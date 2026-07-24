@@ -269,8 +269,9 @@ export const renderValsMethods = {
         time: this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         onAssign: () => this.openAssign(p), assignAria: 'Move ' + p.name + ' to a project', projectLabel: p.projectId ? this.projectName(p.projectId) : 'Unfiled',
-        hexListLabel: s.copied === 'ov-pal-hex' ? 'Copied ✓' : 'Hex list',
-        cssLabel: s.copied === 'ov-pal-css' ? 'Copied ✓' : 'CSS variables',
+        // copy state as a flag, not a label — the view owns how confirmation is drawn (✓ icon + word)
+        hexListCopied: s.copied === 'ov-pal-hex',
+        cssCopied: s.copied === 'ov-pal-css',
         copyHexList: () => this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'),
         copyCss: () => this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'),
       };
@@ -400,9 +401,17 @@ export const renderValsMethods = {
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
       // palette-level copy
       palBtn, palBtnHover: { background: 'var(--on-surface)', color: 'var(--surface)' }, palBtnActive: { transform: 'translateY(1px)' },
-      hexListLabel: s.copied === 'pal-hex' ? 'Copied ✓' : 'Hex list',
-      cssLabel: s.copied === 'pal-css' ? 'Copied ✓' : 'CSS variables',
+      // copy state as a flag, not a label — the view owns how confirmation is drawn (✓ icon + word)
+      hexListCopied: s.copied === 'pal-hex',
+      cssCopied: s.copied === 'pal-css',
       copyHexList: () => copyPal('hex'), copyCss: () => copyPal('css'),
+      // share link — the palette rides in the URL fragment, which never reaches a server
+      shareCopied: s.copied === 'pal-share',
+      onShare: () => this.shareCurrent(),
+      // viewing someone else's palette: nothing is in this browser's archive until they say so
+      isSharedView: !!s.sharedView,
+      onSaveShared: () => this.saveShared(),
+      onMakeOwn: () => this.makeOwnFromShared(),
       copyLabelStyle: this.monoLabel(10, '.12em', { color: 'var(--on-surface-muted)' }),
       deferNoteStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
       // feed states + view toggle

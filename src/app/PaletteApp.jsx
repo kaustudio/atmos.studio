@@ -15,6 +15,7 @@ import { reelMethods } from './methods/reel.js';
 import { orbitMethods } from './methods/orbit.js';
 import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
+import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { renderValsMethods } from './renderVals.js';
 
@@ -74,13 +75,25 @@ export default class PaletteApp extends React.Component {
   planeRef = React.createRef();
   universeCloseRef = React.createRef();
 
+  // An incoming share link, decoded and validated once. Declared before `state` because the state
+  // initializer branches on it — a link must open ON the palette, never on the landing first.
+  // Reads the fragment only; nothing here writes to the recipient's archive.
+  _shared = this._sharedFromHash();
+
   state = {
-    stage: 'upload', current: null, feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null,
+    // a shared palette opens straight into the result stage, past the landing and the loader
+    stage: this._shared ? 'result' : 'upload',
+    current: this._shared || null,
+    sharedView: !!this._shared,
+    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null,
     assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
-    landingDismissed: this._landingDismissed(), showLoader: this._loaderPending(), page: 0,
+    // a share link arrives past both gates: the recipient came for the palette, not the intro
+    landingDismissed: this._shared ? true : this._landingDismissed(),
+    showLoader: this._shared ? false : this._loaderPending(),
+    page: 0,
     narrow: (function () { try { return !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches); } catch (e) { return false; } })(),
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
@@ -261,6 +274,7 @@ Object.assign(
   orbitMethods,
   wipeMethods,
   loaderMethods,
+  shareMethods,
   miscMethods,
   renderValsMethods,
 );
