@@ -244,6 +244,18 @@ export default function AppView({ vals }) {
 
         {vals.isResult && (
           <div ref={vals.resultRef} style={sx('display:flex;flex-direction:column')}>
+            {/* Shared-link view: someone else's palette, held in the URL and NOT in this archive.
+                Saving is the visitor's choice, so the strip says what is (not) happening and offers
+                both exits — keep it, or go make one. */}
+            {vals.isSharedView && (
+              <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;margin:0 0 18px;border:1px solid var(--line-strong);background:var(--surface-raised)')}>
+                <span style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A palette someone shared with you. It isn’t saved in this browser unless you save it.</span>
+                <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
+                  <B006 onClick={vals.onSaveShared} aria-label="Save this shared palette to your archive" label="Save to archive" />
+                  <B006 onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" label="Make your own" />
+                </span>
+              </div>
+            )}
             <div role="group" aria-label="Generated palette swatches" style={sx('display:flex;height:340px;width:100%;gap:0')}>
               {vals.result.bands.map((b, bi) => (
                 <div key={bi} data-band="1" role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
@@ -265,6 +277,8 @@ export default function AppView({ vals }) {
                 label={<Stack text={vals.cssLabel} ghosts={['CSS variables', 'Copied ✓']} />} />
               <B006 btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
               <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+              <B006 onClick={vals.onShare} aria-label="Copy a shareable link to this palette"
+                label={<Stack text={vals.shareLabel} ghosts={['Share link', 'Copied ✓']} />} />
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>

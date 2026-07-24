@@ -399,6 +399,13 @@ export const renderValsMethods = {
       hexListLabel: s.copied === 'pal-hex' ? 'Copied ✓' : 'Hex list',
       cssLabel: s.copied === 'pal-css' ? 'Copied ✓' : 'CSS variables',
       copyHexList: () => copyPal('hex'), copyCss: () => copyPal('css'),
+      // share link — the palette rides in the URL fragment, which never reaches a server
+      shareLabel: s.copied === 'pal-share' ? 'Copied ✓' : 'Share link',
+      onShare: () => this.shareCurrent(),
+      // viewing someone else's palette: nothing is in this browser's archive until they say so
+      isSharedView: !!s.sharedView,
+      onSaveShared: () => this.saveShared(),
+      onMakeOwn: () => this.makeOwnFromShared(),
       copyLabelStyle: this.monoLabel(10, '.12em', { color: 'var(--on-surface-muted)' }),
       deferNoteStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
       // feed states + view toggle
