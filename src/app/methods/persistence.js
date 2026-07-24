@@ -4,6 +4,18 @@ export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
   // now; a backend/account store can replace makeStore() later without touching call sites.
   makeStore() {
+    // FROZEN LEGACY KEY — do not rename to match the product name.
+    //
+    // 'palette-generator/*' predates the settling of the name on Atmos Studio. Every archive that
+    // already exists on someone's machine is keyed to this string, and localStorage has no rename:
+    // changing it would silently orphan real palettes behind a key nothing reads any more. The same
+    // goes for the project-file `schema` value below (saveProjectFile / mergeProjectFile) — files
+    // already saved to disk carry it, and importing must keep working.
+    //
+    // Leaving them is the deliberate choice, not an oversight. They are internal identifiers, never
+    // shown to a user, so they cost nothing in coherence. Renaming would need a versioned migration
+    // that reads the old key, writes the new, and leaves the old intact for at least one release —
+    // real risk and real work to buy a string nobody sees.
     const KEY = 'palette-generator/feed';
     let backend = null;
     try { if (typeof window !== 'undefined' && window.localStorage) { const t = '__pg_probe__'; window.localStorage.setItem(t, '1'); window.localStorage.removeItem(t); backend = window.localStorage; } } catch (e) { backend = null; }
