@@ -299,6 +299,10 @@ export default function AppView({ vals }) {
               <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
               <B006 onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
             </div>
+            {/* Persistent rather than tied to the copied state: the copied flag clears after 1.5s,
+                which is too fleeting to read a privacy claim in — and it is reassurance wanted
+                BEFORE sending a link, not after. */}
+            <p style={sx("margin:10px 0 0;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>The link carries the palette itself — the part after # is never sent to a server.</p>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
                 <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:44px;line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
