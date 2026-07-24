@@ -102,7 +102,7 @@ copy must change in the same commit**:
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
    Moving share data into a query string (`?p=`) would make it false immediately.
 4. **"no analytics"** — true until someone adds Vercel Analytics or similar. That is a copy change,
-   not just a config change. One nuance: if the vendored GSAP fails to load, the app falls back to
+   not just a config change — and the decision not to ship it is recorded in [`DECISIONS.md`](DECISIONS.md) (see PR #6), so the claim and its decision point at each other. One nuance: if the vendored GSAP fails to load, the app falls back to
    `cdn.jsdelivr.net` (`PaletteApp.jsx`) — not tracking, but it is a third-party request, and the
    only one the app can make.
 5. **"a small downscaled thumbnail"** — describes the in-environment path only, and the size comes
