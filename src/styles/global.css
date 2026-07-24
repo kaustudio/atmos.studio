@@ -1,0 +1,183 @@
+/* Atmos Studio — Palette. Global chrome styles, ported verbatim from the design comp
+   (Palette Generator.dc.html helmet). Asset URLs remapped to /fonts and /assets. */
+
+@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+@keyframes hue{0%{background:#1a1a1a}18%{background:#c87d3c}36%{background:#7d8d91}54%{background:#9a5128}72%{background:#828f92}90%{background:#cdbfd2}100%{background:#1a1a1a}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+/* focus-visible rings — cannot be expressed inline; keyboard-only, high-contrast, distinct from hover */
+:focus{outline:none}
+[data-focus="chrome"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px;box-shadow:0 0 0 3px var(--surface)}
+[data-focus="card"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
+[data-focus="swatch"]:focus-visible{box-shadow:inset 0 0 0 4px #ffffff,inset 0 0 0 8px #1a1a1a}
+[data-focus="value"]:focus-visible{outline:none;box-shadow:inset 0 0 0 3px #ffffff,inset 0 0 0 6px #1a1a1a}
+
+/* ===== interaction-state contract — ONE declarative mechanism, token-driven, eased with --ease-standard.
+   Full set per control: rest · hover · focus-visible (above) · active · disabled · selected.
+   !important is required only to layer hover/active over each control's inline rest background. ===== */
+[data-ix]{transition:background-color .28s var(--ease-button-hover),color .28s var(--ease-button-hover),border-color .28s var(--ease-button-hover),box-shadow .28s var(--ease-button-hover),filter .16s var(--ease-standard),transform .12s var(--ease-standard)}
+[data-ix]:disabled{opacity:.42;cursor:default}
+/* solid — bordered chrome; hover/active follow button-006's glass-tint spectrum (16% → 24%), no invert */
+[data-ix="solid"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:color-mix(in srgb,var(--on-surface) 38%,transparent)!important}
+[data-ix="solid"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:color-mix(in srgb,var(--on-surface) 48%,transparent)!important;transform:translateY(1px)}
+/* cta — solid on-surface rest (inverted): hover lightens within its own color, active deepens */
+[data-ix="cta"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important}
+[data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;transform:translateY(1px)}
+/* seg — segmented toggle; unselected tints on the same 16/24 spectrum, selected (aria-pressed) stays solid and lifts */
+[data-ix="seg"][aria-pressed="false"]:hover{background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important}
+[data-ix="seg"][aria-pressed="false"]:active{background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important}
+[data-ix="seg"][aria-pressed="true"]:hover{filter:brightness(1.14)}
+[data-ix="seg"]:active:not(:disabled){transform:translateY(1px)}
+/* icon — icon buttons over swatches/chrome; fill from own currentColor so it adapts to swatch + theme */
+[data-ix="icon"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 16%,transparent)!important}
+[data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important;transform:translateY(1px)}
+/* cell — value rows & harmony cells; tint from own currentColor */
+[data-ix="cell"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 12%,transparent)!important}
+[data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
+/* press — text/icon chrome without its own bg: hover/active tint on the shared 16/24 spectrum */
+[data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important}
+[data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;transform:translateY(1px)}
+/* lift is GSAP-driven on transform — transition only the shadow/border (style-hover) so CSS never fights the tween */
+[data-ix="lift"]{transition:box-shadow .16s var(--ease-standard),border-color .16s var(--ease-standard)}
+/* ===== the three sanctioned specializations (richer motion the declarative rules above can't express) =====
+   button-006 — the clip-path text-swap CTA (own CSS block below).
+   rich-tint  — feed rows, universe cards, export items: JS brightness tint for continuous motion.
+   lift       — the hero dropzone only: GSAP-tweened rise + shadow + ring, interruptible. */
+/* rich-tint family (feed rows, universe cards, export items) keep the JS tint for motion; unify the active press */
+[data-row],[data-ex-item]{transition:filter .14s var(--ease-standard)}
+[data-row]:active:not(:disabled),[data-feed]:active,[data-ex-item]:active{filter:brightness(.97)}
+@media (prefers-reduced-motion: reduce){
+  [data-ix]{transition:none}
+  [data-ix="solid"]:active:not(:disabled),[data-ix="cta"]:active:not(:disabled),[data-ix="seg"]:active:not(:disabled),[data-ix="icon"]:active:not(:disabled),[data-ix="press"]:active:not(:disabled){transform:none}
+  [data-row],[data-ex-item]{transition:none}
+  [data-row]:active,[data-feed]:active,[data-ex-item]:active{filter:none}
+}
+
+/* ===== shared motion tokens (named; mirrored by the JS EASE map) ===== */
+:root{
+  --ease-standard:cubic-bezier(0.22,1,0.36,1);
+  --ease-entrance:cubic-bezier(0.16,1,0.3,1);
+  --ease-exit:cubic-bezier(0.4,0,1,1);
+  --ease-button-hover:cubic-bezier(0.675,0.15,0.1,1);
+  /* landing-scoped (sanctioned exception, like the ambient orbit + circular orb bodies):
+     the Osmo step curve (M0,0 C0.625,0.05 0,1 1,1) — dwell → whip → settle. Orbit step tweens ONLY. */
+  --ease-orbit-step:cubic-bezier(0.625,0.05,0,1);
+  --ease-button-click:cubic-bezier(0.4,0,0.2,1);
+  --ease-button-focus:cubic-bezier(0.32,0.72,0,1);
+}
+/* ===== semantic chrome tokens (theme affects chrome only — never palette swatches) ===== */
+:root{
+  --surface:#f5f5f3;          /* page */
+  --surface-raised:#fafaf8;   /* rows, panels */
+  --surface-white:#ffffff;    /* cards that pop / current row */
+  --on-surface:#1a1a1a;       /* primary ink */
+  --on-surface-muted:#63635b; /* secondary text */
+  --line:#e0e0db;             /* hairline dividers */
+  --line-strong:#d5d5d0;      /* stronger borders */
+  /* ===== type scale (tracking tokens — bundle the system voice; no ad-hoc/0px inline) ===== */
+  --track-display:-0.03em;    /* large display / wordmark */
+  --track-statement:-0.02em;  /* statement-scale headings */
+  --track-title:-0.01em;      /* card/section titles */
+  --track-body:0.01em;        /* body copy */
+  --track-label:0.1em;        /* uppercase mono labels (system default) */
+  --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --surface:#141413;
+  --surface-raised:#1f1f1e;
+  --surface-white:#2a2a28;
+  --on-surface:#f3f3ef;       /* ~16:1 on --surface */
+  --on-surface-muted:#a2a29a; /* ~6.4:1 on --surface (AA) */
+  --line:#333331;
+  --line-strong:#454542;
+  color-scheme:dark;
+}
+html,body{background:var(--surface);transition:background .3s var(--ease-standard)}
+@keyframes gradient-drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fr-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* value→Copied text swap: masked line reveal (two identical keyframes so the swap back restarts it) */
+@keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
+@keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
+@media (prefers-reduced-motion: reduce){ [data-fr-frame],[data-fr-tag],[data-logo],[data-wipe-word]{animation:none!important} }
+/* ===== button-006 (clip-path text-swap CTA), remapped to system tokens ===== */
+.button-006{
+  --button-006-border-radius:0;
+  --button-006-surface:color-mix(in srgb, var(--on-surface) 7%, transparent);   /* rest bg  → glass */
+  --button-006-on-surface:var(--on-surface);   /* rest text → on-surface */
+  --button-006-accent:color-mix(in srgb, var(--on-surface) 16%, transparent);   /* hover bg → glass, strengthened */
+  --button-006-on-accent:var(--on-surface);    /* hover text → same (no invert) */
+  --button-006-focus:var(--on-surface);        /* focus ring → WCAG focus token */
+  --button-006-click-scale:0.955 0.925;
+  --button-006-default-text-scale:1;
+  --button-006-hover-text-scale:1;
+  --button-006-padding:0.75em 1em;
+  --button-006-focus-inset:-0.125em;
+  --button-006-dur:0.42s;
+  position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
+  border-radius:var(--button-006-border-radius);
+  font-family:Neue Montreal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  -webkit-tap-highlight-color:transparent;isolation:isolate;
+  transition:scale .12s var(--ease-button-click);
+}
+.button-006:active{scale:var(--button-006-click-scale);}
+.button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
+.button-006__hover{position:absolute;inset:0;z-index:2;clip-path:inset(0 0 100% 0);transition:clip-path var(--button-006-dur) var(--ease-button-hover);}
+.button-006:hover .button-006__hover{clip-path:inset(0 0 0% 0);}
+.button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;transition:scale var(--button-006-dur) var(--ease-button-hover);transform-origin:center;will-change:scale;}
+.button-006__default .button-006__text{color:var(--button-006-on-surface);}
+.button-006__hover .button-006__text{color:var(--button-006-on-accent);scale:var(--button-006-hover-text-scale);}
+.button-006:hover .button-006__default .button-006__text{scale:var(--button-006-default-text-scale);}
+.button-006:hover .button-006__hover .button-006__text{scale:1;}
+.button-006__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;}
+.button-006__bg.is--default{background:var(--button-006-surface);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 15%, transparent);}
+.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 38%, transparent);}
+/* pressed: the deepest step of the same tint spectrum — clearly distinct from rest and hover in both themes */
+.button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:color-mix(in srgb, var(--on-surface) 24%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 48%, transparent);}
+.button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow .2s var(--ease-button-focus);}
+.button-006:focus-visible{outline:none;}
+.button-006:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-006-focus);}
+[data-del]{opacity:0;pointer-events:none;transition:opacity .16s var(--ease-standard)}
+/* click-to-zoom lightbox (squared — no radius on trigger or clone) */
+[data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
+[data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
+[data-row-main]{transition:padding-right .16s var(--ease-standard)}
+[data-row-wrap]:hover [data-row-main],[data-row-wrap]:focus-within [data-row-main]{padding-right:92px!important}
+[data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto}
+[data-info]{opacity:1;transition:opacity .16s var(--ease-standard)}
+/* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
+   are always visible & tappable, and the row reserves the button gutter permanently. */
+@media (hover:none),(pointer:coarse){
+  [data-del]{opacity:1;pointer-events:auto}
+  [data-row-main]{padding-right:92px!important}
+  [data-info]{opacity:1}
+}
+/* Honest small-viewport gate: the universe, stage and drawers need room, so on narrow screens we
+   show a calm 'best on desktop' state rather than a broken adaptive layout. Pure CSS media query. */
+[data-desk-gate]{display:none}
+@media (max-width:720px){
+  [data-desk-gate]{display:flex}
+  [data-app]>*:not([data-desk-gate]){display:none!important}
+}
+
+/* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
+   at its designed weight, not thickened by subpixel rendering. Scoped to the dark theme and the
+   always-dark surfaces (wipe, loader), NOT the light theme — antialiased thins dark-on-light
+   body copy and costs reading contrast there. */
+:root[data-theme="dark"] body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+[data-wipe], [data-load-wrap] { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+/* Hide scrollbar (Osmo) — the bar, never the overflow: page and drawer regions stay fully
+   scrollable by wheel, touch and keyboard; the drawers keep their edge-fade cue. */
+html, body { scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+[data-lenis-prevent] { scrollbar-width: none; }
+[data-lenis-prevent]::-webkit-scrollbar { display: none; }
+/* Lenis smooth scroll (vendored, like GSAP) — essential runtime rules from lenis.css */
+html.lenis,html.lenis body{height:auto}
+.lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
+.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
