@@ -1,4 +1,4 @@
-// Atmos Studio — Palette. Production port of the Claude Design comp (Palette Generator.dc.html).
+// Atmos Studio. Production port of the Claude Design comp.
 // The design comp was authored against a React-compatible component API, so the logic ports
 // near-verbatim; it is organised here as a class core plus prototype method groups.
 import React from 'react';

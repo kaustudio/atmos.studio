@@ -1,9 +1,10 @@
-# Atmos Studio — Palette
+# Atmos Studio
 
-Production implementation of the **Palette Generator** designed in Claude Design (see the handoff
-bundle in `../project` and the transcripts in `../chats`). Drop in an image and it becomes a
-palette drawn from its **mood** — the light and atmosphere it carries, not just its dominant
-colours.
+**Colour read from light and atmosphere.** Drop in an image and Atmos Studio reads a palette from
+its **mood** — the light and atmosphere it carries, not just its dominant colours.
+
+Production implementation of the design comp authored in Claude Design (see the handoff bundle in
+`../project` and the transcripts in `../chats`).
 
 Built with **Vite + React**; the design comp's logic (authored against a React-compatible
 component API) is ported near-verbatim so behaviour and motion stay faithful.
@@ -55,7 +56,9 @@ The chats left "where live interpretation runs" open. The client is wired with a
 3. **Neither** — the local archetype reading is used silently; a notice appears only on a genuine
    live-call failure.
 
-The privacy line in the first-run panel renders only when a live path is actually available.
+Where a live path exists, a downscaled thumbnail is sent to read the mood; where none does, nothing
+leaves the browser. Any user-facing note about that is capability-conditional — it renders only
+where the live call is actually available, so the claim is true wherever it appears.
 
 ## Privacy
 
@@ -127,4 +130,8 @@ api/interpret.ts        serverless proxy for live interpretation
 scripts/smoke.mjs       Playwright smoke-drive of the full journey
 ```
 
-localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`).
+localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`), and the portable
+project file carries `schema: 'palette-generator/project-file'`. Those strings are **deliberately
+frozen legacy internals** — see the note in `src/app/methods/persistence.js`. They predate the
+settling of the product name on *Atmos Studio*, and every existing archive is keyed to them, so
+renaming without a migration would orphan real people's palettes. They are never shown to a user.

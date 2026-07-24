@@ -1,5 +1,5 @@
-/* Atmos Studio — Palette. Global chrome styles, ported verbatim from the design comp
-   (Palette Generator.dc.html helmet). Asset URLs remapped to /fonts and /assets. */
+/* Atmos Studio. Global chrome styles, ported verbatim from the design comp helmet.
+   Asset URLs remapped to /fonts and /assets. */
 
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}

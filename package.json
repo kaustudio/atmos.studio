@@ -1,9 +1,9 @@
 {
-  "name": "atmos-palette-generator",
+  "name": "atmos-studio",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Atmos Studio — Palette: a desktop web tool that reads a colour palette from an image's mood.",
+  "description": "Atmos Studio — colour read from light and atmosphere: a desktop web tool that reads a palette from an image's mood.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
