@@ -33,11 +33,17 @@ function B006({ label, hover, btnRef, ...props }) {
   );
 }
 
-// grid-stacked label: visible text over hidden ghosts so 'Hex list' ⇄ 'Copied ✓' never reflows
-const Stack = ({ text, ghosts }) => (
+// Copy confirmation: 'Hex list' ⇄ ✓ Copied. Both states are stacked in one grid cell with the
+// inactive one hidden, so the cell is always sized to the WIDER of the two and the row can never
+// reflow at the moment of the swap — which is exactly when the pointer is still over the button.
+const CopiedMark = () => (
+  <span style={sx('display:inline-flex;align-items:center;gap:6px')}><IconCheck />Copied</span>
+);
+const SwapLabel = ({ copied, idle }) => (
   <span style={sx('display:inline-grid;align-items:center;height:14px;justify-items:center')}>
-    <span style={{ gridArea: '1/1' }}>{text}</span>
-    {ghosts.map((g, i) => <span key={i} aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>{g}</span>)}
+    <span style={{ gridArea: '1/1' }}>{copied ? <CopiedMark /> : idle}</span>
+    <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>{idle}</span>
+    <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}><CopiedMark /></span>
   </span>
 );
 
@@ -48,7 +54,7 @@ const logoStyle = {
 };
 
 const IconCopy = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M7.5 17V3h11v14zm-3 3V6.616h1V19h9.385v1z"></path></svg>);
-const IconCheck = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M21 7L9 19l-5.5-5.5l1.41-1.41L9 16.17L19.59 5.59z"></path></svg>);
+const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg>);
 const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true"><circle cx="5.2" cy="7" r="3.4"></circle><circle cx="8.8" cy="7" r="3.4"></circle></svg>);
 const IconContrast = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M8.493 20.292q-1.643-.709-2.859-1.924t-1.925-2.856T3 12.003t.709-3.51Q4.417 6.85 5.63 5.634t2.857-1.925T11.997 3t3.51.709q1.643.708 2.859 1.922t1.925 2.857t.709 3.509t-.708 3.51t-1.924 2.859t-2.856 1.925t-3.509.709t-3.51-.708m4.007-.31q3.09-.201 5.295-2.458T20 12t-2.185-5.505Q15.628 4.258 12.5 4.017z"></path></svg>);
 const IconExport = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m12 15.577l-3.539-3.538l.708-.72L11.5 13.65V5h1v8.65l2.33-2.33l.709.719zM5 19v-4.038h1V18h12v-3.038h1V19z"></path></svg>);
@@ -86,12 +92,12 @@ const exportB006Label = (
   <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export</span>
 );
 // Share is the one action-row button that both carries an icon AND swaps its text, so it composes
-// the icon wrapper with Stack — the icon stays put while 'Share link' ⇄ 'Copied ✓' resolves against
-// the ghosts, and the row never reflows mid-copy.
-const shareB006Label = (text) => (
+// the icon wrapper with SwapLabel — the link icon holds position while the label resolves against
+// its hidden twin, and the row never reflows mid-copy.
+const shareB006Label = (copied) => (
   <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
     <span aria-hidden="true" style={{ display: 'inline-flex' }}><IconLink /></span>
-    <Stack text={text} ghosts={['Share link', 'Copied ✓']} />
+    <SwapLabel copied={copied} idle="Share link" />
   </span>
 );
 
@@ -286,12 +292,12 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px 0 0')}>
               <B006 onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-                label={<Stack text={vals.hexListLabel} ghosts={['Hex list', 'Copied ✓']} />} />
+                label={<SwapLabel copied={vals.hexListCopied} idle="Hex list" />} />
               <B006 onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-                label={<Stack text={vals.cssLabel} ghosts={['CSS variables', 'Copied ✓']} />} />
+                label={<SwapLabel copied={vals.cssCopied} idle="CSS variables" />} />
               <B006 btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
               <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-              <B006 onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareLabel)} />
+              <B006 onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
@@ -736,9 +742,9 @@ function DetailOverlay({ vals }) {
           </div>
           <div style={sx('display:flex;align-items:center;gap:10px')}>
             <B006 onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-              label={<Stack text={overlay.hexListLabel} ghosts={['Hex list', 'Copied ✓']} />} />
+              label={<SwapLabel copied={overlay.hexListCopied} idle="Hex list" />} />
             <B006 onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-              label={<Stack text={overlay.cssLabel} ghosts={['CSS variables', 'Copied ✓']} />} />
+              label={<SwapLabel copied={overlay.cssCopied} idle="CSS variables" />} />
             <B006 onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
             <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
           </div>

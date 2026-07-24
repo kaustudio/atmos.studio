@@ -26,7 +26,7 @@ export const shareMethods = {
   },
 
   // Copy a link to the current palette. Reuses this.copy(), so it gets the same clipboard fallback
-  // and the same "Copied ✓" label swap as the hex/CSS actions.
+  // and the same ✓ Copied confirmation swap as the hex/CSS actions.
   shareCurrent(pal) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
