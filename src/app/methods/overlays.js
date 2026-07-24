@@ -7,6 +7,14 @@ export const overlayMethods = {
   resumeUniverse() { if (this._frozen && this._ticker && window.gsap) { window.gsap.ticker.add(this._ticker); this._frozen = false; } },
 
   openOverlay(p, tileEl) {
+    // One overlay session at a time. state.overlay is set asynchronously, so two activations in the
+    // same tick would BOTH pass a state check — this latch is synchronous. It spans open → fully
+    // closed, which also blocks re-opening during a close reversal: buildOverlayTimeline would
+    // overwrite _ovTl there, orphaning the reversing timeline whose onReverseComplete then tears the
+    // new overlay straight back down. Every teardown path clears it (see _finishOverlayClose,
+    // deletePalette, and _resetIntroState) so it can never strand.
+    if (this._ovOpen) return;
+    this._ovOpen = true;
     this._lastFocus = document.activeElement;
     this._openTileEl = tileEl || null;
     this._ovDone = false; this._ovBack = null;
@@ -53,6 +61,9 @@ export const overlayMethods = {
     this._closeGuard = setTimeout(() => this._finishOverlayClose(), (this._ovTl.duration() + 0.8) * 1000);
   },
   _finishOverlayClose() {
+    // release the open latch BEFORE the _ovDone guard, so this function is unconditionally a
+    // latch-release — a call arriving with _ovDone already true must still leave overlays openable
+    this._ovOpen = false;
     if (this._ovDone) return; this._ovDone = true;
     clearTimeout(this._closeGuard);
     const back = this._ovBack;
@@ -89,7 +100,7 @@ export const overlayMethods = {
         patch.selectedSwatch = null;
       }
       const overlayDeleted = s.overlay && s.overlay.id === id;
-      if (overlayDeleted) { patch.overlay = null; patch.overlaySel = null; this._ovTl = null; this._ovDone = true; this._openTileEl = null; }
+      if (overlayDeleted) { patch.overlay = null; patch.overlaySel = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
       if (this._toastT) clearTimeout(this._toastT);
       this._deleted = { palette: removed, index: idx };
       patch.toast = { name: removed.name };

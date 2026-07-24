@@ -375,6 +375,10 @@ export const renderValsMethods = {
       orbitSlots: this._landingUp() ? this._ringSlots() : [],
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
+      // capability-conditional interpretation note: only where the live model call is actually
+      // available. Reuses the SAME predicate that gates the call itself (interpretLive → pipeline),
+      // so the disclosure can never drift out of step with whether a thumbnail is really sent.
+      showInterpNote: this.canInterpretLive(),
       // glass-CTA variant (landing-scoped component builder) — squared glass, token-mixed, theme-correct
       glassCta: {
         display: 'inline-flex', alignItems: 'center', height: '36px', padding: '0 16px', borderRadius: '0',
