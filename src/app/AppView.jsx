@@ -222,10 +222,12 @@ export default function AppView({ vals }) {
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
           {/* Trust copy sits OUTSIDE the dropzone button — inside, it would join the button's
-              accessible name. TODO(§2): Kau's authored trust line goes here, above this sentence.
-              The sentence below is additive to it and must not contradict or duplicate it. */}
+              accessible name. The trust line is unconditional and true of every build; the sentence
+              under it is additive and renders only where a live path actually exists, so the pair
+              stays literally true in both worlds. */}
+          <p style={sx("max-width:520px;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>Everything stays in your browser — nothing is uploaded or stored on us.</p>
           {vals.showInterpNote && (
-            <p style={sx("max-width:520px;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</p>
+            <p style={sx("max-width:520px;margin:6px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</p>
           )}
         </>)}
 

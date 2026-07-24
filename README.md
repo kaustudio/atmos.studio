@@ -75,3 +75,56 @@ scripts/smoke.mjs       Playwright smoke-drive of the full journey
 ```
 
 localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`).
+
+## Privacy
+
+Atmos Studio runs in your browser.
+
+**Your images never leave your device.** The palette is extracted on your own machine — the image is
+read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build,
+the code that could send an image isn't merely switched off: it isn't part of the build at all.
+
+**Your palettes are stored only in your browser.** The archive lives in this browser's local
+storage. There is no server holding it, no account attached to it, and no way for us to see it.
+Clearing your browser data deletes it — which is why you can save a project file and keep your own
+copy, on your own disk.
+
+**Share links carry the palette, not a lookup.** A shared link encodes the palette in the part of
+the URL after the `#`. Browsers never send that part to a server, so opening a shared link doesn't
+tell us — or anyone else — that you opened it, or what was in it.
+
+**No accounts, no analytics, no tracking, no ads.** There is nothing to sign up for, no tracking
+cookies, no analytics script, and nothing sold or shared with anyone.
+
+**What we can see.** The site is hosted on Vercel, which keeps standard access logs for the files it
+serves — the same as any website on the internet. We don't add anything on top of that.
+
+**About interpretation.** Some environments provide a model that can read an image's mood directly.
+Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up
+for high-density displays — is sent for that reading and is not stored. This public build doesn't
+include that path — palettes are named by a reading that runs locally, on your device.
+
+Last updated: 25 July 2026 · Questions: hello@kau.studio
+
+### Accuracy notes (for whoever edits this later)
+
+These sentences are true because of specific properties of the build. If any of them change, **the
+copy must change in the same commit**:
+
+1. **"never leave your device" / "isn't part of the build"** — true because the endpoint branch is
+   tree-shaken out when `VITE_INTERPRET_ENDPOINT` is unset. Verified against the shipped bundle: it
+   contains no `VITE_INTERPRET_ENDPOINT` reference, no `api.anthropic.com` URL, and not even the
+   endpoint path's error string. Setting that variable, or shipping `api/interpret.ts` with a key
+   configured, makes this false.
+2. **"stored only in your browser"** — true while persistence is localStorage-only. Any sync,
+   backup, or account feature invalidates it.
+3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
+   Moving share data into a query string (`?p=`) would make it false immediately.
+4. **"no analytics"** — true until someone adds Vercel Analytics or similar. That is a copy change,
+   not just a config change. One nuance: if the vendored GSAP fails to load, the app falls back to
+   `cdn.jsdelivr.net` (`PaletteApp.jsx`) — not tracking, but it is a third-party request, and the
+   only one the app can make.
+5. **"a small downscaled thumbnail"** — describes the in-environment path only, and the size comes
+   from `makeThumb` (`320 × devicePixelRatio`, DPR clamped to 3). If hosted interpretation ships,
+   this sentence moves from conditional to permanent, and needs to name where it is sent and what is
+   retained.
