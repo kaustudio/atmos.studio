@@ -105,12 +105,21 @@ export default class PaletteApp extends React.Component {
   // the one global light — every orb cue derives from it
   get ORB_LIGHT() { return { x: 0.30, y: 0.28 }; }
   // how many orbs may hold a WebGL context. Rings claim it whole, front first (see _initOrbGL); the
-  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16) — and
-  // at 0 on phones, where a dozen live contexts is a battery and memory bill the painted floor
-  // (visually the same thing) does not charge.
-  get ORB_GL_MAX() { return this.state.narrow ? 0 : 12; }
+  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16).
+  // Small screens get the SAME budget: an orb's shading must not change with the screen it's on.
+  ORB_GL_MAX = 12;
   // seconds for one full revolution of the ring set — ONE speed, shared by every ring (contract §3)
   ORB_ROT_SECS = 105;
+  // the ring→ring gap as a multiple of the copy→ring gap: the rings should read as separate depths,
+  // not one thick band. Pushing the outer ring off the sides of the viewport is intended.
+  ORB_RING_GAP_MUL = 1.75;
+  // the smallest gap, as a fraction of the inner orb's DIAMETER — proportional so it reads the same
+  // whether the orbs are 55px (phone) or 96px (portrait tablet), where the width-derived gap
+  // collapses onto this floor. A flat pixel floor put tablets at 0.44 diameters and phones at 0.76.
+  ORB_MIN_GAP_MUL = 0.55;
+  // and the largest ring→ring gap, same units: g tracks the viewport width, so without a ceiling the
+  // rings drift apart into two unrelated arcs on big displays (3.2 diameters on a 16", 3.9 at 1080p).
+  ORB_RING_GAP_MAX = 2.2;
 
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }
   // Is the landing surface on screen? On phones it always is: the tool needs room the viewport

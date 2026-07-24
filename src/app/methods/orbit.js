@@ -16,18 +16,15 @@ export const orbitMethods = {
     const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
     const hexes = swatches.slice().sort((a, b) => chroma(b.hex) - chroma(a.hex)).map((s) => s.hex);
     if (ctx.filter !== undefined) ctx.filter = 'saturate(1.25) contrast(1.04)';
-    // ONE GLOBAL LIGHT (ORB_LIGHT) — highlight, shading, rim, spec all derive from it.
-    const L = this.ORB_LIGHT;
-    const deep = hexes.slice().sort((a, b) => lum(a) - lum(b))[0] || hexes[hexes.length - 1] || '#333';
-    const bright = hexes.slice().sort((a, b) => lum(b) - lum(a))[0] || hexes[0] || '#bbb';
-    const cool = hexes.slice().sort((a, b) => { const ca = this.hexToRgb(a), cb = this.hexToRgb(b); return (cb[2] - cb[0]) - (ca[2] - ca[0]); })[0] || bright;
-    ctx.fillStyle = deep; ctx.fillRect(0, 0, W, H);
-    const lx = W * (L.x + (Math.random() - 0.5) * 0.04), ly = H * (L.y + (Math.random() - 0.5) * 0.04);
-    // non-linear diffuse falloff (Lambert-ish): bright core, accelerating darkening away from the light
-    const core = ctx.createRadialGradient(lx, ly, 0, lx, ly, Math.max(W, H) * 1.05);
-    core.addColorStop(0, this.hexA(bright, 0.96)); core.addColorStop(0.22, this.hexA(bright, 0.72));
-    core.addColorStop(0.45, this.hexA(hexes[0] || bright, 0.45)); core.addColorStop(0.70, this.hexA(deep, 0.25)); core.addColorStop(1, this.hexA(deep, 0));
-    ctx.fillStyle = core; ctx.fillRect(0, 0, W, H);
+    // The tile is the orb's MATERIAL, not its lighting: a non-directional colour field, no highlight,
+    // no terminator, no rim. Every one of those used to be baked here at a fixed spot, which is why
+    // an orb on the far right looked lit from its own upper-left just like one on the far left — the
+    // baked cues outvoted the positional layers. Direction now lives entirely in the layers above
+    // (limb / diffuse / spec / rim, all placed from --ldx/--ldy) and in the shader, both of which
+    // answer to the orb's position under the ONE global light.
+    const byLum = hexes.slice().sort((a, b) => lum(a) - lum(b));
+    const mid = byLum[Math.floor(byLum.length / 2)] || hexes[0] || '#8a8a8a';
+    ctx.fillStyle = mid; ctx.fillRect(0, 0, W, H);
     // per-visit jitter: the palette's colours pooled across the surface — never the same arrangement twice
     const jit = (v) => v + (Math.random() - 0.5) * 0.16;
     const pts = [[0.22, 0.26], [0.80, 0.20], [0.72, 0.74], [0.26, 0.80], [0.52, 0.50]].map((p) => [jit(p[0]), jit(p[1])]);
@@ -36,19 +33,7 @@ export const orbitMethods = {
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, this.hexA(hex, 0.5)); g.addColorStop(1, this.hexA(hex, 0));
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     });
-    // Fresnel rim — faint cool light wrap on the shadow-side edge (strongest single realism cue)
-    const rx = W * (1 - L.x), ry = H * (1 - L.y);
-    const rim = ctx.createRadialGradient(rx, ry, Math.max(W, H) * 0.30, rx, ry, Math.max(W, H) * 0.62);
-    rim.addColorStop(0, this.hexA(cool, 0)); rim.addColorStop(0.82, this.hexA(cool, 0)); rim.addColorStop(0.95, this.hexA(cool, 0.22)); rim.addColorStop(1, this.hexA(cool, 0.34));
-    ctx.fillStyle = rim; ctx.fillRect(0, 0, W, H);
-    // specular pair aligned to the light: tight warm dot + broad soft sheen (never pure white)
     if (ctx.filter !== undefined) ctx.filter = 'none';
-    const s1 = ctx.createRadialGradient(lx, ly, 0, lx, ly, Math.max(W, H) * 0.10);
-    s1.addColorStop(0, 'rgba(255,250,240,0.75)'); s1.addColorStop(1, 'rgba(255,250,240,0)');
-    ctx.fillStyle = s1; ctx.fillRect(0, 0, W, H);
-    const s2 = ctx.createRadialGradient(lx * 1.15, ly * 1.15, 0, lx * 1.15, ly * 1.15, Math.max(W, H) * 0.34);
-    s2.addColorStop(0, 'rgba(255,248,238,0.22)'); s2.addColorStop(1, 'rgba(255,248,238,0)');
-    ctx.fillStyle = s2; ctx.fillRect(0, 0, W, H);
     // dither — subtle noise so the baked gradients never band
     try {
       const img = ctx.getImageData(0, 0, W, H), d = img.data;
@@ -100,17 +85,19 @@ export const orbitMethods = {
     });
     this._envURL = cv.toDataURL(); return this._envURL;
   },
-  // ---- The rings. Everything about the formation lives here: how many orbs, how far out, how big,
-  // and where the ring starts. `phase` is what keeps the rings interleaved — the back ring is offset
-  // half a step (360/(2·count)) so its orbs sit in the front ring's gaps and never align radially.
-  // Depth is per RING, not per orb: size, blur, opacity and z are the parallax.
+  // ---- The rings. Radii are NOT configured here — they are solved per viewport in _ringGeom.
+  // What is configured is each ring's population, its size, its direction and its depth treatment.
+  // Counts are deliberately unequal and roughly proportional to circumference, so the ARC gap
+  // between neighbours comes out the same on both rings: at 1440×900 the front ring runs ~134px
+  // between orb edges and the back ring ~135px. Equal counts leave the outer ring's gaps more than
+  // twice the inner ring's — that was the whitespace.
   _rings() {
     return [
       // front — the formation's read: biggest, crisp, full key light, the only ring that floats
-      { count: 12, radius: 0.38, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
-      // back — half a step round, smaller, softer, dimmer; reads as depth, never as a second read.
+      { count: 12, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
+      // back — smaller, softer, dimmer; reads as depth, never as a second read.
       // dir −1: the small orbs run COUNTER-CLOCKWISE against the front ring (contract §3).
-      { count: 12, radius: 0.52, size: 56, phase: 360 / (2 * 12), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0.76, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
+      { count: 21, size: 56, phase: 360 / (2 * 21), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0.76, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
     ];
   },
   // one flat orb list, ring-major: ring 0 takes the first count slots, ring 1 the next, and so on.
@@ -144,17 +131,37 @@ export const orbitMethods = {
     });
     return Math.hypot(dx, dy) || 265;                               // corner reach — the worst angle a ring can pass
   },
-  // Ring geometry for the current viewport: radius as a fraction of the SMALLER edge (so the
-  // formation stays circular and proportional), sizes scaled off the same edge, and one shared
-  // uplift `k` applied to every radius if the front ring would otherwise crowd the hero. Scaling
-  // all rings by the same factor is what preserves their proportions — and the interleave.
+  // Ring geometry for the current viewport, SOLVED rather than configured.
+  //   1. BASE GAP — g is sized off the viewport width so the formation always spans it.
+  //   2. WIDER BETWEEN RINGS — the ring→ring gap is ORB_RING_GAP_MUL× the copy→ring gap, so the
+  //      rings read as separate depths rather than one thick band.
+  //   3. BOUNDS IN ORB DIAMETERS, never absolute px — the same pixel count reads completely
+  //      differently at 55px and 113px. Floor binds on phones and portrait tablets (where the
+  //      width-derived g collapses), ceiling binds from ~1440px up (where g would otherwise track
+  //      the width and pull the rings apart).
+  //   4. OVERFLOW IS FINE — the outer ring is not pinned to the edges; it runs off both sides by
+  //      design, and being true circles it leaves the top and bottom too.
+  // Orb sizes scale off the SMALLER edge — tied to width they would balloon on wide, short screens.
   _ringGeom(vw, vh) {
     const rings = this._rings(), edge = Math.min(vw, vh) || 720;
     const sizeK = Math.min(1.35, Math.max(0.66, edge / 720));
     const px = rings.map((r) => r.size * sizeK);
-    const need = this._heroReach() + px[0] / 2 + 26;                // front ring's inner edge + breathing room
-    const k = Math.max(1, need / (rings[0].radius * edge));
-    return { edge, k, px, R: rings.map((r) => r.radius * edge * k), base: this._orbBase(vw) };
+    const last = rings.length - 1;
+    const reach = this._heroReach();
+    const inner = px.slice(0, last).reduce((a, b) => a + b, 0);     // inner rings each eat a full diameter
+    const g = Math.max(px[0] * this.ORB_MIN_GAP_MUL, (vw / 2 - px[last] - reach - inner) / rings.length);
+    const R = []; let cursor = reach;                               // cursor tracks the last consumed edge
+    rings.forEach((r, i) => {
+      const gap = i === 0 ? g : Math.min(g * this.ORB_RING_GAP_MUL, px[0] * this.ORB_RING_GAP_MAX);
+      R[i] = cursor + gap + px[i] / 2; cursor = R[i] + px[i] / 2;
+    });
+    // Capping the ring→ring gap can leave the outer ring short of the edges on a very wide screen,
+    // which is the side whitespace this formation exists to avoid. Slide the whole set out until it
+    // spans the width: a constant added to every radius moves the copy→ring gap only — the ring→ring
+    // gaps, and so the cap above, survive it exactly.
+    const short = vw / 2 - (R[last] + px[last] / 2);
+    if (short > 0) for (let i = 0; i <= last; i++) R[i] += short;
+    return { edge, g, px, R, base: this._orbBase(vw) };
   },
   _paintOrbitTiles() {
     const urls = this.orbitTileURLs();
@@ -172,21 +179,23 @@ export const orbitMethods = {
       // fx budget by ring: the back ring is small, softened and dim — the costliest grazing-angle
       // layers (env, sheen) would buy compositing nobody can see. Uniform WITHIN a ring, always.
       // Phones drop a rung further: at 55px and no shader, the blend-mode stack is pure battery.
-      const fx = Math.min(rings[(fld[i] || fld[0]).ri].fx, this.state.narrow ? 1 : 2);
+      const fx = rings[(fld[i] || fld[0]).ri].fx;
       const deep = pal.swatches.map((s) => s.hex).sort((a, b) => lum(a) - lum(b))[0] || '#000';
-      // non-linear limb / ambient occlusion — gentle to ~80% radius, then deepening; never pure black
+      // THE TERMINATOR. The gradient's origin is the orb's lit pole — 38% of the radius toward the
+      // lamp — so the darkening always falls on the side facing away from it. This is the layer that
+      // makes two orbs on opposite sides of the room read as lit by the same lamp.
+      const LP = 'calc(50% + 38% * var(--ldx, 0)) calc(50% + 38% * var(--ldy, 0))';
       const limb = document.createElement('div');
       limb.setAttribute('data-orb-fx', 'limb'); limb.setAttribute('aria-hidden', 'true');
       limb.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:50%;'
-        + 'background:radial-gradient(circle at ' + Lpc + ', transparent 55%, ' + this.hexA(deep, 0.10) + ' 72%, ' + this.hexA(deep, 0.30) + ' 84%, ' + this.hexA(deep, 0.58) + ' 97%)';
+        + 'background:radial-gradient(circle at ' + LP + ', transparent 30%, ' + this.hexA(deep, 0.14) + ' 55%, ' + this.hexA(deep, 0.40) + ' 78%, ' + this.hexA(deep, 0.72) + ' 100%)';
       c.appendChild(limb);
-      // diffuse bias — the DIRECTIONAL component of the lighting, separated from the baked base
+      // diffuse bias — the lit hemisphere, centred on the same pole
       const dif = document.createElement('div');
       dif.setAttribute('data-orb-fx', 'diffuse'); dif.setAttribute('aria-hidden', 'true');
-      dif.style.cssText = 'position:absolute;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:soft-light;will-change:transform;'
-        + 'width:120%;height:120%;left:-10%;top:-10%;'
-        + 'background:radial-gradient(circle, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.18) 42%, rgba(255,255,255,0) 66%);'
-        + 'transform:translate(calc(var(--hx, 0px) * 1.5), calc(var(--hy, 0px) * 1.5))';
+      dif.style.cssText = 'position:absolute;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:soft-light;'
+        + 'inset:0;'
+        + 'background:radial-gradient(circle at ' + LP + ', rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.30) 34%, rgba(255,255,255,0) 62%)';
       c.appendChild(dif);
       // fresnel rim — a directionally-masked bright arc that always sits OPPOSITE the light
       if (fx >= 1) {
@@ -207,7 +216,7 @@ export const orbitMethods = {
         env.style.cssText = 'position:absolute;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.10;will-change:transform;'
           + 'width:130%;height:130%;left:-15%;top:-15%;'
           + 'background-image:url(' + this._orbitEnvURL() + ');background-size:cover;'
-          + 'transform:translate(calc(var(--hx, 0px) * -0.6), calc(var(--hy, 0px) * -0.6))';
+          + 'transform:translate(calc(-9% * var(--ldx, 0)), calc(-9% * var(--ldy, 0)))';
         c.appendChild(env);
         // thin-film sheen — iridescence hint at grazing angles: conic band confined to the rim
         const mid = pal.swatches.map((s) => s.hex).sort((a, b) => lum(b) - lum(a));
@@ -220,21 +229,24 @@ export const orbitMethods = {
           + 'transform:rotate(var(--la, -144deg))';
         c.appendChild(sheen);
       }
+      // specular — the reflection of the lamp itself, so it sits ON the lit pole and swings the full
+      // width of the body as the orb crosses the room (it used to be pinned near the upper-left with
+      // a ±12% nudge, which is what made every orb look individually lit)
       const spec = document.createElement('div');
       spec.setAttribute('data-orb-fx', 'spec'); spec.setAttribute('aria-hidden', 'true');
       spec.style.cssText = 'position:absolute;z-index:3;pointer-events:none;border-radius:50%;will-change:transform;'
-        + 'width:34%;height:34%;left:' + Math.round(L.x * 100 - 16) + '%;top:' + Math.round(L.y * 100 - 16) + '%;'
-        + 'background:radial-gradient(circle, rgba(255,250,240,0.5) 0%, rgba(255,250,240,0.16) 38%, rgba(255,250,240,0) 68%);'
-        + 'transform:translate(var(--hx, 0px), var(--hy, 0px)) scale(var(--tsx, 1), var(--tsy, 1));opacity:var(--li, 1)';
+        + 'width:34%;height:34%;left:calc(50% + 34% * var(--ldx, 0));top:calc(50% + 34% * var(--ldy, 0));'
+        + 'background:radial-gradient(circle, rgba(255,250,240,0.62) 0%, rgba(255,250,240,0.18) 38%, rgba(255,250,240,0) 68%);'
+        + 'transform:translate(-50%, -50%) scale(var(--tsx, 1), var(--tsy, 1));opacity:var(--li, 1)';
       c.appendChild(spec);
       // specular breakup — a secondary micro-highlight offset along the light vector at ~40% intensity
       if (fx >= 1) {
         const spec2 = document.createElement('div');
         spec2.setAttribute('data-orb-fx', 'spec2'); spec2.setAttribute('aria-hidden', 'true');
         spec2.style.cssText = 'position:absolute;z-index:3;pointer-events:none;border-radius:50%;will-change:transform;'
-          + 'width:14%;height:14%;left:' + Math.round(L.x * 100 + 4) + '%;top:' + Math.round(L.y * 100 + 6) + '%;'
+          + 'width:14%;height:14%;left:calc(50% + 46% * var(--ldx, 0));top:calc(50% + 46% * var(--ldy, 0));'
           + 'background:radial-gradient(circle, rgba(255,250,240,0.22) 0%, rgba(255,250,240,0) 70%);'
-          + 'transform:translate(calc(var(--hx, 0px) * 1.3), calc(var(--hy, 0px) * 1.3));opacity:var(--li, 1)';
+          + 'transform:translate(-50%, -50%);opacity:var(--li, 1)';
         c.appendChild(spec2);
       }
       // floorless drop shadow — pre-blurred radial layer offset OPPOSITE the light (transform-only)
@@ -310,7 +322,7 @@ export const orbitMethods = {
     const fld = this._ringField(), rings = this._rings();
     [...document.querySelectorAll('[data-orbit-card]')].forEach((card, i) => {
       const pals = this._orbitPalettes; const pal = pals[i % pals.length]; if (!pal) return;
-      const fx = Math.min(rings[(fld[i] || fld[0]).ri].fx, this.state.narrow ? 1 : 2);
+      const fx = rings[(fld[i] || fld[0]).ri].fx;
       const chroma = (hx) => { const c = this.hexToRgb(hx); return Math.max(...c) - Math.min(...c); };
       const hexes = pal.swatches.slice().sort((a, b) => chroma(b.hex) - chroma(a.hex)).map((s) => s.hex);
       // atmosphere budget by ring: the front ring churns fully, the back ring carries two blobs and
@@ -418,13 +430,18 @@ export const orbitMethods = {
     const dxr = lx - px, dyr = ly - py, dist = Math.hypot(dxr, dyr) || 1;
     const dx = dxr / dist, dy = dyr / dist, m = Math.min(1, dist / (vw * 0.45));
     return {
-      la: Math.atan2(dyr, dxr) * 180 / Math.PI, hx: dx * m * tw * 0.12, hy: dy * m * tw * 0.12,
+      la: Math.atan2(dyr, dxr) * 180 / Math.PI,
+      // the UNIT vector from this orb toward the lamp, in screen axes (+x right, +y down). Every
+      // directional layer places itself as a fraction of the orb from this — which is what makes the
+      // lit pole swing right across the body as an orb crosses the room, instead of nudging.
+      dx, dy,
       sx: -dx * (6 + m * 6), sy: -dy * (6 + m * 6), li: 1 - m * 0.25, m,
     };
   },
   _applyLightVars(el, v) {
     const st = el.style;
-    st.setProperty('--la', v.la.toFixed(1) + 'deg'); st.setProperty('--hx', v.hx.toFixed(1) + 'px'); st.setProperty('--hy', v.hy.toFixed(1) + 'px');
+    st.setProperty('--la', v.la.toFixed(1) + 'deg');
+    st.setProperty('--ldx', v.dx.toFixed(3)); st.setProperty('--ldy', v.dy.toFixed(3));
     st.setProperty('--sx', v.sx.toFixed(1) + '%'); st.setProperty('--sy', v.sy.toFixed(1) + '%'); st.setProperty('--li', v.li.toFixed(3)); st.setProperty('--lm', (v.m === undefined ? 0.5 : v.m).toFixed(3)); st.setProperty('--ld', (v.d === undefined ? 1 : v.d).toFixed(3));
   },
   // Per-orb dressing the engine writes ONCE (build + resize), never per tick: within a ring every
@@ -516,45 +533,62 @@ export const orbitMethods = {
        1. PARAMETRIC POSITION — nothing is seeded and nothing accumulates. For orb i of ring r:
           angle = (i/r.count)·360 + r.phase + rot·r.dir;  x = cos(angle)·R[r];  y = sin(angle)·R[r].
           Recomputed from the index EVERY frame, so spacing can never drift out of true.
-       2. THE RINGS (_rings) — front: count 12, radius .38, size 84, phase 0, dir +1, z 30, opacity 1,
-          no blur, dep 1, floats. Back: count 12, radius .52, size 56, phase 360/(2·12) = 15°, dir −1,
-          z 20, opacity .62, blur 1.7px, brightness .95, saturate .76, dep .55, still. The angular
-          step is exactly 360/count — no jitter — and every orb in a ring is the SAME size. The
-          half-step phase is what sets the rings into each other's gaps.
+       2. THE RINGS (_rings) — front: count 12, size 84, phase 0, dir +1, z 30, opacity 1, no blur,
+          dep 1, floats. Back: count 21, size 56, phase 360/(2·21), dir −1, z 20, opacity .62, blur
+          1.7px, brightness .95, saturate .76, dep .55, still. Radii are NOT here — §4 solves them.
+          The angular step is exactly 360/count — no jitter — and every orb in a ring is the SAME
+          size. Counts are UNEQUAL on purpose, roughly proportional to circumference, so the arc gap
+          between neighbours matches across rings (~134px vs ~135px at 1440×900). Equal counts put
+          more than twice the gap on the outer ring; that was the whitespace. A consequence worth
+          keeping: with 12 against 21 the pairs no longer align all at once, so the counter-rotation
+          has no global pulse.
        3. ONE CLOCK, COUNTER-ROTATION — ONE `rot`, advanced by ONE ticker: rot += (360/ROT_SECS)·dt,
           linear, continuous, ROT_SECS = 105. Both rings read that same variable; only the SIGN
           differs (r.dir), so the small back ring turns counter-clockwise against the front. One
           magnitude, so neither ring can drift away from the other's cadence.
-          AMENDED, KNOWINGLY: the earlier contract locked both rings to the same direction so the
-          half-step offset held permanently. Counter-rotation trades that away by design. The pair
-          separation is a triangle wave: closest approach when rot ≡ 7.5 mod 15, so all twelve pairs
-          pass through radial alignment TOGETHER every 15° of rot — 15/(360/105) = 4.37s, measured —
-          and sit at the full 15° interleave 2.19s either side of it. The interleave is now a RHYTHM,
-          not a fixed gap. That cadence is the sanctioned behaviour — do not "fix" it by re-locking
-          the directions. If it ever needs to be rare again rather than rhythmic, the lever is
-          unequal counts or a near-equal (not opposite) pair of speeds, and that is a contract
+          AMENDED, KNOWINGLY: the earliest contract locked both rings to the same direction so a
+          half-step offset held permanently. Counter-rotation traded that away by design, which with
+          equal counts made all pairs align together every 4.37s. The unequal counts of §2 dissolve
+          even that: 12 against 21 never brings the pairs into step at once, so the formation has no
+          global pulse — passings are staggered and continuous. Do not "fix" this by re-locking the
+          directions or equalising the counts; both are load-bearing, and changing them is a contract
           amendment, not a tweak.
-       4. GEOMETRY (_ringGeom) — R = radius · min(vw,vh) · k, sizes = size · clamp(edge/720, .66,
-          1.35). k ≥ 1 is a SHARED uplift applied to every radius when the front ring would crowd the
-          hero (need = _heroReach() + size/2 + 26). Shared, because scaling rings by different
-          factors would change their proportions. Recomputed on resize; circular at every size.
+       4. GEOMETRY (_ringGeom) — radii are SOLVED, not configured. A base gap g is sized off the
+          width: g = (vw/2 − px_last − _heroReach() − Σ inner diameters) / ringCount. The copy→ring0
+          interval is g; every ring→ring interval is g · ORB_RING_GAP_MUL (1.75), so the rings read
+          as separate depths rather than one thick band. Both bounds on g are expressed against the
+          ORB, never in absolute px, because the same pixel count reads differently at 55px and
+          113px: floor ORB_MIN_GAP_MUL (0.55 diameters, binds on phones and portrait tablets, where
+          the width-derived g collapses), ceiling ORB_RING_GAP_MAX (2.2 diameters on the ring→ring
+          gap, binds from ~1440px up, where g would otherwise track the width and pull the rings
+          apart into two unrelated arcs). Finally, if the capped gap leaves the outer ring inside the
+          viewport, every radius slides out by the shortfall — a constant, so the ring→ring gaps and
+          the cap survive it and only the copy→ring gap grows. The outer ring is deliberately NOT
+          pinned to the viewport: it runs off both sides, and being true circles it leaves the top
+          and bottom too. That overflow is the intended read, not a fit failure. Sizes = size ·
+          clamp(min(vw,vh)/720, .66, 1.35) — tied to width they would balloon on wide, short screens.
+          Recomputed on resize.
        5. RING PARALLAX + FLOAT — depth is per ring (size, blur, opacity, brightness, saturate, z,
           dep), never per orb and never from cos(angle); written ONCE by _ringDress on build and
           resize, so the tick writes position only. Float is front-ring only and a whisper:
           --fy = dia·0.03, per-orb sine tween on --ph −1↔1 (5–9s, negative delays, never synced),
           [data-orb-float] applies translateY(calc(--fy · --ph)); tweens live in _blobTweens.
        INVARIANTS the ring model inherits and must keep: the engine owns each orb's transform and
-       nothing else touches it; all life (sphere body, --la/--hx/--hy/--sx/--sy/--li lighting,
+       nothing else touches it; all life (sphere body, --la/--ldx/--ldy/--sx/--sy/--li lighting,
        atmosphere blobs, float) rides on INNER layers; orbs never rotate, so they and their
        light/shadow stay upright as they travel; the circular clip is the object exception; no
-       per-frame canvas repaint.
+       per-frame canvas repaint. And the ONE global light is global: the tile carries the orb's
+       material only — never a highlight, terminator or rim — so that every directional cue is
+       placed from --ldx/--ldy and answers to where the orb actually is in the room.
        ACCEPTANCE: two concentric rings, uniform size and identical angular gaps within each ring,
-       the back one smaller/dimmer and counter-rotating through the front one's gaps; both turn
-       continuously and smoothly at the same magnitude, passing through alignment on the fixed 4.37s
-       cadence above and never faster; the centre stays clear and the hero unobstructed at any
-       viewport; resizing keeps the rings circular and proportional;
-       positional lighting rides on top unchanged; reduced motion / no-GSAP = the same formation
-       standing still at rot 0.
+       matching ARC gaps between them, the back one smaller/dimmer, set a clearly wider gap out,
+       counter-rotating, and running off both sides of the viewport; both turn continuously and
+       smoothly at the same magnitude with no moment where the whole formation lines up; the centre
+       stays clear and the hero unobstructed at any viewport; an orb's shading is identical on every
+       screen size — same fx layers, same shader budget; the specular sits on the side facing the
+       lamp, so orbs left of it are lit from their right and orbs right of it from their left;
+       resizing keeps the rings circular and proportionally gapped; reduced motion / no-GSAP = the
+       same formation standing still at rot 0.
        ============================================================================================ */
     const fld = this._ringField(), rings = this._rings();
     const o = {
