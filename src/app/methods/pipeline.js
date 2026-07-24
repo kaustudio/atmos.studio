@@ -43,7 +43,10 @@ export const pipelineMethods = {
 
   buildPalette(cents, url, srcUrl) {
     const swatches = cents.map((c) => { const rgb = this.oklab2rgb(c.L, c.a, c.b); return { hex: this.hex(rgb[0], rgb[1], rgb[2]), weight: c.weight, L: c.L, a: c.a, b: c.b }; });
-    const it = this.interpret(cents);
+    // The reading works from the swatches (it needs the hexes for its order-stable seed), and takes
+    // the feed itself so two DIFFERENT palettes never ship the same name. Passing whole palettes
+    // rather than bare names lets it recognise a regenerated palette as itself and keep its name.
+    const it = this.interpret(swatches, (this.state && this.state.feed) ? this.state.feed : []);
     const active = (this.state && this.state.activeProject && this.state.activeProject !== '__unfiled__') ? this.state.activeProject : null;
     const pal = { id: String(Date.now()) + Math.random().toString(36).slice(2, 5), imageUrl: url, time: Date.now(), name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, projectId: active, swatches };
     if (srcUrl && srcUrl !== url) Object.defineProperty(pal, '_srcUrl', { value: srcUrl, enumerable: false, writable: true, configurable: true }); // non-enumerable so it never gets persisted

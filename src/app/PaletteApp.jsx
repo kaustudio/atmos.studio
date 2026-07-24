@@ -57,7 +57,6 @@ export default class PaletteApp extends React.Component {
   buildASE = X.buildASE;
   paletteHexList = X.paletteHexList;
   paletteCss = X.paletteCss;
-  archetypes = I.archetypes;
   interpret = I.interpretLocal;
   parseInterp = I.parseInterp;
   canInterpretLive = I.canInterpretLive;
