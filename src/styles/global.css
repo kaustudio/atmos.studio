@@ -157,9 +157,14 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    show a calm 'best on desktop' state rather than a broken adaptive layout. The gate is not a bare
    panel — React puts data-desk-gate on the LANDING surface below 720px (see AppView), so the small
    screen gets the ring formation around the copy and the wordmark at the top, exactly as desktop
-   does. Everything else in the app frame is hidden; the fixed wordmark is not. */
+   does. Everything else in the app frame is hidden; the fixed wordmark is not.
+
+   The one exception is data-mobile-share: a shared link opened on a phone shows the palette
+   read-only instead of the gate (see MobileShareView). The gate still stands for the TOOL — that
+   path never renders this surface — but somebody else's finished palette needs no room to work in,
+   and gating it would end the sharing chain at its first hop. */
 @media (max-width:720px){
-  [data-app]>*:not([data-desk-gate]):not([data-logo]){display:none!important}
+  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]){display:none!important}
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
