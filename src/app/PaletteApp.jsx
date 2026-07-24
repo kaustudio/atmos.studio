@@ -93,10 +93,19 @@ export default class PaletteApp extends React.Component {
   // the one global light — every orb cue derives from it
   get ORB_LIGHT() { return { x: 0.30, y: 0.28 }; }
   // how many orbs may hold a WebGL context. Rings claim it whole, front first (see _initOrbGL); the
-  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16) — and
-  // at 0 on phones, where a dozen live contexts is a battery and memory bill the painted floor
-  // (visually the same thing) does not charge.
-  get ORB_GL_MAX() { return this.state.narrow ? 0 : 12; }
+  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16).
+  // Small screens get the SAME budget: the shading has to read identically there.
+  ORB_GL_MAX = 12;
+  // the ring→ring gap as a multiple of the copy→ring gap: the rings should read as separate depths,
+  // not one thick band. Pushing the outer ring off the sides of the viewport is intended.
+  ORB_RING_GAP_MUL = 1.75;
+  // the smallest gap, as a fraction of the inner orb's DIAMETER — proportional so it reads the same
+  // whether the orbs are 55px (phone) or 96px (portrait tablet), where the width-derived gap
+  // collapses onto this floor.
+  ORB_MIN_GAP_MUL = 0.55;
+  // and the largest ring→ring gap, same units: without it the gap tracks the viewport width and the
+  // two rings drift apart on big displays instead of reading as one formation.
+  ORB_RING_GAP_MAX = 2.2;
   // seconds for one full revolution of the ring set — ONE speed, shared by every ring (contract §3)
   ORB_ROT_SECS = 105;
 
