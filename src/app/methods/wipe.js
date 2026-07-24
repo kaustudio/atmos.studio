@@ -8,6 +8,14 @@ export const wipeMethods = {
     // file menu's 'Show intro again' both route here, which writes '0' and shows the landing again.
     try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { }
     this._orbitRetry = 0;
+    // the landing unmounts the detail overlay outright (overlay: null below) without going through
+    // _finishOverlayClose — force the same teardown deletePalette does. Otherwise a close reversal
+    // still in flight fires onReverseComplete onto the landing, announcing over 'Intro will show
+    // again.' and focusing a detached tile, which steals focus from the CTA showIntroAgain is
+    // retrying to reach. It is also what keeps the open latch from stranding across the journey
+    // open a card → logo → Get Started.
+    this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
+    clearTimeout(this._closeGuard);
     // the landing re-seeds per visit (_rng, _noiseURL, _envURL, _orbitURLs, _orbitPalettes are cleared
     // in killOrbit). Tear down explicitly rather than relying on getStarted having done it: killOrbit is
     // idempotent, and the reduced-motion path never assigns _orbit for initOrbit's guard to catch.
