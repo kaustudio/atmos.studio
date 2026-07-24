@@ -1,49 +1,20 @@
 // Interpretation layer.
-// The LOCAL archetype reading is the guaranteed baseline — always available, fully private.
+// The LOCAL compositional reading (./reading.js) is the guaranteed baseline — always available,
+// fully private, deterministic.
 // The LIVE reading (Claude, model claude-sonnet-4-6 per the design brief) is a pluggable seam:
 //   1. VITE_INTERPRET_ENDPOINT (a proxy holding the Anthropic key — see /api/interpret.ts) if set;
 //   2. window.claude.complete when running inside the Claude artifact runtime;
 //   3. otherwise unavailable → the caller quietly keeps the local reading.
 // Swapping the deployment story never touches the UI: it reads canInterpretLive() + liveComplete().
 
-// ================= local (mock) interpretation — the guaranteed baseline =================
-export function archetypes() {
-  return [
-    {
-      key: 'coastal', L: .66, C: .025, B: -.005, names: ['Harbour Mist', 'Low Tide', 'Overcast', 'Saltwater Grey', 'Quiet Coast'],
-      descriptors: ['Muted', 'Coastal', 'Overcast', 'Still'],
-      rationale: 'Cool, low-chroma greys held under a flat, even light — restrained and quietly atmospheric.',
-    },
-    {
-      key: 'golden', L: .68, C: .09, B: .085, names: ['Last Light', 'Golden Hour', 'Amber Field', 'Sunlit Clay', 'Late Afternoon'],
-      descriptors: ['Warm', 'Saturated', 'Golden', 'Nostalgic'],
-      rationale: 'Saturated warmth pooling toward orange — the long, low glow of the hour before dusk.',
-    },
-    {
-      key: 'clinical', L: .60, C: .012, B: -.004, names: ['Poured Concrete', 'Cold Storage', 'Grey Matter', 'Clinic', 'Off-White Room'],
-      descriptors: ['Cold', 'Clinical', 'Neutral', 'Precise'],
-      rationale: 'Near-neutral greys with a faint cool cast — clean, exact, almost architectural.',
-    },
-    {
-      key: 'pastel', L: .84, C: .035, B: .01, names: ['Powder', 'Faded Bloom', 'Chalk Pastel', 'Soft Serve', 'Sun-Bleached'],
-      descriptors: ['Soft', 'Desaturated', 'Pastel', 'Gentle'],
-      rationale: 'High-key, washed-out hues — soft and weightless, like sun-bleached paper.',
-    },
-    {
-      key: 'nocturne', L: .28, C: .055, B: .0, names: ['Ink & Ember', 'Nightfall', 'After Dark', 'Deep Field', 'Low Lamp'],
-      descriptors: ['Dark', 'Moody', 'Saturated', 'Quiet'],
-      rationale: 'Deep, low-lit tones with embers of warmth — heavy, nocturnal, smouldering.',
-    },
-  ];
-}
+import { composeReading } from './reading.js';
 
-export function interpretLocal(cents) {
-  let tw = 0, L = 0, C = 0, B = 0;
-  cents.forEach((c) => { const wt = c.weight; tw += wt; L += c.L * wt; C += Math.sqrt(c.a * c.a + c.b * c.b) * wt; B += c.b * wt; });
-  tw = tw || 1; L /= tw; C /= tw; B /= tw;
-  const arcs = archetypes(); let best = arcs[0], bd = Infinity;
-  arcs.forEach((a) => { const dL = L - a.L, dC = C - a.C, dB = B - a.B; const d = dL * dL * 1.6 + dC * dC * 70 + dB * dB * 60; if (d < bd) { bd = d; best = a; } });
-  return { name: best.names[Math.floor(Math.random() * best.names.length)], descriptors: best.descriptors, rationale: best.rationale, archetype: best.key };
+// ================= local interpretation — the guaranteed baseline =================
+// Delegates to the compositional engine. One naming system, not two: the old 5-archetype /
+// ~25-name mock is gone rather than left alongside this.
+// swatches: [{hex, weight, L, a, b}]; taken: names already in the feed, so nothing ships twice.
+export function interpretLocal(swatches, taken) {
+  return composeReading(swatches, taken);
 }
 
 // ================= live interpretation seam =================
