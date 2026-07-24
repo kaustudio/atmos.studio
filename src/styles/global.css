@@ -63,9 +63,6 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --ease-entrance:cubic-bezier(0.16,1,0.3,1);
   --ease-exit:cubic-bezier(0.4,0,1,1);
   --ease-button-hover:cubic-bezier(0.675,0.15,0.1,1);
-  /* landing-scoped (sanctioned exception, like the ambient orbit + circular orb bodies):
-     the Osmo step curve (M0,0 C0.625,0.05 0,1 1,1) — dwell → whip → settle. Orbit step tweens ONLY. */
-  --ease-orbit-step:cubic-bezier(0.625,0.05,0,1);
   --ease-button-click:cubic-bezier(0.4,0,0.2,1);
   --ease-button-focus:cubic-bezier(0.32,0.72,0,1);
 }
@@ -157,11 +154,12 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   [data-info]{opacity:1}
 }
 /* Honest small-viewport gate: the universe, stage and drawers need room, so on narrow screens we
-   show a calm 'best on desktop' state rather than a broken adaptive layout. Pure CSS media query. */
-[data-desk-gate]{display:none}
+   show a calm 'best on desktop' state rather than a broken adaptive layout. The gate is not a bare
+   panel — React puts data-desk-gate on the LANDING surface below 720px (see AppView), so the small
+   screen gets the ring formation around the copy and the wordmark at the top, exactly as desktop
+   does. Everything else in the app frame is hidden; the fixed wordmark is not. */
 @media (max-width:720px){
-  [data-desk-gate]{display:flex}
-  [data-app]>*:not([data-desk-gate]){display:none!important}
+  [data-app]>*:not([data-desk-gate]):not([data-logo]){display:none!important}
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders

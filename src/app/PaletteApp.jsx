@@ -82,6 +82,7 @@ export default class PaletteApp extends React.Component {
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
     landingDismissed: this._landingDismissed(), showLoader: this._loaderPending(), page: 0,
+    narrow: (function () { try { return !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches); } catch (e) { return false; } })(),
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
 
@@ -91,8 +92,19 @@ export default class PaletteApp extends React.Component {
 
   // the one global light — every orb cue derives from it
   get ORB_LIGHT() { return { x: 0.30, y: 0.28 }; }
+  // how many orbs may hold a WebGL context. Rings claim it whole, front first (see _initOrbGL); the
+  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16) — and
+  // at 0 on phones, where a dozen live contexts is a battery and memory bill the painted floor
+  // (visually the same thing) does not charge.
+  get ORB_GL_MAX() { return this.state.narrow ? 0 : 12; }
+  // seconds for one full revolution of the ring set — ONE speed, shared by every ring (contract §3)
+  ORB_ROT_SECS = 105;
 
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }
+  // Is the landing surface on screen? On phones it always is: the tool needs room the viewport
+  // hasn't got, so the landing IS the small-screen surface (same ring stage, gate copy instead of
+  // the CTA) rather than a separate dead-end panel. Dismissal only means anything on desktop.
+  _landingUp() { return !this.state.landingDismissed || this.state.narrow; }
   // plays on any page load that lands on the Get Started page (landing not yet dismissed) — never
   // inside the tool. No separate one-shot flag: a burned flag from an interrupted run must not be
   // able to suppress the intro; pressing Get Started ends it for good.
@@ -115,7 +127,7 @@ export default class PaletteApp extends React.Component {
     this.state.theme = theme;
     this.initMotion();
     // GSAP readiness. The vendored core+plugins load from index.html; register plugins once present.
-    const finishGsap = () => { if (window.gsap) { try { const ps = []; if (window.Observer) ps.push(window.Observer); if (window.Flip) ps.push(window.Flip); if (window.ScrollToPlugin) ps.push(window.ScrollToPlugin); if (ps.length) window.gsap.registerPlugin.apply(window.gsap, ps); } catch (e) { } } this._gsapReady = true; if (!this.state.landingDismissed && !this._orbit) this.initOrbit(); };
+    const finishGsap = () => { if (window.gsap) { try { const ps = []; if (window.Observer) ps.push(window.Observer); if (window.Flip) ps.push(window.Flip); if (window.ScrollToPlugin) ps.push(window.ScrollToPlugin); if (ps.length) window.gsap.registerPlugin.apply(window.gsap, ps); } catch (e) { } } this._gsapReady = true; if (this._landingUp() && !this._orbit) this.initOrbit(); };
     if (window.gsap) {
       let tries = 0;
       const waitLocal = () => { if ((window.Observer && window.Flip && window.ScrollToPlugin) || tries >= 40) { finishGsap(); return; } tries++; setTimeout(waitLocal, 50); };
@@ -148,10 +160,19 @@ export default class PaletteApp extends React.Component {
     window.addEventListener('wheel', this._listWheel, { passive: true });
     this._storageHandler = (e) => this._onStorage(e);
     window.addEventListener('storage', this._storageHandler);
+    // small-viewport surface as STATE, not just a CSS gate: the ring stage's context budget, fx
+    // budget and hero measurement all differ there, and those are build-time decisions. Crossing the
+    // breakpoint rebuilds the formation rather than leaving desktop-sized decisions in place.
+    try {
+      this._mq = window.matchMedia('(max-width:720px)');
+      this._onMq = (e) => { if (e.matches === this.state.narrow) return; this.setState({ narrow: e.matches }, () => { this.killOrbit(); if (this._landingUp()) requestAnimationFrame(() => this.initOrbit()); }); };
+      if (this._mq.addEventListener) this._mq.addEventListener('change', this._onMq); else this._mq.addListener(this._onMq);
+    } catch (e) { }
     if (this._needSeedPersist) { this._needSeedPersist = false; this.persist({ immediate: true }); }
     this.initClickZoom();
-    // orbit landing: first-visit brand arrival (retries internally until gsap is ready)
-    if (!this.state.landingDismissed) { requestAnimationFrame(() => this.initOrbit()); }
+    // ring landing: first-visit brand arrival, and the permanent small-screen surface (retries
+    // internally until gsap is ready)
+    if (this._landingUp()) { requestAnimationFrame(() => this.initOrbit()); }
   }
 
   componentDidUpdate() {
@@ -164,7 +185,7 @@ export default class PaletteApp extends React.Component {
       this._cxToggleKey = key;
     } else { this._cxToggleKey = null; }
     // orbit landing safety net: if gsap is already ready and the orbit isn't built, kick it
-    if (!s.landingDismissed && this._gsapReady && !this._orbit && !this._reduce) { this.initOrbit(); }
+    if (this._landingUp() && this._gsapReady && !this._orbit && !this._reduce) { this.initOrbit(); }
     // spatial grid lifecycle (independent of stage/current — runs on view toggle too)
     const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;
@@ -210,6 +231,7 @@ export default class PaletteApp extends React.Component {
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
     if (this._clockT) { clearInterval(this._clockT); this._clockT = null; }
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }
+    if (this._mq && this._onMq) { try { if (this._mq.removeEventListener) this._mq.removeEventListener('change', this._onMq); else this._mq.removeListener(this._onMq); } catch (e) { } this._mq = null; this._onMq = null; }
     this.stopCanvas(); this.killSpatial(); this.killOrbit();
     try { document.body.style.overflow = ''; } catch (e) { }
     if (this._t) clearInterval(this._t);

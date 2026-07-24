@@ -21,9 +21,11 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
 
 ## What's inside
 
-- **First-visit journey** — phase-machine page loader → orbit landing (five colour orbs, raw-WebGL
-  shader with a painted DOM floor for no-WebGL / reduced-motion / context-loss) → curved-wipe
-  handoff into the tool. The Atmos logo returns you to the landing at any time.
+- **First-visit journey** — phase-machine page loader → ring landing (two concentric rings of colour
+  orbs, the back one half a step round so it sits in the front one's gaps, turning at one locked
+  shared speed around the centred hero; raw-WebGL shader on the front ring with a painted DOM floor
+  for no-WebGL / reduced-motion / context-loss) → curved-wipe handoff into the tool. The Atmos logo
+  returns you to the landing at any time.
 - **Core loop** — upload/drop → local OKLab k-means extraction (all colour work stays in the
   browser) → branded processing beat → result with weight-proportional bands and four copyable
   formats per swatch (HEX/RGB/HSL authoritative; CMYK labelled *approx*).

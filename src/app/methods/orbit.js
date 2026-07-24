@@ -1,7 +1,9 @@
-// Orbit landing (first-visit brand arrival): five colour orbs on a stepped Osmo orbit with one
-// fixed room light, painted DOM floor + living gradient blobs, and the raw-WebGL shader renderer
-// (Part B) layered above it. The DOM stack is the permanent floor — no-WebGL, reduced-motion and
-// context-loss all resolve to the painted orbs.
+// Ring landing (first-visit brand arrival, and the permanent small-screen surface): two concentric
+// rings of colour orbs turning around the centred copy under one fixed room light, with a painted
+// DOM floor + living gradient blobs and the raw-WebGL shader renderer (Part B) layered above it.
+// The DOM stack is the permanent floor — no-WebGL, reduced-motion, phones and context-loss all
+// resolve to the painted orbs. The motion model is frozen in the MOTION CONTRACT block in
+// initOrbit(); the engine owns each orb's position, the inner layers own its light.
 export const orbitMethods = {
   // Canvas gradient field from a seed palette's swatches → dataURL at tile size × DPR (crisp, no assets).
   _orbitTileURL(swatches, w, h) {
@@ -98,16 +100,79 @@ export const orbitMethods = {
     });
     this._envURL = cv.toDataURL(); return this._envURL;
   },
+  // ---- The rings. Everything about the formation lives here: how many orbs, how far out, how big,
+  // and where the ring starts. `phase` is what keeps the rings interleaved — the back ring is offset
+  // half a step (360/(2·count)) so its orbs sit in the front ring's gaps and never align radially.
+  // Depth is per RING, not per orb: size, blur, opacity and z are the parallax.
+  _rings() {
+    return [
+      // front — the formation's read: biggest, crisp, full key light, the only ring that floats
+      { count: 12, radius: 0.38, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
+      // back — half a step round, smaller, softer, dimmer; reads as depth, never as a second read.
+      // dir −1: the small orbs run COUNTER-CLOCKWISE against the front ring (contract §3).
+      { count: 12, radius: 0.52, size: 56, phase: 360 / (2 * 12), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0.76, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
+    ];
+  },
+  // one flat orb list, ring-major: ring 0 takes the first count slots, ring 1 the next, and so on.
+  // ang0 is the orb's fixed place in its ring — the tick only ever adds the one shared rotation.
+  _ringField() {
+    if (this._ringFld) return this._ringFld;
+    const out = [];
+    this._rings().forEach((r, ri) => {
+      for (let i = 0; i < r.count; i++) out.push({ ri, i, ang0: (i / r.count) * 360 + r.phase });
+    });
+    this._ringFld = out; return out;
+  },
+  _ringSlots() { return this._orbSlots || (this._orbSlots = this._ringField().map((_, i) => i)); },
+  // the orb's CSS diameter, derived not measured — clamp(56px,6vw,104px). Lets the formation size
+  // itself before layout and keeps the tick free of offsetWidth reads.
+  _orbBase(vw) { return Math.min(104, Math.max(56, (vw || window.innerWidth || 1440) * 0.06)); },
+  // How far the hero reaches from the stage centre — measured from the marks themselves (the
+  // statement block and the CTA), not from their padded container, so the ring clears the ink. The
+  // h1 is measured rather than its [data-land-line] spans: those carry the reveal tween, and a
+  // measurement taken mid-reveal would bake a shifted hero into the geometry. DOM read: build and
+  // resize only, never in the tick.
+  _heroReach() {
+    const marks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')];
+    if (!marks.length) return 265;                                  // pre-layout fallback: the 1280×720 measurement
+    const cx = (window.innerWidth || 1440) / 2, cy = (window.innerHeight || 800) / 2;
+    let dx = 0, dy = 0;
+    marks.forEach((m) => {
+      const b = m.getBoundingClientRect(); if (!b.width && !b.height) return;
+      dx = Math.max(dx, Math.abs(b.left - cx), Math.abs(b.right - cx));
+      dy = Math.max(dy, Math.abs(b.top - cy), Math.abs(b.bottom - cy));
+    });
+    return Math.hypot(dx, dy) || 265;                               // corner reach — the worst angle a ring can pass
+  },
+  // Ring geometry for the current viewport: radius as a fraction of the SMALLER edge (so the
+  // formation stays circular and proportional), sizes scaled off the same edge, and one shared
+  // uplift `k` applied to every radius if the front ring would otherwise crowd the hero. Scaling
+  // all rings by the same factor is what preserves their proportions — and the interleave.
+  _ringGeom(vw, vh) {
+    const rings = this._rings(), edge = Math.min(vw, vh) || 720;
+    const sizeK = Math.min(1.35, Math.max(0.66, edge / 720));
+    const px = rings.map((r) => r.size * sizeK);
+    const need = this._heroReach() + px[0] / 2 + 26;                // front ring's inner edge + breathing room
+    const k = Math.max(1, need / (rings[0].radius * edge));
+    return { edge, k, px, R: rings.map((r) => r.radius * edge * k), base: this._orbBase(vw) };
+  },
   _paintOrbitTiles() {
     const urls = this.orbitTileURLs();
     const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
     const L = this.ORB_LIGHT, Lpc = Math.round(L.x * 100) + '% ' + Math.round(L.y * 100) + '%';
+    const fld = this._ringField(), rings = this._rings();
     [...document.querySelectorAll('[data-orbit-card]')].forEach((c, i) => {
-      if (urls[i]) c.style.backgroundImage = 'url(' + urls[i] + ')';
+      // the five reference tiles/palettes dress the whole formation — colour is what varies orb to
+      // orb, so the bake stays five canvases however many orbs the rings hold
+      if (urls.length) c.style.backgroundImage = 'url(' + urls[i % urls.length] + ')';
       c.querySelectorAll('[data-orb-fx]').forEach((el) => { try { el.remove(); } catch (e) { } });
       const item = c.parentElement;
       if (item) item.querySelectorAll('[data-orb-shadow]').forEach((el) => { try { el.remove(); } catch (e) { } });
-      const pal = this._orbitPalettes && this._orbitPalettes[i]; if (!pal) return;
+      const pals = this._orbitPalettes; const pal = pals && pals[i % pals.length]; if (!pal) return;
+      // fx budget by ring: the back ring is small, softened and dim — the costliest grazing-angle
+      // layers (env, sheen) would buy compositing nobody can see. Uniform WITHIN a ring, always.
+      // Phones drop a rung further: at 55px and no shader, the blend-mode stack is pure battery.
+      const fx = Math.min(rings[(fld[i] || fld[0]).ri].fx, this.state.narrow ? 1 : 2);
       const deep = pal.swatches.map((s) => s.hex).sort((a, b) => lum(a) - lum(b))[0] || '#000';
       // non-linear limb / ambient occlusion — gentle to ~80% radius, then deepening; never pure black
       const limb = document.createElement('div');
@@ -124,33 +189,37 @@ export const orbitMethods = {
         + 'transform:translate(calc(var(--hx, 0px) * 1.5), calc(var(--hy, 0px) * 1.5))';
       c.appendChild(dif);
       // fresnel rim — a directionally-masked bright arc that always sits OPPOSITE the light
-      const rim = document.createElement('div');
-      rim.setAttribute('data-orb-fx', 'rim'); rim.setAttribute('aria-hidden', 'true');
-      rim.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.18;will-change:transform;'
-        + 'background:linear-gradient(90deg, transparent 55%, rgba(255,255,255,0.55) 100%);'
-        + '-webkit-mask:radial-gradient(circle, transparent 74%, #000 86%, #000 95%, transparent 99%);'
-        + 'mask:radial-gradient(circle, transparent 74%, #000 86%, #000 95%, transparent 99%);'
-        + 'transform:rotate(calc(var(--la, -144deg) + 180deg))';
-      c.appendChild(rim);
-      // env reflection — the room mirrored faintly in the glass: world-locked and parallax-shifted
-      // AGAINST the highlight vector so the reflection slides over the surface as the orb travels.
-      const env = document.createElement('div');
-      env.setAttribute('data-orb-fx', 'env'); env.setAttribute('aria-hidden', 'true');
-      env.style.cssText = 'position:absolute;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.10;will-change:transform;'
-        + 'width:130%;height:130%;left:-15%;top:-15%;'
-        + 'background-image:url(' + this._orbitEnvURL() + ');background-size:cover;'
-        + 'transform:translate(calc(var(--hx, 0px) * -0.6), calc(var(--hy, 0px) * -0.6))';
-      c.appendChild(env);
-      // thin-film sheen — iridescence hint at grazing angles: conic band confined to the rim
-      const mid = pal.swatches.map((s) => s.hex).sort((a, b) => lum(b) - lum(a));
-      const sheen = document.createElement('div');
-      sheen.setAttribute('data-orb-fx', 'sheen'); sheen.setAttribute('aria-hidden', 'true');
-      sheen.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.09;will-change:transform;'
-        + 'background:conic-gradient(from 90deg, transparent 0 30%, color-mix(in srgb, ' + (mid[1] || '#888') + ' 60%, #7fb0d8) 42%, color-mix(in srgb, ' + (mid[mid.length - 2] || '#666') + ' 55%, #d8a67f) 56%, transparent 70%);'
-        + '-webkit-mask:radial-gradient(circle, transparent 72%, #000 86%, #000 94%, transparent 99%);'
-        + 'mask:radial-gradient(circle, transparent 72%, #000 86%, #000 94%, transparent 99%);'
-        + 'transform:rotate(var(--la, -144deg))';
-      c.appendChild(sheen);
+      if (fx >= 1) {
+        const rim = document.createElement('div');
+        rim.setAttribute('data-orb-fx', 'rim'); rim.setAttribute('aria-hidden', 'true');
+        rim.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.18;will-change:transform;'
+          + 'background:linear-gradient(90deg, transparent 55%, rgba(255,255,255,0.55) 100%);'
+          + '-webkit-mask:radial-gradient(circle, transparent 74%, #000 86%, #000 95%, transparent 99%);'
+          + 'mask:radial-gradient(circle, transparent 74%, #000 86%, #000 95%, transparent 99%);'
+          + 'transform:rotate(calc(var(--la, -144deg) + 180deg))';
+        c.appendChild(rim);
+      }
+      if (fx >= 2) {
+        // env reflection — the room mirrored faintly in the glass: world-locked and parallax-shifted
+        // AGAINST the highlight vector so the reflection slides over the surface as the orb travels.
+        const env = document.createElement('div');
+        env.setAttribute('data-orb-fx', 'env'); env.setAttribute('aria-hidden', 'true');
+        env.style.cssText = 'position:absolute;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.10;will-change:transform;'
+          + 'width:130%;height:130%;left:-15%;top:-15%;'
+          + 'background-image:url(' + this._orbitEnvURL() + ');background-size:cover;'
+          + 'transform:translate(calc(var(--hx, 0px) * -0.6), calc(var(--hy, 0px) * -0.6))';
+        c.appendChild(env);
+        // thin-film sheen — iridescence hint at grazing angles: conic band confined to the rim
+        const mid = pal.swatches.map((s) => s.hex).sort((a, b) => lum(b) - lum(a));
+        const sheen = document.createElement('div');
+        sheen.setAttribute('data-orb-fx', 'sheen'); sheen.setAttribute('aria-hidden', 'true');
+        sheen.style.cssText = 'position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:50%;mix-blend-mode:screen;opacity:0.09;will-change:transform;'
+          + 'background:conic-gradient(from 90deg, transparent 0 30%, color-mix(in srgb, ' + (mid[1] || '#888') + ' 60%, #7fb0d8) 42%, color-mix(in srgb, ' + (mid[mid.length - 2] || '#666') + ' 55%, #d8a67f) 56%, transparent 70%);'
+          + '-webkit-mask:radial-gradient(circle, transparent 72%, #000 86%, #000 94%, transparent 99%);'
+          + 'mask:radial-gradient(circle, transparent 72%, #000 86%, #000 94%, transparent 99%);'
+          + 'transform:rotate(var(--la, -144deg))';
+        c.appendChild(sheen);
+      }
       const spec = document.createElement('div');
       spec.setAttribute('data-orb-fx', 'spec'); spec.setAttribute('aria-hidden', 'true');
       spec.style.cssText = 'position:absolute;z-index:3;pointer-events:none;border-radius:50%;will-change:transform;'
@@ -159,15 +228,17 @@ export const orbitMethods = {
         + 'transform:translate(var(--hx, 0px), var(--hy, 0px)) scale(var(--tsx, 1), var(--tsy, 1));opacity:var(--li, 1)';
       c.appendChild(spec);
       // specular breakup — a secondary micro-highlight offset along the light vector at ~40% intensity
-      const spec2 = document.createElement('div');
-      spec2.setAttribute('data-orb-fx', 'spec2'); spec2.setAttribute('aria-hidden', 'true');
-      spec2.style.cssText = 'position:absolute;z-index:3;pointer-events:none;border-radius:50%;will-change:transform;'
-        + 'width:14%;height:14%;left:' + Math.round(L.x * 100 + 4) + '%;top:' + Math.round(L.y * 100 + 6) + '%;'
-        + 'background:radial-gradient(circle, rgba(255,250,240,0.22) 0%, rgba(255,250,240,0) 70%);'
-        + 'transform:translate(calc(var(--hx, 0px) * 1.3), calc(var(--hy, 0px) * 1.3));opacity:var(--li, 1)';
-      c.appendChild(spec2);
+      if (fx >= 1) {
+        const spec2 = document.createElement('div');
+        spec2.setAttribute('data-orb-fx', 'spec2'); spec2.setAttribute('aria-hidden', 'true');
+        spec2.style.cssText = 'position:absolute;z-index:3;pointer-events:none;border-radius:50%;will-change:transform;'
+          + 'width:14%;height:14%;left:' + Math.round(L.x * 100 + 4) + '%;top:' + Math.round(L.y * 100 + 6) + '%;'
+          + 'background:radial-gradient(circle, rgba(255,250,240,0.22) 0%, rgba(255,250,240,0) 70%);'
+          + 'transform:translate(calc(var(--hx, 0px) * 1.3), calc(var(--hy, 0px) * 1.3));opacity:var(--li, 1)';
+        c.appendChild(spec2);
+      }
       // floorless drop shadow — pre-blurred radial layer offset OPPOSITE the light (transform-only)
-      if (item) {
+      if (item && fx >= 1) {
         const sh = document.createElement('div');
         sh.setAttribute('data-orb-shadow', '1'); sh.setAttribute('aria-hidden', 'true');
         sh.style.cssText = 'position:absolute;z-index:0;pointer-events:none;will-change:transform;'
@@ -236,11 +307,15 @@ export const orbitMethods = {
       });
       this._blobTweens.push(tw);
     };
+    const fld = this._ringField(), rings = this._rings();
     [...document.querySelectorAll('[data-orbit-card]')].forEach((card, i) => {
-      const pal = this._orbitPalettes[i]; if (!pal) return;
+      const pals = this._orbitPalettes; const pal = pals[i % pals.length]; if (!pal) return;
+      const fx = Math.min(rings[(fld[i] || fld[0]).ri].fx, this.state.narrow ? 1 : 2);
       const chroma = (hx) => { const c = this.hexToRgb(hx); return Math.max(...c) - Math.min(...c); };
       const hexes = pal.swatches.slice().sort((a, b) => chroma(b.hex) - chroma(a.hex)).map((s) => s.hex);
-      const nBlobs = 2 + Math.floor(rng() * 2);
+      // atmosphere budget by ring: the front ring churns fully, the back ring carries two blobs and
+      // one noise layer — at 56px behind 1.7px of blur the rest is compositing nobody can see
+      const nBlobs = fx >= 2 ? 2 + Math.floor(rng() * 2) : 2;
       for (let b = 0; b < nBlobs; b++) {
         const hex = hexes[b % Math.min(3, hexes.length)] || hexes[0];
         const el = document.createElement('div');
@@ -256,7 +331,7 @@ export const orbitMethods = {
         if (b === 0) this._blobTweens.push(g.to(el, { opacity: 0.55, duration: 4.5 + rng() * 2.5, delay: -rng() * 5, repeat: -1, yoyo: true, ease: 'sine.inOut' }));
       }
       // two counter-drifting pre-blurred noise layers — the surface itself slowly churns (FBM layering)
-      [[220, 0.05, 26, 1], [340, 0.04, 34, -1]].forEach(([bs, op, dur, dir], k) => {
+      [[220, 0.05, 26, 1], [340, 0.04, 34, -1]].slice(0, fx).forEach(([bs, op, dur, dir], k) => {
         const nl = document.createElement('div');
         nl.setAttribute('data-orbit-blob', '1'); nl.setAttribute('aria-hidden', 'true');
         nl.style.cssText = 'position:absolute;pointer-events:none;will-change:transform;z-index:1;'
@@ -276,8 +351,20 @@ export const orbitMethods = {
     const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
     const rng = this._orbitRng();
     const recs = [];
+    // WebGL context budget: browsers hard-cap live contexts (~16/page) and silently kill the oldest
+    // past it. Rings are taken WHOLE, front first, and only if the whole ring fits the budget — a
+    // ring half on the shader and half on the painted floor would break the one thing the formation
+    // is for. Rings that don't fit keep the DOM stack, which is the same look by design.
+    const fld = this._ringField(), rings = this._rings();
+    const glSet = new Set(); let budget = this.ORB_GL_MAX;
+    rings.forEach((r, ri) => {
+      if (r.count > budget) return;
+      budget -= r.count;
+      fld.forEach((s, i) => { if (s.ri === ri) glSet.add(i); });
+    });
     [...document.querySelectorAll('[data-orbit-card]')].forEach((card, i) => {
-      const pal = this._orbitPalettes && this._orbitPalettes[i]; if (!pal) return;
+      if (!glSet.has(i)) return;
+      const pals = this._orbitPalettes; const pal = pals && pals[i % pals.length]; if (!pal) return;
       const sorted = pal.swatches.map((s) => s.hex).sort((a, b) => lum(b) - lum(a));   // bright → dark
       const hexes = [sorted[2], sorted[1], sorted[3], sorted[0], sorted[4]];      // mid, light, mid-dark, lift, deepest
       const cv = document.createElement('canvas');
@@ -340,21 +427,45 @@ export const orbitMethods = {
     st.setProperty('--la', v.la.toFixed(1) + 'deg'); st.setProperty('--hx', v.hx.toFixed(1) + 'px'); st.setProperty('--hy', v.hy.toFixed(1) + 'px');
     st.setProperty('--sx', v.sx.toFixed(1) + '%'); st.setProperty('--sy', v.sy.toFixed(1) + '%'); st.setProperty('--li', v.li.toFixed(3)); st.setProperty('--lm', (v.m === undefined ? 0.5 : v.m).toFixed(3)); st.setProperty('--ld', (v.d === undefined ? 1 : v.d).toFixed(3));
   },
-  // Reduced-motion / no-gsap floor: a calm, static fanned arrangement (no orbit, no rotation).
-  _staticOrbit() {
-    const tiles = [...document.querySelectorAll('[data-orbit-item]')]; const N = tiles.length; if (!N) return;
-    const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
-    tiles.forEach((t, i) => {
-      const o = i - (N - 1) / 2; const tw = t.offsetWidth || 240;
-      t.style.transform = 'translate(' + (o * tw * 0.46) + 'px,0) scale(' + (1 - Math.abs(o) * 0.15) + ')';
-      t.style.opacity = '1'; t.style.filter = 'brightness(' + (1 - Math.abs(o) * 0.20) + ')'; t.style.zIndex = String(100 - Math.abs(Math.round(o)));
-      this._applyLightVars(t, this._lightTargets(o * tw * 0.46, 0, tw, vw, vh));
-    });
+  // Per-orb dressing the engine writes ONCE (build + resize), never per tick: within a ring every
+  // one of these is identical — that uniformity IS the formation. Depth is the difference BETWEEN
+  // rings. Keeping it off the tick is what leaves the tick writing nothing but position.
+  _ringDress(tile, r, geom, ri) {
+    const st = tile.style, dia = geom.px[ri];
+    st.opacity = String(r.op);
+    // blur is authored in FINAL px; the engine's scale would otherwise magnify it with the orb
+    st.filter = (r.blur || r.bright !== 1 || r.sat !== 1 || r.con !== 1)
+      ? 'blur(' + (r.blur / (dia / geom.base)).toFixed(2) + 'px) brightness(' + r.bright + ') saturate(' + r.sat + ') contrast(' + r.con + ')'
+      : 'none';
+    st.zIndex = String(r.z);
+    // a whisper of bob on the front ring only — any more and the even spacing starts to read as wobble
+    st.setProperty('--fy', (r.float ? dia * 0.03 : 0).toFixed(1) + 'px');
+    // gloss anisotropy rests at 1 — it encoded the old stepped whip's horizontal smear, and the same
+    // speed formula evaluates to ~1 at ring speed. The vars, and the layers reading them, stay.
+    st.setProperty('--tsx', '1'); st.setProperty('--tsy', '1');
   },
-  _orbitActiveIndex(o) {
-    const N = o.N, st = o.states;
-    const wd = (k) => { const m = (((k - st[k].progress) % N) + N) % N; return Math.min(m, N - m); };
-    return st.reduce((closest, _, i) => wd(i) < wd(closest) ? i : closest, 0);
+  // The light relationship for an orb at its current screen position: same one global lamp, same
+  // formula — only the position feeding it changed. Depth thins the key light per RING instead of
+  // by cos(angle): the back ring sits deeper in the room and falls back toward ambient.
+  _ringLight(tile, r, dia, x, y, vw, vh) {
+    const t = this._lightTargets(x, y, dia, vw, vh);
+    t.li *= (0.34 + 0.66 * r.dep); t.d = r.dep;
+    this._applyLightVars(tile, t);
+  },
+  // Reduced-motion / no-gsap floor: the same formation at rotation 0 — correctly spaced, correctly
+  // interleaved, correctly lit, standing still.
+  _staticOrbit() {
+    const tiles = [...document.querySelectorAll('[data-orbit-item]')]; if (!tiles.length) return;
+    const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
+    const fld = this._ringField(), rings = this._rings(), geom = this._ringGeom(vw, vh);
+    tiles.forEach((t, i) => {
+      const s = fld[i]; if (!s) return; const r = rings[s.ri];
+      const a = s.ang0 * Math.PI / 180, R = geom.R[s.ri];
+      const x = Math.cos(a) * R, y = Math.sin(a) * R;
+      t.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) scale(' + (geom.px[s.ri] / geom.base).toFixed(4) + ')';
+      this._ringDress(t, r, geom, s.ri);
+      this._ringLight(t, r, geom.px[s.ri], x, y, vw, vh);
+    });
   },
   // masked line reveal on the landing statement — lines are pre-authored spans inside overflow:hidden
   // masks, so this is a pure from-tween: no split, no restore, static text is the no-GSAP floor
@@ -368,7 +479,7 @@ export const orbitMethods = {
     g.fromTo(lines, { yPercent: 110 }, { yPercent: 0, duration: this.DUR ? this.DUR.reveal : 0.62, stagger: 0.09, ease: this.EASE ? this.EASE.entrance : 'power3.out', clearProps: 'transform' });
   },
   initOrbit() {
-    if (this.state.landingDismissed) return;
+    if (!this._landingUp()) return;
     if (this._orbit) {   // already built — repainting here would orphan the render cache + drift tweens
       const g0 = window.gsap;
       if (g0 && !this.state.showLoader && !this._wipeRunning) this._landingTextReveal(g0);
@@ -381,105 +492,135 @@ export const orbitMethods = {
     // reveal only when the landing is actually visible — under the loader or wipe cover the
     // covering timeline fires the reveal itself at its uncover moment
     if (!this.state.showLoader && !this._wipeRunning) this._landingTextReveal(g);
-    const list = container.querySelector('[data-orbit-list]');
     const tiles = [...container.querySelectorAll('[data-orbit-item]')];
     const N = tiles.length; if (N < 2) return;
-    this._paintOrbitTiles();
     this._spawnOrbitBlobs();   // living gradients — same lifecycle as the orbit, inner layers only
     this._initOrbGL();         // Part B: shader renderer over the DOM floor (self-gating; floor stays live)
-    // free vertical float: one phase tween per orb (--ph −1↔1), per-orb random duration + negative
-    // delay so no two sync. Joins _blobTweens → pause/play/kill with the orbit.
-    tiles.forEach((t) => {
+    // free vertical float: one phase tween per FRONT-RING orb (--ph −1↔1), per-orb random duration
+    // + negative delay so no two sync. The back ring is left still — its job is to hold the
+    // interleave. Joins _blobTweens → pause/play/kill with the formation.
+    const fld0 = this._ringField(), rings0 = this._rings();
+    tiles.forEach((t, i) => {
+      const s = fld0[i]; if (!s || !rings0[s.ri].float) return;
       const fl = t.querySelector('[data-orb-float]'); if (!fl) return;
       this._blobTweens = this._blobTweens || [];
       this._blobTweens.push(g.fromTo(fl, { '--ph': -1 }, { '--ph': 1, duration: 5 + Math.random() * 4, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: -Math.random() * 9 }));
     });
     /* ============================== MOTION CONTRACT — DO NOT MODIFY ==============================
-       Any pass touching this module must leave these four layers byte-identical unless the brief
-       explicitly amends the motion contract. Lighting/shading passes compose WITH this state —
-       they never substitute their own time-based angles for the stepped progress.
-       1. FLAT ELLIPSE  — angle=((i−states[i].progress)/N)·2π; x=sin·rx, y=0 (radiusY:0);
-          depth=((cos+1)/2)^1.3 → scale 0.2→1, blur 0.04·tw→0, brightness 0.3→1,
-          saturate 0.72→1, contrast 0.93→1, zIndex.
-       2. STEPPED ADVANCE — every orb's progress +1 per step; moveDur 2.5, stagger moveDur·0.03,
-          pauseDuration 0, looping delayed-call chain; ease --ease-orbit-step
-          cubic-bezier(0.625,0.05,0,1) — dwell→whip→settle, NEVER ease-entrance/uniform.
-       3. DUAL ROTATION — list rotate:+360 & each tile rotate:−360, duration 24, ease:'none',
-          repeat:-1, together: the ring sweeps the ellipse while orbs stay upright.
-       4. FREE FLOAT — engine writes --fy=(1−depth^1.3)·(tw·0.08) (0 at front); per-orb sine tween
-          oscillates --ph −1↔1 (5–9s, negative delays, never synced); the [data-orb-float] wrapper
-          applies translateY(calc(--fy · --ph)); float tweens live in the _blobTweens lifecycle.
-       ACCEPTANCE: the advance visibly dwells and whips; out-of-focus orbs sweep vertically with
-       the ring AND float on their own phases; the front orb holds steady; positional lighting
-       rides on top unchanged; reduced motion = static fan.
+       AMENDED (concentric rings): this replaces the scatter-field contract — seeded positions,
+       per-orb headings, tangential centre-avoidance, edge wrap — which is retired in full, as the
+       choreographed cylinder before it was. The sanctioned motion is now a PARAMETRIC RING SET, and
+       the same rule applies: any pass touching this module must leave these five layers
+       byte-identical unless a brief explicitly amends the contract again. Lighting/shading passes
+       compose WITH this state — they never substitute their own angles for the ring formula.
+       1. PARAMETRIC POSITION — nothing is seeded and nothing accumulates. For orb i of ring r:
+          angle = (i/r.count)·360 + r.phase + rot·r.dir;  x = cos(angle)·R[r];  y = sin(angle)·R[r].
+          Recomputed from the index EVERY frame, so spacing can never drift out of true.
+       2. THE RINGS (_rings) — front: count 12, radius .38, size 84, phase 0, dir +1, z 30, opacity 1,
+          no blur, dep 1, floats. Back: count 12, radius .52, size 56, phase 360/(2·12) = 15°, dir −1,
+          z 20, opacity .62, blur 1.7px, brightness .95, saturate .76, dep .55, still. The angular
+          step is exactly 360/count — no jitter — and every orb in a ring is the SAME size. The
+          half-step phase is what sets the rings into each other's gaps.
+       3. ONE CLOCK, COUNTER-ROTATION — ONE `rot`, advanced by ONE ticker: rot += (360/ROT_SECS)·dt,
+          linear, continuous, ROT_SECS = 105. Both rings read that same variable; only the SIGN
+          differs (r.dir), so the small back ring turns counter-clockwise against the front. One
+          magnitude, so neither ring can drift away from the other's cadence.
+          AMENDED, KNOWINGLY: the earlier contract locked both rings to the same direction so the
+          half-step offset held permanently. Counter-rotation trades that away by design. The pair
+          separation is a triangle wave: closest approach when rot ≡ 7.5 mod 15, so all twelve pairs
+          pass through radial alignment TOGETHER every 15° of rot — 15/(360/105) = 4.37s, measured —
+          and sit at the full 15° interleave 2.19s either side of it. The interleave is now a RHYTHM,
+          not a fixed gap. That cadence is the sanctioned behaviour — do not "fix" it by re-locking
+          the directions. If it ever needs to be rare again rather than rhythmic, the lever is
+          unequal counts or a near-equal (not opposite) pair of speeds, and that is a contract
+          amendment, not a tweak.
+       4. GEOMETRY (_ringGeom) — R = radius · min(vw,vh) · k, sizes = size · clamp(edge/720, .66,
+          1.35). k ≥ 1 is a SHARED uplift applied to every radius when the front ring would crowd the
+          hero (need = _heroReach() + size/2 + 26). Shared, because scaling rings by different
+          factors would change their proportions. Recomputed on resize; circular at every size.
+       5. RING PARALLAX + FLOAT — depth is per ring (size, blur, opacity, brightness, saturate, z,
+          dep), never per orb and never from cos(angle); written ONCE by _ringDress on build and
+          resize, so the tick writes position only. Float is front-ring only and a whisper:
+          --fy = dia·0.03, per-orb sine tween on --ph −1↔1 (5–9s, negative delays, never synced),
+          [data-orb-float] applies translateY(calc(--fy · --ph)); tweens live in _blobTweens.
+       INVARIANTS the ring model inherits and must keep: the engine owns each orb's transform and
+       nothing else touches it; all life (sphere body, --la/--hx/--hy/--sx/--sy/--li lighting,
+       atmosphere blobs, float) rides on INNER layers; orbs never rotate, so they and their
+       light/shadow stay upright as they travel; the circular clip is the object exception; no
+       per-frame canvas repaint.
+       ACCEPTANCE: two concentric rings, uniform size and identical angular gaps within each ring,
+       the back one smaller/dimmer and counter-rotating through the front one's gaps; both turn
+       continuously and smoothly at the same magnitude, passing through alignment on the fixed 4.37s
+       cadence above and never faster; the centre stays clear and the hero unobstructed at any
+       viewport; resizing keeps the rings circular and proportional;
+       positional lighting rides on top unchanged; reduced motion / no-GSAP = the same formation
+       standing still at rot 0.
        ============================================================================================ */
-    const cfg = { radiusX: 1, radiusY: 0, blurMul: 0.04, minScale: 0.2, minDark: 0.3, moveDur: 2.5, rotDur: 24 };
-    cfg.stagger = cfg.moveDur * 0.03;
-    const states = tiles.map(() => ({ progress: 0 }));
-    this._lightSm = tiles.map(() => null);   // smoothed light state, reset per build
-    const render = () => {
-      const tw = tiles[0].offsetWidth || 260; const rx = tw * cfg.radiusX, ry = tw * cfg.radiusY, maxBlur = tw * cfg.blurMul;
-      // positional lighting: analytic screen position (ellipse x rotated by the ring angle θ) vs the
-      // fixed room light. No rect/computed-style reads in the tick.
-      const th = (Number(g.getProperty(list, 'rotation')) || 0) * Math.PI / 180;
-      const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
-      tiles.forEach((tile, i) => {
-        const angle = ((i - states[i].progress) / N) * Math.PI * 2;
-        const depth = (Math.cos(angle) + 1) / 2; const ad = Math.pow(depth, 1.3);
-        const xl = Math.sin(angle) * rx;
-        g.set(tile, {
-          x: xl, y: Math.cos(angle) * ry,
-          scale: g.utils.interpolate(cfg.minScale, 1, ad), opacity: 1,
-          filter: 'blur(' + g.utils.interpolate(maxBlur, 0, ad) + 'px) brightness(' + g.utils.interpolate(cfg.minDark, 1, ad) + ') saturate(' + g.utils.interpolate(0.72, 1, ad) + ') contrast(' + g.utils.interpolate(0.93, 1, ad) + ')',
-          zIndex: Math.round(ad * 1000),
-        });
-        // depth → float amplitude: full breath at the back, 0 at the front (focused orb holds steady).
-        tile.style.setProperty('--fy', ((1 - ad) * tw * 0.08).toFixed(1) + 'px');
-        // engine computes the light relationship; layers consume the vars. Lerp ~0.15/tick so nothing
-        // jitters at step boundaries (angle lerp wraps at ±180).
-        const t = this._lightTargets(xl * Math.cos(th), xl * Math.sin(th), tw, vw, vh);
-        // depth gates the key light: the lamp lives at the FRONT of the room — orbs receding to the
-        // back drop out of it into ambient (spec dies, shading flattens).
-        t.li *= (0.12 + 0.88 * ad); t.d = ad;
-        const s = this._lightSm[i] || (this._lightSm[i] = { ...t });
-        let dla = t.la - s.la; if (dla > 180) dla -= 360; if (dla < -180) dla += 360;
-        s.la += dla * 0.15; s.hx += (t.hx - s.hx) * 0.15; s.hy += (t.hy - s.hy) * 0.15;
-        s.sx += (t.sx - s.sx) * 0.15; s.sy += (t.sy - s.sy) * 0.15; s.li += (t.li - s.li) * 0.15; s.m += (t.m - s.m) * 0.15; s.d += ((t.d === undefined ? 1 : t.d) - (s.d === undefined ? 1 : s.d)) * 0.15;
-        this._applyLightVars(tile, s);
-        // specular anisotropy: horizontal travel speed (Δx per tick, smoothed) stretches the
-        // highlight along the travel axis — clamped hard so it reads as gloss, never smear.
-        const spd = Math.abs(xl - (s.px === undefined ? xl : s.px)); s.px = xl;
-        s.v = (s.v === undefined ? 0 : s.v) + ((Math.min(1, spd / (tw * 0.06))) - (s.v || 0)) * 0.12;
-        const str = 1 + s.v * 0.16;
-        tile.style.setProperty('--tsx', str.toFixed(3)); tile.style.setProperty('--tsy', (1 / str).toFixed(3));
-      });
+    const fld = this._ringField(), rings = this._rings();
+    const o = {
+      fld, rings, active: false, frame: 0, N, rot: 0, rotSpeed: 360 / this.ORB_ROT_SECS,
+      vw: window.innerWidth || 1440, vh: window.innerHeight || 800,
     };
-    const rotations = [
-      g.to(list, { rotate: 360, duration: cfg.rotDur, ease: 'none', repeat: -1, paused: true }),
-      g.to(tiles, { rotate: -360, duration: cfg.rotDur, ease: 'none', repeat: -1, paused: true }),
-    ];
-    const o = { states, render, rotations, tl: null, delayed: null, active: false, N, cfg };
-    o.next = () => {
+    o.geom = this._ringGeom(o.vw, o.vh);
+    // ring constants + a full placement at the current rotation. Runs on build and on resize; after
+    // it, the tick writes nothing but position (+ light).
+    const dress = () => tiles.forEach((tile, i) => {
+      const s = o.fld[i]; if (!s) return;
+      const a = (s.ang0 + o.rot * o.rings[s.ri].dir) * Math.PI / 180, R = o.geom.R[s.ri];
+      const x = Math.cos(a) * R, y = Math.sin(a) * R;
+      g.set(tile, { x, y, scale: o.geom.px[s.ri] / o.geom.base, rotate: 0 });
+      this._ringDress(tile, o.rings[s.ri], o.geom, s.ri);
+      this._ringLight(tile, o.rings[s.ri], o.geom.px[s.ri], x, y, o.vw, o.vh);
+    });
+    dress();
+    // ONE ticker for the whole formation, ONE rotation value. Position is derived, not integrated:
+    // every orb's angle is recomputed from its index each frame, so no error can accumulate and the
+    // two rings cannot drift apart no matter how long the landing sits open.
+    o.tick = (time, deltaMS) => {
       if (!o.active) return;
-      const ai = this._orbitActiveIndex(o);
-      const ordered = states.map((state, index) => ({ state, offset: (index - ai + N) % N })).sort((a, b) => a.offset - b.offset);
-      o.tl = g.timeline({ paused: true, onComplete: () => { if (o.active) o.delayed = g.delayedCall(0, o.next); } });
-      // --ease-orbit-step (landing-scoped token): the Osmo curve's dwell→whip→settle IS the step's character
-      ordered.forEach(({ state }, index) => { o.tl.to(state, { progress: state.progress + 1, duration: cfg.moveDur, ease: this._orbitStepEase || (this._orbitStepEase = this.cubicBezier(0.625, 0.05, 0, 1)), onUpdate: render }, index * cfg.stagger); });
-      o.tl.play();
+      const dt = Math.min(0.05, (deltaMS || 16.7) / 1000);   // clamp: a stalled tab must not jump the formation
+      const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
+      // resize: re-derive the geometry and re-dress. Positions need no fixing — they fall out of the
+      // formula on the very next line.
+      if (vw !== o.vw || vh !== o.vh) { o.vw = vw; o.vh = vh; o.geom = this._ringGeom(vw, vh); dress(); }
+      o.rot = (o.rot + o.rotSpeed * dt) % 360;               // the one shared angle, ease:'none' by construction
+      const f = ++o.frame;
+      for (let i = 0; i < tiles.length; i++) {
+        const s = o.fld[i]; if (!s) continue;
+        // ONE rot, read through the ring's own direction — the rings counter-rotate off a single clock
+        const a = (s.ang0 + o.rot * o.rings[s.ri].dir) * Math.PI / 180, R = o.geom.R[s.ri];
+        const x = Math.cos(a) * R, y = Math.sin(a) * R;
+        g.set(tiles[i], { x, y });
+        // the light answers to the orb's new screen position. Refreshed on a 1-in-3 rotation: at ring
+        // speed the relationship moves fractions of a pixel per frame, so a third of the property
+        // writes is visually identical and keeps two dozen orbs off the main thread's back.
+        if ((f + i) % 3 === 0) this._ringLight(tiles[i], o.rings[s.ri], o.geom.px[s.ri], x, y, vw, vh);
+      }
     };
     this._orbit = o;
-    render();
     this.playOrbit();
-    if (!this._orbitVis) { this._orbitVis = () => { if (document.hidden) this.pauseOrbit(); else if (this._orbit && !this.state.landingDismissed) this.playOrbit(); }; document.addEventListener('visibilitychange', this._orbitVis); }
+    if (!this._orbitVis) { this._orbitVis = () => { if (document.hidden) this.pauseOrbit(); else if (this._orbit && this._landingUp()) this.playOrbit(); }; document.addEventListener('visibilitychange', this._orbitVis); }
   },
-  playOrbit() { this._glPaused = false; const o = this._orbit; if (!o || this._reduce) return; o.active = true; o.rotations.forEach((r) => r.play()); if (o.tl && o.tl.progress() < 1) { o.tl.play(); } else { o.next(); } if (this._blobTweens) this._blobTweens.forEach((t) => { try { t.play(); } catch (e) { } }); },
-  pauseOrbit() { this._glPaused = true; const o = this._orbit; if (!o) return; o.active = false; if (o.tl) o.tl.pause(); if (o.delayed) o.delayed.pause(); o.rotations.forEach((r) => r.pause()); if (this._blobTweens) this._blobTweens.forEach((t) => { try { t.pause(); } catch (e) { } }); },
+  playOrbit() {
+    this._glPaused = false; const o = this._orbit; if (!o || this._reduce) return;
+    o.active = true;
+    if (!o.added && window.gsap) { window.gsap.ticker.add(o.tick); o.added = true; }
+    if (this._blobTweens) this._blobTweens.forEach((t) => { try { t.play(); } catch (e) { } });
+  },
+  // hidden tab / dismissed landing: the drift stops integrating and the blobs stop, so nothing runs
+  pauseOrbit() {
+    this._glPaused = true; const o = this._orbit; if (!o) return;
+    o.active = false;
+    if (this._blobTweens) this._blobTweens.forEach((t) => { try { t.pause(); } catch (e) { } });
+  },
   killOrbit() {
     this._landRevealed = false; this._killOrbGL(); this._killOrbitBlobs();
     this._rng = null; this._noiseURL = null; this._envURL = null;   // per-visit seeds/maps — a return to the intro re-seeds fresh (and re-reads the theme)
     this._orbitURLs = null; this._orbitPalettes = null;
-    const o = this._orbit; if (o) { o.active = false; if (o.tl) { try { o.tl.kill(); } catch (e) { } } if (o.delayed) { try { o.delayed.kill(); } catch (e) { } } o.rotations.forEach((r) => { try { r.kill(); } catch (e) { } }); this._orbit = null; }
+    // the formation itself is parametric, so nothing about it needs re-seeding — only the palette
+    // assignment above is per-visit. _ringFld/_orbSlots stay cached: they are pure config.
+    const o = this._orbit;
+    if (o) { o.active = false; if (o.added && window.gsap) { try { window.gsap.ticker.remove(o.tick); } catch (e) { } } this._orbit = null; }
     if (this._orbitVis) { document.removeEventListener('visibilitychange', this._orbitVis); this._orbitVis = null; }
   },
 };

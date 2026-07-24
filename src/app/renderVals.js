@@ -366,9 +366,13 @@ export const renderValsMethods = {
       canReset: s.stage !== 'upload', busy, announce: s.announce,
       reset: () => this.doReset(),
       // orbit landing (first-visit brand arrival)
-      showLanding: !s.landingDismissed,
+      // the landing surface doubles as the small-screen surface — on phones it is always up, with
+      // the gate copy in place of the statement + CTA (the tool needs room a phone hasn't got)
+      showLanding: this._landingUp(), narrow: s.narrow,
       showLoader: s.showLoader,
-      orbitSlots: [0, 1, 2, 3, 4],
+      // ring population — one slot per orb across all rings (sum of the ring counts). Deterministic,
+      // and memoised so the array identity is stable across renders.
+      orbitSlots: this._landingUp() ? this._ringSlots() : [],
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
       // glass-CTA variant (landing-scoped component builder) — squared glass, token-mixed, theme-correct
@@ -411,8 +415,10 @@ export const renderValsMethods = {
       saveActiveFile: () => { this.setState({ fileMenuOpen: false }); this.saveProjectFile(s.activeProject); },
       saveArchiveFile: () => { this.setState({ fileMenuOpen: false }); this.saveProjectFile('archive'); },
       showIntroAgain: () => this.returnToIntro(),
-      showLogoButton: !!s.landingDismissed,
-      showLogoDecor: !s.landingDismissed,
+      // on phones the wordmark rides at the top exactly as it does on desktop, and stays decorative:
+      // there is no tool behind the small-screen surface to hand a "back to the start" button to
+      showLogoButton: !!s.landingDismissed && !s.narrow,
+      showLogoDecor: !s.landingDismissed || s.narrow,
       activeScopeLabel: (s.activeProject === '__unfiled__' ? 'Unfiled' : this.projectName(s.activeProject)),
       onOpenFile: () => { const inp = this.projectFileRef && this.projectFileRef.current; if (inp) inp.click(); },
       onProjectFileChange: (e) => { const f = e && e.target && e.target.files && e.target.files[0]; if (f) this.importProjectFile(f); if (e && e.target) e.target.value = ''; },

@@ -182,7 +182,13 @@ export const wipeMethods = {
     // instant=true (watchdog/fallback path): mount the tool plain — never start a rise tween on a
     // possibly-starved rAF; a from-tween that can't tick leaves the whole tool frozen dim at 0.4.
     const doSwap = (instant) => {
-      if (swapped) return; swapped = true; persist(() => {
+      if (swapped) return; swapped = true;
+      // the cover's landing drift (y −12vh, opacity .5) exists only to sell the hand-off. On desktop
+      // the surface unmounts here and takes the transform with it; on a small screen it STAYS mounted
+      // as the gate, so clear it at the swap or the copy is left off-centre, dim, and out of the
+      // ring the engine centred on it.
+      try { if (landing) g.set(landing, { clearProps: 'transform,opacity' }); } catch (e) { }
+      persist(() => {
         const parts = [document.querySelector('header'), document.querySelector('main')].filter(Boolean);
         if (instant || !parts.length) { clearParts(); return; }
         g.from(parts, { y: '12vh', opacity: 0.4, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });

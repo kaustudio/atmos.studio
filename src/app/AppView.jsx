@@ -107,24 +107,22 @@ export default function AppView({ vals }) {
           style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
       )}
 
-      <div data-desk-gate="1" role="region" aria-label="Desktop recommended" style={sx('position:fixed;inset:0;z-index:200;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:0;padding:32px 26px;background:var(--surface)')}>
-        <div aria-hidden="true" style={{ ...sx('width:165px;height:26px;margin-bottom:34px;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'), WebkitMask: LOGO_MASK, mask: LOGO_MASK }}></div>
-        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:26px;line-height:1.25;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:22ch;text-wrap:balance")}>Atmos Studio is a desktop experience.</h1>
-        <p style={sx("font-family: 'Neue Montreal'; font-size: 13px; line-height: 1.6; color: var(--on-surface-muted); margin: 18px 0 0; text-wrap: pretty")}>The spatial archive, editorial stage and export drawers need room to breathe. Open this link on a wider screen to drop an image and pull its palette.</p>
-      </div>
-
+      {/* One surface, two copies. On a phone the landing IS the small-screen gate — same ring stage,
+          same centred block, gate copy instead of the statement + CTA — so there is never a second
+          [data-orbit] in the DOM for the engine to find. data-desk-gate marks it for the CSS that
+          hides the tool behind it. */}
       {vals.showLanding && (
-        <div data-landing="1" role="region" aria-label="Welcome to Palette" style={sx('position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;overflow:clip;background:var(--surface)')}>
-          {/* orbit ring (decorative) — one global light (upper-left); everything baked or static */}
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} role="region" aria-label={vals.narrow ? 'Desktop recommended' : 'Welcome to Palette'} style={sx('position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+          {/* scatter field (decorative) — one global light (upper-left); everything baked or static */}
           <div data-orbit-bloom="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}></div>
           <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none')}>
             <div data-orbit-list="1" style={sx('display:grid;place-items:center')}>
               {vals.orbitSlots.map((slot) => (
-                <div key={slot} data-orbit-item="1" style={sx('position:relative;grid-area:1/1;display:flex;align-items:center;justify-content:center;width:max-content;height:max-content;will-change:transform,opacity,filter')}>
+                <div key={slot} data-orbit-item="1" style={sx('position:relative;grid-area:1/1;display:flex;align-items:center;justify-content:center;width:max-content;height:max-content;will-change:transform')}>
                   {/* Contract exception: the circular clip belongs to the depicted OBJECT (a 3D colour orb),
                       never to chrome. Float wrapper: engine writes --fy, float tween writes --ph. */}
                   <div data-orb-float="1" style={{ ...sx('position:relative;display:flex;align-items:center;justify-content:center'), transform: 'translateY(calc(var(--fy, 0px) * var(--ph, 0)))' }}>
-                    <div data-orbit-card={String(slot)} style={{ ...sx('position:relative;z-index:1;overflow:hidden;isolation:isolate;width:clamp(146px,15.4vw,235px);aspect-ratio:1;border-radius:50%;background-size:cover;background-position:center;background-color:var(--surface-raised)'), WebkitClipPath: 'circle(50% at 50% 50%)', clipPath: 'circle(50% at 50% 50%)' }}></div>
+                    <div data-orbit-card={String(slot)} style={{ ...sx('position:relative;z-index:1;overflow:hidden;isolation:isolate;width:clamp(56px,6vw,104px);aspect-ratio:1;border-radius:50%;background-size:cover;background-position:center;background-color:var(--surface-raised)'), WebkitClipPath: 'circle(50% at 50% 50%)', clipPath: 'circle(50% at 50% 50%)' }}></div>
                   </div>
                 </div>
               ))}
@@ -132,17 +130,27 @@ export default function AppView({ vals }) {
           </div>
           <div aria-hidden="true" style={sx('position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(120% 100% at 50% 46%, transparent 58%, color-mix(in srgb, var(--on-surface) 8%, transparent) 100%)')}></div>
           <div data-orbit-grain="1" aria-hidden="true" style={sx('position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:soft-light;opacity:0.045;background-repeat:repeat')}></div>
-          {/* brand content (above the ring) */}
-          <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:40px 26px')}>
-            <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>
-              <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:20ch;text-wrap:balance")}>
-                <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size: 32px; width: 507px')}>Colour read from light and atmosphere.</span></span>
-                <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size: 32px')}>In seconds.</span></span>
-              </h1>
-              <div style={sx('margin-top:36px;pointer-events:auto')}>
-                <HBtn type="button" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get started" style={vals.glassCta} styleHover={vals.glassCtaHover} styleActive={vals.glassCtaActive}>Get Started</HBtn>
+          {/* brand content (above the field) — horizontal padding only: any vertical padding would
+              bias the block off the viewport centre the rings clear for it */}
+          <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 26px')}>
+            {vals.narrow ? (
+              /* small screen: the honest gate copy, sized to fit inside the ring the engine builds
+                 around it (_heroReach measures this block, so a narrower column = a tighter ring) */
+              <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;max-width:280px')}>
+                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>Atmos Studio is a desktop experience.</h1>
+                <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>Open this link on a wider screen to drop an image and pull its palette.</p>
               </div>
-            </div>
+            ) : (
+              <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>
+                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:20ch;text-wrap:balance")}>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size: 32px; width: 507px')}>Colour read from light and atmosphere.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size: 32px')}>In seconds.</span></span>
+                </h1>
+                <div style={sx('margin-top:36px;pointer-events:auto')}>
+                  <HBtn type="button" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get started" style={vals.glassCta} styleHover={vals.glassCtaHover} styleActive={vals.glassCtaActive}>Get Started</HBtn>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
