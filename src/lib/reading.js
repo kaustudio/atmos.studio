@@ -284,8 +284,8 @@ const ATMOSPHERE = {
   },
   mid: {
     mono: ['Overcast', 'Flat Day', 'Grey Weather', 'Stillwater|cool', 'Midfield'],
-    analogous: ['Overcast', 'Low Tide|cool', 'Harbour|cool', 'Field Study', 'Quiet Coast|cool', 'Hedgerow|-|green'],
-    broad: ['Weather', 'Harbour|cool', 'Open Ground', 'Middle Distance', 'Crosswind'],
+    analogous: ['Overcast', 'Low Tide|cool', 'Harbour|cool', 'Field Study', 'Quiet Coast|cool', 'Hedgerow|-|green', 'Late Afternoon|warm', 'Kiln|warm', 'Dry Season|warm', 'Open Country'],
+    broad: ['Weather', 'Harbour|cool', 'Open Ground', 'Middle Distance', 'Crosswind', 'Open Country', 'Long Afternoon|warm'],
     opposed: ['Crosswind', 'Split Weather', 'Counterpoint', 'Open Ground', 'Crossfade'],
   },
   high: {
@@ -356,14 +356,21 @@ function stutters(name) {
 
 // Select from a pool, honouring the temperature/hue constraints, with graceful widening so the
 // pool can never come back empty.
-function eligible(pool, temp, family) {
+// `fallback` is where this widens to when the constraints empty the pool — and it must be a pool of
+// UNCONSTRAINED words. Widening back to the full list is how a rainbow palette ends up called
+// "Coral": the very words the constraints just rejected come back in through the last door.
+function eligible(pool, temp, family, fallback) {
   const all = (pool || []).map(parseEntry);
   const strict = all.filter((e) => (!e.t || e.t === temp) && (!e.h || e.h === family));
   if (strict.length) return strict.map((e) => e.w);
   const loose = all.filter((e) => !e.h && (!e.t || e.t === temp));
   if (loose.length) return loose.map((e) => e.w);
   const bare = all.filter((e) => !e.t && !e.h);
-  return (bare.length ? bare : all).map((e) => e.w);
+  if (bare.length) return bare.map((e) => e.w);
+  const fb = (fallback || []).map(parseEntry).filter((e) => !e.t && !e.h);
+  const out = (fb.length ? fb : all.filter((e) => !e.h)).map((e) => e.w);
+  out.widened = true;   // the caller uses this to prefer an atmosphere name over a bland material one
+  return out;
 }
 
 // ============================================================================================
@@ -375,7 +382,9 @@ const words = (s) => s.trim().split(/\s+/).length;
 
 function composeName(A, r, nth) {
   const temp = A.temperature.band, family = A.hue.family;
-  const subPool = eligible(SUBSTANCE[A.chroma.band][A.lightness.band], temp, family);
+  // the grey pool of the same lightness is the safe widening target: pure material words, no
+  // colour or temperature claims, so it can never reintroduce a hue the palette doesn't hold
+  const subPool = eligible(SUBSTANCE[A.chroma.band][A.lightness.band], temp, family, SUBSTANCE.grey[A.lightness.band]);
   const qualAll = QUALIFIER[temp][A.contrast.band];
   const qualFit = qualAll.filter((q) => !QUAL_LIGHT[q] || QUAL_LIGHT[q].indexOf(A.lightness.band) >= 0);
   const qualPool = qualFit.length ? qualFit : qualAll.filter((q) => !QUAL_LIGHT[q]);
@@ -405,9 +414,14 @@ function composeName(A, r, nth) {
     () => At,
     () => S,
   ];
+  // When no substance survived the honesty filters the pool widened to plain material words, which
+  // are safe but bland — "Oat" for a neon rainbow. Atmosphere carries those palettes far better,
+  // so lead with the shapes built on it.
+  const order = subPool.widened && A.chroma.band !== 'grey' ? [1, 2, 5, 6, 0, 3, 4, 7] : null;
   const start = Math.floor(r() * shapes.length);
   for (let i = 0; i < shapes.length; i++) {
-    const out = shapes[(start + i + nth) % shapes.length]();
+    const idx = order ? order[i % order.length] : (start + i + nth) % shapes.length;
+    const out = shapes[idx]();
     if (!out) continue;
     if (BLOCKED.has(Q + '|' + S) && out.indexOf(Q) === 0) continue;
     if (words(out) > 3 || out.length > 42) continue;
@@ -467,19 +481,33 @@ const HUE_NOUN = { pink: 'pinks', red: 'reds', orange: 'oranges', yellow: 'yello
 
 function frags(A) {
   const acc = A.chroma.accent;
-  // an accented palette over a grey base is described as what it is: greys, plus the accent
+  // Naming a single family is only honest when the palette actually sits in one. Spread across the
+  // wheel it is "hues", not whichever family happened to win the weighting — a rainbow is not
+  // "violets" just because the violet swatch carried the most chroma×area.
+  const spreadOut = A.hue.band === 'opposed' || A.hue.band === 'broad';
+  // "tones" rather than "hues" for the spread case: every hue-relationship clause already begins
+  // with "hues", and the pair reads as a stutter in the same sentence.
   const noun = (acc && acc.greyBase) ? 'greys'
     : A.chroma.band === 'grey' ? 'greys'
-      : (A.hue.family ? HUE_NOUN[A.hue.family] : 'tones');
+      : spreadOut ? 'tones'
+        : (A.hue.family ? HUE_NOUN[A.hue.family] : 'tones');
   return {
     noun,
     accent: acc ? ('one ' + HUE_NOUN[acc.family].replace(/s$/, '') + ' carrying the only real colour') : null,
-    temp: { warm: 'warm', cool: 'cool', neutral: 'near-neutral' }[A.temperature.band],
+    // "near-neutral" reads as "greyish", which is right for a grey palette and wrong for a green
+    // one that simply sits on the warm/cool boundary — so the phrasing follows the chroma.
+    temp: A.temperature.band !== 'neutral' ? A.temperature.band
+      : ((A.chroma.band === 'grey' || (acc && acc.greyBase)) ? 'near-neutral' : 'neither warm nor cool'),
+    // adjectival form, for the templates that put temperature in front of the noun — the long
+    // predicative phrase reads badly there ("Neither warm nor cool hues lifted high")
+    tempAdj: { warm: 'warm', cool: 'cool', neutral: 'balanced' }[A.temperature.band],
     chroma: { grey: 'achromatic', muted: 'low-chroma', restrained: 'restrained', saturated: 'saturated', vivid: 'high-chroma' }[A.chroma.band],
     light: { dark: 'held low', low: 'kept in shadow', mid: 'sitting at mid weight', high: 'lifted high', pale: 'washed almost to white' }[A.lightness.band],
     contrast: { flat: 'under a flat, even light', gentle: 'with gentle separation', structured: 'with clear structure between them', stark: 'split by stark contrast' }[A.contrast.band],
     dom: { dominant: 'one colour carrying the frame', paired: 'two colours sharing the weight', even: 'weight spread evenly across the set', graded: 'weight stepping down through the set' }[A.dominance.band],
     hue: { mono: 'hues held to a single note', analogous: 'hues sitting close together', broad: 'hues spread wide', opposed: 'hues pulled to opposite sides' }[A.hue.band],
+    // same clause without the leading noun, so a palette whose noun IS "hues" doesn't say it twice
+    hueTail: { mono: 'held to a single note', analogous: 'sitting close together', broad: 'spread wide', opposed: 'pulled to opposite sides' }[A.hue.band],
   };
 }
 
@@ -500,12 +528,12 @@ function composeRationale(A, r) {
   // Several shapes so consecutive palettes don't share a silhouette. Each names two or three of
   // the most distinctive axes for THIS palette — never all six.
   const templates = [
-    () => CAP(f.temp) + ', ' + f.chroma + ' ' + f.noun + ' ' + f.light + ' ' + f.contrast + ' — ' + close + '.',
+    () => CAP(f.tempAdj) + ', ' + f.chroma + ' ' + f.noun + ' ' + f.light + ' ' + f.contrast + ' — ' + close + '.',
     () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.contrast + ', ' + f.dom + ' — ' + close + '.',
-    () => CAP(f.hue) + ', ' + f.chroma + ' and ' + f.temp + ' — ' + close + '.',
-    () => CAP(f.temp) + ' ' + f.noun + ' ' + f.light + ', ' + f.hue + ' — ' + close + '.',
+    () => CAP(f.hue) + ': ' + f.chroma + ' ' + f.noun + ', ' + f.temp + ' — ' + close + '.',
+    () => CAP(f.tempAdj) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail + ' — ' + close + '.',
     () => CAP(f.dom) + ': ' + f.chroma + ' ' + f.noun + ' ' + f.contrast + ' — ' + close + '.',
-    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.light + ', ' + f.hue + ' — ' + close + '.',
+    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail + ' — ' + close + '.',
   ];
   // Bias toward templates that lead with a salient axis, then let the seed choose among them.
   const preferred = [];
@@ -519,7 +547,9 @@ function composeRationale(A, r) {
   // Both of these are the single most distinctive thing about the palettes they apply to, so they
   // are spliced in ahead of the closing rather than left to compete for a slot.
   if (f.accent) out = out.replace(' — ', ', ' + f.accent + ' — ');
-  else if (A.temperature.split) out = out.replace(' — ', ', warm and cool both holding ground — ');
+  // …unless the sentence has already said as much: "neither warm nor cool, warm and cool both
+  // holding ground" is the same fact twice.
+  else if (A.temperature.split && out.indexOf('neither warm nor cool') < 0) out = out.replace(' — ', ', warm and cool both holding ground — ');
   return out.slice(0, 240);
 }
 
@@ -541,14 +571,24 @@ function composeArchetype(A) {
 // ============================================================================================
 
 // swatches: [{hex, weight, L, a, b}] — the palette as extracted.
-// taken:    optional array of names already in the feed, so two palettes never ship the same name.
+// taken:    optional array of names, or of palettes ({name, swatches}), already in the feed, so two
+//           DIFFERENT palettes never ship the same name.
 // Returns the SAME shape the live reading returns: {name, descriptors, rationale, archetype}.
 export function composeReading(swatches, taken) {
   const A = analysePalette(swatches);
   if (!A) return { name: 'Untitled', descriptors: ['Neutral', 'Quiet', 'Even'], rationale: 'A palette with too little signal to read.', archetype: 'neutral' };
 
   const seed = paletteSeed(swatches);
-  const used = new Set((taken || []).map((n) => String(n || '').toLowerCase()));
+  // Determinism outranks collision avoidance: the same palette must read the same every time, so a
+  // palette already in the feed with THIS seed is not a collision with itself — it is itself.
+  // Without this, regenerating the same image walks to the next candidate and renames it.
+  const used = new Set((taken || []).map((t) => {
+    if (t && typeof t === 'object') {
+      if (Array.isArray(t.swatches) && paletteSeed(t.swatches) === seed) return null;
+      return String(t.name || '').toLowerCase();
+    }
+    return String(t || '').toLowerCase();
+  }).filter(Boolean));
 
   // Collision handling: walk further into the same pools rather than re-rolling the reading.
   let name = null;
