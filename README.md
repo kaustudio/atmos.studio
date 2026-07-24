@@ -57,25 +57,6 @@ The chats left "where live interpretation runs" open. The client is wired with a
 
 The privacy line in the first-run panel renders only when a live path is actually available.
 
-## Layout
-
-```
-index.html              vendor script tags (gsap + plugins, lenis, orb shader, demo image)
-public/vendor           vendored runtimes (exact builds the design was authored against)
-public/fonts            Neue Montreal (Regular/Medium)
-public/assets           Atmos logo/wordmark SVGs
-src/lib                 colour science, exporters, interpretation seam, sx() style parser
-src/app/PaletteApp.jsx  class core (state, lifecycle)
-src/app/methods/*       prototype method groups (pipeline, persistence, motion, overlays,
-                        universe, reel, orbit, wipe, loader, misc)
-src/app/renderVals.js   the view-model
-src/app/AppView.jsx     the JSX template
-api/interpret.ts        serverless proxy for live interpretation
-scripts/smoke.mjs       Playwright smoke-drive of the full journey
-```
-
-localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`).
-
 ## Privacy
 
 Atmos Studio runs in your browser.
@@ -128,3 +109,22 @@ copy must change in the same commit**:
    from `makeThumb` (`320 × devicePixelRatio`, DPR clamped to 3). If hosted interpretation ships,
    this sentence moves from conditional to permanent, and needs to name where it is sent and what is
    retained.
+
+## Layout
+
+```
+index.html              vendor script tags (gsap + plugins, lenis, orb shader, demo image)
+public/vendor           vendored runtimes (exact builds the design was authored against)
+public/fonts            Neue Montreal (Regular/Medium)
+public/assets           Atmos logo/wordmark SVGs
+src/lib                 colour science, exporters, interpretation seam, sx() style parser
+src/app/PaletteApp.jsx  class core (state, lifecycle)
+src/app/methods/*       prototype method groups (pipeline, persistence, motion, overlays,
+                        universe, reel, orbit, wipe, loader, misc)
+src/app/renderVals.js   the view-model
+src/app/AppView.jsx     the JSX template
+api/interpret.ts        serverless proxy for live interpretation
+scripts/smoke.mjs       Playwright smoke-drive of the full journey
+```
+
+localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`).
