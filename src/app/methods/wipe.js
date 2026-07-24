@@ -2,9 +2,16 @@
 // pumps and watchdogs so a throttled frame can never strand the covering layer or lock the app.
 export const wipeMethods = {
   _resetIntroState(afterCb) {
-    // journey flags only — palettes, projects, theme untouched
+    // journey flags only — palettes, projects, theme untouched.
+    // 'palette-generator/landing' is PERMANENT dismissal, not session-scoped: '1' survives reloads so
+    // a returning visitor lands straight in the tool. It is deliberately reversible — the logo and the
+    // file menu's 'Show intro again' both route here, which writes '0' and shows the landing again.
     try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { }
     this._orbitRetry = 0;
+    // the landing re-seeds per visit (_rng, _noiseURL, _envURL, _orbitURLs, _orbitPalettes are cleared
+    // in killOrbit). Tear down explicitly rather than relying on getStarted having done it: killOrbit is
+    // idempotent, and the reduced-motion path never assigns _orbit for initOrbit's guard to catch.
+    this.killOrbit();
     // the tool behind the landing returns to its default state — Get Started must always land on
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
     if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
