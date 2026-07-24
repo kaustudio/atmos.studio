@@ -54,7 +54,6 @@ const IconContrast = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill
 const IconExport = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m12 15.577l-3.539-3.538l.708-.72L11.5 13.65V5h1v8.65l2.33-2.33l.709.719zM5 19v-4.038h1V18h12v-3.038h1V19z"></path></svg>);
 const IconFolder = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}><path fill="currentColor" d="M3 19V5h6.596l2 2H21v12zm1-1h16V8h-8.806l-2-2H4zm0 0V6z"></path></svg>);
 const IconTrash = ({ size = 13 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}><path fill="currentColor" d="M6 20V6H5V5h4v-.77h6V5h4v1h-1v14zm1-1h10V6H7zm2.808-2h1V8h-1zm3.384 0h1V8h-1zM7 6v13z"></path></svg>);
-const IconX = () => (<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m6.4 18.308l-.708-.708l5.6-5.6l-5.6-5.6l.708-.708l5.6 5.6l5.6-5.6l.708.708l-5.6 5.6l5.6 5.6l-.708.708l-5.6-5.6z"></path></svg>);
 
 // swatch value row (result bands + overlay bands share it; overlay renders the caveat chip)
 function ValueRow({ v, showCaveat }) {
@@ -202,25 +201,6 @@ export default function AppView({ vals }) {
       <main aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px 16px 8px')}>
 
         {vals.isUpload && (<>
-          {vals.firstRun && (
-            <div data-fr-frame="1" style={sx('text-align:center;max-width:560px;margin:0 auto 30px;animation:fr-rise .6s cubic-bezier(0.16,1,0.3,1) both')}>
-              {vals.firstRunStatic && (
-                <div style={sx("font-family:'Neue Montreal';font-size:14px;letter-spacing:.01em;line-height:1.55;color:var(--on-surface-muted);text-wrap:pretty")}>Drop in an image and it becomes a palette drawn from its <span style={{ color: 'var(--on-surface)' }}>mood</span> — the light and atmosphere it carries, not just its dominant colours.</div>
-              )}
-              {vals.firstRunDemo && (<>
-                <div style={sx("font-family:'Neue Montreal';font-size:15px;letter-spacing:.01em;line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>See how it works - watch an image become a palette from its <span style={{ color: 'var(--on-surface)' }}>mood</span>.</div>
-                <button type="button" data-focus="chrome" data-button-006="" className="button-006" onClick={vals.tryExample} aria-label="Run an example generation to see how the tool works" style={sx('margin-top: 16px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat)')}>
-                  <span className="button-006__hover"><span className="button-006__text">Try an example</span><span className="button-006__bg is--hover"></span></span>
-                  <span className="button-006__default"><span aria-hidden="true" className="button-006__text">Try an example</span><span className="button-006__bg is--default"></span></span>
-                </button>
-              </>)}
-              <div style={sx('font-family: Neue Montreal; font-size: 11px; letter-spacing:var(--track-flat); color: var(--on-surface-muted); margin-top: 16px; opacity: .75')}>Everything stays in your browser — nothing is uploaded or stored on us.</div>
-              {vals.showInterpNote && (
-                <div style={sx('font-family: Neue Montreal; font-size: 11px; letter-spacing:var(--track-flat); color: var(--on-surface-muted); margin-top: 6px; opacity: .75')}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</div>
-              )}
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissFirstRun} aria-label="Dismiss the introduction" style={sx('margin-top: 12px; background: none; border: none; padding: 4px 8px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px')}>Dismiss</button>
-            </div>
-          )}
           <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Upload a reference image. Drop an image here, or activate to browse your files." style={vals.dropStyle}>
             <div style={sx('position:relative;width:38px;height:38px')} aria-hidden="true">
               <div style={sx('position:absolute;left:0;top:0;width:26px;height:26px;border:1px solid var(--on-surface-muted)')}></div>
@@ -256,13 +236,6 @@ export default function AppView({ vals }) {
 
         {vals.isResult && (
           <div ref={vals.resultRef} style={sx('display:flex;flex-direction:column')}>
-            {vals.isExamplePreview && (
-              <div role="status" style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 16px;margin-bottom:14px;background:var(--surface-raised);border:1px solid var(--line-strong)')}>
-                <span style={sx('font-family: Neue Montreal; font-size: 9px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 7px; flex: none')}>Example</span>
-                <span style={sx("flex:1;min-width:0;font-family:'Neue Montreal';font-size:12.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A preview to show you how it works - this one isn’t saved. Drop your own image to make a palette that’s yours.</span>
-                <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.reset} aria-label="Drop your own image" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 15px;font-family:Neue Montreal;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--surface);cursor:pointer')}>Drop your own</button>
-              </div>
-            )}
             <div role="group" aria-label="Generated palette swatches" style={sx('display:flex;height:340px;width:100%;gap:0')}>
               {vals.result.bands.map((b, bi) => (
                 <div key={bi} data-band="1" role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
@@ -356,7 +329,7 @@ function FeedSection({ vals }) {
   return (
     <section data-recent="1" aria-label="Recent generations" style={sx('width: 100%; padding: 40px 16px 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
       <div style={sx('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
-        <h2 style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 15px; letter-spacing:var(--track-flat); color: var(--on-surface); margin: 0; text-transform: capitalize")}>{vals.recentHeading}</h2>
+        <h2 style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 15px; letter-spacing:var(--track-flat); color: var(--on-surface); margin: 0; text-transform: capitalize")}>Recent</h2>
         <span style={sx('font-family: Neue Montreal; font-size: 10px; color: var(--on-surface-muted); text-transform: uppercase; letter-spacing:var(--track-flat)')}>{vals.feedCount} palettes</span>
         {vals.feedHasItems && (
           <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;margin-left:auto')}>
@@ -367,10 +340,6 @@ function FeedSection({ vals }) {
           </div>
         )}
       </div>
-
-      {vals.showRecentHint && (
-        <div data-fr-frame="1" style={sx("margin:-8px 0 22px;font-family:'Neue Montreal';font-size:12.5px;letter-spacing:.01em;color:var(--on-surface-muted);animation:fr-rise .6s cubic-bezier(0.16,1,0.3,1) both")}>A few examples to explore - drop an image to make your own.</div>
-      )}
 
       {vals.showProjectsBar && (
         <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px')}>
@@ -410,15 +379,6 @@ function FeedSection({ vals }) {
         </div>
       )}
 
-      {vals.showBackupNudge && (
-        <div style={sx('display:flex;align-items:center;gap:14px;padding:12px 16px;margin-bottom:22px;background:var(--surface-raised);border:1px solid var(--line)')}>
-          <span style={sx("flex:1;min-width:0;font-family:'Neue Montreal';font-size:12px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{vals.nudgeText}</span>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.saveArchiveFile} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Save a file</button>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissNudge} aria-label="Dismiss backup reminder" style={sx('flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line-strong);color:var(--on-surface-muted);cursor:pointer')}>
-            <IconX />
-          </button>
-        </div>
-      )}
       {vals.feedEmpty && (
         <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:56px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
           <div aria-hidden="true" style={sx('position:relative;width:34px;height:34px')}>

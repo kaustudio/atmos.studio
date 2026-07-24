@@ -23,7 +23,7 @@ export const persistenceMethods = {
     const incoming = this._parseRaw(e.newValue); if (!incoming) return;
     this._syncing = true;
     const inIds = new Set(incoming.feed.map((p) => p.id));
-    const localExtras = this.state.feed.filter((p) => !inIds.has(p.id) && !p.ephemeral);
+    const localExtras = this.state.feed.filter((p) => !inIds.has(p.id));
     const feed = [...localExtras, ...incoming.feed];
     const projById = {}; incoming.projects.forEach((p) => projById[p.id] = p); this.state.projects.forEach((p) => { if (!projById[p.id]) projById[p.id] = p; });
     const projects = Object.values(projById);
@@ -200,8 +200,7 @@ export const persistenceMethods = {
     for (let i = feed.length - 1; i >= 0 && (!res || !res.ok); i--) {
       if (feed[i].imageUrl) { feed[i].imageUrl = null; dropped++; res = attempt(Object.assign({}, payload, { feed })); }
     }
-    if (!res || !res.ok) { this.setState({ quotaPressure: true, announce: 'Storage is full — some palettes could not be saved. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full — save a project file to keep your palettes safe.'); } }
-    else if (dropped > 0) { this.setState({ quotaPressure: true, announce: 'Storage nearly full — older reference images were dropped to keep your palettes. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space — save a project file to keep everything.'); } }
+    if (!res || !res.ok) { this.setState({ announce: 'Storage is full — some palettes could not be saved. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full — save a project file to keep your palettes safe.'); } }
+    else if (dropped > 0) { this.setState({ announce: 'Storage nearly full — older reference images were dropped to keep your palettes. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space — save a project file to keep everything.'); } }
   },
-  dismissNudge() { try { localStorage.setItem('palette-generator/nudge', '1'); } catch (e) { } this.setState({ nudgeDismissed: true }); },
 };

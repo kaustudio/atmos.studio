@@ -99,11 +99,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 }
 html,body{background:var(--surface);transition:background .3s var(--ease-standard)}
 @keyframes gradient-drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-@keyframes fr-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* value→Copied text swap: masked line reveal (two identical keyframes so the swap back restarts it) */
 @keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
 @keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
-@media (prefers-reduced-motion: reduce){ [data-fr-frame],[data-fr-tag],[data-logo],[data-wipe-word]{animation:none!important} }
+@media (prefers-reduced-motion: reduce){ [data-logo],[data-wipe-word]{animation:none!important} }
 /* ===== button-006 (clip-path text-swap CTA), remapped to system tokens ===== */
 .button-006{
   --button-006-border-radius:0;

@@ -133,19 +133,6 @@ export const overlayMethods = {
   _toastIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
   _dismissToast() { const g = window.gsap; const el = document.querySelector('[data-toast]'); const clear = () => this.setState({ toast: null }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
 
-  // ===== first-run framing =====
-  _isFirstRun() { const s = this.state; return !s.firstRunDismissed && s.feed.some((p) => p.example) && !s.feed.some((p) => !p.example); },
-  dismissFirstRun() {
-    if (this.state.firstRunDismissed) return;
-    const persist = () => { try { localStorage.setItem('palette-generator/firstrun', '1'); } catch (e) { } this.setState({ firstRunDismissed: true }); };
-    const g = window.gsap, els = document.querySelectorAll('[data-fr-frame]');
-    if (this._reduce || !g || !els.length) { persist(); return; }
-    g.to(els, { opacity: 0, y: -8, duration: this.DUR.state, ease: this.EASE.exit, onComplete: persist });
-  },
-  // Once the example demo has run, the first-run framing has done its job — recede it automatically on the
-  // next return to upload (understanding is the dismissal), reusing the animated exit. No manual Dismiss.
-  _maybeAutoRecedeFirstRun() { if ((this._demoConsumed || (function () { try { return localStorage.getItem('palette-generator/demo') === '1'; } catch (e) { return false; } })()) && !this.state.firstRunDismissed) { this.dismissFirstRun(); } },
-
   // ===== contrast checker (opt-in surface over the current palette) =====
   contrastPalette() { const s = this.state; return s.overlay || s.current || (s.feed && s.feed[0]) || null; },
   openContrast() {

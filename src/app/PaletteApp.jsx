@@ -81,7 +81,6 @@ export default class PaletteApp extends React.Component {
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
-    nudgeDismissed: this._nudgeDismissed(), firstRunDismissed: this._firstRunDismissed(),
     landingDismissed: this._landingDismissed(), showLoader: this._loaderPending(), page: 0,
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
@@ -98,8 +97,6 @@ export default class PaletteApp extends React.Component {
   // inside the tool. No separate one-shot flag: a burned flag from an interrupted run must not be
   // able to suppress the intro; pressing Get Started ends it for good.
   _loaderPending() { return !this._landingDismissed(); }
-  _nudgeDismissed() { try { return localStorage.getItem('palette-generator/nudge') === '1'; } catch (e) { return false; } }
-  _firstRunDismissed() { try { return localStorage.getItem('palette-generator/firstrun') === '1'; } catch (e) { return false; } }
 
   componentDidMount() {
     // surface swallowed load-time errors with their real message/location
@@ -155,10 +152,6 @@ export default class PaletteApp extends React.Component {
     this.initClickZoom();
     // orbit landing: first-visit brand arrival (retries internally until gsap is ready)
     if (!this.state.landingDismissed) { requestAnimationFrame(() => this.initOrbit()); }
-    // first-run: bloom the example palettes in with the established entrance stagger
-    if (this._isFirstRun() && !this._reduce && window.gsap) {
-      requestAnimationFrame(() => { const rows = document.querySelectorAll('[data-list-wrap] [data-row-wrap]'); if (rows.length) window.gsap.from(rows, { opacity: 0, y: 16, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: 0.06, clearProps: 'transform' }); });
-    }
   }
 
   componentDidUpdate() {

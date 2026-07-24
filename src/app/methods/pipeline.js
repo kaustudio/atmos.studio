@@ -54,43 +54,21 @@ export const pipelineMethods = {
     const url = URL.createObjectURL(file); const img = new Image();
     img.onerror = () => { this.showError('We couldn’t open that image', 'The file may be corrupted or in a format the browser can’t decode. Try another image.'); };
     img.onload = () => {
-      this._exampleRun = false;                      // a real drop always overrides the example demo
       this._runPipeline(img, { srcUrl: url });         // keep the full-res object URL alive for crisp in-session display
     };
     img.src = url;
-  },
-  // ---- first-run demonstration: run the REAL pipeline on a built-in image, ephemerally ----
-  _exampleImageDataURL() {
-    // Prefer the real reference photograph (self-contained base64) so the demo reads a genuine mood.
-    if (typeof window !== 'undefined' && window.__PG_EXAMPLE_IMG) return window.__PG_EXAMPLE_IMG;
-    // Fallback: a warm generated field (used only if the image asset is unavailable).
-    const cols = ['#f0d3a4', '#e2a85f', '#c87d3c', '#9a5128', '#5c3220'];   // warm 'Last Light' source
-    const cv = document.createElement('canvas'); cv.width = 320; cv.height = 220; const ctx = cv.getContext('2d');
-    ctx.fillStyle = cols[0]; ctx.fillRect(0, 0, 320, 220);
-    const blobs = [[70, 64, 130, cols[1]], [235, 80, 150, cols[2]], [150, 175, 160, cols[3]], [268, 196, 120, cols[4]], [44, 188, 96, cols[2]], [180, 40, 90, cols[1]]];
-    blobs.forEach((b) => { const g = ctx.createRadialGradient(b[0], b[1], 0, b[0], b[1], b[2]); g.addColorStop(0, b[3]); g.addColorStop(1, this.hexA(b[3], 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b[0], b[1], b[2], 0, 6.2832); ctx.fill(); });
-    return cv.toDataURL('image/jpeg', 0.85);
-  },
-  tryExample() {
-    if (this._exampleRun || this.state.stage === 'processing') return;
-    this._exampleRun = true;
-    const img = new Image();
-    img.onload = () => this._runPipeline(img, { example: true });
-    img.onerror = () => { this._exampleRun = false; };
-    img.src = this._exampleImageDataURL();
   },
   _runPipeline(img, opts) {
     opts = opts || {};
     this._procImg = img;
     let cents = []; try { cents = this.extract(img); } catch (e) { cents = []; }
-    if (!cents.length) { if (opts.example) { this._exampleRun = false; return; } if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette — try a photo with more visible tone and detail.'); return; }
+    if (!cents.length) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette — try a photo with more visible tone and detail.'); return; }
     const thumb = this.makeThumb(img);                // display-sized thumbnail (×DPR) — persisted, survives reload
     const srcUrl = opts.srcUrl || null;                 // full-res object URL — session-only crisp display
     if (srcUrl) { (this._objUrls = this._objUrls || []).push(srcUrl); }   // revoke on eviction/unload, not now
     const pal = this.buildPalette(cents, thumb, srcUrl); // mock interpretation baked in as the guaranteed baseline
-    if (opts.example) { pal.example = true; pal.ephemeral = true; }
     const myGen = ++this._genId;                       // invalidate any in-flight interpretation from a prior generate
-    this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, selectedSwatch: null, announce: opts.example ? 'Generating an example palette to show you how it works.' : 'Generating palette from your image.' });
+    this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, selectedSwatch: null, announce: 'Generating palette from your image.' });
     if (this._t) clearInterval(this._t);
     this._t = setInterval(() => this.setState((st) => ({ procStep: Math.min(st.procStep + 1, 3) })), 620);
     if (this._end) clearTimeout(this._end);
@@ -118,21 +96,11 @@ export const pipelineMethods = {
   commitGenerated(pal, myGen, noLive, errored) {
     if (myGen !== this._genId) return;
     if (this._t) clearInterval(this._t);
-    if (this._exampleRun && pal.ephemeral) {
-      // ephemeral demonstration: show it, never persist. Mark the demo consumed so the first-run framing
-      // auto-recedes on the next return to upload (understanding is the dismissal).
-      this._demoConsumed = true; try { localStorage.setItem('palette-generator/demo', '1'); } catch (e) { }
-      this.setState({ stage: 'result', current: pal, pending: null, announce: 'Example palette: ' + pal.name + '. Mood: ' + pal.descriptors.join(', ') + '. This is a preview — drop your own image to make one.' });
-      if (errored) this.showNotice('Interpreted with the local reading — the live interpreter was unreachable.');
-      return;
-    }
     // fallback = "no live reading applied", for any reason (standalone runtime or error). Silent data honesty:
     // persists (round-trips through validation) and enables a future "Another reading". The notice below is
     // reserved for genuine failures, so a standalone build never surfaces it on every generation.
     pal.fallback = !!noLive;
     this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. Mood: ' + pal.descriptors.join(', ') + '.' }), () => this.persist({ immediate: true }));
-    // first real palette → the first-run framing recedes for good
-    if (!this.state.firstRunDismissed) { try { localStorage.setItem('palette-generator/firstrun', '1'); } catch (e) { } this.setState({ firstRunDismissed: true }); }
     if (errored) this.showNotice('Interpreted with the local reading — the live interpreter was unreachable.');
   },
   // ------- live interpretation call (pluggable: proxy endpoint → artifact runtime → none) -------
@@ -246,7 +214,7 @@ export const pipelineMethods = {
   // (reverse of the bottom-to-top entry), then the upload surface rises in a beat later.
   doReset() {
     const g = window.gsap, root = this.resultRef.current;
-    const commit = () => { this._genId = (this._genId || 0) + 1; this._exampleRun = false; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, selectedSwatch: null, announce: 'Ready for a new reference image.' }, () => { this._maybeAutoRecedeFirstRun(); requestAnimationFrame(() => this.animateUploadIn()); }); };
+    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, selectedSwatch: null, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
     if (this._reduce || !g || !root || this.state.stage !== 'result' || document.hidden) { commit(); return; }
     const bands = [...root.querySelectorAll('[data-band]')];
     const fx = [...root.querySelectorAll('[data-fx]')];

@@ -360,11 +360,6 @@ export const renderValsMethods = {
       };
     }
 
-    // honest permanence nudge: after a few palettes OR under storage-quota pressure, gently suggest keeping a file
-    const showBackupNudge = (s.feed.length >= 4 || s.quotaPressure) && !s.nudgeDismissed;
-    // first-run: examples present, no real palette yet, not dismissed
-    const firstRun = !s.firstRunDismissed && s.feed.some((p) => p.example) && !s.feed.some((p) => !p.example);
-
     return {
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
@@ -376,8 +371,6 @@ export const renderValsMethods = {
       orbitSlots: [0, 1, 2, 3, 4],
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
-      // capability-conditional interpretation note: only where the live model call is actually available
-      showInterpNote: this.canInterpretLive(),
       // glass-CTA variant (landing-scoped component builder) — squared glass, token-mixed, theme-correct
       glassCta: {
         display: 'inline-flex', alignItems: 'center', height: '36px', padding: '0 16px', borderRadius: '0',
@@ -424,15 +417,6 @@ export const renderValsMethods = {
       onOpenFile: () => { const inp = this.projectFileRef && this.projectFileRef.current; if (inp) inp.click(); },
       onProjectFileChange: (e) => { const f = e && e.target && e.target.files && e.target.files[0]; if (f) this.importProjectFile(f); if (e && e.target) e.target.value = ''; },
       projectFileRef: this.projectFileRef,
-      showBackupNudge, dismissNudge: () => this.dismissNudge(),
-      nudgeText: s.quotaPressure
-        ? 'Storage is filling up — older reference images may be dropped to keep your palettes. Save a project file now to keep everything for good, on any device.'
-        : 'Your palettes live in this browser only. Save a project file to keep them for good — and to carry them to another device or browser.',
-      firstRun, dismissFirstRun: () => this.dismissFirstRun(),
-      firstRunStatic: firstRun && this._reduce, firstRunDemo: firstRun && !this._reduce,
-      tryExample: () => this.tryExample(),
-      isExamplePreview: s.stage === 'result' && !!(s.current && s.current.ephemeral),
-      recentHeading: firstRun ? 'A few to explore' : 'Recent', showRecentHint: firstRun,
       isListView: s.feedView === 'list', isGridView: s.feedView === 'grid',
       setList: () => this.setFeedView('list'), setGrid: () => this.setFeedView('grid'), setReel: () => this.setFeedView('carousel'),
       listToggleStyle: this.viewToggleOptStyle(s.feedView === 'list'), gridToggleStyle: this.viewToggleOptStyle(s.feedView === 'grid'), reelToggleStyle: this.viewToggleOptStyle(s.feedView === 'carousel'),

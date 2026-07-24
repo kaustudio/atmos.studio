@@ -3,16 +3,16 @@
 export const wipeMethods = {
   _resetIntroState(afterCb) {
     // journey flags only — palettes, projects, theme untouched
-    ['landing', 'firstrun', 'demo'].forEach((k) => { try { localStorage.setItem('palette-generator/' + k, '0'); } catch (e) { } });
-    this._demoConsumed = false; this._orbitRetry = 0;
+    try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { }
+    this._orbitRetry = 0;
     // the tool behind the landing returns to its default state — Get Started must always land on
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
     if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
     if (this.state.feedView === 'carousel') { this.killReel(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
-    this._genId = (this._genId || 0) + 1; this._exampleRun = false; this.stopCanvas();
+    this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState({
-      fileMenuOpen: false, landingDismissed: false, firstRunDismissed: false,
+      fileMenuOpen: false, landingDismissed: false,
       stage: 'upload', current: null, imageUrl: null, selectedSwatch: null, pending: null,
       feedView: 'list', overlay: null, overlaySel: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, assignPalette: null, manageProjects: false,
       announce: 'Intro will show again.',
