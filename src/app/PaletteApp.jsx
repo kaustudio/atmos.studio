@@ -117,7 +117,12 @@ export default class PaletteApp extends React.Component {
   // Is the landing surface on screen? On phones it always is: the tool needs room the viewport
   // hasn't got, so the landing IS the small-screen surface (same ring stage, gate copy instead of
   // the CTA) rather than a separate dead-end panel. Dismissal only means anything on desktop.
-  _landingUp() { return !this.state.landingDismissed || this.state.narrow; }
+  // A shared link opened on a phone gets the palette, read-only — not the desktop gate. That single
+  // exception is the whole point: most shared links ARE opened on a phone, so gating them ends the
+  // chain at its first hop and sharing never compounds. The tool itself still gates; only somebody
+  // else's finished palette comes through.
+  _mobileShare() { return !!(this.state.narrow && this.state.sharedView && this.state.current); }
+  _landingUp() { return (!this.state.landingDismissed || this.state.narrow) && !this._mobileShare(); }
   // plays on any page load that lands on the Get Started page (landing not yet dismissed) — never
   // inside the tool. No separate one-shot flag: a burned flag from an interrupted run must not be
   // able to suppress the intro; pressing Get Started ends it for good.

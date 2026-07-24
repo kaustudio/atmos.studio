@@ -48,6 +48,7 @@ const SwapLabel = ({ copied, idle }) => (
 );
 
 const LOGO_MASK = "url('/assets/atmos-logo-black-v3.svg') center/contain no-repeat";
+const MARK_MASK = "url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat";
 const logoStyle = {
   ...sx('position:fixed;top:24px;left:50%;transform:translateX(-50%);width:165px;height:26px;z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
   WebkitMask: LOGO_MASK, mask: LOGO_MASK,
@@ -101,6 +102,54 @@ const shareB006Label = (copied) => (
   </span>
 );
 
+// Mobile read-only share view. A separate lightweight surface, NOT a responsive port of the tool —
+// it exists so a shared link opened on a phone shows the palette instead of the desktop gate. The
+// tool still gates; this only ever renders somebody else's finished palette.
+function MobileShareView({ ms }) {
+  return (
+    <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name}
+      style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
+      <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 0')}>
+        {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
+        <span role="img" aria-label="Atmos Studio" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
+        <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>Shared palette</span>
+      </div>
+
+      <div style={sx('flex:none;padding:26px 18px 22px')}>
+        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:34px;line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
+        {ms.descriptors.length > 0 && (
+          <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
+            {ms.descriptors.map((d, i) => (
+              <span key={i} style={sx('font-family:Neue Montreal;font-size:11px;padding:4px 8px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:capitalize')}>{d}</span>
+            ))}
+          </div>
+        )}
+        {ms.hasRationale && (
+          <p style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
+        )}
+      </div>
+
+      {/* the palette itself: full-bleed rows, each tappable to take its hex */}
+      <div role="group" aria-label="Palette swatches — tap a colour to copy its hex" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
+        {ms.rows.map((r) => (
+          <button key={r.key} type="button" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
+            <span style={r.hexStyle}>{r.hex}</span>
+            <span style={r.metaStyle}>
+              {r.copied ? (<><IconCheck />Copied</>) : r.pct}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
+          stretched footer strands this line half a screen away from what it refers to. */}
+      <div style={sx('flex:none;padding:24px 18px 34px')}>
+        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>Open Atmos Studio on a desktop to read a palette from your own image.</p>
+      </div>
+    </div>
+  );
+}
+
 function themeSwitchLabel(vals) {
   return (
     <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
@@ -111,11 +160,24 @@ function themeSwitchLabel(vals) {
   );
 }
 
+const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+
 export default function AppView({ vals }) {
+  // A shared link on a phone renders ONLY the read-only palette. Returning early rather than
+  // layering it over the tool keeps the desktop app out of the DOM entirely on a viewport that
+  // cannot use it: nothing behind to tab into, no archive laid out off-screen, no orbit stage.
+  if (vals.showMobileShare) {
+    return (
+      <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        <MobileShareView ms={vals.mobileShare} />
+      </div>
+    );
+  }
   return (
     <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
 
-      <div aria-live="polite" role="status" style={sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0')}>{vals.announce}</div>
+      <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
 
       {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
           composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}

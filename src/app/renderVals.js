@@ -361,7 +361,43 @@ export const renderValsMethods = {
       };
     }
 
+    // ===== mobile read-only share view =====
+    // Deliberately NOT a responsive port of the result stage: a separate, minimal surface that shows
+    // the palette, hands over the hex values, and says plainly where to go to make one. Read-only by
+    // design — no save, no generate, so it never implies a tool the viewport can't carry.
+    let mobileShare = null;
+    if (this._mobileShare()) {
+      const p = s.current;
+      const totW = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
+      mobileShare = {
+        name: p.name,
+        descriptors: p.descriptors || [],
+        rationale: p.rationale || '',
+        hasRationale: !!(p.rationale || '').trim(),
+        rows: p.swatches.map((b, i) => {
+          const key = 'ms-' + i;
+          const HX = b.hex.toUpperCase();
+          const on = this.onColor(b.hex);   // guaranteed-AA on-colour for THIS swatch
+          return {
+            key, hex: HX, copied: s.copied === key,
+            pct: Math.round((b.weight / totW) * 100) + '%',
+            aria: 'Copy ' + HX + ', ' + Math.round((b.weight / totW) * 100) + ' percent of the palette',
+            onCopy: () => this.copy(HX, key, 'Copied ' + HX),
+            style: {
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+              width: '100%', minHeight: '62px', padding: '0 18px', margin: 0, textAlign: 'left',
+              background: b.hex, color: on, border: 'none', cursor: 'pointer',
+              fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
+            },
+            hexStyle: { fontFamily: 'Neue Montreal', fontSize: '15px', letterSpacing: '.02em', textTransform: 'uppercase' },
+            metaStyle: { fontFamily: 'Neue Montreal', fontSize: '11px', letterSpacing: '.06em', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '6px' },
+          };
+        }),
+      };
+    }
+
     return {
+      showMobileShare: !!mobileShare, mobileShare,
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,
