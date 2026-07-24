@@ -3,6 +3,7 @@
 // from renderVals() untouched. No logic lives here.
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
+import { Analytics } from '@vercel/analytics/react';
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
 // stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
@@ -896,6 +897,7 @@ function ManageDialog({ vals }) {
           ))}
         </div>
       </div>
+      <Analytics />
     </div>
   );
 }
