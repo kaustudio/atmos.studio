@@ -900,10 +900,10 @@ function FeedSection({ vals }) {
           )}
         </div>
 
-        {/* FULLSCREEN 3D REEL: cylinder of reference images (panels built imperatively) */}
-        <div data-reel-layer="1" role="region" aria-label="3D image carousel" style={vals.reelStyle}>
-          <div data-reel-stage="1" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:90vw;perspective-origin:50% 50%;overscroll-behavior:none;cursor:grab;touch-action:none')}>
-            <div data-reel-list="1" style={sx('position:relative;width:80vw;height:50vw;font-size:1vw;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d')}></div>
+        {/* FULLSCREEN 3D TORNADO: helix of palette cards (items built imperatively) */}
+        <div data-reel-layer="1" role="region" aria-label="3D palette view" style={vals.reelStyle}>
+          <div data-reel-stage="1" style={sx('position:absolute;inset:0;overflow:clip;overscroll-behavior:none;cursor:grab;touch-action:none')}>
+            <div data-reel-list="1" style={sx('position:relative;width:100%;height:100%;font-size:clamp(.5em, .75vw, 1.5em);perspective:75em;transform-style:preserve-3d')}></div>
           </div>
           {vals.reelEmpty && (
             <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>

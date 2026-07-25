@@ -26,7 +26,7 @@ export const universeMethods = {
       if (from === 'grid') { this._uCloseGen = (this._uCloseGen || 0) + 1; this.killSpatial(); }
       this._lenisStop();
       try { document.body.style.overflow = 'hidden'; } catch (e) { }
-      this.setState({ feedView: 'carousel', announce: '3D view. Drag or scroll to spin the carousel. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { this.initReel(); const c = this.reelCloseRef && this.reelCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
+      this.setState({ feedView: 'carousel', announce: '3D view. Drag or scroll to spin the cards. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { this.initReel(); const c = this.reelCloseRef && this.reelCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
     } else {
       // exiting to list — animate the exit on the still-built view, hide FIRST, teardown AFTER.
       const finishToList = () => {
