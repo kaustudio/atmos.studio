@@ -900,10 +900,10 @@ function FeedSection({ vals }) {
           )}
         </div>
 
-        {/* FULLSCREEN 3D REEL: cylinder of reference images (panels built imperatively) */}
-        <div data-reel-layer="1" role="region" aria-label="3D image carousel" style={vals.reelStyle}>
-          <div data-reel-stage="1" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:90vw;perspective-origin:50% 50%;overscroll-behavior:none;cursor:grab;touch-action:none')}>
-            <div data-reel-list="1" style={sx('position:relative;width:80vw;height:50vw;font-size:1vw;display:flex;align-items:center;justify-content:center;transform-style:preserve-3d')}></div>
+        {/* FULLSCREEN 3D TORNADO: helix of palette cards (items built imperatively) */}
+        <div data-reel-layer="1" role="region" aria-label="3D palette view" style={vals.reelStyle}>
+          <div data-reel-stage="1" style={sx('position:absolute;inset:0;overflow:clip;overscroll-behavior:none;cursor:grab;touch-action:none')}>
+            <div data-reel-list="1" style={sx('position:relative;width:100%;height:100%;font-size:clamp(.5em, .75vw, 1.5em);perspective:75em;transform-style:preserve-3d')}></div>
           </div>
           {vals.reelEmpty && (
             <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>
@@ -1097,7 +1097,7 @@ function TagFilterDrawer({ vals }) {
         </div>
 
         <div data-tg-sec="1" style={sx('padding:16px 22px 0')}>
-          <input data-facet-search="1" data-focus="chrome" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+          <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
         </div>
 
         <div data-tg-sec="1" role="group" aria-label="Tags" style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>
