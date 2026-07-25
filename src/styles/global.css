@@ -82,6 +82,79 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --track-body:0.01em;        /* body copy */
   --track-label:0.1em;        /* uppercase mono labels (system default) */
   --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
+  /* ===== archive list rhythm =====
+     The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
+     of whatever the widest row happened to contain. Naming it here keeps the scan rhythm in one
+     place: the row, the hover gutter and the absolutely-positioned row buttons all centre on it,
+     and they cannot drift apart the way three separate inline numbers would. The value is the
+     collapsed row's own settled height (13px padding + a 16px/1.3 name line + 13px). */
+  --row-list-height:48px;
+  /* The comparison columns. These are the whole reason the list is comparable: the sort header and
+     every row read the SAME width from here, so the cells stack into a true column. Two inline
+     copies of "200px" would align until the first person edited one of them. */
+  /* AA pairs and max contrast are two unrelated measurements, so they get two independent
+     columns rather than one shared cluster — each sized for its own header label and value. */
+  --row-aa-col:104px;         /* AA verdict badge + the pair count */
+  --row-contrast-col:88px;    /* the maximum contrast ratio */
+  --row-time-col:96px;        /* the trailing timestamp column — sized for the widest value the
+                                 cell can hold, a same-day da-DK stamp ("14.06.26, 14.32"); a column
+                                 that only fits its narrowest value is a column that jitters */
+  /* ===== status tokens (pass / partial / fail) =====
+     The system is monochrome by design, so status is NEVER a hue: pass is FILLED (inverted, the
+     strongest treatment the system owns), partial is OUTLINED at secondary edge strength, fail is
+     a ghost on muted ink. Each state also carries its own glyph (✓ / half-circle / ✕) — fill and
+     glyph both change, so the three states survive greyscale, zoom, and colour-blindness without
+     any of them ever resting on colour alone (WCAG 1.4.1). All values resolve through the chrome
+     tokens above; introducing red/green here would put a colour vocabulary into a product whose
+     entire language is ink on surface. */
+  --status-pass-surface:var(--on-surface);
+  --status-pass-ink:var(--surface);
+  --status-pass-line:var(--on-surface);
+  --status-partial-surface:transparent;
+  --status-partial-ink:var(--on-surface);
+  --status-partial-line:color-mix(in srgb,var(--on-surface) 42%,transparent);
+  --status-fail-surface:transparent;
+  --status-fail-ink:var(--on-surface-muted);
+  --status-fail-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
+  /* The row's right-hand action gutter, permanently reserved. It used to be opened on hover, which
+     slid that row's columns 74px left while its neighbours stayed put — fine when the right edge
+     held a timestamp nobody compared, unreadable once the columns became the point. The buttons
+     still FADE in on hover; only the space they need is now always there. */
+  --row-action-gutter:92px;
+  /* ===== action emphasis (three tiers) — what a control is FOR, not what it looks like.
+     Every value below resolves through the chrome tokens above, so the tiers re-theme with
+     everything else and no tier owns a colour of its own. Emphasis is never carried by colour
+     alone: primary is FILLED, secondary is OUTLINED at full edge strength, utility is UNBORDERED
+     and lighter in weight — the three stay distinguishable in greyscale, at any zoom, and to
+     anyone who cannot separate the two inks by hue. Consumed by the button-006 variants below. */
+  /* tier 1 — primary: the payoff. Inverted fill; the one dominant control in its region. */
+  --action-primary-surface:var(--on-surface);
+  --action-primary-ink:var(--surface);
+  --action-primary-hover:color-mix(in srgb,var(--on-surface) 84%,var(--surface));
+  --action-primary-press:color-mix(in srgb,var(--on-surface) 72%,var(--surface));
+  --action-primary-line:var(--on-surface);
+  --action-primary-weight:500;
+  --action-primary-padding:0.75em 1.35em;
+  /* tier 2 — secondary: analysis. No fill, but a full-strength edge and medium weight. */
+  --action-secondary-surface:transparent;
+  --action-secondary-ink:var(--on-surface);
+  --action-secondary-line:color-mix(in srgb,var(--on-surface) 42%,transparent);
+  --action-secondary-weight:500;
+  /* tier 3 — utility: convenience exits. No fill, muted ink, regular weight — but it still carries
+     the system's baseline hairline. Every other control in the app is bounded by that 15% edge
+     (button-006's own default, the solid chrome buttons, the chip groups), so an edgeless button
+     read as a different KIND of control rather than a quieter one. The tier is expressed by fill
+     and weight; the edge is shared vocabulary, and hierarchy still reads: solid → 42% → 15%. */
+  --action-utility-surface:transparent;
+  --action-utility-ink:var(--on-surface-muted);
+  --action-utility-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
+  --action-utility-weight:400;
+  /* shared hover/press tints for the two unfilled tiers — the sanctioned 16% → 24% spectrum,
+     the same one [data-ix="solid"], ="press" and button-006's own rest state already ride. */
+  --action-quiet-hover:color-mix(in srgb,var(--on-surface) 16%,transparent);
+  --action-quiet-press:color-mix(in srgb,var(--on-surface) 24%,transparent);
+  --action-quiet-line-hover:color-mix(in srgb,var(--on-surface) 38%,transparent);
+  --action-quiet-line-press:color-mix(in srgb,var(--on-surface) 48%,transparent);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -108,6 +181,12 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-accent:color-mix(in srgb, var(--on-surface) 16%, transparent);   /* hover bg → glass, strengthened */
   --button-006-on-accent:var(--on-surface);    /* hover text → same (no invert) */
   --button-006-focus:var(--on-surface);        /* focus ring → WCAG focus token */
+  /* edge + press, hoisted out of the rules below so an emphasis tier can remap them without
+     restating any of button-006's structure. Defaults are the untiered button's own values. */
+  --button-006-line:color-mix(in srgb, var(--on-surface) 15%, transparent);
+  --button-006-line-hover:color-mix(in srgb, var(--on-surface) 38%, transparent);
+  --button-006-press:color-mix(in srgb, var(--on-surface) 24%, transparent);
+  --button-006-line-press:color-mix(in srgb, var(--on-surface) 48%, transparent);
   --button-006-click-scale:0.955 0.925;
   --button-006-default-text-scale:1;
   --button-006-hover-text-scale:1;
@@ -124,33 +203,84 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
 .button-006:active{scale:var(--button-006-click-scale);}
 .button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
 .button-006__hover{position:absolute;inset:0;z-index:2;clip-path:inset(0 0 100% 0);transition:clip-path var(--button-006-dur) var(--ease-button-hover);}
-.button-006:hover .button-006__hover{clip-path:inset(0 0 0% 0);}
+.button-006:hover:not(:disabled) .button-006__hover{clip-path:inset(0 0 0% 0);}
 .button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;transition:scale var(--button-006-dur) var(--ease-button-hover);transform-origin:center;will-change:scale;}
 .button-006__default .button-006__text{color:var(--button-006-on-surface);}
 .button-006__hover .button-006__text{color:var(--button-006-on-accent);scale:var(--button-006-hover-text-scale);}
 .button-006:hover .button-006__default .button-006__text{scale:var(--button-006-default-text-scale);}
 .button-006:hover .button-006__hover .button-006__text{scale:1;}
 .button-006__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;}
-.button-006__bg.is--default{background:var(--button-006-surface);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 15%, transparent);}
-.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 38%, transparent);}
+.button-006__bg.is--default{background:var(--button-006-surface);box-shadow:inset 0 0 0 1px var(--button-006-line);}
+.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px var(--button-006-line-hover);}
 /* pressed: the deepest step of the same tint spectrum — clearly distinct from rest and hover in both themes */
-.button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:color-mix(in srgb, var(--on-surface) 24%, transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 48%, transparent);}
+.button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:var(--button-006-press);box-shadow:inset 0 0 0 1px var(--button-006-line-press);}
 .button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow .2s var(--ease-button-focus);}
 .button-006:focus-visible{outline:none;}
 .button-006:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-006-focus);}
+/* disabled — same value the [data-ix] contract uses, restated here because button-006 is outside
+   it. Now that a tier can be FILLED or OUTLINED, an unavailable control that renders at full
+   strength claims an emphasis it cannot honour (contrast is disabled whenever the palette has no
+   pair to check); the tiers only stay readable if unavailability is legible too. */
+.button-006:disabled{opacity:.42;cursor:default;}
+/* ===== emphasis variants — the three action tiers, expressed ONLY as remapped button-006
+   properties. Nothing about the clip-path text swap, the press scale or the focus ring is
+   restated, so every tier inherits the same motion and the same keyboard affordance: a quiet
+   button is quiet at rest, never quiet when focused. An untagged .button-006 is untouched. */
+.button-006[data-emphasis="primary"]{
+  --button-006-surface:var(--action-primary-surface);
+  --button-006-on-surface:var(--action-primary-ink);
+  --button-006-accent:var(--action-primary-hover);
+  --button-006-on-accent:var(--action-primary-ink);
+  --button-006-line:var(--action-primary-line);
+  --button-006-line-hover:var(--action-primary-hover);
+  --button-006-press:var(--action-primary-press);
+  --button-006-line-press:var(--action-primary-press);
+  --button-006-padding:var(--action-primary-padding);
+  font-weight:var(--action-primary-weight);
+}
+.button-006[data-emphasis="secondary"]{
+  --button-006-surface:var(--action-secondary-surface);
+  --button-006-on-surface:var(--action-secondary-ink);
+  --button-006-accent:var(--action-quiet-hover);
+  --button-006-on-accent:var(--action-secondary-ink);
+  --button-006-line:var(--action-secondary-line);
+  --button-006-line-hover:var(--action-quiet-line-hover);
+  --button-006-press:var(--action-quiet-press);
+  --button-006-line-press:var(--action-quiet-line-press);
+  font-weight:var(--action-secondary-weight);
+}
+/* utility now strengthens its edge on hover and press exactly like every other tier — the same
+   15% → 38% → 48% progression the whole system rides. It reads as quieter, never as foreign. */
+.button-006[data-emphasis="utility"]{
+  --button-006-surface:var(--action-utility-surface);
+  --button-006-on-surface:var(--action-utility-ink);
+  --button-006-accent:var(--action-quiet-hover);
+  --button-006-on-accent:var(--on-surface);
+  --button-006-line:var(--action-utility-line);
+  --button-006-line-hover:var(--action-quiet-line-hover);
+  --button-006-press:var(--action-quiet-press);
+  --button-006-line-press:var(--action-quiet-line-press);
+  font-weight:var(--action-utility-weight);
+}
+/* Sort direction is a rotation, not a glyph swap: the chevron rests pointing down (descending) and
+   turns a half-circle to point up (ascending). Declarative like the [data-ix] contract — the state
+   lives on data-dir, the motion is one transition on --ease-standard, and it reverses by construction
+   because the same rule drives both directions. transform-origin is centred so it pivots in place. */
+[data-sort-chevron]{transform-origin:50% 50%;transition:transform .28s var(--ease-standard)}
+[data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){[data-sort-chevron]{transition:none}}
 [data-del]{opacity:0;pointer-events:none;transition:opacity .16s var(--ease-standard)}
 /* click-to-zoom lightbox (squared — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
-[data-row-main]{transition:padding-right .16s var(--ease-standard)}
-[data-row-wrap]:hover [data-row-main],[data-row-wrap]:focus-within [data-row-main]{padding-right:92px!important}
+/* The gutter is reserved in the row's own padding now (--row-action-gutter), not opened on hover:
+   a row that reflows under the pointer cannot hold a column. Only the buttons still fade. */
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto}
 [data-info]{opacity:1;transition:opacity .16s var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
    are always visible & tappable, and the row reserves the button gutter permanently. */
 @media (hover:none),(pointer:coarse){
   [data-del]{opacity:1;pointer-events:auto}
-  [data-row-main]{padding-right:92px!important}
   [data-info]{opacity:1}
 }
 /* Honest small-viewport gate: the universe, stage and drawers need room, so on narrow screens we

@@ -148,6 +148,23 @@ export const pipelineMethods = {
     ];
   },
   relTime(ts) { const d = Date.now() - ts, m = d / 60000; if (m < 1) return 'just now'; if (m < 60) return Math.round(m) + 'm ago'; const h = m / 60; if (h < 24) return Math.round(h) + 'h ago'; return Math.round(h / 24) + 'd ago'; },
+  // Absolute form for the SORTABLE date column: a sorted column needs values that differ, and
+  // relative stamps collapse into ten identical "12M AGO"s within a session. Everything comes from
+  // Intl under da-DK — including the same-day variant, which is ONE formatter carrying both date
+  // and time parts, so even the joiner between them is the locale's, never a concatenated string.
+  // (da-DK's own separators throughout: 14.06.26, and 14.32 for the clock.) Same-day entries carry
+  // the clock because a date alone cannot distinguish this morning's five generations.
+  // Relative time is not deleted — it survives as the secondary layer (title tooltip on the cell,
+  // and the row's accessible name still says "Generated 3h ago").
+  absTime(ts) {
+    if (!this._dfDate) {
+      this._dfDate = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      this._dfDateTime = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+    const d = new Date(ts), now = new Date();
+    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+    return (sameDay ? this._dfDateTime : this._dfDate).format(d);
+  },
 
   // Downscaled reference thumbnail as a data URL — object URLs are session-only; this survives reload.
   // Display thumbnail: sized to the largest display context (universe card) × DPR, so the browser

@@ -33,8 +33,11 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
 - **Interpretation** — the palette's name/descriptors/rationale. Local archetype reading is the
   guaranteed baseline; a live Claude reading (`claude-sonnet-4-6`) layers on when available (see
   below).
-- **Archive** — list view (expanding rows with OKLCH metrics readout, pagination), the infinite
-  draggable "universe" grid, and a 3D reel; fullscreen palette detail; delete with undo.
+- **Archive** — master–detail list (uniform rows led by a proportional swatch strip; sortable AA
+  pairs / max contrast / date columns; tag filtering via a searchable drawer and clickable row
+  tags; pagination), the infinite draggable "universe" grid, and a 3D reel; fullscreen palette
+  detail; delete with undo. Selecting a row drives the overview panel above it — that panel is the
+  single detail surface, and the rows no longer expand.
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
   variables, CSS custom properties, binary `.ase`), projects with portable JSON project files.
