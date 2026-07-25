@@ -217,10 +217,18 @@ export default function AppView({ vals }) {
           <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 26px')}>
             {vals.narrow ? (
               /* small screen: the honest gate copy, sized to fit inside the ring the engine builds
-                 around it (_heroReach measures this block, so a narrower column = a tighter ring) */
+                 around it (_heroReach measures this block, so a narrower column = a tighter ring).
+                 It carries the SAME masked reveal as the desktop statement — the gate is the phone's
+                 arrival, so its copy rises out of the mask as the loader uncovers rather than being
+                 there already. One pre-authored line-group per block, no split; the masks are inside
+                 the h1/p so those boxes stay exactly the size _heroReach measures. */
               <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;max-width:280px')}>
-                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>Atmos Studio is a desktop experience.</h1>
-                <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>Open this link on a wider screen to drop an image and pull its palette.</p>
+                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Studio is a desktop experience.</span></span>
+                </h1>
+                <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Open this link on a wider screen to drop an image and pull its palette.</span></span>
+                </p>
               </div>
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>

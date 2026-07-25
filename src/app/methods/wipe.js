@@ -128,7 +128,9 @@ export const wipeMethods = {
     g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 }); g.set(word, { yPercent: 120 });
     const parts = [document.querySelector('header'), document.querySelector('main')].filter(Boolean);
     let swapped = false;
-    const doSwap = () => { if (swapped) return; swapped = true; this._resetIntroState(() => { try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { } }); };
+    // arm the statement lines the moment the landing mounts behind the cover — same reason as the
+    // loader: the panel must never uncover text already sitting at its final position
+    const doSwap = () => { if (swapped) return; swapped = true; this._resetIntroState(() => { try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { } this._landingTextArm(g); }); };
     const focusCta = () => { let tries = 0; const grab = () => { const cta = document.querySelector('button[aria-label="Get started"]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0); };
     const tl = g.timeline({ paused: true, onComplete: () => { if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; } layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null; g.set([panel, capT, capB, word], { clearProps: 'transform' }); this._wipeRunning = false; this._wipeTl = null; focusCta(); } });
     this._wipeWatchdog = setTimeout(() => {
@@ -140,6 +142,7 @@ export const wipeMethods = {
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the tool frozen dim
       if (!swapped) doSwap();
+      try { this._landingTextReveal(g); } catch (e) { }   // killed timeline must not strand armed lines
       focusCta();
     }, 4000);
     this._wipeTl = tl;

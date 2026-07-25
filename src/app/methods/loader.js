@@ -9,6 +9,9 @@ export const loaderMethods = {
       if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
       // hide + release the covering layer synchronously — even if setState is somehow unable to unmount it
       try { const w = document.querySelector('[data-load-wrap]'); if (w) { w.style.pointerEvents = 'none'; w.style.display = 'none'; } } catch (e) { }
+      // no-op on the normal path (the exit timeline already fired it) — this is the watchdog's
+      // guarantee that armed lines can never be left parked below their masks
+      try { this._landingTextReveal(); } catch (e) { }
       try { this.setState({ showLoader: false }); } catch (e) { }
     };
     // watchdog armed FIRST: no failure path below may strand the fixed covering layer
@@ -21,6 +24,9 @@ export const loaderMethods = {
       const bg = wrap.querySelector('[data-load-bg]'), bar = wrap.querySelector('[data-load-progress]'),
         logo = wrap.querySelector('[data-load-logo]'), num = wrap.querySelector('[data-load-num]');
       try { g.ticker.wake(); } catch (e) { }
+      // the landing renders in the same commit as this cover — park its statement lines below their
+      // masks now, while nothing can see them, so the fold never uncovers finished text
+      this._landingTextArm(g);
       // ── PHASE MACHINE. Nothing writes the bar or the number outside render(), and render()
       // no-ops outside FILLING.
       let phase = 'HIDDEN';
@@ -47,7 +53,9 @@ export const loaderMethods = {
         tl.to(num, { yPercent: -110, duration: 0.6, ease: ex }, 0.15);                               // 2. progress (at 100) follows out the top
         tl.to(bar, { scaleX: 0, transformOrigin: 'right center', duration: 0.6, ease: ex }, 0.3);      // 3. bar exits to the right
         tl.to(bg, { yPercent: -101, duration: 0.95, ease: this._foldEase || (this._foldEase = this.cubicBezier(0.19, 1, 0.22, 1)) }, 0.8);   // fold lifts, unchanged
-        tl.call(() => this._landingTextReveal(g), null, '<+0.45');
+        // the fold is expo-out: it clears the centre of the viewport ~0.1s in, so the lines start
+        // rising just behind its trailing edge rather than after a beat of empty landing
+        tl.call(() => this._landingTextReveal(g), null, '<+0.15');
         this._loaderTl = tl; tl.play(0);
       };
       const startFill = () => {

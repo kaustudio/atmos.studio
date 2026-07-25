@@ -162,9 +162,14 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    The one exception is data-mobile-share: a shared link opened on a phone shows the palette
    read-only instead of the gate (see MobileShareView). The gate still stands for the TOOL — that
    path never renders this surface — but somebody else's finished palette needs no room to work in,
-   and gating it would end the sharing chain at its first hop. */
+   and gating it would end the sharing chain at its first hop.
+
+   data-load-wrap is exempt for the same reason data-logo is: it is the ARRIVAL, not the tool. The
+   gate is a real destination on a phone, so it gets the same logo-reveal opening the desktop landing
+   gets — without this exemption the loader still mounts and still runs its whole timeline, just
+   invisibly, and the phone jumps straight to the gate. */
 @media (max-width:720px){
-  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]){display:none!important}
+  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-load-wrap]){display:none!important}
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
