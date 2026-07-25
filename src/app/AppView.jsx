@@ -54,8 +54,12 @@ const SwapLabel = ({ copied, idle }) => (
 
 const LOGO_MASK = "url('/assets/atmos-logo-black-v3.svg') center/contain no-repeat";
 const MARK_MASK = "url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat";
+// top sits the 26px mark on the header's own centre line: the bar is 64px with a 1px bottom border,
+// so its content box is 63px and the clock and the switch centre at 31.5 — (63 - 26) / 2 = 18.5.
+// It is fixed rather than a child of the header (it also flies over the landing), so the shared
+// centre has to be restated here; anything else reads as the logo sitting low in the row.
 const logoStyle = {
-  ...sx('position:fixed;top:24px;left:50%;transform:translateX(-50%);width:165px;height:26px;z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
+  ...sx('position:fixed;top:18.5px;left:50%;transform:translateX(-50%);width:165px;height:26px;z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
   WebkitMask: LOGO_MASK, mask: LOGO_MASK,
 };
 
