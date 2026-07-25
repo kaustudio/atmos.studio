@@ -1097,7 +1097,7 @@ function TagFilterDrawer({ vals }) {
         </div>
 
         <div data-tg-sec="1" style={sx('padding:16px 22px 0')}>
-          <input data-facet-search="1" data-focus="chrome" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+          <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
         </div>
 
         <div data-tg-sec="1" role="group" aria-label="Tags" style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>

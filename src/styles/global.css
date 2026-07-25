@@ -15,6 +15,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-focus="card"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 [data-focus="swatch"]:focus-visible{box-shadow:inset 0 0 0 4px #ffffff,inset 0 0 0 8px #1a1a1a}
 [data-focus="value"]:focus-visible{outline:none;box-shadow:inset 0 0 0 3px #ffffff,inset 0 0 0 6px #1a1a1a}
+/* text fields: a browser focuses these on click as well as by keyboard, so the chrome ring would
+   box the field every time you land in it. The underline the field already carries thickens instead. */
+[data-focus="field"]:focus-visible{outline:none;box-shadow:inset 0 -2px 0 var(--on-surface)}
 
 /* ===== interaction-state contract — ONE declarative mechanism, token-driven, eased with --ease-standard.
    Full set per control: rest · hover · focus-visible (above) · active · disabled · selected.
