@@ -254,6 +254,9 @@ export default class PaletteApp extends React.Component {
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }
+    if (this._loaderT1) { clearTimeout(this._loaderT1); this._loaderT1 = null; }
+    if (this._loaderT2) { clearTimeout(this._loaderT2); this._loaderT2 = null; }
+    this._loaderRescue = null;
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
     if (this._clockT) { clearInterval(this._clockT); this._clockT = null; }
