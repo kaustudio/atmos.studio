@@ -3,6 +3,11 @@
 // from renderVals() untouched. No logic lives here.
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
+// PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
+// any in-app action. Behavioural instrumentation is a separate decision with its own copy
+// implications — the privacy statement currently promises the analytics "doesn't see anything you
+// do inside the tool", and a single custom event makes that false. See DECISIONS.md.
+import { Analytics } from '@vercel/analytics/react';
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
 // stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
@@ -171,6 +176,8 @@ export default function AppView({ vals }) {
       <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         <MobileShareView ms={vals.mobileShare} />
+        {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
+        <Analytics />
       </div>
     );
   }
@@ -443,6 +450,8 @@ export default function AppView({ vals }) {
           <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.4;letter-spacing:.01em;text-wrap:pretty')}>{vals.notice}</span>
         </div>
       )}
+
+      <Analytics />
     </div>
   );
 }

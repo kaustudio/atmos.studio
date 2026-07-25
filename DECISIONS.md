@@ -25,3 +25,22 @@ disclosed decision — not a default arriving through an integration.
 **Also required to make it stick:** Web Analytics must be disabled in the Vercel project itself
 (Vercel → project → Analytics). Closing the pull request without that invites the integration to
 open it again.
+
+---
+
+## 2026-07-25 — Analytics: reversed
+
+**Decision:** Vercel Web Analytics (page views only) is enabled. **Supersedes the entry above and
+[#6](https://github.com/kaustudio/atmos.studio/pull/6)** — which is left in place deliberately, so
+the record reads as a reversal rather than as if the first decision never happened.
+
+**Rationale:** visit counts are wanted; the provider is cookieless and aggregated; and the privacy
+statement was updated in the same pull request rather than a later one.
+
+**What did not change:** no accounts, no cross-site tracking, no behavioural events, and nothing
+about images, palettes or the archive ever leaving the browser.
+
+**Explicitly still unmade:** custom/behavioural events. `track()` is not called anywhere, and the
+privacy statement now promises the analytics "doesn't see anything you do inside the tool" — one
+custom event makes that false. Instrumenting generation, export or any in-app action is a separate
+decision with its own copy implications, and the mount in `AppView.jsx` carries a comment saying so.
