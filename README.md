@@ -109,7 +109,7 @@ copy must change in the same commit**:
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
    Moving share data into a query string (`?p=`) would make it false immediately.
 4. **Analytics** — Vercel Web Analytics (page views only, cookieless, aggregated) is enabled
-   as of `__SHA__`. If custom events are ever added, or any other analytics provider, this
+   as of `f82dfaa`. If custom events are ever added, or any other analytics provider, this
    paragraph must name what is collected in the same commit. The one other third-party
    request the app can make is unchanged: if the vendored GSAP fails to load it falls back to
    `cdn.jsdelivr.net` (`PaletteApp.jsx`).
