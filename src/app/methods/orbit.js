@@ -10,7 +10,7 @@ export const orbitMethods = {
     const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     const cv = document.createElement('canvas'); cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     const ctx = cv.getContext('2d'); const W = cv.width, H = cv.height;
-    // lead with each palette's most chromatic swatches so the five tiles read as five distinct moods,
+    // lead with each palette's most chromatic swatches so the tiles read as distinct moods,
     // and amplify the palette's own cast (same hues, stronger voice) — near-neutrals diverge instead of merging
     const chroma = (hx) => { const c = this.hexToRgb(hx); return Math.max(...c) - Math.min(...c); };
     const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
@@ -36,31 +36,115 @@ export const orbitMethods = {
     if (ctx.filter !== undefined) ctx.filter = 'none';
     // dither — subtle noise so the baked gradients never band
     try {
-      const img = ctx.getImageData(0, 0, W, H), d = img.data;
-      for (let q = 0; q < d.length; q += 4) { const nz = (Math.random() - 0.5) * 5; d[q] += nz; d[q + 1] += nz; d[q + 2] += nz; }
-      ctx.putImageData(img, 0, 0);
+      ctx.fillStyle = ctx.createPattern(this._orbitDitherTile(), 'repeat'); ctx.fillRect(0, 0, W, H);
     } catch (e) { }
     return cv.toDataURL('image/jpeg', 0.92);
   },
-  // orbit tiles are driven by the reference palettes, not the archive seeds
+  // The dither field, built ONCE per visit and tiled onto every orb. It used to be a per-pixel JS
+  // pass over each tile's ImageData, which is fine for five tiles and not fine for twelve: at DPR 2
+  // that loop is ~340k pixels per orb, and it runs synchronously inside the arrival, ahead of GSAP.
+  // Measured on this machine, twelve tiles cost 129ms that way and 57ms this way — less than the
+  // FIVE old tiles cost (40ms) plus what the seven new ones would have added. Same ±2.5/255 speckle,
+  // same job (break the gradient banding); it is simply generated once instead of twelve times.
+  // Sharing one field across orbs is safe because the orbs are never adjacent copies of each other.
+  _orbitDitherTile() {
+    if (this._ditherTile) return this._ditherTile;
+    const n = document.createElement('canvas'); n.width = n.height = 256;
+    const nx = n.getContext('2d'), im = nx.createImageData(256, 256), d = im.data;
+    for (let q = 0; q < d.length; q += 4) {
+      d[q] = d[q + 1] = d[q + 2] = Math.random() < 0.5 ? 255 : 0;   // half lift, half sink…
+      d[q + 3] = Math.round(Math.random() * 10);                     // …at up to 4% alpha ⇒ ±2.5 at mid grey
+    }
+    nx.putImageData(im, 0, 0);
+    this._ditherTile = n; return n;
+  },
+  // ---- The reference palettes. Orbit tiles are driven by these, not by the archive seeds.
+  //
+  // THE RING IS THE TOOL'S OWN HARMONY ENGINE, RUN IN PUBLIC. Every hex below is generated in
+  // OKLCH and gamut-mapped through the same `gamutMap` the Harmonies drawer uses, so the landing
+  // cannot drift from what the tool actually does. Nothing here is hand-picked.
+  //
+  // What the five hand-authored palettes got wrong, measured. Their hues sat at 58/35/125/237/335:
+  // two of the five were orange and a third of the wheel — yellow, cyan, violet — never appeared at
+  // all. The cool ones ran at a third of the warm ones' chroma (steel peaked at C 0.045, and its
+  // lift at 0.019 fell below the 0.02 floor `reading.js` calls a grey), so the ring read warm and
+  // dusty rather than spectral. And each palette moved less than 20° of hue end to end, which makes
+  // an orb a tonal ramp of ONE colour. Five brightnesses of brown is not a palette, and the ring is
+  // the first thing this tool says about itself.
+  //
+  // Colour now travels on two axes:
+  //   ACROSS the ring — 12 stations 30° apart, one full revolution. The front ring holds exactly
+  //     12 orbs, so it wears the whole wheel once, in order (see `orbitTileURLs`).
+  //   WITHIN an orb — a named harmony out of `harmonyGroups`' own vocabulary, so hue TRAVELS
+  //     46–150° inside a single orb instead of standing still. That travel IS the palette the tile
+  //     bake pools; without it the gradient has nothing to be made of.
+  //
+  // The one rule the counter-hue obeys: it is never both large AND fully chromatic. A 180° rotation
+  // at full chroma blends through neutral wherever it meets the base and turns the orb to mud —
+  // that was built and it looked it. So the counter-hue is always given a small slot at reduced
+  // chroma (see HARM below, and the note on which slots are small): a cast in the orb's atmosphere,
+  // never a second subject competing with the first.
   _orbitRefPalettes() {
     const P = (hexes) => ({ swatches: hexes.map((hex, i) => ({ hex, weight: 1 - (i * 0.15) })) });
-    // one harmonious spectrum across the ring: five hues spaced evenly around the wheel
-    // (amber → terracotta → sage → steel → plum), all at the same muted chroma register and the
-    // same tonal spread (dominant mid / light lift / deep shadow) so the orbs complement, not clash
+    const oklch = (L, C, deg) => { const H = deg * Math.PI / 180; return this.gamutMap(L, C * Math.cos(H), C * Math.sin(H)); };
+    // The tonal spread, unchanged in shape from the hand-authored set it replaces: a dominant mid,
+    // a light lift, a deep shadow. Chroma falls off at both ends — a lift that stays saturated
+    // reads as a second colour, and a shadow that does never sits behind the light.
+    const TL = [0.86, 0.74, 0.62, 0.50, 0.34];        // lift, light, MID, mid-dark, deep
+    const TC = [0.55, 0.90, 1.00, 0.85, 0.38];        // chroma as a fraction of the palette's own
+    // Per harmony: `h` rotates each tone off the base hue, `c` scales that tone's chroma again.
+    //
+    // WHY THE DEEP TONE NEVER CARRIES THE COUNTER-HUE. It is tempting to put the complement in the
+    // shadow — warm light, cool shadow, the oldest move in painting — and on the DOM floor it works.
+    // On the shader it does not: `orb-shader.js` resolves the deepest swatch as the ambient floor
+    // (`col=mix(u_c4*.9,col,…)`), so it is not an accent there, it is the entire unlit hemisphere.
+    // A complement in that slot paints half the orb a foreign colour and the terminator turns to
+    // sludge — built, looked at, reverted. The counter-hue lives in the mid-dark (u_c2, a
+    // domain-warped patch) or in the light tone at reduced chroma. The deep stays home.
+    const HARM = {
+      analogWide:  { h: [-40, -20, 0, 24, 46],  c: [1, 1, 1, 1, 1] },     // 86° of drift — the richest gradient
+      analogTight: { h: [-24, -12, 0, 14, 28],  c: [1, 1, 1, 1, 1] },     // 52° — the calm majority
+      splitAccent: { h: [-28, -14, 0, 148, 32], c: [1, 1, 1, 0.55, 1] },  // split-complement in the mid-dark
+      compAccent:  { h: [-26, -13, 0, 180, 30], c: [1, 1, 1, 0.50, 1] },  // the true complement, chroma halved
+      triadAccent: { h: [-22, -11, 0, 120, 30], c: [1, 1, 1, 0.60, 1] },  // a third of the wheel, in the mid-dark
+      triadLift:   { h: [-25, 112, 0, 20, 36],  c: [1, 0.60, 1, 1, 1] },  // a third of the wheel, in the airy tone
+    };
+    // 12 stations. Two things are deliberately NOT flat across them:
+    //   CHROMA — the warms stay the loudest voices (the surface and the key light are both warm)
+    //     and the cools sit back, but every station now clears the chroma floor the old steel and
+    //     plum fell through.
+    //   LIGHTNESS (dL) — yellow and yellow-green carry their chroma high; run them on the same ramp
+    //     as blue and they read as olive sludge rather than gold. Those two stations get the ramp
+    //     lifted. This is a fact about the gamut, not a preference.
     return [
-      P(['#b77743', '#dca96b', '#955c34', '#e7c79d', '#453424']),  // amber — warm anchor
-      P(['#c76850', '#e39576', '#9f5141', '#eabda4', '#5a352d']),  // terracotta — dusk warmth
-      P(['#7b8b62', '#9dab83', '#5c694a', '#cbd2b9', '#3f4733']),  // sage — quiet green bridge
-      P(['#5a778a', '#8ba3b3', '#3f5562', '#c7d6dd', '#2b373e']),  // steel — cool counterweight
-      P(['#896981', '#ad8fa7', '#644c60', '#d0bac9', '#40323d']),   // plum — closes the circle
-    ];
+      { H: 30,  k: 'analogWide',  C: 0.125 },             // ember      — red, the warm anchor
+      { H: 58,  k: 'splitAccent', C: 0.115, dL: 0.03 },   // amber      — orange with a teal accent
+      { H: 88,  k: 'analogTight', C: 0.105, dL: 0.06 },   // ochre      — yellow, absent from the old set
+      { H: 118, k: 'compAccent',  C: 0.090, dL: 0.04 },   // moss       — green against its violet
+      { H: 148, k: 'analogWide',  C: 0.095 },             // sage       — the quiet green bridge, kept
+      { H: 178, k: 'triadLift',   C: 0.080 },             // verdigris  — cyan, absent from the old set
+      { H: 205, k: 'analogTight', C: 0.078 },             // teal       — the coolest station
+      { H: 235, k: 'triadAccent', C: 0.088 },             // steel      — blue, the cool counterweight
+      { H: 265, k: 'analogWide',  C: 0.098 },             // indigo     — absent from the old set
+      { H: 295, k: 'splitAccent', C: 0.088 },             // violet     — absent from the old set
+      { H: 325, k: 'analogTight', C: 0.098 },             // plum       — kept, with the chroma it never had
+      { H: 355, k: 'compAccent',  C: 0.115 },             // rose       — closes the circle back onto ember
+    ].map((st) => {
+      const hm = HARM[st.k], dL = st.dL || 0;
+      const t = (i) => oklch(Math.min(0.93, TL[i] + dL), st.C * TC[i] * hm.c[i], st.H + hm.h[i]);
+      return P([t(2), t(1), t(3), t(0), t(4)]);   // [mid, light, mid-dark, lift, deepest] — the authoring
+    });                                          // order every consumer re-sorts from (see _paintOrbitTiles)
   },
   orbitTileURLs() {
     if (this._orbitURLs) return this._orbitURLs;
-    // shuffle which reference palette drives which tile — fresh assignment every arrival
-    const seeds = this._orbitRefPalettes();
-    for (let i = seeds.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [seeds[i], seeds[j]] = [seeds[j], seeds[i]]; }
+    // ROTATE the wheel, never shuffle it. A shuffle was fresh every arrival but destroyed the one
+    // thing the 12 stations are for — neighbouring orbs being neighbouring hues. Turning the whole
+    // wheel by a random number of stations, in a random direction, is just as unrepeatable and
+    // leaves the spectrum intact: the ring always reads as one revolution, just not from the same
+    // place twice.
+    const ref = this._orbitRefPalettes(), n = ref.length;
+    const start = Math.floor(Math.random() * n), dir = Math.random() < 0.5 ? 1 : -1;
+    const seeds = Array.from({ length: n }, (_, i) => ref[((start + i * dir) % n + n) % n]);
     this._orbitPalettes = seeds;
     this._orbitURLs = seeds.map((p) => this._orbitTileURL(p.swatches, 290, 290));
     return this._orbitURLs;
@@ -77,7 +161,11 @@ export const orbitMethods = {
     const bl = ctx.createRadialGradient(L.x * 128, L.y * 128, 0, L.x * 128, L.y * 128, 110);
     bl.addColorStop(0, 'rgba(255,250,240,0.55)'); bl.addColorStop(0.4, 'rgba(255,250,240,0.16)'); bl.addColorStop(1, 'rgba(255,250,240,0)');
     ctx.fillStyle = bl; ctx.fillRect(0, 0, 128, 128);
-    (this._orbitPalettes || []).slice(0, 4).forEach((p, i) => {
+    // four tints, sampled a QUARTER-WHEEL apart rather than off the front of the list — the four
+    // corners of the room should carry four different parts of the spectrum, not four neighbours.
+    const pals = this._orbitPalettes || [];
+    [0, 0.25, 0.5, 0.75].map((f) => pals[Math.round(f * pals.length) % (pals.length || 1)]).forEach((p, i) => {
+      if (!p) return;
       const hex = p.swatches[0].hex, x = [104, 24, 110, 20][i], y = [100, 110, 30, 40][i];
       const gr = ctx.createRadialGradient(x, y, 0, x, y, 60);
       gr.addColorStop(0, this.hexA(hex, 0.18)); gr.addColorStop(1, this.hexA(hex, 0));
@@ -169,8 +257,10 @@ export const orbitMethods = {
     const L = this.ORB_LIGHT, Lpc = Math.round(L.x * 100) + '% ' + Math.round(L.y * 100) + '%';
     const fld = this._ringField(), rings = this._rings();
     [...document.querySelectorAll('[data-orbit-card]')].forEach((c, i) => {
-      // the five reference tiles/palettes dress the whole formation — colour is what varies orb to
-      // orb, so the bake stays five canvases however many orbs the rings hold
+      // The 12 reference tiles dress the whole formation, and the count is not arbitrary: the front
+      // ring holds exactly 12 orbs, so `i % urls.length` walks it round one full revolution of the
+      // wheel — neighbouring orbs are neighbouring hues, and the ring reads as a spectrum rather
+      // than as a bag of colours. The back ring's 21 keep cycling the same 12.
       if (urls.length) c.style.backgroundImage = 'url(' + urls[i % urls.length] + ')';
       c.querySelectorAll('[data-orb-fx]').forEach((el) => { try { el.remove(); } catch (e) { } });
       const item = c.parentElement;
@@ -672,7 +762,7 @@ export const orbitMethods = {
   },
   killOrbit() {
     this._landRevealed = false; this._killOrbGL(); this._killOrbitBlobs();
-    this._rng = null; this._noiseURL = null; this._envURL = null;   // per-visit seeds/maps — a return to the intro re-seeds fresh (and re-reads the theme)
+    this._rng = null; this._noiseURL = null; this._envURL = null; this._ditherTile = null;   // per-visit seeds/maps — a return to the intro re-seeds fresh (and re-reads the theme)
     this._orbitURLs = null; this._orbitPalettes = null;
     // the formation itself is parametric, so nothing about it needs re-seeding — only the palette
     // assignment above is per-visit. _ringFld/_orbSlots stay cached: they are pure config.
