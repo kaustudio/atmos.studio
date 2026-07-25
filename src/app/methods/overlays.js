@@ -113,7 +113,9 @@ export const overlayMethods = {
           if (this.state.feedView === 'grid') { this.buildUniverse(); }
           const wrap = document.querySelector('[data-list-wrap]');
           const rows = wrap ? [...wrap.querySelectorAll('[data-row]')] : [];
-          const focusTarget = rows.length ? rows[Math.min(idx, rows.length - 1)] : null;
+          // the row is a surface now; its focusable is the stretched hit button inside
+          const rowEl = rows.length ? rows[Math.min(idx, rows.length - 1)] : null;
+          const focusTarget = rowEl ? (rowEl.querySelector('[data-row-hit]') || rowEl) : null;
           if (focusTarget && focusTarget.focus) { try { focusTarget.focus(); } catch (e) { } }
           else { const u = document.querySelector('[data-undo-btn]'); if (u) try { u.focus(); } catch (e) { } }
         });
@@ -263,6 +265,50 @@ export const overlayMethods = {
     });
   },
   trapHarmony(e) { this.trapFocusIn('[data-harmony-dialog]', e); },
+
+  // ===== tag filter drawer (same family as contrast + harmonies: right drawer, one reversible
+  // timeline, Escape/backdrop/Close all reverse it, focus captured on open and restored on close) =====
+  openTagFilter() {
+    this._tagBack = document.activeElement; this._tgDone = false;
+    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Tag filter opened. Press Escape to close.' }, () => {
+      requestAnimationFrame(() => {
+        // focus lands in the search field — the drawer exists to be typed at
+        const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { }
+        try { this.buildTagTimeline(); if (this._tgTl) this._tgTl.play(0); this._revealDrawerText('[data-tag-dialog]'); } catch (e) { }
+      });
+    });
+  },
+  buildTagTimeline() {
+    this._tgTl = null;
+    const g = window.gsap, root = document.querySelector('[data-tag-dialog]');
+    const backdrop = document.querySelector('[data-tg-backdrop]');
+    if (!g || !root) return;
+    const secs = [...root.querySelectorAll('[data-tg-sec]')];
+    const cells = [...root.querySelectorAll('[data-tg-cell]')];
+    const tl = g.timeline({ paused: true, onReverseComplete: () => this._finishTagClose() });
+    if (this._reduce) { if (backdrop) tl.from(backdrop, { opacity: 0, duration: .15, ease: 'none' }, 0); tl.from(root, { opacity: 0, duration: .15, ease: 'none' }, 0); this._tgTl = tl; return; }
+    if (backdrop) tl.from(backdrop, { opacity: 0, duration: .24, ease: this.EASE.standard }, 0);
+    tl.from(root, { xPercent: 100, duration: this.DUR.reveal, ease: this.EASE.entrance }, 0);
+    tl.from(secs, { y: 16, opacity: 0, duration: .42, ease: this.EASE.entrance, stagger: .055 }, this.DUR.reveal * 0.35);
+    if (cells.length) tl.from(cells, { opacity: 0, duration: .25, ease: this.EASE.standard, stagger: { each: .02, from: 'start' } }, this.DUR.reveal * 0.55);
+    this._tgTl = tl;
+  },
+  closeTagFilter() {
+    if (!this._tgTl) { this._finishTagClose(); return; }
+    this._tgTl.reverse();
+    clearTimeout(this._tgGuard);
+    this._tgGuard = setTimeout(() => this._finishTagClose(), (this._tgTl.duration() + 0.8) * 1000);
+  },
+  _finishTagClose() {
+    if (this._tgDone) return; this._tgDone = true;
+    clearTimeout(this._tgGuard);
+    const back = this._tagBack; this._tgTl = null;
+    this.setState({ tagMenuOpen: false, tagQuery: '', announce: 'Tag filter closed.' }, () => {
+      if (back && back.focus) try { back.focus(); } catch (e) { }
+      this._tagBack = null;
+    });
+  },
+  trapTagFilter(e) { this.trapFocusIn('[data-tag-dialog]', e); },
 
   // ===== token export =====
   download(filename, content, mime) {

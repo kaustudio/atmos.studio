@@ -122,10 +122,40 @@ export const persistenceMethods = {
   },
   hydrateProjects() { const parsed = this.loadPersisted(); return parsed ? parsed.projects : []; },
   // Scope the archive to the active project: null=All, '__unfiled__'=Unfiled, else a project id.
-  scopedFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => !p.projectId); return feed.filter((p) => p.projectId === a); },
+  // Two scoping axes, one pipeline. projectFeed is the project axis alone — the chip counts and the
+  // tag menu are built from it, so choosing a tag never narrows the menu it was chosen from (and an
+  // active tag can never delete its own way out of the UI). scopedFeed is what the whole app reads:
+  // list, universe, reel, pagination counts. There is no second filter path.
+  projectFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => !p.projectId); return feed.filter((p) => p.projectId === a); },
+  // Tags combine with AND: a palette must carry EVERY selected tag. Adding a tag narrows.
+  matchesTags(p, tags) { if (!tags || !tags.length) return true; const d = p.descriptors.map((x) => x.toLowerCase()); return tags.every((t) => d.indexOf(t) >= 0); },
+  scopedFeed(feed) { const t = this.state ? (this.state.activeTags || []) : []; const out = this.projectFeed(feed); return t.length ? out.filter((p) => this.matchesTags(p, t)) : out; },
   // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
   projectName(id) { if (!id) return 'Unfiled'; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : 'Unfiled'; },
-  setActiveProject(id) { this.setState({ activeProject: id, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); }); },
+  setActiveProject(id) { this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); }); },
+  // Tag scoping. Activating the pressed tag clears it — the chip is the toggle, so there is no
+  // separate "clear" control to find, and no way to end up filtered with nothing to unfilter with.
+  // Same shape as setActiveProject deliberately: same state pipeline, same universe rebuild, same
+  // page reset (a filtered list is a different list; page 4 of the old one means nothing).
+  // The ONE filter state. Pure now: the drawer's open/close lifecycle lives with the other
+  // drawers in overlays.js, and applying a filter no longer closes anything — the drawer stays
+  // up so the list re-filters live behind it and the next pick is one click away.
+  // Toggle one tag in or out of the selection. Every route into the filter — a row tag, a drawer
+  // option, an applied chip's ✕ — comes through here, so there is still exactly one filter state.
+  setActiveTag(tag) {
+    this.setState((st) => {
+      const cur = st.activeTags || [];
+      const on = cur.indexOf(tag) >= 0;
+      const next = on ? cur.filter((x) => x !== tag) : cur.concat([tag]);
+      const say = next.length === 0 ? 'Tag filter cleared.'
+        : (on ? 'Removed ' + tag + '. ' : 'Added ' + tag + '. ')
+          + 'Showing palettes tagged ' + next.join(' and ') + '.';
+      return { activeTags: next, page: 0, announce: say };
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+  },
+  clearTags() {
+    this.setState({ activeTags: [], page: 0, announce: 'Tag filter cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+  },
   createProject(name) {
     name = (name || '').trim(); if (!name) return null; const id = 'proj-' + Date.now() + Math.random().toString(36).slice(2, 6);
     this.setState((st) => ({ projects: [...st.projects, { id, name: name.slice(0, 60), createdAt: Date.now() }], announce: 'Project ' + name + ' created.' }), () => this.persist({ immediate: true })); return id;

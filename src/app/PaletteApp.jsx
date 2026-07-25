@@ -85,7 +85,11 @@ export default class PaletteApp extends React.Component {
     stage: this._shared ? 'result' : 'upload',
     current: this._shared || null,
     sharedView: !!this._shared,
-    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null,
+    // activeTags is a LIST, combined with AND: each tag added narrows the archive further. Union
+    // would widen on every pick, which makes a filter less useful the more you tell it.
+    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [],
+    // the tag facet: one disclosure control, closed by default; the query is typeahead state
+    tagMenuOpen: false, tagQuery: '',
     assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
@@ -94,6 +98,10 @@ export default class PaletteApp extends React.Component {
     landingDismissed: this._shared ? true : this._landingDismissed(),
     showLoader: this._shared ? false : this._loaderPending(),
     page: 0,
+    // List sort. 'time' desc is the archive's own default — newest first, what the feed already
+    // meant before there was anything to sort BY. Deliberately not persisted: page size is a
+    // standing preference, an ordering is a question you are asking of the list right now.
+    sortKey: 'time', sortDir: 'desc',
     narrow: (function () { try { return !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches); } catch (e) { return false; } })(),
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
@@ -168,6 +176,7 @@ export default class PaletteApp extends React.Component {
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
         if (this.state.fileMenuOpen) { e.preventDefault(); this.setState({ fileMenuOpen: false }); return; }
+        if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
         if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
@@ -182,8 +191,10 @@ export default class PaletteApp extends React.Component {
     this._onModPtr = () => { this._kbdInput = false; };
     document.addEventListener('keydown', this._onModKey, true);
     document.addEventListener('pointerdown', this._onModPtr, true);
-    this._listWheel = (e) => { if (this._reduce || !window.gsap || !this._readoutScale || this.state.feedView !== 'list') return; const v = 1 - window.gsap.utils.clamp(-0.035, 0.035, e.deltaY / 900); this._readoutScale(v); clearTimeout(this._roT); this._roT = setTimeout(() => { if (this._readoutScale) this._readoutScale(1); }, 90); };
-    window.addEventListener('wheel', this._listWheel, { passive: true });
+    // (Removed with the inline row expansion: a window-level wheel listener that scaled the expanded
+    // row's metric readout. Its only target was [data-row-values], which no longer exists — the row
+    // carries no readout to emphasise. If a per-row metric cluster returns, this is the hook to
+    // reinstate, on the new element.)
     this._storageHandler = (e) => this._onStorage(e);
     window.addEventListener('storage', this._storageHandler);
     // small-viewport surface as STATE, not just a CSS gate: the ring stage's context budget, fx
@@ -267,7 +278,6 @@ export default class PaletteApp extends React.Component {
     if (this._t) clearInterval(this._t);
     if (this._end) clearTimeout(this._end);
     if (this._onKey) document.removeEventListener('keydown', this._onKey);
-    if (this._listWheel) window.removeEventListener('wheel', this._listWheel);
     if (this._uRetryT) clearTimeout(this._uRetryT);
     if (this._objUrls) { this._objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) { } }); this._objUrls = []; }
     if (this._storageHandler) window.removeEventListener('storage', this._storageHandler);

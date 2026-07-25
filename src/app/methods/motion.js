@@ -49,6 +49,28 @@ export const motionMethods = {
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this.setState({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); this.setState({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 
+  // ===== list sort =====
+  // Each column's FIRST activation opens on the direction that answers the question people bring to
+  // it — most contrast, most accessible pairs, most recent — rather than a blanket ascending. A
+  // second activation on the same column flips it. Sorting resets to page 1: staying on page 4 of a
+  // reordered list shows a slice of rows that has nothing to do with what was just asked for.
+  SORT_LABELS: { contrast: 'max contrast', aa: 'AA pairs', time: 'date' },
+  setSort(key) {
+    this.setState((st) => {
+      const same = st.sortKey === key;
+      const dir = same ? (st.sortDir === 'desc' ? 'asc' : 'desc') : 'desc';
+      const highLow = key === 'time' ? ['newest first', 'oldest first'] : ['highest first', 'lowest first'];
+      return { sortKey: key, sortDir: dir, page: 0, announce: 'Sorted by ' + this.SORT_LABELS[key] + ', ' + highLow[dir === 'desc' ? 0 : 1] + '.' };
+    });
+  },
+  // One comparator for the list. Ties fall back to newest-first so equal metrics — which are common,
+  // AA pairs is a small integer — still land in a stable, meaningful order rather than an arbitrary one.
+  sortDecorated(rows, key, dir) {
+    const mul = dir === 'asc' ? 1 : -1;
+    const val = (d) => key === 'contrast' ? d.met.contrastMax : key === 'aa' ? d.met.aaPairs : d.p.time;
+    return rows.slice().sort((a, b) => ((val(a) - val(b)) * mul) || (b.p.time - a.p.time));
+  },
+
   // List selection is a quiet, in-place load into the TOP result (not the fullscreen detail),
   // reusing the shared reveal — the same surface a freshly generated palette occupies.
   loadIntoResult(p, rowEl) {
@@ -88,10 +110,16 @@ export const motionMethods = {
     const lums = sw.map((s) => this.relLum(s.hex));
     let cMax = 1, aa = 0;
     for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = lums[i], b = lums[j], r = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); if (r > cMax) cMax = r; if (r >= 4.5) aa++; }
+    const total = n * (n - 1) / 2;
     return {
       hue: Math.round(hue), chroma, lMin: Math.round(lMin * 100), lMax: Math.round(lMax * 100),
       temp: (avgA + avgB) > 0.008 ? 'Warm' : (avgA + avgB) < -0.008 ? 'Cool' : 'Neutral',
-      contrastMax: cMax, aaPairs: aa, totalPairs: n * (n - 1) / 2, mood: (p.archetype && p.archetype !== 'seed') ? p.archetype : (p.descriptors[0] || '').toLowerCase(),
+      contrastMax: cMax, aaPairs: aa, totalPairs: total,
+      // The verdict against WCAG AA (4.5:1, SC 1.4.3), stated in honest terms: pass only when EVERY
+      // pair clears it, fail only when NONE does, partial for everything between. "Has at least one
+      // usable pair" is not a pass — it is the definition of partial.
+      aaStatus: aa === 0 ? 'fail' : aa === total ? 'pass' : 'partial',
+      mood: (p.archetype && p.archetype !== 'seed') ? p.archetype : (p.descriptors[0] || '').toLowerCase(),
     };
   },
   // Resolve a CSS custom property to its concrete value in the ACTIVE theme (GSAP can't interpolate var()).
@@ -101,39 +129,34 @@ export const motionMethods = {
     if (!el) return; el.removeAttribute('data-hover'); if (el.getAttribute('data-cur') === '1') return;  // current row stays lit
     const g = window.gsap; if (this._reduce || !g) { el.style.background = 'var(--surface-raised)'; return; } g.to(el, { backgroundColor: this._cssVar('--surface-raised'), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
   },
-  _countUp(el, instant) {
-    const g = window.gsap; const nums = el.querySelectorAll('[data-count]');
-    nums.forEach((n) => {
-      const raw = n.getAttribute('data-count'); const t = parseFloat(raw); if (raw === '' || isNaN(t)) return;
-      const dec = parseInt(n.getAttribute('data-dec') || '0', 10), suf = n.getAttribute('data-suf') || '';
-      if (this._reduce || !g || instant) { n.textContent = t.toFixed(dec) + suf; return; }
-      const o = { v: t * 0.6 }; g.to(o, { v: t, duration: 0.6, ease: 'power4.out', overwrite: 'auto', onUpdate: () => { n.textContent = o.v.toFixed(dec) + suf; } });
-    });
-  },
-  // effect019 idea: scroll/drag lends a restrained, transform-only emphasis to the CURRENT readout, then settles.
-  _bindReadout(el) { const g = window.gsap; if (this._reduce || !g) return; const rv = el.querySelector('[data-row-values]'); if (!rv) { this._readoutScale = null; return; } this._readoutScale = g.quickTo(rv, 'scale', { duration: 0.5, ease: 'power4' }); },
-  // The expanded (reveal) row is the CURRENT/committed one — never hover. Hovering moves nothing.
-  // Animate the panel height only when the current row CHANGES (a click/commit), not on re-render.
+  // Selection no longer expands a row — it drives the overview panel above, and the row's only job
+  // here is to SHOW that it is the selected one. So this reconciles the selected surface and nothing
+  // else. It has to run imperatively (rather than from rowStyle) because rowTintOn/Off bake an
+  // inline background via GSAP on hover and focus; without this pass, a row that was hovered before
+  // it was selected would keep the hover value and the selected row could be left reading as plain.
+  //
+  // The colour is only ever the QUIET half of the selected state. The persistent, non-colour half —
+  // the left marker bar, the "Viewing" label and aria-current — is declarative in the view-model and
+  // is what actually survives a hovered neighbour looking momentarily identical.
   _syncListActive() {
     const wrap = document.querySelector('[data-list-wrap]'); if (!wrap) return;
     const rows = [...wrap.querySelectorAll('[data-row]')]; if (!rows.length) return;
     const g = window.gsap, reduce = this._reduce;
     const curRow = rows.find((r) => r.getAttribute('data-cur') === '1') || null;
     const curId = curRow ? curRow.getAttribute('data-rowid') : null;
-    const changed = (curId !== this._expandedCurId);
+    const changed = (curId !== this._selectedCurId);
     rows.forEach((r) => {
-      const panel = r.querySelector('[data-row-panel]'), medias = r.querySelectorAll('[data-media]');
-      if (r === curRow) {
-        r.style.background = 'var(--surface-white)';
-        medias.forEach((m) => { m.style.opacity = '1'; m.style.transform = 'none'; });
-        this._countUp(r, !changed); this._bindReadout(r);
-        if (panel) { if (changed && g && !reduce) { panel.style.height = 'auto'; const h = panel.scrollHeight; g.fromTo(panel, { height: 0 }, { height: h, duration: 0.44, ease: this.EASE.entrance, overwrite: 'auto', onComplete: () => { panel.style.height = 'auto'; } }); g.fromTo(medias, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'power4.out', overwrite: 'auto', stagger: { each: 0.04, from: 'random' } }); } else { panel.style.height = 'auto'; } }
-      } else {
-        if (r.getAttribute('data-hover') !== '1') r.style.background = 'var(--surface-raised)';
-        if (panel) { if (changed && g && !reduce && r.getAttribute('data-rowid') === this._expandedCurId) { g.to(panel, { height: 0, duration: 0.3, ease: this.EASE.exit, overwrite: 'auto' }); } else { panel.style.height = '0px'; } }
-      }
+      const selected = (r === curRow);
+      const token = selected ? '--surface-white' : '--surface-raised';
+      // Leave a hovered row alone: its own tween owns the background until the pointer leaves.
+      if (!selected && r.getAttribute('data-hover') === '1') return;
+      // Tween only the two rows whose selection actually flipped; every other row is set flat, so a
+      // re-render (pagination, delete, theme) never restages motion the user did not ask for.
+      const flipped = changed && (selected || r.getAttribute('data-rowid') === this._selectedCurId);
+      if (flipped && g && !reduce) g.to(r, { backgroundColor: this._cssVar(token), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
+      else r.style.background = 'var(' + token + ')';
     });
-    this._expandedCurId = curId;
+    this._selectedCurId = curId;
   },
 
   // ===== theme toggle (chrome only — never the palette swatches) =====
@@ -162,11 +185,22 @@ export const motionMethods = {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;
     const all = [...root.querySelectorAll('[data-fx]')];
-    if (this._reduce) { g.fromTo(all, { opacity: 0 }, { opacity: 1, duration: .4, ease: 'none' }); return; }
+    const meta = [...root.querySelectorAll('[data-meta]')];
+    if (this._reduce) { g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: .4, ease: 'none' }); return; }
     const split = all.filter((el) => el.hasAttribute('data-split'));
     const fx = all.filter((el) => !el.hasAttribute('data-split'));
     g.from(fx, { y: 14, opacity: 0, duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: delay });
     split.forEach((el) => this._maskLineReveal(el, delay));
+    // The metrics readout assembles as a sequence, from the same two primitives the page already
+    // owns: every [data-meta-line] rule draws left→right (the loader bar's scaleX-from-origin-0
+    // draw), and every [data-meta-split] text rises through the same masked line reveal as the
+    // name and rationale above — each one a beat later than the last (half the shared stagger, so
+    // eleven rules and ten texts overlap into one continuous pass down the block rather than
+    // eleven separate events). Rules lead by a breath; the words rise into ruled space.
+    const metaLines = [...root.querySelectorAll('[data-meta-line]')];
+    const metaSplits = [...root.querySelectorAll('[data-meta-split]')];
+    if (metaLines.length) g.from(metaLines, { scaleX: 0, transformOrigin: '0% 50%', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: delay + 0.1, clearProps: 'transform' });
+    metaSplits.forEach((el, i) => this._maskLineReveal(el, delay + 0.16 + i * (this.DUR.stagger * 0.5)));
   },
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then

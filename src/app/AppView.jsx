@@ -66,7 +66,11 @@ const logoStyle = {
 const IconCopy = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M7.5 17V3h11v14zm-3 3V6.616h1V19h9.385v1z"></path></svg>);
 const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m9.55 18l-5.7-5.7l1.425-1.425L9.55 15.15l9.175-9.175L20.15 7.4z"></path></svg>);
 const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true"><circle cx="5.2" cy="7" r="3.4"></circle><circle cx="8.8" cy="7" r="3.4"></circle></svg>);
-const IconContrast = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M8.493 20.292q-1.643-.709-2.859-1.924t-1.925-2.856T3 12.003t.709-3.51Q4.417 6.85 5.63 5.634t2.857-1.925T11.997 3t3.51.709q1.643.708 2.859 1.922t1.925 2.857t.709 3.509t-.708 3.51t-1.924 2.859t-2.856 1.925t-3.509.709t-3.51-.708m4.007-.31q3.09-.201 5.295-2.458T20 12t-2.185-5.505Q15.628 4.258 12.5 4.017z"></path></svg>);
+// Sort chevron — drawn at the same 1-unit hairline weight as the rest of the icon set, so it sits
+// in the header without shouting. It points DOWN at rest (descending) and rotates 180° to point up
+// for ascending; the rotation is the state change, so the glyph never swaps out from under the eye.
+const IconChevron = ({ size = 9 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" aria-hidden="true" style={{ display: 'block' }}><path d="M5 9l7 7 7-7"></path></svg>);
+const IconContrast = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M8.493 20.292q-1.643-.709-2.859-1.924t-1.925-2.856T3 12.003t.709-3.51Q4.417 6.85 5.63 5.634t2.857-1.925T11.997 3t3.51.709q1.643.708 2.859 1.922t1.925 2.857t.709 3.509t-.708 3.51t-1.924 2.859t-2.856 1.925t-3.509.709t-3.51-.708m4.007-.31q3.09-.201 5.295-2.458T20 12t-2.185-5.505Q15.628 4.258 12.5 4.017z"></path></svg>);
 const IconExport = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m12 15.577l-3.539-3.538l.708-.72L11.5 13.65V5h1v8.65l2.33-2.33l.709.719zM5 19v-4.038h1V18h12v-3.038h1V19z"></path></svg>);
 const IconFolder = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}><path fill="currentColor" d="M3 19V5h6.596l2 2H21v12zm1-1h16V8h-8.806l-2-2H4zm0 0V6z"></path></svg>);
 // Redrawn from the supplied mdi link glyph at this set's stroke weight. The source was ~2 units of
@@ -299,11 +303,17 @@ export default function AppView({ vals }) {
 
       <header style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 16px;border-bottom:1px solid var(--line-strong);background:var(--surface);position:sticky;top:0;z-index:10')}>
         <p data-current-time="" style={sx('margin:0;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:1px')}><span data-current-time-hours="">--</span>:<span data-current-time-minutes="">--</span>:<span data-current-time-seconds="">--</span><span data-current-time-timezone="" style={{ marginLeft: '7px' }}>CET</span></p>
-        <div style={sx('display:flex;align-items:center;gap:10px')}>
-          {vals.canReset && (
-            <B006 onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New generation</span>} />
-          )}
-          <B006 data-focus="chrome" role="switch" aria-checked={vals.isDark} onClick={vals.toggleTheme} aria-label="Toggle dark theme" title="Light / dark" label={themeSwitchLabel(vals)} />
+        {/* New generation drives the core loop; the theme switch is a display preference. They sat
+            at identical weight, so the bar read as two settings. Now: the loop control is filled
+            and comes first in the DOM (so it is also first to tab to), the switch drops to utility
+            weight, and a hairline puts real space between them — the separation is spatial as well
+            as tonal, so the two never read as a pair of peers. */}
+        <div style={sx('display:flex;align-items:center;gap:14px')}>
+          {vals.canReset && (<>
+            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New generation</span>} />
+            <span aria-hidden="true" style={sx('width:1px;height:22px;flex:none;background:var(--line-strong)')}></span>
+          </>)}
+          <B006 data-emphasis="utility" data-focus="chrome" role="switch" aria-checked={vals.isDark} onClick={vals.toggleTheme} aria-label="Toggle dark theme" title="Light / dark" label={themeSwitchLabel(vals)} />
         </div>
       </header>
 
@@ -322,13 +332,13 @@ export default function AppView({ vals }) {
             <span style={sx('font-family: Neue Montreal; font-size: 13px; letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
-          {/* Trust copy sits OUTSIDE the dropzone button — inside, it would join the button's
-              accessible name. The trust line is unconditional and true of every build; the sentence
-              under it is additive and renders only where a live path actually exists, so the pair
-              stays literally true in both worlds. */}
-          <p style={sx("max-width:520px;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>Everything stays in your browser — nothing is uploaded or stored on us.</p>
+          {/* Sits OUTSIDE the dropzone button — inside, it would join the button's accessible name.
+              Renders only where a live interpretation path actually exists, so it never promises a
+              network call this build cannot make. (The unconditional "everything stays in your
+              browser" line that used to lead it was removed by request; the claim itself still
+              stands in the README and on /privacy.html.) */}
           {vals.showInterpNote && (
-            <p style={sx("max-width:520px;margin:6px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</p>
+            <p style={sx("max-width:520px;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</p>
           )}
         </>)}
 
@@ -379,19 +389,30 @@ export default function AppView({ vals }) {
                 </div>
               ))}
             </div>
-            <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:18px 0 0')}>
-              <B006 onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-                label={<SwapLabel copied={vals.hexListCopied} idle="Hex list" />} />
-              <B006 onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-                label={<SwapLabel copied={vals.cssCopied} idle="CSS variables" />} />
-              <B006 btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-              <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-              <B006 onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+            {/* Action row, ordered by what the user came to do. DOM order IS the visual order IS
+                the tab order — Export first, the utilities last — so a keyboard traveller meets
+                the actions in the same sequence the eye does. */}
+            {/* One 8px rhythm across the whole row — between Export and Contrast, on both sides of
+                the hairline, and between the three utilities — matching the archive header's bar.
+                The utilities used to sit at 2px, which was right when they were borderless ghosts
+                and tight clustering read as one object; now that they carry the system's 15% edge,
+                2px reads as buttons touching. Same spacing, so the row has one rhythm. */}
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
+              {/* tier 1 — the payoff; the only filled control on this surface */}
+              <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+              {/* tier 2 — inspection, not a destination: outlined, unfilled */}
+              <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+              {/* tier 3 — convenience exits. Held in their own group behind a hairline so the
+                  break reads as grouping rather than as a gap that a wrap could invent; keeping
+                  the three together also means they wrap as a cluster, never one at a time. */}
+              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+                <B006 data-emphasis="utility" onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
+                  label={<SwapLabel copied={vals.hexListCopied} idle="Hex list" />} />
+                <B006 data-emphasis="utility" onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
+                  label={<SwapLabel copied={vals.cssCopied} idle="CSS variables" />} />
+                <B006 data-emphasis="utility" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+              </div>
             </div>
-            {/* Persistent rather than tied to the copied state: the copied flag clears after 1.5s,
-                which is too fleeting to read a privacy claim in — and it is reassurance wanted
-                BEFORE sending a link, not after. */}
-            <p style={sx("margin:10px 0 0;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>The link carries the palette itself — the part after # is never sent to a server.</p>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
                 <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:44px;line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
@@ -401,16 +422,62 @@ export default function AppView({ vals }) {
                   ))}
                 </div>
               </div>
-              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:20px')}>
+              {/* rationale only — the reference image moved down into the metadata row, which
+                  frees this column's height and lets the name/rationale block sit closer to it */}
+              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
                 <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:68px")}>{vals.result.rationale}</p>
-                <div data-fx="1" style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:8px')}>
-                  {vals.result.hasRef && vals.result.refImageNode}
-                  {vals.result.noRef && (
-                    <div aria-hidden="true" style={sx('width: 128px; height: 64px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                      <span style={sx('font-family:Neue Montreal;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
-                    </div>
-                  )}
+              </div>
+            </div>
+            {/* The palette's metadata readout — the detail pane's bottom line, restored from the
+                old inline row expansion. A hairline seals it off from the name/rationale block
+                above so it reads as the pane's data footer rather than a third free-floating
+                horizontal band. Inside, three GROUPS (Colour / Accessibility / Reading), each a
+                heading over an aligned label:value column — definition lists, because that is
+                literally what the content is, and a screen reader then pairs each term with its
+                value for free. Groups are the wrap unit: min-width per group, so a narrow window
+                stacks whole groups instead of shuffling seven pairs mid-line. data-fx joins the
+                pane's existing staggered reveal — no motion of its own. */}
+            {/* Every tier speaks --track-flat — the design's single flat-tracking source, the same
+                voice the action row's labels use. Hierarchy: weight 500→400, size 9→8→13, ink
+                full→muted→full, case. Structure: ruled rows and heading underlines only — no left
+                column rules; the columns hold their own line through alignment and the gap.
+                The rules are ELEMENTS, not borders, because they perform: each [data-meta-line]
+                draws left→right (the loader bar's scaleX draw) and each [data-meta-split] text
+                rises through the same masked line reveal the name and rationale use — staggered
+                down the block from one delay in animateText, so the readout assembles as a
+                sequence rather than appearing at once. Statically (no GSAP, reduced motion) they
+                are plain visible hairlines and plain visible text. */}
+            <div data-meta="1" role="group" aria-label="Palette metrics" style={sx('display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px 44px;margin-top:18px')}>
+              <span data-meta-line="1" aria-hidden="true" style={sx('display:block;flex:none;width:100%;height:1px;background:var(--line)')}></span>
+              {vals.result.detailMeta.map((g, gi) => (
+                <div key={gi} style={sx('flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column')}>
+                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
+                  <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
+                  <dl style={sx('display:flex;flex-direction:column;margin:0')}>
+                    {g.rows.map((m, mi) => (
+                      <div key={mi}>
+                        <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
+                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                          <dd data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:13px;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums;margin:0')}>{m.value}</dd>
+                        </div>
+                        <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
+              ))}
+              {/* the reference image, moved down from the rationale column into this row: it is
+                  provenance — the palette's source datum — so it belongs with the data. Pushed to
+                  the row's right edge (the same right margin the rationale keeps above), sized
+                  156×104 so it sits level with the columns beside it. data-fx keeps the y-fade it
+                  had in its old home; click-to-zoom unchanged. */}
+              <div data-fx="1" style={sx('flex:none;margin-left:auto')}>
+                {vals.result.hasRef && vals.result.refImageNode}
+                {vals.result.noRef && (
+                  <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -433,6 +500,7 @@ export default function AppView({ vals }) {
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />
+      <TagFilterDrawer vals={vals} />
       <ExportDialog vals={vals} />
       <AssignDialog vals={vals} />
       <ManageDialog vals={vals} />
@@ -462,11 +530,23 @@ export default function AppView({ vals }) {
 
 // ============================== FEED (list / universe / reel) ==============================
 function FeedSection({ vals }) {
+  // aria-labelledby, not aria-label: the region is named BY its visible heading, so the two can
+  // never drift apart the way a hardcoded "Recent generations" already had. No count beside it —
+  // the scope chips below carry live ones (ALL 24 / UNFILED 24), and a second number would be one
+  // more thing to keep in sync and nothing to read.
   return (
-    <section data-recent="1" aria-label="Recent generations" style={sx('width: 100%; padding: 40px 16px 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
-      <div style={sx('display:flex;align-items:center;gap:12px;margin-bottom:22px')}>
-        <h2 style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 15px; letter-spacing:var(--track-flat); color: var(--on-surface); margin: 0; text-transform: capitalize")}>Recent</h2>
-        <span style={sx('font-family: Neue Montreal; font-size: 10px; color: var(--on-surface-muted); text-transform: uppercase; letter-spacing:var(--track-flat)')}>{vals.feedCount} palettes</span>
+    <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px 16px 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
+      {/* The view switcher belongs on the heading line, not in the control bar below: it changes
+          how the WHOLE section is rendered, at the same altitude as the section's own title —
+          unlike filter and scope, which change what the list contains. Heading left, view control
+          right is also where it has always been, and where the eye goes looking for it. */}
+      {/* The view switcher and the file cluster stack on the right edge, so an unequal gap there
+          read as two loose objects rather than one right-hand column. Both gaps are now 8px on
+          screen. 7px rather than 8 because the file buttons are 29px inside a 31px control bar
+          (the bordered chip group is 2px taller than a plain button) and sit centred, adding 1px
+          before they begin — 7 + 1 = the 8 the file buttons keep between each other. */}
+      <div style={sx('display:flex;align-items:center;gap:12px;margin-bottom:7px')}>
+        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 15px; letter-spacing:var(--track-flat); color: var(--on-surface); margin: 0")}>Palette Overview</h2>
         {vals.feedHasItems && (
           <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;margin-left:auto')}>
             <span aria-hidden="true" style={vals.viewTogglePill}></span>
@@ -477,18 +557,69 @@ function FeedSection({ vals }) {
         )}
       </div>
 
+      {/* Three intent tiers, left to right in DOM = on screen = in the tab order:
+            1 · WHERE AM I  — project scoping + management (constant, structural)
+            2 · WHAT AM I SEEING — the tag filter (constant, changes what the list contains)
+            3 · MY DATA — archive file operations (rare, and now the quietest thing here)
+          The zones are told apart by proximity first (28px between tiers vs 8px inside one), so the
+          grouping survives greyscale and does not lean on colour. Tier 3 additionally drops to the
+          utility emphasis the action row already defines — 15% edge, muted ink — because rare,
+          heavy actions should not hold the same visual weight as the controls used every minute. */}
+      {/* 8px throughout, the same gap the file buttons and the Tier 2 controls already keep: with a
+          hairline doing the separating, the space only has to give the rule room to breathe, not
+          carry the grouping itself. The old 28px was sized for a world with no divider. */}
       {vals.showProjectsBar && (
-        <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px')}>
-          <div role="group" data-proj-group="1" aria-label="Filter palettes by project" style={sx('position:relative;display:inline-flex;padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
+        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px')}>
+          {/* ONE home for the project concept. The tab row was already project navigation; managing
+              projects used to be a second door to the same idea, standing in the utility cluster
+              wearing a utility button's clothes. Scoping and management now share one surface and
+              one border: the scope chips, then a hairline, then Manage. Nothing about the chips or
+              the sliding pill changes — Manage deliberately carries no data-proj-chip and no
+              aria-pressed, so the pill (which selects [data-proj-chip][aria-pressed="true"]) can
+              never mistake an action for a scope. */}
+          <div role="group" data-proj-group="1" aria-label="Projects" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
             <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
             {vals.projectChips.map((ch) => (
               <button key={ch.key} type="button" data-proj-chip="1" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} onClick={ch.onClick} style={ch.chipStyle}>{ch.label}<span style={ch.countStyle}>{ch.count}</span></button>
             ))}
+            <span aria-hidden="true" style={sx('flex:none;width:1px;margin:4px 4px;background:color-mix(in srgb, var(--on-surface) 15%, transparent)')}></span>
+            <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage projects — create, rename, or delete" style={vals.projManageStyle}>Manage</button>
           </div>
+          {/* TIER 2 — what am I seeing. The tag filter and its applied chip: controls that change
+              what the list CONTAINS, sitting beside the scopes that do the same at a broader grain.
+              The view switcher is not here — it changes how the whole section is rendered, so it
+              belongs on the heading line above. Sort stays in the column header and per-page stays
+              with the pager: both are view manipulation too, but they are bound to the thing they
+              act on, and lifting the sort labels out of their columns would undo the header/value
+              alignment this list is built on. */}
+          {vals.showFacet && (<>
+            {/* Divider between Tier 1 and Tier 2: the 28px gap alone left them reading as one long
+                strip of controls. A hairline states the boundary outright — same --line-strong the
+                section rules and the row separators already use, so the grouping is declared in the
+                system's own vocabulary rather than implied by whitespace. */}
+            <span aria-hidden="true" style={sx('flex:none;align-self:stretch;width:1px;background:var(--line-strong)')}></span>
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+              <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes by tag" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
+              {/* one chip per selected tag — each removable on its own, so a narrowing can be undone
+                  from either end rather than only all at once */}
+              {vals.appliedTags.map((t) => (
+                <button key={t.key} type="button" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
+                  {t.label}{t.count && <span style={sx('font-size:8.5px;opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: '9px' }}>✕</span>
+                </button>
+              ))}
+              {vals.hasAppliedTags && (
+                <button type="button" data-ix="press" data-focus="chrome" aria-label="Clear all tag filters" onClick={vals.clearAllTags} style={sx('background:none;border:none;padding:7px 8px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);cursor:pointer')}>Clear</button>
+              )}
+            </div>
+          </>)}
+          {/* TIER 3 — my data. Projects no longer lives here; what remains is archive file work,
+              used at machine changes and restores rather than daily. Pushed to the far end and
+              dropped to utility emphasis so it stops competing with the controls above it.
+              (Renaming these to verb + object and collapsing them into ONE entry point is Step B,
+              which was skipped — so they are still twin buttons reading "Save file / Open file".) */}
           <div style={sx('display:flex;align-items:center;gap:8px;margin-left:auto')}>
-            <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.onOpenManage} aria-haspopup="dialog" aria-label="Manage projects" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Projects</button>
             <div style={sx('position:relative;display:flex')}>
-              <button type="button" data-ix="solid" data-focus="chrome" aria-haspopup="menu" aria-expanded={vals.fileMenuOpen} onClick={vals.toggleFileMenu} aria-label="Save a project file" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;display:inline-flex;align-items:center;gap:7px')}>Save file<span aria-hidden="true" style={{ fontSize: '8px' }}>▾</span></button>
+              <button type="button" data-ix="solid" data-focus="chrome" aria-haspopup="menu" aria-expanded={vals.fileMenuOpen} onClick={vals.toggleFileMenu} aria-label="Save a project file" style={vals.tier3BtnStyle}>Save file<span aria-hidden="true" style={{ fontSize: '8px' }}>▾</span></button>
               {vals.fileMenuOpen && (<>
                 <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleFileMenu} aria-hidden="true"></div>
                 <div role="menu" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;min-width:230px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column')}>
@@ -509,7 +640,7 @@ function FeedSection({ vals }) {
                 </div>
               </>)}
             </div>
-            <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.onOpenFile} aria-label="Open a project file to import" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Open file</button>
+            <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.onOpenFile} aria-label="Open a project file to import" style={vals.tier3BtnStyle}>Open file</button>
             <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </div>
         </div>
@@ -527,51 +658,135 @@ function FeedSection({ vals }) {
       )}
       <div ref={vals.gridRef} onKeyDown={vals.onGridKey}>
 
+        {/* Sort header. It is NOT a table header — the rows below are buttons, not cells — so it
+            claims no table semantics it cannot honour: a labelled group of toggle buttons, with the
+            ordering announced through the live region on activation. Its columns are laid out from
+            the same tokens and the same 16px gap as the rows, and it ends on the same action
+            gutter, which is what puts the labels directly over their numbers. */}
+        {vals.showSortHeader && (
+          <div role="group" aria-label="Sort palettes" style={sx('display:flex;align-items:center;gap:16px;width:100%;padding:0 var(--row-action-gutter) 7px 16px')}>
+            <span aria-hidden="true" style={sx('flex:1;min-width:0')}></span>
+            {/* AA PAIRS owns its column: the ⓘ sits over the badge below it (both are the "what is
+                this" anchor), the sort label right-aligns over the pair count. Sorting still runs
+                on the true numbers, never on the badge. */}
+            <div style={sx('width:var(--row-aa-col);flex:none;display:inline-flex;align-items:center;gap:8px')}>
+              <div style={sx('position:relative;display:inline-flex')}>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line-strong);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                {vals.aaInfoOpen && (<>
+                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
+                  <div role="note" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;width:264px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>Contrast is tested against WCAG AA — 4.5:1, the minimum for normal text.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>The pair count is every two-colour pairing of the palette (5 colours → 10 pairs).</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Badge: ✓ every pair passes · ◐ some pairs pass · ✕ no pair passes.</span>
+                  </div>
+                </>)}
+              </div>
+              {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
+                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={{ ...col.style, marginLeft: 'auto' }}>
+                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex' }}><IconChevron /></span>}</span>{col.label}
+                </button>
+              ))}
+            </div>
+            {/* MAX CONTRAST and DATE each own their column outright */}
+            {vals.sortCols.filter((col) => col.key === 'contrast' || col.key === 'time').map((col) => (
+              <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={col.style}>
+                <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex' }}><IconChevron /></span>}</span>{col.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* LIST view (canonical) */}
         <div data-list-wrap="1" style={vals.listWrapStyle}>
           {vals.feedList.map((c) => (
             <div key={c.rowid} data-row-wrap="1" style={{ position: 'relative' }}>
-              <button type="button" data-row="1" data-feed="1" data-focus="card" data-cur={c.curFlag} data-rowid={c.rowid} disabled={c.disabled} aria-current={c.ariaCurrent} aria-label={c.aria} onMouseEnter={c.onEnter} onMouseLeave={c.onLeave} onFocus={c.onFocus} onBlur={c.onLeave} onClick={c.onClick} style={c.rowStyle}>
+              {/* The row was a single <button>, which made interactive tags inside it illegal HTML.
+                  Now it is a surface (this div carries the background, the selected sync and the
+                  hover tint) with a STRETCHED activation button covering it — the same overlay
+                  pattern the folder/delete buttons already use, just inset:0. The hit button is
+                  first in DOM so keyboard order leads with the row's main action, then its tags;
+                  it keeps data-feed so the list's arrow-key navigation still walks row to row. */}
+              <div data-row="1" data-cur={c.curFlag} data-rowid={c.rowid} onMouseEnter={c.onEnter} onMouseLeave={c.onLeave} style={c.rowStyle}>
+                <button type="button" data-row-hit="1" data-feed="1" data-focus="card" disabled={c.disabled} aria-current={c.ariaCurrent} aria-label={c.aria} onFocus={c.onHitFocus} onBlur={c.onHitBlur} onClick={c.onClick} style={sx('position:absolute;inset:0;z-index:1;background:transparent;border:0;padding:0;margin:0;cursor:inherit')}></button>
                 <span data-cmark="1" aria-hidden="true" style={c.markerStyle}></span>
-                <div data-row-main="1" style={sx('display:flex;align-items:center;gap:16px;width:100%;padding:13px 18px 13px 16px')}>
-                  <div aria-hidden="true" style={sx('display:flex;width:88px;height:14px;flex:none')}>
+                {/* One row, one job: recognition. The detail surface is the overview panel above —
+                    this row's only output is "which palette", so it holds a fixed height and every
+                    child stays on a single line. Nothing here may grow the row. */}
+                <div data-row-main="1" style={sx('display:flex;align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-action-gutter) 12px 16px')}>
+                  {/* The colour IS the row's identity — people recognise a palette by how it looks,
+                      not by an auto-generated name. So the strip leads and carries the mass: 24px
+                      tall, which with the 12px padding is exactly --row-list-height, making the
+                      strip the thing that DEFINES the row rather than a thumbnail sitting inside it.
+                      Fixed 160px (not proportional to the row) so the strips align into a column and
+                      stay comparable down the list. Bands use flexGrow: w(b) — the same
+                      share-to-width mapping as the overview and the universe card, from one shared
+                      w(); scaling the box up cannot drift the proportions. */}
+                  {/* Hairline because the strip is now the anchor: a pale palette's outer band sits
+                      at ~1.3:1 against --surface-raised, so without an edge the anchor bleeds into
+                      the row. --line is the same hairline the other media islands take (reference
+                      thumbnail, "No reference" box, universe card) — quiet by system decision, and
+                      matching that decision beats inventing a heavier border no sibling has.
+                      box-sizing is border-box globally, so the box stays exactly 160×24. */}
+                  <div aria-hidden="true" style={sx('display:flex;width:160px;height:24px;flex:none;border:1px solid var(--line)')}>
                     {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
                   </div>
-                  <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:16px;color:var(--on-surface);flex:none")}>{c.name}</span>
+                  {/* Secondary: down a step (16 → 13) and to regular weight. Still full --on-surface
+                      ink, not muted — it is the row's only text identifier and the one thing a
+                      screen reader leads with; subordination comes from size and weight, which is
+                      also what keeps the demotion legible without relying on colour. */}
+                  <span style={sx("font-family:'Neue Montreal';font-weight:400;font-size:13px;color:var(--on-surface);flex:none")}>{c.name}</span>
                   {c.isExample && (
                     <span style={sx('flex: none; font-family: Neue Montreal; font-size: 8px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 6px')}>Example</span>
                   )}
-                  <span style={sx("font-family:'Neue Montreal';font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.descriptors}</span>
+                  {/* "Viewing" sits with the name and the Example chip — the labels that say what
+                      this palette IS — and, structurally, it has to sit before the flexible column:
+                      appearing on the right would push the metric columns left on whichever row was
+                      selected, and a column that moves for one row is not a column. */}
                   {c.current && (
                     <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size: 9px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
                       <span style={sx('width:7px;height:7px;background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
                   )}
-                  <span style={sx("font-family:'Neue Montreal';font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:none")}>{c.time}</span>
+                  {/* the one flexible child — it absorbs every difference in name length, so that
+                      everything after it lands at a fixed offset from the row's right edge.
+                      Filter-in-context: each tag is a button riding above the stretched hit
+                      surface (z2 over z1) — clicking a tag filters, clicking anywhere else loads
+                      the palette. Same quiet voice as before; the active tag steps up in weight
+                      and ink and carries aria-pressed. */}
+                  <span style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:2px;overflow:hidden')}>
+                    {c.descriptorParts.map((d, di) => (
+                      <button key={di} type="button" data-ix="press" data-focus="chrome" disabled={c.disabled} aria-pressed={d.pressed} aria-label={d.aria} onClick={d.onClick} style={{ ...c.tagBtnBase, ...(d.on ? c.tagOn : c.tagOff) }}>{d.text}</button>
+                    ))}
+                  </span>
+                  {/* the accessibility cluster — verdict first, numbers second. The badge is the
+                      primary signal: fill AND glyph change per state (never colour alone), and a
+                      reader who has never heard of 4.5:1 still gets pass / partial / fail. The
+                      raw layer stays for whoever wants the actual numbers. Header shares the
+                      column token, so the cluster stacks into a true column down the list. */}
+                  {/* AA PAIRS — the verdict badge and the pair count it derives from, nothing
+                      else. Badge left (its own column of glyphs down the list), count right so
+                      the figures share one edge. */}
+                  <span style={c.aaCell}>
+                    <span style={c.aaBadgeStyle} title={c.aaBadgeTitle}>
+                      <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;line-height:1')}>
+                        {c.aaStatus === 'pass' && <IconCheck size={9} />}
+                        {c.aaStatus === 'partial' && <IconContrast size={9} />}
+                        {c.aaStatus === 'fail' && <span style={sx('font-size:8px;line-height:1')}>✕</span>}
+                      </span>
+                      AA
+                    </span>
+                    <span style={c.metricValue}>{c.aaValueText}</span>
+                  </span>
+                  {/* MAX CONTRAST — a separate measurement, so a separate column */}
+                  <span style={c.contrastCell}>{c.contrastValueText}</span>
+                  {/* absolute stamp as the value, relative as the hover layer; the row's aria
+                      sentence still ends "Generated 3h ago", so both forms reach every modality */}
+                  <span style={c.timeCell} title={c.timeRel}>{c.time}</span>
                 </div>
-                <div data-row-panel="1" style={c.panelStyle}>
-                  <div style={sx('display:flex;gap:18px;padding:2px 18px 20px 16px;align-items:stretch')}>
-                    {c.hasImage && (<span data-media="1" aria-hidden="true" style={c.mediaImgStyle}></span>)}
-                    {c.noImage && (<span data-media="1" aria-hidden="true" style={c.heroFallback}></span>)}
-                    <div style={sx('display:flex;flex:1;min-width:0;height:88px')} aria-hidden="true">
-                      {c.bigStrip.map((st, si) => (
-                        <div key={si} data-media="1" style={st.style}><span style={st.hexStyle}>{st.hex}</span></div>
-                      ))}
-                    </div>
-                    <div data-row-values="1" style={c.valuesStyle}>
-                      {c.metrics.map((m, mi) => (
-                        <div key={mi} style={sx('display:flex;flex-direction:column;gap:4px;min-width:64px')}>
-                          <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:#a3a39c;white-space:nowrap')}>{m.label}</span>
-                          <span data-count={m.count} data-dec={m.dec} data-suf={m.suf} style={sx('font-family:Neue Montreal;font-size:13px;letter-spacing:.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>{m.text}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </button>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;top:24px;right:52px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              </div>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:52px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;top:24px;right:16px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:16px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
@@ -835,17 +1050,78 @@ function DetailOverlay({ vals }) {
           <div style={sx('display:flex;flex-wrap:wrap;gap:8px')}>
             {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
           </div>
-          <div style={sx('display:flex;align-items:center;gap:10px')}>
-            <B006 onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-              label={<SwapLabel copied={overlay.hexListCopied} idle="Hex list" />} />
-            <B006 onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-              label={<SwapLabel copied={overlay.cssCopied} idle="CSS variables" />} />
-            <B006 onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-            <B006 onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+          {/* Same action hierarchy as the result view's row, and deliberately so: this is the same
+              job on a different surface, so Export leads, Contrast follows, and the copy actions sit
+              behind a hairline as utilities. A palette opened fullscreen from the grid must not
+              re-teach the user a different set of weights. (No Share here — the overlay has no
+              share affordance, so the utility cluster is a pair rather than a trio.) */}
+          <div style={sx('display:flex;align-items:center;gap:8px')}>
+            <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+            <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+              <B006 data-emphasis="utility" onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
+                label={<SwapLabel copied={overlay.hexListCopied} idle="Hex list" />} />
+              <B006 data-emphasis="utility" onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
+                label={<SwapLabel copied={overlay.cssCopied} idle="CSS variables" />} />
+            </div>
           </div>
         </div>
         <p style={sx("width:380px;flex:none;font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
       </footer>
+    </div>
+  );
+}
+
+// ============================== TAG FILTER DRAWER ==============================
+// Same family as the contrast + harmony drawers, deliberately: right drawer, dimmed blurred
+// backdrop, small label over a display title, Close in the header corner, sections that stagger in
+// on ONE reversible timeline (overlays.js drives it), Escape/backdrop/Close all reverse. What the
+// dropdown could never afford, the drawer spends on context: every tag with the dominant colour of
+// every palette that carries it — the tag's meaning shown in ink before it is clicked.
+function TagFilterDrawer({ vals }) {
+  if (!vals.facetOpen) return null;
+  return (
+    <div style={sx('position:fixed;inset:0;z-index:120')}>
+      <div data-tg-backdrop="1" onClick={vals.closeFacet} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-tag-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Filter palettes by tag" onKeyDown={vals.trapTagFilter} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
+        <header data-tg-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+          <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Tags</span>
+          </div>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close tag filter" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+        </header>
+
+        <div data-tg-sec="1" style={sx('padding:14px 22px 2px')}>
+          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every tag in the current scope with the colours that carry it, largest groups first. Pick one to filter the archive; pick it again to clear.</span>
+        </div>
+
+        <div data-tg-sec="1" style={sx('padding:16px 22px 0')}>
+          <input data-facet-search="1" data-focus="chrome" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+        </div>
+
+        <div data-tg-sec="1" role="group" aria-label="Tags" style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>
+          {vals.facetOptions.map((o) => (
+            <button key={o.key} type="button" data-tg-cell="1" data-ix="cell" data-focus="chrome" aria-pressed={o.pressed} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;cursor:pointer;color:var(--on-surface);font:inherit')}>
+              <span aria-hidden="true" style={{ ...sx('width:6px;height:6px;flex:none;background:var(--on-surface)'), opacity: o.active ? 1 : 0 }}></span>
+              <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;flex:none;font-weight:' + (o.active ? 500 : 400))}>{o.label}</span>
+              {/* which palettes a tiny tag actually covers — this is what makes two identical
+                  strips legible instead of puzzling: same palette named twice, same colours */}
+              <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.memberNames}</span>
+              <span aria-hidden="true" style={sx('display:flex;width:150px;flex:none;height:14px;border:1px solid var(--line)')}>
+                {o.strip.map((hex, hi) => (<span key={hi} style={{ flex: 1, background: hex }}></span>))}
+              </span>
+              <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none;min-width:14px;text-align:right')}>{o.count}</span>
+            </button>
+          ))}
+          {vals.facetEmpty && (
+            <span style={sx('padding:14px 2px;font-family:Neue Montreal;font-size:11px;color:var(--on-surface-muted)')}>No matching tags</span>
+          )}
+          {vals.facetClear && (
+            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

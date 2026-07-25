@@ -42,18 +42,23 @@ export const miscMethods = {
   _lenisStart() { if (this._lenis) { try { this._lenis.start(); } catch (e) { } } },
 
   // sliding pill behind the active project chip — measured (chips have variable widths)
+  // Every [data-proj-group] on the page, not just the first: the tag filter is the SAME chip group
+  // as the project filter, so it gets the same pill from the same code rather than a second
+  // "selected chip" treatment that would drift. A group with nothing pressed hides its pill — which
+  // is the tag group's normal resting state (no tag filter), and never the project group's.
   _updateProjPill() {
     try {
-      const grp = document.querySelector('[data-proj-group]'); if (!grp) return;
-      const pill = grp.querySelector('[data-proj-pill]'); if (!pill) return;
-      const cur = grp.querySelector('[data-proj-chip][aria-pressed="true"]');
-      if (!cur) { pill.style.opacity = '0'; return; }
-      const w = cur.offsetWidth, h = cur.offsetHeight, x = cur.offsetLeft, y = cur.offsetTop;
-      const first = pill.style.opacity !== '1';
-      if (first || this._reduce) { pill.style.transition = 'none'; } else { pill.style.transition = 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)'; }
-      pill.style.width = w + 'px'; pill.style.height = h + 'px';
-      pill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-      pill.style.opacity = '1';
+      document.querySelectorAll('[data-proj-group]').forEach((grp) => {
+        const pill = grp.querySelector('[data-proj-pill]'); if (!pill) return;
+        const cur = grp.querySelector('[data-proj-chip][aria-pressed="true"]');
+        if (!cur) { pill.style.opacity = '0'; return; }
+        const w = cur.offsetWidth, h = cur.offsetHeight, x = cur.offsetLeft, y = cur.offsetTop;
+        const first = pill.style.opacity !== '1';
+        if (first || this._reduce) { pill.style.transition = 'none'; } else { pill.style.transition = 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)'; }
+        pill.style.width = w + 'px'; pill.style.height = h + 'px';
+        pill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+        pill.style.opacity = '1';
+      });
     } catch (e) { }
   },
 
