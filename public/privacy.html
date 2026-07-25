@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy — Atmos Studio</title>
+<meta name="description" content="How Atmos Studio handles your images, palettes and data. Everything stays in your browser." />
+<link rel="icon" type="image/svg+xml" href="/assets/atmos-logo-black-v3.svg" />
+<style>
+  @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-display:swap}
+  @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-display:swap}
+  :root{--surface:#f5f5f3;--on-surface:#1a1a1a;--on-surface-muted:#63635b;--line:#e0e0db;color-scheme:light}
+  @media (prefers-color-scheme:dark){:root{--surface:#141413;--on-surface:#f3f3ef;--on-surface-muted:#a2a29a;--line:#333331;color-scheme:dark}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--on-surface);font-family:'Neue Montreal',system-ui,sans-serif;line-height:1.6}
+  main{max-width:660px;margin:0 auto;padding:64px 24px 96px}
+  .mark{display:block;width:132px;height:20px;background:var(--on-surface);
+        -webkit-mask:url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat;
+        mask:url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat}
+  h1{font-weight:500;font-size:34px;line-height:1.1;letter-spacing:-.02em;margin:40px 0 28px}
+  p{font-size:15px;margin:0 0 20px;text-wrap:pretty}
+  strong{font-weight:500}
+  code{font-size:.92em;padding:1px 4px;background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
+  a{color:var(--on-surface)}
+  .meta{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--on-surface-muted)}
+  .back{display:inline-block;margin-top:28px;font-size:12px;color:var(--on-surface-muted)}
+</style>
+</head>
+<body>
+<main>
+  <a href="/" aria-label="Atmos Studio"><span class="mark" role="img" aria-label="Atmos Studio"></span></a>
+  <h1>Privacy</h1>
+  <p>Atmos Studio runs in your browser.</p>
+  <p><strong>Your images never leave your device.</strong> The palette is extracted on your own machine — the image is read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build, the code that could send an image isn't merely switched off: it isn't part of the build at all.</p>
+  <p><strong>Your palettes are stored only in your browser.</strong> The archive lives in this browser's local storage. There is no server holding it, no account attached to it, and no way for us to see it. Clearing your browser data deletes it — which is why you can save a project file and keep your own copy, on your own disk.</p>
+  <p><strong>Share links carry the palette, not a lookup.</strong> A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never send that part to a server, so opening a shared link doesn't tell us — or anyone else — that you opened it, or what was in it.</p>
+  <p><strong>No accounts, no ads, no cross-site tracking.</strong> There is nothing to sign up for, no tracking cookies, and nothing sold or shared with anyone. We do use Vercel Web Analytics to see how many people visit — it's cookieless and aggregated, it doesn't identify you, doesn't follow you to other sites, and doesn't see anything you do inside the tool.</p>
+  <p><strong>What we can see.</strong> The site is hosted on Vercel, which keeps standard access logs for the files it serves. On top of that, Vercel Web Analytics gives us aggregate counts — visits, where links were shared from, rough location and device type. Nothing about your images, your palettes, or your archive: those never leave your browser in the first place.</p>
+  <p><strong>About interpretation.</strong> Some environments provide a model that can read an image's mood directly. Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up for high-density displays — is sent for that reading and is not stored. This public build doesn't include that path — palettes are named by a reading that runs locally, on your device.</p>
+  <p class="meta">Last updated: 25 July 2026 · Questions: <a href="mailto:hello@kau.studio">hello@kau.studio</a></p>
+  <a class="back" href="/">← Back to Atmos Studio</a>
+</main>
+</body>
+</html>

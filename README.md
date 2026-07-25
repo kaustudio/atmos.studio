@@ -77,11 +77,15 @@ copy, on your own disk.
 the URL after the `#`. Browsers never send that part to a server, so opening a shared link doesn't
 tell us — or anyone else — that you opened it, or what was in it.
 
-**No accounts, no analytics, no tracking, no ads.** There is nothing to sign up for, no tracking
-cookies, no analytics script, and nothing sold or shared with anyone.
+**No accounts, no ads, no cross-site tracking.** There is nothing to sign up for, no tracking
+cookies, and nothing sold or shared with anyone. We do use Vercel Web Analytics to see how many
+people visit — it's cookieless and aggregated, it doesn't identify you, doesn't follow you to other
+sites, and doesn't see anything you do inside the tool.
 
 **What we can see.** The site is hosted on Vercel, which keeps standard access logs for the files it
-serves — the same as any website on the internet. We don't add anything on top of that.
+serves. On top of that, Vercel Web Analytics gives us aggregate counts — visits, where links were
+shared from, rough location and device type. Nothing about your images, your palettes, or your
+archive: those never leave your browser in the first place.
 
 **About interpretation.** Some environments provide a model that can read an image's mood directly.
 Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up
@@ -104,10 +108,11 @@ copy must change in the same commit**:
    backup, or account feature invalidates it.
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
    Moving share data into a query string (`?p=`) would make it false immediately.
-4. **"no analytics"** — true until someone adds Vercel Analytics or similar. That is a copy change,
-   not just a config change — and the decision not to ship it is recorded in [`DECISIONS.md`](DECISIONS.md) (see PR #6), so the claim and its decision point at each other. One nuance: if the vendored GSAP fails to load, the app falls back to
-   `cdn.jsdelivr.net` (`PaletteApp.jsx`) — not tracking, but it is a third-party request, and the
-   only one the app can make.
+4. **Analytics** — Vercel Web Analytics (page views only, cookieless, aggregated) is enabled
+   as of `f82dfaa`. If custom events are ever added, or any other analytics provider, this
+   paragraph must name what is collected in the same commit. The one other third-party
+   request the app can make is unchanged: if the vendored GSAP fails to load it falls back to
+   `cdn.jsdelivr.net` (`PaletteApp.jsx`).
 5. **"a small downscaled thumbnail"** — describes the in-environment path only, and the size comes
    from `makeThumb` (`320 × devicePixelRatio`, DPR clamped to 3). If hosted interpretation ships,
    this sentence moves from conditional to permanent, and needs to name where it is sent and what is
