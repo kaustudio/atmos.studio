@@ -207,11 +207,15 @@ export const wipeMethods = {
       // ring the engine centred on it.
       try { if (landing) g.set(landing, { clearProps: 'transform,opacity' }); } catch (e) { }
       persist(() => {
-        const parts = [document.querySelector('header'), document.querySelector('main')].filter(Boolean);
-        if (instant || !parts.length) { clearParts(); return; }
-        g.from(parts, { y: '12vh', opacity: 0.4, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
-        // belt-and-braces: whatever happens to that tween, the tool must end fully opaque and unshifted
-        setTimeout(clearParts, Math.max(1600, this.DUR.reveal * 1000 + 400));
+        clearParts();   // clear any block transform a previous, interrupted run may have left behind
+        // The tool arrives here exactly as it does under the page loader: its own copy rises out of
+        // the masks, rather than the whole page block sliding up as one slab. Same destination, same
+        // arrival — the handoff and a cold load into the tool must not look like two different
+        // products. Armed behind the cover; the timeline reveals it as the panel's edge clears it.
+        if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }   // starved rAF: nothing to tween, just be there
+        this._dropRevealed = false;
+        this._dropLinesArm();
+        this._listRowsArm();
       });
     };
     const tl = g.timeline({ paused: true, onComplete: () => { if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; } layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null; g.set([panel, capT, capB, word], { clearProps: 'transform' }); this._wipeRunning = false; this._wipeTl = null; focusChrome(); } });
@@ -226,7 +230,9 @@ export const wipeMethods = {
       layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null;
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       try { if (landing) g.set(landing, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the landing frozen dim
-      if (!swapped) doSwap(true); else clearParts();   // the tool must come up even if the cover never played — plain, no tween
+      // the tool must come up even if the cover never played — plain, no tween. If the swap already
+      // armed the dropzone copy, force it visible rather than leaving it parked below its masks.
+      if (!swapped) doSwap(true); else { clearParts(); try { this._dropLinesReveal(g); this._listRowsReveal(); } catch (e) { } }
       focusChrome();
     }, 4000);
     this._wipeTl = tl;
@@ -242,6 +248,8 @@ export const wipeMethods = {
     tl.to(word, { yPercent: -130, duration: 0.6, ease: this.EASE.exit }, '>-0.05');
     tl.to(panel, { yPercent: -100, duration: 0.9, ease: this.EASE.entrance }, '<');
     tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
+    // dropzone copy rises just behind the panel's trailing edge — same offset the loader's fold uses
+    tl.call(() => { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }, null, '<+0.15');
     // built paused: wake the clock first, then pin the playhead to 0.
     try { g.ticker.wake(); } catch (e) { }
     tl.play(0);

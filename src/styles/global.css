@@ -110,15 +110,18 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      any of them ever resting on colour alone (WCAG 1.4.1). All values resolve through the chrome
      tokens above; introducing red/green here would put a colour vocabulary into a product whose
      entire language is ink on surface. */
-  --status-pass-surface:var(--on-surface);
-  --status-pass-ink:var(--surface);
-  --status-pass-line:var(--on-surface);
-  --status-partial-surface:transparent;
-  --status-partial-ink:var(--on-surface);
-  --status-partial-line:color-mix(in srgb,var(--on-surface) 42%,transparent);
-  --status-fail-surface:transparent;
-  --status-fail-ink:var(--on-surface-muted);
-  --status-fail-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
+  /* Named for the capability they report, not for a pass/fail grade — the states are
+     flexible (3+ usable pairs) / limited (1–2) / none (0). See paletteMetrics for the thresholds.
+     Weight still descends filled → outlined → ghost, so more capability reads as more presence. */
+  --status-flexible-surface:var(--on-surface);
+  --status-flexible-ink:var(--surface);
+  --status-flexible-line:var(--on-surface);
+  --status-limited-surface:transparent;
+  --status-limited-ink:var(--on-surface);
+  --status-limited-line:color-mix(in srgb,var(--on-surface) 42%,transparent);
+  --status-none-surface:transparent;
+  --status-none-ink:var(--on-surface-muted);
+  --status-none-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
   /* The row's right-hand action gutter, permanently reserved. It used to be opened on hover, which
      slid that row's columns 74px left while its neighbours stayed put — fine when the right edge
      held a timestamp nobody compared, unreadable once the columns became the point. The buttons

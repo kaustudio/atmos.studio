@@ -270,7 +270,7 @@ export const overlayMethods = {
   // timeline, Escape/backdrop/Close all reverse it, focus captured on open and restored on close) =====
   openTagFilter() {
     this._tagBack = document.activeElement; this._tgDone = false;
-    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Tag filter opened. Press Escape to close.' }, () => {
+    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Filters opened. Press Escape to close.' }, () => {
       requestAnimationFrame(() => {
         // focus lands in the search field — the drawer exists to be typed at
         const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { }
@@ -303,12 +303,11 @@ export const overlayMethods = {
     if (this._tgDone) return; this._tgDone = true;
     clearTimeout(this._tgGuard);
     const back = this._tagBack; this._tgTl = null;
-    this.setState({ tagMenuOpen: false, tagQuery: '', announce: 'Tag filter closed.' }, () => {
+    this.setState({ tagMenuOpen: false, tagQuery: '', announce: 'Filters closed.' }, () => {
       if (back && back.focus) try { back.focus(); } catch (e) { }
       this._tagBack = null;
     });
   },
-  trapTagFilter(e) { this.trapFocusIn('[data-tag-dialog]', e); },
 
   // ===== token export =====
   download(filename, content, mime) {

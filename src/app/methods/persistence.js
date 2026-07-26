@@ -129,7 +129,17 @@ export const persistenceMethods = {
   projectFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => !p.projectId); return feed.filter((p) => p.projectId === a); },
   // Tags combine with AND: a palette must carry EVERY selected tag. Adding a tag narrows.
   matchesTags(p, tags) { if (!tags || !tags.length) return true; const d = p.descriptors.map((x) => x.toLowerCase()); return tags.every((t) => d.indexOf(t) >= 0); },
-  scopedFeed(feed) { const t = this.state ? (this.state.activeTags || []) : []; const out = this.projectFeed(feed); return t.length ? out.filter((p) => this.matchesTags(p, t)) : out; },
+  // OR within the group: a palette holds exactly one accessibility state, so selecting two means
+  // "either of these", never "both" — which would be unsatisfiable.
+  matchesA11y(p, states) { if (!states || !states.length) return true; return states.indexOf(this.paletteMetrics(p).aaState) >= 0; },
+  scopedFeed(feed) {
+    const s = this.state || {};
+    const t = s.activeTags || [], a = s.activeA11y || [];
+    let out = this.projectFeed(feed);
+    if (t.length) out = out.filter((p) => this.matchesTags(p, t));
+    if (a.length) out = out.filter((p) => this.matchesA11y(p, a));
+    return out;
+  },
   // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
   projectName(id) { if (!id) return 'Unfiled'; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : 'Unfiled'; },
   setActiveProject(id) { this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); }); },
@@ -147,14 +157,29 @@ export const persistenceMethods = {
       const cur = st.activeTags || [];
       const on = cur.indexOf(tag) >= 0;
       const next = on ? cur.filter((x) => x !== tag) : cur.concat([tag]);
-      const say = next.length === 0 ? 'Tag filter cleared.'
+      // "Tag filter cleared" was a lie whenever an accessibility filter was still applied — the
+      // list stays filtered, just not by tags. Removing the last tag now announces the removal
+      // only; the panel's live match count carries what is actually left.
+      const say = next.length === 0 ? 'Removed ' + tag + '.'
         : (on ? 'Removed ' + tag + '. ' : 'Added ' + tag + '. ')
           + 'Showing palettes tagged ' + next.join(' and ') + '.';
       return { activeTags: next, page: 0, announce: say };
     }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
   },
+  // OR toggle within the accessibility group.
+  setA11yFilter(state) {
+    this.setState((st) => {
+      const cur = st.activeA11y || [];
+      const on = cur.indexOf(state) >= 0;
+      const next = on ? cur.filter((x) => x !== state) : cur.concat([state]);
+      const say = next.length === 0 ? 'Accessibility filter cleared.'
+        : 'Showing palettes with ' + next.join(' or ') + ' accessibility.';
+      return { activeA11y: next, page: 0, announce: say };
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+  },
+  // Clears BOTH groups — the single clear-all the panel and header share.
   clearTags() {
-    this.setState({ activeTags: [], page: 0, announce: 'Tag filter cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
   },
   createProject(name) {
     name = (name || '').trim(); if (!name) return null; const id = 'proj-' + Date.now() + Math.random().toString(36).slice(2, 6);

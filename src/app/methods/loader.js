@@ -16,9 +16,33 @@ const CATCHUP_FORCED = 0.10;   // ...once the budget is spent: still a fill, jus
 const RESCUE_MS = 9000;        // stuck fill/entrance → force the ending, keep the choreography
 const FLOOR_MS = 12000;        // absolute last resort: the cover comes off however it can
 export const loaderMethods = {
+  // The tool's arrival, in the landing's own language. Now that the loader plays over 'Drop a
+  // reference' too, that surface needs one — and the content is what should arrive, not the page
+  // block it sits in: the dropzone copy rises out of its masks as the fold clears it, exactly as
+  // the landing statement does, rather than the whole of header+main sliding up as one slab.
+  //
+  // Shares _maskArm/_maskReveal with the landing, so the stagger, easing, duration and stall
+  // failsafe are one implementation and cannot drift apart between the two surfaces.
+  _dropLinesArm() {
+    if (this._dropRevealed) return;
+    if (document.querySelector('[data-land-line]')) return;   // landing is up; it owns this arrival
+    this._maskArm([...document.querySelectorAll('[data-drop-line]')]);
+  },
+  _dropLinesReveal(g) {
+    g = g || window.gsap;
+    const lines = [...document.querySelectorAll('[data-drop-line]')];
+    if (!g || !lines.length || this._reduce) return;
+    if (this._dropRevealed) return;
+    this._dropRevealed = true;
+    this._maskReveal(lines, '_dropRevealT');
+  },
   _initLoader() {
     if (!this.state.showLoader) return;
     const done = () => {
+      // Burn the session flag HERE, at the end of the run, not at mount: an intro cut short by a
+      // reload should replay rather than be swallowed by a flag it never got to earn. Every
+      // teardown path lands here, watchdogs included, so it cannot fail to burn.
+      try { sessionStorage.setItem('palette-generator/loader-session', '1'); } catch (e) { }
       if (this._loaderT1) { clearTimeout(this._loaderT1); this._loaderT1 = null; }
       if (this._loaderT2) { clearTimeout(this._loaderT2); this._loaderT2 = null; }
       this._loaderRescue = null;
@@ -29,6 +53,8 @@ export const loaderMethods = {
       // no-op on the normal path (the exit timeline already fired it) — this is the watchdog's
       // guarantee that armed lines can never be left parked below their masks
       try { this._landingTextReveal(); } catch (e) { }
+      try { this._dropLinesReveal(); } catch (e) { }
+      try { this._listRowsReveal(); } catch (e) { }
       try { this.setState({ showLoader: false }); } catch (e) { }
     };
     // Watchdogs armed FIRST: no failure path below may strand the fixed covering layer. They
@@ -53,6 +79,8 @@ export const loaderMethods = {
       // the landing renders in the same commit as this cover — park its statement lines below their
       // masks now, while nothing can see them, so the fold never uncovers finished text
       this._landingTextArm(g);
+      this._dropLinesArm();   // ...or the tool's, when the visit landed straight in it
+      this._listRowsArm();    // ...and the archive below it, which arrives on the same breath
       // ── PHASE MACHINE. Nothing writes the bar or the number outside render(), and render()
       // no-ops outside FILLING.
       let phase = 'HIDDEN';
@@ -82,7 +110,9 @@ export const loaderMethods = {
         tl.to(bg, { yPercent: -101, duration: 0.95, ease: this._foldEase || (this._foldEase = this.cubicBezier(0.19, 1, 0.22, 1)) }, 0.8);   // fold lifts, unchanged
         // the fold is expo-out: it clears the centre of the viewport ~0.1s in, so the lines start
         // rising just behind its trailing edge rather than after a beat of empty landing
-        tl.call(() => this._landingTextReveal(g), null, '<+0.15');
+        // One arrival, in reading order: the dropzone copy first, the archive a beat behind it, so
+        // the page resolves top-down instead of everything firing at once.
+        tl.call(() => { this._landingTextReveal(g); this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }, null, '<+0.15');
         this._loaderTl = tl; tl.play(0);
       };
       const startFill = () => {

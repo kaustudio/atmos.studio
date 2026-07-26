@@ -46,8 +46,8 @@ export const motionMethods = {
   viewToggleOptStyle(active) { return this.monoLabel(10, 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
   toggleStyle(active) { return this.monoLabel(10, 'var(--track-flat)', { padding: '7px 12px', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'color-mix(in srgb, var(--on-surface) 15%, transparent)'), background: active ? 'var(--on-surface)' : 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface)', transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
   pageNavStyle(disabled) { return this.monoLabel(10, 'var(--track-flat)', { padding: '7px 12px', cursor: disabled ? 'default' : 'pointer', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
-  setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this.setState({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
-  setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); this.setState({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
+  setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
+  setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 
   // ===== list sort =====
   // Each column's FIRST activation opens on the direction that answers the question people bring to
@@ -56,12 +56,14 @@ export const motionMethods = {
   // reordered list shows a slice of rows that has nothing to do with what was just asked for.
   SORT_LABELS: { contrast: 'max contrast', aa: 'AA pairs', time: 'date' },
   setSort(key) {
+    // Reordering replaces every row's contents just as wholesale as a page change does, so it takes
+    // the same arrival rather than snapping to a new order in place.
     this.setState((st) => {
       const same = st.sortKey === key;
       const dir = same ? (st.sortDir === 'desc' ? 'asc' : 'desc') : 'desc';
       const highLow = key === 'time' ? ['newest first', 'oldest first'] : ['highest first', 'lowest first'];
       return { sortKey: key, sortDir: dir, page: 0, announce: 'Sorted by ' + this.SORT_LABELS[key] + ', ' + highLow[dir === 'desc' ? 0 : 1] + '.' };
-    });
+    }, () => this._listRowsReveal());
   },
   // One comparator for the list. Ties fall back to newest-first so equal metrics — which are common,
   // AA pairs is a small integer — still land in a stable, meaningful order rather than an arbitrary one.
@@ -115,10 +117,21 @@ export const motionMethods = {
       hue: Math.round(hue), chroma, lMin: Math.round(lMin * 100), lMax: Math.round(lMax * 100),
       temp: (avgA + avgB) > 0.008 ? 'Warm' : (avgA + avgB) < -0.008 ? 'Cool' : 'Neutral',
       contrastMax: cMax, aaPairs: aa, totalPairs: total,
-      // The verdict against WCAG AA (4.5:1, SC 1.4.3), stated in honest terms: pass only when EVERY
-      // pair clears it, fail only when NONE does, partial for everything between. "Has at least one
-      // usable pair" is not a pass — it is the definition of partial.
-      aaStatus: aa === 0 ? 'fail' : aa === total ? 'pass' : 'partial',
+      // CAPABILITY, not a compliance score. The old scheme graded pass/partial/fail against the
+      // whole pair set, and "pass" required all C(n,2) pairs to clear 4.5:1 — which no palette in a
+      // 26-palette archive achieved, and which nothing short of a black-and-white ramp realistically
+      // could. It claimed three states and shipped two.
+      //
+      // These states answer the question actually being asked — can I build an interface with this?
+      // A "pair" is two palette colours that clear WCAG AA (4.5:1, SC 1.4.3) against each other, so
+      // one can carry text on the other.
+      //   none     0 pairs  — no usable text/background combination exists here
+      //   limited  1–2      — a workable accent or a single pairing, not an interface
+      //   flexible 3+       — enough distinct pairings to build a UI from
+      // The 3 boundary is deliberate: below it you are designing around the palette, at or above it
+      // the palette gives you choices. Measured across the current archive the split is roughly
+      // 19% / 27% / 54%, so every state is reachable and none is vestigial.
+      aaState: aa === 0 ? 'none' : aa <= 2 ? 'limited' : 'flexible',
       mood: (p.archetype && p.archetype !== 'seed') ? p.archetype : (p.descriptors[0] || '').toLowerCase(),
     };
   },
@@ -157,6 +170,90 @@ export const motionMethods = {
       else r.style.background = 'var(' + token + ')';
     });
     this._selectedCurId = curId;
+  },
+
+  // ===== list arrival =====
+  // WHY THE LIST USED TO JUMP. Nothing scripted it. The list is plain document flow with no reserved
+  // height — one row is --row-list-height plus its 1px top border, ~49px — so 36 → 12 removes over a
+  // thousand pixels of DOCUMENT, the browser clamps scrollY to the new maximum, and the viewport
+  // snaps upward. The reader is near the bottom by definition, because that is where the pager is,
+  // so the clamp fired on essentially every page change. It was the clamp, never a transition.
+  //
+  // Anchor FIRST, then swap. Bringing the list's own top to the viewport puts the height change
+  // below the fold of attention instead of under the cursor, lands the reader on row 1 of the new
+  // page, and leaves the clamp nothing to do because scrollY is small by the time the rows change.
+  // Ordering is the whole fix: swapping first and scrolling after would animate away FROM a snap
+  // that already happened.
+  _listRows() { return [...document.querySelectorAll('[data-list-wrap] [data-row-wrap]')]; },
+  _listAnchor(futureRows, after) {
+    // The commit must NEVER depend on a scroll finishing. A stalled ticker would otherwise swallow
+    // the page change outright — the reader presses Next and nothing happens — which is a far worse
+    // failure than the jump this replaces. So the callback is latched and also fired by a timer.
+    let fired = false;
+    const done = () => { if (fired) return; fired = true; if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; } if (after) after(); };
+    const el = this.gridRef && this.gridRef.current, g = window.gsap;
+    if (!el) { done(); return; }
+    let top = Math.max(0, window.scrollY + el.getBoundingClientRect().top - 24);
+    // Never aim past where the SHORTER page will be able to scroll. Anchoring to the list top is
+    // pointless if the post-commit document cannot reach it — the browser would clamp on arrival and
+    // reintroduce the very snap this exists to remove, just smaller. Row height is measured from the
+    // live rows rather than assumed from the token, so a row-height change cannot silently break it.
+    const wrap = document.querySelector('[data-list-wrap]'), cur = this._listRows().length;
+    if (wrap && cur && typeof futureRows === 'number') {
+      const rowH = wrap.getBoundingClientRect().height / cur;
+      const shrink = Math.max(0, (cur - futureRows) * rowH);
+      top = Math.min(top, Math.max(0, document.documentElement.scrollHeight - shrink - window.innerHeight));
+    }
+    const dist = Math.abs(window.scrollY - top);
+    if (dist < 8) { done(); return; }                       // already reading from the top: no move at all
+    if (this._reduce || !g) { try { window.scrollTo(0, top); } catch (e) { } done(); return; }
+    clearTimeout(this._listAnchorT);
+    this._listAnchorT = setTimeout(() => { this._listAnchorT = null; try { window.scrollTo(0, top); } catch (e) { } done(); }, this.DUR.reveal * 1000 + 250);
+    // Lenis owns the page's scroll when it is running; going around it would fight its own rAF loop.
+    if (this._lenis) { this._lenis.scrollTo(top, { duration: this.DUR.reveal, onComplete: done }); return; }
+    if (g.plugins && g.plugins.scrollTo) { g.to(window, { scrollTo: { y: top, autoKill: false }, duration: this.DUR.reveal, ease: this.EASE.entrance, onComplete: done }); return; }
+    try { window.scrollTo(0, top); } catch (e) { } done();
+  },
+  // Rows arrive as ONE unit, top to bottom. The stagger is deliberately tighter than the statement
+  // lines' — there can be 36 of them, and the whole cascade still has to read as a single gesture
+  // rather than a queue — so it is derived from the row count and capped, never a flat per-row delay.
+  _listRowsArm() {
+    const g = window.gsap;
+    if (!g || this._reduce || document.hidden || this.state.feedView !== 'list') return;
+    if (document.querySelector('[data-land-line]')) return;   // landing is up; the archive is behind it
+    const rows = this._listRows();
+    if (!rows.length) return;
+    g.set(rows, { y: 12, opacity: 0 });   // transform+opacity only: the container's height cannot move
+  },
+  _listRowsReveal(opts) {
+    const g = window.gsap;
+    if (!g || this._reduce || this.state.feedView !== 'list') return;
+    const rows = this._listRows();
+    if (!rows.length) return;
+    const delay = (opts && opts.delay) || 0;
+    g.killTweensOf(rows);
+    const stagger = Math.min(0.035, 0.7 / rows.length);
+    const tw = g.fromTo(rows, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: this.DUR.reveal, stagger: stagger, ease: this.EASE.entrance, delay: delay, clearProps: 'transform,opacity' });
+    // Same stall contract as the masked lines: rows are set invisible the instant this is called, so
+    // a ticker that never wakes must not be able to leave the archive blank. Plainly visible is the floor.
+    clearTimeout(this._listRevealT);
+    this._listRevealT = setTimeout(() => {
+      this._listRevealT = null;
+      if (tw.progress() >= 1) return;
+      try { tw.kill(); } catch (e) { }
+      try { g.set(rows, { clearProps: 'transform,opacity' }); } catch (e) { }
+    }, 2500 + delay * 1000);
+  },
+  // One path for every control that replaces the list's contents wholesale, so page, page size and
+  // sort cannot drift into three different behaviours. The reveal runs in setState's callback —
+  // after the DOM is committed but before the browser paints — so the rows are never shown at rest
+  // for a frame before being hidden to start.
+  _listCommit(patch) {
+    const total = this.scopedFeed(this.state.feed).length;
+    const size = patch.pageSize || this.state.pageSize || 12;
+    const pg = typeof patch.page === 'number' ? patch.page : (this.state.page || 0);
+    const futureRows = Math.max(0, Math.min(size, total - pg * size));
+    this._listAnchor(futureRows, () => this.setState(patch, () => this._listRowsReveal()));
   },
 
   // ===== theme toggle (chrome only — never the palette swatches) =====
