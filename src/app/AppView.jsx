@@ -632,6 +632,39 @@ export default function AppView({ vals }) {
       </main>
 
       <FeedSection vals={vals} />
+
+      {/* The site footer, the same one privacy, terms and 404 close with — markup identical, styles
+          from /site-foot.css, which index.html links because this app is bundled and cannot read
+          legal.css. Classes rather than sx() for exactly one reason: the footer needs :hover,
+          :focus-visible and a 700px media query, none of which an inline style can express, so the
+          rules have to live in a stylesheet whatever we do — and then a second, inline copy of the
+          layout would only be something to keep in sync with them.
+
+          Only on 'Drop a reference'. That screen is the tool at rest — nothing has been dropped, the
+          reel below is empty or idle, and the page has somewhere to put a footer. The result and
+          processing stages are a working surface with drawers and overlays over them, where a
+          full-bleed wordmark would be arriving underneath somebody's palette. The landing is exempt
+          for a different reason: it is position:fixed over this whole frame, so it covers the footer
+          rather than needing to be told about it.
+
+          Below 720px the desktop gate hides every child of [data-app] except the gate itself, and this
+          is a child of [data-app], so it goes with them — which is correct: that screen is not the
+          tool, it is the notice standing in for it. */}
+      {vals.isUpload && (
+        <footer className="site-foot">
+          <div className="site-foot__brand">
+            <a href="/" aria-label="Atmos Gallery — home"><span className="site-foot__mark" aria-hidden="true"></span></a>
+          </div>
+          <div className="site-foot__meta">
+            <p className="site-foot__origin">A part of <a href="https://kau.studio">kau.studio</a></p>
+            <nav className="site-foot__nav" aria-label="Legal">
+              <a href="/privacy.html">Privacy policy</a>
+              <a href="/terms.html">Terms and conditions</a>
+            </nav>
+            <p className="site-foot__rights">All rights reserved &copy; 2026</p>
+          </div>
+        </footer>
+      )}
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />

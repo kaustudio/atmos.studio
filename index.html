@@ -58,6 +58,13 @@
     }
     </script>
 
+    <!-- The site footer, shared verbatim with privacy, terms and 404. A plain <link> rather than an
+         import in global.css: the file is served straight out of /public for those three pages, which
+         never pass through Vite, and one copy that all four entry points read is the whole point of it
+         being a separate file. It only consumes theme tokens, so it follows the app's [data-theme]
+         toggle here and prefers-color-scheme there without knowing which it is in. -->
+    <link rel="stylesheet" href="/site-foot.css" />
+
     <!-- Vendored motion + shader runtime (same builds the design was authored against).
          The app code reads window.gsap / window.Observer / window.Flip / window.ScrollToPlugin /
          window.Lenis / window.OrbShader — script order matters. -->
