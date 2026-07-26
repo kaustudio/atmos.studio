@@ -222,6 +222,10 @@ export const motionMethods = {
     // reintroduce the very snap this exists to remove, just smaller. Row height is measured from the
     // live rows rather than assumed from the token, so a row-height change cannot silently break it.
     const wrap = document.querySelector('[data-list-wrap]'), cur = this._listRows().length;
+    // A height ramp from a folder switch still in flight would make the wrap measure short and throw
+    // the row height off. Settle it first: the anchor needs the list's real size, not a frame of an
+    // animation.
+    if (wrap && this._listFrozenH != null) { try { g.killTweensOf(wrap); g.set(wrap, { clearProps: 'height,overflow' }); g.set(this._listRows(), { clearProps: 'flexShrink' }); } catch (e) { } this._listFrozenH = null; }
     let futureMax = Infinity;
     if (wrap && cur && typeof futureRows === 'number') {
       const rowH = wrap.getBoundingClientRect().height / cur;
@@ -262,6 +266,71 @@ export const motionMethods = {
   // Rows arrive as ONE unit, top to bottom. The stagger is deliberately tighter than the statement
   // lines' — there can be 36 of them, and the whole cascade still has to read as a single gesture
   // rather than a queue — so it is derived from the row count and capped, never a flat per-row delay.
+  // ===== list height ramp (scoping) =====
+  // Folders hold different numbers of palettes, so scoping the archive changes the list's height —
+  // and everything below it moves with it, the pager most visibly. Worse, when the document becomes
+  // shorter than the current scroll position the browser clamps, and the page lurches upward to keep
+  // the end of the document at the bottom of the viewport. That is the jump: the reader did not ask
+  // to move, the document moved under them and dragged the view along.
+  //
+  // Holding the wrap at its old height across the swap and TWEENING to the new one turns that step
+  // change into a ramp. Any clamp that still has to happen is spread over the same beat as the row
+  // cascade, so the page settles instead of snapping — and the pager glides to its new place rather
+  // than teleporting there.
+  //
+  // The rows are direct flex children of a column flex container with the default flex-shrink: 1, so
+  // pinning a height SHORTER than the content (switching to a fuller folder) would squash every row
+  // instead of clipping. flex-shrink is held at 0 for the duration; overflow hides the overhang.
+  _listFreezeHeight() {
+    const g = window.gsap, wrap = document.querySelector('[data-list-wrap]');
+    this._listFrozenH = null;
+    if (!g || this._reduce || !wrap || this.state.feedView !== 'list') return;
+    const h = wrap.getBoundingClientRect().height;
+    if (!h) return;
+    this._listFrozenH = h;
+    g.killTweensOf(wrap);
+    g.set(wrap, { height: h, overflow: 'hidden' });
+    g.set(this._listRows(), { flexShrink: 0 });
+  },
+  _listSettleHeight(span) {
+    const g = window.gsap, wrap = document.querySelector('[data-list-wrap]');
+    const from = this._listFrozenH; this._listFrozenH = null;
+    if (!g || this._reduce || !wrap || typeof from !== 'number') return;
+    const rows = this._listRows();
+    g.set(rows, { flexShrink: 0 });   // the new rows are different elements from the frozen ones
+    const release = () => { try { g.set(wrap, { clearProps: 'height,overflow' }); g.set(this._listRows(), { clearProps: 'flexShrink' }); } catch (e) { } };
+    // Measure the new contents by SUMMING THE ROWS, never by lifting the pin. Setting height:auto to
+    // read the natural size — the obvious way — un-pins the wrap for a frame, the document collapses,
+    // and the browser clamps the scroll right there; restoring the pin cannot undo it. That single
+    // measuring frame WAS the jump. scrollHeight is no good either: it reports the greater of content
+    // and client height, so it lies by exactly the amount that matters whenever the list shrinks.
+    const cs = getComputedStyle(wrap);
+    const px = (v) => parseFloat(v) || 0;
+    const chrome = px(cs.borderTopWidth) + px(cs.borderBottomWidth) + px(cs.paddingTop) + px(cs.paddingBottom);
+    const gap = px(cs.rowGap) * Math.max(0, rows.length - 1);
+    const to = rows.reduce((sum, r) => sum + r.getBoundingClientRect().height, 0) + chrome + gap;
+    if (Math.abs(to - from) < 1) { release(); return; }
+    const dur = Math.max(0.28, typeof span === 'number' ? span : this.DUR.reveal);
+    // An IN-OUT curve, not the entrance token every other reveal uses. Those are expo-out: they cover
+    // most of the distance immediately and settle, which is right when something arrives and wrong
+    // here — this tween is dragging the reader's viewport with it, and front-loading the movement is
+    // exactly the lurch being designed out. Measured with the entrance ease, 75% of the travel
+    // happened in the first 20% of the time. Easing both ends spreads it around the middle instead.
+    // Gentle in-out rather than a cubic one: what matters for a tween the viewport is riding is the
+    // PEAK rate, not the average. A cubic in-out peaks at ~2.7x the even share; this flattens that to
+    // ~1.5x, so there is no point in the ramp where the page is moving much faster than its average.
+    const ease = this._listRampEase || (this._listRampEase = this.cubicBezier(0.45, 0, 0.55, 1));
+    const tw = g.to(wrap, { height: to, duration: dur, ease: ease, onComplete: release });
+    // Stall failsafe, same contract as every other reveal here: a ticker that never wakes must not be
+    // able to leave the archive pinned to a stale height with its rows clipped.
+    clearTimeout(this._listHeightT);
+    this._listHeightT = setTimeout(() => {
+      this._listHeightT = null;
+      if (tw.progress() >= 1) return;
+      try { tw.kill(); } catch (e) { }
+      release();
+    }, dur * 1000 + 1200);
+  },
   _listRowsArm() {
     const g = window.gsap;
     if (!g || this._reduce || document.hidden || this.state.feedView !== 'list') return;

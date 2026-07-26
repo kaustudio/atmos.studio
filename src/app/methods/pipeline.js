@@ -1,6 +1,7 @@
 // Upload → extraction → interpretation → result pipeline, plus the branded processing canvas.
 // Verbatim port of the design comp's logic; interpretLive routes through the pluggable seam.
 import { buildInterpRequest, liveComplete } from '../../lib/interpret.js';
+import { hashBytes } from '../../lib/hash.js';
 
 export const pipelineMethods = {
   // ================= clipboard =================
@@ -31,24 +32,72 @@ export const pipelineMethods = {
   // data-image URLs (persisted thumbnails) and session blob: URLs (in-memory objects).
   _safeImageUrl(u) { if (typeof u !== 'string') return null; return (/^data:image\//i.test(u) || /^blob:/.test(u)) ? u : null; },
 
+  // Returns { cents, hash }. The hash is taken over the NORMALISED working buffer — the same 72x72
+  // RGBA the extraction itself reads — so identity and measurement are computed from exactly the
+  // same bytes. Hashing the file instead would make a rename or an EXIF strip look like a new
+  // image, and would tie identity to something extraction never looks at.
   extract(img) {
     const k = this.props.swatchCount || 5, W = 72, H = 72;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, W, H);
     const d = ctx.getImageData(0, 0, W, H).data, pts = [];
+    const hash = hashBytes(d);
+    // Fixed stride, raster order, whole buffer — never a sampled subset. Already true before this
+    // deploy; stated here because it is now load-bearing rather than incidental.
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 128) continue; pts.push(this.rgb2oklab(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255)); }
-    if (pts.length < k) return [];
-    return this.kmeans(pts, k);
+    if (pts.length < k) return { cents: [], hash };
+    return { cents: this.kmeans(pts, k), hash };
   },
 
-  buildPalette(cents, url, srcUrl) {
+  // ---- derived-reading cache, keyed by content hash -------------------------------------------
+  // Local only: a plain localStorage record on this device, never sent anywhere. Once an image has
+  // been read, its name is the record — a name is a thing the user recognises their work by, so it
+  // must not be re-derived and must not drift. This is also what pins the one remaining contextual
+  // dependency: composeReading walks to a different candidate when the archive already holds the
+  // name it wants, so the same image read into a changed archive could otherwise be renamed.
+  CACHE_KEY: 'palette-generator/derived',
+  CACHE_MAX: 400,
+  _readCache() {
+    try { const raw = localStorage.getItem(this.CACHE_KEY); const o = raw ? JSON.parse(raw) : null; return (o && typeof o === 'object' && o.v === 1 && o.e && typeof o.e === 'object') ? o.e : {}; }
+    catch (e) { return {}; }
+  },
+  cachedReading(hash) {
+    const e = this._readCache()[hash];
+    if (!e || typeof e !== 'object') return null;
+    if (typeof e.name !== 'string' || !Array.isArray(e.descriptors)) return null;
+    return { name: e.name, descriptors: e.descriptors.filter((d) => typeof d === 'string'), rationale: typeof e.rationale === 'string' ? e.rationale : '', archetype: typeof e.archetype === 'string' ? e.archetype : 'interpreted' };
+  },
+  cacheReading(hash, it) {
+    if (!hash || !it) return;
+    try {
+      const e = this._readCache();
+      if (e[hash]) return;                      // first derivation wins, permanently
+      e[hash] = { name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, at: Date.now() };
+      const keys = Object.keys(e);
+      if (keys.length > this.CACHE_MAX) {       // oldest-first eviction, so the cap can't grow unbounded
+        keys.sort((a, b) => (e[a].at || 0) - (e[b].at || 0)).slice(0, keys.length - this.CACHE_MAX).forEach((k) => { delete e[k]; });
+      }
+      localStorage.setItem(this.CACHE_KEY, JSON.stringify({ v: 1, e }));
+    } catch (err) { /* quota or private mode — the reading is still deterministic without the cache */ }
+  },
+
+  buildPalette(cents, url, srcUrl, hash) {
     const swatches = cents.map((c) => { const rgb = this.oklab2rgb(c.L, c.a, c.b); return { hex: this.hex(rgb[0], rgb[1], rgb[2]), weight: c.weight, L: c.L, a: c.a, b: c.b }; });
     // The reading works from the swatches (it needs the hexes for its order-stable seed), and takes
     // the feed itself so two DIFFERENT palettes never ship the same name. Passing whole palettes
     // rather than bare names lets it recognise a regenerated palette as itself and keep its name.
-    const it = this.interpret(swatches, (this.state && this.state.feed) ? this.state.feed : []);
+    // A cached reading outranks a fresh one: this image has been read before on this device, and
+    // that first answer is the record.
+    const feed = (this.state && this.state.feed) ? this.state.feed : [];
+    const it = this.cachedReading(hash) || this.interpret(swatches, feed);
+    this.cacheReading(hash, it);
     const active = (this.state && this.state.activeProject && this.state.activeProject !== '__unfiled__') ? this.state.activeProject : null;
-    const pal = { id: String(Date.now()) + Math.random().toString(36).slice(2, 5), imageUrl: url, time: Date.now(), name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, projectId: active, swatches };
+    // Identity comes from content, not from the clock and a dice roll. The suffix is the lowest
+    // index not already taken by a palette of this same image, so re-extracting never collides with
+    // an existing entry and never reuses an id freed by a deletion.
+    const used = new Set(feed.filter((p) => p && p.hash === hash).map((p) => (typeof p.variation === 'number' ? p.variation : 0)));
+    let variation = 0; while (used.has(variation)) variation++;
+    const pal = { id: hash + '-' + variation, hash, variation, imageUrl: url, time: Date.now(), name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, projectId: active, swatches };
     if (srcUrl && srcUrl !== url) Object.defineProperty(pal, '_srcUrl', { value: srcUrl, enumerable: false, writable: true, configurable: true }); // non-enumerable so it never gets persisted
     return pal;
   },
@@ -64,12 +113,22 @@ export const pipelineMethods = {
   _runPipeline(img, opts) {
     opts = opts || {};
     this._procImg = img;
-    let cents = []; try { cents = this.extract(img); } catch (e) { cents = []; }
+    let cents = [], hash = null;
+    try { const r = this.extract(img); cents = r.cents; hash = r.hash; } catch (e) { cents = []; }
     if (!cents.length) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette — try a photo with more visible tone and detail.'); return; }
+    // RECOGNITION GATE. Now that identity is content-addressed, an image the archive has already
+    // read is a fact we can state instead of a duplicate we silently manufacture. The extraction
+    // above has already run — it is 5184 pixels and costs nothing — but nothing is committed, so
+    // stopping here creates no entry. Only opts.deliberate gets past, and the only thing that sets
+    // it is the user choosing "create a variation" in the dialog.
+    if (hash && !opts.deliberate) {
+      const known = (this.state.feed || []).filter((p) => p && p.hash === hash);
+      if (known.length) { this.openRecognised(known, img, opts, hash); return; }
+    }
     const thumb = this.makeThumb(img);                // display-sized thumbnail (×DPR) — persisted, survives reload
     const srcUrl = opts.srcUrl || null;                 // full-res object URL — session-only crisp display
     if (srcUrl) { (this._objUrls = this._objUrls || []).push(srcUrl); }   // revoke on eviction/unload, not now
-    const pal = this.buildPalette(cents, thumb, srcUrl); // mock interpretation baked in as the guaranteed baseline
+    const pal = this.buildPalette(cents, thumb, srcUrl, hash); // mock interpretation baked in as the guaranteed baseline
     const myGen = ++this._genId;                       // invalidate any in-flight interpretation from a prior generate
     this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, selectedSwatch: null, announce: 'Generating palette from your image.' });
     if (this._t) clearInterval(this._t);
@@ -253,6 +312,59 @@ export const pipelineMethods = {
     if (this._reduce) { g.fromTo(zone, { opacity: 0 }, { opacity: 1, duration: .35, ease: 'none' }); return; }   // opacity crossfade only
     g.fromTo(zone, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance });
   },
+  // ---- re-upload recognition -------------------------------------------------------------------
+  // Same dialog family as move-to-project: backdrop, aria-modal, the shared focus trap, the shared
+  // in/out transition. The pending image is parked on the instance rather than in state — it is an
+  // Image element and a blob URL, not view data — and is disposed of on whichever way the user
+  // leaves, so a declined re-upload leaks nothing and stores nothing.
+  openRecognised(matches, img, opts, hash) {
+    this._recogBack = document.activeElement;
+    this._recogPending = { img, opts: opts || {}, hash };
+    const newest = matches.slice().sort((a, b) => (b.time || 0) - (a.time || 0))[0];
+    this.setState({
+      recognised: { palette: newest, count: matches.length },
+      announce: 'This image has already been extracted as ' + newest.name + '. Choose whether to open it or extract a variation.',
+    }, () => {
+      // Focus moves in the setState callback, NOT inside the rAF: the DOM is already committed
+      // here, and rAF is throttled to nothing while a tab is hidden. Deferring focus to a frame
+      // that may never arrive would leave a modal open with focus stranded on <body> — keyboard
+      // users would tab from the top of the page into a dialog they cannot see the start of.
+      // The frame is still the right place for the transition, which genuinely needs layout.
+      const d = document.querySelector('[data-recognise-dialog]');
+      if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      requestAnimationFrame(() => this._dialogIn('[data-recognise-dialog]'));
+    });
+  },
+  // Every exit routes through here, so the pending image cannot survive the dialog by any path.
+  _closeRecognised(after) {
+    const back = this._recogBack, pending = this._recogPending;
+    this._dialogOut('[data-recognise-dialog]', () => this.setState({ recognised: null }, () => {
+      this._recogPending = null;
+      if (after) after(pending);
+      else {
+        if (pending && pending.opts && pending.opts.srcUrl) { try { URL.revokeObjectURL(pending.opts.srcUrl); } catch (e) { } }
+        if (back && back.focus) try { back.focus(); } catch (e) { }
+      }
+    }));
+  },
+  // Declining is a real outcome, not a dead end: nothing is created and the archive is untouched.
+  closeRecognised() { const n = this.state.recognised; const nm = n && n.palette ? n.palette.name : ''; this._closeRecognised(); this.setState({ announce: 'Kept the existing palette' + (nm ? ' ' + nm : '') + '. Nothing new was created.' }); },
+  recogniseOpen() {
+    const p = this.state.recognised && this.state.recognised.palette;
+    this._closeRecognised((pending) => {
+      if (pending && pending.opts && pending.opts.srcUrl) { try { URL.revokeObjectURL(pending.opts.srcUrl); } catch (e) { } }
+      if (p) this.openFromFeed(p, null);
+    });
+  },
+  // The ONLY path that sets deliberate. A second entry for the same image now requires the user to
+  // have read the sentence saying one already exists and to have chosen this anyway.
+  recogniseVariation() {
+    this._closeRecognised((pending) => {
+      if (!pending || !pending.img) return;
+      this._runPipeline(pending.img, Object.assign({}, pending.opts, { deliberate: true }));
+    });
+  },
+
   openFromFeed(p, cardEl) {
     if (this.state.stage === 'result' && this.state.current && this.state.current.id === p.id) return;
     if (!this._reduce && window.gsap && cardEl) {

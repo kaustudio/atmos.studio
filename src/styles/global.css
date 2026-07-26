@@ -98,6 +98,13 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* AA pairs and max contrast are two unrelated measurements, so they get two independent
      columns rather than one shared cluster — each sized for its own header label and value. */
   --row-aa-col:104px;         /* AA verdict badge + the pair count */
+  /* The verdict badge's own slot inside that column. Fixed rather than intrinsic for two reasons:
+     the three states carry glyphs of different widths (✓ and ◐ are 9px, ✕ is narrower), so left to
+     size themselves the badges ended in a ragged right edge down a list whose whole point is that
+     its columns line up; and the sort header's ⓘ reads from the same token and right-aligns in it,
+     so the badge and the marker that explains it share ONE edge — the same right-edge alignment
+     AA pairs and Max contrast already keep with their values. */
+  --row-aa-mark:35px;
   --row-contrast-col:88px;    /* the maximum contrast ratio */
   --row-time-col:96px;        /* the trailing timestamp column — sized for the widest value the
                                  cell can hold, a same-day da-DK stamp ("14.06.26, 14.32"); a column

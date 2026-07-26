@@ -1,25 +1,5 @@
-// Clock, Lenis smooth scroll, click-to-zoom lightbox, and the sliding project-filter pill.
+// Lenis smooth scroll, click-to-zoom lightbox, and the sliding project-filter pill.
 export const miscMethods = {
-  // Dynamic current time (Osmo mechanic): Intl formatter per [data-current-time] tz attr,
-  // updated every second; interval cleared on unmount.
-  _initClock() {
-    if (this._clockT) return;
-    const defaultTimezone = 'Europe/Amsterdam';
-    const update = () => {
-      document.querySelectorAll('[data-current-time]').forEach((element) => {
-        const timezone = element.getAttribute('data-current-time') || defaultTimezone;
-        let formatted;
-        try { formatted = new Intl.DateTimeFormat([], { timeZone: timezone, timeZoneName: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date()); } catch (e) { return; }
-        const match = formatted.match(/(\d+):(\d+):(\d+)\s*([\w+]+)/);
-        if (!match) return;
-        const set = (sel, val) => { const el = element.querySelector(sel); if (el && el.textContent !== val) el.textContent = val; };
-        set('[data-current-time-hours]', match[1]); set('[data-current-time-minutes]', match[2]);
-        set('[data-current-time-seconds]', match[3]); set('[data-current-time-timezone]', match[4]);
-      });
-    };
-    update();
-    this._clockT = setInterval(update, 1000);
-  },
   // Lenis smooth scroll (vendored). Integration contract with the existing motion system:
   //  - driven by the GSAP ticker (one clock; no second rAF loop)
   //  - skipped under prefers-reduced-motion (native scroll is the floor)

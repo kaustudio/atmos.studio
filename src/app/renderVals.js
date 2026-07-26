@@ -1,6 +1,48 @@
 // The view-model: renderVals() computes everything the view renders — a verbatim port of the
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
+import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
+
+const MONO = 'Neue Montreal';
+
+// ===== THE ACCESSIBILITY VERDICT — one definition, every surface =====
+// Module scope rather than local to renderVals() on purpose: three surfaces report this same
+// measurement (the list row, the detail panel's Accessibility group, and the universe card), and
+// while each built its own they drifted — the row led with the verdict badge and a bare count, the
+// other two printed a bare "2 / 10" with no verdict at all. The same palette answered the same
+// question in two vocabularies depending on where you were standing. Now there is one answer and
+// three places that render it.
+
+// One vocabulary for the three capability states, used by the badge tooltip, the row's accessible
+// name and the Accessibility facet — so the words never diverge between surfaces.
+const A11Y_LABEL = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
+const A11Y_TITLE = {
+  flexible: 'Flexible — enough usable text pairings to build an interface',
+  limited: 'Limited — one or two usable pairings, enough for an accent',
+  none: 'None — no usable text/background pairing in this palette',
+};
+const A11Y_SPOKEN = {
+  flexible: 'flexible for interface use',
+  limited: 'limited to an accent',
+  none: 'not usable for text',
+};
+// the badge: status expressed by FILL (pass filled / partial outlined / fail ghost) + glyph,
+// every value resolving through the status tokens — the view only ever names the status.
+// Width comes from --row-aa-mark rather than from the content, and the content sits flush to the
+// trailing edge: the ✕ state's glyph is narrower than ✓ and ◐, so intrinsic sizing gave three
+// badge widths and a ragged right edge. Fixed slot + flex-end = one edge, which the list header's ⓘ
+// reads from the same token — so badge and marker align exactly the way the pair count aligns
+// under AA PAIRS and the ratio under MAX CONTRAST.
+const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flex: 'none', width: 'var(--row-aa-mark)', padding: '2px 6px', fontFamily: MONO, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
+// What every surface renders: the verdict, then the count. No denominator in the VALUE — it is
+// C(n,2), a number nobody reasons in, and repeating it implied a compliance percentage. It is
+// stated once in the list header's ⓘ, and again in the title of every badge, everywhere.
+const aaReadout = (met) => ({
+  aaState: met.aaState,
+  aaBadgeStyle: aaBadge(met.aaState),
+  aaBadgeTitle: A11Y_TITLE[met.aaState] + ' — ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
+  aaValueText: String(met.aaPairs),
+});
 
 export const renderValsMethods = {
   renderVals() {
@@ -136,9 +178,13 @@ export const renderValsMethods = {
           ],
         },
         {
+          // AA pairs is the one row here that carries a VERDICT as well as a number, so it renders
+          // the same badge the list row and the universe card do — from aaReadout, so the three can
+          // never disagree. It used to print "2 / 10" with no verdict at all, which left the panel
+          // stating a raw fraction while the row two sections down led with ✓ AA.
           title: 'Accessibility', rows: [
             { label: 'Max contrast', value: curMet.contrastMax.toFixed(1) + ':1' },
-            { label: 'AA pairs', value: curMet.aaPairs + ' / ' + curMet.totalPairs },
+            { label: 'AA pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
           ],
         },
         {
@@ -158,7 +204,15 @@ export const renderValsMethods = {
     if (busy) { const STEPS = ['Reading light', 'Sampling the field', 'Clustering in OKLCH', 'Naming the mood']; procStatus = STEPS[Math.min(s.procStep, 3)] + '…'; }
 
     const curId = s.stage === 'result' && s.current ? s.current.id : null;
-    const itemAria = (p) => 'Open ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ') + '. Generated ' + this.relTime(p.time) + (p.id === curId ? '. Currently viewing' : '');
+    // The card's spoken form. Its metrics grid is aria-hidden (it is the visual layer), so whatever
+    // the card SHOWS has to be said here or it is said nowhere — and the card shows the same readout
+    // the list row does. Same clause order as the row's aria, so moving between views does not
+    // change the shape of the sentence.
+    const itemAria = (p, met) => 'Open ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ')
+      + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase()
+      + '. Accessibility ' + A11Y_SPOKEN[met.aaState] + ': ' + met.aaPairs + ' of ' + met.totalPairs
+      + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
+      + '. Generated ' + this.relTime(p.time) + (p.id === curId ? '. Currently viewing' : '');
 
     // --- LIST view: canonical, one row each, keyboard-navigable ---
     const scopedAll = this.scopedFeed(s.feed);
@@ -195,23 +249,7 @@ export const renderValsMethods = {
     const aaCell = { width: 'var(--row-aa-col)', flex: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', paddingRight: '8px', whiteSpace: 'nowrap' };
     const metricValue = { marginLeft: 'auto', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     const contrastCell = { width: 'var(--row-contrast-col)', flex: 'none', textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    // the badge: status expressed by FILL (pass filled / partial outlined / fail ghost) + glyph,
-    // every value resolving through the status tokens — the view only ever names the status
-    const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', gap: '4px', flex: 'none', padding: '2px 6px', fontFamily: mono, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
     const timeCell = { width: 'var(--row-time-col)', flex: 'none', textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
-    // One vocabulary for the three capability states, used by the badge tooltip, the row's
-    // accessible name and the Accessibility facet — so the words never diverge between surfaces.
-    const A11Y_LABEL = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
-    const A11Y_TITLE = {
-      flexible: 'Flexible — enough usable text pairings to build an interface',
-      limited: 'Limited — one or two usable pairings, enough for an accent',
-      none: 'None — no usable text/background pairing in this palette',
-    };
-    const A11Y_SPOKEN = {
-      flexible: 'flexible for interface use',
-      limited: 'limited to an accent',
-      none: 'not usable for text',
-    };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -251,14 +289,10 @@ export const renderValsMethods = {
         current: isCur, ariaCurrent: isCur ? 'true' : undefined, curFlag: isCur ? '1' : '0', disabled: busy,
         // The accessibility cluster: the VERDICT leads (badge), the numbers follow (secondary).
         // The badge answers "can I set accessible text with this palette?" without asking the
-        // reader to know what 4.5:1 means; the raw layer stays for whoever does.
-        aaState: met.aaState,
-        aaBadgeStyle: aaBadge(met.aaState),
-        aaBadgeTitle: A11Y_TITLE[met.aaState] + ' — ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
-        // each column carries ONLY its own measurement: pairs here, ratio there.
-        // No "/10": the denominator is C(n,2), a number nobody reasons in, and repeating it on
-        // every row implied a compliance percentage. It is stated once in the ⓘ instead.
-        aaValueText: String(met.aaPairs),
+        // reader to know what 4.5:1 means; the raw layer stays for whoever does. From aaReadout,
+        // the same source the detail panel and the universe card read.
+        ...aaReadout(met),
+        // each column carries ONLY its own measurement: pairs here, ratio there
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
         aaCell, metricValue, contrastCell, timeCell,
         aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. Accessibility ' + A11Y_SPOKEN[met.aaState] + ': ' + met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
@@ -280,7 +314,9 @@ export const renderValsMethods = {
     });
 
     // --- PALETTE UNIVERSE: one real, focusable tile per palette (the engine clones these to fill) ---
-    const UTW = 300, UTH = 372, HERO = 150;
+    // Box from the shared token, so the card and the field cell universe.js lays it out on cannot
+    // disagree — see universeTile.js for why the height is the number it is.
+    const UTW = UNIVERSE_TILE.W, UTH = UNIVERSE_TILE.H, HERO = 150;
     const cardBox = (isCur) => ({ position: 'absolute', top: '0', left: '0', width: UTW + 'px', height: UTH + 'px', display: 'block', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', overflow: 'hidden' });
     const feedNodes = scoped.map((p, idx) => {
       const isCur = p.id === curId;
@@ -295,12 +331,23 @@ export const renderValsMethods = {
         { label: 'Lightness', text: met.lMin + '–' + met.lMax + '%' },
         { label: 'Temp', text: met.temp },
         { label: 'Max contrast', text: met.contrastMax.toFixed(1) + ':1' },
-        { label: 'AA pairs', text: met.aaPairs + ' / ' + met.totalPairs },
+        // the one metric carrying a verdict as well as a number — badge from the shared readout,
+        // so the card says exactly what the row and the detail panel say
+        { label: 'AA pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
         { label: 'Archetype', text: met.mood },
+        // Eighth entry, and the one that squares the 2-column grid off at four full rows: the list
+        // row ends on a date and the card had none, so the same palette was datable in one view and
+        // not in the other. Absolute stamp, exactly as the row's column carries it.
+        { label: 'Generated', text: this.absTime(p.time) },
       ];
       return {
         name: p.name, descriptors: p.descriptors.join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
-        aria: itemAria(p),
+        aria: itemAria(p, met),
+        // The row's two identity labels, which the card was missing: EXAMPLE marks the seeded
+        // palettes, and the current palette is named rather than only dotted. An unlabelled 7px
+        // square asks the reader to already know what it means; the row spells it out, so the card
+        // does too (and the square stays, so the state is never carried by the word alone).
+        isExample: p.example === true,
         hasImage, noImage: !hasImage, refImage: this.dispUrl(p),
         cardMetrics,
         onClick: (e) => { if (this._uMoved) { this._uMoved = false; return; } if (!busy) this.openOverlay(p, e && e.currentTarget); },
@@ -314,7 +361,16 @@ export const renderValsMethods = {
         imgStyle: { width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center' },
         heroFadeStyle: { display: 'none' },
         pbaseStyle: { position: 'absolute', left: '0', right: '0', top: (HERO - 16) + 'px', height: (UTH - HERO + 38) + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', display: 'flex', flexDirection: 'column', boxShadow: '0 0px 0px rgba(0,0,0,0)', zIndex: 1, willChange: 'transform', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)') },
-        cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', padding: '12px 14px 0' },
+        // The block keeps its 8px rows: it was briefly tightened to 6 to stop the AA badge (taller
+        // than a plain-text row) pushing the last row past the tile's bottom edge, but that was
+        // treating a sizing problem as a spacing problem — the card was simply a row's worth too
+        // short. The height now comes from the content (see universeTile.js) and the rhythm is back.
+        //
+        // The foot matches the sides. With no bottom padding the readout ran out of the card: 14px
+        // of air to the left and right, 3px underneath. It now sits in an even frame. On the
+        // engine tile the card is a fixed height and this padding is what that height reserves; on
+        // the reduced-motion card, which grows to its content, this padding IS the foot.
+        cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', padding: '12px ' + UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px' },
         ringStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 3 },
         strip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
@@ -323,7 +379,15 @@ export const renderValsMethods = {
     // --- fullscreen palette detail overlay (reuses the swatch-band value system) ---
     let overlay = null;
     if (s.overlay) {
-      const p = s.overlay, on2 = this.onColor, N = p.swatches.length, tw2 = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
+      // s.overlay holds the palette the overlay was OPENED with — a snapshot taken at open time.
+      // Every edit made from inside the overlay writes to feed instead (assignPalette maps over
+      // st.feed), so the snapshot went stale the moment you used it: file a palette from the
+      // overlay's own folder button and the button carried on reporting "Unfiled", because it was
+      // reading a copy of the record from before the move. Re-resolve by id on every render so the
+      // overlay reads the live record and reflects its own edits. The fallback covers the palette
+      // being removed from the feed while open (delete closes the overlay, but not in the same tick).
+      const p = s.feed.find((f) => f.id === s.overlay.id) || s.overlay;
+      const on2 = this.onColor, N = p.swatches.length, tw2 = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
       const obands = p.swatches.map((b, i) => {
         const on = on2.call(this, b.hex);
         const fmt = this.swatchFormats(b.hex);
@@ -770,6 +834,27 @@ export const renderValsMethods = {
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
       onOpenManage: () => this.openManage(),
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
+      // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
+      // user is being asked about looks the way it looks everywhere else — recognition is the whole
+      // point of the dialog. Counting: `count` includes every entry already made from this image,
+      // so the wording has to hold at one and at many.
+      hasRecognise: !!s.recognised,
+      recognise: s.recognised ? {
+        name: s.recognised.palette.name,
+        when: this.relTime(s.recognised.palette.time),
+        count: s.recognised.count,
+        // Stated in words, never by colour or icon alone (SC 1.4.1).
+        line: s.recognised.count === 1
+          ? 'You extracted this image before. It is already in your archive.'
+          : 'You extracted this image before. Your archive already holds ' + s.recognised.count + ' palettes from it.',
+        strip: s.recognised.palette.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
+        openAria: 'Open the existing palette ' + s.recognised.palette.name,
+        variationAria: 'Extract this image again anyway, adding a second entry with the same colours and keeping ' + s.recognised.palette.name,
+      } : null,
+      closeRecognise: () => this.closeRecognised(),
+      recogniseOpen: () => this.recogniseOpen(),
+      recogniseVariation: () => this.recogniseVariation(),
+      trapRecognise: (e) => this.trapFocusIn('[data-recognise-dialog]', e),
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
       // portable project file
       fileMenuOpen: s.fileMenuOpen, toggleFileMenu: () => this.setState((st) => ({ fileMenuOpen: !st.fileMenuOpen })),

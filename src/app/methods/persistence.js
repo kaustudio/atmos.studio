@@ -100,6 +100,12 @@ export const persistenceMethods = {
       if (!sw.length) continue;
       out.push({
         id: String(p.id || (Date.now() + Math.random().toString(36).slice(2, 5))),
+        // Content address and which extraction of that content this is. This validator builds an
+        // allow-listed object, so a field absent from here is silently dropped on every reload —
+        // these two must be named or the archive forgets which image a palette came from.
+        // Absent on anything saved before this deploy, and on seeds; null is a legitimate value.
+        hash: (typeof p.hash === 'string' && /^[0-9a-f]{16}$/.test(p.hash)) ? p.hash : null,
+        variation: (typeof p.variation === 'number' && p.variation >= 0 && p.variation < 1e4) ? Math.floor(p.variation) : 0,
         imageUrl: this._safeImageUrl(p.imageUrl),
         time: typeof p.time === 'number' ? p.time : Date.now(),
         name: typeof p.name === 'string' ? p.name : 'Untitled',
@@ -149,7 +155,9 @@ export const persistenceMethods = {
   // filter drawer sit ABOVE the list, so anchoring would scroll the control you just clicked off the
   // top of the screen — the cure would be worse than the jump. Paging is different: the pager is
   // below the list, so anchoring moves toward what you were touching, not away from it.
-  setActiveProject(id) { this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); }); },
+  // Folders hold different counts, so the list's height changes with the scope — see _listFreezeHeight
+  // for why that has to be ramped rather than stepped. Freeze BEFORE the swap, ramp after it.
+  setActiveProject(id) { this._listFreezeHeight(); this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); }); },
   // Tag scoping. Activating the pressed tag clears it — the chip is the toggle, so there is no
   // separate "clear" control to find, and no way to end up filtered with nothing to unfilter with.
   // Same shape as setActiveProject deliberately: same state pipeline, same universe rebuild, same
@@ -160,6 +168,7 @@ export const persistenceMethods = {
   // Toggle one tag in or out of the selection. Every route into the filter — a row tag, a drawer
   // option, an applied chip's ✕ — comes through here, so there is still exactly one filter state.
   setActiveTag(tag) {
+    this._listFreezeHeight();
     this.setState((st) => {
       const cur = st.activeTags || [];
       const on = cur.indexOf(tag) >= 0;
@@ -171,10 +180,11 @@ export const persistenceMethods = {
         : (on ? 'Removed ' + tag + '. ' : 'Added ' + tag + '. ')
           + 'Showing palettes tagged ' + next.join(' and ') + '.';
       return { activeTags: next, page: 0, announce: say };
-    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
   },
   // OR toggle within the accessibility group.
   setA11yFilter(state) {
+    this._listFreezeHeight();
     this.setState((st) => {
       const cur = st.activeA11y || [];
       const on = cur.indexOf(state) >= 0;
@@ -182,11 +192,12 @@ export const persistenceMethods = {
       const say = next.length === 0 ? 'Accessibility filter cleared.'
         : 'Showing palettes with ' + next.join(' or ') + ' accessibility.';
       return { activeA11y: next, page: 0, announce: say };
-    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
   },
   // Clears BOTH groups — the single clear-all the panel and header share.
   clearTags() {
-    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
+    this._listFreezeHeight();
+    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
   },
   createProject(name) {
     name = (name || '').trim(); if (!name) return null; const id = 'proj-' + Date.now() + Math.random().toString(36).slice(2, 6);

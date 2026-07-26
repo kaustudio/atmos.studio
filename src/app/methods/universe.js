@@ -1,6 +1,8 @@
 // The fullscreen palette universe: an overscanning, infinitely-wrapping plane (adapted from the
 // Osmo infinite grid, tone-disciplined — no scale-on-drag, no parallax) with a radial-bloom
 // entrance as ONE reversible timeline, plus the feed-view switcher shared with the 3D reel.
+import { UNIVERSE_TILE } from '../universeTile.js';
+
 export const universeMethods = {
   setFeedView(v) {
     // Re-entering grid while the close is still reversing: cancel the close and replay the bloom
@@ -125,7 +127,10 @@ export const universeMethods = {
       if (this._ticker) { g.ticker.remove(this._ticker); this._ticker = null; }
       if (this._cloneLayer && this._cloneLayer.parentNode) this._cloneLayer.parentNode.removeChild(this._cloneLayer);
 
-      const TW = 300, TH = 372, GAP = 64, cellW = TW + GAP, cellH = TH + GAP, OVER = 1;
+      // The cell is the card plus the gutter. Both dimensions come from the shared token rather
+      // than from literals restated here: this file lays out a box it does not build, and the two
+      // copies of "300 × 372" only ever agreed because nobody had resized the card yet.
+      const TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, GAP = 64, cellW = TW + GAP, cellH = TH + GAP, OVER = 1;
       const cols = Math.max(1, Math.ceil(wrapper.clientWidth / cellW) + OVER * 2);
       const rows = Math.max(Math.ceil(wrapper.clientHeight / cellH) + OVER * 2, Math.ceil(N / cols));
       const totalW = cols * cellW, totalH = rows * cellH;

@@ -55,14 +55,38 @@ export function rgb2hsl(r, g, b) {
   return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
 }
 
+// Extraction is a MEASUREMENT, so it must return the same answer for the same input. This used to
+// seed with k-means++: one random first centroid, then centroids sampled with probability
+// proportional to D². Fourteen Lloyd iterations then settled into whichever local minimum that
+// initialisation happened to fall toward, so the same photograph produced a different palette,
+// different tags and a different name on every upload — the whole reported defect traced here.
+//
+// The fix is to remove the randomness rather than seed it. A seeded RNG would also be reproducible,
+// but it leaves a live RNG inside the hot path, and the next person to touch this function can
+// reintroduce an unseeded call without any test noticing until a user does. There is nothing to
+// reintroduce here: greedy farthest-point (maximin) initialisation takes the ARGMAX of the same D²
+// the sampling version drew from, which is the deterministic limit of that same idea and is the
+// standard k-center construction. Ties resolve to the lowest index, and point order is raster
+// order, so the whole function is now pure.
 export function kmeans(pts, k) {
-  const cents = [pts[Math.floor(Math.random() * pts.length)]];
+  // Start from the point furthest from the cloud's own centre: a fixed, meaningful anchor rather
+  // than an arbitrary index, so the first centroid does not depend on where the image happens to
+  // begin. Lloyd's iterations refine from there exactly as before.
+  let mL = 0, ma = 0, mb = 0;
+  for (let i = 0; i < pts.length; i++) { mL += pts[i].L; ma += pts[i].a; mb += pts[i].b; }
+  const mean = { L: mL / pts.length, a: ma / pts.length, b: mb / pts.length };
+  let first = 0, fd = -1;
+  for (let i = 0; i < pts.length; i++) { const d = dist2(pts[i], mean); if (d > fd) { fd = d; first = i; } }
+  const cents = [pts[first]];
+  // Running nearest-centroid distance, updated against the newest centroid only — the same values
+  // the previous implementation recomputed from scratch each round, at O(n·k) instead of O(n·k²).
+  const d2 = new Array(pts.length);
+  for (let i = 0; i < pts.length; i++) d2[i] = dist2(pts[i], cents[0]);
   while (cents.length < k) {
-    const d2 = pts.map((p) => Math.min.apply(null, cents.map((c) => dist2(p, c))));
-    const sum = d2.reduce((a, b) => a + b, 0) || 1;
-    let r = Math.random() * sum, idx = 0;
-    for (let i = 0; i < pts.length; i++) { r -= d2[i]; if (r <= 0) { idx = i; break; } idx = i; }
+    let idx = 0, bd = -1;
+    for (let i = 0; i < pts.length; i++) { if (d2[i] > bd) { bd = d2[i]; idx = i; } }
     cents.push(pts[idx]);
+    for (let i = 0; i < pts.length; i++) { const d = dist2(pts[i], pts[idx]); if (d < d2[i]) d2[i] = d; }
   }
   const assign = new Array(pts.length).fill(0);
   for (let it = 0; it < 14; it++) {
@@ -73,7 +97,10 @@ export function kmeans(pts, k) {
   }
   const counts = new Array(k).fill(0); assign.forEach((a) => counts[a]++);
   return cents.map((c, i) => ({ L: c.L, a: c.a, b: c.b, weight: counts[i] / pts.length }))
-    .filter((c) => c.weight > 0).sort((a, b) => b.weight - a.weight);
+    // Explicit tiebreak on lightness: two clusters of exactly equal area must not be free to swap
+    // places. Sort stability would cover it today, but the order feeds paletteSeed's sorted-hex
+    // hash and the archive's swatch order, so it is stated rather than inherited.
+    .filter((c) => c.weight > 0).sort((a, b) => (b.weight - a.weight) || (a.L - b.L));
 }
 
 // ===== OKLCH colour harmonies (hue rotation + gamut-map to sRGB) =====

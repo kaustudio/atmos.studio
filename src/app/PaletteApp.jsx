@@ -168,7 +168,6 @@ export default class PaletteApp extends React.Component {
     if (!window.__pgErrHook) { window.__pgErrHook = true; window.addEventListener('error', (e) => { try { console.error('[pg:onerror]', e.message, e.filename, e.lineno, e.error && e.error.stack); } catch (_) { } }); }
     // one feature's failure must never abort the rest of mount
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
-    safe(() => this._initClock(), 'clock');
     this._reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
     safe(() => this.initMotion(), 'motion');   // EASE/DUR tokens must exist before the loader builds its timeline
     safe(() => this._initLenis(), 'lenis');
@@ -293,8 +292,8 @@ export default class PaletteApp extends React.Component {
     if (this._listRevealT) { clearTimeout(this._listRevealT); this._listRevealT = null; }
     if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }
     if (this._listAnchorTick) { try { window.gsap && window.gsap.ticker.remove(this._listAnchorTick); } catch (e) { } this._listAnchorTick = null; }
+    if (this._listHeightT) { clearTimeout(this._listHeightT); this._listHeightT = null; }
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
-    if (this._clockT) { clearInterval(this._clockT); this._clockT = null; }
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }
     if (this._mq && this._onMq) { try { if (this._mq.removeEventListener) this._mq.removeEventListener('change', this._onMq); else this._mq.removeListener(this._onMq); } catch (e) { } this._mq = null; this._onMq = null; }
     this.stopCanvas(); this.killSpatial(); this.killOrbit();
