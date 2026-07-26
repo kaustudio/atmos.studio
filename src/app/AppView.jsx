@@ -80,6 +80,23 @@ const IconFolder = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="
 const IconLink = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M6.5 17q-2.28 0-3.89-1.61T1 11.5t1.61-3.89T6.5 6H10v1H6.5q-1.86 0-3.18 1.32T2 11.5t1.32 3.18T6.5 16H10v1zm1-5v-1h9v1zm6.5 5v-1h3.5q1.86 0 3.18-1.32T22 11.5t-1.32-3.18T17.5 7H14V6h3.5q2.28 0 3.89 1.61T23 11.5t-1.61 3.89T17.5 17z"></path></svg>);
 const IconTrash = ({ size = 13 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}><path fill="currentColor" d="M6 20V6H5V5h4v-.77h6V5h4v1h-1v14zm1-1h10V6H7zm2.808-2h1V8h-1zm3.384 0h1V8h-1zM7 6v13z"></path></svg>);
 
+// The state marker both facet groups share. Three states, three SHAPES — empty square, filled
+// square with a check, and a bare rule — so the unavailable state is never carried by colour or
+// dimming alone (SC 1.4.1). A rule rather than a greyed box because a box, however faint, still
+// says "this is a thing you tick"; a rule says the tick is not on offer.
+const FacetMark = ({ active, unavailable }) => (
+  unavailable
+    ? <span aria-hidden="true" style={sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center')}>
+        <span style={sx('width:8px;height:1px;background:var(--on-surface-muted)')}></span>
+      </span>
+    : <span aria-hidden="true" style={{
+      ...sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center'),
+      border: '1px solid ' + (active ? 'var(--on-surface)' : 'color-mix(in srgb, var(--on-surface) 38%, transparent)'),
+      background: active ? 'var(--on-surface)' : 'transparent',
+      color: 'var(--surface)',
+    }}>{active && <IconCheck size={8} />}</span>
+);
+
 // swatch value row (result bands + overlay bands share it; overlay renders the caveat chip)
 function ValueRow({ v, showCaveat }) {
   return (
@@ -325,11 +342,15 @@ export default function AppView({ vals }) {
               <div style={sx('position:absolute;left:0;top:0;width:26px;height:26px;border:1px solid var(--on-surface-muted)')}></div>
               <div style={sx('position:absolute;right:0;bottom:0;width:26px;height:26px;border:1px solid var(--on-surface);background:var(--surface)')}></div>
             </div>
+            {/* Masked line reveal, same as the landing statement — this copy is what ARRIVES when
+                the loader's fold lifts off the tool. Each line is a pre-authored span inside its own
+                overflow:hidden mask; the spacing lives on the MASK, never on the span, or the
+                translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
-              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:26px;color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div>
-              <div style={sx("font-family:'Neue Montreal';font-size:15px;color:var(--on-surface-muted);margin-top:8px")}>We read its light and atmosphere - not its literal pixels.</div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:26px;color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div></div>
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:15px;color:var(--on-surface-muted)")}>We read its light and atmosphere - not its literal pixels.</div></div>
             </div>
-            <span style={sx('font-family: Neue Montreal; font-size: 13px; letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span>
+            <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size: 13px; letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
           {/* Sits OUTSIDE the dropzone button — inside, it would join the button's accessible name.
@@ -559,7 +580,7 @@ function FeedSection({ vals }) {
 
       {/* Three intent tiers, left to right in DOM = on screen = in the tab order:
             1 · WHERE AM I  — project scoping + management (constant, structural)
-            2 · WHAT AM I SEEING — the tag filter (constant, changes what the list contains)
+            2 · WHAT AM I SEEING — the filter panel (constant, changes what the list contains)
             3 · MY DATA — archive file operations (rare, and now the quietest thing here)
           The zones are told apart by proximity first (28px between tiers vs 8px inside one), so the
           grouping survives greyscale and does not lean on colour. Tier 3 additionally drops to the
@@ -585,7 +606,7 @@ function FeedSection({ vals }) {
             <span aria-hidden="true" style={sx('flex:none;width:1px;margin:4px 4px;background:color-mix(in srgb, var(--on-surface) 15%, transparent)')}></span>
             <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage projects — create, rename, or delete" style={vals.projManageStyle}>Manage</button>
           </div>
-          {/* TIER 2 — what am I seeing. The tag filter and its applied chip: controls that change
+          {/* TIER 2 — what am I seeing. The filter panel and its applied chips: controls that change
               what the list CONTAINS, sitting beside the scopes that do the same at a broader grain.
               The view switcher is not here — it changes how the whole section is rendered, so it
               belongs on the heading line above. Sort stays in the column header and per-page stays
@@ -599,17 +620,17 @@ function FeedSection({ vals }) {
                 system's own vocabulary rather than implied by whitespace. */}
             <span aria-hidden="true" style={sx('flex:none;align-self:stretch;width:1px;background:var(--line-strong)')}></span>
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-              <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes by tag" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
-              {/* one chip per selected tag — each removable on its own, so a narrowing can be undone
-                  from either end rather than only all at once */}
+              <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
+              {/* One chip per applied filter across BOTH groups — accessibility first, matching the
+                  panel's group order — each removable on its own, so a narrowing can be undone from
+                  either end. No clear-all here: that was a third affordance for one act (chip ✕ ·
+                  header CLEAR · panel CLEAR FILTER) and now lives only in the panel, beside the
+                  facets it clears. */}
               {vals.appliedTags.map((t) => (
                 <button key={t.key} type="button" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
                   {t.label}{t.count && <span style={sx('font-size:8.5px;opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: '9px' }}>✕</span>
                 </button>
               ))}
-              {vals.hasAppliedTags && (
-                <button type="button" data-ix="press" data-focus="chrome" aria-label="Clear all tag filters" onClick={vals.clearAllTags} style={sx('background:none;border:none;padding:7px 8px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);cursor:pointer')}>Clear</button>
-              )}
             </div>
           </>)}
           {/* TIER 3 — my data. Projects no longer lives here; what remains is archive file work,
@@ -675,22 +696,25 @@ function FeedSection({ vals }) {
                 {vals.aaInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
                   <div role="note" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;width:264px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>Contrast is tested against WCAG AA — 4.5:1, the minimum for normal text.</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>The pair count is every two-colour pairing of the palette (5 colours → 10 pairs).</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Badge: ✓ every pair passes · ◐ some pairs pass · ✕ no pair passes.</span>
+                    {/* The one place the denominator is stated, now that the rows show a bare count.
+                        These three lines must track paletteMetrics.aaState — the badge and its
+                        explanation drifting apart is worse than having no explanation. */}
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A pair is two palette colours that reach WCAG AA against each other — 4.5:1, the minimum for normal text — so one can carry text on the other.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every two-colour combination is tested: 5 colours make 10 pairs.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Badge: ✓ flexible, 3+ usable pairs · ◐ limited, 1–2 · ✕ none.</span>
                   </div>
                 </>)}
               </div>
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
                 <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={{ ...col.style, marginLeft: 'auto' }}>
-                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex' }}><IconChevron /></span>}</span>{col.label}
+                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
                 </button>
               ))}
             </div>
             {/* MAX CONTRAST and DATE each own their column outright */}
             {vals.sortCols.filter((col) => col.key === 'contrast' || col.key === 'time').map((col) => (
               <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={col.style}>
-                <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex' }}><IconChevron /></span>}</span>{col.label}
+                <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
               </button>
             ))}
           </div>
@@ -768,9 +792,9 @@ function FeedSection({ vals }) {
                   <span style={c.aaCell}>
                     <span style={c.aaBadgeStyle} title={c.aaBadgeTitle}>
                       <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;line-height:1')}>
-                        {c.aaStatus === 'pass' && <IconCheck size={9} />}
-                        {c.aaStatus === 'partial' && <IconContrast size={9} />}
-                        {c.aaStatus === 'fail' && <span style={sx('font-size:8px;line-height:1')}>✕</span>}
+                        {c.aaState === 'flexible' && <IconCheck size={9} />}
+                        {c.aaState === 'limited' && <IconContrast size={9} />}
+                        {c.aaState === 'none' && <span style={sx('font-size:8px;line-height:1')}>✕</span>}
                       </span>
                       AA
                     </span>
@@ -1081,41 +1105,133 @@ function DetailOverlay({ vals }) {
 function TagFilterDrawer({ vals }) {
   if (!vals.facetOpen) return null;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:120')}>
-      <div data-tg-backdrop="1" onClick={vals.closeFacet} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-tag-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Filter palettes by tag" onKeyDown={vals.trapTagFilter} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
+    // NON-MODAL. Filtering is iterative — adjust, look, adjust — and a modal made every refinement
+    // a round trip: open, pick, close, evaluate, reopen. The wrapper no longer intercepts anything
+    // (pointer-events:none, restored on the panel itself), the dimming backdrop is gone because it
+    // hid the very list you are filtering, and there is no aria-modal and no focus trap: Tab leaves
+    // the panel into the page, which is the honest behaviour for a surface that does not own the
+    // screen. Escape still closes and returns focus to the trigger.
+    // z-index 156 — above the fixed brand mark (155), unlike the modal drawers at 120. Those can
+    // sit under it because their dimming backdrop subsumes the logo; this one has no backdrop, so
+    // at 120 the wordmark printed straight through the panel header. Still below the wipe (160),
+    // lightbox (170) and loader (190), which are whole-screen states that outrank any panel.
+    <div style={sx('position:fixed;inset:0;z-index:156;pointer-events:none')}>
+      <div data-tag-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Filter palettes" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:-18px 0 40px rgba(0,0,0,.10);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-tg-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Tags</span>
+            {/* "Tags" is now one group among several, so the title names the surface, not a group */}
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
+            {/* the panel covers the right of the list, so it reports the result size itself */}
+            <span role="status" aria-live="polite" style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);font-variant-numeric:tabular-nums')}>{vals.matchLabel}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close tag filter" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-tg-sec="1" style={sx('padding:14px 22px 2px')}>
-          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every tag in the current scope with the colours that carry it, largest groups first. Pick one to filter the archive; pick it again to clear.</span>
+          {/* PANEL-LEVEL only. This line sits above every group, so it may say nothing that is true
+              of just one of them — the previous copy described tags while sitting over
+              Accessibility. Each group states its own count semantics at its own heading, because
+              the two genuinely differ: tags AND together (adding one narrows), accessibility ORs
+              (adding one widens). One sentence cannot honestly cover both. */}
+          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Filter groups combine — a palette must match every group you use.</span>
         </div>
 
-        <div data-tg-sec="1" style={sx('padding:16px 22px 0')}>
-          <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-strong);padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+        {/* ACCESSIBILITY — a facet, and the first one, because "can I build with this?" outranks
+            "what mood is it?". Exhaustive: every palette holds exactly one state, so the group
+            always partitions the archive. OR within the group (a palette cannot be two states, so
+            AND would be unsatisfiable); AND against tags. Same checkbox, count and zero-suppression
+            rules as the tag rows — one grammar for every facet. */}
+        {vals.hasA11yOptions && (
+          <div data-tg-sec="1" style={sx('padding:18px 22px 0')}>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Accessibility</span>
+            {/* OR semantics stated where they apply. "Would remain if you added" would be FALSE
+                here: with Limited selected, adding Flexible gives the union (21), not Flexible's
+                own 14. So this group's counts are described as what they actually are — the size
+                of each state within the current tag scope — which holds in every selection state. */}
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding:4px 0 8px;text-wrap:pretty')}>A palette is in one state, so choosing more than one widens. Counts are how many palettes are in each.</span>
+            <div role="group" aria-label="Filter by accessibility" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
+              {vals.a11yOptions.map((o) => (
+                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  <FacetMark active={o.active} unavailable={o.disabled} />
+                  <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;flex:none;font-weight:' + (o.active ? 500 : 400))}>{o.label}</span>
+                  {/* count sits beside its label (F5), not across the row */}
+                  <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  {/* on an inert row the reason displaces the hint: why you cannot pick it outranks
+                      what picking it would have meant */}
+                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : o.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div data-tg-sec="1" style={sx('padding:18px 22px 0')}>
+          <span style={sx('display:block;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Tags</span>
+          {/* The sentence that used to head the whole panel, moved to the group it actually
+              describes. It stays verbatim because it is still exactly true here: tags AND, so the
+              count shown for a tag IS the result size after adding it — in every selection state,
+              including alongside an accessibility filter. */}
+          <span style={sx('display:block;font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding:4px 0 0;text-wrap:pretty')}>Each tag narrows further. Counts are how many palettes would remain if you added that tag.</span>
         </div>
 
-        <div data-tg-sec="1" role="group" aria-label="Tags" style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>
+        {/* A bordered field, not an underlined line of text — the old styling read as a heading,
+            so the one control you are meant to type into did not look like an input. Clear button
+            appears only when there is something to clear, and hands focus back to the field. */}
+        <div data-tg-sec="1" style={sx('padding:16px 22px 0;display:flex;align-items:center;gap:8px')}>
+          <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface-raised);padding:0 8px 0 10px')}>
+            <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+            {vals.hasTagQuery && (
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;padding:0;font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted);cursor:pointer')}>✕</button>
+            )}
+          </div>
+          {/* sort: discovery vs known-item lookup, on the existing segmented toggle style */}
+          <div role="group" aria-label="Sort tags" style={sx('display:flex;align-items:center;gap:6px;flex:none')}>
+            <button type="button" data-ix="seg" data-focus="chrome" aria-pressed={vals.tagSort === 'count'} onClick={vals.sortByCount} style={vals.sortCountStyle}>Count</button>
+            <button type="button" data-ix="seg" data-focus="chrome" aria-pressed={vals.tagSort === 'alpha'} onClick={vals.sortByAlpha} style={vals.sortAlphaStyle}>A–Z</button>
+          </div>
+        </div>
+
+        <div data-tg-sec="1" role="group" aria-label="Tags" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>
           {vals.facetOptions.map((o) => (
-            <button key={o.key} type="button" data-tg-cell="1" data-ix="cell" data-focus="chrome" aria-pressed={o.pressed} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-              <span aria-hidden="true" style={{ ...sx('width:6px;height:6px;flex:none;background:var(--on-surface)'), opacity: o.active ? 1 : 0 }}></span>
+            <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+              {/* A checkbox, not a dot that appears. The old marker was invisible when unselected,
+                  so an unpicked row showed nothing where its state should be — the affordance only
+                  existed once you had already used it. This box is always present and states which
+                  of two states it is in: empty outline → filled with a check. Shape, fill AND glyph
+                  all change, so it never rests on colour (SC 1.4.1). aria-pressed on the row button
+                  carries the same fact to assistive tech. */}
+              <FacetMark active={o.active} unavailable={o.disabled} />
               <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;flex:none;font-weight:' + (o.active ? 500 : 400))}>{o.label}</span>
-              {/* which palettes a tiny tag actually covers — this is what makes two identical
-                  strips legible instead of puzzling: same palette named twice, same colours */}
-              <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.memberNames}</span>
+              {/* Count belongs to the label, so it sits against it — identical placement and
+                  styling to the Accessibility group. It used to be parked in a right-hand column
+                  past the strip, which made the same fact read as two different kinds of thing
+                  depending on which group you were looking at, and put a whole colour strip
+                  between a name and its number. */}
+              <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+              {/* Names the palette the strip is showing. Sits directly against the strip so the
+                  two read as one unit — a labelled sample, not a claim about the whole tag. On an
+                  inert row the reason takes this slot instead: you cannot pick the tag, so why it
+                  is inert outranks the name of a sample you cannot act on. */}
+              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : o.exemplarName}</span>
               <span aria-hidden="true" style={sx('display:flex;width:150px;flex:none;height:14px;border:1px solid var(--line)')}>
-                {o.strip.map((hex, hi) => (<span key={hi} style={{ flex: 1, background: hex }}></span>))}
+                {o.strip.map((b, hi) => (<span key={hi} style={b.style}></span>))}
               </span>
-              <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none;min-width:14px;text-align:right')}>{o.count}</span>
             </button>
           ))}
+          {/* An empty state that says what happened and offers the way out, rather than a dead
+              two-word label. It also covers the non-search case: if a selection has narrowed the
+              archive so far that no further tag would leave anything, the list is empty for a
+              different reason and should say so. */}
           {vals.facetEmpty && (
-            <span style={sx('padding:14px 2px;font-family:Neue Montreal;font-size:11px;color:var(--on-surface-muted)')}>No matching tags</span>
+            <div role="status" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 2px')}>
+              <span style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>
+                {vals.hasTagQuery ? 'No tag matches “' + vals.tagQuery + '”.' : 'No further tag would narrow this selection.'}
+              </span>
+              {vals.hasTagQuery && (
+                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear search</button>
+              )}
+            </div>
           )}
           {vals.facetClear && (
             <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>

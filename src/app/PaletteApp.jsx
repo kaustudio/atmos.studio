@@ -87,9 +87,16 @@ export default class PaletteApp extends React.Component {
     sharedView: !!this._shared,
     // activeTags is a LIST, combined with AND: each tag added narrows the archive further. Union
     // would widen on every pick, which makes a filter less useful the more you tell it.
-    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [],
-    // the tag facet: one disclosure control, closed by default; the query is typeahead state
-    tagMenuOpen: false, tagQuery: '',
+    // Two filter groups with DIFFERENT boolean semantics, the standard faceted-search convention:
+    // AND across groups, OR within a group. Tags are AND *within* the group too (each tag narrows),
+    // because a tag is a property a palette either has or lacks and you can hold several at once.
+    // Accessibility is one exclusive property per palette, so within it only OR is meaningful —
+    // AND would always yield nothing.
+    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [], activeA11y: [],
+    // the tag facet: one disclosure control, closed by default; the query is typeahead state.
+    // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
+    // (I want GOLDEN) — the two reasons anyone opens a facet list.
+    tagMenuOpen: false, tagQuery: '', tagSort: 'count',
     assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
@@ -139,10 +146,20 @@ export default class PaletteApp extends React.Component {
   // else's finished palette comes through.
   _mobileShare() { return !!(this.state.narrow && this.state.sharedView && this.state.current); }
   _landingUp() { return (!this.state.landingDismissed || this.state.narrow) && !this._mobileShare(); }
-  // plays on any page load that lands on the Get Started page (landing not yet dismissed) — never
-  // inside the tool. No separate one-shot flag: a burned flag from an interrupted run must not be
-  // able to suppress the intro; pressing Get Started ends it for good.
-  _loaderPending() { return !this._landingDismissed(); }
+  // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
+  // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is
+  // the ARRIVAL, and a returning visitor arrives just as much as a first-time one; keying it to the
+  // landing meant the people who use the tool most were the only ones who never saw it.
+  //
+  // sessionStorage, not localStorage: 'first visit of this session' is precisely what a session
+  // store means, and it clears itself with the tab, so there is no permanent flag to go stale.
+  //
+  // The flag is burned when the run FINISHES (loader done()), never here at mount — that was the
+  // real objection to a one-shot flag, and it survives: a run cut short by a reload replays instead
+  // of being swallowed. done() is reachable from every teardown path, watchdogs included, so the
+  // flag cannot fail to burn either.
+  _loaderSeen() { try { return sessionStorage.getItem('palette-generator/loader-session') === '1'; } catch (e) { return false; } }
+  _loaderPending() { return !this._loaderSeen(); }
 
   componentDidMount() {
     // surface swallowed load-time errors with their real message/location
@@ -269,6 +286,9 @@ export default class PaletteApp extends React.Component {
     if (this._loaderT2) { clearTimeout(this._loaderT2); this._loaderT2 = null; }
     this._loaderRescue = null;
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
+    if (this._dropRevealT) { clearTimeout(this._dropRevealT); this._dropRevealT = null; }
+    if (this._listRevealT) { clearTimeout(this._listRevealT); this._listRevealT = null; }
+    if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
     if (this._clockT) { clearInterval(this._clockT); this._clockT = null; }
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }

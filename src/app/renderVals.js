@@ -199,7 +199,19 @@ export const renderValsMethods = {
     // every value resolving through the status tokens — the view only ever names the status
     const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', gap: '4px', flex: 'none', padding: '2px 6px', fontFamily: mono, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
     const timeCell = { width: 'var(--row-time-col)', flex: 'none', textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
-    const STATUS_WORD = { pass: 'passes', partial: 'partly passes', fail: 'fails' };
+    // One vocabulary for the three capability states, used by the badge tooltip, the row's
+    // accessible name and the Accessibility facet — so the words never diverge between surfaces.
+    const A11Y_LABEL = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
+    const A11Y_TITLE = {
+      flexible: 'Flexible — enough usable text pairings to build an interface',
+      limited: 'Limited — one or two usable pairings, enough for an accent',
+      none: 'None — no usable text/background pairing in this palette',
+    };
+    const A11Y_SPOKEN = {
+      flexible: 'flexible for interface use',
+      limited: 'limited to an accent',
+      none: 'not usable for text',
+    };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -240,14 +252,16 @@ export const renderValsMethods = {
         // The accessibility cluster: the VERDICT leads (badge), the numbers follow (secondary).
         // The badge answers "can I set accessible text with this palette?" without asking the
         // reader to know what 4.5:1 means; the raw layer stays for whoever does.
-        aaStatus: met.aaStatus,
-        aaBadgeStyle: aaBadge(met.aaStatus),
-        aaBadgeTitle: 'WCAG AA ' + met.aaStatus + ': ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach 4.5:1',
-        // each column carries ONLY its own measurement: pairs here, ratio there
-        aaValueText: met.aaPairs + '/' + met.totalPairs,
+        aaState: met.aaState,
+        aaBadgeStyle: aaBadge(met.aaState),
+        aaBadgeTitle: A11Y_TITLE[met.aaState] + ' — ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
+        // each column carries ONLY its own measurement: pairs here, ratio there.
+        // No "/10": the denominator is C(n,2), a number nobody reasons in, and repeating it on
+        // every row implied a compliance percentage. It is stated once in the ⓘ instead.
+        aaValueText: String(met.aaPairs),
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
         aaCell, metricValue, contrastCell, timeCell,
-        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + STATUS_WORD[met.aaStatus] + ' WCAG AA: ' + met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
+        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. Accessibility ' + A11Y_SPOKEN[met.aaState] + ': ' + met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
         deleteAria: 'Delete ' + p.name,
@@ -439,6 +453,7 @@ export const renderValsMethods = {
     // are listed now — behind search they cost nothing and are how a rare mood is found.
     const tagPool = this.projectFeed(s.feed);
     const activeTags = s.activeTags || [];
+    const activeA11y = s.activeA11y || [];
     const tagCounts = new Map();
     tagPool.forEach((p) => { new Set(p.descriptors.map((d) => d.toLowerCase())).forEach((d) => tagCounts.set(d, (tagCounts.get(d) || 0) + 1)); });
     // Tags combine with AND, so every count shown is the count YOU WOULD GET — the size of the
@@ -447,47 +462,82 @@ export const renderValsMethods = {
     // information scent, so it is not offered at all. Selected tags always stay listed (they are
     // how you get back out), and a tag on every remaining palette is dropped for the old reason —
     // it partitions nothing.
-    const tagBase = tagPool.filter((p) => this.matchesTags(p, activeTags));
+    // Each group counts against the OTHER groups' filters but not its own — the standard faceted
+    // convention. Counting a group against itself would make every unselected option read zero the
+    // moment you picked something in that group.
+    const tagBase = tagPool.filter((p) => this.matchesTags(p, activeTags) && this.matchesA11y(p, activeA11y));
+    const a11yBase = tagPool.filter((p) => this.matchesTags(p, activeTags));
     const withTag = (d) => tagBase.filter((p) => p.descriptors.some((x) => x.toLowerCase() === d));
+    // Two different facts were being answered with the same silence. A tag that would empty the
+    // list and a tag that is true of EVERYTHING here are both unpickable, but they mean opposite
+    // things, and hiding both taught the user nothing either time. Zero stays hidden: an option
+    // that leads nowhere is noise, and its absence costs nothing because it was never true of
+    // anything you can see. Universal is now SHOWN and disabled, because "every palette here is
+    // warm" is a real description of the current view — arguably the most useful sentence the
+    // panel can say — and silently dropping it made the vocabulary look smaller than it is and
+    // left tags vanishing for no stated reason.
+    const universalTag = (d) => activeTags.indexOf(d) < 0 && tagBase.length > 0 && withTag(d).length === tagBase.length;
     const facetQuery = (s.tagQuery || '').trim().toLowerCase();
     const facetOptions = [...tagCounts.keys()]
-      .filter((d) => activeTags.indexOf(d) >= 0 || (withTag(d).length > 0 && withTag(d).length < tagBase.length))
+      .filter((d) => activeTags.indexOf(d) >= 0 || withTag(d).length > 0)
       .filter((d) => !facetQuery || d.indexOf(facetQuery) >= 0)
-      .sort((a, b) => withTag(b).length - withTag(a).length || a.localeCompare(b))
+      // count-first for discovery, A–Z for known-item lookup; count order keeps the alphabetical
+      // tiebreak so equal-sized tags never shuffle between renders. Universal tags sort last in
+      // both orders: they describe the view but cannot act on it, so they must not head a list
+      // whose purpose is choosing — their count is the maximum, so they would otherwise sort first.
+      .sort((a, b) => (universalTag(a) - universalTag(b)) || (s.tagSort === 'alpha' ? 0 : withTag(b).length - withTag(a).length) || a.localeCompare(b))
       .map((d) => {
         const active = activeTags.indexOf(d) >= 0;
         const count = active ? tagBase.length : withTag(d).length;
-        // The tag's colour FINGERPRINT: every swatch of every palette carrying it, ordered dark →
-        // light by OKLCH lightness, sampled evenly across that range (ends included). The first
-        // cut of this took one dominant swatch per palette in feed order — and since mood tags
-        // largely share members, STARK and WARM opened with the SAME colours in the SAME order,
-        // which is a presentation that says nothing. Sampling the whole distribution instead means
-        // two tags read alike only when their colour spaces genuinely are alike, and each strip is
-        // a legible spectrum rather than an arbitrary prefix.
-        const strip = (() => {
-          const sw = [];
-          tagPool.forEach((p) => { if (p.descriptors.some((x) => x.toLowerCase() === d)) sw.push(...p.swatches); });
-          sw.sort((a, b) => a.L - b.L);
-          const k = Math.min(8, sw.length);
-          return Array.from({ length: k }, (_, i) => sw[Math.floor(i * (sw.length - 1) / Math.max(1, k - 1))].hex);
+        // The strip shows ONE member palette, drawn the way the archive draws it, and the row names
+        // which one. It used to pool every swatch of every member and sample that by lightness —
+        // and that pooling destroyed the very properties most tags name. Half the taxonomy's
+        // dimensions (hue, contrast, dominance) are relations WITHIN a palette, so a set assembled
+        // ACROSS members is a synthetic object that satisfies no tag's definition. Measured: the
+        // seven MONOCHROME palettes each span ≤28° of hue, inside the mono bucket's [0,30); their
+        // pooled swatches span 47°, which this app's own resolver calls 'analogous'. The strip
+        // labelled MONOCHROME was, by our own numbers, not monochrome. No sampling rule fixes that;
+        // only showing a real member does, because a member satisfies the predicate by definition.
+        const exemplar = (() => {
+          const mem = tagPool.filter((p) => p.descriptors.some((x) => x.toLowerCase() === d));
+          if (!mem.length) return null;
+          // The most TYPICAL member: each palette's area-weighted centre in OKLab, then the member
+          // nearest the tag's own centre. Deterministic, needs no per-tag knowledge (so it works
+          // the same for a computed facet and for an interpretive word), and because two tags have
+          // different member sets they usually resolve to different exemplars on their own.
+          const mid = (p) => { let L = 0, a = 0, b = 0, t = 0; p.swatches.forEach((x) => { const q = x.weight || 1; L += x.L * q; a += x.a * q; b += x.b * q; t += q; }); return t ? [L / t, a / t, b / t] : [0, 0, 0]; };
+          const cs = mem.map(mid);
+          const c0 = cs.reduce((m, c) => [m[0] + c[0] / cs.length, m[1] + c[1] / cs.length, m[2] + c[2] / cs.length], [0, 0, 0]);
+          let best = 0, bd = Infinity;
+          cs.forEach((c, i) => { const dd = (c[0] - c0[0]) ** 2 + (c[1] - c0[1]) ** 2 + (c[2] - c0[2]) ** 2; if (dd < bd) { bd = dd; best = i; } });
+          return mem[best];
         })();
-        // Naming the members of a small tag. Two tags carried by exactly the SAME palettes have
-        // exactly the same colour space — clinical/cold/neutral/precise all describe one palette
-        // here — so their strips are identical and honestly so. Faking a difference would invent
-        // data; naming the palette explains the match instead, and turns a puzzling repeat into
-        // the actual information ("these four words describe Poured Concrete"). Only for tiny
-        // tags: at twelve members a list is noise and the strips differ on their own.
-        const memberNames = count <= 2
-          ? withTag(d).map((p) => p.name).join(' · ')
-          : '';
+        // Area-weighted, the same value shape the archive card's strip uses, so one palette renders
+        // identically wherever it appears — and so the dominance dimension reads truthfully too,
+        // which equal-width sampling flattened away.
+        const strip = exemplar ? exemplar.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })) : [];
+        // Named at EVERY count, not just at one or two members (F4). The name was previously
+        // conditional, so a row's anatomy changed with its size — the same column held information
+        // on some rows and nothing on others, and you could not tell which kind of row you were
+        // reading until you had read it. It also now has a second job: it says WHICH palette the
+        // strip is, so the strip cannot be misread as a summary of all members. Two tags that
+        // resolve to the same exemplar therefore repeat honestly rather than puzzlingly.
+        const exemplarName = exemplar ? exemplar.name : '';
+        // A disabled row must say WHY, and must not say it in colour alone. The reason takes the
+        // flexible text column: on a row you cannot pick, why-it-is-inert outranks the name of a
+        // sample you cannot select. Anatomy is unchanged either way — same five slots, one state.
+        const disabled = universalTag(d);
         return {
           key: d, label: d, count: String(count), active, pressed: active ? 'true' : 'false',
-          strip, memberNames,
-          aria: (active ? 'Remove the ' + d + ' filter' : (activeTags.length ? 'Narrow to ' + d + ' as well' : 'Filter to ' + d + ' palettes'))
-            + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (memberNames ? ': ' + memberNames : ''),
+          strip, exemplarName, disabled,
+          reason: disabled ? 'on every palette here' : '',
+          aria: disabled
+            ? d + ' is on every one of these ' + count + ' palettes, so it cannot narrow them further'
+            : (active ? 'Remove the ' + d + ' filter' : (activeTags.length ? 'Narrow to ' + d + ' as well' : 'Filter to ' + d + ' palettes'))
+              + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (exemplarName ? ', for example ' + exemplarName : ''),
           // applying does NOT close the drawer: the list re-filters live behind it, so the drawer
           // works like the contrast lens toggles — a place to try slices, not a one-shot picker
-          onPick: () => this.setActiveTag(d),
+          onPick: disabled ? () => {} : () => this.setActiveTag(d),
         };
       });
     // One removable chip per selected tag, in the order they were picked, so the narrowing reads as
@@ -495,12 +545,44 @@ export const renderValsMethods = {
     // size; earlier chips show what the selection was worth at that point, which is why only the
     // final one carries a number — two numbers that mean different things is worse than one.
     const focusFacetBtn = () => requestAnimationFrame(() => { const b = document.querySelector('[data-facet-btn]'); if (b) try { b.focus(); } catch (e) { } });
-    const appliedTags = activeTags.map((t, i) => ({
-      key: t, label: t,
-      count: i === activeTags.length - 1 ? String(tagBase.length) : '',
+    // Chips for BOTH groups, accessibility first so the chip order matches the panel's group order.
+    // Only the final chip carries the live result count — two numbers meaning different things
+    // beside each other is worse than one.
+    const appliedRaw = activeA11y.map((v) => ({
+      key: 'a11y:' + v, label: A11Y_LABEL[v],
+      aria: 'Remove the ' + A11Y_LABEL[v].toLowerCase() + ' accessibility filter',
+      onRemove: () => { this.setA11yFilter(v); focusFacetBtn(); },
+    })).concat(activeTags.map((t) => ({
+      key: 'tag:' + t, label: t,
       aria: 'Remove the ' + t + ' filter',
       onRemove: () => { this.setActiveTag(t); focusFacetBtn(); },
-    }));
+    })));
+    const scopedNow = this.scopedFeed(s.feed).length;
+    const appliedTags = appliedRaw.map((c, i) => Object.assign({}, c, { count: i === appliedRaw.length - 1 ? String(scopedNow) : '' }));
+
+    // ---- the Accessibility facet: OR within the group, exhaustive over the archive ----
+    // Ordered most-capable first, which is the order anyone shopping for a usable palette wants.
+    // Zero-result suppression applies as it does to tags: a state nothing has is not offered,
+    // unless it is already selected (it must stay reachable to be removed).
+    // The universal case reaches this group too, and matters more here than in tags: because the
+    // states partition the archive, "every palette here is Limited" can be the whole truth about a
+    // view. Suppressed, it left one lone checkbox that did nothing and no clue why; stated, it
+    // answers the question the group exists to answer without the user having to click.
+    const a11yOptions = ['flexible', 'limited', 'none'].map((v) => {
+      const n = a11yBase.filter((p) => this.paletteMetrics(p).aaState === v).length;
+      const active = activeA11y.indexOf(v) >= 0;
+      const disabled = !active && n > 0 && n === a11yBase.length;
+      return {
+        key: v, label: A11Y_LABEL[v], count: String(n), active, pressed: active ? 'true' : 'false',
+        hint: A11Y_TITLE[v].split('—')[1].trim(), disabled,
+        reason: disabled ? 'every palette here' : '',
+        aria: disabled
+          ? 'All ' + n + ' of these palettes are ' + A11Y_LABEL[v].toLowerCase() + ', so this cannot narrow them further'
+          : (active ? 'Remove the ' : 'Filter to ') + A11Y_LABEL[v].toLowerCase() + ' accessibility, ' + n + ' palette' + (n === 1 ? '' : 's'),
+        onPick: disabled ? () => {} : () => this.setA11yFilter(v),
+        show: n > 0 || active,
+      };
+    }).filter((o) => o.show);
 
     let assignView = null;
     if (s.assignPalette) {
@@ -640,19 +722,51 @@ export const renderValsMethods = {
       // the tag facet: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
       openFacet: () => this.openTagFilter(), closeFacet: () => this.closeTagFilter(),
-      trapTagFilter: (e) => this.trapTagFilter(e),
       tagQuery: s.tagQuery || '', onTagQuery: (e) => this.setState({ tagQuery: e.target.value }),
+      hasTagQuery: !!(s.tagQuery || '').trim(),
+      clearTagQuery: () => this.setState({ tagQuery: '' }, () => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }),
+      // The panel covers the right of the list, so it states the result size itself rather than
+      // making you close it to find out. aria-live=polite on the element (see AppView) announces
+      // each change without interrupting whatever the user is doing.
+      matchCount: tagBase.length,
+      matchLabel: tagBase.length + (tagBase.length === 1 ? ' palette matches' : ' palettes match'),
+      // sort the facet list: discovery (count) vs known-item lookup (A–Z)
+      tagSort: s.tagSort || 'count',
+      sortByCount: () => this.setState({ tagSort: 'count' }),
+      sortByAlpha: () => this.setState({ tagSort: 'alpha' }),
+      sortCountStyle: this.toggleStyle((s.tagSort || 'count') === 'count'),
+      sortAlphaStyle: this.toggleStyle(s.tagSort === 'alpha'),
+      // roving arrow traversal inside the option list — Down/Up step, Home/End jump. Typing stays
+      // with the search field, which is where focus lands on open.
+      onFacetListKey: (e) => {
+        const nav = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+        if (nav.indexOf(e.key) < 0) return;
+        const list = e.currentTarget;
+        const opts = [...list.querySelectorAll('[data-tg-cell][aria-pressed]')].filter((b) => !b.disabled && b.offsetParent !== null);
+        if (!opts.length) return;
+        e.preventDefault();
+        const i = opts.indexOf(document.activeElement);
+        let n = i;
+        if (e.key === 'ArrowDown') n = i < 0 ? 0 : Math.min(i + 1, opts.length - 1);
+        else if (e.key === 'ArrowUp') n = i <= 0 ? 0 : i - 1;
+        else if (e.key === 'Home') n = 0;
+        else n = opts.length - 1;
+        if (opts[n]) opts[n].focus();
+      },
       facetOptions, facetEmpty: facetOptions.length === 0,
       // the in-drawer clear: focus moves to the search field after, because the clear row itself
       // disappears with the state it clears — focus must never die with the control that held it
-      facetClear: activeTags.length ? {
-        label: activeTags.length > 1 ? 'Clear all filters' : 'Clear filter',
+      // ONE clear-all, living in the panel beside the facets it clears. The header's separate
+      // CLEAR was a third affordance for the same act (chip ✕ · header CLEAR · panel CLEAR FILTER);
+      // per-chip removal plus this is the whole set now.
+      facetClear: (activeTags.length + activeA11y.length) ? {
+        label: (activeTags.length + activeA11y.length) > 1 ? 'Clear all filters' : 'Clear filter',
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
-      clearAllTags: () => { this.clearTags(); focusFacetBtn(); },
-      activeTags,
-      showFacet: tagPool.length > 0 || activeTags.length > 0,
+      a11yOptions, hasA11yOptions: a11yOptions.length > 0,
+      activeTags, activeA11y,
+      showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
       onOpenManage: () => this.openManage(),
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
@@ -745,7 +859,14 @@ export const renderValsMethods = {
           // Direction is a ROTATION rather than a glyph swap: down for descending, 180° for
           // ascending, tweened through --ease-standard so the flip is a movement the eye can
           // follow instead of a substitution it has to re-read.
-          showChevron: active, dir: desc ? 'desc' : 'asc',
+          //
+          // The chevron now renders on EVERY sortable column, not just the active one. Previously
+          // only the active column showed it, so AA PAIRS and MAX CONTRAST read as inert labels —
+          // sortable but undiscoverable. At rest it is dimmed and points down (the direction a
+          // first click will give); active it comes to full strength and rotates to match. Active
+          // is never carried by the chevron alone: the label also steps to 500 and full ink, so
+          // the state survives greyscale (SC 1.4.1).
+          showChevron: true, chevronDim: !active, dir: desc ? 'desc' : 'asc',
           pressed: active ? 'true' : 'false',
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),

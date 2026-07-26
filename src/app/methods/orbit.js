@@ -574,39 +574,48 @@ export const orbitMethods = {
       this._ringLight(t, r, geom.px[s.ri], x, y, vw, vh);
     });
   },
-  // Park the lines below their masks BEFORE a covering layer starts lifting. Without this they sit at
-  // their final position under the loader/wipe and are readable for the beat between the cover
-  // clearing them and the reveal tween starting. Armed only when the reveal will actually run
-  // (gsap present, motion not reduced) — visible static text stays the floor everywhere else.
-  // Hiding costs nothing on a hidden page (there is no flash to prevent) and the ticker is asleep
-  // there, so parking would only risk stranding — skip it outright.
-  _landingTextArm(g) {
-    g = g || window.gsap;
-    if (!g || this._reduce || this._landRevealed || document.hidden) return;
-    const lines = [...document.querySelectorAll('[data-land-line]')];
-    if (!lines.length) return;
+  // ── THE MASKED-LINE MOVE, factored. Pre-authored spans inside overflow:hidden masks: parked below
+  // them before any cover lifts, then tweened home. Two surfaces use it — the landing's statement
+  // and the tool's dropzone copy — and an arrival should not look like a different product
+  // depending on which one you land on, so they share the mechanism rather than each keeping a copy.
+  //
+  // Park BEFORE the cover starts lifting. Without that the lines sit at their final position under
+  // the loader/wipe and are readable for the beat between the cover clearing them and the tween
+  // starting. Parking is skipped on a hidden page: there is no flash to prevent, the ticker is
+  // asleep there, and arming would only risk stranding them.
+  _maskArm(lines) {
+    const g = window.gsap;
+    if (!g || this._reduce || document.hidden || !lines.length) return;
     g.set(lines, { yPercent: 110 });
   },
-  // masked line reveal on the landing statement — lines are pre-authored spans inside overflow:hidden
-  // masks, so this is a pure from-tween: no split, no restore, static text is the no-GSAP floor
+  // A pure from-tween: no split, no restore. Static visible text is the no-GSAP floor.
+  _maskReveal(lines, timerKey) {
+    const g = window.gsap;
+    if (!g || this._reduce || !lines.length) return;
+    g.killTweensOf(lines);
+    const tw = g.fromTo(lines, { yPercent: 110 }, { yPercent: 0, duration: this.DUR ? this.DUR.reveal : 0.62, stagger: 0.09, ease: this.EASE ? this.EASE.entrance : 'power3.out', clearProps: 'transform' });
+    // rAF-stall failsafe. Because the lines are PARKED before the cover lifts, a ticker that never
+    // wakes (backgrounded tab, throttled frame) would leave them below their masks forever — the
+    // reveal is the only thing that brings them back. Static, visible text is the floor: force it.
+    clearTimeout(this[timerKey]);
+    this[timerKey] = setTimeout(() => {
+      this[timerKey] = null;
+      if (tw.progress() >= 1) return;
+      try { tw.kill(); } catch (e) { }
+      try { g.set(lines, { clearProps: 'transform' }); } catch (e) { }
+    }, 2500);
+  },
+  _landingTextArm() {
+    if (this._landRevealed) return;
+    this._maskArm([...document.querySelectorAll('[data-land-line]')]);
+  },
   _landingTextReveal(g) {
     g = g || window.gsap;
     const lines = [...document.querySelectorAll('[data-land-line]')];
     if (!g || !lines.length || this._reduce) return;
     if (this._landRevealed) return;   // once per landing arrival — loader/wipe/initOrbit may all call this
     this._landRevealed = true;
-    g.killTweensOf(lines);
-    const tw = g.fromTo(lines, { yPercent: 110 }, { yPercent: 0, duration: this.DUR ? this.DUR.reveal : 0.62, stagger: 0.09, ease: this.EASE ? this.EASE.entrance : 'power3.out', clearProps: 'transform' });
-    // rAF-stall failsafe. Now that the lines are PARKED before the cover lifts, a ticker that never
-    // wakes (backgrounded tab, throttled frame) would leave them below their masks forever — the
-    // reveal is the only thing that brings them back. Static, visible text is the floor: force it.
-    clearTimeout(this._landRevealT);
-    this._landRevealT = setTimeout(() => {
-      this._landRevealT = null;
-      if (tw.progress() >= 1) return;
-      try { tw.kill(); } catch (e) { }
-      try { g.set(lines, { clearProps: 'transform' }); } catch (e) { }
-    }, 2500);
+    this._maskReveal(lines, '_landRevealT');
   },
   initOrbit() {
     if (!this._landingUp()) return;
