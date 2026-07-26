@@ -97,11 +97,13 @@ do inside the tool.
 
 **What we can see.** The site is hosted on Vercel, which keeps standard access logs for the files it
 serves — including IP address and user-agent, as any web server must. On top of that, Web Analytics
-gives us aggregate counts (visits, where links were shared from, rough location, device type, browser
-and OS) and Speed Insights gives us Core Web Vitals plus a rough connection speed. Both attach a
-short-lived pseudonymous identifier so one visit can be told from another; it is not a cookie and
-nothing is written to your device. Nothing about your images, your palettes, or your archive: those
-never leave your browser in the first place.
+gives us aggregate counts (visits, page and route, referrer, filtered query params, device type,
+browser and OS, and a location Vercel resolves to **city** level) and Speed Insights gives us Core
+Web Vitals with their attribution, a rough connection speed, device, browser, OS and **country only**.
+Web Analytics tells visits apart with a hash derived from the incoming request that Vercel discards
+after **24 hours**; Speed Insights is documented as carrying no visitor identifier. Neither is a
+cookie and neither writes anything to your device. Nothing about your images, your palettes, or your
+archive: those never leave your browser in the first place.
 
 The full statement — controller, legal basis, processors and transfers, retention, and your rights —
 is `public/privacy.html`. Terms are `public/terms.html`. The two are cross-linked and share

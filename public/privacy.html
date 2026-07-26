@@ -21,9 +21,21 @@
   "name": "Privacy — Atmos Gallery",
   "url": "https://atmos.gallery/privacy.html",
   "description": "How Atmos Gallery handles your images, palettes and data.",
-  "dateModified": "2026-07-26",
+  "dateModified": "2026-07-27",
   "inLanguage": "en",
-  "publisher": { "@type": "Organization", "name": "KauStudio", "email": "hello@kau.studio" },
+  "publisher": {
+    "@type": "Organization",
+    "name": "KauStudio ApS",
+    "vatID": "DK39161443",
+    "email": "hello@kau.studio",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Hessensgade 36, 4. tv",
+      "postalCode": "2300",
+      "addressLocality": "Copenhagen S",
+      "addressCountry": "DK"
+    }
+  },
   "isPartOf": { "@type": "WebSite", "name": "Atmos Gallery", "url": "https://atmos.gallery/" }
 }
 </script>
@@ -47,7 +59,7 @@
     <p class="legal-hero__label">Privacy</p>
     <h1>Privacy</h1>
     <p class="legal-hero__sub">Atmos Gallery runs in your browser. Your images are never uploaded, your palettes are never held on a server, and a shared link tells us nothing about who opened it.</p>
-    <p class="legal-hero__meta">Last updated: 26 July 2026 · Data controller: KauStudio</p>
+    <p class="legal-hero__meta">Last updated: 27 July 2026 · Data controller: KauStudio ApS</p>
   </div>
 </header>
 
@@ -66,6 +78,15 @@
 
     <h2>Your palettes are stored only in your browser</h2>
     <p>The archive lives in this browser's local storage. There is no server holding it, no account attached to it, and no way for us to see it. Clearing your browser data deletes it — which is why you can save a project file and keep your own copy, on your own disk.</p>
+    <p>That archive is not the only thing the tool keeps locally, so here is everything, in full. All of it is first-party, none of it identifies you, and none of it is ever sent anywhere:</p>
+    <ul>
+      <li><code>palette-generator/feed</code> — the archive itself: your palettes.</li>
+      <li><code>palette-generator/derived</code> — a cache of work already done, so a palette you have opened before doesn't have to be recomputed.</li>
+      <li><code>palette-generator/landing</code> — a single flag remembering that you have dismissed the opening screen, so it doesn't greet you every visit.</li>
+      <li><code>palette-generator/pagesize</code> — how many palettes you chose to show per page.</li>
+      <li><code>palette-generator/loader-session</code> — a flag, for this browser session only, remembering that you have already seen the loading sequence.</li>
+    </ul>
+    <p>Clearing your browser data clears all five. The names begin with <code>palette-generator</code> because they predate the product being called Atmos Gallery, and renaming them would orphan archives that already exist on people's machines.</p>
 
     <h2>Share links carry the palette, not a lookup</h2>
     <p>A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never send that part to a server, so opening a shared link doesn't tell us — or anyone else — that you opened it, or what was in it.</p>
@@ -75,12 +96,12 @@
 
     <h2>What we can see</h2>
     <p>The site is hosted on Vercel, which keeps standard access logs for the files it serves. Those logs include your IP address and browser user-agent, because a web server cannot answer a request without them.</p>
-    <p>On top of that, the two measurement tools report:</p>
+    <p>On top of that, the two measurement tools report — and this is the full list Vercel publishes, not a summary of it:</p>
     <ul>
-      <li><strong>Web Analytics</strong> — aggregate counts: visits, which page, where the link was shared from, approximate country, device type, browser and operating system.</li>
-      <li><strong>Speed Insights</strong> — loading-performance figures for the page you opened, the standard Core Web Vitals, plus a rough connection speed.</li>
+      <li><strong>Web Analytics</strong> — the time, the page and its route, the referring site, filtered query parameters, your device type, browser and version, operating system and version, and an approximate location that Vercel resolves as far as <strong>city</strong> level.</li>
+      <li><strong>Speed Insights</strong> — the page and its route, the standard Core Web Vitals and which element on the page they attach to, your rough connection speed, device type, browser, operating system, and your <strong>country</strong> only.</li>
     </ul>
-    <p>Both attach a short-lived pseudonymous identifier so Vercel can tell one visit apart from another. It is not a cookie, nothing is written to your device, and it cannot be used to recognise you on any other site.</p>
+    <p>Web Analytics tells one visit from another using a hash derived from the incoming request, which Vercel discards after <strong>24 hours</strong>. Speed Insights is documented as carrying no visitor identifier at all. Neither is a cookie, neither writes anything to your device, and neither can recognise you on another site.</p>
     <p>Nothing about your images, your palettes, or your archive: those never leave your browser in the first place.</p>
 
     <h2>About interpretation</h2>
@@ -88,26 +109,52 @@
 
     <h2>Why we are allowed to process this</h2>
     <h3>Who is responsible</h3>
-    <p><strong>KauStudio</strong> is the data controller for the small amount of personal data described above, and can be reached at <a href="mailto:hello@kau.studio">hello@kau.studio</a>. Atmos Gallery is part of KauStudio.</p>
+    <p>The data controller for the small amount of personal data described above is:</p>
+    <p>
+      <strong>KauStudio ApS</strong><br />
+      Hessensgade 36, 4. tv<br />
+      2300 Copenhagen S<br />
+      Denmark<br />
+      CVR / VAT: DK39161443<br />
+      <a href="mailto:hello@kau.studio">hello@kau.studio</a>
+    </p>
+    <p>Atmos Gallery is a product of KauStudio ApS. We have not appointed a data protection officer, and are not required to: there is no large-scale monitoring here and no special-category data — the sections above are the whole of it.</p>
     <h3>Our legal basis</h3>
     <p>We rely on <strong>legitimate interests</strong> — serving the site reliably and securely, knowing roughly how many people use it, and finding out when it has become slow. We do not ask for consent for this because we are not doing anything a visitor would not expect from a website that simply loads; if you would rather not be counted at all, a tracker-blocking extension will stop both scripts and the tool will work exactly as before.</p>
     <p>We do not use your data to make automated decisions about you, we do not build profiles, and we do not advertise.</p>
 
     <h2>Who else touches it</h2>
-    <p>One company: <strong>Vercel Inc.</strong>, which hosts the site and provides both measurement tools, acting as our processor. That means your data reaches servers in the United States. Vercel commits to the safeguards required for transfers out of the EU/EEA in its own data processing terms.</p>
+    <p>One company: <strong>Vercel Inc.</strong>, which hosts the site and provides both measurement tools, acting as our processor. That means your data reaches servers in the United States.</p>
+    <!-- HOLD BEFORE PUBLISHING. This paragraph is deliberately thin, and it should not stay this way.
+         Vercel's Data Processing Addendum — which is what would incorporate the European Commission's
+         2021 Standard Contractual Clauses for this transfer — applies by its own terms only to
+         customers on Pro and Enterprise plans. This project is on Hobby, so there is no processor
+         agreement in place to name, and naming one would be false. Article 28 wants that contract and
+         Article 13(1)(f) wants the safeguard identified here; both are answered by moving the project
+         to Pro, at which point the Addendum binds automatically and this paragraph becomes:
+
+           That processing is governed by Vercel's Data Processing Addendum. Transfers out of the
+           EEA, the UK and Switzerland rely on the European Commission's 2021 Standard Contractual
+           Clauses — Module Two, controller to processor. You can read the Addendum, including the
+           Clauses as incorporated, at vercel.com/legal/dpa.
+
+         Until then this says only what is true. -->
+    <p>Vercel publishes its current list of sub-processors at <a href="https://security.vercel.com">security.vercel.com</a>. If you want to know what contractual protections apply to that transfer before you use the tool, write to <a href="mailto:hello@kau.studio">hello@kau.studio</a> and we will tell you where it stands rather than point you at a document.</p>
     <p>There is no one else. No advertising network, no third-party analytics, no email or CRM tool, no embedded video or font service — the fonts and animation libraries are served from this domain, not a CDN.</p>
 
     <h2>How long it is kept</h2>
-    <p>We keep no copies ourselves and maintain no database of visitors. The server logs and the aggregated measurement data are held by Vercel on its own retention schedule and expire automatically; we can neither extend it nor reach into it to find an individual visitor.</p>
+    <p>We keep no copies ourselves and maintain no database of visitors. Everything below is held by Vercel, and we can neither extend it nor reach into it to find an individual visitor.</p>
+    <p>The one figure that is published, and the one that matters most: the hash Web Analytics uses to tell visits apart is <strong>discarded after 24 hours</strong>. After that there is nothing left that could group your page views together, even in principle.</p>
+    <p>What remains is aggregate — counts by page, country, browser and device, with no thread running back to a person. We have not been able to establish a fixed published period for those aggregates or for Vercel's standard access logs, so rather than invent one, here is the criterion we hold ourselves to: we ask for no retention beyond what the hosting and these two aggregate measurements need, we add no storage of our own on top, and if Vercel publishes a defined period we will state it here rather than leave this paragraph as it is.</p>
     <p>Your palettes are a separate matter, and simpler: they are on your machine, for as long as you keep them there. See <a href="#your-palettes-are-stored-only-in-your-browser">Your palettes are stored only in your browser</a>.</p>
 
     <h2>Your rights</h2>
     <p>If any of the above counts as your personal data, you have the right to ask for a copy of it, to have it corrected or deleted, to restrict or object to how it is used, and to receive it in a portable form. Write to <a href="mailto:hello@kau.studio">hello@kau.studio</a> and we will answer within one month.</p>
     <p>One honest limitation: because we hold no accounts and no identifiers of our own, we usually <em>cannot</em> find data relating to a particular person — there is nothing linking an IP address in a server log to you. Where we cannot identify you, we cannot act on a request, and we will tell you that rather than pretend otherwise.</p>
-    <p>If you think we have handled your data badly, you can complain to the data protection authority where you live.</p>
+    <p>If you think we have handled your data badly, you can complain to the data protection authority where you live. Because KauStudio ApS is established in Denmark, you can also complain to <strong>Datatilsynet</strong>, the Danish Data Protection Agency, at <a href="https://www.datatilsynet.dk">datatilsynet.dk</a> — it is the authority that supervises us. You do not have to come to us first, though we would rather you did.</p>
 
     <h2>Children</h2>
-    <p>Atmos Gallery is a professional tool and is not directed at children. We do not knowingly collect data from anyone under 13.</p>
+    <p>Atmos Gallery is a professional design tool. It is not directed at children, we do not knowingly collect anything from them, and there is no account to create and no profile to build in any case. Where local law sets an age for consenting to online services, nothing here relies on a child's consent to begin with.</p>
 
     <h2>Changes to this statement</h2>
     <p>If what we collect changes, this page changes in the same release — not later. The date at the top is the date of the current version.</p>
@@ -117,7 +164,7 @@
 
     <div class="legal-foot">
       <p class="legal-foot__nav"><a href="/terms.html">Terms</a><span>·</span><a href="/">Back to Atmos Gallery</a></p>
-      <p>Atmos Gallery is part of KauStudio.</p>
+      <p>Atmos Gallery is a product of KauStudio ApS · CVR DK39161443</p>
     </div>
 
   </div>
