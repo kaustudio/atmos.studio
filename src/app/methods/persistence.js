@@ -142,7 +142,14 @@ export const persistenceMethods = {
   },
   // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
   projectName(id) { if (!id) return 'Unfiled'; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : 'Unfiled'; },
-  setActiveProject(id) { this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); }); },
+  // Scoping the archive replaces every row in it, so it takes the same arrival as a page change:
+  // the list restates itself top-down instead of cutting to a different set in place.
+  //
+  // Reveal WITHOUT the anchor scroll that setPage/setPageSize use, deliberately. The chips and the
+  // filter drawer sit ABOVE the list, so anchoring would scroll the control you just clicked off the
+  // top of the screen — the cure would be worse than the jump. Paging is different: the pager is
+  // below the list, so anchoring moves toward what you were touching, not away from it.
+  setActiveProject(id) { this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); }); },
   // Tag scoping. Activating the pressed tag clears it — the chip is the toggle, so there is no
   // separate "clear" control to find, and no way to end up filtered with nothing to unfilter with.
   // Same shape as setActiveProject deliberately: same state pipeline, same universe rebuild, same
@@ -164,7 +171,7 @@ export const persistenceMethods = {
         : (on ? 'Removed ' + tag + '. ' : 'Added ' + tag + '. ')
           + 'Showing palettes tagged ' + next.join(' and ') + '.';
       return { activeTags: next, page: 0, announce: say };
-    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
   },
   // OR toggle within the accessibility group.
   setA11yFilter(state) {
@@ -175,11 +182,11 @@ export const persistenceMethods = {
       const say = next.length === 0 ? 'Accessibility filter cleared.'
         : 'Showing palettes with ' + next.join(' or ') + ' accessibility.';
       return { activeA11y: next, page: 0, announce: say };
-    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
   },
   // Clears BOTH groups — the single clear-all the panel and header share.
   clearTags() {
-    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); });
+    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); });
   },
   createProject(name) {
     name = (name || '').trim(); if (!name) return null; const id = 'proj-' + Date.now() + Math.random().toString(36).slice(2, 6);
