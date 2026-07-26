@@ -1,4 +1,12 @@
+# Everything here is public and free to read, by people and by agents alike. No crawler is singled
+# out for a block: the site sells nothing, gates nothing, and holds no user content on a server.
 User-agent: *
 Allow: /
+
+# The tool is client-rendered, so a crawler that does not execute JavaScript sees an empty body on
+# the homepage. /llms.txt is the plain-text description of what this is, written for exactly that
+# case. It is not a standard a crawler is obliged to read, so index.html also carries JSON-LD and a
+# <noscript> body with the same substance.
+# llms: https://atmos.gallery/llms.txt
 
 Sitemap: https://atmos.gallery/sitemap.xml

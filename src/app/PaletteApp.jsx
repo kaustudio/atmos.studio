@@ -6,6 +6,7 @@ import AppView from './AppView.jsx';
 import * as C from '../lib/color.js';
 import * as X from '../lib/exporters.js';
 import * as I from '../lib/interpret.js';
+import { syncThemeColor } from '../lib/themeColor.js';
 import { pipelineMethods } from './methods/pipeline.js';
 import { persistenceMethods } from './methods/persistence.js';
 import { motionMethods } from './methods/motion.js';
@@ -176,6 +177,7 @@ export default class PaletteApp extends React.Component {
     // Light is the product default; the nav toggle overrides in-session
     const theme = 'light';
     try { document.documentElement.setAttribute('data-theme', theme); } catch (e) { }
+    safe(() => syncThemeColor(), 'themecolor'); // browser chrome follows --surface, not the OS appearance
     this.state.theme = theme;
     this.initMotion();
     // GSAP readiness. The vendored core+plugins load from index.html; register plugins once present.

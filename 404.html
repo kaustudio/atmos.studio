@@ -7,6 +7,12 @@
 <meta name="description" content="That address doesn't exist on Atmos Gallery." />
 <!-- No canonical and not in sitemap.xml: this page is an answer to a bad request, not a destination. -->
 <meta name="robots" content="noindex" />
+<!-- Paints the iOS status bar and Safari toolbar in --surface, so the page fills the window rather
+     than sitting between two bars of the OS appearance. Media-scoped, unlike the app's single tag:
+     this page has no theme toggle and legal.css themes it straight off prefers-color-scheme, so the
+     two values track that query exactly as the tokens do. -->
+<meta name="theme-color" content="#f5f5f3" media="(prefers-color-scheme:light)" />
+<meta name="theme-color" content="#141413" media="(prefers-color-scheme:dark)" />
 <link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
 <link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
 <!-- legal.css first: it carries the tokens, the Neue Montreal @font-face rules and the chrome this

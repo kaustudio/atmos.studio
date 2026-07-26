@@ -1,6 +1,8 @@
 // Motion system: shared tokens, micro-interaction handlers, list-row activation (effect035) +
 // value readout (effect019), the result reveal (bottom-to-top band wipe, masked line reveals),
 // theme toggle, and the mono-label style builders.
+import { syncThemeColor } from '../../lib/themeColor.js';
+
 export const motionMethods = {
   // ---- motion tokens: one shared set, scaled by hierarchy ----
   initMotion() {
@@ -383,6 +385,8 @@ export const motionMethods = {
   // ===== theme toggle (chrome only — never the palette swatches) =====
   toggleTheme() {
     const next = this.state.theme === 'dark' ? 'light' : 'dark'; try { document.documentElement.setAttribute('data-theme', next); } catch (e) { }
+    // the status bar / toolbar re-skin with the page, so the window keeps reading as one surface
+    syncThemeColor();
     // clear any GSAP-baked inline background so rows fall back to the token-driven rowStyle under the new theme
     try { const g = window.gsap; document.querySelectorAll('[data-list-wrap] [data-row]').forEach((r) => { if (g) g.killTweensOf(r); r.style.removeProperty('background-color'); r.style.removeProperty('background'); r.removeAttribute('data-hover'); }); } catch (e) { }
     this.setState({ theme: next, announce: next === 'dark' ? 'Dark theme.' : 'Light theme.' }, () => {
