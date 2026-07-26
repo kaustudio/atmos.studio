@@ -62,9 +62,10 @@ The chats left "where live interpretation runs" open. The client is wired with a
 1. **`VITE_INTERPRET_ENDPOINT`** — a proxy URL that holds the Anthropic API key.
    `api/interpret.ts` is a ready-to-deploy Vercel/Netlify-style function: set `ANTHROPIC_API_KEY`
    on the host, then build the client with
-   `VITE_INTERPRET_ENDPOINT=/api/interpret`.
-2. **`window.claude.complete`** — when running inside the Claude artifact runtime.
-3. **Neither** — the local archetype reading is used silently; a notice appears only on a genuine
+   `VITE_INTERPRET_ENDPOINT=/api/interpret`. The endpoint owns the model, the token cap and the
+   system prompt, and accepts only `{ image: { media_type, data }, swatches: [{ hex, weight }] }`
+   — the client sends no prompt text, so none of it is in the bundle.
+2. **Neither** — the local archetype reading is used silently; a notice appears only on a genuine
    live-call failure.
 
 Where a live path exists, a downscaled thumbnail is sent to read the mood; where none does, nothing
