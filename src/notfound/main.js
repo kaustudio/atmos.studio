@@ -173,6 +173,32 @@ async function init() {
   follow.observe(canvas);
   follow.observe(title);
 
+  /* And on scroll, which is a third kind of change and needs saying because it is not obvious from
+     placement(): every offset it returns is the gap between the heading's rect and the canvas's, both
+     read in VIEWPORT pixels. The canvas is position:fixed, so its rect never moves — but the heading's
+     does, the moment the page scrolls. Until the footer moved past the fold this page could not scroll
+     at all, so resizing was the only way those two could ever disagree; now scrolling is another, and
+     without this the cloud stays parked mid-screen while the type it is standing in for slides out from
+     under it.
+
+     rAF-throttled because scroll fires far faster than the compositor can use, and the work is only a
+     uniform update. Safe to throttle this way, unlike the field's start-up failsafe: this is a response
+     to an event that only happens while the tab is live and painting, not a timer that has to survive a
+     tab that is not. */
+  let queued = false;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (queued || !field) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        field?.setOptions(placement());
+      });
+    },
+    { passive: true },
+  );
+
   const dark = window.matchMedia('(prefers-color-scheme: dark)');
   dark.addEventListener('change', () => field?.setOptions({ color: inkColor() }));
 

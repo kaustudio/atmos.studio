@@ -31,21 +31,32 @@ token expresses that asymmetry, colours were flagged as not final, and `--line-s
 `.legal-head`, `.legal-hero::after` and `h2::before` already draw. Everything else matches the comp
 within ~1px, measured subpixel off the rendered PDFs.
 
-**What it cost the 404, knowingly:** that page is exactly `100vh` with nothing scrolling, and its
-`--nf-reserve` is what stops the fitted 404 outgrowing a viewport it cannot scroll. The footer it
-replaced was 105px of two-line type; this one is ~355px at a 1440px window, and all of it comes out of
-the numeral — which drops from full width to roughly 60% of it, leaving the footer wordmark wider than
-the 404 itself. That was weighed and accepted rather than overlooked.
+**The 404 no longer holds everything in one viewport.** It used to be pinned to exactly `100vh` with
+`overflow:hidden` on `html` and `body` — "the viewport is the page" was the first of the three rules at
+the top of `notfound.css`. A full-bleed wordmark cannot share one screen with a full-bleed 404: the
+footer's height is a function of viewport *width*, so it grew as the page widened, and the numeral had
+to shrink to pay for it. Tried in that order and both were worse than this:
 
-**The coupling this creates is the thing to be careful with.** The footer's height is a function of
-viewport *WIDTH* — a full-bleed wordmark gets taller as the page widens — while `--nf-reserve` has to
-be a length. So it is no longer a constant but
-`calc(175px + var(--nf-foot-height))`, and `--nf-foot-height` carries the wordmark's aspect ratio
-(`6.4633`, i.e. 876.43 ÷ 135.6) as a live term. **That figure must stay in step with
-`.site-foot__mark`'s `aspect-ratio`**: re-crop the asset without moving it and the 404 silently
-mis-reserves, which on a page that cannot scroll means content simply off the bottom edge. The two
-breakpoints are also deliberately separate — the footer restacks at 700px, the 404's own chrome
-relaxes at 767px, and collapsing them to one number would make each answerable to the wrong thing.
+1. *Footer inside the viewport.* `--nf-reserve` had to carry the footer's width-dependent height, so it
+   stopped being a length and became `calc(175px + var(--nf-foot-height))` with the wordmark's aspect
+   ratio as a live term. The numeral dropped to ~60% of full width, and on a landscape phone (844×390)
+   the reserve exceeded `100vh` outright — `max-width` clamped to `0`, which is exactly the case
+   `fit-width.js` returns early on, so the heading kept a stale font size, overflowed, and was clipped
+   off the top of a page that could not be scrolled, with the button underneath the footer.
+2. *Footer inside the viewport, minus its wordmark on short windows.* Two more media queries, and the
+   404 still paid for the rest.
+3. **The page scrolls and the footer sits past the fold.** `.nf` is one screen less the mark's band, so
+   the fold falls on the footer's top rule. The numeral is back to full width at every size.
+
+That third form is not a tweak of the first two, it deletes them: `--nf-reserve` is a flat sum of the
+mark, `.nf`'s padding and the button again, and three width- and height-dependent overrides are gone,
+along with the `6.4633` aspect-ratio term that had to be kept in step with `.site-foot__mark` by hand.
+Whole classes of arithmetic bug went with them. **What replaces that vigilance:** the canvas is
+`position:fixed` and `placement()` measures the heading in *viewport* coordinates, so `main.js` now
+re-places the field on scroll — without it the cloud stays parked mid-screen while the type slides out
+from under it. And both `100vh` figures are followed by a `100svh` copy, because on iOS `vh` is the
+toolbars-collapsed viewport and would push the button behind the toolbar; `svh` and not `dvh`, which
+would re-fit the type mid-scroll.
 
 **Why the CVR line stayed behind:** `.legal-foot` still closes both legal articles, reduced to the
 controller-identity line alone. Its nav duplicated the new footer and went; the identity did not,

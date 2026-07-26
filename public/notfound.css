@@ -16,24 +16,38 @@
    that grid, under the centred mark.
 
    Three rules hold the whole page together and are worth reading before changing any of them:
-     · the viewport is the page — exactly 100vh, and nothing scrolls, so the layout can never be
-       longer than what is on screen (see .nf's min-height:0);
+     · the 404 owns the first viewport and the footer begins where it ends — the mark plus .nf are
+       exactly 100vh, so the fold falls on the footer's top rule and the page scrolls from there;
      · the 404's size is not in this file — fit-width.js measures .nf-type and sets the font-size
        that fills it, so .nf-type's width is the only thing that decides how big the 404 gets;
      · the particle canvas is a fixed layer over the whole viewport rather than a box around the
-       heading, so a pushed particle is never clipped by a container. */
+       heading, so a pushed particle is never clipped by a container. Because it is fixed and the page
+       now scrolls, main.js re-places the field on scroll — see the note there.
 
-/* Exactly one viewport tall, and immovable. overflow:hidden on both elements is what makes "no
-   scrolling" true for every input — wheel, touch, keyboard, and the focus ring of an off-screen
-   element. Nothing here is ever taller than the viewport, so nothing is unreachable as a result. */
-html,body{height:100vh;overflow:hidden}
+   This page USED to be exactly 100vh with overflow:hidden on html and body, and the footer lived
+   inside that. It cannot any more: the site footer's height is a function of viewport WIDTH, so on a
+   short window it took the whole screen and the 404 was clipped off the top of a page that could not
+   be scrolled. Letting the page scroll and putting the footer past the fold is what removes that class
+   of bug rather than tuning around it — --nf-reserve below is a flat figure again as a direct result. */
+
+/* The first screen is the mark plus .nf; the footer follows it and is reached by scrolling. Nothing
+   here pins the document's height, so the page is as tall as it needs to be — and the scrollbar is the
+   affordance telling a visitor the footer is down there (legal.css does not hide it, unlike the app). */
 body{display:flex;flex-direction:column}
 
-/* The column: mark at the top, footer at the bottom, the type taking every pixel between and centred
-   in it. min-height:0 lets this shrink below its content on a short window instead of pushing the
-   footer off the bottom — with scrolling disabled, the flex item must be the thing that gives. */
+/* One viewport, less the band the mark sits in, so the footer's first rule lands exactly on the fold.
+   The head's height is not a literal here — it is composed from the same two tokens .nf-head and
+   .nf-mark are drawn from, so this split cannot drift from the thing it is measuring. */
 .nf{
-  flex:1;min-height:0;
+  min-height:calc(100vh - var(--nf-head-height));
+  /* svh, declared second so it simply wins where it is understood. On iOS, 100vh is the viewport with
+     the browser's toolbars COLLAPSED — taller than what you can actually see — so a vh-only version of
+     this rule puts the button behind the toolbar and the fold below the real bottom of the screen, and
+     the footer stops beginning where it is supposed to. svh is the small viewport: toolbars showing, the
+     worst case, so the first screen fits whether they are there or not. Deliberately not dvh, which
+     tracks the toolbars live and would re-fit the 404 mid-scroll as they slid away. Desktop is
+     unaffected — there svh and vh are the same number. */
+  min-height:calc(100svh - var(--nf-head-height));
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   width:100%;
   padding:24px var(--page-gutter);
@@ -50,13 +64,20 @@ body{display:flex;flex-direction:column}
    finds it where they left it. The app's version masks a drifting gradient with mix-blend difference;
    those keyframes live in global.css, which this page doesn't load, so the ink is flat --on-surface
    exactly as on privacy and terms. */
+/* The two figures are named because .nf's 100vh split reads them: the band above the 404 has to be
+   the band the mark actually occupies, and two literals would agree only until someone edited one. */
+:root{
+  --nf-mark-height:26px;
+  --nf-head-pad:18.5px;
+  --nf-head-height:calc(var(--nf-head-pad) + var(--nf-mark-height));
+}
 .nf-head{
   display:flex;justify-content:center;
-  padding:18.5px var(--chrome-gutter) 0;
+  padding:var(--nf-head-pad) var(--chrome-gutter) 0;
 }
 .nf-head a{display:block;line-height:0}
 .nf-mark{
-  display:block;width:165px;height:26px;background:var(--on-surface);
+  display:block;width:165px;height:var(--nf-mark-height);background:var(--on-surface);
   -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
   mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
 }
@@ -66,11 +87,11 @@ body{display:flex;flex-direction:column}
    fit-width.js fills the inner width of the heading's PARENT, so this box is the whole type scale of
    the page: it is full width on the page's gutter, and the 404 grows to meet it.
 
-   max-width is the one guard the fit needs. Nothing scrolls, so type that outgrows the viewport's
-   HEIGHT would simply be cut off — and a page fitted to width alone does exactly that on a short,
-   wide window. So the box never asks for more width than the height can carry: --nf-reserve is
-   everything that is not the 404 (the mark, this box's padding, the button, the footer, plus air),
-   and --nf-fit-ratio turns the height that remains back into a width.
+   max-width is the one guard the fit needs. The 404 is meant to sit WITHIN the first screen, so type
+   fitted to width alone overruns it on a short, wide window and pushes the button past the fold. So the
+   box never asks for more width than the first screen's height can carry: --nf-reserve is everything
+   in that screen which is not the 404 (the mark, this box's padding, the button, plus air), and
+   --nf-fit-ratio turns the height that remains back into a width.
 
    The ratio is "404" set in Neue Montreal Medium: its advance width divided by its line box, which is
    how many pixels wide the line is per pixel tall. src/notfound/main.js measures it off the live
@@ -78,31 +99,26 @@ body{display:flex;flex-direction:column}
    On an ordinary window it doesn't bind at all — the type simply fills the width. */
 .nf-type{
   width:100%;
-  /* The floor is not decoration. The reserve below is subtracted from 100vh, so on a short enough
-     window it exceeds it and the calc goes negative — max-width clamps to 0, and a 0-width parent is
-     exactly the case fit-width.js returns early on (`if (available <= 0) return`). The heading then
-     keeps whatever font-size it was last fitted at, overflows its parent, and gets clipped off the top
-     of a page that cannot scroll. max() means the type is always given SOME width to be fitted into,
-     so the fit always runs and the result is always small-but-correct rather than stale-and-cropped. */
+  /* The floor is not decoration. The reserve is subtracted from 100vh, so on a short enough window it
+     exceeds it and the calc goes negative — max-width clamps to 0, and a 0-width parent is exactly the
+     case fit-width.js returns early on (`if (available <= 0) return`). The heading then keeps whatever
+     font-size it was last fitted at and overflows its parent. max() means the type is always given
+     SOME width to be fitted into, so the fit always runs and the result is small-but-correct rather
+     than stale-and-oversized. */
   max-width:max(120px, calc((100vh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35)));
-  /* The reserve used to be a single 280px, which worked while the footer was two lines of 12px type.
-     The shared site footer is a full-bleed wordmark, so its height is a function of the viewport's
-     WIDTH — it grows as the page widens — and no constant can stand in for that. Hence two terms:
-
-       --nf-foot-height  the footer itself. 139px of fixed furniture (two 1px rules, the 44+22 around
-                         the wordmark, and 33+12+26 for the meta row — see .site-foot in legal.css)
-                         plus the wordmark, which is the content width over its own aspect ratio.
-                         6.4633 is 876.43 ÷ 135.6, the same box .site-foot__mark carries as
-                         aspect-ratio; if that asset is ever re-cropped, this figure moves with it.
-       175px             everything else that is not the 404: the mark, .nf's padding, the button and
-                         its margin, plus the air the old 280px already held (280 − the old footer's
-                         measured 105px).
-
-     Both are custom properties rather than one long calc so the breakpoints below can move the two
-     independently — the footer restacks at 700px, this page's own chrome relaxes at 767px, and those
-     are not the same width. */
-  --nf-foot-height:calc(139px + (100vw - 2 * var(--page-gutter)) / 6.4633);
-  --nf-reserve:calc(175px + var(--nf-foot-height));
+  /* svh for the same reason .nf uses it: the height this guard is rationing is the height of the FIRST
+     SCREEN, and on iOS that is the small viewport, not vh. */
+  max-width:max(120px, calc((100svh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35)));
+  /* Everything in the first screen that is not the 404, summed from its parts rather than written as
+     one number, so each term stays answerable to the rule that sets it:
+       --nf-head-height  the mark's band, from the tokens .nf-head and .nf-mark themselves use
+       48px              .nf's own vertical padding, 24 top and 24 bottom
+       24px + 36px       .nf-actions' margin-top, and the button
+       24px              air, so the type never crowds the button
+     It is a flat figure again — while the footer lived inside the viewport this had to carry the
+     footer's width-dependent height, and got the arithmetic wrong on any short window. The footer is
+     past the fold now, so it is none of this sum's business. */
+  --nf-reserve:calc(var(--nf-head-height) + 48px + 24px + 36px + 24px);
   text-align:center;
   /* The heading is an inline-block, so it sits on a line box here — and that line box carries a strut
      from the inherited line-height, which parked ~8px of nothing under the digits and made the 24px
@@ -196,41 +212,12 @@ body{display:flex;flex-direction:column}
    its own rules and its own bottom padding, and is identical here to what privacy and terms show. */
 
 /* One grid at every width — the app's gutters hold on a phone as much as on a desktop, and the legal
-   pages now do the same, so no page here has a breakpoint-specific inset. Only the vertical reserve
-   changes: there is less chrome to leave room for, so the type may take more of a short screen. */
-@media screen and (max-width:767px){
-  .nf-type{--nf-reserve:calc(115px + var(--nf-foot-height))}
-}
-/* The footer's own threshold, not this page's: at 700px its meta row stops being three columns and
-   becomes three stacked rows, which is 48px the reserve above would otherwise not know about. Kept as
-   a separate query so each number stays answerable to the thing that actually decides it. */
-@media screen and (max-width:700px){
-  .nf-type{--nf-foot-height:calc(146px + (100vw - 2 * var(--page-gutter)) / 6.4633)}
-}
-
-/* Short windows: the footer gives up its wordmark, and this is the only page where it does.
-   The wordmark is sized off the page's WIDTH, so on a landscape phone (844×390) it asks for 216px of
-   a 390px window — and unlike privacy and terms, which simply scroll, this page is exactly 100vh with
-   overflow:hidden, so what does not fit is not merely below the fold, it is unreachable. Before that
-   arithmetic was in the reserve, 280px flat left room here; afterwards the reserve exceeded the whole
-   viewport, and the 404 was clipped off the top of the screen with the button under the footer.
-
-   So on a short window the wordmark goes and the meta row stays. It is the right thing to lose: the
-   links and the credit are the footer's FUNCTION, the wordmark is its presence, and this page already
-   carries the mark at the top and a "Back to Atmos Gallery" button in the middle — nothing becomes
-   unreachable by dropping it. The alternative, keeping it and squeezing the 404, spends the subject of
-   the page on the decoration of its footer.
-
-   72px is the meta row alone: its 1px rule plus 33 + 12 + 26. The narrow variant restates it because
-   there the row is three stacked lines (1 + 24 + 60 + 24), and it must come after the width query
-   above, which would otherwise put the wordmark's height back. */
-@media screen and (max-height:600px){
-  .site-foot__brand{display:none}
-  .nf-type{--nf-foot-height:72px}
-}
-@media screen and (max-height:600px) and (max-width:700px){
-  .nf-type{--nf-foot-height:109px}
-}
+   pages now do the same, so no page here has a breakpoint-specific inset. The vertical reserve needs no
+   breakpoint either: it is summed from the mark, this page's own padding and its button, none of which
+   change with width. It carried three width- and height-dependent overrides while the footer shared the
+   viewport with the 404 — every one of them existed to keep the footer from crowding the type, and the
+   fold does that job now. Deleted rather than kept "just in case": each was a number that had to be
+   right, and none of them can be checked any more. */
 
 /* legal.css carries no blanket motion floor, so the two transitions above are stood down here. The
    particle field itself never starts under this preference — see src/notfound/main.js. */

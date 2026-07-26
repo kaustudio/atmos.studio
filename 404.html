@@ -42,10 +42,10 @@
   <p class="nf-actions"><a class="nf-cta" href="/">Back to Atmos Gallery</a></p>
 </main>
 
-<!-- The shared site footer, from legal.css — outside .nf so the flex column holds it at the bottom
-     while the 404 takes the middle. It is much taller than the two lines it replaces, and this page is
-     exactly one viewport with nothing scrolling, so .nf-type's --nf-reserve was rewritten to carry the
-     footer's height as a width-dependent term. Change one and check the other. -->
+<!-- The shared site footer, from legal.css — after .nf rather than inside it, and BELOW THE FOLD: .nf is
+     one viewport less the mark's band, so this footer's top rule is the first thing a scroll reveals.
+     That is why the page scrolls at all now; it used to be pinned to 100vh with overflow:hidden, which
+     a full-bleed wordmark cannot share with a full-bleed 404. See notfound.css. -->
 <footer class="site-foot">
   <div class="site-foot__brand">
     <a href="/" aria-label="Atmos Gallery — home"><span class="site-foot__mark" aria-hidden="true"></span></a>
