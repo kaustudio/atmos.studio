@@ -51,9 +51,6 @@ const DEFAULTS = {
   damping: 0.35,
   /** Idle wander amplitude, in CSS pixels. */
   drift: 1.1,
-  /** How much of its palette's spread an orb shows across its own body, 0–1. The rest of the
-      variety lives BETWEEN orbs, where it does not compete with the lamp for direction. */
-  tonalRange: 0.42,
   /** How far the whole formation leans toward the cursor, in CSS pixels. A whisper by design. */
   lean: 14,
   /** Viewport fractions — the one room light every orb answers to. */
@@ -130,11 +127,7 @@ void main() {
      laid over the orb rather than as light falling on it. */
   vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
   float sp = pow(clamp(dot(aNormal, H), 0.0, 1.0), 64.0);
-  // Neutral white. The solid's highlight was warm (1.0, .98, .94) and its rim cool, which is a
-  // colour decision, and on a greyscale formation a warm highlight against a cool limb is the one
-  // place hue would survive — two tints quietly reintroducing the colour the rest of this is
-  // removing. Both are neutral now, so the orbs are grey all the way through rather than nearly.
-  col += vec3(1.0) * sp * 0.30 * li * dep * dep;
+  col += vec3(1.0, 0.98, 0.94) * sp * 0.30 * li * dep * dep;
 
   /* Fresnel rim opposite the light, at the limb. Also pulled well back: on a solid the limb is a
      thin band, but under an orthographic camera |n.z| is small across the whole outer THIRD of the
@@ -142,14 +135,14 @@ void main() {
      was ever meant to and took the palette down with it. */
   float fr = pow(1.0 - abs(aNormal.z), 3.4);
   float away = clamp(dot(normalize(aNormal.xy + 1e-4), -l2), 0.0, 1.0);
-  col += mix(aColor, vec3(0.82), 0.26) * fr * away * (0.13 + 0.20 * m) * (0.35 + 0.65 * dep);
+  col += mix(aColor, vec3(0.72, 0.79, 0.92), 0.26) * fr * away * (0.13 + 0.20 * m) * (0.35 + 0.65 * dep);
 
-  /* The painted tile finished on saturate(1.25) contrast(1.04). The saturation half of that is
-     gone — there is nothing left to saturate, and applied to a grey it is an expensive no-op — but
-     the CONTRAST half is worth more here than it was there. Every shading term above pulls toward
-     white or grey, and with hue removed, tone is carrying the whole read on its own. */
+  /* The painted tile finished on saturate(1.25) contrast(1.04) — the palette's own cast, given a
+     stronger voice so near-neutrals diverge instead of merging. The same correction is owed here
+     and matters more: the shading terms above all pull toward white or grey, and dots average
+     together in a way a continuous surface does not. */
   float grey = dot(col, vec3(0.2126, 0.7152, 0.0722));
-  col = vec3(0.5 + (grey - 0.5) * 1.06);
+  col = mix(vec3(grey), col, 1.24);
 
   vColor = col;
   vAlpha = aParams.z;
@@ -271,14 +264,6 @@ export function createOrbField(canvas, orbs, options = {}) {
     const unit = sphereOffsets(n, rng);
     const palette = (orb.hexes && orb.hexes.length ? orb.hexes : ['#8a8a8a']).map(hexToRgb);
     const sat = orb.saturation === undefined ? 1 : orb.saturation;
-    /* The orb's own average, and the amount of its palette's spread the body is allowed to show.
-       Compressing the ramp toward this mean is what keeps the material from becoming a SECOND light:
-       a ramp is a gradient across the body, and at full strength a light-to-dark one competes with
-       the lamp for which side of the orb is lit. Pulled most of the way in, the palette still sets
-       each orb's weight against its neighbours — which is where the tonal variety is meant to read —
-       while the direction stays where the contract puts it, with the one global lamp. */
-    const mean = [0, 1, 2].map((k) => palette.reduce((a, c) => a + c[k], 0) / palette.length);
-    const spread = Math.min(Math.max(config.tonalRange, 0), 1);
     for (let j = 0; j < n; j++) {
       const i = cursorIx + j;
       const i3 = i * 3;
@@ -290,27 +275,21 @@ export function createOrbField(canvas, orbs, options = {}) {
       pulls[i] = len;
 
       /* The orb's MATERIAL, and nothing else — no highlight, no terminator, no rim, exactly as the
-         painted tile was forbidden to carry them.
+         painted tile was forbidden to carry them. Which colour a particle wears is a function of
+         where it sits on the sphere, so hue TRAVELS across the body the way the reference palettes
+         were chosen to make it (see _orbitRefPalettes) instead of the orb reading as one flat mood.
 
          It is a continuous RAMP through the palette, not a swatch per particle. Picking a discrete
          swatch is what the painted tile could afford, because there it was a region of a gradient;
          here it is one 2px dot next to another 2px dot holding a different swatch, and at this
-         grain the eye does the averaging — five swatches dithered together came out as noise with
-         the palette nowhere in it. Interpolating gives a gradient the eye can actually read.
-
-         The caller hands the palette in LUMINANCE order, which matters more here than it looks.
-         While these were in colour the order was by hue, and the luminance jumps between adjacent
-         swatches were carried by the hue change; desaturated there is no hue left to carry them, so
-         a hue-ordered ramp turns straight back into the speckle that ordering was introduced to
-         fix. Tone is the only channel left, so the ramp has to be monotonic in it. */
+         grain the eye does the averaging — five swatches dithered together came out as grey noise
+         with the palette nowhere in it. Interpolating instead puts the same hue travel across the
+         body as a gradient the eye can actually read, which is the whole point of the formation. */
       const ramp = Math.min(Math.max((ux * 0.55 + uy * 0.84) * 0.5 + 0.5 + (rng() - 0.5) * 0.1, 0), 1)
         * (palette.length - 1);
       const lo = Math.floor(ramp), hi = Math.min(lo + 1, palette.length - 1), mix = ramp - lo;
       const a = palette[lo], b = palette[hi];
-      const c = [0, 1, 2].map((k) => {
-        const v = a[k] + (b[k] - a[k]) * mix;
-        return mean[k] + (v - mean[k]) * spread;      // compressed toward the orb's own average
-      });
+      const c = [a[0] + (b[0] - a[0]) * mix, a[1] + (b[1] - a[1]) * mix, a[2] + (b[2] - a[2]) * mix];
       // Ring desaturation is per-ring and static, so it is baked here rather than costing a uniform.
       const grey = c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722;
       colors[i3] = grey + (c[0] - grey) * sat;
