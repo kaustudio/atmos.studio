@@ -42,11 +42,13 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
   variables, CSS custom properties, binary `.ase`), projects with portable JSON project files.
 - **Standalone pages** — privacy and terms, served straight out of `/public`, and a not-found page
-  that is one thing only: the real Neue Montreal glyphs of *404*, rebuilt as a particle cloud the
-  cursor pushes through, on the app's full-bleed grid with the mark centred as the app centres it.
-  No explanatory copy, and one quiet button at the system's own button size. Without JS, WebGL, the
-  webfont, or with reduced motion asked for, the same 404 is simply set as type — the heading in the
-  markup is the fallback, and the CSS is what sizes both.
+  that is one thing only: the real Neue Montreal glyphs of *404*, fitted edge to edge across the
+  viewport and rebuilt as a particle cloud the cursor pushes through, over a fixed full-viewport
+  canvas so nothing it throws is ever clipped. Exactly 100vh, nothing scrolls, everything centred
+  under the centred mark; no explanatory copy, and one button — the landing's own glass *Get Started*,
+  relabelled.
+  Without JS, WebGL, the webfont, or with reduced motion asked for, the same 404 is simply set as
+  type — the heading in the markup is the fallback either way.
 - **System** — light/dark themes (chrome only, never swatches), Neue Montreal, zero border-radius
   (orb bodies and the wipe caps are the only sanctioned curves), token-driven GSAP motion with
   full `prefers-reduced-motion` floors, versioned localStorage persistence with cross-tab sync
@@ -156,6 +158,7 @@ public/fonts            Neue Montreal (Regular/Medium)
 public/assets           Atmos logo/wordmark SVGs
 public/legal.css        shared chrome for the standalone pages (privacy, terms, 404)
 public/notfound.css     the 404's own layer: display type + the particle canvas
+public/fit-width.js     Osmo Supply "Fit Text to Width", as delivered — sizes the 404 to the page
 src/notfound/*          the particle field, the type rasteriser, and the page's wiring
 src/lib                 colour science, exporters, interpretation seam, sx() style parser
 src/app/PaletteApp.jsx  class core (state, lifecycle)

@@ -117,14 +117,46 @@ NOT_FOUND` for a nonsense path — i.e. there is no SPA catch-all rewrite in fro
 stops being reachable. Note that `npm run preview` *does* fall back to `index.html`, so it cannot be
 used to check this — only a deployment can.
 
+**The 404 is fitted to the page, and the page is exactly one viewport.** `public/fit-width.js` is Osmo
+Supply's *Fit Text to Width*, kept as delivered like `legal-toc.js` before it, and it — not this
+repo's CSS — sets the font-size that makes the 404 span its container. Consequences, all load-bearing:
+
+- **Nothing scrolls.** `html,body{height:100vh;overflow:hidden}`, and `.nf` carries `min-height:0` so
+  the type is what gives on a short window rather than the footer being pushed off the bottom.
+- **Because nothing scrolls, width alone is not a safe fit.** Type fitted only to width overflows the
+  *height* on a short, wide window, and with no scrollbar that overflow is simply cut off. So
+  `.nf-type` also caps its width at the height that is actually free — `--nf-reserve` (everything that
+  is not the 404) turned back into a width by `--nf-fit-ratio`. On an ordinary window the cap doesn't
+  bind and the 404 fills the width edge to edge; measured at 1440×900 it lands on 1408px, the full
+  width between the gutters. `main.js` sets the ratio from the rasterised glyphs; the CSS fallback is
+  the same figure, so the guard holds with no JS. Verified: measured 2.3502 against a 2.35 fallback.
+- **`line-height:.74` on the heading is not styling.** At ~800px the default leading parks ~170px of
+  empty line box under the digits, and on a page that cannot scroll that space comes straight out of
+  how wide the 404 may be. Tightening it to the digits' own height is what lets the type fill the
+  width at all.
+- **The particle canvas is `position:fixed; inset:0`** — a layer over the whole viewport, not a box
+  around the heading. The push field throws particles well past the glyphs, and any box drawn around
+  them is a box they visibly get clipped against, which is exactly the bug this replaced. It is
+  `pointer-events:none` because it now covers the mark, the button and the footer links.
+
+Because the canvas no longer wraps the heading, its resizing no longer implies the heading's:
+`main.js` observes both, since the fit also re-runs after the webfont lands.
+
 **The page carries no explanatory copy, deliberately.** There is no eyebrow and no lead paragraph:
 the 404 is the whole message, and the page is a full-height column — mark at the top, footer at the
 bottom, the type taking everything between. Two things follow from that, and both are easy to undo by
 accident:
 
-- The one action is the system's button at the system's size (10.5px uppercase, `0.75em 1.35em`,
-  primary's inverted fill — `button-006`'s own figures), *not* a larger CTA. It is deliberately quiet
-  so the 404 is what the eye lands on. At 28px tall it still clears the 24×24 target minimum.
+- The one action is the landing's **Get Started** button, restated figure for figure from `glassCta`
+  in `renderVals.js`: 36px tall, 0/16px, Neue Montreal 500 at 14px on `--track-title`, sentence case,
+  squared, and a 7% *glass* fill with an 18px backdrop blur behind a 15% edge — not an inverted fill
+  and not uppercase. The two easing curves are written out because `global.css` isn't loaded here, so
+  retuning `--ease-button-hover` or `--ease-standard` there leaves this page stale. The glass pays for
+  itself on this page in particular: the button sits above the particle layer, so the blur takes the
+  cloud drifting behind it, exactly as the landing's does with the orb ring.
+- The 24px above it is measured to the glyphs, and getting there needed `line-height:0` on `.nf-type`.
+  The heading is an inline-block, so it sits on a line box whose strut — inherited `line-height:1.6`
+  from legal.css — parked ~8px of nothing under the digits and made 24px read as 32.
 - `<p class="nf-said">` is the copy that remains, hidden but spoken — without it a screen reader
   announces this page as the bare number "404". It sits outside the `<h1>` because `main.js`
   rasterises that element's text, and anything inside it would be spelled out by the particles. If

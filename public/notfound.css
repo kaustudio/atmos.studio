@@ -81,6 +81,11 @@ body{display:flex;flex-direction:column}
   max-width:calc((100vh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35));
   --nf-reserve:280px;
   text-align:center;
+  /* The heading is an inline-block, so it sits on a line box here — and that line box carries a strut
+     from the inherited line-height, which parked ~8px of nothing under the digits and made the 24px
+     below read as 32. Zeroing it leaves the box exactly as tall as the glyphs; the heading sets its
+     own line-height, so nothing about the type changes. */
+  line-height:0;
 }
 
 /* The resource's own rule, as delivered. */
@@ -120,35 +125,45 @@ body{display:flex;flex-direction:column}
   z-index:1;
 }
 
-.nf-actions{margin:8px 0 0}
+/* The line box hugs the digits now, so this margin is the whole gap between the 404 and the button —
+   there is no leading left over to stand in for it. */
+.nf-actions{margin:24px 0 0}
 
-/* The system's button, at the system's size. Every action in the tool is a button-006: 10.5px
-   uppercase on .1em tracking, 0.75em/1.35em of padding, and — for the primary tier, which this is,
-   being the only action on the page — an inverted fill at weight 500. The figures come from
-   global.css (`--action-primary-*`, `.button-006`), restated because this page loads none of it.
+/* The landing's Get Started button, restated. Not an approximation of it: every figure below is
+   copied from `glassCta` in src/app/renderVals.js — 36px tall, 0/16px padding, Neue Montreal 500 at
+   14px on --track-title, squared, and a *glass* fill rather than an inverted one (7% of the ink over
+   whatever is behind it, with the 18px backdrop blur), edged at 15%. Hover and press ride the
+   system's 16% → 24% tint spectrum with the edge going 38% → 48%, which is the same progression
+   button-006 and every [data-ix] control use.
 
-   What is NOT restated is button-006's structure: the clip-path text swap, the press scale, the
-   backdrop blur. Those belong to the app's chrome. Rest, hover and press *colours* are the primary
-   tier's own 84% → 72% steps, so the one control here reads at the same weight as its counterparts
-   in the tool instead of at an invented one. Squared, per the system's zero-radius rule. */
+   The two easing curves are global.css's --ease-button-hover and --ease-standard, written out because
+   this page doesn't load that file. If they are ever retuned there, they are wrong here.
+
+   The glass earns its keep on this page specifically: the button sits above the particle layer, so
+   the backdrop blur takes the cloud passing behind it — the same trick the landing plays with the
+   orb ring behind the real one. */
 .nf-cta{
-  display:inline-block;
-  padding:0.75em 1.35em;
-  background:var(--on-surface);color:var(--surface);
-  border:1px solid var(--on-surface);
-  font-size:10.5px;font-weight:500;line-height:1;
-  letter-spacing:.1em;text-transform:uppercase;
+  display:inline-flex;align-items:center;
+  height:36px;padding:0 16px;
+  background:color-mix(in srgb,var(--on-surface) 7%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent);
+  color:var(--on-surface);
+  font-size:14px;font-weight:500;
+  letter-spacing:var(--track-title);white-space:nowrap;
   text-decoration:none;
-  transition:background-color .28s ease,border-color .28s ease,transform .12s ease;
+  transition:background-color .28s cubic-bezier(0.675,0.15,0.1,1),
+             border-color .28s cubic-bezier(0.675,0.15,0.1,1),
+             transform .12s cubic-bezier(0.22,1,0.36,1);
   position:relative;z-index:2;
 }
 .nf-cta:hover{
-  background:color-mix(in srgb,var(--on-surface) 84%,var(--surface));
-  border-color:color-mix(in srgb,var(--on-surface) 84%,var(--surface));
+  background:color-mix(in srgb,var(--on-surface) 16%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 38%,transparent);
 }
 .nf-cta:active{
-  background:color-mix(in srgb,var(--on-surface) 72%,var(--surface));
-  border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface));
+  background:color-mix(in srgb,var(--on-surface) 24%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 48%,transparent);
   transform:translateY(1px);
 }
 .nf-cta:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
@@ -168,4 +183,6 @@ body{display:flex;flex-direction:column}
    particle field itself never starts under this preference — see src/notfound/main.js. */
 @media (prefers-reduced-motion:reduce){
   .nf-title,.nf-cta{transition:none}
+  /* glassCta drops its press shift under this preference too — renderVals.js does the same in JS. */
+  .nf-cta:active{transform:none}
 }
