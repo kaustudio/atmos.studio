@@ -217,10 +217,10 @@ export const orbitMethods = {
   _particleRings() {
     return [
       // front — the formation's read: biggest, crisp, full key light, the only ring that floats
-      { count: 24, size: 42, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1, dens: 760, grain: 2.3 },
-      { count: 40, size: 29, phase: 360 / (2 * 40), dir: -0.72, z: 24, op: 0.8, bright: 0.97, sat: 0.86, con: 0.98, blur: 1.1, dep: 0.68, fx: 1, float: 0, dens: 400, grain: 2 },
+      { count: 24, size: 42, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 0, con: 1, blur: 0, dep: 1, fx: 2, float: 1, dens: 760, grain: 2.3 },
+      { count: 40, size: 29, phase: 360 / (2 * 40), dir: -0.72, z: 24, op: 0.8, bright: 0.97, sat: 0, con: 0.98, blur: 1.1, dep: 0.68, fx: 1, float: 0, dens: 400, grain: 2 },
       // back — smallest, softest, dimmest; reads as depth, never as a second read.
-      { count: 58, size: 19, phase: 360 / (3 * 58), dir: 0.46, z: 20, op: 0.55, bright: 0.95, sat: 0.7, con: 0.96, blur: 1.7, dep: 0.4, fx: 1, float: 0, dens: 220, grain: 1.6 },
+      { count: 58, size: 19, phase: 360 / (3 * 58), dir: 0.46, z: 20, op: 0.55, bright: 0.95, sat: 0, con: 0.96, blur: 1.7, dep: 0.4, fx: 1, float: 0, dens: 220, grain: 1.6 },
     ];
   },
   // The painted floor's formation, unchanged: two rings sized for DOM orbs with five shading layers
@@ -228,9 +228,9 @@ export const orbitMethods = {
   // design it always was — a degraded population, not a degraded one at the wrong size.
   _paintedRings() {
     return [
-      { count: 12, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
+      { count: 12, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 0, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
       // dir −1: the small orbs run COUNTER-CLOCKWISE against the front ring (contract §3).
-      { count: 21, size: 56, phase: 360 / (2 * 21), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0.76, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
+      { count: 21, size: 56, phase: 360 / (2 * 21), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
     ];
   },
   // one flat orb list, ring-major: ring 0 takes the first count slots, ring 1 the next, and so on.
@@ -560,27 +560,24 @@ export const orbitMethods = {
     // indices — the tick writes centres through it.
     const order = fld.map((_, i) => i).sort((a, b) => fld[b].ri - fld[a].ri);
     const geom = this._ringGeom(window.innerWidth || 1440, window.innerHeight || 800);
-    /* Ordered by HUE, which is not what the per-orb shader wanted and is the whole difference.
+    /* Ordered by LUMINANCE, which is not what the per-orb shader wanted and is the whole difference.
        That shader took five slots by ROLE — mid, light, mid-dark, lift, deepest — because each fed
        a different term. The field walks them as one continuous ramp across the sphere, and handing
        a ramp the role order puts the palette's brightest swatch immediately beside its darkest:
        every orb came out with a bright band butting a dark one, which at this grain is not a band
-       at all, it is speckle. Hue order gives the ramp the thing the reference palettes were chosen
-       for — hue TRAVELLING 46–150° inside one orb (see _orbitRefPalettes) — and it deliberately
-       does NOT sort by luminance, because a tonal ramp across the body is a direction, and
-       direction belongs to the one global lamp, never to the material. */
-    const hue = (hx) => {
-      const c = this.hexToRgb(hx), r = c[0] / 255, g = c[1] / 255, b = c[2] / 255;
-      const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
-      if (!d) return 0;
-      const h = mx === r ? (g - b) / d : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
-      return (h * 60 + 360) % 360;
-    };
+       at all, it is speckle. Any monotonic order fixes that; which one depends on what the ramp is
+       carrying. In colour it was HUE, so the ramp travelled the thing the reference palettes were
+       chosen for and the luminance jumps rode along under it. Greyscale removes exactly that cover:
+       tone is the only channel left, so the ramp has to be monotonic in tone or the speckle is
+       straight back. The ramp is also compressed hard toward each orb's mean (orbField's
+       tonalRange), because a strong light-to-dark gradient across a body IS a direction, and
+       direction belongs to the one global lamp and never to the material. */
+    const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
 
     const orbs = order.map((i) => {
       const s = fld[i], r = rings[s.ri], pal = pals[i % pals.length];
       return {
-        hexes: pal.swatches.map((w) => w.hex).sort((a, b) => hue(a) - hue(b)),
+        hexes: pal.swatches.map((w) => w.hex).sort((a, b) => lum(a) - lum(b)),
         radius: geom.px[s.ri] / 2,
         count: r.dens,
         pointSize: r.grain * (geom.px[s.ri] / r.size),

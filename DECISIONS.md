@@ -229,3 +229,43 @@ fit.
 answers with `_paintedRings` — the original 12-at-84 and 21-at-56 — because 122 painted orbs
 carrying five shading layers each is not a floor, and the DOM stack was drawn around the two-ring
 formation. The dense population is only ever offered where it can actually be drawn.
+
+---
+
+## 2026-07-26 — The landing's orbs are greyscale
+
+**Decision:** the orb ring renders in greyscale. `sat` is 0 on every ring in both `_particleRings`
+and `_paintedRings`, the palette ramp is compressed toward each orb's own mean (`tonalRange`), and
+the two tints in `orbField.js`'s shader that were not neutral — a warm specular, a cool fresnel rim
+— are neutral now. Verified rather than assumed: sampled across 232,581 opaque pixels of the live
+canvas, the maximum R/G/B spread is 0.
+
+**What "greyscale" means here, since it has more than one reading:** the palettes are still doing
+work. Each orb takes the *luminance* structure of its assigned reference palette, so orbs differ in
+weight against their neighbours; what is gone is hue, not variety. The alternative readings — one
+ink for the whole formation, or one flat tone per orb — were considered and not taken.
+
+**Supersedes the monochrome paragraph in the entry above.** That entry rejected `thinking-orbs`
+partly on the grounds that being "strictly monochrome" was disqualifying, because hue travelling
+46–150° inside a single orb was the thing the landing existed to demonstrate. The landing no longer
+demonstrates that, so **that specific objection is withdrawn** — it is left in place above so the
+record reads as a reversal rather than as if it were never made.
+
+**What did NOT change about that rejection:** the package still has no cursor interaction, still
+documents its two sizes as separate designs where these solve continuously per viewport, and is
+still a v0.1.1 single-maintainer dependency. The orb field also now exists and is doing more than
+the package ever offered. Greyscale removes one argument out of four; it does not reopen the choice.
+
+**The ordering trap, which is the thing most likely to be broken by a future pass:** the palette is
+handed to the field in LUMINANCE order, and that is load-bearing. Under colour it was sorted by HUE
+— any monotonic order stops adjacent particles landing on unrelated swatches, and hue order let the
+ramp carry the hue travel while the luminance jumps rode along underneath it. Desaturating removes
+exactly that cover: tone becomes the only channel, so a hue-ordered ramp turns back into the
+speckle the ordering was introduced to fix. If colour ever returns, the sort goes back to hue in the
+same change.
+
+**Still true, and the reason `tonalRange` exists:** a strong light-to-dark gradient across an orb's
+body is a DIRECTION, and direction belongs to the one global lamp and never to the material — the
+same rule that forbids the painted tile from carrying a terminator or a rim. So the ramp is
+compressed to a fraction of the palette's spread. Most of the tonal variety is meant to read
+*between* orbs, where it cannot compete with the lamp.
