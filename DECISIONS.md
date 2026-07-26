@@ -83,16 +83,23 @@ the moment any non-essential third party ships.
 
 ---
 
-## 2026-07-26 — three.js, for one page
+## 2026-07-26 — three.js, never in an entry chunk
 
-**Decision:** `three` is a dependency, used by exactly one page: `404.html`, where the 404 is
-rasterised from Neue Montreal and rebuilt as a cursor-reactive particle cloud
-(`src/notfound/particleField.js`, adapted from `@canvas-ui/particle-object`).
+*(Superseded in part by the orb-field entry below: three is no longer used by only one page. The
+rule it exists to protect — three never lands in a chunk the browser blocks first paint on — is
+unchanged, and now applies in two places instead of one.)*
 
-**Why it doesn't cost the app anything:** `404.html` is the build's second entry, so three lands in
-its own chunk (`notFound-*.js`, ~134 kB gzipped) that only a visitor who hits a dead URL ever
-downloads. `dist/assets/main-*.js` is byte-for-byte unaffected. Check that this is still true after
-touching `vite.config.ts`: `npm run build` prints both chunks.
+**Decision:** `three` is a dependency of exactly two things: `404.html`, where the 404 is rasterised
+from Neue Montreal and rebuilt as a cursor-reactive particle cloud (`src/notfound/particleField.js`,
+adapted from `@canvas-ui/particle-object`), and the landing's orb field (`src/app/orbField.js`).
+
+**Why it doesn't cost either page anything:** `404.html` is the build's second entry, and the
+landing reaches `orbField.js` only through a dynamic `import()`, so three is a shared chunk
+(`three.module-*.js`, ~130 kB gzipped) that neither entry blocks on. `npm run build` should print
+`main-*.js` at roughly 138 kB gzipped with `three.module-*.js` and `orbField-*.js` beside it, not
+inside it. A static import of `orbField.js` from `orbit.js` puts three straight into `main-*.js` and
+doubles the landing's payload to ~272 kB gzipped — it was written that way first, and measured.
+Re-check after touching `vite.config.ts` or that import.
 
 **What was cut rather than shipped dead:** the component arrives able to load GLB/glTF (with Draco),
 sample triangle meshes, sniff asset bytes and orbit the camera. None of that is reachable when the
@@ -185,3 +192,40 @@ the real size, and `src/notfound/main.js` only hides it (opacity, still in the l
 accessibility tree) once the font has loaded, WebGL has been granted, and motion is wanted. The
 particle cloud is scaled and positioned from that element's own measurements, so the size lives in
 `public/notfound.css` — clamped to a 5rem floor — and in no second place.
+
+---
+
+## 2026-07-26 — The landing's orbs are particles, and not from a package
+
+**Decision:** the landing's orb ring is drawn by `src/app/orbField.js` — one WebGL 2 canvas holding
+every orb as a cloud of cursor-reactive particles — instead of one renderer per orb. The formation
+grew from 33 orbs on two rings to 122 on three, at roughly half the diameter.
+
+**Why one canvas:** browsers cap live WebGL contexts at around sixteen per page and silently kill
+the oldest past that, so `ORB_GL_MAX` had the shaded formation pinned at twelve orbs. Every orb
+added beyond that fell back to the painted floor — the count could not grow without the formation
+getting *less* shaded. That ceiling is a property of the per-orb architecture, not a number to tune,
+and consolidating is the only way past it. It also turns the cursor into one pass over one buffer
+rather than 33 isolated ones.
+
+**What it cost, knowingly:** an orb is a dotted sphere now, not a solid one. The terminator, the
+distance-graded key light, the specular, the fresnel rim and the per-ring depth gate all survive —
+ported per-particle into `orbField.js`'s vertex shader, off the same one global lamp — but the
+continuous surface between them does not. The MOTION CONTRACT in `initOrbit()` records this as a
+written amendment to §2, §3 and §5 plus a new §6, which is where the reasoning lives; this entry
+exists so the *tradeoff* isn't rediscovered as a bug.
+
+**Why not `thinking-orbs`:** it was proposed, and it is a competent package — 2D canvas, six agent
+states, reduced-motion handling, shared clock. It is also **strictly monochrome**, which is
+disqualifying here for a reason that has nothing to do with quality: these orbs wear the reference
+palettes, and hue travelling 46–150° inside a single orb is the thing the landing exists to
+demonstrate (see `_orbitRefPalettes`). It has no cursor interaction, its two sizes are documented as
+separate designs rather than a scale factor where ours solve continuously per viewport, and at
+v0.1.1 with one maintainer it would be a supply-chain dependency bought to replace code the repo
+already owns in `src/notfound/particleField.js`. Not a rejection of the package — a rejection of the
+fit.
+
+**The floors are unchanged and still load-bearing:** no WebGL 2, or reduced motion, and `_rings()`
+answers with `_paintedRings` — the original 12-at-84 and 21-at-56 — because 122 painted orbs
+carrying five shading layers each is not a floor, and the DOM stack was drawn around the two-ring
+formation. The dense population is only ever offered where it can actually be drawn.

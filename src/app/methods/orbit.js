@@ -1,9 +1,18 @@
-// Ring landing (first-visit brand arrival, and the permanent small-screen surface): two concentric
-// rings of colour orbs turning around the centred copy under one fixed room light, with a painted
-// DOM floor + living gradient blobs and the raw-WebGL shader renderer (Part B) layered above it.
-// The DOM stack is the permanent floor — no-WebGL, reduced-motion, phones and context-loss all
-// resolve to the painted orbs. The motion model is frozen in the MOTION CONTRACT block in
-// initOrbit(); the engine owns each orb's position, the inner layers own its light.
+// Ring landing (first-visit brand arrival, and the permanent small-screen surface): concentric
+// rings of colour orbs turning around the centred copy under one fixed room light.
+//
+// THREE renderers, in descending order of what a browser will let us have. Part C (orbField.js) is
+// the one that normally runs: a single WebGL 2 canvas holding every orb as particles, cursor-
+// reactive, and the only one whose cost does not scale with the orb count. Part B (orb-shader.js)
+// is the per-orb raw-WebGL renderer it superseded, kept because it is the better floor when Part C
+// cannot start. Under both sits the painted DOM stack + living gradient blobs — the permanent
+// floor, which no-WebGL, reduced-motion and context-loss all resolve to.
+//
+// The motion model is frozen in the MOTION CONTRACT block in initOrbit(); the engine owns each
+// orb's position, the inner layers own its light.
+// orbField.js is NOT imported here — see _initOrbField. It pulls in three, and a static import puts
+// three in the landing's own chunk.
+
 export const orbitMethods = {
   // Canvas gradient field from a seed palette's swatches → dataURL at tile size × DPR (crisp, no assets).
   _orbitTileURL(swatches, w, h) {
@@ -179,11 +188,47 @@ export const orbitMethods = {
   // between neighbours comes out the same on both rings: at 1440×900 the front ring runs ~134px
   // between orb edges and the back ring ~135px. Equal counts leave the outer ring's gaps more than
   // twice the inner ring's — that was the whitespace.
-  _rings() {
+  // Can the particle renderer run? The formation's POPULATION is a function of the answer, which is
+  // why this is asked here and not at mount. One canvas holds a hundred-odd orbs for the price of
+  // one context; the painted DOM floor cannot — that is a hundred-odd elements carrying five
+  // shading layers each, built synchronously inside the arrival. So the dense formation is offered
+  // only where it can actually be drawn, and no-WebGL / reduced-motion get the formation the floor
+  // was designed around, at the size it was drawn at, rather than a dense one it would choke on.
+  // WebGL 2 specifically: orbField.js's shader is GLSL 3.
+  // Probed once and cached — the answer cannot change within a visit.
+  _orbFieldOK() {
+    if (this._fieldOK !== undefined) return this._fieldOK;
+    if (this._reduce) return (this._fieldOK = false);
+    try {
+      this._fieldOK = !!document.createElement('canvas').getContext('webgl2');
+    } catch (e) { this._fieldOK = false; }
+    return this._fieldOK;
+  },
+  _rings() { return this._orbFieldOK() ? this._particleRings() : this._paintedRings(); },
+  /* The formation as the particle renderer draws it: three rings, many more orbs, each roughly half
+     the diameter it used to be. `dens` is particles per orb and `grain` their size in CSS pixels at
+     sizeK 1 — see _initOrbField.
+     The counts are SOLVED against §4's radii, not chosen: at 1440×900 the solver puts the rings at
+     403.9 / 563.8 / 709.3 with diameters 52.5 / 36.3 / 23.8, and 24 / 40 / 58 are the populations
+     that bring the arc gap between neighbours out at 53.2 / 52.3 / 53.1px — matched to within a
+     pixel across all three, which is the property §2 is protecting. 24 rather than the 23 that
+     would fit marginally better, because the front ring wears the 12 reference palettes and 2×12
+     means it walks the whole colour wheel exactly twice with no seam. */
+  _particleRings() {
     return [
       // front — the formation's read: biggest, crisp, full key light, the only ring that floats
+      { count: 24, size: 42, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1, dens: 760, grain: 2.3 },
+      { count: 40, size: 29, phase: 360 / (2 * 40), dir: -0.72, z: 24, op: 0.8, bright: 0.97, sat: 0.86, con: 0.98, blur: 1.1, dep: 0.68, fx: 1, float: 0, dens: 400, grain: 2 },
+      // back — smallest, softest, dimmest; reads as depth, never as a second read.
+      { count: 58, size: 19, phase: 360 / (3 * 58), dir: 0.46, z: 20, op: 0.55, bright: 0.95, sat: 0.7, con: 0.96, blur: 1.7, dep: 0.4, fx: 1, float: 0, dens: 220, grain: 1.6 },
+    ];
+  },
+  // The painted floor's formation, unchanged: two rings sized for DOM orbs with five shading layers
+  // apiece. This is what a visitor gets with no WebGL 2 or with reduced motion, and it is the same
+  // design it always was — a degraded population, not a degraded one at the wrong size.
+  _paintedRings() {
+    return [
       { count: 12, size: 84, phase: 0, dir: 1, z: 30, op: 1, bright: 1, sat: 1, con: 1, blur: 0, dep: 1, fx: 2, float: 1 },
-      // back — smaller, softer, dimmer; reads as depth, never as a second read.
       // dir −1: the small orbs run COUNTER-CLOCKWISE against the front ring (contract §3).
       { count: 21, size: 56, phase: 360 / (2 * 21), dir: -1, z: 20, op: 0.62, bright: 0.95, sat: 0.76, con: 0.96, blur: 1.7, dep: 0.55, fx: 1, float: 0 },
     ];
@@ -251,12 +296,18 @@ export const orbitMethods = {
     if (short > 0) for (let i = 0; i <= last; i++) R[i] += short;
     return { edge, g, px, R, base: this._orbBase(vw) };
   },
-  _paintOrbitTiles() {
+  /* `bodyOnly` paints each orb's MATERIAL and stops — no terminator, no diffuse, no rim, env or
+     sheen. That is what the floor needs while the particle field is the thing on screen: the tiles
+     are hidden, and the shading layers are ~5 elements per orb across a hundred-odd orbs, built
+     synchronously inside the arrival. The material alone is one style write against a cached URL,
+     so the floor is still one call away if the context is lost — it just isn't lit until then. */
+  _paintOrbitTiles(bodyOnly) {
     const urls = this.orbitTileURLs();
     const lum = (hx) => this.lumHex ? this.lumHex(hx) : 0.5;
     const L = this.ORB_LIGHT, Lpc = Math.round(L.x * 100) + '% ' + Math.round(L.y * 100) + '%';
     const fld = this._ringField(), rings = this._rings();
     [...document.querySelectorAll('[data-orbit-card]')].forEach((c, i) => {
+      if (bodyOnly) { if (urls.length) c.style.backgroundImage = 'url(' + urls[i % urls.length] + ')'; return; }
       // The 12 reference tiles dress the whole formation, and the count is not arbitrary: the front
       // ring holds exactly 12 orbs, so `i % urls.length` walks it round one full revolution of the
       // wheel — neighbouring orbs are neighbouring hues, and the ring reads as a spectrum rather
@@ -446,6 +497,146 @@ export const orbitMethods = {
       // specular stays PINNED at the global light position — a sphere's highlight must not wander
     });
   },
+  /* ---- Part C: the particle renderer. ONE canvas, ONE cloud, every orb in it (orbField.js).
+     Where this runs, Part B's per-orb contexts and the blob layers do not — they would be animating
+     hidden elements for nobody.
+
+     LOADED ON DEMAND, and that is not an optimisation to be tidied away into a static import. The
+     module pulls in three, which the build had kept entirely inside the 404's chunk (see the
+     2026-07-26 DECISIONS entry); importing it at the top of this file put 130 kB gzipped of it in
+     front of every landing visitor and doubled the landing's payload, on a page whose own headline
+     is "In seconds." Dynamically, three stays a chunk that arrives AFTER the landing has painted,
+     and the arrival is not a hole in the page: the painted floor is what the visitor is looking at
+     until the cloud is ready to replace it, which is the same floor-first arrangement Parts A and B
+     already use, just extended across time as well as capability.
+
+     Returns whether the field is up OR on its way — either answer means the caller must not build
+     the LIT floor, since that work is thrown away the moment the cloud lands. */
+  _initOrbField() {
+    if (!this._orbFieldOK() || this._orbField || this._fieldPending) return false;
+    this._fieldPending = true;
+    import('../orbField.js').then(
+      (m) => { this._fieldPending = false; if (!this._buildOrbField(m.createOrbField)) this._orbFieldUnavailable(); },
+      () => { this._fieldPending = false; this._orbFieldUnavailable(); },
+    );
+    return true;
+  },
+  /* The chunk never arrived, or the context did not open. The ring POPULATION cannot be walked back
+     here — _ringField and the rendered slot list were both decided from _orbFieldOK long before
+     this — so the floor takes the dense formation, lit, which is the same place context loss lands.
+     Do NOT "fix" this by clearing _fieldOK: _rings would start answering with two rings while
+     _ringFld still holds three rings' worth of slots, and every index into it would be wrong. */
+  _orbFieldUnavailable() {
+    if (!this._landingUp()) return;
+    this._paintOrbitTiles();
+    this._spawnOrbitBlobs();
+    if (this._orbit && this._orbit.dress) this._orbit.dress();
+  },
+  _buildOrbField(createOrbField) {
+    if (!this._landingUp() || this._reduce || this._orbField) return false;
+    const host = document.querySelector('[data-orbit]');
+    const pals = this._orbitPalettes;
+    if (!host || !pals || !pals.length) return false;
+
+    const cv = document.createElement('canvas');
+    cv.setAttribute('data-orbit-field', '1'); cv.setAttribute('aria-hidden', 'true');
+    // z-index 1: over the bloom, under the copy (2), the vignette (3) and the grain (4). The canvas
+    // is the whole stage, so anything meant to sit above the orbs has to sit above it too.
+    cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;';
+    host.appendChild(cv);
+
+    const fld = this._ringField(), rings = this._rings();
+    // Deepest ring FIRST. The cloud is one draw call with the depth buffer off, so buffer order IS
+    // paint order and the front ring has to land last. `_fieldOrder` maps back to _ringField
+    // indices — the tick writes centres through it.
+    const order = fld.map((_, i) => i).sort((a, b) => fld[b].ri - fld[a].ri);
+    const geom = this._ringGeom(window.innerWidth || 1440, window.innerHeight || 800);
+    /* Ordered by HUE, which is not what the per-orb shader wanted and is the whole difference.
+       That shader took five slots by ROLE — mid, light, mid-dark, lift, deepest — because each fed
+       a different term. The field walks them as one continuous ramp across the sphere, and handing
+       a ramp the role order puts the palette's brightest swatch immediately beside its darkest:
+       every orb came out with a bright band butting a dark one, which at this grain is not a band
+       at all, it is speckle. Hue order gives the ramp the thing the reference palettes were chosen
+       for — hue TRAVELLING 46–150° inside one orb (see _orbitRefPalettes) — and it deliberately
+       does NOT sort by luminance, because a tonal ramp across the body is a direction, and
+       direction belongs to the one global lamp, never to the material. */
+    const hue = (hx) => {
+      const c = this.hexToRgb(hx), r = c[0] / 255, g = c[1] / 255, b = c[2] / 255;
+      const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b);
+      if (!d) return 0;
+      const h = mx === r ? (g - b) / d : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return (h * 60 + 360) % 360;
+    };
+
+    const orbs = order.map((i) => {
+      const s = fld[i], r = rings[s.ri], pal = pals[i % pals.length];
+      return {
+        hexes: pal.swatches.map((w) => w.hex).sort((a, b) => hue(a) - hue(b)),
+        radius: geom.px[s.ri] / 2,
+        count: r.dens,
+        pointSize: r.grain * (geom.px[s.ri] / r.size),
+        opacity: r.op,
+        depth: r.dep,
+        saturation: r.sat,
+      };
+    });
+
+    const field = createOrbField(cv, orbs, { light: this.ORB_LIGHT });
+    if (!field) { try { cv.remove(); } catch (e) { } return false; }
+
+    // §5's float, moved off the CSS vars onto the centre the field is handed: same per-orb 5–9s
+    // period, same negative-phase scatter, same refusal to let any two orbs sync. The amplitude is
+    // NOT stored — it is dia·0.03, and dia is per viewport, so the tick derives it each frame.
+    const bob = { w: new Float32Array(order.length), ph: new Float32Array(order.length) };
+    for (let k = 0; k < order.length; k++) {
+      bob.w[k] = (2 * Math.PI) / (5 + Math.random() * 4);
+      bob.ph[k] = Math.random() * Math.PI * 2;
+    }
+
+    this._orbField = field; this._fieldOrder = order; this._fieldBob = bob; this._fieldCanvas = cv;
+    /* The floor is taken out of layout, not just made invisible — it is a hundred-odd elements the
+       field is drawing over. The previous value is CAPTURED rather than cleared on the way back:
+       this element's display comes from AppView's inline style object, so `display = ''` does not
+       restore it, it deletes it, and React will not re-apply a style prop it does not think has
+       changed. The list fell back to `block` and stacked all 116 orbs in a 10,000px column. */
+    const list = document.querySelector('[data-orbit-list]');
+    if (list) { this._listDisplay = list.style.display; list.style.display = 'none'; }
+    field.onContextLost(() => this._dropOrbField());
+    return true;
+  },
+  // Per-viewport figures for the current geometry, in the field's build order. Only these two change
+  // on resize; the cloud itself is never rebuilt (see orbField.setSizes).
+  _fieldSizes() {
+    const fld = this._ringField(), rings = this._rings(), ord = this._fieldOrder || [];
+    const geom = (this._orbit && this._orbit.geom) || this._ringGeom(window.innerWidth || 1440, window.innerHeight || 800);
+    return ord.map((i) => {
+      const s = fld[i], dia = geom.px[s.ri];
+      return { radius: dia / 2, pointSize: rings[s.ri].grain * (dia / rings[s.ri].size) };
+    });
+  },
+  _tearDownOrbField() {
+    if (!this._orbField) return false;
+    try { this._orbField.destroy(); } catch (e) { }
+    try { this._fieldCanvas.remove(); } catch (e) { }
+    this._orbField = null; this._fieldOrder = null; this._fieldBob = null; this._fieldCanvas = null;
+    const list = document.querySelector('[data-orbit-list]');
+    if (list) list.style.display = this._listDisplay || 'grid';
+    return true;
+  },
+  /* Context loss. The floor was painted body-only while the field held the stage, so light it now
+     and hand the formation back to the DOM tick, which needs no telling — it simply finds no field.
+     The dense formation is heavier on the floor than the floor was drawn for; that is the price of a
+     path nobody should reach, and it beats an empty stage.
+     The re-dress is not optional: the tick writes position and nothing else (§5), so every per-ring
+     constant — scale above all — is applied by dress(), which has been taking its field branch and
+     leaving the tiles at their unscaled CSS size this whole time. */
+  _dropOrbField() {
+    if (!this._tearDownOrbField()) return;
+    this._paintOrbitTiles();
+    this._spawnOrbitBlobs();
+    if (this._orbit && this._orbit.dress) this._orbit.dress();
+    else requestAnimationFrame(() => this._staticOrbit());
+  },
   // ---- Part B: raw-WebGL orb renderer. The shader REPLACES the painted base + inner shading
   // layers when available; the DOM stack stays mounted (display:none) as the permanent floor.
   _initOrbGL() {
@@ -624,7 +815,12 @@ export const orbitMethods = {
       if (g0 && !this.state.showLoader && !this._wipeRunning) this._landingTextReveal(g0);
       return;
     }
-    this._paintOrbitTiles();   // canvas paint must NEVER wait on GSAP — do it first, always
+    /* The renderer decides how much floor is worth building, so it is asked first — but the orbs'
+       MATERIAL is painted either way, and never behind GSAP. _initOrbField answers false under
+       reduced motion and without WebGL 2, which is also what sized the formation (see _rings). */
+    this.orbitTileURLs();                        // seeds _orbitPalettes, which the field reads
+    const fieldUp = this._initOrbField();
+    this._paintOrbitTiles(fieldUp);
     if (this._reduce) { requestAnimationFrame(() => this._staticOrbit()); return; }
     const g = window.gsap; const container = document.querySelector('[data-orbit]');
     if (!g || !container) { this._orbitRetry = (this._orbitRetry || 0) + 1; if (this._orbitRetry < 50) { setTimeout(() => this.initOrbit(), 100); } else { requestAnimationFrame(() => this._staticOrbit()); } return; }
@@ -633,48 +829,74 @@ export const orbitMethods = {
     if (!this.state.showLoader && !this._wipeRunning) this._landingTextReveal(g);
     const tiles = [...container.querySelectorAll('[data-orbit-item]')];
     const N = tiles.length; if (N < 2) return;
-    this._spawnOrbitBlobs();   // living gradients — same lifecycle as the orbit, inner layers only
-    this._initOrbGL();         // Part B: shader renderer over the DOM floor (self-gating; floor stays live)
-    // free vertical float: one phase tween per FRONT-RING orb (--ph −1↔1), per-orb random duration
-    // + negative delay so no two sync. The back ring is left still — its job is to hold the
-    // interleave. Joins _blobTweens → pause/play/kill with the formation.
-    const fld0 = this._ringField(), rings0 = this._rings();
-    tiles.forEach((t, i) => {
-      const s = fld0[i]; if (!s || !rings0[s.ri].float) return;
-      const fl = t.querySelector('[data-orb-float]'); if (!fl) return;
-      this._blobTweens = this._blobTweens || [];
-      this._blobTweens.push(g.fromTo(fl, { '--ph': -1 }, { '--ph': 1, duration: 5 + Math.random() * 4, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: -Math.random() * 9 }));
-    });
+    // Everything below dresses the DOM floor, which the field is standing on top of when it is up:
+    // blobs and per-orb contexts animating hidden elements is work for nobody. The field carries its
+    // own equivalents — atmosphere in the cloud's own colour spread, float folded into the centres.
+    if (!fieldUp) {
+      this._spawnOrbitBlobs();   // living gradients — same lifecycle as the orbit, inner layers only
+      this._initOrbGL();         // Part B: shader renderer over the DOM floor (self-gating; floor stays live)
+      // free vertical float: one phase tween per FRONT-RING orb (--ph −1↔1), per-orb random duration
+      // + negative delay so no two sync. The back ring is left still — its job is to hold the
+      // interleave. Joins _blobTweens → pause/play/kill with the formation.
+      const fld0 = this._ringField(), rings0 = this._rings();
+      tiles.forEach((t, i) => {
+        const s = fld0[i]; if (!s || !rings0[s.ri].float) return;
+        const fl = t.querySelector('[data-orb-float]'); if (!fl) return;
+        this._blobTweens = this._blobTweens || [];
+        this._blobTweens.push(g.fromTo(fl, { '--ph': -1 }, { '--ph': 1, duration: 5 + Math.random() * 4, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: -Math.random() * 9 }));
+      });
+    }
     /* ============================== MOTION CONTRACT — DO NOT MODIFY ==============================
        AMENDED (concentric rings): this replaces the scatter-field contract — seeded positions,
        per-orb headings, tangential centre-avoidance, edge wrap — which is retired in full, as the
        choreographed cylinder before it was. The sanctioned motion is now a PARAMETRIC RING SET, and
-       the same rule applies: any pass touching this module must leave these five layers
-       byte-identical unless a brief explicitly amends the contract again. Lighting/shading passes
-       compose WITH this state — they never substitute their own angles for the ring formula.
+       the same rule applies: any pass touching this module must leave these layers byte-identical
+       unless a brief explicitly amends the contract again. Lighting/shading passes compose WITH
+       this state — they never substitute their own angles for the ring formula.
+
+       AMENDED AGAIN (particle renderer — §2, §3, §5, and a new §6): the orbs are no longer one DOM
+       element apiece. Part C draws every orb as particles in a single WebGL 2 cloud (orbField.js),
+       which removes the per-orb context budget that had capped the shaded formation at twelve orbs
+       and made every orb added past that a DOWNGRADE. What the amendment buys is population: three
+       rings and a hundred-odd orbs at roughly half the diameter, with the cursor pushing the cloud
+       around. What it costs is that an orb is a dotted sphere rather than a solid one — the
+       terminator, the specular, the fresnel rim and the depth gate all survive (per particle, in
+       orbField.js's vertex shader, off the same one global lamp), but the continuous surface
+       between them does not. That was accepted knowingly. §1 and §4 are untouched, and the painted
+       floor keeps the two-ring formation it was drawn for — see _paintedRings.
        1. PARAMETRIC POSITION — nothing is seeded and nothing accumulates. For orb i of ring r:
           angle = (i/r.count)·360 + r.phase + rot·r.dir;  x = cos(angle)·R[r];  y = sin(angle)·R[r].
           Recomputed from the index EVERY frame, so spacing can never drift out of true.
-       2. THE RINGS (_rings) — front: count 12, size 84, phase 0, dir +1, z 30, opacity 1, no blur,
-          dep 1, floats. Back: count 21, size 56, phase 360/(2·21), dir −1, z 20, opacity .62, blur
-          1.7px, brightness .95, saturate .76, dep .55, still. Radii are NOT here — §4 solves them.
+       2. THE RINGS (_particleRings) — AMENDED to three rings. Front: count 24, size 42, phase 0,
+          dir +1, z 30, opacity 1, dep 1, 760 particles at 2.3px, floats. Middle: count 40, size 29,
+          phase 360/(2·40), dir −.72, z 24, opacity .8, saturate .86, dep .68, 400 at 2px, still.
+          Back: count 58, size 19, phase 360/(3·58), dir +.46, z 20, opacity .55, saturate .7, dep
+          .4, 220 at 1.6px, still. Radii are NOT here — §4 solves them, unamended.
           The angular step is exactly 360/count — no jitter — and every orb in a ring is the SAME
-          size. Counts are UNEQUAL on purpose, roughly proportional to circumference, so the arc gap
-          between neighbours matches across rings (~134px vs ~135px at 1440×900). Equal counts put
-          more than twice the gap on the outer ring; that was the whitespace. A consequence worth
-          keeping: with 12 against 21 the pairs no longer align all at once, so the counter-rotation
-          has no global pulse.
-       3. ONE CLOCK, COUNTER-ROTATION — ONE `rot`, advanced by ONE ticker: rot += (360/ROT_SECS)·dt,
-          linear, continuous, ROT_SECS = 105. Both rings read that same variable; only the SIGN
-          differs (r.dir), so the small back ring turns counter-clockwise against the front. One
-          magnitude, so neither ring can drift away from the other's cadence.
-          AMENDED, KNOWINGLY: the earliest contract locked both rings to the same direction so a
-          half-step offset held permanently. Counter-rotation traded that away by design, which with
-          equal counts made all pairs align together every 4.37s. The unequal counts of §2 dissolve
-          even that: 12 against 21 never brings the pairs into step at once, so the formation has no
-          global pulse — passings are staggered and continuous. Do not "fix" this by re-locking the
-          directions or equalising the counts; both are load-bearing, and changing them is a contract
-          amendment, not a tweak.
+          size. Counts stay UNEQUAL and proportional to circumference, which is the rule the old
+          12/21 followed and the reason it worked: measured at 1440×900, where §4 puts the rings at
+          403.9 / 563.8 / 709.3, the arc gap between neighbours comes out 53.2 / 52.3 / 53.1px —
+          matched to within a pixel. Equal counts put more than twice the gap on the outer ring;
+          that was the whitespace, and it is still the whitespace. Change a ring's SIZE and the
+          counts have to be re-solved against the new radii or that match is gone.
+          The population is only available where Part C can draw it. Without WebGL 2, or under
+          reduced motion, _rings returns _paintedRings — the original 12 at 84 and 21 at 56 — and it
+          is not a downgrade of this one but the formation the DOM floor was actually designed
+          around. A hundred-odd painted orbs carrying five shading layers each is not a floor.
+       3. ONE CLOCK — ONE `rot`, advanced by ONE ticker: rot += (360/ROT_SECS)·dt, linear,
+          continuous, ROT_SECS = 105. Every ring reads that same variable through its own r.dir.
+          AMENDED: r.dir was ±1 — a pure sign, one shared magnitude — and is now a signed multiplier
+          (+1, −.72, +.46). With only a sign available, a third ring must share a direction AND a
+          speed with one of the other two, which means those two hold a CONSTANT relative angle
+          forever: a fixed alignment pattern standing still inside a turning formation, which is
+          precisely the global pulse §3 has always existed to prevent. Three distinct magnitudes in
+          no simple ratio give no two rings a repeating relationship at all.
+          The magnitudes were shared to stop the rings drifting apart. That guard is now redundant
+          rather than discarded: §1 recomputes every angle from its index each frame, so there is no
+          integrator to drift and no error to accumulate — differing speeds change the relationship
+          between the rings, never their trueness. Do not "fix" this by re-locking the magnitudes or
+          equalising the counts; both are load-bearing, and changing them is a contract amendment,
+          not a tweak.
        4. GEOMETRY (_ringGeom) — radii are SOLVED, not configured. A base gap g is sized off the
           width: g = (vw/2 − px_last − _heroReach() − Σ inner diameters) / ringCount. The copy→ring0
           interval is g; every ring→ring interval is g · ORB_RING_GAP_MUL (1.75), so the rings read
@@ -691,10 +913,28 @@ export const orbitMethods = {
           clamp(min(vw,vh)/720, .66, 1.35) — tied to width they would balloon on wide, short screens.
           Recomputed on resize.
        5. RING PARALLAX + FLOAT — depth is per ring (size, blur, opacity, brightness, saturate, z,
-          dep), never per orb and never from cos(angle); written ONCE by _ringDress on build and
-          resize, so the tick writes position only. Float is front-ring only and a whisper:
-          --fy = dia·0.03, per-orb sine tween on --ph −1↔1 (5–9s, negative delays, never synced),
-          [data-orb-float] applies translateY(calc(--fy · --ph)); tweens live in _blobTweens.
+          dep), never per orb and never from cos(angle); written ONCE on build and resize, so the
+          tick writes position only. Float is front-ring only and a whisper: amplitude dia·0.03,
+          per-orb sine at a 5–9s period with a scattered phase, never synced.
+          AMENDED for Part C, in mechanism only: a particle cloud has no element to hang --fy/--ph
+          on, so the float is added to the orb's CENTRE in the tick and the per-ring constants are
+          vertex attributes rather than styles (_fieldSizes rewrites the two that are genuinely per
+          viewport; the cloud is never rebuilt, because a particle count that changed with the
+          window would change how dense an orb reads from one screen to the next). Blur has no
+          equivalent and is not faked with one: the back rings get the same softening from a wider
+          falloff on the sprite, which cannot be magnified by scale the way the CSS blur could.
+          The floor's mechanism is unchanged — _ringDress, [data-orb-float], tweens in _blobTweens.
+
+       6. THE CURSOR (Part C only) — NEW. Two layers, and they are different sizes on purpose.
+          LOCAL: the 404's push field, unchanged in physics — radial escape + tangential swirl + a
+          shove along the direction of travel, against a spring home and damping (see orbField.js,
+          which documents what the ortho camera lets it drop). It is genuinely local: it opens the
+          orbs the cursor is actually over and leaves the rest of the formation alone.
+          GLOBAL: the whole cloud leans toward the cursor, eased, capped at `lean` (14px). This is
+          the layer that makes the formation answer to the cursor everywhere rather than only where
+          it happens to be, and it is deliberately small — the ring set must never read as sliding.
+          Neither layer touches `rot`, the radii or the angular step: the cursor DISPLACES the
+          formation, it does not steer it. §1 still owns where an orb is.
        INVARIANTS the ring model inherits and must keep: the engine owns each orb's transform and
        nothing else touches it; all life (sphere body, --la/--ldx/--ldy/--sx/--sy/--li lighting,
        atmosphere blobs, float) rides on INNER layers; orbs never rotate, so they and their
@@ -702,33 +942,42 @@ export const orbitMethods = {
        per-frame canvas repaint. And the ONE global light is global: the tile carries the orb's
        material only — never a highlight, terminator or rim — so that every directional cue is
        placed from --ldx/--ldy and answers to where the orb actually is in the room.
-       ACCEPTANCE: two concentric rings, uniform size and identical angular gaps within each ring,
-       matching ARC gaps between them, the back one smaller/dimmer, set a clearly wider gap out,
-       counter-rotating, and running off both sides of the viewport; both turn continuously and
-       smoothly at the same magnitude with no moment where the whole formation lines up; the centre
-       stays clear and the hero unobstructed at any viewport; an orb's shading is identical on every
-       screen size — same fx layers, same shader budget; the specular sits on the side facing the
-       lamp, so orbs left of it are lit from their right and orbs right of it from their left;
-       resizing keeps the rings circular and proportionally gapped; reduced motion / no-GSAP = the
-       same formation standing still at rot 0.
+       ACCEPTANCE: three concentric rings, uniform size and identical angular gaps within each ring,
+       matching ARC gaps between them, each one outward smaller/dimmer, set a clearly wider gap out,
+       and running off both sides of the viewport; all three turn continuously and smoothly with no
+       moment where the whole formation lines up and no pair holding a fixed relative angle; the
+       centre stays clear and the hero unobstructed at any viewport; an orb's shading is identical
+       on every screen size; the specular sits on the side facing the lamp, so orbs left of it are
+       lit from their right and orbs right of it from their left; resizing keeps the rings circular
+       and proportionally gapped, and does not re-grain the orbs; the cursor opens the orbs it
+       passes through and they settle back without overshoot piling up; the formation leans toward
+       the cursor without ever reading as sliding; no WebGL 2 / reduced motion / no-GSAP = the
+       painted two-ring formation, standing still at rot 0.
        ============================================================================================ */
     const fld = this._ringField(), rings = this._rings();
     const o = {
-      fld, rings, active: false, frame: 0, N, rot: 0, rotSpeed: 360 / this.ORB_ROT_SECS,
+      fld, rings, active: false, frame: 0, N, rot: 0, t: 0, rotSpeed: 360 / this.ORB_ROT_SECS,
       vw: window.innerWidth || 1440, vh: window.innerHeight || 800,
     };
     o.geom = this._ringGeom(o.vw, o.vh);
     // ring constants + a full placement at the current rotation. Runs on build and on resize; after
     // it, the tick writes nothing but position (+ light).
-    const dress = () => tiles.forEach((tile, i) => {
-      const s = o.fld[i]; if (!s) return;
-      const a = (s.ang0 + o.rot * o.rings[s.ri].dir) * Math.PI / 180, R = o.geom.R[s.ri];
-      const x = Math.cos(a) * R, y = Math.sin(a) * R;
-      g.set(tile, { x, y, scale: o.geom.px[s.ri] / o.geom.base, rotate: 0 });
-      this._ringDress(tile, o.rings[s.ri], o.geom, s.ri);
-      this._ringLight(tile, o.rings[s.ri], o.geom.px[s.ri], x, y, o.vw, o.vh);
-    });
+    const dress = () => {
+      // On the field the per-orb constants are attributes rather than styles, and only the two that
+      // are genuinely per-viewport get rewritten. Position needs no dressing either way — it falls
+      // out of the formula on the next tick.
+      if (this._orbField) { this._orbField.setSizes(this._fieldSizes()); return; }
+      tiles.forEach((tile, i) => {
+        const s = o.fld[i]; if (!s) return;
+        const a = (s.ang0 + o.rot * o.rings[s.ri].dir) * Math.PI / 180, R = o.geom.R[s.ri];
+        const x = Math.cos(a) * R, y = Math.sin(a) * R;
+        g.set(tile, { x, y, scale: o.geom.px[s.ri] / o.geom.base, rotate: 0 });
+        this._ringDress(tile, o.rings[s.ri], o.geom, s.ri);
+        this._ringLight(tile, o.rings[s.ri], o.geom.px[s.ri], x, y, o.vw, o.vh);
+      });
+    };
     dress();
+    o.dress = dress;   // _dropOrbField needs it: losing the field means the DOM tiles need dressing
     // ONE ticker for the whole formation, ONE rotation value. Position is derived, not integrated:
     // every orb's angle is recomputed from its index each frame, so no error can accumulate and the
     // two rings cannot drift apart no matter how long the landing sits open.
@@ -740,6 +989,24 @@ export const orbitMethods = {
       // formula on the very next line.
       if (vw !== o.vw || vh !== o.vh) { o.vw = vw; o.vh = vh; o.geom = this._ringGeom(vw, vh); dress(); }
       o.rot = (o.rot + o.rotSpeed * dt) % 360;               // the one shared angle, ease:'none' by construction
+      o.t += dt;
+      /* Part C. The SAME formula, resolved to centres instead of transforms and handed to the field
+         from this ticker — so the formation still has exactly one clock (§3) and the field never
+         integrates a rotation of its own. Two conversions and nothing else: the ring formula's y
+         counts down the screen where the field's scene counts up, and §5's float is added here
+         rather than through --fy/--ph, which have no meaning inside a particle cloud. */
+      if (this._orbField) {
+        const ctr = this._orbField.centers, ord = this._fieldOrder, bb = this._fieldBob;
+        for (let k = 0; k < ord.length; k++) {
+          const s = o.fld[ord[k]], r = o.rings[s.ri];
+          const a = (s.ang0 + o.rot * r.dir) * Math.PI / 180, R = o.geom.R[s.ri];
+          const fy = r.float ? o.geom.px[s.ri] * 0.03 * Math.sin(o.t * bb.w[k] + bb.ph[k]) : 0;
+          ctr[k * 2] = Math.cos(a) * R;
+          ctr[k * 2 + 1] = -(Math.sin(a) * R) + fy;
+        }
+        this._orbField.update(dt);
+        return;
+      }
       const f = ++o.frame;
       for (let i = 0; i < tiles.length; i++) {
         const s = o.fld[i]; if (!s) continue;
@@ -770,7 +1037,7 @@ export const orbitMethods = {
     if (this._blobTweens) this._blobTweens.forEach((t) => { try { t.pause(); } catch (e) { } });
   },
   killOrbit() {
-    this._landRevealed = false; this._killOrbGL(); this._killOrbitBlobs();
+    this._landRevealed = false; this._tearDownOrbField(); this._killOrbGL(); this._killOrbitBlobs();
     this._rng = null; this._noiseURL = null; this._envURL = null; this._ditherTile = null;   // per-visit seeds/maps — a return to the intro re-seeds fresh (and re-reads the theme)
     this._orbitURLs = null; this._orbitPalettes = null;
     // the formation itself is parametric, so nothing about it needs re-seeding — only the palette
