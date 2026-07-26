@@ -78,7 +78,13 @@ body{display:flex;flex-direction:column}
    On an ordinary window it doesn't bind at all — the type simply fills the width. */
 .nf-type{
   width:100%;
-  max-width:calc((100vh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35));
+  /* The floor is not decoration. The reserve below is subtracted from 100vh, so on a short enough
+     window it exceeds it and the calc goes negative — max-width clamps to 0, and a 0-width parent is
+     exactly the case fit-width.js returns early on (`if (available <= 0) return`). The heading then
+     keeps whatever font-size it was last fitted at, overflows its parent, and gets clipped off the top
+     of a page that cannot scroll. max() means the type is always given SOME width to be fitted into,
+     so the fit always runs and the result is always small-but-correct rather than stale-and-cropped. */
+  max-width:max(120px, calc((100vh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35)));
   /* The reserve used to be a single 280px, which worked while the footer was two lines of 12px type.
      The shared site footer is a full-bleed wordmark, so its height is a function of the viewport's
      WIDTH — it grows as the page widens — and no constant can stand in for that. Hence two terms:
@@ -200,6 +206,30 @@ body{display:flex;flex-direction:column}
    a separate query so each number stays answerable to the thing that actually decides it. */
 @media screen and (max-width:700px){
   .nf-type{--nf-foot-height:calc(146px + (100vw - 2 * var(--page-gutter)) / 6.4633)}
+}
+
+/* Short windows: the footer gives up its wordmark, and this is the only page where it does.
+   The wordmark is sized off the page's WIDTH, so on a landscape phone (844×390) it asks for 216px of
+   a 390px window — and unlike privacy and terms, which simply scroll, this page is exactly 100vh with
+   overflow:hidden, so what does not fit is not merely below the fold, it is unreachable. Before that
+   arithmetic was in the reserve, 280px flat left room here; afterwards the reserve exceeded the whole
+   viewport, and the 404 was clipped off the top of the screen with the button under the footer.
+
+   So on a short window the wordmark goes and the meta row stays. It is the right thing to lose: the
+   links and the credit are the footer's FUNCTION, the wordmark is its presence, and this page already
+   carries the mark at the top and a "Back to Atmos Gallery" button in the middle — nothing becomes
+   unreachable by dropping it. The alternative, keeping it and squeezing the 404, spends the subject of
+   the page on the decoration of its footer.
+
+   72px is the meta row alone: its 1px rule plus 33 + 12 + 26. The narrow variant restates it because
+   there the row is three stacked lines (1 + 24 + 60 + 24), and it must come after the width query
+   above, which would otherwise put the wordmark's height back. */
+@media screen and (max-height:600px){
+  .site-foot__brand{display:none}
+  .nf-type{--nf-foot-height:72px}
+}
+@media screen and (max-height:600px) and (max-width:700px){
+  .nf-type{--nf-foot-height:109px}
 }
 
 /* legal.css carries no blanket motion floor, so the two transitions above are stood down here. The
