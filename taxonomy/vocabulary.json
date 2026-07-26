@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "updated": "2026-07-26",
+  "about": [
+    "The single source of truth for Atmos Studio's descriptive vocabulary.",
+    "",
+    "Two systems with different jobs. A FACET is exhaustive and mutually exclusive within its",
+    "dimension: every palette resolves to exactly one value, so a facet always partitions the whole",
+    "archive and can therefore carry navigation. A TAG is sparse and overlapping: it describes, it",
+    "does not partition, and it carries the product's voice.",
+    "",
+    "Every facet boundary below is transcribed from the values already used by src/lib/reading.js,",
+    "not newly invented — the reading engine has always bucketed these axes; the buckets were simply",
+    "never exposed as navigation. Keeping the numbers identical means no palette changes meaning.",
+    "",
+    "Boundaries are half-open [min, max) and tile each dimension's full domain, matching the",
+    "band() helper in reading.js: the first cut the value falls under wins, otherwise the last",
+    "bucket. scripts/taxonomy-check.mjs proves the tiling has no gap and no overlap, and that every",
+    "seed palette plus a randomised sweep resolves to exactly one value per dimension."
+  ],
+  "sources": {
+    "generator": {
+      "file": "src/lib/reading.js",
+      "note": "ADJ table + moodAdj(). CLOSED vocabulary — the local reading cannot mint a term at runtime."
+    },
+    "seeds": {
+      "file": "src/app/methods/pipeline.js",
+      "note": "makeSeed() — five example palettes with hand-authored descriptors, the only terms in the app that come from outside the generator."
+    },
+    "live": {
+      "file": "src/lib/interpret.js",
+      "note": "The hosted-model path CAN return free text. It is tree-shaken out of the public build (README accuracy note 1), so in the shipped app the vocabulary is closed. Step B's lexicon constraint is what keeps it closed if that path ever ships."
+    }
+  },
+
+  "measures": {
+    "warmth": {
+      "unit": "scalar -1..1",
+      "formula": "Σ(area × chroma × cos(H − 65°)) / Σ(area × chroma)",
+      "note": "+1 at orange, −1 at its opposite (~245°). Chroma-weighted, so a grey casts no vote."
+    },
+    "meanL": { "unit": "OKLab L, 0..1", "formula": "Σ(L × area)" },
+    "meanC": { "unit": "OKLab chroma", "formula": "Σ(√(a²+b²) × area)" },
+    "maxRatio": { "unit": "WCAG contrast ratio 1..21", "formula": "max sRGB contrast ratio over all swatch pairs" },
+    "topWeight": { "unit": "area 0..1", "formula": "largest single swatch weight" },
+    "hueSpan": {
+      "unit": "degrees 0..360",
+      "formula": "360 − largest empty arc between swatches above the chroma floor (0.02)",
+      "note": "Fewer than two chromatic swatches ⇒ no span is measurable and the palette is monochrome by definition."
+    }
+  },
+
+  "facets": {
+    "temperature": {
+      "label": "Temperature",
+      "measure": "warmth",
+      "buckets": [
+        { "value": "cool", "label": "Cool", "min": -1, "max": -0.35 },
+        { "value": "neutral", "label": "Neutral", "min": -0.35, "max": 0.35 },
+        { "value": "warm", "label": "Warm", "min": 0.35, "max": 1.0001 }
+      ]
+    },
+    "lightness": {
+      "label": "Lightness",
+      "measure": "meanL",
+      "buckets": [
+        { "value": "dark", "label": "Dark", "min": 0, "max": 0.3 },
+        { "value": "low", "label": "Low-lit", "min": 0.3, "max": 0.45 },
+        { "value": "mid", "label": "Even", "min": 0.45, "max": 0.62 },
+        { "value": "high", "label": "Bright", "min": 0.62, "max": 0.8 },
+        { "value": "pale", "label": "Pale", "min": 0.8, "max": 1.0001 }
+      ]
+    },
+    "chroma": {
+      "label": "Chroma",
+      "measure": "meanC",
+      "buckets": [
+        { "value": "grey", "label": "Achromatic", "min": 0, "max": 0.018 },
+        { "value": "muted", "label": "Muted", "min": 0.018, "max": 0.045 },
+        { "value": "restrained", "label": "Restrained", "min": 0.045, "max": 0.09 },
+        { "value": "saturated", "label": "Saturated", "min": 0.09, "max": 0.15 },
+        { "value": "vivid", "label": "Vivid", "min": 0.15, "max": 1.0001 }
+      ]
+    },
+    "contrast": {
+      "label": "Contrast",
+      "measure": "maxRatio",
+      "buckets": [
+        { "value": "flat", "label": "Flat", "min": 1, "max": 2 },
+        { "value": "gentle", "label": "Gentle", "min": 2, "max": 4.5 },
+        { "value": "structured", "label": "Structured", "min": 4.5, "max": 7 },
+        { "value": "stark", "label": "Stark", "min": 7, "max": 21.0001 }
+      ],
+      "note": "The 4.5 and 7 cuts are the WCAG AA and AAA thresholds, so this dimension already aligns with the AA badge added in Phase 4.5 Step C."
+    },
+    "hue": {
+      "label": "Hue relationship",
+      "measure": "hueSpan",
+      "buckets": [
+        { "value": "mono", "label": "Monochrome", "min": 0, "max": 30 },
+        { "value": "analogous", "label": "Harmonious", "min": 30, "max": 90 },
+        { "value": "broad", "label": "Varied", "min": 90, "max": 180 },
+        { "value": "opposed", "label": "Opposed", "min": 180, "max": 360.0001 }
+      ],
+      "note": "Fewer than two swatches above the chroma floor resolves to 'mono' before the span is consulted."
+    },
+    "dominance": {
+      "label": "Dominance",
+      "measure": "topWeight",
+      "rule": "ordered — first match wins, so the buckets are mutually exclusive by evaluation order rather than by numeric range",
+      "buckets": [
+        { "value": "dominant", "label": "Anchored", "test": "top >= 0.42" },
+        { "value": "paired", "label": "Paired", "test": "top + second >= 0.66" },
+        { "value": "even", "label": "Balanced", "test": "top − smallest <= 0.10" },
+        { "value": "graded", "label": "Graded", "test": "otherwise" }
+      ],
+      "note": "Not listed in the restructure brief, but its four terms (Anchored / Paired / Balanced / Graded) are computed and would otherwise be orphaned — classified with no home in either system. Included so the classification is complete."
+    }
+  },
+
+  "tags": {
+    "note": [
+      "Interpretive terms only: associative meaning that cannot be computed from colour data.",
+      "Sparse and overlapping by design. Step B turns this list into a curated lexicon with",
+      "canonical terms and alias mappings; at version 1 it is the observed set, classified."
+    ],
+    "fromGenerator": [
+      "Sombre", "Smouldering", "Weightless", "Sunlit", "Becalmed",
+      "Golden", "Contrasted", "Accented", "Graphic", "Quiet"
+    ],
+    "fromSeeds": [
+      "Coastal", "Overcast", "Still", "Nostalgic", "Clinical", "Precise", "Moody"
+    ]
+  },
+
+  "retired": {
+    "note": [
+      "Terms that leave the tag vocabulary. Two reasons, both from the brief's diagnosis:",
+      "COMPUTED — the term is a facet value now (D1: a lossy duplicate of data the metadata panel",
+      "already shows at full precision). SYNONYM — the term competes with a canonical form and was",
+      "splitting counts (D5).",
+      "",
+      "'to' is where the term's meaning now lives, so nothing is lost in migration."
+    ],
+    "computed": {
+      "Warm": "temperature=warm", "Cool": "temperature=cool", "Neutral": "temperature=neutral",
+      "Dark": "lightness=dark", "Low-lit": "lightness=low", "Even": "lightness=mid",
+      "Bright": "lightness=high", "Pale": "lightness=pale",
+      "Achromatic": "chroma=grey", "Muted": "chroma=muted", "Restrained": "chroma=restrained",
+      "Saturated": "chroma=saturated", "Vivid": "chroma=vivid",
+      "Flat": "contrast=flat", "Gentle": "contrast=gentle", "Structured": "contrast=structured",
+      "Stark": "contrast=stark",
+      "Monochrome": "hue=mono", "Harmonious": "hue=analogous", "Varied": "hue=broad", "Opposed": "hue=opposed",
+      "Anchored": "dominance=dominant", "Paired": "dominance=paired", "Balanced": "dominance=even",
+      "Graded": "dominance=graded"
+    },
+    "synonym": {
+      "Cold": "temperature=cool",
+      "Desaturated": "chroma=muted",
+      "Soft": "contrast=gentle",
+      "Pastel": "lightness=pale + chroma=muted"
+    }
+  },
+
+  "healthMetric": {
+    "note": "Review heuristic for governing future lexicon changes — NOT a runtime filter.",
+    "minShare": 0.05,
+    "maxShare": 0.4,
+    "rationale": "Above ~40% a term is near-universal and cannot discriminate; below ~5% it behaves as a unique identifier rather than a category."
+  }
+}
