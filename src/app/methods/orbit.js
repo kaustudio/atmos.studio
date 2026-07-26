@@ -264,35 +264,44 @@ export const orbitMethods = {
     });
     return Math.hypot(dx, dy) || 265;                               // corner reach — the worst angle a ring can pass
   },
-  // Ring geometry for the current viewport, SOLVED rather than configured.
-  //   1. BASE GAP — g is sized off the viewport width so the formation always spans it.
-  //   2. WIDER BETWEEN RINGS — the ring→ring gap is ORB_RING_GAP_MUL× the copy→ring gap, so the
-  //      rings read as separate depths rather than one thick band.
-  //   3. BOUNDS IN ORB DIAMETERS, never absolute px — the same pixel count reads completely
-  //      differently at 55px and 113px. Floor binds on phones and portrait tablets (where the
-  //      width-derived g collapses), ceiling binds from ~1440px up (where g would otherwise track
-  //      the width and pull the rings apart).
-  //   4. OVERFLOW IS FINE — the outer ring is not pinned to the edges; it runs off both sides by
-  //      design, and being true circles it leaves the top and bottom too.
-  // Orb sizes scale off the SMALLER edge — tied to width they would balloon on wide, short screens.
+  /* Ring geometry for the current viewport, SOLVED rather than configured.
+       1. BASE GAP — g is sized off the viewport's LONGER edge, so the formation spans it.
+       2. WIDER BETWEEN RINGS — the ring→ring gap is ORB_RING_GAP_MUL× the copy→ring gap, so the
+          rings read as separate depths rather than one thick band.
+       3. BOUNDS IN ORB DIAMETERS, never absolute px — the same pixel count reads completely
+          differently at 55px and 113px. Ceiling binds from ~1440px up, where g would otherwise
+          track the viewport and pull the rings apart.
+       4. OVERFLOW IS FINE — the outer ring is not pinned to the edges; it runs off the long axis
+          by design, and being true circles it leaves the short one too.
+
+     `span` is the longer edge and not the width, which is the whole of what makes this work in
+     portrait. Against the width, the numerator (vw/2 − …) is what is left over after the hero and
+     the orbs have been paid for — and on a phone the hero alone is most of the half-width, so it
+     went NEGATIVE and g fell to its floor. That floor is a minimum, not a fit: the rings ended up
+     crowding the copy at 0.55 diameters while the tall viewport sat empty above and below them,
+     which is both halves of the same bug. In landscape the longer edge IS the width, so every
+     desktop and landscape-tablet geometry is unchanged to the pixel; only portrait moves, and it
+     moves to the arrangement the rule always described. */
   _ringGeom(vw, vh) {
     const rings = this._rings(), edge = Math.min(vw, vh) || 720;
+    const span = Math.max(vw, vh) || 1440;
     const sizeK = Math.min(1.35, Math.max(0.66, edge / 720));
     const px = rings.map((r) => r.size * sizeK);
     const last = rings.length - 1;
     const reach = this._heroReach();
     const inner = px.slice(0, last).reduce((a, b) => a + b, 0);     // inner rings each eat a full diameter
-    const g = Math.max(px[0] * this.ORB_MIN_GAP_MUL, (vw / 2 - px[last] - reach - inner) / rings.length);
+    const g = Math.max(px[0] * this.ORB_MIN_GAP_MUL, (span / 2 - px[last] - reach - inner) / rings.length);
     const R = []; let cursor = reach;                               // cursor tracks the last consumed edge
     rings.forEach((r, i) => {
       const gap = i === 0 ? g : Math.min(g * this.ORB_RING_GAP_MUL, px[0] * this.ORB_RING_GAP_MAX);
       R[i] = cursor + gap + px[i] / 2; cursor = R[i] + px[i] / 2;
     });
-    // Capping the ring→ring gap can leave the outer ring short of the edges on a very wide screen,
-    // which is the side whitespace this formation exists to avoid. Slide the whole set out until it
-    // spans the width: a constant added to every radius moves the copy→ring gap only — the ring→ring
-    // gaps, and so the cap above, survive it exactly.
-    const short = vw / 2 - (R[last] + px[last] / 2);
+    // Capping the ring→ring gap can leave the outer ring short of the edges on a very large screen,
+    // which is the whitespace this formation exists to avoid. Slide the whole set out until it
+    // spans: a constant added to every radius moves the copy→ring gap only — the ring→ring gaps,
+    // and so the cap above, survive it exactly. Measured against the same `span` as g, or the two
+    // would disagree about which edge the formation is supposed to reach.
+    const short = span / 2 - (R[last] + px[last] / 2);
     if (short > 0) for (let i = 0; i <= last; i++) R[i] += short;
     return { edge, g, px, R, base: this._orbBase(vw) };
   },
@@ -898,20 +907,30 @@ export const orbitMethods = {
           equalising the counts; both are load-bearing, and changing them is a contract amendment,
           not a tweak.
        4. GEOMETRY (_ringGeom) — radii are SOLVED, not configured. A base gap g is sized off the
-          width: g = (vw/2 − px_last − _heroReach() − Σ inner diameters) / ringCount. The copy→ring0
-          interval is g; every ring→ring interval is g · ORB_RING_GAP_MUL (1.75), so the rings read
-          as separate depths rather than one thick band. Both bounds on g are expressed against the
-          ORB, never in absolute px, because the same pixel count reads differently at 55px and
-          113px: floor ORB_MIN_GAP_MUL (0.55 diameters, binds on phones and portrait tablets, where
-          the width-derived g collapses), ceiling ORB_RING_GAP_MAX (2.2 diameters on the ring→ring
-          gap, binds from ~1440px up, where g would otherwise track the width and pull the rings
-          apart into two unrelated arcs). Finally, if the capped gap leaves the outer ring inside the
-          viewport, every radius slides out by the shortfall — a constant, so the ring→ring gaps and
-          the cap survive it and only the copy→ring gap grows. The outer ring is deliberately NOT
-          pinned to the viewport: it runs off both sides, and being true circles it leaves the top
-          and bottom too. That overflow is the intended read, not a fit failure. Sizes = size ·
-          clamp(min(vw,vh)/720, .66, 1.35) — tied to width they would balloon on wide, short screens.
-          Recomputed on resize.
+          LONGER edge: span = max(vw,vh), g = (span/2 − px_last − _heroReach() − Σ inner diameters)
+          / ringCount. The copy→ring0 interval is g; every ring→ring interval is g ·
+          ORB_RING_GAP_MUL (1.75), so the rings read as separate depths rather than one thick band.
+          Both bounds on g are expressed against the ORB, never in absolute px, because the same
+          pixel count reads differently at 55px and 113px: floor ORB_MIN_GAP_MUL (0.55 diameters),
+          ceiling ORB_RING_GAP_MAX (2.2 diameters on the ring→ring gap, binds from ~1440px up, where
+          g would otherwise track the viewport and pull the rings apart into unrelated arcs).
+          Finally, if the capped gap leaves the outer ring inside the viewport, every radius slides
+          out by the shortfall — a constant, so the ring→ring gaps and the cap survive it and only
+          the copy→ring gap grows. The outer ring is deliberately NOT pinned to the viewport: it runs
+          off the long axis, and being true circles it leaves the short one too. That overflow is
+          the intended read, not a fit failure.
+          AMENDED: span was vw. Against the width the numerator is what remains after the hero and
+          the orbs are paid for, and in PORTRAIT the hero alone is most of the half-width, so it went
+          negative and g fell to its floor — the rings crowded the copy at 0.55 diameters while the
+          tall viewport sat empty above and below, which is two symptoms of one bug. In landscape the
+          longer edge IS the width, so every landscape geometry is unchanged to the pixel (1440×900
+          solves to 403.9 / 563.8 / 709.3 either way); only portrait moves, and it moves to the
+          arrangement this clause always described.
+          Sizes = size · clamp(min(vw,vh)/720, .66, 1.35) — off the SHORTER edge, since tied to the
+          longer they would balloon on wide, short screens.
+          Recomputed on resize AND whenever the hero's own box changes, which is not the same event:
+          _heroReach() is a DOM measurement, and a reach taken before the webfont lands is one no
+          viewport event will ever correct. See o.reachWatch.
        5. RING PARALLAX + FLOAT — depth is per ring (size, blur, opacity, brightness, saturate, z,
           dep), never per orb and never from cos(angle); written ONCE on build and resize, so the
           tick writes position only. Float is front-ring only and a whisper: amplitude dia·0.03,
@@ -978,6 +997,26 @@ export const orbitMethods = {
     };
     dress();
     o.dress = dress;   // _dropOrbField needs it: losing the field means the DOM tiles need dressing
+    /* Re-solve when the HERO changes size, not only when the viewport does.
+       §4's radii are built on _heroReach(), which is a DOM measurement, and the tick re-derives the
+       geometry on a viewport change and on nothing else — so a reach taken before the copy has its
+       final box is the reach the formation keeps for the entire visit, with no event that will ever
+       correct it. On a portrait tablet that landed as every ring collapsed onto the copy; a 1px
+       resize snapped it right, which is the whole diagnosis. The marks' own box changing IS the
+       signal that the reach is stale, and watching them catches the webfont swap, a late reflow and
+       a copy change alike, where a one-shot fonts.ready would only catch the first.
+       src/notfound/main.js follows its heading for exactly this reason. The first callback fires
+       immediately on observe and re-solves with the numbers we already have, which is harmless —
+       dress() is idempotent and the radii fall out of the formula on the next tick regardless. */
+    const reachMarks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')];
+    if (reachMarks.length && typeof ResizeObserver !== 'undefined') {
+      o.reachWatch = new ResizeObserver(() => {
+        if (this._orbit !== o) return;               // a rebuilt orbit owns its own observer
+        o.geom = this._ringGeom(o.vw, o.vh);
+        dress();
+      });
+      reachMarks.forEach((m) => o.reachWatch.observe(m));
+    }
     // ONE ticker for the whole formation, ONE rotation value. Position is derived, not integrated:
     // every orb's angle is recomputed from its index each frame, so no error can accumulate and the
     // two rings cannot drift apart no matter how long the landing sits open.
@@ -1043,7 +1082,7 @@ export const orbitMethods = {
     // the formation itself is parametric, so nothing about it needs re-seeding — only the palette
     // assignment above is per-visit. _ringFld/_orbSlots stay cached: they are pure config.
     const o = this._orbit;
-    if (o) { o.active = false; if (o.added && window.gsap) { try { window.gsap.ticker.remove(o.tick); } catch (e) { } } this._orbit = null; }
+    if (o) { o.active = false; if (o.added && window.gsap) { try { window.gsap.ticker.remove(o.tick); } catch (e) { } } if (o.reachWatch) { try { o.reachWatch.disconnect(); } catch (e) { } o.reachWatch = null; } this._orbit = null; }
     if (this._orbitVis) { document.removeEventListener('visibilitychange', this._orbitVis); this._orbitVis = null; }
   },
 };
