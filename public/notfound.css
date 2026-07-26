@@ -79,7 +79,24 @@ body{display:flex;flex-direction:column}
 .nf-type{
   width:100%;
   max-width:calc((100vh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35));
-  --nf-reserve:280px;
+  /* The reserve used to be a single 280px, which worked while the footer was two lines of 12px type.
+     The shared site footer is a full-bleed wordmark, so its height is a function of the viewport's
+     WIDTH — it grows as the page widens — and no constant can stand in for that. Hence two terms:
+
+       --nf-foot-height  the footer itself. 139px of fixed furniture (two 1px rules, the 44+22 around
+                         the wordmark, and 33+12+26 for the meta row — see .site-foot in legal.css)
+                         plus the wordmark, which is the content width over its own aspect ratio.
+                         6.4633 is 876.43 ÷ 135.6, the same box .site-foot__mark carries as
+                         aspect-ratio; if that asset is ever re-cropped, this figure moves with it.
+       175px             everything else that is not the 404: the mark, .nf's padding, the button and
+                         its margin, plus the air the old 280px already held (280 − the old footer's
+                         measured 105px).
+
+     Both are custom properties rather than one long calc so the breakpoints below can move the two
+     independently — the footer restacks at 700px, this page's own chrome relaxes at 767px, and those
+     are not the same width. */
+  --nf-foot-height:calc(139px + (100vw - 2 * var(--page-gutter)) / 6.4633);
+  --nf-reserve:calc(175px + var(--nf-foot-height));
   text-align:center;
   /* The heading is an inline-block, so it sits on a line box here — and that line box carries a strut
      from the inherited line-height, which parked ~8px of nothing under the digits and made the 24px
@@ -168,15 +185,21 @@ body{display:flex;flex-direction:column}
 }
 .nf-cta:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 
-/* Outside .nf so the flex column can hold it at the bottom while the type takes the middle. It keeps
-   legal.css's hairline and 12px muted type; the page's gutter and its centring are added here. */
-.nf-foot{margin:0 var(--page-gutter);padding-bottom:24px;text-align:center}
+/* The footer needs nothing from this file any more. It used to be a 404-only .nf-foot that added the
+   page's gutter and centring to legal.css's .legal-foot; the shared .site-foot carries its own gutter,
+   its own rules and its own bottom padding, and is identical here to what privacy and terms show. */
 
 /* One grid at every width — the app's gutters hold on a phone as much as on a desktop, and the legal
    pages now do the same, so no page here has a breakpoint-specific inset. Only the vertical reserve
    changes: there is less chrome to leave room for, so the type may take more of a short screen. */
 @media screen and (max-width:767px){
-  .nf-type{--nf-reserve:220px}
+  .nf-type{--nf-reserve:calc(115px + var(--nf-foot-height))}
+}
+/* The footer's own threshold, not this page's: at 700px its meta row stops being three columns and
+   becomes three stacked rows, which is 48px the reserve above would otherwise not know about. Kept as
+   a separate query so each number stays answerable to the thing that actually decides it. */
+@media screen and (max-width:700px){
+  .nf-type{--nf-foot-height:calc(146px + (100vw - 2 * var(--page-gutter)) / 6.4633)}
 }
 
 /* legal.css carries no blanket motion floor, so the two transitions above are stood down here. The

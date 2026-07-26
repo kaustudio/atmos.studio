@@ -6,6 +6,55 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-26 — The site footer, and what it costs the 404
+
+**Decision:** a shared footer — the Atmos Gallery wordmark at full page width between two hairlines,
+over a left/centre/right meta row — closes `privacy.html`, `terms.html` and `404.html`. Not the front
+page: that is the app, and it carries its own chrome. It is `.site-foot` in `public/legal.css`, from a
+design comp supplied as a 1728×418 frame in light and dark.
+
+**The wordmark is artwork, not set type.** It is `atmos-gallery-wordmark-tight.svg` used as a CSS
+mask, inked from `--on-surface` exactly as `.mark` and `.nf-mark` already are, so one file serves both
+themes and there is no second copy to drift. Set as *type* it would have needed the webfont to load
+and a `fit-width.js` pass to fill the measure, and would still have been at the mercy of both; as
+artwork it is flush at every width by construction. The asset is a new crop rather than the shipping
+`-white` wordmark because that file's viewBox carries 27 units of empty space above the ascenders —
+enough to hang the mark ~3% of its own width low and make the gaps above and below it a function of
+the viewport instead of a token.
+
+**Two departures from the comp, both toward the system.** They will read as bugs to anyone diffing
+against the PDFs, so: the side inset is `--page-gutter` (22px) and not the comp's measured 24px,
+because these are content-width rules whose ends have to land on the same vertical line as the prose
+above them — 2px at this width is invisible, a left edge that misses the one above it is not. And the
+hairlines are `--line-strong`, not the comp's ink, which is ~100% in light and ~40% in dark; no single
+token expresses that asymmetry, colours were flagged as not final, and `--line-strong` is the rule
+`.legal-head`, `.legal-hero::after` and `h2::before` already draw. Everything else matches the comp
+within ~1px, measured subpixel off the rendered PDFs.
+
+**What it cost the 404, knowingly:** that page is exactly `100vh` with nothing scrolling, and its
+`--nf-reserve` is what stops the fitted 404 outgrowing a viewport it cannot scroll. The footer it
+replaced was 105px of two-line type; this one is ~355px at a 1440px window, and all of it comes out of
+the numeral — which drops from full width to roughly 60% of it, leaving the footer wordmark wider than
+the 404 itself. That was weighed and accepted rather than overlooked.
+
+**The coupling this creates is the thing to be careful with.** The footer's height is a function of
+viewport *WIDTH* — a full-bleed wordmark gets taller as the page widens — while `--nf-reserve` has to
+be a length. So it is no longer a constant but
+`calc(175px + var(--nf-foot-height))`, and `--nf-foot-height` carries the wordmark's aspect ratio
+(`6.4633`, i.e. 876.43 ÷ 135.6) as a live term. **That figure must stay in step with
+`.site-foot__mark`'s `aspect-ratio`**: re-crop the asset without moving it and the 404 silently
+mis-reserves, which on a page that cannot scroll means content simply off the bottom edge. The two
+breakpoints are also deliberately separate — the footer restacks at 700px, the 404's own chrome
+relaxes at 767px, and collapsing them to one number would make each answerable to the wrong thing.
+
+**Why the CVR line stayed behind:** `.legal-foot` still closes both legal articles, reduced to the
+controller-identity line alone. Its nav duplicated the new footer and went; the identity did not,
+because it is the E-Commerce Directive Art. 5 trader identification and the comp has no slot for a CVR
+number. On `terms.html` it now restates what *Who you are dealing with* says a few lines above — mild
+redundancy, kept on purpose rather than trimmed by a footer change.
+
+---
+
 ## 2026-07-25 — No analytics or tracking scripts
 
 **Decision:** Atmos Studio ships with no analytics package, no tracking script, and no tracking

@@ -42,9 +42,22 @@
   <p class="nf-actions"><a class="nf-cta" href="/">Back to Atmos Gallery</a></p>
 </main>
 
-<footer class="nf-foot legal-foot">
-  <p class="legal-foot__nav"><a href="/privacy.html">Privacy</a><span>·</span><a href="/terms.html">Terms</a></p>
-  <p>Atmos Gallery is part of KauStudio.</p>
+<!-- The shared site footer, from legal.css — outside .nf so the flex column holds it at the bottom
+     while the 404 takes the middle. It is much taller than the two lines it replaces, and this page is
+     exactly one viewport with nothing scrolling, so .nf-type's --nf-reserve was rewritten to carry the
+     footer's height as a width-dependent term. Change one and check the other. -->
+<footer class="site-foot">
+  <div class="site-foot__brand">
+    <a href="/" aria-label="Atmos Gallery — home"><span class="site-foot__mark" aria-hidden="true"></span></a>
+  </div>
+  <div class="site-foot__meta">
+    <p class="site-foot__origin">A part of <a href="https://kau.studio">kau.studio</a></p>
+    <nav class="site-foot__nav" aria-label="Legal">
+      <a href="/privacy.html">Privacy policy</a>
+      <a href="/terms.html">Terms and conditions</a>
+    </nav>
+    <p class="site-foot__rights">All rights reserved &copy; 2026</p>
+  </div>
 </footer>
 
 <!-- The field is a fixed layer over the whole viewport, not a box around the heading: a particle

@@ -162,13 +162,31 @@
     <h2>Questions</h2>
     <p>Anything unclear, or something you'd like removed: <a href="mailto:hello@kau.studio">hello@kau.studio</a>.</p>
 
+    <!-- The nav line this block used to carry (Terms · Back to Atmos Gallery) is now in the site
+         footer below, which is on every page. What stays is the controller's identity: it is not
+         decoration but the E-Commerce Directive Art. 5 trader identification, and the footer from the
+         design comp has no slot for a CVR number. -->
     <div class="legal-foot">
-      <p class="legal-foot__nav"><a href="/terms.html">Terms</a><span>·</span><a href="/">Back to Atmos Gallery</a></p>
       <p>Atmos Gallery is a product of KauStudio ApS · CVR DK39161443</p>
     </div>
 
   </div>
 </div>
+
+<!-- Outside .toc-layout, so the wordmark spans the page rather than the article's --measure column. -->
+<footer class="site-foot">
+  <div class="site-foot__brand">
+    <a href="/" aria-label="Atmos Gallery — home"><span class="site-foot__mark" aria-hidden="true"></span></a>
+  </div>
+  <div class="site-foot__meta">
+    <p class="site-foot__origin">A part of <a href="https://kau.studio">kau.studio</a></p>
+    <nav class="site-foot__nav" aria-label="Legal">
+      <a href="/privacy.html" aria-current="page">Privacy policy</a>
+      <a href="/terms.html">Terms and conditions</a>
+    </nav>
+    <p class="site-foot__rights">All rights reserved &copy; 2026</p>
+  </div>
+</footer>
 
 <script src="/vendor/gsap.min.js"></script>
 <script src="/vendor/ScrollTrigger.min.js"></script>
