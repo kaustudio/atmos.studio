@@ -2,7 +2,7 @@
   "version": 1,
   "updated": "2026-07-26",
   "about": [
-    "The single source of truth for Atmos Studio's descriptive vocabulary.",
+    "The single source of truth for Atmos Gallery's descriptive vocabulary.",
     "",
     "Two systems with different jobs. A FACET is exhaustive and mutually exclusive within its",
     "dimension: every palette resolves to exactly one value, so a facet always partitions the whole",

@@ -3,42 +3,103 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Privacy — Atmos Studio</title>
-<meta name="description" content="How Atmos Studio handles your images, palettes and data. Everything stays in your browser." />
-<link rel="icon" type="image/svg+xml" href="/assets/atmos-logo-black-v3.svg" />
-<style>
-  @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-display:swap}
-  @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-display:swap}
-  :root{--surface:#f5f5f3;--on-surface:#1a1a1a;--on-surface-muted:#63635b;--line:#e0e0db;color-scheme:light}
-  @media (prefers-color-scheme:dark){:root{--surface:#141413;--on-surface:#f3f3ef;--on-surface-muted:#a2a29a;--line:#333331;color-scheme:dark}}
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--surface);color:var(--on-surface);font-family:'Neue Montreal',system-ui,sans-serif;line-height:1.6}
-  main{max-width:660px;margin:0 auto;padding:64px 24px 96px}
-  .mark{display:block;width:132px;height:20px;background:var(--on-surface);
-        -webkit-mask:url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat;
-        mask:url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat}
-  h1{font-weight:500;font-size:34px;line-height:1.1;letter-spacing:-.02em;margin:40px 0 28px}
-  p{font-size:15px;margin:0 0 20px;text-wrap:pretty}
-  strong{font-weight:500}
-  code{font-size:.92em;padding:1px 4px;background:color-mix(in srgb,var(--on-surface) 8%,transparent)}
-  a{color:var(--on-surface)}
-  .meta{margin-top:36px;padding-top:20px;border-top:1px solid var(--line);font-size:12px;color:var(--on-surface-muted)}
-  .back{display:inline-block;margin-top:28px;font-size:12px;color:var(--on-surface-muted)}
-</style>
+<title>Privacy — Atmos Gallery</title>
+<meta name="description" content="How Atmos Gallery handles your images, palettes and data. Everything stays in your browser." />
+<link rel="canonical" href="https://atmos.gallery/privacy.html" />
+<link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
+<link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
+<link rel="stylesheet" href="/legal.css" />
 </head>
 <body>
-<main>
-  <a href="/" aria-label="Atmos Studio"><span class="mark" role="img" aria-label="Atmos Studio"></span></a>
-  <h1>Privacy</h1>
-  <p>Atmos Studio runs in your browser.</p>
-  <p><strong>Your images never leave your device.</strong> The palette is extracted on your own machine — the image is read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build, the code that could send an image isn't merely switched off: it isn't part of the build at all.</p>
-  <p><strong>Your palettes are stored only in your browser.</strong> The archive lives in this browser's local storage. There is no server holding it, no account attached to it, and no way for us to see it. Clearing your browser data deletes it — which is why you can save a project file and keep your own copy, on your own disk.</p>
-  <p><strong>Share links carry the palette, not a lookup.</strong> A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never send that part to a server, so opening a shared link doesn't tell us — or anyone else — that you opened it, or what was in it.</p>
-  <p><strong>No accounts, no ads, no cross-site tracking.</strong> There is nothing to sign up for, no tracking cookies, and nothing sold or shared with anyone. We do use Vercel Web Analytics to see how many people visit — it's cookieless and aggregated, it doesn't identify you, doesn't follow you to other sites, and doesn't see anything you do inside the tool.</p>
-  <p><strong>What we can see.</strong> The site is hosted on Vercel, which keeps standard access logs for the files it serves. On top of that, Vercel Web Analytics gives us aggregate counts — visits, where links were shared from, rough location and device type. Nothing about your images, your palettes, or your archive: those never leave your browser in the first place.</p>
-  <p><strong>About interpretation.</strong> Some environments provide a model that can read an image's mood directly. Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up for high-density displays — is sent for that reading and is not stored. This public build doesn't include that path — palettes are named by a reading that runs locally, on your device.</p>
-  <p class="meta">Last updated: 25 July 2026 · Questions: <a href="mailto:hello@kau.studio">hello@kau.studio</a></p>
-  <a class="back" href="/">← Back to Atmos Studio</a>
-</main>
+
+<div class="legal-head">
+  <a href="/" aria-label="Atmos Gallery"><span class="mark" role="img" aria-label="Atmos Gallery"></span></a>
+</div>
+
+<header class="legal-hero">
+  <div class="legal-hero__inner">
+    <p class="legal-hero__label">Privacy</p>
+    <h1>Privacy</h1>
+    <p class="legal-hero__sub">Atmos Gallery runs in your browser. Your images are never uploaded, your palettes are never held on a server, and a shared link tells us nothing about who opened it.</p>
+    <p class="legal-hero__meta">Last updated: 26 July 2026 · Data controller: KauStudio</p>
+  </div>
+</header>
+
+<div data-toc-offset="88" data-toc-wrap data-toc-levels="h2,h3" class="toc-layout">
+  <aside class="toc-sidebar">
+    <p class="toc-hero__label">on this page</p>
+    <nav data-toc-list class="toc-list" aria-label="On this page">
+      <a data-toc-link data-toc-item href="#" class="toc-link"><span data-toc-text=""></span></a>
+    </nav>
+  </aside>
+
+  <div data-toc-content class="toc-article">
+
+    <h2>Your images never leave your device</h2>
+    <p>The palette is extracted on your own machine — the image is read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build, the code that could send an image isn't merely switched off: it isn't part of the build at all.</p>
+
+    <h2>Your palettes are stored only in your browser</h2>
+    <p>The archive lives in this browser's local storage. There is no server holding it, no account attached to it, and no way for us to see it. Clearing your browser data deletes it — which is why you can save a project file and keep your own copy, on your own disk.</p>
+
+    <h2>Share links carry the palette, not a lookup</h2>
+    <p>A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never send that part to a server, so opening a shared link doesn't tell us — or anyone else — that you opened it, or what was in it.</p>
+
+    <h2>No accounts, no ads, no cross-site tracking</h2>
+    <p>There is nothing to sign up for, <strong>no cookies at all</strong>, and nothing sold or shared with anyone. Two measurement tools run on the page — Vercel Web Analytics, to see how many people visit, and Vercel Speed Insights, to see whether pages load quickly. Both are cookieless and aggregated, neither identifies you, neither follows you to other sites, and neither sees anything you do inside the tool.</p>
+
+    <h2>What we can see</h2>
+    <p>The site is hosted on Vercel, which keeps standard access logs for the files it serves. Those logs include your IP address and browser user-agent, because a web server cannot answer a request without them.</p>
+    <p>On top of that, the two measurement tools report:</p>
+    <ul>
+      <li><strong>Web Analytics</strong> — aggregate counts: visits, which page, where the link was shared from, approximate country, device type, browser and operating system.</li>
+      <li><strong>Speed Insights</strong> — loading-performance figures for the page you opened, the standard Core Web Vitals, plus a rough connection speed.</li>
+    </ul>
+    <p>Both attach a short-lived pseudonymous identifier so Vercel can tell one visit apart from another. It is not a cookie, nothing is written to your device, and it cannot be used to recognise you on any other site.</p>
+    <p>Nothing about your images, your palettes, or your archive: those never leave your browser in the first place.</p>
+
+    <h2>About interpretation</h2>
+    <p>Some environments provide a model that can read an image's mood directly. Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up for high-density displays — is sent for that reading and is not stored. This public build doesn't include that path — palettes are named by a reading that runs locally, on your device.</p>
+
+    <h2>Why we are allowed to process this</h2>
+    <h3>Who is responsible</h3>
+    <p><strong>KauStudio</strong> is the data controller for the small amount of personal data described above, and can be reached at <a href="mailto:hello@kau.studio">hello@kau.studio</a>. Atmos Gallery is part of KauStudio.</p>
+    <h3>Our legal basis</h3>
+    <p>We rely on <strong>legitimate interests</strong> — serving the site reliably and securely, knowing roughly how many people use it, and finding out when it has become slow. We do not ask for consent for this because we are not doing anything a visitor would not expect from a website that simply loads; if you would rather not be counted at all, a tracker-blocking extension will stop both scripts and the tool will work exactly as before.</p>
+    <p>We do not use your data to make automated decisions about you, we do not build profiles, and we do not advertise.</p>
+
+    <h2>Who else touches it</h2>
+    <p>One company: <strong>Vercel Inc.</strong>, which hosts the site and provides both measurement tools, acting as our processor. That means your data reaches servers in the United States. Vercel commits to the safeguards required for transfers out of the EU/EEA in its own data processing terms.</p>
+    <p>There is no one else. No advertising network, no third-party analytics, no email or CRM tool, no embedded video or font service — the fonts and animation libraries are served from this domain, not a CDN.</p>
+
+    <h2>How long it is kept</h2>
+    <p>We keep no copies ourselves and maintain no database of visitors. The server logs and the aggregated measurement data are held by Vercel on its own retention schedule and expire automatically; we can neither extend it nor reach into it to find an individual visitor.</p>
+    <p>Your palettes are a separate matter, and simpler: they are on your machine, for as long as you keep them there. See <a href="#your-palettes-are-stored-only-in-your-browser">Your palettes are stored only in your browser</a>.</p>
+
+    <h2>Your rights</h2>
+    <p>If any of the above counts as your personal data, you have the right to ask for a copy of it, to have it corrected or deleted, to restrict or object to how it is used, and to receive it in a portable form. Write to <a href="mailto:hello@kau.studio">hello@kau.studio</a> and we will answer within one month.</p>
+    <p>One honest limitation: because we hold no accounts and no identifiers of our own, we usually <em>cannot</em> find data relating to a particular person — there is nothing linking an IP address in a server log to you. Where we cannot identify you, we cannot act on a request, and we will tell you that rather than pretend otherwise.</p>
+    <p>If you think we have handled your data badly, you can complain to the data protection authority where you live.</p>
+
+    <h2>Children</h2>
+    <p>Atmos Gallery is a professional tool and is not directed at children. We do not knowingly collect data from anyone under 13.</p>
+
+    <h2>Changes to this statement</h2>
+    <p>If what we collect changes, this page changes in the same release — not later. The date at the top is the date of the current version.</p>
+
+    <h2>Questions</h2>
+    <p>Anything unclear, or something you'd like removed: <a href="mailto:hello@kau.studio">hello@kau.studio</a>.</p>
+
+    <div class="legal-foot">
+      <p class="legal-foot__nav"><a href="/terms.html">Terms</a><span>·</span><a href="/">Back to Atmos Gallery</a></p>
+      <p>Atmos Gallery is part of KauStudio.</p>
+    </div>
+
+  </div>
+</div>
+
+<script src="/vendor/gsap.min.js"></script>
+<script src="/vendor/ScrollTrigger.min.js"></script>
+<script src="/legal-toc.js"></script>
+<script src="/legal-reveal.js"></script>
 </body>
 </html>

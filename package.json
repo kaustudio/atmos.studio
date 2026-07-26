@@ -1,9 +1,9 @@
 {
-  "name": "atmos-studio",
+  "name": "atmos-gallery",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Atmos Studio — colour read from light and atmosphere: a desktop web tool that reads a palette from an image's mood.",
+  "description": "Atmos Gallery — colour read from light and atmosphere: a desktop web tool that reads a palette from an image's mood.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",

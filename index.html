@@ -3,9 +3,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Atmos Studio</title>
-    <meta name="description" content="Colour read from light and atmosphere. Drop in an image and Atmos Studio reads a palette from its mood — not just its dominant colours." />
-    <link rel="icon" type="image/svg+xml" href="/assets/atmos-logo-black-v3.svg" />
+    <title>Atmos Gallery</title>
+    <meta name="description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours." />
+    <link rel="canonical" href="https://atmos.gallery/" />
+    <!-- Square PNG rather than the lockup SVG: the wordmark is 6.4:1 and rendered into a 16px
+         favicon slot it collapsed to an illegible smear. -->
+    <link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
+    <link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
+
+    <!-- Social cards. og:image is deliberately absent: the only brand artwork in the repo is the
+         wordmark, which is an SVG (unsupported by most crawlers) and still draws the former name.
+         A card with no image beats a card advertising the old one. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Atmos Gallery" />
+    <meta property="og:title" content="Atmos Gallery" />
+    <meta property="og:description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours." />
+    <meta property="og:url" content="https://atmos.gallery/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Atmos Gallery" />
+    <meta name="twitter:description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours." />
     <!-- Vendored motion + shader runtime (same builds the design was authored against).
          The app code reads window.gsap / window.Observer / window.Flip / window.ScrollToPlugin /
          window.Lenis / window.OrbShader — script order matters. -->

@@ -8,6 +8,7 @@ import { sx } from '../lib/sx.js';
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
 // do inside the tool", and a single custom event makes that false. See DECISIONS.md.
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
 // stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
@@ -52,8 +53,8 @@ const SwapLabel = ({ copied, idle }) => (
   </span>
 );
 
-const LOGO_MASK = "url('/assets/atmos-logo-black-v3.svg') center/contain no-repeat";
-const MARK_MASK = "url('/assets/atmos-logo-black-v3.svg') left center/contain no-repeat";
+const LOGO_MASK = "url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat";
+const MARK_MASK = "url('/assets/atmos-gallery-logo-black.svg') left center/contain no-repeat";
 // top sits the 26px mark on the header's own centre line: the bar is 64px with a 1px bottom border,
 // so its content box is 63px and every control in it centres at 31.5 — (63 - 26) / 2 = 18.5.
 // It is fixed rather than a child of the header (it also flies over the landing), so the shared
@@ -203,7 +204,7 @@ function MobileShareView({ ms }) {
       style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
       <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 0')}>
         {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
-        <span role="img" aria-label="Atmos Studio" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
+        <span role="img" aria-label="Atmos Gallery" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
         <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>Shared palette</span>
       </div>
 
@@ -236,7 +237,7 @@ function MobileShareView({ ms }) {
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
       <div style={sx('flex:none;padding:24px 18px 34px')}>
-        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>Open Atmos Studio on a desktop to read a palette from your own image.</p>
+        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>Open Atmos Gallery on a desktop to read a palette from your own image.</p>
       </div>
     </div>
   );
@@ -265,6 +266,7 @@ export default function AppView({ vals }) {
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
         <Analytics />
+        <SpeedInsights />
       </div>
     );
   }
@@ -276,10 +278,10 @@ export default function AppView({ vals }) {
       {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
           composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
       {vals.showLogoDecor && (
-        <div data-logo="1" role="img" aria-label="Atmos Studio" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
       )}
       {vals.showLogoButton && (
-        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Studio — return to the start screen" title="Return to the start screen"
+        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery — return to the start screen" title="Return to the start screen"
           style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
       )}
 
@@ -288,7 +290,7 @@ export default function AppView({ vals }) {
           [data-orbit] in the DOM for the engine to find. data-desk-gate marks it for the CSS that
           hides the tool behind it. */}
       {vals.showLanding && (
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} role="region" aria-label={vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Studio'} style={sx('position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} role="region" aria-label={vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery'} style={sx('position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* scatter field (decorative) — one global light (upper-left); everything baked or static */}
           <div data-orbit-bloom="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}></div>
           <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none')}>
@@ -318,7 +320,7 @@ export default function AppView({ vals }) {
                  the h1/p so those boxes stay exactly the size _heroReach measures. */
               <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;max-width:280px')}>
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Studio is a desktop experience.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a desktop experience.</span></span>
                 </h1>
                 <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Open this link on a wider screen to drop an image and pull its palette.</span></span>
@@ -349,9 +351,12 @@ export default function AppView({ vals }) {
           <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 16px;box-sizing:border-box')}>
             <div style={{ width: '100%' }}>
               <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%')}>
-                <div data-load-logobox="1" style={sx('position:relative;width:198px;height:39px;flex:none;overflow:hidden')}>
+                {/* 206px is not arbitrary: the img below fills the box with no object-fit, so the box
+                    must carry the wordmark's own ratio or the letterforms render condensed.
+                    atmos-gallery-wordmark-white.svg is 878×166, so 39 × (878/166) = 206. */}
+                <div data-load-logobox="1" style={sx('position:relative;width:206px;height:39px;flex:none;overflow:hidden')}>
                   <div data-load-logo="1" style={sx('position:absolute;inset:0;transform:translateY(110%);will-change:transform')}>
-                    <img src="/assets/atmos-wordmark-white.svg" alt="Atmos Studio" style={sx('width:100%;height:100%;display:block')} />
+                    <img src="/assets/atmos-gallery-wordmark-white.svg" alt="Atmos Gallery" style={sx('width:100%;height:100%;display:block')} />
                   </div>
                 </div>
                 <div style={sx('flex:none;overflow:hidden')} data-load-numbox="1">
@@ -374,7 +379,7 @@ export default function AppView({ vals }) {
           <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
           <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
             <div style={sx('overflow:hidden;padding:8px 6px')}>
-              <img data-wipe-word="1" src="/assets/atmos-logo-white-v3.svg" alt="Atmos Studio" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
+              <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
             </div>
           </div>
         </div>
@@ -655,6 +660,7 @@ export default function AppView({ vals }) {
       )}
 
       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }

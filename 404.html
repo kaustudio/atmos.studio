@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page not found — Atmos Gallery</title>
+<meta name="description" content="That address doesn't exist on Atmos Gallery." />
+<!-- No canonical and not in sitemap.xml: this page is an answer to a bad request, not a destination. -->
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
+<link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
+<!-- legal.css first: it carries the tokens, the Neue Montreal @font-face rules and the chrome this
+     page reuses for its footer. notfound.css adds the display 404, the grid and the particle layer. -->
+<link rel="stylesheet" href="/legal.css" />
+<link rel="stylesheet" href="/notfound.css" />
+</head>
+<body>
+
+<div class="nf-head">
+  <a href="/" aria-label="Atmos Gallery"><span class="nf-mark" role="img" aria-label="Atmos Gallery"></span></a>
+</div>
+
+<main class="nf">
+  <!-- The heading is the real type at the real size. src/notfound/main.js rebuilds it as particles
+       in place and only then hides it — so with no JS, no WebGL, no Neue Montreal, or a request for
+       reduced motion, this is simply a 404 set in Neue Montreal. -->
+  <div class="nf-type" data-nf-type>
+    <h1 class="nf-title" data-nf-title data-fit-width>404</h1>
+  </div>
+
+  <!-- Spoken, never shown. With the explanatory copy gone, a screen reader would otherwise announce
+       this page as the bare number "404". It sits OUTSIDE the h1 on purpose: main.js rasterises that
+       element's own text, so anything added inside it would be spelled out by the particles. -->
+  <p class="nf-said">Page not found. Nothing lives at this address.</p>
+
+  <p class="nf-actions"><a class="nf-cta" href="/">Back to Atmos Gallery</a></p>
+</main>
+
+<footer class="nf-foot legal-foot">
+  <p class="legal-foot__nav"><a href="/privacy.html">Privacy</a><span>·</span><a href="/terms.html">Terms</a></p>
+  <p>Atmos Gallery is part of KauStudio.</p>
+</footer>
+
+<!-- The field is a fixed layer over the whole viewport, not a box around the heading: a particle
+     pushed off the glyphs has the entire page to travel through and is never clipped by a container.
+     It sits outside the content flow because it belongs to no part of it, and is pointer-events:none,
+     so the link and the button under it stay live. -->
+<canvas class="nf-canvas" data-nf-canvas aria-hidden="true"></canvas>
+
+<!-- A classic script, so it runs during parsing — ahead of the module below, which is deferred, and
+     which the build moves into <head> anyway. Order is the tidy case rather than the load-bearing one:
+     the fit also re-runs after the webfont lands, and main.js watches the heading for resizes, so the
+     cloud follows the type whichever of the two settles last. -->
+<script src="/fit-width.js"></script>
+<script type="module" src="/src/notfound/main.js"></script>
+</body>
+</html>

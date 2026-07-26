@@ -1,6 +1,6 @@
-# Atmos Studio
+# Atmos Gallery
 
-**Colour read from light and atmosphere.** Drop in an image and Atmos Studio reads a palette from
+**Colour read from light and atmosphere.** Drop in an image and Atmos Gallery reads a palette from
 its **mood** — the light and atmosphere it carries, not just its dominant colours.
 
 Production implementation of the design comp authored in Claude Design (see the handoff bundle in
@@ -41,6 +41,12 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
   variables, CSS custom properties, binary `.ase`), projects with portable JSON project files.
+- **Standalone pages** — privacy and terms, served straight out of `/public`, and a not-found page
+  that is one thing only: the real Neue Montreal glyphs of *404*, rebuilt as a particle cloud the
+  cursor pushes through, on the app's full-bleed grid with the mark centred as the app centres it.
+  No explanatory copy, and one quiet button at the system's own button size. Without JS, WebGL, the
+  webfont, or with reduced motion asked for, the same 404 is simply set as type — the heading in the
+  markup is the fallback, and the CSS is what sizes both.
 - **System** — light/dark themes (chrome only, never swatches), Neue Montreal, zero border-radius
   (orb bodies and the wipe caps are the only sanctioned curves), token-driven GSAP motion with
   full `prefers-reduced-motion` floors, versioned localStorage persistence with cross-tab sync
@@ -65,7 +71,7 @@ where the live call is actually available, so the claim is true wherever it appe
 
 ## Privacy
 
-Atmos Studio runs in your browser.
+Atmos Gallery runs in your browser.
 
 **Your images never leave your device.** The palette is extracted on your own machine — the image is
 read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build,
@@ -80,15 +86,27 @@ copy, on your own disk.
 the URL after the `#`. Browsers never send that part to a server, so opening a shared link doesn't
 tell us — or anyone else — that you opened it, or what was in it.
 
-**No accounts, no ads, no cross-site tracking.** There is nothing to sign up for, no tracking
-cookies, and nothing sold or shared with anyone. We do use Vercel Web Analytics to see how many
-people visit — it's cookieless and aggregated, it doesn't identify you, doesn't follow you to other
-sites, and doesn't see anything you do inside the tool.
+**No accounts, no ads, no cross-site tracking.** There is nothing to sign up for, no cookies at all,
+and nothing sold or shared with anyone. Two measurement tools run on the page — Vercel Web Analytics
+for visit counts and Vercel Speed Insights for loading performance. Both are cookieless and
+aggregated, neither identifies you, neither follows you to other sites, and neither sees anything you
+do inside the tool.
 
 **What we can see.** The site is hosted on Vercel, which keeps standard access logs for the files it
-serves. On top of that, Vercel Web Analytics gives us aggregate counts — visits, where links were
-shared from, rough location and device type. Nothing about your images, your palettes, or your
-archive: those never leave your browser in the first place.
+serves — including IP address and user-agent, as any web server must. On top of that, Web Analytics
+gives us aggregate counts (visits, where links were shared from, rough location, device type, browser
+and OS) and Speed Insights gives us Core Web Vitals plus a rough connection speed. Both attach a
+short-lived pseudonymous identifier so one visit can be told from another; it is not a cookie and
+nothing is written to your device. Nothing about your images, your palettes, or your archive: those
+never leave your browser in the first place.
+
+The full statement — controller, legal basis, processors and transfers, retention, and your rights —
+is `public/privacy.html`. Terms are `public/terms.html`. The two are cross-linked and share
+`public/legal.css`, `public/legal-toc.js` (the Osmo table-of-contents resource, kept as delivered)
+and `public/legal-reveal.js` (masked heading reveals + rule draws). Both pages load the vendored
+`gsap` + `ScrollTrigger` rather than a CDN, and both degrade to plain, fully readable type with no
+JS, no GSAP, or `prefers-reduced-motion` — see the header comment in `legal-reveal.js` for why that
+floor is enforced in three separate places.
 
 **About interpretation.** Some environments provide a model that can read an image's mood directly.
 Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up
@@ -111,23 +129,34 @@ copy must change in the same commit**:
    backup, or account feature invalidates it.
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
    Moving share data into a query string (`?p=`) would make it false immediately.
-4. **Analytics** — Vercel Web Analytics (page views only, cookieless, aggregated) is enabled
-   as of `f82dfaa`. If custom events are ever added, or any other analytics provider, this
-   paragraph must name what is collected in the same commit. The one other third-party
-   request the app can make is unchanged: if the vendored GSAP fails to load it falls back to
-   `cdn.jsdelivr.net` (`PaletteApp.jsx`).
+4. **Analytics** — two Vercel products, both cookieless and aggregated: Web Analytics (page views
+   only) as of `f82dfaa`, and Speed Insights (Core Web Vitals only) as of 2026-07-26. If custom
+   events are ever added, or any other provider, this paragraph must name what is collected **in the
+   same commit** — Speed Insights shipped a day ahead of its disclosure, which is why
+   `DECISIONS.md` now carries an entry about the sequencing rather than just the decision. The one
+   other third-party request the app can make is unchanged: if the vendored GSAP fails to load it
+   falls back to `cdn.jsdelivr.net` (`PaletteApp.jsx`).
 5. **"a small downscaled thumbnail"** — describes the in-environment path only, and the size comes
    from `makeThumb` (`320 × devicePixelRatio`, DPR clamped to 3). If hosted interpretation ships,
    this sentence moves from conditional to permanent, and needs to name where it is sent and what is
    retained.
+6. **"no cookies at all"** — verified by measurement, not assumption: `document.cookie` is empty on
+   every page. Client storage is `palette-generator/feed` (the user's own archive) and
+   `palette-generator/loader-session`. This is also why there is no consent banner. Any
+   non-essential third party — ads, a pixel, a hosted font, an embedded video — makes the claim false
+   and makes consent legally required.
 
 ## Layout
 
 ```
 index.html              vendor script tags (gsap + plugins, lenis, orb shader, demo image)
+404.html                the not-found page — the second Vite entry, built to dist/404.html
 public/vendor           vendored runtimes (exact builds the design was authored against)
 public/fonts            Neue Montreal (Regular/Medium)
 public/assets           Atmos logo/wordmark SVGs
+public/legal.css        shared chrome for the standalone pages (privacy, terms, 404)
+public/notfound.css     the 404's own layer: display type + the particle canvas
+src/notfound/*          the particle field, the type rasteriser, and the page's wiring
 src/lib                 colour science, exporters, interpretation seam, sx() style parser
 src/app/PaletteApp.jsx  class core (state, lifecycle)
 src/app/methods/*       prototype method groups (pipeline, persistence, motion, overlays,
@@ -141,5 +170,6 @@ scripts/smoke.mjs       Playwright smoke-drive of the full journey
 localStorage keys are namespaced `palette-generator/*` (feed schema `version: 1`), and the portable
 project file carries `schema: 'palette-generator/project-file'`. Those strings are **deliberately
 frozen legacy internals** — see the note in `src/app/methods/persistence.js`. They predate the
-settling of the product name on *Atmos Studio*, and every existing archive is keyed to them, so
+settling of the product name (they predate both *Atmos Studio* and *Atmos Gallery*), and every
+existing archive is keyed to them, so
 renaming without a migration would orphan real people's palettes. They are never shown to a user.

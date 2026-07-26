@@ -6,7 +6,8 @@ export const persistenceMethods = {
   makeStore() {
     // FROZEN LEGACY KEY — do not rename to match the product name.
     //
-    // 'palette-generator/*' predates the settling of the name on Atmos Studio. Every archive that
+    // 'palette-generator/*' predates every product name this has had (Atmos Studio, now Atmos
+    // Gallery) — which is the point: it survived both renames. Every archive that
     // already exists on someone's machine is keyed to this string, and localStorage has no rename:
     // changing it would silently orphan real palettes behind a key nothing reads any more. The same
     // goes for the project-file `schema` value below (saveProjectFile / mergeProjectFile) — files
