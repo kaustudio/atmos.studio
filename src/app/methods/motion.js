@@ -184,31 +184,76 @@ export const motionMethods = {
   // page, and leaves the clamp nothing to do because scrollY is small by the time the rows change.
   // Ordering is the whole fix: swapping first and scrolling after would animate away FROM a snap
   // that already happened.
+  //
+  // WHERE IT LANDS: scroll-margin, expressed in JS because Lenis works out its own stop position and
+  // ignores the CSS property. Landing the list flush against the viewport top puts it UNDER the
+  // sticky header, so the offset clears that header and then leaves a strip of breathing room above
+  // the first row. The header is measured rather than assumed — it is the element that would cover
+  // the list, so its real height is the only honest source for how far to stop short.
+  LIST_SCROLL_MARGIN: 24,   // breathing room above the list, once the sticky header is cleared
+  _stickyChromeHeight() {
+    const h = document.querySelector('header:not([data-ochrome])');
+    if (!h) return 0;
+    try { if (getComputedStyle(h).position !== 'sticky') return 0; } catch (e) { return 0; }
+    return h.getBoundingClientRect().height || 0;
+  },
   _listRows() { return [...document.querySelectorAll('[data-list-wrap] [data-row-wrap]')]; },
+  // `after` receives the SECONDS OF TRAVEL still left when it fires, so the cascade can be fitted to
+  // the time remaining and land on the same beat the scroll does.
   _listAnchor(futureRows, after) {
     // The commit must NEVER depend on a scroll finishing. A stalled ticker would otherwise swallow
     // the page change outright — the reader presses Next and nothing happens — which is a far worse
     // failure than the jump this replaces. So the callback is latched and also fired by a timer.
     let fired = false;
-    const done = () => { if (fired) return; fired = true; if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; } if (after) after(); };
+    const dur = this.DUR.reveal;
+    const t0 = (function () { try { return performance.now(); } catch (e) { return 0; } })();
+    const left = () => { try { return Math.max(0, dur - (performance.now() - t0) / 1000); } catch (e) { return 0; } };
+    const done = () => {
+      if (fired) return; fired = true;
+      if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }
+      if (this._listAnchorTick) { try { window.gsap.ticker.remove(this._listAnchorTick); } catch (e) { } this._listAnchorTick = null; }
+      if (after) after(left());
+    };
     const el = this.gridRef && this.gridRef.current, g = window.gsap;
     if (!el) { done(); return; }
-    let top = Math.max(0, window.scrollY + el.getBoundingClientRect().top - 24);
+    let top = Math.max(0, window.scrollY + el.getBoundingClientRect().top - this._stickyChromeHeight() - this.LIST_SCROLL_MARGIN);
     // Never aim past where the SHORTER page will be able to scroll. Anchoring to the list top is
     // pointless if the post-commit document cannot reach it — the browser would clamp on arrival and
     // reintroduce the very snap this exists to remove, just smaller. Row height is measured from the
     // live rows rather than assumed from the token, so a row-height change cannot silently break it.
     const wrap = document.querySelector('[data-list-wrap]'), cur = this._listRows().length;
+    let futureMax = Infinity;
     if (wrap && cur && typeof futureRows === 'number') {
       const rowH = wrap.getBoundingClientRect().height / cur;
       const shrink = Math.max(0, (cur - futureRows) * rowH);
-      top = Math.min(top, Math.max(0, document.documentElement.scrollHeight - shrink - window.innerHeight));
+      futureMax = Math.max(0, document.documentElement.scrollHeight - shrink - window.innerHeight);
+      top = Math.min(top, futureMax);
     }
     const dist = Math.abs(window.scrollY - top);
     if (dist < 8) { done(); return; }                       // already reading from the top: no move at all
     if (this._reduce || !g) { try { window.scrollTo(0, top); } catch (e) { } done(); return; }
+    // Swap the rows the moment it is SAFE, not the moment the travel ends. What made the old jump was
+    // committing while scrollY still sat above what the shorter document could hold; the instant the
+    // page has come down past that line the swap is clamp-free, and the cascade gets to run ALONGSIDE
+    // the remaining travel instead of queueing behind it. When the row count is unchanged — paging
+    // within a full page — that line is already behind us and the two start together.
+    // 2px of tolerance, because scrollY is fractional while scrollHeight is an integer: at the very
+    // bottom of the page the comparison reads false by a subpixel and would defer the commit for no
+    // reason. Two pixels of clamp is nothing; losing the overlap on the commonest case is not.
+    const safe = (y) => y <= futureMax + 2;
+    if (safe(window.scrollY)) { done(); }
+    else {
+      const watch = () => { if (safe(window.scrollY)) done(); };
+      this._listAnchorTick = watch;
+      try { g.ticker.add(watch); } catch (e) { this._listAnchorTick = null; }
+    }
     clearTimeout(this._listAnchorT);
-    this._listAnchorT = setTimeout(() => { this._listAnchorT = null; try { window.scrollTo(0, top); } catch (e) { } done(); }, this.DUR.reveal * 1000 + 250);
+    // The failsafe must land the scroll THROUGH whoever owns it. A raw window.scrollTo here while
+    // Lenis is still mid-animation is a tug of war Lenis wins — it keeps interpolating from its own
+    // idea of the position and drags the page back off the mark. Telling Lenis to jump keeps one
+    // owner of the scroll at all times.
+    const land = () => { if (this._lenis) { try { this._lenis.scrollTo(top, { immediate: true }); return; } catch (e) { } } try { window.scrollTo(0, top); } catch (e) { } };
+    this._listAnchorT = setTimeout(() => { this._listAnchorT = null; land(); done(); }, this.DUR.reveal * 1000 + 250);
     // Lenis owns the page's scroll when it is running; going around it would fight its own rAF loop.
     if (this._lenis) { this._lenis.scrollTo(top, { duration: this.DUR.reveal, onComplete: done }); return; }
     if (g.plugins && g.plugins.scrollTo) { g.to(window, { scrollTo: { y: top, autoKill: false }, duration: this.DUR.reveal, ease: this.EASE.entrance, onComplete: done }); return; }
@@ -232,8 +277,18 @@ export const motionMethods = {
     if (!rows.length) return;
     const delay = (opts && opts.delay) || 0;
     g.killTweensOf(rows);
-    const stagger = Math.min(0.035, 0.7 / rows.length);
-    const tw = g.fromTo(rows, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: this.DUR.reveal, stagger: stagger, ease: this.EASE.entrance, delay: delay, clearProps: 'transform,opacity' });
+    const n = rows.length, gaps = Math.max(1, n - 1);
+    let duration = this.DUR.reveal, stagger = Math.min(0.035, 0.7 / n);
+    // `span` = seconds of scroll travel still to run. Fit the WHOLE cascade inside it so the last row
+    // settles on the same beat the page stops moving, instead of the reader arriving at the top and
+    // then waiting for the list to catch up. The wave keeps its top-down order either way — it is
+    // only being fitted to the time available. A floor stops a near-finished scroll turning it into a cut.
+    if (opts && typeof opts.span === 'number') {
+      const fit = Math.max(0.28, opts.span);
+      stagger = Math.min(stagger, (fit * 0.45) / gaps);
+      duration = Math.max(0.18, fit - stagger * gaps);
+    }
+    const tw = g.fromTo(rows, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: duration, stagger: stagger, ease: this.EASE.entrance, delay: delay, clearProps: 'transform,opacity' });
     // Same stall contract as the masked lines: rows are set invisible the instant this is called, so
     // a ticker that never wakes must not be able to leave the archive blank. Plainly visible is the floor.
     clearTimeout(this._listRevealT);
@@ -253,7 +308,7 @@ export const motionMethods = {
     const size = patch.pageSize || this.state.pageSize || 12;
     const pg = typeof patch.page === 'number' ? patch.page : (this.state.page || 0);
     const futureRows = Math.max(0, Math.min(size, total - pg * size));
-    this._listAnchor(futureRows, () => this.setState(patch, () => this._listRowsReveal()));
+    this._listAnchor(futureRows, (travelLeft) => this.setState(patch, () => this._listRowsReveal({ span: travelLeft })));
   },
 
   // ===== theme toggle (chrome only — never the palette swatches) =====

@@ -97,6 +97,8 @@ export default class PaletteApp extends React.Component {
     // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
+    // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
+    recognised: null,
     assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
@@ -190,6 +192,7 @@ export default class PaletteApp extends React.Component {
     }
     this._onKey = (e) => {
       if (e.key === 'Escape') {
+        if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
         if (this.state.fileMenuOpen) { e.preventDefault(); this.setState({ fileMenuOpen: false }); return; }
@@ -289,6 +292,7 @@ export default class PaletteApp extends React.Component {
     if (this._dropRevealT) { clearTimeout(this._dropRevealT); this._dropRevealT = null; }
     if (this._listRevealT) { clearTimeout(this._listRevealT); this._listRevealT = null; }
     if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }
+    if (this._listAnchorTick) { try { window.gsap && window.gsap.ticker.remove(this._listAnchorTick); } catch (e) { } this._listAnchorTick = null; }
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
     if (this._clockT) { clearInterval(this._clockT); this._clockT = null; }
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }
