@@ -247,6 +247,22 @@ export const pipelineMethods = {
   dispUrl(p) { return (p && (p._srcUrl || p.imageUrl)) || ''; },
   hasImg(p) { return !!(p && (p._srcUrl || p.imageUrl)); },
 
+  // ---- how much room a swatch is owed, and the imageless palette's stand-in ----
+  // One rule for the share a swatch takes, read by every surface that draws one: the list row's
+  // strip, the detail's bands, the grid tile's band, and the 3D card's. The floor keeps a 1%
+  // accent visible as a sliver rather than a hairline; `proportional: false` flattens the lot.
+  swatchGrow(b) { return (this.props.proportional ?? true) ? Math.max(b.weight, 0.06) : 1; },
+  // The gradient a palette wears when it has no reference image. Stops land on each swatch's
+  // cumulative MIDPOINT, so a colour holding 40% of the palette holds 40% of the field — the same
+  // proportional reading its band gives it everywhere else. Spacing the stops evenly by index, as
+  // both fallbacks used to, drew every palette as equal fifths, which is the one thing no palette is.
+  paletteStops(p) {
+    const sw = (p && p.swatches) || []; if (!sw.length) return '';
+    const tot = sw.reduce((a, b) => a + this.swatchGrow(b), 0) || 1;
+    let run = 0;
+    return sw.map((b) => { const share = this.swatchGrow(b) / tot, mid = run + share / 2; run += share; return b.hex + ' ' + Math.round(mid * 100) + '%'; }).join(', ');
+  },
+
   // ================= processing canvas (branded colour-diffusion beat) =================
   drawCover(ctx, img, W, H) {
     const ir = img.width / img.height, r = W / H; let w, h, x, y;

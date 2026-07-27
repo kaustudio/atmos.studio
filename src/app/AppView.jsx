@@ -1077,7 +1077,15 @@ function FeedSection({ vals }) {
         {/* FULLSCREEN 3D TORNADO: helix of palette cards (items built imperatively) */}
         <div data-reel-layer="1" role="region" aria-label="3D palette view" style={vals.reelStyle}>
           <div data-reel-stage="1" style={sx('position:absolute;inset:0;overflow:clip;overscroll-behavior:none;cursor:grab;touch-action:none')}>
-            <div data-reel-list="1" style={sx('position:relative;width:100%;height:100%;font-size:clamp(.5em, .75vw, 1.5em);perspective:75em;transform-style:preserve-3d')}></div>
+            {/* pointer-events:none on the list is what makes the cards clickable at all. Every card
+                is pushed AWAY from the camera by the helix (z is (cos−1)·radius, so never positive),
+                which puts the list's own untransformed plane in FRONT of all of them for hit-testing
+                while the cards still paint through it — the list has no background to hide them. A
+                press then landed on the list, where nothing listens, and the card under the cursor
+                never heard it. Taking the list out of hit-testing lets each press resolve against the
+                cards themselves, which order correctly among each other; the press still reaches the
+                stage behind them, so drag-to-spin is untouched. */}
+            <div data-reel-list="1" style={sx('position:relative;width:100%;height:100%;font-size:clamp(.5em, .75vw, 1.5em);perspective:75em;transform-style:preserve-3d;pointer-events:none')}></div>
           </div>
           {vals.reelEmpty && (
             <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>
@@ -1192,9 +1200,12 @@ function DetailOverlay({ vals }) {
           <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap")}>{overlay.name}</span>
           <span style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{overlay.time}</span>
         </div>
+        {/* Filing used to stand here, in the chrome, while the result view files from its action
+            row — one job wearing two different clothes depending on which door you came through.
+            It moved down to the footer row, next to Export and Contrast, where the other things you
+            do WITH a palette already live. The header keeps only what acts on the palette's place in
+            the archive or on this window: delete, and close. */}
         <div style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-          <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.assignAria} onClick={overlay.onAssign} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
-            <IconFolder />{overlay.projectLabel}</button>
           <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
             <IconTrash />Delete</button>
           <button type="button" data-ix="solid" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
@@ -1225,12 +1236,13 @@ function DetailOverlay({ vals }) {
             {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
           </div>
           {/* Same action hierarchy as the result view's row, and deliberately so: this is the same
-              job on a different surface, so Export leads, Contrast follows, and the copy actions sit
-              behind a hairline as utilities. A palette opened fullscreen from the grid must not
-              re-teach the user a different set of weights. (No Share here — the overlay has no
-              share affordance, so the utility cluster is a pair rather than a trio.) */}
+              job on a different surface, so Export leads, filing follows, then Contrast, and the copy
+              actions sit behind a hairline as utilities. A palette opened fullscreen from the grid
+              must not re-teach the user a different set of weights. (No Share here — the overlay has
+              no share affordance, so the utility cluster is a pair rather than a trio.) */}
           <div style={sx('display:flex;align-items:center;gap:8px')}>
             <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+            <B006 data-emphasis="secondary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
             <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
               <B006 data-emphasis="utility" onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"

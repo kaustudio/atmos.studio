@@ -32,6 +32,7 @@ export const reelMethods = {
     const minScale = 1;                                         // smallest scale for distant cards
     const backDarkness = 0.75;                                  // darkening applied to cards in back
     const backBlur = 0.5;                                       // blur applied to cards in back
+    const DRAG_SLOP = 8;                                        // px of travel before a press counts as a drag, not a click
     // every scoped palette gets exactly ONE card (feed order, never capped); the helix then
     // wraps/duplicates in whole batches to reach the density the viewport needs — duplicates stay decorative
     const makeCard = (p, dup) => {
@@ -41,18 +42,35 @@ export const reelMethods = {
       b.type = 'button'; b.setAttribute('data-focus', 'card');
       b.setAttribute('aria-label', 'Open ' + p.name + ' detail');
       if (dup) { b.setAttribute('aria-hidden', 'true'); b.tabIndex = -1; }
-      b.style.cssText = 'position:relative;display:block;aspect-ratio:4/5;width:18em;padding:0;margin:0;border:none;background:var(--line);cursor:pointer;overflow:hidden;-webkit-user-select:none;user-select:none';
+      // pointer-events:auto re-arms the card inside the list's pointer-events:none (see AppView) —
+      // the list steps out of hit-testing, the cards step back into it, one card at a time.
+      b.style.cssText = 'position:relative;display:block;aspect-ratio:4/5;width:18em;padding:0;margin:0;border:none;background:var(--line);cursor:pointer;overflow:hidden;pointer-events:auto;-webkit-user-select:none;user-select:none';
       const im = document.createElement('span');
       im.setAttribute('aria-hidden', 'true');
       if (this.hasImg(p)) {
         im.style.cssText = 'position:absolute;inset:0;background-image:url("' + this.dispUrl(p) + '");background-size:cover;background-position:center;display:block';
       } else {
-        // imageless palette: its swatches as the soft gradient field (same treatment as list/grid fallbacks)
-        const denom = Math.max(1, p.swatches.length - 1);
-        const stops = p.swatches.map((sw, si) => sw.hex + ' ' + Math.round(si / denom * 100) + '%').join(', ');
-        im.style.cssText = 'position:absolute;inset:0;background:linear-gradient(135deg, ' + stops + ');background-size:220% 220%;display:block';
+        // imageless palette: its swatches as the soft gradient field — the grid tile's fallback,
+        // built from the same weight-true stops (pipeline.js), so one palette cannot arrive as two
+        // different pictures depending on which view you opened
+        im.style.cssText = 'position:absolute;inset:0;background:linear-gradient(135deg, ' + this.paletteStops(p) + ');background-size:220% 220%;display:block';
       }
-      b.appendChild(im); item.appendChild(b);
+      b.appendChild(im);
+      // The palette itself, along the card's bottom edge. Until now the reel was the one surface
+      // that showed a palette without showing its colours: an image (or a wash) stood in for five
+      // measured swatches, and nothing on the card said how much of the palette each one holds.
+      // Same band as the grid tile — bands grown by swatchGrow, flush to the edges, no gaps — so
+      // the tornado reads as the same object the list and the grid are describing.
+      const strip = document.createElement('span');
+      strip.setAttribute('aria-hidden', 'true');
+      strip.style.cssText = 'position:absolute;left:0;right:0;bottom:0;height:2.6em;display:flex';
+      p.swatches.forEach((sw) => {
+        const band = document.createElement('span');
+        band.style.cssText = 'flex-grow:' + this.swatchGrow(sw) + ';flex-basis:0;min-width:0;background:' + sw.hex;
+        strip.appendChild(band);
+      });
+      b.appendChild(strip);
+      item.appendChild(b);
       return item;
     };
     // measure one card, size the helix to the container, then build the full set
@@ -119,16 +137,22 @@ export const reelMethods = {
     if (window.Observer) {
       this._reelObs = window.Observer.create({
         target: stage, type: 'wheel,touch,pointer', preventDefault: true, lockAxis: true,
-        onPress: () => { this._reelMoved = false; this._reelDragAcc = 0; this._reelKillVel(); stage.style.cursor = 'grabbing'; },
+        onPress: () => { this._reelMoved = false; this._reelNetX = 0; this._reelNetY = 0; this._reelKillVel(); stage.style.cursor = 'grabbing'; },
         onRelease: () => { stage.style.cursor = 'grab'; },
         onChange: (self) => {
           if (this.state.overlay) return;
           const wheel = self.event.type === 'wheel';
           const delta = wheel ? self.deltaY : (Math.abs(self.deltaX) > Math.abs(self.deltaY) ? self.deltaX : self.deltaY) * dragMultiplier;
           if (!wheel) {
-            // click-vs-drag: past the threshold the gesture is a drag, and release must not open
-            this._reelDragAcc += Math.abs(self.deltaX) + Math.abs(self.deltaY);
-            if (this._reelDragAcc > 3) this._reelMoved = true;
+            // Click-vs-drag: past the threshold the gesture is a drag, and release must not open.
+            // Measured as NET displacement from the press point, not as path length. Summing
+            // |dx|+|dy| every frame charged a click for its own tremor — a hand resting on a mouse
+            // wanders a few pixels before the button comes up, a trackpad tap always does, and at
+            // the old 3px ceiling that arrived as "the card did not respond". Net distance lets a
+            // wobble that returns to where it started stay a click, and still calls a real drag a
+            // drag on its first few pixels of travel. DRAG_SLOP is the platform's own click slop.
+            this._reelNetX += self.deltaX; this._reelNetY += self.deltaY;
+            if (Math.sqrt(this._reelNetX * this._reelNetX + this._reelNetY * this._reelNetY) > DRAG_SLOP) this._reelMoved = true;
           }
           if (!delta) return;
           if (wheel) this._reelKillVel();

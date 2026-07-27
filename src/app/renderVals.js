@@ -53,9 +53,8 @@ const aaReadout = (met) => ({
 export const renderValsMethods = {
   renderVals() {
     const s = this.state;
-    const prop = this.props.proportional ?? true;
     const mono = 'Neue Montreal';
-    const w = (b) => prop ? Math.max(b.weight, 0.06) : 1;
+    const w = (b) => this.swatchGrow(b);   // one rule for a swatch's share, shared with the 3D card (pipeline.js)
     const pill = { fontFamily: mono, fontSize: '10.5px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', padding: '8px 11px', lineHeight: 1 };
     const busy = s.stage === 'processing';
 
@@ -259,18 +258,18 @@ export const renderValsMethods = {
     // stay adjacent and the pair right-aligns as a unit. Pinning the badge to the column's left
     // edge was what kept it beside its number while the column was 104px wide; on a column that
     // takes a share of the row it would strand the badge a track away from the figure it grades.
-    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: '8px', whiteSpace: 'nowrap' };
+    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: 'var(--row-cell-inset)', whiteSpace: 'nowrap' };
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
     const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    // No trailing inset, and for a reason none of its neighbours have: this cell ENDS the row, so
-    // its ink is the row's right margin. The 8px the others keep is space before the next column;
-    // adding it here would put the stamp 24px from the edge while the palette sits 16px from the
-    // other one, and the row would not be square. The clearance from the row buttons comes from
-    // the column's own minimum (--row-time-col), not from padding.
-    const timeCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const contrastCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    // The same inset as its neighbours — the difference is what it is measured against. For them
+    // it is space before the next column; for this one there is no next column, so it pairs with
+    // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
+    // not moved a pixel; the 8 it used to leave to the row's padding it now holds itself, which is
+    // what lets the sort header above it be a button rather than a column-wide slab.
+    const timeCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -342,8 +341,7 @@ export const renderValsMethods = {
     const feedNodes = scoped.map((p, idx) => {
       const isCur = p.id === curId;
       const hasImage = this.hasImg(p);
-      const denom = Math.max(1, p.swatches.length - 1);
-      const stops = p.swatches.map((b, i) => b.hex + ' ' + Math.round(i / denom * 100) + '%').join(', ');
+      const stops = this.paletteStops(p);   // weight-true, and the same stops the 3D card wears
       // SAME palette-card content model as the list row — identical data, stacked arrangement
       const met = this.paletteMetrics(p);
       const cardMetrics = [
@@ -457,7 +455,11 @@ export const renderValsMethods = {
         name: p.name, rationale: p.rationale, descriptors: p.descriptors, bands: obands,
         time: this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
-        onAssign: () => this.openAssign(p), assignAria: 'Move ' + p.name + ' to a project', projectLabel: p.projectId ? this.projectName(p.projectId) : 'Unfiled',
+        // filed → the project's name; unfiled → the invitation. Same words the result view's row
+        // uses, because it is now the same control in the same place on both surfaces.
+        onAssign: () => this.openAssign(p),
+        assignAria: p.projectId ? 'Move ' + p.name + ' to another project (currently in ' + this.projectName(p.projectId) + ')' : 'Add ' + p.name + ' to a project',
+        assignLabel: p.projectId ? this.projectName(p.projectId) : 'Add to project',
         // copy state as a flag, not a label — the view owns how confirmation is drawn (✓ icon + word)
         hexListCopied: s.copied === 'ov-pal-hex',
         cssCopied: s.copied === 'ov-pal-css',
@@ -995,15 +997,17 @@ export const renderValsMethods = {
             // which is the one place in the app a control had no inset. The SAME 8px inset is
             // applied to the value cells below (metricValue / contrastCell / timeCell), so the
             // column still aligns on one edge: label and value are both 8px off the column line.
-            // The button fills its grid track (100%, not a repeated pixel width) and right-aligns
-            // its label inside it, which is what puts the label over the value however wide the
-            // track resolves to. AA's is overridden to auto in AppView — it shares its track with
-            // the ⓘ, so it sizes to content and the pair right-aligns together.
-            width: '100%', minWidth: 0,
+            // The button hugs its label and sits at the END of its track, rather than filling the
+            // track at 100%. Filling was a fair way to put a label over a value while the columns
+            // were content-width; once they took the metric pitch it meant a hover tint 182px wide
+            // announcing a 30px word — the control looked like the column rather than like a
+            // button. Hugging + justify-self does the same alignment job and admits its own size.
+            width: 'auto', minWidth: 0, justifySelf: 'end',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            // Date drops its trailing 8px to land on the same margin its stamps do — the label and
-            // the value have to share an edge, and that edge is the row's.
-            padding: c.key === 'time' ? '4px 0 4px 8px' : '4px 8px', border: 'none', background: 'transparent', cursor: 'pointer',
+            // Symmetrical, from the same token the value cells inset by: 8px out to the track edge,
+            // 8px back around the label, so the tint is even on both sides and the label still ends
+            // exactly where the figures below it end.
+            padding: '4px var(--row-cell-inset)', border: 'none', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
           }),
