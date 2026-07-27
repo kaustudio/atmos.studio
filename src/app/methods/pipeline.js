@@ -191,19 +191,97 @@ export const pipelineMethods = {
   _dismissNotice() { const g = window.gsap; const el = document.querySelector('[data-notice]'); const clear = () => this.setState({ notice: null }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
 
   // ================= pre-seeded feed =================
-  seedObj(name, desc, rat, hexes, age) {
-    const W = [.30, .24, .20, .16, .10];
-    const swatches = hexes.map((h, i) => { const rgb = this.hexToRgb(h); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { hex: h, weight: W[i] || .1, L: lab.L, a: lab.a, b: lab.b }; });
-    return { id: name + age, imageUrl: null, time: Date.now() - age, name, descriptors: desc, rationale: rat, archetype: 'seed', example: true, swatches };
+  // The examples a first visit opens on. Each one is a photograph that ships with the app, and each
+  // palette below is the genuine output of the pipeline above having read that exact file: the same
+  // 72x72 k-means, the same content hash, the same local composeReading that named it and wrote its
+  // rationale. Nothing here is hand-tuned to look good. That matters twice over — the first thing a
+  // visitor sees is a true sample of what the tool does rather than an art-directed promise of it,
+  // and because the hashes are real, downloading one of these images and dropping it back in is
+  // recognised by the gate in _runPipeline as the palette it already is, instead of silently
+  // manufacturing a duplicate.
+  //
+  // Replacing an image means re-deriving its row. The extraction is deterministic, so the numbers
+  // are reproducible: read the file through extract() + buildPalette() + composeReading() and paste
+  // what comes back. Editing a hex by hand without moving the hash is the one thing that would make
+  // this table lie.
+  //
+  // Seeds keep imageUrl null and carry a KEY instead. The key is resolved against EXAMPLE_SRC below
+  // and nowhere else, so the H1 invariant at the top of this file survives the examples having
+  // pictures: no string that came out of storage or off a share link can ever reach an <img src> —
+  // the only thing a stored value can do is name one of our own bundled assets, or miss.
+  EXAMPLE_SRC: {
+    'glass-bottle': '/assets/examples/glass-bottle.webp',
+    'runner': '/assets/examples/runner.webp',
+    'coupe': '/assets/examples/coupe.webp',
+    'profile-sky': '/assets/examples/profile-sky.webp',
+    'profile-ember': '/assets/examples/profile-ember.webp',
+    'monolith': '/assets/examples/monolith.webp',
+    'gravel': '/assets/examples/gravel.webp',
+    'dusk-silhouette': '/assets/examples/dusk-silhouette.webp',
+  },
+  // hasOwnProperty, not a bare lookup: 'constructor' and friends are inherited keys that would
+  // otherwise resolve to a truthy non-string and end up interpolated into a url().
+  exampleUrl(p) {
+    const k = p && p.example === true && p.exampleKey;
+    return (typeof k === 'string' && Object.prototype.hasOwnProperty.call(this.EXAMPLE_SRC, k)) ? this.EXAMPLE_SRC[k] : '';
+  },
+  seedObj(s) {
+    const swatches = s.sw.map((e) => { const rgb = this.hexToRgb(e[0]); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { hex: e[0], weight: e[1], L: lab.L, a: lab.a, b: lab.b }; });
+    // id follows the generated form (hash + variation) rather than a name, so a seed and a re-read
+    // of the same image are the same identity in every place identity is compared.
+    return { id: s.hash + '-0', hash: s.hash, variation: 0, imageUrl: null, exampleKey: s.key, time: Date.now() - s.age, name: s.name, descriptors: s.desc, rationale: s.rat, archetype: s.arch, example: true, swatches };
   },
   makeSeed() {
     const H = 3600e3;
     return [
-      this.seedObj('Harbour Mist', ['Muted', 'Coastal', 'Overcast', 'Still'], 'Cool, low-chroma greys held under a flat, even light — restrained and quietly atmospheric.', ['#c4ccca', '#a3afb0', '#828f92', '#62706f', '#dfe3e1'], 8 * 60e3),
-      this.seedObj('Last Light', ['Warm', 'Saturated', 'Golden', 'Nostalgic'], 'Saturated warmth pooling toward orange — the long, low glow of the hour before dusk.', ['#f0d3a4', '#e2a85f', '#c87d3c', '#9a5128', '#5c3220'], 3 * H),
-      this.seedObj('Poured Concrete', ['Cold', 'Clinical', 'Neutral', 'Precise'], 'Near-neutral greys with a faint cool cast — clean, exact, almost architectural.', ['#d3d5d4', '#b4b7b6', '#949897', '#74797a', '#585d5e'], 26 * H),
-      this.seedObj('Powder', ['Soft', 'Desaturated', 'Pastel', 'Gentle'], 'High-key, washed-out hues — soft and weightless, like sun-bleached paper.', ['#ece2e8', '#dccfdb', '#cdbfd2', '#d7d4e4', '#c4c2b8'], 50 * H),
-      this.seedObj('Ink & Ember', ['Dark', 'Moody', 'Saturated', 'Quiet'], 'Deep, low-lit tones with embers of warmth — heavy, nocturnal, smouldering.', ['#221f28', '#3a3340', '#5c3a38', '#7c4a39', '#15131a'], 100 * H),
+      this.seedObj({
+        key: 'glass-bottle', hash: 'aa15aa01de85a28f', age: 8 * 60e3,
+        name: 'Pewter & Moss', desc: ['Low-lit', 'Muted', 'Structured'], arch: 'neutral',
+        rat: 'Low-chroma greens with clear structure between them, weight stepping down through the set — dim and unhurried.',
+        sw: [['#04110b', .3329], ['#314334', .2153], ['#12251d', .2010], ['#596857', .1553], ['#92977e', .0955]],
+      }),
+      this.seedObj({
+        key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 3 * H,
+        name: 'Garnet', desc: ['Low-lit', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
+        rat: 'Warm, saturated reds kept in shadow split by stark contrast — shadowed but legible.',
+        sw: [['#0f0302', .3609], ['#e12409', .2392], ['#f17645', .1454], ['#aa0906', .1416], ['#540604', .1128]],
+      }),
+      this.seedObj({
+        key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 9 * H,
+        name: 'Frozen Slate', desc: ['Restrained', 'Cool', 'Stark', 'Graphic'], arch: 'accented',
+        rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour — even-tempered and workable.',
+        sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
+      }),
+      this.seedObj({
+        key: 'coupe', hash: '1f67421820f58c52', age: 26 * H,
+        name: 'Cut Halflight', desc: ['Stark', 'Low-lit', 'Warm'], arch: 'graphic',
+        rat: 'Warm oranges kept in shadow, held to a single note — dim and unhurried.',
+        sw: [['#060503', .5639], ['#ad8b68', .1364], ['#cdb8a4', .1343], ['#7d552b', .0864], ['#3d2612', .0791]],
+      }),
+      this.seedObj({
+        key: 'monolith', hash: '59cb19011a8e4f59', age: 34 * H,
+        name: 'Struck Midfield', desc: ['Stark', 'Warm', 'Monochrome'], arch: 'graphic',
+        rat: 'Warm oranges sitting at mid weight, held to a single note — even-tempered and workable.',
+        sw: [['#865f48', .2890], ['#050302', .2257], ['#e4b590', .2226], ['#b68665', .1844], ['#392113', .0783]],
+      }),
+      this.seedObj({
+        key: 'runner', hash: 'f382abb30f4060e9', age: 50 * H,
+        name: 'Gloaming', desc: ['Low-lit', 'Achromatic', 'Stark'], arch: 'graphic',
+        rat: 'Achromatic greys split by stark contrast, weight stepping down through the set — shadowed but legible.',
+        sw: [['#120e10', .3235], ['#4f595c', .2197], ['#717c77', .1869], ['#3d3029', .1553], ['#a8a288', .1146]],
+      }),
+      this.seedObj({
+        key: 'gravel', hash: 'd9739c5708064aa5', age: 74 * H,
+        name: 'Hard Driftwood', desc: ['Stark', 'Monochrome', 'Warm'], arch: 'graphic',
+        rat: 'Warm, low-chroma yellows sitting at mid weight split by stark contrast — restrained and quietly atmospheric.',
+        sw: [['#0d1816', .2542], ['#434436', .2031], ['#786e4d', .1971], ['#cdc6b8', .1970], ['#aba084', .1485]],
+      }),
+      this.seedObj({
+        key: 'dusk-silhouette', hash: '4ed0c1873c4ab5d1', age: 100 * H,
+        name: 'Nightfall', desc: ['Dark', 'Warm', 'Monochrome'], arch: 'smouldering',
+        rat: 'Warm, restrained reds held low with gentle separation — weighted, almost airless.',
+        sw: [['#130a06', .3985], ['#391508', .2517], ['#6d280f', .1597], ['#a24116', .0976], ['#000000', .0924]],
+      }),
     ];
   },
   relTime(ts) { const d = Date.now() - ts, m = d / 60000; if (m < 1) return 'just now'; if (m < 60) return Math.round(m) + 'm ago'; const h = m / 60; if (h < 24) return Math.round(h) + 'h ago'; return Math.round(h / 24) + 'd ago'; },
@@ -244,8 +322,10 @@ export const pipelineMethods = {
 
   // Session-only full-resolution display source. Prefer it over the persisted thumbnail while the
   // object URL is alive; after reload it's gone and display falls back to imageUrl (the thumbnail).
-  dispUrl(p) { return (p && (p._srcUrl || p.imageUrl)) || ''; },
-  hasImg(p) { return !!(p && (p._srcUrl || p.imageUrl)); },
+  // Seeded examples resolve last: a seed has no imageUrl to lose, and an uploaded palette must never
+  // be able to fall through to a bundled picture that isn't its reference.
+  dispUrl(p) { return (p && (p._srcUrl || p.imageUrl)) || this.exampleUrl(p); },
+  hasImg(p) { return !!((p && (p._srcUrl || p.imageUrl)) || this.exampleUrl(p)); },
 
   // ---- how much room a swatch is owed, and the imageless palette's stand-in ----
   // One rule for the share a swatch takes, read by every surface that draws one: the list row's

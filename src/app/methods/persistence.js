@@ -108,6 +108,11 @@ export const persistenceMethods = {
         hash: (typeof p.hash === 'string' && /^[0-9a-f]{16}$/.test(p.hash)) ? p.hash : null,
         variation: (typeof p.variation === 'number' && p.variation >= 0 && p.variation < 1e4) ? Math.floor(p.variation) : 0,
         imageUrl: this._safeImageUrl(p.imageUrl),
+        // A seeded example's reference picture is named, not addressed: the key survives a reload so
+        // the eight examples keep their images, and it is resolved against EXAMPLE_SRC (see
+        // pipeline.js) rather than used as a URL — so the worst a doctored save file can do here is
+        // point an entry at one of our own bundled assets.
+        exampleKey: typeof p.exampleKey === 'string' ? p.exampleKey : null,
         time: typeof p.time === 'number' ? p.time : Date.now(),
         name: typeof p.name === 'string' ? p.name : 'Untitled',
         descriptors: Array.isArray(p.descriptors) ? p.descriptors.filter((d) => typeof d === 'string') : [],
