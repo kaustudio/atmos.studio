@@ -289,3 +289,40 @@ fit.
 answers with `_paintedRings` — the original 12-at-84 and 21-at-56 — because 122 painted orbs
 carrying five shading layers each is not a floor, and the DOM stack was drawn around the two-ring
 formation. The dense population is only ever offered where it can actually be drawn.
+
+---
+
+## 2026-07-26 — Greyscale orbs: tried, shipped, reversed
+
+**Decision:** the orb ring is in colour, as the entry above describes. Greyscale was built and
+shipped to `main` (`d1f9708`) and reverted the same day. This entry exists because "just make them
+monochrome" is a reasonable-sounding suggestion that will be made again, and it should be made
+against a record rather than from scratch.
+
+**Why it was reverted, in the words that settled it:** greyscale doesn't serve the purpose when the
+product is a tool that creates palettes. The landing's job is to show what the tool does, and a hero
+with no colour in it argues against the thing it is introducing — the orbs wear the reference
+palettes precisely so the formation demonstrates hue travel rather than merely decorating. That is
+the same reason recorded above for not taking `thinking-orbs`, so it is now the reason twice over,
+and **the withdrawal of that objection is itself withdrawn** — being strictly monochrome is once
+again disqualifying for anything drawing these orbs.
+
+**It looked fine, which is the trap.** The greyscale build was clean and verifiable — max R/G/B
+spread of 0 across 232,581 sampled pixels, the lamp reading clearly, the depth rings still receding.
+Nothing about it was broken. It failed on what the page is FOR, which no amount of looking at the
+page in isolation would have caught. If it comes up again, that is the axis to argue on.
+
+**What the attempt was worth keeping:** two things it surfaced are true independently of colour and
+survive in the code.
+- The palette ramp must be monotonic in whatever channel is carrying it. Under colour that is HUE,
+  and the luminance jumps between adjacent swatches ride along underneath it. Desaturating removes
+  that cover and tone becomes the only channel, so a hue-ordered ramp becomes speckle — which is why
+  greyscale needed a luminance sort. Either way the rule is the same: sort by the channel doing the
+  work, or adjacent particles land on unrelated swatches.
+- The specular is warm and the fresnel rim cool *on purpose* (from `orb-shader.js`). Greyscale had
+  to neutralise both, and that is what proved they are the last places hue survives in this shader.
+  Anyone tuning them is tuning colour, not just brightness.
+
+**Not kept:** `tonalRange`, the compression of the ramp toward each orb's mean. It existed because a
+full-strength tonal ramp reads as a second, disagreeing light once hue is gone. In colour the ramp
+reads as hue travel and wants its full spread, so it went back with the rest.
