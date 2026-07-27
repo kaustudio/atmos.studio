@@ -105,29 +105,39 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* The row's inset — the palette's left margin, and now the timestamp's right one. The row is
      symmetrical about this: the two things that end it are the same distance from its edges. */
   --row-inset:16px;
-  /* The two row buttons: 30 + 6 + 30, the pair and the space between them, nothing added. They are
-     NOT a column of their own. A sixth track put them past the date, which is the one place they
-     cannot go if the date is to hold the row's right margin — so their space is reserved inside the
-     trailing column instead (see --row-time-col), and the date keeps the edge. */
+  /* The two row buttons: 30 + 6 + 30, the pair and the space between them, nothing added. */
   --row-action-col:66px;
-  /* How far the button pair sits from the row's right edge: the inset the date keeps, plus the
-     stamp's own width, plus one grid gap. That is the left edge of the timestamp's narrowest
-     possible box — so the widest stamp the cell can hold still clears the buttons by a full gap,
-     and nothing has to know how wide today's date happens to render. */
-  --row-action-offset:calc(var(--row-inset) + var(--row-time-ink) + 16px);
+  /* Their space is BORROWED, not reserved. Reserving it — first as a track past the date, then as a
+     slot inside the date's own column — is what left two buttons parked in the middle of the row
+     with a hole around them, permanently, in service of a state that is true only while the pointer
+     is on the row. The row opens this gutter on hover instead and gives it back on leave, which is
+     what the list did originally and what the trailing columns now go back to.
+     What it costs: the hovered row's metrics stand one gutter left of its neighbours' for as long as
+     it is hovered. That was the objection to the old behaviour, and it is real — but it is one row,
+     it is under the pointer, and it ends when the pointer leaves. A permanent hole to avoid a
+     temporary offset is the more expensive trade, and it is the one you look at all the time. */
+  --row-action-gutter:calc(var(--row-action-col) + 16px);
+  /* Where the pair lands once the gutter is open: on the row's own inset. So the right edge is held
+     by the date at rest and by the buttons while hovered — the same 16px either way, and the same
+     16px the palette keeps on the left. Nothing about the row's margin changes under the pointer;
+     only what is standing on it. */
+  --row-action-offset:var(--row-inset);
   /* THE ROW GRID. One template, read by the sort header and by every row, so a column cannot exist
-     in one and not the other. The metric columns are minmax(min, 1fr): they never fall below the
-     width their own label needs, and above that they divide the free space EQUALLY, which is what
-     stops the three of them from huddling in the last 320px of a 1392px row with half a screen of
-     dead air in front of them. The identity column takes 2fr — it holds a name, a chip and a tag
-     list, so it deserves the larger share, but it is on the same grid rather than being the one
-     elastic child that swallowed everything left over. */
+     in one and not the other.
+     The three metric columns are SIZED, not shared. They briefly took minmax(min, 1fr) each, which
+     divided the free space equally and blew the columns out to 230px to hold a figure like "2" —
+     the numbers ended up a screen apart, and numbers you cannot see together are numbers you cannot
+     compare, which is the entire job of this list. Each is now exactly as wide as its own label
+     needs, so what separates one from the next is one grid gap and nothing else.
+     The free space goes to identity instead, which is the only column with anything to do with it:
+     a name, a chip and a tag list that clip when they are short of room. Slack belongs where
+     content is variable, not where it is a two-digit count. */
   --row-grid:
     var(--row-strip-col)
-    minmax(0, 2fr)
-    minmax(var(--row-aa-col), 1fr)
-    minmax(var(--row-contrast-col), 1fr)
-    minmax(var(--row-time-col), 1fr);
+    minmax(0, 1fr)
+    var(--row-aa-col)
+    var(--row-contrast-col)
+    var(--row-time-col);
   /* AA pairs and max contrast are two unrelated measurements, so they get two independent
      columns rather than one shared cluster — each sized for its own header label and value. */
   --row-aa-col:104px;         /* AA verdict badge + the pair count */
@@ -145,12 +155,11 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
                                  narrowest value is a column that jitters. Everything that must
                                  clear the stamp is derived from this, so it has to be the real
                                  width and not a round number near it. */
-  /* The trailing column is the stamp PLUS the buttons that appear beside it, because they share it:
-     the stamp holds the column's right edge (and with it the row's margin, matching the palette on
-     the left), the buttons sit at the column's left, one grid gap apart. Reserving both in the
-     column's minimum is what guarantees they never meet, at any width — the alternative, giving the
-     buttons the last track, is what put them past the date and took the margin away from it. */
-  --row-time-col:calc(var(--row-time-ink) + 16px + var(--row-action-col));
+  /* The trailing column is the stamp and nothing else now. It used to carry the buttons' space in
+     its own width, which made it 182px to show 33px of date — the gap the whole trailing block was
+     judged by. The buttons come out of the hover gutter instead, so this column is honest again:
+     one column, one value, one grid gap to its neighbour. */
+  --row-time-col:var(--row-time-ink);
   /* ===== status tokens (pass / partial / fail) =====
      The system is monochrome by design, so status is NEVER a hue: pass is FILLED (inverted, the
      strongest treatment the system owns), partial is OUTLINED at secondary edge strength, fail is
@@ -324,20 +333,33 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
 [data-sort-chevron]{transform-origin:50% 50%;transition:transform .28s var(--ease-standard)}
 [data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
 @media (prefers-reduced-motion:reduce){[data-sort-chevron]{transition:none}}
-[data-del]{opacity:0;pointer-events:none;transition:opacity .16s var(--ease-standard)}
+/* The pair arrives with the gutter that makes room for it: same duration, same ease, so the push and
+   the fade are one gesture rather than two things that happen to coincide. The 10px is a hint of
+   travel, not the full 82 — they come from the right, they do not fly in from off-screen (and could
+   not: the row ends at the section's edge, so real travel would be horizontal overflow). */
+[data-del]{opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity .18s var(--ease-standard),transform .18s var(--ease-standard)}
 /* click-to-zoom lightbox (squared — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
-/* The buttons live in their own grid column (--row-action-col), so they cover nothing when they
-   arrive and the row does not reflow under the pointer: the space is always there, only the ink
-   fades in. The date stays readable while they are on screen, which is the whole point of giving
-   them a column instead of the last one's slot. */
-[data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto}
+/* THE HOVER GUTTER. The row's padding lives here rather than inline because this is the one part of
+   the row that is a STATE, and a state cannot be written on the element — which is exactly the line
+   this stylesheet is for. Opening the right padding takes the space out of the identity track (the
+   only 1fr in --row-grid), so the metric columns slide left together, keeping their own spacing, and
+   the buttons land in what opened. Padding interpolates, so the push animates for free.
+   The date returns to the row's margin on leave: same property, same duration, reversed by
+   construction. Under prefers-reduced-motion the global rule drops the transition and the gutter
+   simply is or is not open — the layout is correct in both states, the motion was never load-bearing. */
+[data-row-main]{padding:12px var(--row-inset);transition:padding-right .18s var(--ease-standard)}
+[data-row-wrap]:hover [data-row-main],[data-row-wrap]:focus-within [data-row-main]{padding-right:calc(var(--row-inset) + var(--row-action-gutter))}
+[data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
 [data-info]{opacity:1;transition:opacity .16s var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
-   are always visible & tappable. Nothing else changes — their column is reserved either way. */
+   are always visible & tappable — and with them permanently on screen the gutter has to be
+   permanently open, or they would stand on the date. No pointer means no borrowing: the space is
+   simply reserved, which is the right trade for the one input mode that cannot give it back. */
 @media (hover:none),(pointer:coarse){
-  [data-del]{opacity:1;pointer-events:auto}
+  [data-row-main]{padding-right:calc(var(--row-inset) + var(--row-action-gutter))}
+  [data-del]{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
   [data-info]{opacity:1}
 }
 /* Honest small-viewport gate: the universe, stage and drawers need room, so on narrow screens we

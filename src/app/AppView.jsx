@@ -872,7 +872,10 @@ function FeedSection({ vals }) {
                 {/* One row, one job: recognition. The detail surface is the overview panel above —
                     this row's only output is "which palette", so it holds a fixed height and every
                     child stays on a single line. Nothing here may grow the row. */}
-                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-inset)')}>
+                {/* No padding here: it is in global.css, because the right half of it is a hover
+                    state (the gutter the row opens for its buttons) and an inline style cannot be
+                    one — nor be overridden by the rule that is. Everything static stays inline. */}
+                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height)')}>
                   {/* The colour IS the row's identity — people recognise a palette by how it looks,
                       not by an auto-generated name. So the strip leads and carries the mass: 24px
                       tall, which with the 12px padding is exactly --row-list-height, making the
@@ -895,7 +898,12 @@ function FeedSection({ vals }) {
                       elastic child and quietly owned every pixel the metrics did not use (520 of
                       them at 1440, most of it empty). As one cell on the 2fr track it takes a
                       declared share instead of the remainder, and the metric columns get theirs. */}
-                  <div style={sx('display:flex;align-items:center;gap:16px;min-width:0')}>
+                  {/* overflow:hidden because this cell is the one that PAYS for the hover gutter —
+                      it is the 1fr track, so it is what narrows. The name and the chip are flex:none
+                      and would otherwise spill into the AA column on a window narrow enough that
+                      82px is more than the cell's slack. Clipped is recoverable; overlapping two
+                      columns is not. */}
+                  <div style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
                   {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
                       but at the same medium weight the filter panel gives its facet names. Both are
                       the same kind of thing — the name of a choosable, the subject of its row — and
@@ -948,16 +956,15 @@ function FeedSection({ vals }) {
                   <span style={c.timeCell} title={c.timeRel}>{c.time}</span>
                 </div>
               </div>
-              {/* The buttons sit INSIDE the trailing column, at its left, with the stamp holding
-                  its right edge — one --row-action-offset from the row's edge, which is the inset
-                  the date keeps plus the stamp's own width plus a grid gap. They are absolute
-                  rather than grid children so they can lie above the row's full-bleed hit target;
-                  the offset is grid arithmetic all the same, and the column's minimum reserves the
-                  space, so the two can never meet. 6px apart, unchanged. */}
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:calc(var(--row-action-offset) + 36px);transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              {/* The buttons land on the row's own inset, in the gutter the row opens for them on
+                  hover (global.css). Their vertical centring and their arrival travel live there
+                  too — one transform cannot be half inline and half in a stylesheet, and the half
+                  that is a state has to be the one that wins. Only what is static about them is
+                  here. 6px apart, unchanged. */}
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:var(--row-action-offset);transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
