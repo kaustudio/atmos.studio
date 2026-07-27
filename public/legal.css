@@ -149,17 +149,28 @@ a{color:inherit}
 /* Grid rather than the resource's flex row, so this shares the hero's two tracks exactly. Full
    width, no centred container — the measure cap lives on the article, which is the only element here
    that must not be full width. */
+/* ONE track, and both children share it. The article is centred on the page like the hero above it,
+   so the whole document sits on a single centre line rather than being pushed right by a sidebar
+   track; the text inside keeps its left edge, so this is a centred column of left-aligned copy.
+
+   The table of contents cannot hold a track of its own any more — a track is width the article would
+   have to be centred inside, which is centred-in-what's-left, not centred on the page. So both are
+   placed in the same cell and overlap: the sidebar sits at its own width against the left gutter, the
+   article floats centred over the rest. They never actually touch above 1200px, which is exactly why
+   the stacking breakpoint moved there from 900 (see the responsive block) — at 1200 the article's left
+   edge is 280px and the sidebar ends at 242. Below that they would collide, so the sidebar stops
+   overlapping and goes back to being stacked above the article. */
 .toc-layout{
   display:grid;
-  grid-template-columns:var(--toc-col) minmax(0,1fr);
-  column-gap:var(--grid-gap);
+  grid-template-columns:minmax(0,1fr);
   padding:56px var(--page-gutter) 96px;
   position:relative;
 }
-.toc-article{grid-column:2;max-width:var(--measure);min-width:0}
+.toc-article{grid-area:1/1;max-width:var(--measure);margin-inline:auto;min-width:0}
 
 .toc-sidebar{
-  grid-column:1;
+  grid-area:1/1;
+  width:var(--toc-col);
   display:flex;flex-flow:column;justify-content:flex-start;align-items:flex-start;
   gap:1em;
   /* 64px chrome bar + breathing room, so the sticky sidebar never slides under the header. */
@@ -266,18 +277,25 @@ a{color:inherit}
 
 /* ---------------------------------------------------------------- responsive */
 
-/* Below the two-column threshold the grid collapses to one track and both the sidebar and the
-   article span it. The gutter stays the app's 22px at every width — it is the page's grid, not a
-   breakpoint-specific inset. */
-@media screen and (max-width:900px){
-  .legal-hero,.toc-layout{grid-template-columns:minmax(0,1fr)}
-  .legal-hero__inner,.toc-article,.toc-sidebar{grid-column:1}
-  .legal-hero__inner{padding:36px 0 28px}
-  .toc-layout{row-gap:2.5em;padding:32px var(--page-gutter) 72px}
-  .toc-sidebar{position:relative;top:0;width:100%}
-  .toc-article{max-width:none}
-}
+/* Two thresholds now, because two different things give way at two different widths. The gutter
+   stays the app's 22px at every one of them — it is the page's grid, not a breakpoint's.
 
+   1200 is where the overlap stops working. Above it the sidebar sits against the left gutter and the
+   centred article clears it (280px vs 242px at exactly 1200); below it the two would cross, so the
+   sidebar leaves the shared cell and stacks above the article instead. The article stays centred
+   either way — that is the point of the layout, not a wide-screen luxury.
+
+   900 is the old threshold, and all that is left of it is spacing: less padding, and the measure
+   released so a phone is not reading 40em of column inside 375px of screen. */
+@media screen and (max-width:1200px){
+  .toc-sidebar{grid-area:auto;position:relative;top:0;width:100%}
+  .toc-article{grid-area:auto}
+  .toc-layout{row-gap:2.5em}
+}
+@media screen and (max-width:900px){
+  .legal-hero__inner{padding:36px 0 28px}
+  .toc-layout{padding:32px var(--page-gutter) 72px}
+  .toc-article{max-width:none}
 }
 
 /* The sidebar's sticky offset and the headings' scroll-margin both assume the page can scroll

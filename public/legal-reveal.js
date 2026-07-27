@@ -112,7 +112,6 @@
 
     var ST = window.ScrollTrigger;
     var headings = [].slice.call(article.querySelectorAll('h2, h3'));
-    var bodyBlocks = [].slice.call(article.querySelectorAll('p, ul, blockquote'));
 
     // No ScrollTrigger: reveal everything at once rather than leaving it parked forever.
     if (!ST) {
@@ -132,44 +131,66 @@
         onComplete: function () { h.style.removeProperty('--rule'); drop(h); }
       });
     }
-    function revealBlock(b) {
+    function revealBlock(b, delay) {
       if (!claim(b)) return;
       g.to(b, {
         opacity: 1, y: 0, duration: 0.5, ease: EASE_ENTRANCE,
+        delay: delay || 0,
         clearProps: 'opacity,transform',
         onComplete: function () { drop(b); }
       });
     }
 
-    headings.forEach(function (h) {
-      var line = mask(h);
-      var isH2 = h.tagName === 'H2';
-      // The first h2's rule is display:none, so there is nothing to draw there.
-      var hasRule = isH2 && h !== article.querySelector('h2');
-      if (hasRule) { g.set(h, { '--rule': 0 }); pending.push(h); }
+    /* Reveal by SECTION, not by element.
 
-      ST.create({
-        trigger: h,
-        start: 'top 92%',
-        once: true,
-        onEnter: function () {
-          if (line) revealLines([line], 0);
-          if (hasRule) drawRule(h);
-        }
-      });
+       Every heading and every paragraph used to carry a ScrollTrigger of its own, firing at its own
+       threshold. Each animation was correct and the sequence was not: a paragraph two lines below its
+       heading crossed the line a moment later and arrived as a separate event, so a section read as
+       four or five unrelated things appearing near each other rather than as one thing arriving. Worse,
+       the order was really the order the thresholds were crossed — scroll quickly and body copy could
+       announce itself alongside the heading it belongs to.
+
+       So a section is now one trigger and one cascade: the rule draws, the heading rises out of its
+       mask, and its body blocks follow it at a fixed offset each. The delay is the composition, not the
+       scroll position, which is what makes it read as deliberate at any scroll speed.
+
+       Grouping is by document order: a heading opens a group and everything up to the next heading
+       belongs to it. h3s open their own, so a subsection cascades on its own beat rather than being
+       swept along by the h2 above it. */
+    var GROUP_LEAD = 0.14;   // heading first — its mask is clearing as the body starts to lift
+    var groups = [];
+    var cur = null;
+    [].slice.call(article.children).forEach(function (el) {
+      var tag = el.tagName;
+      if (tag === 'H2' || tag === 'H3') { cur = { heading: el, blocks: [] }; groups.push(cur); return; }
+      if (tag !== 'P' && tag !== 'UL' && tag !== 'BLOCKQUOTE') return;
+      if (!cur) { cur = { heading: null, blocks: [] }; groups.push(cur); }
+      cur.blocks.push(el);
     });
 
-    // Body copy gets a rise, not a mask — masking every paragraph of a terms document reads as a
-    // showreel. start is deliberately late (95%) so text is revealed slightly before it is legible
-    // rather than after.
-    bodyBlocks.forEach(function (b) {
-      g.set(b, { opacity: 0, y: 14 });
-      pending.push(b);
+    groups.forEach(function (grp) {
+      var h = grp.heading;
+      var line = h ? mask(h) : null;
+      // The first h2's rule is display:none, so there is nothing to draw there.
+      var hasRule = h && h.tagName === 'H2' && h !== article.querySelector('h2');
+      if (hasRule) { g.set(h, { '--rule': 0 }); pending.push(h); }
+      // Body copy gets a rise, not a mask — masking every paragraph of a terms document reads as a
+      // showreel.
+      grp.blocks.forEach(function (b) { g.set(b, { opacity: 0, y: 14 }); pending.push(b); });
+
+      /* One trigger for the whole group, on whatever opens it. 88% rather than the old 92/95: the
+         cascade now has a tail, so it has to start earlier for its last block to still land before
+         the reader's eye reaches it. */
       ST.create({
-        trigger: b,
-        start: 'top 95%',
+        trigger: h || grp.blocks[0],
+        start: 'top 88%',
         once: true,
-        onEnter: function () { revealBlock(b); }
+        onEnter: function () {
+          if (hasRule) drawRule(h);
+          if (line) revealLines([line], 0);
+          var lead = line ? GROUP_LEAD : 0;
+          grp.blocks.forEach(function (b, i) { revealBlock(b, lead + i * STAGGER); });
+        }
       });
     });
 
