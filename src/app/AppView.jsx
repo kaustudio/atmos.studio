@@ -656,12 +656,12 @@ export default function AppView({ vals }) {
             <a href="/" aria-label="Atmos Gallery — home"><span className="site-foot__mark" aria-hidden="true"></span></a>
           </div>
           <div className="site-foot__meta">
-            <p className="site-foot__origin">A part of <a href="https://kau.studio">kau.studio</a></p>
+            <p className="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
             <nav className="site-foot__nav" aria-label="Legal">
-              <a href="/privacy.html">Privacy policy</a>
-              <a href="/terms.html">Terms and conditions</a>
+              <a href="/privacy.html">Privacy Policy</a>
+              <a href="/terms.html">Terms and Conditions</a>
             </nav>
-            <p className="site-foot__rights">All rights reserved &copy; 2026</p>
+            <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
           </div>
         </footer>
       )}
