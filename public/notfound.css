@@ -71,9 +71,21 @@ body{display:flex;flex-direction:column}
   --nf-head-pad:18.5px;
   --nf-head-height:calc(var(--nf-head-pad) + var(--nf-mark-height));
 }
+/* Raised out of the flow for the same reason .nf-cta is, and it is the link that needs it, not the
+   look. .nf-title's line-height is .74 — far tighter than the font's natural line box — so at the
+   fitted size the half-leading goes hugely NEGATIVE and the text fragment overhangs its own border
+   box by about that much on each side. At 1280×800 the 404 is set at 702px: a 520px line box against
+   an 843px natural one, so the glyphs' hit area runs ~161px past the box top and bottom. The box
+   starts at y=132, so the h1 answers clicks from y≈-29 — straight over this band — and the mark,
+   sitting earlier in the DOM with no z-index of its own, loses every one of them. It is not the
+   canvas: that is pointer-events:none and passes clicks through untouched.
+   The same overhang reaches DOWN over the button, which is what .nf-cta's z-index has always been
+   for; the head was simply never given the matching pair. Both are z-index:2, above the canvas's 1,
+   so the mark now also paints over the field instead of under it — as the button already did. */
 .nf-head{
   display:flex;justify-content:center;
   padding:var(--nf-head-pad) var(--chrome-gutter) 0;
+  position:relative;z-index:2;
 }
 .nf-head a{display:block;line-height:0}
 .nf-mark{

@@ -109,14 +109,24 @@
     };
   }
 
-  /* Everything the cover slides over. Explicitly NOT <body> itself: a transform on body would make it
-     the containing block for position:fixed descendants, and the cover is one — it would start
-     scrolling with the page mid-transition. Its children are safe to move. */
+  /* Everything the cover slides over: the cover's own SIBLINGS, never an ancestor of it. A transform
+     or an opacity below 1 makes an element the containing block for its position:fixed descendants —
+     and the cover is one. Move something the cover lives inside and it stops being measured against
+     the viewport: `inset:0` starts resolving against a document-tall box, so the panel travels the
+     height of the whole page instead of one screen and lands at the top of the DOCUMENT, off-screen
+     from wherever the reader actually is. The same transform drags the cover along with the page and
+     the same opacity fades it to half — the layer meant to hide the swap becomes part of what needs
+     hiding.
+
+     On privacy and terms the layer is appended to <body>, so this is <body>'s children, as before. In
+     the app it is React's own [data-wipe], down inside #root > [data-app] — walking <body> there
+     handed back #root, the cover's own ancestor, which is exactly the case above: no cover ever
+     appeared on screen, the page just dimmed and slid before the navigation. */
   function drifters(layer) {
-    var out = [], kids = document.body.children;
+    var out = [], host = layer.parentNode || document.body, kids = host.children;
     for (var i = 0; i < kids.length; i++) {
-      var el = kids[i];
-      if (el === layer || el.tagName === 'SCRIPT' || el.tagName === 'LINK' || el.tagName === 'STYLE') continue;
+      var el = kids[i], tag = el.tagName;
+      if (el === layer || tag === 'SCRIPT' || tag === 'LINK' || tag === 'STYLE' || tag === 'NOSCRIPT') continue;
       out.push(el);
     }
     return out;
