@@ -2,6 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- The curved wipe's arrival half. Inline and first, on purpose: this paints the cover on the
+         very first frame — before any stylesheet or script has parsed — which is the only place a
+         cross-document transition can hide the browser's own blank page between unload and paint.
+         page-wipe.js takes the layer over and animates it away; the timeout is the guarantee that a page
+         can never stay covered if it does not. -->
+    <style>html.wipe-arriving::before{content:"";position:fixed;inset:0;background:#1C1B1A;z-index:200}</style>
+    <script>(function(){try{
+    if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    if(sessionStorage.getItem("atmos/page-wipe")!=="1")return;
+    sessionStorage.removeItem("atmos/page-wipe");
+    window.__atmosArriving=1;
+    document.documentElement.classList.add("wipe-arriving");
+    setTimeout(function(){document.documentElement.classList.remove("wipe-arriving")},3000);
+    }catch(e){}})();</script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Atmos Gallery</title>
     <meta name="description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours." />
@@ -74,6 +88,7 @@
     <script src="/vendor/ScrollToPlugin.min.js"></script>
     <script src="/vendor/lenis.min.js"></script>
     <script src="/vendor/orb-shader.js"></script>
+    <script src="/page-wipe.js"></script>
   </head>
   <body>
     <div id="root"></div>

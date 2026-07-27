@@ -2,6 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
+<!-- The curved wipe's arrival half. Inline and first, on purpose: this paints the cover on the
+     very first frame — before any stylesheet or script has parsed — which is the only place a
+     cross-document transition can hide the browser's own blank page between unload and paint.
+     page-wipe.js takes the layer over and animates it away; the timeout is the guarantee that a page
+     can never stay covered if it does not. -->
+<style>html.wipe-arriving::before{content:"";position:fixed;inset:0;background:#1C1B1A;z-index:200}</style>
+<script>(function(){try{
+if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+if(sessionStorage.getItem("atmos/page-wipe")!=="1")return;
+sessionStorage.removeItem("atmos/page-wipe");
+window.__atmosArriving=1;
+document.documentElement.classList.add("wipe-arriving");
+setTimeout(function(){document.documentElement.classList.remove("wipe-arriving")},3000);
+}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Terms — Atmos Gallery</title>
 <meta name="description" content="The terms for using Atmos Gallery: what the tool does, what stays yours, what a palette reading is and isn't, and what it does not promise." />
@@ -57,7 +71,6 @@
 
 <header class="legal-hero">
   <div class="legal-hero__inner">
-    <p class="legal-hero__label">Terms of use</p>
     <h1>Terms</h1>
     <p class="legal-hero__sub">Atmos Gallery is a free tool that reads a colour palette from an image, in your browser. These terms describe what it does, what stays yours, and what it does not promise.</p>
     <p class="legal-hero__meta">Last updated: 27 July 2026 · Provided by KauStudio ApS</p>
@@ -154,5 +167,6 @@
 <script src="/vendor/ScrollTrigger.min.js"></script>
 <script src="/legal-toc.js"></script>
 <script src="/legal-reveal.js"></script>
+<script src="/page-wipe.js"></script>
 </body>
 </html>

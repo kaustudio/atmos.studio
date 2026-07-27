@@ -108,9 +108,22 @@ a{color:inherit}
   background:var(--line-strong);
   transform:scaleX(var(--rule));transform-origin:0 50%;
 }
-/* Second track, so the title's left edge is the article's left edge. */
-.legal-hero__inner{grid-column:2;max-width:var(--measure);padding:56px 0 40px}
-.legal-hero__label,.toc-hero__label{
+/* Centred on the PAGE, not parked in the article's track. The hero used to sit in column 2 so its
+   left edge lined up with the prose below it; it now spans both tracks and centres its own measure,
+   which puts the title on the page's centre line while the text inside it stays left-aligned — a
+   centred block of left-aligned copy, not centred type. The article keeps its two-column layout, so
+   the hero's left edge and the body's no longer agree. That is the trade this asks for: the hero reads
+   as the page's own statement rather than as the first paragraph of the document under it. */
+.legal-hero__inner{
+  grid-column:1 / -1;
+  max-width:var(--measure);
+  margin-inline:auto;
+  padding:56px 0 40px;
+}
+/* .legal-hero__label is gone from both pages — the eyebrow repeated the h1 a line above it ("Privacy"
+   over "Privacy"), which is a label naming its own heading rather than adding to it. The rule stays
+   for .toc-hero__label, the sidebar's "on this page", which is the same size and treatment. */
+.toc-hero__label{
   margin:0 0 20px;
   font-size:11px;font-weight:500;line-height:1;
   letter-spacing:var(--track-label);text-transform:uppercase;
