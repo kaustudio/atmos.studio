@@ -734,6 +734,15 @@ export const renderValsMethods = {
       };
     }
 
+    // --- the result stage's own filing target ---
+    // Resolved by id out of the LIVE feed, for the same reason the overlay re-resolves its own
+    // record (see above): s.current is a snapshot taken when the palette was loaded, and
+    // assignPalette writes to st.feed only — so reading projectId off s.current would leave the
+    // action row's button reporting the project the palette sat in BEFORE you moved it.
+    // Missing from the feed is a real state, not a failure: a shared palette lives in the URL and
+    // is not in this archive until it is saved, and there is no record to file until then.
+    const filedCur = s.current ? (s.feed.find((f) => f.id === s.current.id) || null) : null;
+
     return {
       showMobileShare: !!mobileShare, mobileShare,
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
@@ -1025,6 +1034,16 @@ export const renderValsMethods = {
       openExport: () => this.openExport(this.contrastPalette()),
       contrastDisabled: !this.contrastPalette(),
       contrastBtnRef: this.contrastBtnRef,
+      // Filing, from the action row of the palette on view. NOT contrastPalette(): that resolver
+      // ends in a feed[0] fallback, which is harmless when it decides what gets INSPECTED and wrong
+      // when it decides what gets MOVED. Same dialog the row's folder button and the overlay's
+      // header open, so there is one way to file a palette and it says the same thing every time.
+      openAssignCurrent: () => { const p = this.state.current; if (p) this.openAssign(p); },
+      assignDisabled: !filedCur,
+      // The button reports where the palette IS, the way the overlay's does — a filed palette
+      // shows its project, so the row states the fact rather than repeating the invitation.
+      assignLabel: filedCur && filedCur.projectId ? this.projectName(filedCur.projectId) : 'Add to project',
+      assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--line-strong)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       navBtnHover: { background: 'var(--surface-raised)', borderColor: 'var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),

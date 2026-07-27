@@ -185,6 +185,11 @@ const contrastB006Label = (
 const exportB006Label = (
   <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export</span>
 );
+// Filing takes the same folder glyph the archive row and the overlay header already use — one
+// concept, one mark — and a label that changes with the state rather than an icon that doesn't.
+const assignB006Label = (text) => (
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconFolder /></span>{text}</span>
+);
 // Share is the one action-row button that both carries an icon AND swaps its text, so it composes
 // the icon wrapper with SwapLabel — the link icon holds position while the label resolves against
 // its hidden twin, and the row never reflows mid-copy.
@@ -524,6 +529,13 @@ export default function AppView({ vals }) {
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* tier 1 — the payoff; the only filled control on this surface */}
               <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+              {/* tier 2 — the two things you do WITH the palette once it exists: file it, then
+                  inspect it. Both outlined, so Export stays the only filled control on the surface.
+                  Filing leads inspection because it is the one that changes the archive; Contrast
+                  keeps its position relative to the utilities behind the hairline. Disabled while
+                  the palette is only in the URL — a shared palette has no record to file until it
+                  is saved, and the strip above already offers that. */}
+              <B006 data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
               {/* tier 2 — inspection, not a destination: outlined, unfilled */}
               <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
               {/* tier 3 — convenience exits. Held in their own group behind a hairline so the
