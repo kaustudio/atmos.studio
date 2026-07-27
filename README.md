@@ -69,67 +69,44 @@ The chats left "where live interpretation runs" open. The client is wired with a
    live-call failure.
 
 Where a live path exists, a downscaled thumbnail is sent to read the mood; where none does, nothing
-leaves the browser. Any user-facing note about that is capability-conditional — it renders only
-where the live call is actually available, so the claim is true wherever it appears.
+leaves the browser. **The production deployment sets `VITE_INTERPRET_ENDPOINT`, so on atmos.gallery
+the live path is the one that runs** — the privacy copy is written against that, not against a build
+with the seam unset. Any user-facing note is still capability-conditional, so it renders only where
+the live call is actually available.
 
 ## Privacy
 
-Atmos Gallery runs in your browser.
+The statement itself is `public/privacy.html` — controller, what is collected, legal basis,
+processors and transfers, retention, rights. It is deliberately short, and it is the single source:
+**do not restate it here**, or the two drift apart. What matters for whoever is editing the code:
 
-**Your images never leave your device.** The palette is extracted on your own machine — the image is
-read into a canvas, clustered in OKLCH, and discarded. It is never uploaded. In this public build,
-the code that could send an image isn't merely switched off: it isn't part of the build at all.
+- Extraction is local. The full-size image is never uploaded.
+- **Naming a palette sends a ~320 px thumbnail plus the hex values to Anthropic** (`api/interpret.ts`),
+  falling back to the local reading in `src/lib/reading.js` if that is unavailable.
+- Palettes live in localStorage only, under `palette-generator/*`. No cookies at all, which is why
+  there is no consent banner.
+- Analytics is Vercel Web Analytics + Speed Insights, both cookieless.
 
-**Your palettes are stored only in your browser.** The archive lives in this browser's local
-storage. There is no server holding it, no account attached to it, and no way for us to see it.
-Clearing your browser data deletes it — which is why you can save a project file and keep your own
-copy, on your own disk.
+Terms are `public/terms.html`. The two are cross-linked and share `public/legal.css`,
+`public/legal-toc.js` (the Osmo table-of-contents resource, kept as delivered) and
+`public/legal-reveal.js` (masked heading reveals + rule draws). Both load the vendored `gsap` +
+`ScrollTrigger` rather than a CDN, and both degrade to plain, fully readable type with no JS, no
+GSAP, or `prefers-reduced-motion` — see the header comment in `legal-reveal.js` for why that floor
+is enforced in three separate places.
 
-**Share links carry the palette, not a lookup.** A shared link encodes the palette in the part of
-the URL after the `#`. Browsers never send that part to a server, so opening a shared link doesn't
-tell us — or anyone else — that you opened it, or what was in it.
-
-**No accounts, no ads, no cross-site tracking.** There is nothing to sign up for, no cookies at all,
-and nothing sold or shared with anyone. Two measurement tools run on the page — Vercel Web Analytics
-for visit counts and Vercel Speed Insights for loading performance. Both are cookieless and
-aggregated, neither identifies you, neither follows you to other sites, and neither sees anything you
-do inside the tool.
-
-**What we can see.** The site is hosted on Vercel, which keeps standard access logs for the files it
-serves — including IP address and user-agent, as any web server must. On top of that, Web Analytics
-gives us aggregate counts (visits, page and route, referrer, filtered query params, device type,
-browser and OS, and a location Vercel resolves to **city** level) and Speed Insights gives us Core
-Web Vitals with their attribution, a rough connection speed, device, browser, OS and **country only**.
-Web Analytics tells visits apart with a hash derived from the incoming request that Vercel discards
-after **24 hours**; Speed Insights is documented as carrying no visitor identifier. Neither is a
-cookie and neither writes anything to your device. Nothing about your images, your palettes, or your
-archive: those never leave your browser in the first place.
-
-The full statement — controller, legal basis, processors and transfers, retention, and your rights —
-is `public/privacy.html`. Terms are `public/terms.html`. The two are cross-linked and share
-`public/legal.css`, `public/legal-toc.js` (the Osmo table-of-contents resource, kept as delivered)
-and `public/legal-reveal.js` (masked heading reveals + rule draws). Both pages load the vendored
-`gsap` + `ScrollTrigger` rather than a CDN, and both degrade to plain, fully readable type with no
-JS, no GSAP, or `prefers-reduced-motion` — see the header comment in `legal-reveal.js` for why that
-floor is enforced in three separate places.
-
-**About interpretation.** Some environments provide a model that can read an image's mood directly.
-Where that's available, a small downscaled thumbnail — roughly 320 px on its longest edge, scaled up
-for high-density displays — is sent for that reading and is not stored. This public build doesn't
-include that path — palettes are named by a reading that runs locally, on your device.
-
-Last updated: 25 July 2026 · Questions: hello@kau.studio
+Last updated: 27 July 2026 · Questions: hello@kau.studio
 
 ### Accuracy notes (for whoever edits this later)
 
 These sentences are true because of specific properties of the build. If any of them change, **the
 copy must change in the same commit**:
 
-1. **"never leave your device" / "isn't part of the build"** — true because the endpoint branch is
-   tree-shaken out when `VITE_INTERPRET_ENDPOINT` is unset. Verified against the shipped bundle: it
-   contains no `VITE_INTERPRET_ENDPOINT` reference, no `api.anthropic.com` URL, and not even the
-   endpoint path's error string. Setting that variable, or shipping `api/interpret.ts` with a key
-   configured, makes this false.
+1. **"the full-size image is never uploaded"** — true because the only thing the client ever posts is
+   `makeThumb`'s output plus the hex values (`buildInterpRequest`, `src/lib/interpret.js`); there is
+   no code path that sends the original file. The *earlier* claim — that nothing left the device at
+   all, because the endpoint branch tree-shakes out when `VITE_INTERPRET_ENDPOINT` is unset — stopped
+   being true when production set that variable. Unsetting it would make the local reading the only
+   path again, and then the privacy copy would need to say less, not more.
 2. **"stored only in your browser"** — true while persistence is localStorage-only. Any sync,
    backup, or account feature invalidates it.
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
@@ -141,13 +118,16 @@ copy must change in the same commit**:
    `DECISIONS.md` now carries an entry about the sequencing rather than just the decision. The one
    other third-party request the app can make is unchanged: if the vendored GSAP fails to load it
    falls back to `cdn.jsdelivr.net` (`PaletteApp.jsx`).
-5. **"a small downscaled thumbnail"** — describes the in-environment path only, and the size comes
-   from `makeThumb` (`320 × devicePixelRatio`, DPR clamped to 3). If hosted interpretation ships,
-   this sentence moves from conditional to permanent, and needs to name where it is sent and what is
-   retained.
+5. **"a small downscaled thumbnail"** — the size comes from `makeThumb` (`320 × devicePixelRatio`,
+   DPR clamped to 3). This is now permanent rather than conditional, so the copy names both the
+   recipient (Anthropic, via `api/interpret.ts`) and the retention position. Changing the thumbnail
+   size, adding anything to the payload beyond `{ image, swatches }`, or changing recipient means
+   `public/privacy.html` changes in the same commit.
 6. **"no cookies at all"** — verified by measurement, not assumption: `document.cookie` is empty on
-   every page. Client storage is `palette-generator/feed` (the user's own archive) and
-   `palette-generator/loader-session`. This is also why there is no consent banner. Any
+   every page. Client storage is five keys — `palette-generator/feed` (the user's own archive),
+   `/derived`, `/landing`, `/pagesize` and `/loader-session`. The privacy page names the prefix
+   rather than enumerating them; add a key outside that prefix and it needs saying. This is also
+   why there is no consent banner. Any
    non-essential third party — ads, a pixel, a hosted font, an embedded video — makes the claim false
    and makes consent legally required.
 

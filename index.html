@@ -43,7 +43,8 @@
     <meta name="twitter:title" content="Atmos Gallery" />
     <meta name="twitter:description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours." />
     <!-- Structured data. Every field here is checkable against the build: the tool is free, it runs
-         in the browser, it is desktop-only, and nothing is uploaded. Deliberately absent are
+         in the browser, it is desktop-only, and the image itself is never uploaded — only a ~320 px
+         thumbnail, and only when a palette is interpreted. Deliberately absent are
          aggregateRating and review — there are no ratings, and inventing them is both a Google
          structured-data violation and a lie told in a machine-readable format. -->
     <script type="application/ld+json">
@@ -52,7 +53,7 @@
       "@type": "WebApplication",
       "name": "Atmos Gallery",
       "url": "https://atmos.gallery/",
-      "description": "Atmos Gallery reads a colour palette from an image — the mood its light and atmosphere carry, not just its dominant colours. It runs entirely in the browser: images are never uploaded and palettes are stored on your own machine.",
+      "description": "Atmos Gallery reads a colour palette from an image — the mood its light and atmosphere carry, not just its dominant colours. It runs in the browser: your image is read on your own machine and palettes are stored there too.",
       "applicationCategory": "DesignApplication",
       "operatingSystem": "Any modern desktop browser",
       "browserRequirements": "Requires JavaScript. Desktop viewport — narrow screens show a read-only view.",
@@ -105,7 +106,7 @@
       <div style="max-width:34em;margin:0 auto;padding:64px 22px;font-family:system-ui,sans-serif;line-height:1.6;color:#1a1a1a">
         <h1 style="font-size:32px;font-weight:500;line-height:1.1;margin:0 0 20px">Atmos Gallery</h1>
         <p style="margin:0 0 16px"><strong>Colour read from light and atmosphere.</strong> Drop in an image and Atmos Gallery reads a palette from its mood — the light it carries, not only its dominant colours.</p>
-        <p style="margin:0 0 16px">It is a free desktop web tool, made by KauStudio. There is nothing to sign up for. The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH and discarded, and it is never uploaded. Palettes are kept in your own browser and can be exported as Tailwind theme values, W3C design tokens, Figma variables, CSS custom properties or an <code>.ase</code> swatch file.</p>
+        <p style="margin:0 0 16px">It is a free desktop web tool, made by KauStudio. There is nothing to sign up for. The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH and discarded, and the full-size image is never uploaded — only a small thumbnail, and only when you ask for a palette to be named. Palettes are kept in your own browser and can be exported as Tailwind theme values, W3C design tokens, Figma variables, CSS custom properties or an <code>.ase</code> swatch file.</p>
         <p style="margin:0 0 16px">The tool itself needs JavaScript to run, and a desktop-width window. This page is what is left without it.</p>
         <p style="margin:24px 0 0;font-size:14px"><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="/llms.txt">llms.txt</a></p>
       </div>

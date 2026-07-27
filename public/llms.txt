@@ -1,8 +1,9 @@
 # Atmos Gallery
 
 > A free desktop web tool that reads a colour palette from an image — the mood its light and
-> atmosphere carry, not only its dominant colours. Made by KauStudio. Everything runs in the
-> browser: images are never uploaded, and palettes are stored on the visitor's own machine.
+> atmosphere carry, not only its dominant colours. Made by KauStudio. Extraction runs in the
+> browser: the full-size image is never uploaded, and palettes are stored on the visitor's own
+> machine.
 
 This file exists because the site is client-rendered. Agents that do not execute JavaScript receive
 an empty body from the homepage, so the description of the tool lives here in full rather than being
@@ -27,8 +28,11 @@ something only a browser can discover.
 
 - **Free.** No account, no payment, no trial.
 - **Desktop.** A narrow viewport shows a read-only view of a shared palette rather than the tool.
-- **Nothing is uploaded.** Palette extraction is local. Shared links carry the palette in the URL
-  fragment, which browsers never transmit to a server.
+- **The image stays local.** Palette extraction runs on the visitor's machine and the full-size image
+  is never uploaded. One exception, stated because it is the only one: naming and describing a
+  palette sends a ~320 px thumbnail and the hex values to Anthropic's API, and falls back to a local
+  reading if that is unavailable. Shared links carry the palette in the URL fragment, which browsers
+  never transmit to a server.
 - **No cookies.** The site sets none. Measurement is Vercel Web Analytics and Speed Insights, both
   cookieless and aggregated.
 - **Colour readings are interpretations, not measurements**, and are not colour-managed. They should
