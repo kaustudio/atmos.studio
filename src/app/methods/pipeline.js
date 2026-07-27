@@ -200,24 +200,34 @@ export const pipelineMethods = {
   // recognised by the gate in _runPipeline as the palette it already is, instead of silently
   // manufacturing a duplicate.
   //
-  // Replacing an image means re-deriving its row. The extraction is deterministic, so the numbers
-  // are reproducible: read the file through extract() + buildPalette() + composeReading() and paste
-  // what comes back. Editing a hex by hand without moving the hash is the one thing that would make
-  // this table lie.
+  // Replacing an image means re-deriving its row. The extraction is deterministic — kmeans seeds
+  // from the point furthest from the cloud's own centre and never touches Math.random — so the
+  // numbers are reproducible: read the file through extract() + buildPalette() + composeReading()
+  // and paste what comes back. Derive OLDEST FIRST, since composeReading takes the archive as it
+  // stood when the image was read, and these ages say the bottom row was acquired first. Editing a
+  // hex by hand without moving the hash is the one thing that would make this table lie.
+  //
+  // The set is chosen for hue coverage, not for mood. Measured dominant hue runs 30 / 44 / 58 / 82 /
+  // 128 / 164 / 238 / 263 degrees, which is as much of the wheel as eight real photographs can hold:
+  // red through orange, gold and chartreuse into green, then two blues. The gaps are the source
+  // material's, not an oversight — there is no magenta and no clean cyan to be had, so the arc from
+  // 263 back round to 30 is empty. Two of these carry their own opposition (papaya on green, yellow
+  // balls on a blue court), which is what keeps the middle of the set from reading as one long warm
+  // run the way an earlier eight did.
   //
   // Seeds keep imageUrl null and carry a KEY instead. The key is resolved against EXAMPLE_SRC below
   // and nowhere else, so the H1 invariant at the top of this file survives the examples having
   // pictures: no string that came out of storage or off a share link can ever reach an <img src> —
   // the only thing a stored value can do is name one of our own bundled assets, or miss.
   EXAMPLE_SRC: {
-    'glass-bottle': '/assets/examples/glass-bottle.webp',
-    'runner': '/assets/examples/runner.webp',
-    'coupe': '/assets/examples/coupe.webp',
-    'profile-sky': '/assets/examples/profile-sky.webp',
     'profile-ember': '/assets/examples/profile-ember.webp',
-    'monolith': '/assets/examples/monolith.webp',
-    'gravel': '/assets/examples/gravel.webp',
-    'dusk-silhouette': '/assets/examples/dusk-silhouette.webp',
+    'tulip': '/assets/examples/tulip.webp',
+    'courtyard': '/assets/examples/courtyard.webp',
+    'poppy': '/assets/examples/poppy.webp',
+    'radish': '/assets/examples/radish.webp',
+    'papaya': '/assets/examples/papaya.webp',
+    'court': '/assets/examples/court.webp',
+    'profile-sky': '/assets/examples/profile-sky.webp',
   },
   // hasOwnProperty, not a bare lookup: 'constructor' and friends are inherited keys that would
   // otherwise resolve to a truthy non-string and end up interpolated into a url().
@@ -234,53 +244,61 @@ export const pipelineMethods = {
   makeSeed() {
     const H = 3600e3;
     return [
+      // 30° — red
       this.seedObj({
-        key: 'glass-bottle', hash: 'aa15aa01de85a28f', age: 8 * 60e3,
-        name: 'Pewter & Moss', desc: ['Low-lit', 'Muted', 'Structured'], arch: 'neutral',
-        rat: 'Low-chroma greens with clear structure between them, weight stepping down through the set — dim and unhurried.',
-        sw: [['#04110b', .3329], ['#314334', .2153], ['#12251d', .2010], ['#596857', .1553], ['#92977e', .0955]],
-      }),
-      this.seedObj({
-        key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 3 * H,
+        key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 8 * 60e3,
         name: 'Garnet', desc: ['Low-lit', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
         rat: 'Warm, saturated reds kept in shadow split by stark contrast — shadowed but legible.',
         sw: [['#0f0302', .3609], ['#e12409', .2392], ['#f17645', .1454], ['#aa0906', .1416], ['#540604', .1128]],
       }),
+      // 44° — orange
       this.seedObj({
-        key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 9 * H,
+        key: 'tulip', hash: 'ff280e7420bfb244', age: 3 * H,
+        name: 'Dry Season', desc: ['Stark', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
+        rat: 'Saturated reds sitting at mid weight, sitting close together — even-tempered and workable.',
+        sw: [['#a74b1b', .4919], ['#933913', .3580], ['#ab8766', .0972], ['#d5cdbf', .0449], ['#361905', .0079]],
+      }),
+      // 58° — terracotta, against the one teal in the set
+      this.seedObj({
+        key: 'courtyard', hash: '5b217989553d518d', age: 9 * H,
+        name: 'Forged Midfield', desc: ['Warm', 'Stark', 'Monochrome'], arch: 'graphic',
+        rat: 'Warm oranges sitting at mid weight, held to a single note — plain and unhurried.',
+        sw: [['#e2a779', .3819], ['#472f24', .2483], ['#19110e', .2014], ['#685a48', .0961], ['#9c7b60', .0723]],
+      }),
+      // 82° — gold
+      this.seedObj({
+        key: 'poppy', hash: '9f0f8f2c2b9d30f2', age: 26 * H,
+        name: 'Scorched Clear Morning', desc: ['Stark', 'Bright', 'Warm', 'Graphic'], arch: 'graphic',
+        rat: 'Warm yellows lifted high, held to a single note — airy and unforced.',
+        sw: [['#e5e9eb', .5490], ['#664515', .1188], ['#c4b07b', .1132], ['#1e1506', .1109], ['#9d7b38', .1080]],
+      }),
+      // 128° — chartreuse
+      this.seedObj({
+        key: 'radish', hash: '4cae3f7a29e8ee24', age: 34 * H,
+        name: 'High Key', desc: ['Stark', 'Pale', 'Monochrome', 'Graphic'], arch: 'graphic',
+        rat: 'Hues held to a single note: low-chroma greens, warm — washed and quiet.',
+        sw: [['#eae8dd', .7766], ['#b8cd79', .0814], ['#6c9429', .0557], ['#3c5e19', .0480], ['#1b2f0c', .0382]],
+      }),
+      // 164° — green, carrying its own complement
+      this.seedObj({
+        key: 'papaya', hash: '1e83a904f39350e0', age: 50 * H,
+        name: 'Ruled Open Country', desc: ['Even', 'Varied', 'Anchored'], arch: 'neutral',
+        rat: 'One colour carrying the frame: saturated tones with clear structure between them — restrained and quietly atmospheric.',
+        sw: [['#1b6d4e', .7556], ['#221d14', .0797], ['#c05118', .0637], ['#d17827', .0507], ['#903215', .0503]],
+      }),
+      // 238° — blue, carrying its own complement
+      this.seedObj({
+        key: 'court', hash: '480909a3cd5e5535', age: 74 * H,
+        name: 'Midfield', desc: ['Stark', 'Cool', 'Monochrome'], arch: 'graphic',
+        rat: 'Hues held to a single note: restrained blues, cool — restrained and quietly atmospheric.',
+        sw: [['#547b95', .4699], ['#0a2944', .1977], ['#678da4', .1890], ['#456b85', .1140], ['#d0d2c6', .0293]],
+      }),
+      // 263° — periwinkle
+      this.seedObj({
+        key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 100 * H,
         name: 'Frozen Slate', desc: ['Restrained', 'Cool', 'Stark', 'Graphic'], arch: 'accented',
         rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour — even-tempered and workable.',
         sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
-      }),
-      this.seedObj({
-        key: 'coupe', hash: '1f67421820f58c52', age: 26 * H,
-        name: 'Cut Halflight', desc: ['Stark', 'Low-lit', 'Warm'], arch: 'graphic',
-        rat: 'Warm oranges kept in shadow, held to a single note — dim and unhurried.',
-        sw: [['#060503', .5639], ['#ad8b68', .1364], ['#cdb8a4', .1343], ['#7d552b', .0864], ['#3d2612', .0791]],
-      }),
-      this.seedObj({
-        key: 'monolith', hash: '59cb19011a8e4f59', age: 34 * H,
-        name: 'Struck Midfield', desc: ['Stark', 'Warm', 'Monochrome'], arch: 'graphic',
-        rat: 'Warm oranges sitting at mid weight, held to a single note — even-tempered and workable.',
-        sw: [['#865f48', .2890], ['#050302', .2257], ['#e4b590', .2226], ['#b68665', .1844], ['#392113', .0783]],
-      }),
-      this.seedObj({
-        key: 'runner', hash: 'f382abb30f4060e9', age: 50 * H,
-        name: 'Gloaming', desc: ['Low-lit', 'Achromatic', 'Stark'], arch: 'graphic',
-        rat: 'Achromatic greys split by stark contrast, weight stepping down through the set — shadowed but legible.',
-        sw: [['#120e10', .3235], ['#4f595c', .2197], ['#717c77', .1869], ['#3d3029', .1553], ['#a8a288', .1146]],
-      }),
-      this.seedObj({
-        key: 'gravel', hash: 'd9739c5708064aa5', age: 74 * H,
-        name: 'Hard Driftwood', desc: ['Stark', 'Monochrome', 'Warm'], arch: 'graphic',
-        rat: 'Warm, low-chroma yellows sitting at mid weight split by stark contrast — restrained and quietly atmospheric.',
-        sw: [['#0d1816', .2542], ['#434436', .2031], ['#786e4d', .1971], ['#cdc6b8', .1970], ['#aba084', .1485]],
-      }),
-      this.seedObj({
-        key: 'dusk-silhouette', hash: '4ed0c1873c4ab5d1', age: 100 * H,
-        name: 'Nightfall', desc: ['Dark', 'Warm', 'Monochrome'], arch: 'smouldering',
-        rat: 'Warm, restrained reds held low with gentle separation — weighted, almost airless.',
-        sw: [['#130a06', .3985], ['#391508', .2517], ['#6d280f', .1597], ['#a24116', .0976], ['#000000', .0924]],
       }),
     ];
   },
