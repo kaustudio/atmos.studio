@@ -896,11 +896,13 @@ function FeedSection({ vals }) {
                       them at 1440, most of it empty). As one cell on the 2fr track it takes a
                       declared share instead of the remainder, and the metric columns get theirs. */}
                   <div style={sx('display:flex;align-items:center;gap:16px;min-width:0')}>
-                  {/* Secondary: down a step (16 → 13) and to regular weight. Still full --on-surface
-                      ink, not muted — it is the row's only text identifier and the one thing a
-                      screen reader leads with; subordination comes from size and weight, which is
-                      also what keeps the demotion legible without relying on colour. */}
-                  <span style={sx("font-family:'Neue Montreal';font-weight:400;font-size:13px;color:var(--on-surface);flex:none")}>{c.name}</span>
+                  {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
+                      but at the same medium weight the filter panel gives its facet names. Both are
+                      the same kind of thing — the name of a choosable, the subject of its row — and
+                      13/500 is what that is called in this app. Still full --on-surface ink, not
+                      muted: it is the row's only text identifier and the one thing a screen reader
+                      leads with, so the demotion is a size step and never a fade. */}
+                  <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:13px;color:var(--on-surface);flex:none")}>{c.name}</span>
                   {c.isExample && (
                     <span style={sx('flex: none; font-family: Neue Montreal; font-size: 8px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 6px')}>Example</span>
                   )}
