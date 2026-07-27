@@ -71,8 +71,9 @@ The chats left "where live interpretation runs" open. The client is wired with a
 Where a live path exists, a downscaled thumbnail is sent to read the mood; where none does, nothing
 leaves the browser. **The production deployment sets `VITE_INTERPRET_ENDPOINT`, so on atmos.gallery
 the live path is the one that runs** — the privacy copy is written against that, not against a build
-with the seam unset. Any user-facing note is still capability-conditional, so it renders only where
-the live call is actually available.
+with the seam unset. The tool itself no longer carries a note about it: the disclosure was removed
+from the dropzone screen by request, and it is `/privacy.html` — linked from the footer of that same
+screen — that has to stay true.
 
 ## Privacy
 
@@ -118,9 +119,10 @@ copy must change in the same commit**:
    `DECISIONS.md` now carries an entry about the sequencing rather than just the decision. The one
    other third-party request the app can make is unchanged: if the vendored GSAP fails to load it
    falls back to `cdn.jsdelivr.net` (`PaletteApp.jsx`).
-5. **"a small downscaled thumbnail"** — the size comes from `makeThumb` (`320 × devicePixelRatio`,
+5. **"a thumbnail of roughly 320 px"** — the size comes from `makeThumb` (`320 × devicePixelRatio`,
    DPR clamped to 3). This is now permanent rather than conditional, so the copy names both the
-   recipient (Anthropic, via `api/interpret.ts`) and the retention position. Changing the thumbnail
+   recipient (Anthropic, via `api/interpret.ts`) and the retention position. It is also the only
+   place the claim is made now that the dropzone note is gone. Changing the thumbnail
    size, adding anything to the payload beyond `{ image, swatches }`, or changing recipient means
    `public/privacy.html` changes in the same commit.
 6. **"no cookies at all"** — verified by measurement, not assumption: `document.cookie` is empty on

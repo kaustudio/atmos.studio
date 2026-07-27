@@ -127,15 +127,10 @@ a{color:inherit}
   margin-inline:auto;
   padding:56px 0 40px;
 }
-/* .legal-hero__label is gone from both pages — the eyebrow repeated the h1 a line above it ("Privacy"
-   over "Privacy"), which is a label naming its own heading rather than adding to it. The rule stays
-   for .toc-hero__label, the sidebar's "on this page", which is the same size and treatment. */
-.toc-hero__label{
-  margin:0 0 20px;
-  font-size:11px;font-weight:500;line-height:1;
-  letter-spacing:var(--track-label);text-transform:uppercase;
-  color:var(--on-surface-muted);
-}
+/* The eyebrow rule that lived here is gone with the last of its two users. .legal-hero__label went
+   first — it repeated the h1 a line above it ("Privacy" over "Privacy"), a label naming its own
+   heading rather than adding to it — and .toc-hero__label, the sidebar's "on this page", followed by
+   request. The list under it is a column of section titles beside the sections; it says what it is. */
 .legal-hero h1{
   margin:0;
   font-size:clamp(38px,5.2vw,58px);font-weight:500;line-height:1.04;

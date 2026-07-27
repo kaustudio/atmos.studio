@@ -461,14 +461,10 @@ export default function AppView({ vals }) {
             <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size: 13px; letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
-          {/* Sits OUTSIDE the dropzone button — inside, it would join the button's accessible name.
-              Renders only where a live interpretation path actually exists, so it never promises a
-              network call this build cannot make. (The unconditional "everything stays in your
-              browser" line that used to lead it was removed by request; the claim itself still
-              stands in the README and on /privacy.html.) */}
-          {vals.showInterpNote && (
-            <p style={sx("max-width:520px;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:11px;line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>When live interpretation is available, a small downscaled thumbnail is sent to the model to read the mood — it isn’t stored.</p>
-          )}
+          {/* The interpretation note that used to sit here — "a small downscaled thumbnail is sent to
+              the model … it isn't stored" — was removed by request, as the "everything stays in your
+              browser" line above it had been earlier. The disclosure itself is unchanged: it stands in
+              the README and in full on /privacy.html, which the footer links from this same screen. */}
         </>)}
 
         {vals.isProcessing && (
