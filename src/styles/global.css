@@ -30,8 +30,8 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-ix]{transition:background-color .28s var(--ease-button-hover),color .28s var(--ease-button-hover),border-color .28s var(--ease-button-hover),box-shadow .28s var(--ease-button-hover),filter .16s var(--ease-standard),transform .12s var(--ease-standard)}
 [data-ix]:disabled{opacity:.42;cursor:default}
 /* solid — bordered chrome; hover/active follow button-006's glass-tint spectrum (16% → 24%), no invert */
-[data-ix="solid"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:color-mix(in srgb,var(--on-surface) 38%,transparent)!important}
-[data-ix="solid"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:color-mix(in srgb,var(--on-surface) 48%,transparent)!important;transform:translateY(1px)}
+[data-ix="solid"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:var(--action-line-hover)!important}
+[data-ix="solid"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important;transform:translateY(1px)}
 /* cta — solid on-surface rest (inverted): hover lightens within its own color, active deepens */
 [data-ix="cta"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important}
 [data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;transform:translateY(1px)}
@@ -193,12 +193,25 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      the columns divide the space evenly, but it stood between the timestamp and the row's edge, so
      the date could never hold the margin the palette holds on the left. It is neither now: the
      buttons are reserved INSIDE the trailing column, and the row ends on the date. */
-  /* ===== action emphasis (three tiers) — what a control is FOR, not what it looks like.
+  /* ===== the control edge — ONE progression, shared by every bounded control in the app.
+     These buttons have no fill at rest, so the border is not decoration: it is the only thing
+     that says "control" rather than "label". WCAG 2.2 SC 1.4.11 therefore asks 3:1 of it against
+     the surface behind it, and the old 15% baseline measured 1.36:1 in light / 1.50:1 in dark —
+     invisible to the standard and nearly so to the eye. 50% is the first step that clears 3:1 on
+     BOTH page surfaces in BOTH themes with margin (3.25 / 3.31 light, 4.91 / 4.71 dark).
+     Hover and press climb from there, so the edge can only ever strengthen under the pointer;
+     they used to sit at 38%/48%, which is BELOW the new rest and would have inverted the feedback.
+     Anything interactive takes these three. Static pills, badges and dividers keep the 15%
+     hairline — the difference is now information: an edge this strong means you can press it. */
+  --action-line:color-mix(in srgb,var(--on-surface) 50%,transparent);
+  --action-line-hover:color-mix(in srgb,var(--on-surface) 62%,transparent);
+  --action-line-press:color-mix(in srgb,var(--on-surface) 72%,transparent);
+  /* ===== action emphasis (two tiers) — what a control is FOR, not what it looks like.
      Every value below resolves through the chrome tokens above, so the tiers re-theme with
      everything else and no tier owns a colour of its own. Emphasis is never carried by colour
-     alone: primary is FILLED, secondary is OUTLINED at full edge strength, utility is UNBORDERED
-     and lighter in weight — the three stay distinguishable in greyscale, at any zoom, and to
-     anyone who cannot separate the two inks by hue. Consumed by the button-006 variants below. */
+     alone: primary is FILLED, secondary is OUTLINED — the two stay distinguishable in greyscale,
+     at any zoom, and to anyone who cannot separate the two inks by hue. There is no third tier:
+     see the note below. Consumed by the button-006 variants below. */
   /* tier 1 — primary: the payoff. Inverted fill; the one dominant control in its region. */
   --action-primary-surface:var(--on-surface);
   --action-primary-ink:var(--surface);
@@ -207,26 +220,26 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-primary-line:var(--on-surface);
   --action-primary-weight:500;
   --action-primary-padding:0.75em 1.35em;
-  /* tier 2 — secondary: analysis. No fill, but a full-strength edge and medium weight. */
+  /* tier 2 — secondary: everything you do WITH the result. No fill, full-strength edge, medium
+     weight, full-strength ink. Every unfilled control in the app is this tier.
+
+     There WAS a third tier — utility: muted ink at weight 400 for the copy actions and the theme
+     switch. It failed on its own hover state. The muted ink stayed muted while the hover tint
+     darkened the ground under it, landing at 4.00:1 in light mode against the 4.5:1 SC 1.4.3 asks
+     of body text (3.33:1 on press). A control that is legible until you point at it is not
+     legible. Since the ink had to come up to --on-surface to pass, and full ink at weight 400 on a
+     50% edge just reads as a secondary button set slightly wrong, the tier is gone rather than
+     patched: one outlined tier, one set of values. Grouping still happens — the hairline in the
+     action rows does it — but it is now positional, which costs no contrast to express. */
   --action-secondary-surface:transparent;
   --action-secondary-ink:var(--on-surface);
-  --action-secondary-line:color-mix(in srgb,var(--on-surface) 42%,transparent);
+  --action-secondary-line:var(--action-line);
   --action-secondary-weight:500;
-  /* tier 3 — utility: convenience exits. No fill, muted ink, regular weight — but it still carries
-     the system's baseline hairline. Every other control in the app is bounded by that 15% edge
-     (button-006's own default, the solid chrome buttons, the chip groups), so an edgeless button
-     read as a different KIND of control rather than a quieter one. The tier is expressed by fill
-     and weight; the edge is shared vocabulary, and hierarchy still reads: solid → 42% → 15%. */
-  --action-utility-surface:transparent;
-  --action-utility-ink:var(--on-surface-muted);
-  --action-utility-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
-  --action-utility-weight:400;
-  /* shared hover/press tints for the two unfilled tiers — the sanctioned 16% → 24% spectrum,
-     the same one [data-ix="solid"], ="press" and button-006's own rest state already ride. */
+  /* hover/press tints for the unfilled tier — the sanctioned 16% → 24% spectrum, the same one
+     [data-ix="solid"], ="press" and button-006's own rest state already ride. Text stays
+     --on-surface across all three states, so the worst case is 11.49:1 (light) / 10.56:1 (dark). */
   --action-quiet-hover:color-mix(in srgb,var(--on-surface) 16%,transparent);
   --action-quiet-press:color-mix(in srgb,var(--on-surface) 24%,transparent);
-  --action-quiet-line-hover:color-mix(in srgb,var(--on-surface) 38%,transparent);
-  --action-quiet-line-press:color-mix(in srgb,var(--on-surface) 48%,transparent);
   color-scheme:light;
 }
 :root[data-theme="dark"]{
@@ -255,10 +268,10 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-focus:var(--on-surface);        /* focus ring → WCAG focus token */
   /* edge + press, hoisted out of the rules below so an emphasis tier can remap them without
      restating any of button-006's structure. Defaults are the untiered button's own values. */
-  --button-006-line:color-mix(in srgb, var(--on-surface) 15%, transparent);
-  --button-006-line-hover:color-mix(in srgb, var(--on-surface) 38%, transparent);
+  --button-006-line:var(--action-line);
+  --button-006-line-hover:var(--action-line-hover);
   --button-006-press:color-mix(in srgb, var(--on-surface) 24%, transparent);
-  --button-006-line-press:color-mix(in srgb, var(--on-surface) 48%, transparent);
+  --button-006-line-press:var(--action-line-press);
   --button-006-click-scale:0.955 0.925;
   --button-006-default-text-scale:1;
   --button-006-hover-text-scale:1;
@@ -316,24 +329,16 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-accent:var(--action-quiet-hover);
   --button-006-on-accent:var(--action-secondary-ink);
   --button-006-line:var(--action-secondary-line);
-  --button-006-line-hover:var(--action-quiet-line-hover);
+  --button-006-line-hover:var(--action-line-hover);
   --button-006-press:var(--action-quiet-press);
-  --button-006-line-press:var(--action-quiet-line-press);
+  --button-006-line-press:var(--action-line-press);
   font-weight:var(--action-secondary-weight);
 }
-/* utility now strengthens its edge on hover and press exactly like every other tier — the same
-   15% → 38% → 48% progression the whole system rides. It reads as quieter, never as foreign. */
-.button-006[data-emphasis="utility"]{
-  --button-006-surface:var(--action-utility-surface);
-  --button-006-on-surface:var(--action-utility-ink);
-  --button-006-accent:var(--action-quiet-hover);
-  --button-006-on-accent:var(--on-surface);
-  --button-006-line:var(--action-utility-line);
-  --button-006-line-hover:var(--action-quiet-line-hover);
-  --button-006-press:var(--action-quiet-press);
-  --button-006-line-press:var(--action-quiet-line-press);
-  font-weight:var(--action-utility-weight);
-}
+/* [data-emphasis="utility"] used to live here. It is deliberately NOT aliased to secondary: an
+   alias would let the attribute keep spreading, and the whole point is that there is one outlined
+   tier to reach for. An unknown emphasis value now falls through to the untiered .button-006
+   above, which carries the same 50% edge and the same --on-surface ink, so nothing renders
+   illegibly while a stray attribute is still in the tree. */
 /* Sort direction is a rotation, not a glyph swap: the chevron rests pointing down (descending) and
    turns a half-circle to point up (ascending). Declarative like the [data-ix] contract — the state
    lives on data-dir, the motion is one transition on --ease-standard, and it reverses by construction

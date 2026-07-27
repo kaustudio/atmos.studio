@@ -92,7 +92,7 @@ export const renderValsMethods = {
         let best = null; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { if (i === j) continue; const r = this.contrastRatio(sw[i].hex, sw[j].hex); if (!best || r > best.r) best = { r, fg: sw[i].hex, bg: sw[j].hex }; }
         const summary = this.contrastSummary(cp);
         const segOn = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--line-strong)', background: 'none', color: 'var(--on-surface)' };
+        const segOff = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
         cx = {
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
@@ -770,13 +770,13 @@ export const renderValsMethods = {
         display: 'inline-flex', alignItems: 'center', height: '36px', padding: '0 16px', borderRadius: '0',
         background: 'color-mix(in srgb, var(--on-surface) 7%, transparent)',
         backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-        border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)',
+        border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', fontFamily: 'Neue Montreal', fontSize: '14px', fontWeight: 500,
         letterSpacing: 'var(--track-title)', whiteSpace: 'nowrap', cursor: 'pointer',
         transition: 'background-color .28s var(--ease-button-hover), border-color .28s var(--ease-button-hover), transform .12s var(--ease-standard)',
       },
-      glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', borderColor: 'color-mix(in srgb, var(--on-surface) 38%, transparent)' },
-      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', borderColor: 'color-mix(in srgb, var(--on-surface) 48%, transparent)', transform: this._reduce ? 'none' : 'translateY(1px)' },
+      glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', borderColor: 'var(--action-line-hover)' },
+      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', borderColor: 'var(--action-line-press)', transform: this._reduce ? 'none' : 'translateY(1px)' },
       // shared micro-interaction handlers (one signature across the whole UI)
       mEnter: (e) => this.mEnter(e), mLeave: (e) => this.mLeave(e), mDown: (e) => this.mDown(e), mUp: (e) => this.mUp(e),
       dimEnter: (e) => this.dimEnter(e), dimLeave: (e) => this.dimLeave(e),
@@ -807,15 +807,15 @@ export const renderValsMethods = {
       // inside the shared border. Full --on-surface, not the chips' muted ink: it is always
       // available rather than selectable, so it should not wear an "unselected scope" colour.
       projManageStyle: Object.assign({}, chipStyle(false), { color: 'var(--on-surface)' }),
-      // Tier 3 (data maintenance) reads at the action row's UTILITY emphasis — same 15% edge and
-      // muted ink already defined for Hex list / CSS variables / Share link. Reusing that tier
-      // rather than inventing a "quiet header button" keeps one emphasis vocabulary across the app:
-      // filled → outlined → 15%-edged. Same padding and type as the Tier 2 controls, so the demotion
-      // is carried by weight, not by size.
+      // The file pair (save / open) reads at the action row's SECONDARY emphasis — the same edge
+      // and the same full-strength ink as every other unfilled control in the app. It used to take
+      // the utility tier's muted ink and 15% edge; that tier is gone (it could not hold 4.5:1 once
+      // its own hover tint darkened the ground under it), so these take what everything else takes.
+      // The demotion from "New generation" is carried by fill: that one is filled, these are not.
       tier3BtnStyle: this.monoLabel(10, 'var(--track-flat)', {
         display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '7px 12px',
-        background: 'none', border: '1px solid var(--action-utility-line)',
-        color: 'var(--action-utility-ink)', cursor: 'pointer',
+        background: 'none', border: '1px solid var(--action-line)',
+        color: 'var(--on-surface)', cursor: 'pointer',
       }),
       // the tag facet: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
@@ -1048,7 +1048,7 @@ export const renderValsMethods = {
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: filedCur && filedCur.projectId ? this.projectName(filedCur.projectId) : 'Add to project',
       assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--line-strong)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
+      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       navBtnHover: { background: 'var(--surface-raised)', borderColor: 'var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast

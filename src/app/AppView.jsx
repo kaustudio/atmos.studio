@@ -394,12 +394,12 @@ export default function AppView({ vals }) {
         {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
             nothing about the palette, the archive or the work, yet it was the first thing every
             left-to-right scan landed on. The theme switch takes the corner instead — it is the
-            control that changes how everything else on the page is READ, and at utility weight it
-            holds the edge without competing with the mark. */}
-        <B006 data-emphasis="utility" data-focus="chrome" role="switch" aria-checked={vals.isDark} onClick={vals.toggleTheme} aria-label="Toggle dark theme" title="Light / dark" label={themeSwitchLabel(vals)} />
+            control that changes how everything else on the page is READ. It is outlined, not
+            filled, so it holds the edge without competing with the mark. */}
+        <B006 data-emphasis="secondary" data-focus="chrome" role="switch" aria-checked={vals.isDark} onClick={vals.toggleTheme} aria-label="Toggle dark theme" title="Light / dark" label={themeSwitchLabel(vals)} />
         {/* RIGHT — the acts. New generation drives the core loop, so it stays filled and leads the
             cluster in the DOM (and therefore in the tab order); the file pair follows behind a
-            hairline at utility weight, so the two never read as peers.
+            hairline, outlined rather than filled, so the two never read as peers.
 
             Saving and opening a project file moved UP here from the archive heading line. Both act
             on the archive as a whole rather than on the list they used to sit beside, and down
@@ -519,34 +519,35 @@ export default function AppView({ vals }) {
               ))}
             </div>
             {/* Action row, ordered by what the user came to do. DOM order IS the visual order IS
-                the tab order — Export first, the utilities last — so a keyboard traveller meets
-                the actions in the same sequence the eye does. */}
-            {/* One 8px rhythm across the whole row — between Export and Contrast, on both sides of
-                the hairline, and between the three utilities — matching the archive header's bar.
-                The utilities used to sit at 2px, which was right when they were borderless ghosts
-                and tight clustering read as one object; now that they carry the system's 15% edge,
-                2px reads as buttons touching. Same spacing, so the row has one rhythm. */}
+                the tab order, so a keyboard traveller meets the actions in the same sequence the
+                eye does. The hairline divides by CONSEQUENCE: ahead of it the two acts that leave
+                something behind, behind it the four that only read this palette back to you. It is
+                the same row, in the same order, as the fullscreen detail's footer — one grammar,
+                two surfaces. (Share is here and not there: only this view holds a shareable URL.)
+
+                Every control except Export is now the same outlined tier, at the same weight and
+                the same ink. The copy actions used to be a lighter third tier; it failed its own
+                hover state on contrast, so it is gone — see the emphasis block in global.css. What
+                the weight difference used to say, position and the hairline now say instead.
+
+                One 8px rhythm across the whole row, matching the archive header's bar. */}
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* tier 1 — the payoff; the only filled control on this surface */}
               <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-              {/* tier 2 — the two things you do WITH the palette once it exists: file it, then
-                  inspect it. Both outlined, so Export stays the only filled control on the surface.
-                  Filing leads inspection because it is the one that changes the archive; Contrast
-                  keeps its position relative to the utilities behind the hairline. Disabled while
-                  the palette is only in the URL — a shared palette has no record to file until it
-                  is saved, and the strip above already offers that. */}
+              {/* tier 2 — filing changes the archive, so it stays on the committing side of the
+                  hairline. Disabled while the palette is only in the URL — a shared palette has no
+                  record to file until it is saved, and the strip above already offers that. */}
               <B006 data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
-              {/* tier 2 — inspection, not a destination: outlined, unfilled */}
-              <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-              {/* tier 3 — convenience exits. Held in their own group behind a hairline so the
-                  break reads as grouping rather than as a gap that a wrap could invent; keeping
-                  the three together also means they wrap as a cluster, never one at a time. */}
+              {/* The read-only group, held behind a hairline so the break reads as grouping rather
+                  than as a gap that a wrap could invent; keeping them together also means they
+                  wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
-                <B006 data-emphasis="utility" onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
+                <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+                <B006 data-emphasis="secondary" onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
                   label={<SwapLabel copied={vals.hexListCopied} idle="Hex list" />} />
-                <B006 data-emphasis="utility" onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
+                <B006 data-emphasis="secondary" onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
                   label={<SwapLabel copied={vals.cssCopied} idle="CSS variables" />} />
-                <B006 data-emphasis="utility" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
               </div>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
@@ -691,7 +692,7 @@ export default function AppView({ vals }) {
           <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);padding:11px 12px 11px 18px;box-shadow:0 14px 36px rgba(0,0,0,.24);pointer-events:auto')}>
             <span style={sx("font-family: 'Neue Montreal'; font-size: 13px; letter-spacing:var(--track-flat); white-space: nowrap; text-transform: capitalize")}>{vals.toastLabel}</span>
             <HBtn type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete}
-              style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
+              style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
               styleHover={{ background: 'var(--on-surface)', color: 'var(--surface)' }}>Undo</HBtn>
           </div>
         </div>
@@ -752,7 +753,7 @@ function FeedSection({ vals }) {
               the sliding pill changes — Manage deliberately carries no data-proj-chip and no
               aria-pressed, so the pill (which selects [data-proj-chip][aria-pressed="true"]) can
               never mistake an action for a scope. */}
-          <div role="group" data-proj-group="1" aria-label="Projects" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
+          <div role="group" data-proj-group="1" aria-label="Projects" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
             <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
             {vals.projectChips.map((ch) => (
               <button key={ch.key} type="button" data-proj-chip="1" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} onClick={ch.onClick} style={ch.chipStyle}>{ch.label}<span style={ch.countStyle}>{ch.count}</span></button>
@@ -773,7 +774,7 @@ function FeedSection({ vals }) {
                 system's own vocabulary rather than implied by whitespace. */}
             <span aria-hidden="true" style={sx('flex:none;align-self:stretch;width:1px;background:var(--line-strong)')}></span>
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-              <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes" style={sx('background:none;border:1px solid var(--line-strong);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
+              <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
               {/* One chip per applied filter across BOTH groups — accessibility first, matching the
                   panel's group order — each removable on its own, so a narrowing can be undone from
                   either end. No clear-all here: that was a third affordance for one act (chip ✕ ·
@@ -795,7 +796,7 @@ function FeedSection({ vals }) {
               File work went the other way, up to the top bar — it acts on the archive rather than
               on this list, and does not belong in the middle of the daily path. */}
           {vals.feedHasItems && (
-            <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent;margin-left:auto')}>
+            <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-left:auto')}>
               <span aria-hidden="true" style={vals.viewTogglePill}></span>
               <button type="button" data-toggle-btn="1" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}>List</button>
               <button type="button" data-toggle-btn="1" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}>Grid</button>
@@ -840,7 +841,7 @@ function FeedSection({ vals }) {
                 the column keeps its ONE right edge: label over count, both flush. */}
             <div style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
               <div style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line-strong);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.aaInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
                   <div role="note" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;width:264px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:8px')}>
@@ -975,10 +976,10 @@ function FeedSection({ vals }) {
                   travel live in global.css: one transform cannot be half inline and half in a
                   stylesheet, and the half that is a state has to be the one that wins. Only what is
                   static about them is here. 6px apart, unchanged. */}
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
@@ -990,7 +991,7 @@ function FeedSection({ vals }) {
           <nav aria-label="Palette list pages" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
             <div role="group" aria-label="Palettes per page" style={sx('display:flex;align-items:center;gap:10px')}>
               <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Per page</span>
-              <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:transparent')}>
+              <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
                 <span aria-hidden="true" style={vals.pageTogglePill}></span>
                 {vals.pageSizeOptions.map((o) => (
                   <button key={o.label} type="button" data-toggle-btn="1" data-focus="chrome" aria-pressed={o.pressed} tabIndex={o.tabIndex} onClick={o.onSelect} onKeyDown={vals.pageToggleKey} style={o.style}>{o.label}</button>
@@ -1068,7 +1069,7 @@ function FeedSection({ vals }) {
           {/* universe chrome (fixed above the field) */}
           <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.universeCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--on-surface) 15%, transparent); padding: 9px 14px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.universeCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: 9px 14px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
 
           {vals.universeEngine && (
@@ -1096,7 +1097,7 @@ function FeedSection({ vals }) {
           )}
           <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;pointer-events:none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.reelCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.reelCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
           <span data-reel-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to spin</span>
         </div>
@@ -1118,7 +1119,7 @@ function ContrastDrawer({ vals }) {
             <span style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
             <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid color-mix(in srgb, var(--on-surface) 15%, transparent); padding: 8px 13px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: 8px 13px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px 22px 0')}>
@@ -1204,13 +1205,13 @@ function DetailOverlay({ vals }) {
         </div>
         {/* Filing used to stand here, in the chrome, while the result view files from its action
             row — one job wearing two different clothes depending on which door you came through.
-            It moved down to the footer row, next to Export and Contrast, where the other things you
+            It moved down to the footer row, next to Export, where the other things you
             do WITH a palette already live. The header keeps only what acts on the palette's place in
             the archive or on this window: delete, and close. */}
         <div style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-          <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
+          <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
             <IconTrash />Delete</button>
-          <button type="button" data-ix="solid" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
         </div>
       </header>
 
@@ -1237,19 +1238,20 @@ function DetailOverlay({ vals }) {
           <div style={sx('display:flex;flex-wrap:wrap;gap:8px')}>
             {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
           </div>
-          {/* Same action hierarchy as the result view's row, and deliberately so: this is the same
-              job on a different surface, so Export leads, filing follows, then Contrast, and the copy
-              actions sit behind a hairline as utilities. A palette opened fullscreen from the grid
-              must not re-teach the user a different set of weights. (No Share here — the overlay has
-              no share affordance, so the utility cluster is a pair rather than a trio.) */}
+          {/* The same row as the result view's, deliberately: same order, same division, same
+              weights. A palette opened fullscreen from the archive must not re-teach the user a
+              different set of controls. The hairline divides by consequence — ahead of it the two
+              acts that leave something behind, behind it the ones that only read the palette back
+              to you, Contrast first because inspecting comes before copying. (No Share here: the
+              overlay has no shareable URL, so the group behind the hairline is a trio, not four.) */}
           <div style={sx('display:flex;align-items:center;gap:8px')}>
             <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
             <B006 data-emphasis="secondary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
-            <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
-              <B006 data-emphasis="utility" onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
+              <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+              <B006 data-emphasis="secondary" onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
                 label={<SwapLabel copied={overlay.hexListCopied} idle="Hex list" />} />
-              <B006 data-emphasis="utility" onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
+              <B006 data-emphasis="secondary" onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
                 label={<SwapLabel copied={overlay.cssCopied} idle="CSS variables" />} />
             </div>
           </div>
@@ -1306,7 +1308,7 @@ function TagFilterDrawer({ vals }) {
                 panel that quietly narrows something behind it. Same words, no pixels. */}
             <span role="status" aria-live="polite" style={liveRegionStyle}>{vals.matchLabel}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-tg-sec="1" style={sx('padding:14px 22px 2px')}>
@@ -1358,7 +1360,7 @@ function TagFilterDrawer({ vals }) {
             so the one control you are meant to type into did not look like an input. Clear button
             appears only when there is something to clear, and hands focus back to the field. */}
         <div data-tg-sec="1" style={sx('padding:16px 22px 0;display:flex;align-items:center;gap:8px')}>
-          <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface-raised);padding:0 8px 0 10px')}>
+          <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--action-line);background:var(--surface-raised);padding:0 8px 0 10px')}>
             <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
             {vals.hasTagQuery && (
               <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;padding:0;font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted);cursor:pointer')}>✕</button>
@@ -1408,12 +1410,12 @@ function TagFilterDrawer({ vals }) {
                 {vals.hasTagQuery ? 'No tag matches “' + vals.tagQuery + '”.' : 'No further tag would narrow this selection.'}
               </span>
               {vals.hasTagQuery && (
-                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear search</button>
+                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear search</button>
               )}
             </div>
           )}
           {vals.facetClear && (
-            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
+            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
           )}
         </div>
       </div>
@@ -1437,7 +1439,7 @@ function HarmonyDrawer({ vals }) {
               <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>{harmony.hex}</span>
             </div>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Close colour harmonies" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-hx-sec="1" style={sx('padding:14px 22px 2px')}>
@@ -1478,7 +1480,7 @@ function ExportDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div style={sx('padding:14px 22px 0')}>
@@ -1541,7 +1543,7 @@ function RecogniseDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
         </header>
         <div style={sx('padding:14px 22px 0;display:flex;flex-direction:column;gap:12px')}>
           <span style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
@@ -1557,7 +1559,7 @@ function RecogniseDialog({ vals }) {
               second run of the same image returns the same colours — this adds a separate entry,
               it does not produce a different palette. Step D is what makes variations genuinely
               differ (seed = content hash + variation index); the label can promise that then. */}
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:12px 16px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Extract again anyway</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:12px 16px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Extract again anyway</button>
           <span style={sx("font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so this adds a second entry with the same colours.</span>
         </div>
       </div>
@@ -1577,7 +1579,7 @@ function AssignDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Move to project</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close move-to-project" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close move-to-project" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px 22px 0;display:flex;flex-direction:column;gap:6px')}>
           {assign.options.map((o) => (
@@ -1590,7 +1592,7 @@ function AssignDialog({ vals }) {
         <div style={sx('padding:16px 22px 22px;margin-top:8px;border-top:1px solid var(--line)')}>
           <label style={sx('font-family:Neue Montreal;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
-            <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line-strong);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
+            <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Create &amp; move</button>
           </div>
         </div>
@@ -1612,11 +1614,11 @@ function ManageDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Projects</span>
             <span style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 20px; letter-spacing: -.01em; color: var(--on-surface); text-transform: capitalize")}>Manage projects</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px 22px 4px')}>
           <div style={sx('display:flex;gap:8px')}>
-            <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line-strong);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
+            <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
           </div>
         </div>
@@ -1628,7 +1630,7 @@ function ManageDialog({ vals }) {
             <div key={pr.id} style={sx('display:flex;align-items:center;gap:8px')}>
               <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
               <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:none;white-space:nowrap')}>{pr.count}</span>
-              <button type="button" data-ix="solid" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>

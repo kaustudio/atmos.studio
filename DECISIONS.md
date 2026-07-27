@@ -326,3 +326,49 @@ survive in the code.
 **Not kept:** `tonalRange`, the compression of the ramp toward each orb's mean. It existed because a
 full-strength tonal ramp reads as a second, disagreeing light once hue is gone. In colour the ramp
 reads as hue travel and wants its full spread, so it went back with the rest.
+
+---
+
+## 2026-07-27 — The quiet button tier is gone, and the control edge is 3:1
+
+**Decision:** there are two action tiers, not three. Primary is filled; everything else unfilled is
+`secondary` — same ink (`--on-surface`), same weight (500), same edge. The system's control edge is
+`--action-line` at 50% ink, climbing to 62% on hover and 72% on press, and every interactive
+boundary in the app takes those three: `button-006`'s own default, the emphasis variants, the
+`[data-ix="solid"]` chrome buttons, the segmented-toggle containers, the pager, the text inputs, the
+glass CTA on the landing. Static pills, badges and dividers keep the old 15% hairline.
+
+**Why the tier went.** `utility` was muted ink (`--on-surface-muted`) at weight 400, used for the
+copy actions, the theme switch and the file pair. It passed at rest — 5.55:1 in light — and failed
+the moment you pointed at it. Its own hover tint darkened the ground under ink that stayed muted,
+landing at **4.00:1 against the 4.5:1 that SC 1.4.3 asks of body text, and 3.33:1 on press.** A
+control that is legible until you reach for it is not legible. Bringing the ink up to `--on-surface`
+was the only fix, and full ink at weight 400 on the same edge is just a secondary button set
+slightly wrong — so the tier went rather than got patched.
+
+**Why the edge moved off 15%.** These buttons have no fill at rest, so the border is not decoration:
+it is the only thing that says "control" rather than "label", which is what SC 1.4.11 measures at
+3:1. The 15% baseline was **1.36:1 in light, 1.50:1 in dark**. 42% (the old `secondary`) was 2.61:1
+in light — also short. 50% is the first step that clears 3:1 on both page surfaces in both themes
+with margin. Measured from the live tokens after the change:
+
+| | light (surface / raised) | dark (surface / raised) |
+|---|---|---|
+| edge, rest | 3.27 / 3.31 | 4.88 / 4.70 |
+| edge, hover | 4.73 / 4.80 | 6.89 / 6.48 |
+| edge, press | 6.59 / 6.74 | 8.92 / 8.26 |
+| label, rest → hover → press | 15.94 → 11.49 → 9.60 | 16.57 → 10.61 → 8.04 |
+
+Hover and press had to move too: at 38%/48% they sat *below* the new rest, so the edge would have
+weakened under the pointer — the feedback inverted. `[data-ix="solid"]`'s `!important` border-colour
+states were part of that same fix.
+
+**What replaced the hierarchy the weight used to carry.** Position. Each action row divides on a
+hairline by CONSEQUENCE — ahead of it the acts that leave something behind (Export, Add to project),
+behind it the ones that only read the palette back to you (Contrast, Hex list, CSS variables, Share
+link) — and the result view and the fullscreen detail footer now carry the same row in the same
+order. Grouping costs no contrast to express; weight did.
+
+**If "make the copy buttons quieter" comes up again:** it is a contrast change, not a visual one. The
+numbers above are what it has to beat, and the muted-ink-on-hover-tint failure is what it will hit.
+Quieter is available in *position* and *fill* — never in ink or weight.
