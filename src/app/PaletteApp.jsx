@@ -138,6 +138,18 @@ export default class PaletteApp extends React.Component {
   // and the largest ring→ring gap, same units: g tracks the viewport width, so without a ceiling the
   // rings drift apart into two unrelated arcs on big displays (3.2 diameters on a 16", 3.9 at 1080p).
   ORB_RING_GAP_MAX = 2.2;
+  // The widest viewport the formation will SIZE ITSELF to. Past this the rings stop growing and the
+  // extra width becomes margin instead of gap.
+  // ORB_RING_GAP_MAX bounds the ring→ring interval but nothing bounded the copy→ring one, and that
+  // one is a third of the leftover half-viewport, so it grew without limit: 2.19 orb diameters at
+  // 1440, 2.66 at 1728, 3.62 at 2000, 5.05 at 1440p, 7.63 on a 3440 ultrawide — a 1049px hole
+  // between the copy and the first ring, with the slide-out then pushing every radius further out
+  // still. The formation was spanning the display and had nothing left to span it WITH.
+  // 1728 is the 16" MacBook Pro's default logical width, chosen so that screen and everything below
+  // it is untouched to the pixel (the clamp is a no-op there). A 16" run at a scaled "More Space"
+  // resolution reports wider than this and is treated as a large display, which is correct — what
+  // matters is the CSS pixels the formation has to fill, not the diagonal.
+  ORB_SPAN_MAX = 1728;
 
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }
   // Is the landing surface on screen? On phones it always is: the tool needs room the viewport

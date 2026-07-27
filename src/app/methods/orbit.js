@@ -281,10 +281,18 @@ export const orbitMethods = {
      crowding the copy at 0.55 diameters while the tall viewport sat empty above and below them,
      which is both halves of the same bug. In landscape the longer edge IS the width, so every
      desktop and landscape-tablet geometry is unchanged to the pixel; only portrait moves, and it
-     moves to the arrangement the rule always described. */
+     moves to the arrangement the rule always described.
+
+     It is also CLAMPED, at ORB_SPAN_MAX. Spanning the viewport is the right instinct up to a point
+     and past that point it is the failure: the copy→ring gap is a third of whatever half-viewport
+     is left over, so on a big display it ran to 5 and then 7.6 orb diameters and opened a hole in
+     the middle of the formation wide enough to lose the hero in. Beyond the clamp the rings hold
+     their 16" geometry and the extra width is simply margin — the formation stops trying to reach
+     the edges of a display it has no business filling. Everything at or below the clamp is
+     untouched to the pixel, which is what makes this safe to have added late. */
   _ringGeom(vw, vh) {
     const rings = this._rings(), edge = Math.min(vw, vh) || 720;
-    const span = Math.max(vw, vh) || 1440;
+    const span = Math.min(Math.max(vw, vh) || 1440, this.ORB_SPAN_MAX);
     const sizeK = Math.min(1.35, Math.max(0.66, edge / 720));
     const px = rings.map((r) => r.size * sizeK);
     const last = rings.length - 1;
@@ -907,8 +915,8 @@ export const orbitMethods = {
           equalising the counts; both are load-bearing, and changing them is a contract amendment,
           not a tweak.
        4. GEOMETRY (_ringGeom) — radii are SOLVED, not configured. A base gap g is sized off the
-          LONGER edge: span = max(vw,vh), g = (span/2 − px_last − _heroReach() − Σ inner diameters)
-          / ringCount. The copy→ring0 interval is g; every ring→ring interval is g ·
+          LONGER edge, clamped: span = min(max(vw,vh), ORB_SPAN_MAX), g = (span/2 − px_last −
+          _heroReach() − Σ inner diameters) / ringCount. The copy→ring0 interval is g; every ring→ring interval is g ·
           ORB_RING_GAP_MUL (1.75), so the rings read as separate depths rather than one thick band.
           Both bounds on g are expressed against the ORB, never in absolute px, because the same
           pixel count reads differently at 55px and 113px: floor ORB_MIN_GAP_MUL (0.55 diameters),
@@ -919,6 +927,13 @@ export const orbitMethods = {
           the copy→ring gap grows. The outer ring is deliberately NOT pinned to the viewport: it runs
           off the long axis, and being true circles it leaves the short one too. That overflow is
           the intended read, not a fit failure.
+          AMENDED (ORB_SPAN_MAX): span is clamped to 1728. ORB_RING_GAP_MAX bounded the ring→ring
+          interval and nothing bounded the copy→ring one, which is a third of the leftover
+          half-viewport and so grew without limit — 2.19 orb diameters at 1440, 2.66 at 1728, 3.62
+          at 2000, 5.05 at 1440p and 7.63 on a 3440 ultrawide, where the hole between the copy and
+          the first ring reached 1049px. Spanning the viewport is the right instinct only while the
+          formation has enough orbs to span it with. Past the clamp the rings keep their 16"
+          geometry and the surplus width is margin. At or below it nothing changes by a pixel.
           AMENDED: span was vw. Against the width the numerator is what remains after the hero and
           the orbs are paid for, and in PORTRAIT the hero alone is most of the half-width, so it went
           negative and g fell to its floor — the rings crowded the copy at 0.55 diameters while the
@@ -930,7 +945,8 @@ export const orbitMethods = {
           longer they would balloon on wide, short screens.
           Recomputed on resize AND whenever the hero's own box changes, which is not the same event:
           _heroReach() is a DOM measurement, and a reach taken before the webfont lands is one no
-          viewport event will ever correct. See o.reachWatch.
+          viewport event will ever correct — 213 at build against 263 settled, on this machine. See
+          o.reachWatch, whose comment also records what that observer is NOT for.
        5. RING PARALLAX + FLOAT — depth is per ring (size, blur, opacity, brightness, saturate, z,
           dep), never per orb and never from cos(angle); written ONCE on build and resize, so the
           tick writes position only. Float is front-ring only and a whisper: amplitude dia·0.03,
@@ -1001,13 +1017,18 @@ export const orbitMethods = {
        §4's radii are built on _heroReach(), which is a DOM measurement, and the tick re-derives the
        geometry on a viewport change and on nothing else — so a reach taken before the copy has its
        final box is the reach the formation keeps for the entire visit, with no event that will ever
-       correct it. On a portrait tablet that landed as every ring collapsed onto the copy; a 1px
-       resize snapped it right, which is the whole diagnosis. The marks' own box changing IS the
-       signal that the reach is stale, and watching them catches the webfont swap, a late reflow and
-       a copy change alike, where a one-shot fonts.ready would only catch the first.
+       correct it. Measured on this machine the reach is 213 at build and 263 once the webfont has
+       landed: a 50px error in every radius, silently kept. The marks' own box changing IS the signal
+       that the reach is stale, and watching them catches the font swap, a late reflow and a copy
+       change alike, where a one-shot fonts.ready would only catch the first.
        src/notfound/main.js follows its heading for exactly this reason. The first callback fires
        immediately on observe and re-solves with the numbers we already have, which is harmless —
-       dress() is idempotent and the radii fall out of the formula on the next tick regardless. */
+       dress() is idempotent and the radii fall out of the formula on the next tick regardless.
+       NOT what this fixes, despite the commit that added it saying so: a formation that renders as a
+       small torus piled on the copy is not this. That is the particles still springing out from the
+       origin, because rAF — and so the one ticker driving them — is throttled while the tab or the
+       preview pane is hidden. It resolves itself the moment the page is actually visible, and no
+       geometry is wrong when it happens. Check document.visibilityState before diagnosing it. */
     const reachMarks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')];
     if (reachMarks.length && typeof ResizeObserver !== 'undefined') {
       o.reachWatch = new ResizeObserver(() => {
