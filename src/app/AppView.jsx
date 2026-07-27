@@ -823,7 +823,7 @@ function FeedSection({ vals }) {
             the same tokens and the same 16px gap as the rows, and it ends on the same action
             gutter, which is what puts the labels directly over their numbers. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Sort palettes" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;padding:0 var(--row-inset) 7px')}>
+          <div role="group" aria-label="Sort palettes" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;padding:0 var(--row-cell-inset) 7px var(--row-inset)')}>
             {/* the strip and identity tracks carry no label — one spacer spanning both, so the
                 header is laid out by the SAME template as the rows rather than by a flex child
                 that happens to end in the right place */}
@@ -854,7 +854,7 @@ function FeedSection({ vals }) {
                 </>)}
               </div>
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
-                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={{ ...col.style, width: 'auto' }}>
+                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={col.style}>
                   <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
                 </button>
               ))}
@@ -884,10 +884,11 @@ function FeedSection({ vals }) {
                 {/* One row, one job: recognition. The detail surface is the overview panel above —
                     this row's only output is "which palette", so it holds a fixed height and every
                     child stays on a single line. Nothing here may grow the row. */}
-                {/* No padding here: it is in global.css, because the right half of it is a hover
-                    state (the gutter the row opens for its buttons) and an inline style cannot be
-                    one — nor be overridden by the rule that is. Everything static stays inline. */}
-                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height)')}>
+                {/* 16 on the left, 8 on the right — and the same 16px margin on both, because the
+                    trailing cell carries the other 8 itself (--row-cell-inset). Splitting it that
+                    way is what lets the last column's value and its header label share one right
+                    edge while the header's hover tint stays symmetrical around its own label. */}
+                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-cell-inset) 12px var(--row-inset)')}>
                   {/* The colour IS the row's identity — people recognise a palette by how it looks,
                       not by an auto-generated name. So the strip leads and carries the mass: 24px
                       tall, which with the 12px padding is exactly --row-list-height, making the
@@ -910,11 +911,10 @@ function FeedSection({ vals }) {
                       elastic child and quietly owned every pixel the metrics did not use (520 of
                       them at 1440, most of it empty). As one cell on the 2fr track it takes a
                       declared share instead of the remainder, and the metric columns get theirs. */}
-                  {/* overflow:hidden because this cell is the one that PAYS for the hover gutter —
-                      it is the 1fr track, so it is what narrows. The name and the chip are flex:none
-                      and would otherwise spill into the AA column on a window narrow enough that
-                      82px is more than the cell's slack. Clipped is recoverable; overlapping two
-                      columns is not. */}
+                  {/* overflow:hidden because this cell is the 1fr track: it absorbs every width the
+                      fixed columns do not take, so it is the one that runs out. The name and the
+                      chip are flex:none and would otherwise spill into the AA column on a narrow
+                      window. Clipped is recoverable; overlapping two columns is not. */}
                   <div style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
                   {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
                       but at the same medium weight the filter panel gives its facet names. Both are
@@ -963,16 +963,18 @@ function FeedSection({ vals }) {
                   <span style={c.contrastCell}>{c.contrastValueText}</span>
                   {/* absolute stamp as the value, relative as the hover layer; the row's aria
                       sentence still ends "Generated 3h ago", so both forms reach every modality.
-                      It is the last DATA column, not the last column — the buttons have their own
-                      track after it, so it keeps its ink at full strength while they are shown. */}
-                  <span style={c.timeCell} title={c.timeRel}>{c.time}</span>
+                      data-row-time is the hook for the one movement in this row: on hover it steps
+                      one gutter left, into room its own column already holds, and hands the margin
+                      to the buttons. It is the only column allowed to move, which is why it is the
+                      only one that carries a hook. */}
+                  <span data-row-time="1" style={c.timeCell} title={c.timeRel}>{c.time}</span>
                 </div>
               </div>
-              {/* The buttons land on the row's own inset, in the gutter the row opens for them on
-                  hover (global.css). Their vertical centring and their arrival travel live there
-                  too — one transform cannot be half inline and half in a stylesheet, and the half
-                  that is a state has to be the one that wins. Only what is static about them is
-                  here. 6px apart, unchanged. */}
+              {/* The buttons land on the row's own inset — the margin the stamp holds at rest and
+                  hands over while the pointer is here. Their vertical centring and their arrival
+                  travel live in global.css: one transform cannot be half inline and half in a
+                  stylesheet, and the half that is a state has to be the one that wins. Only what is
+                  static about them is here. 6px apart, unchanged. */}
               <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconFolder />
               </button>
