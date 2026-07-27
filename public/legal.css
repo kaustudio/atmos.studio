@@ -116,6 +116,13 @@ a{color:inherit}
    as the page's own statement rather than as the first paragraph of the document under it. */
 .legal-hero__inner{
   grid-column:1 / -1;
+  /* width:100% is load-bearing, and the reason is easy to miss: margin-inline:auto on a GRID item
+     stops it stretching and makes it shrink-to-fit instead. Without this the hero collapsed to its
+     widest child's constraint — .legal-hero__sub's 34em — so it measured 544px against the article's
+     640 and the headline sat 48px right of the copy below it. Stating the width restores the measure
+     as the thing that decides the box, which is what puts the h1, the intro and the article on one
+     left edge. .toc-article carries it for the same reason. */
+  width:100%;
   max-width:var(--measure);
   margin-inline:auto;
   padding:56px 0 40px;
@@ -166,7 +173,7 @@ a{color:inherit}
   padding:56px var(--page-gutter) 96px;
   position:relative;
 }
-.toc-article{grid-area:1/1;max-width:var(--measure);margin-inline:auto;min-width:0}
+.toc-article{grid-area:1/1;width:100%;max-width:var(--measure);margin-inline:auto;min-width:0}
 
 .toc-sidebar{
   grid-area:1/1;
