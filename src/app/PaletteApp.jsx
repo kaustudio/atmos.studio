@@ -208,8 +208,15 @@ export default class PaletteApp extends React.Component {
     };
     document.addEventListener('keydown', this._onKey);
     // input-modality tracking: keyboard sets the flag, pointer clears it — centerOnTile is gated on it
-    this._onModKey = (e) => { if (e.key === 'Tab' || e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End') this._kbdInput = true; };
-    this._onModPtr = () => { this._kbdInput = false; };
+    // The same fact is mirrored onto the root as data-kbd, which is the only way CSS can know it:
+    // the text field's focus ring hangs off it (global.css), so a click leaves the field alone and a
+    // Tab still lands visibly. Tab ONLY, not the arrow keys the flag also takes — arrows move a
+    // caret inside a field, and a focus ring appearing mid-sentence is not keyboard navigation.
+    this._onModKey = (e) => {
+      if (e.key === 'Tab' || e.key.startsWith('Arrow') || e.key === 'Home' || e.key === 'End') this._kbdInput = true;
+      if (e.key === 'Tab') document.documentElement.setAttribute('data-kbd', '');
+    };
+    this._onModPtr = () => { this._kbdInput = false; document.documentElement.removeAttribute('data-kbd'); };
     document.addEventListener('keydown', this._onModKey, true);
     document.addEventListener('pointerdown', this._onModPtr, true);
     // (Removed with the inline row expansion: a window-level wheel listener that scaled the expanded

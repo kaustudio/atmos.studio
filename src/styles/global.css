@@ -15,9 +15,14 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-focus="card"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 [data-focus="swatch"]:focus-visible{box-shadow:inset 0 0 0 4px #ffffff,inset 0 0 0 8px #1a1a1a}
 [data-focus="value"]:focus-visible{outline:none;box-shadow:inset 0 0 0 3px #ffffff,inset 0 0 0 6px #1a1a1a}
-/* text fields: a browser focuses these on click as well as by keyboard, so the chrome ring would
-   box the field every time you land in it. The underline the field already carries thickens instead. */
-[data-focus="field"]:focus-visible{outline:none;box-shadow:inset 0 -2px 0 var(--on-surface)}
+/* Text fields are the one place :focus-visible is not enough on its own: a browser matches it on a
+   text input however you got there, because typing is expected — so clicking into the search field
+   drew a 2px underline under a field that was already bordered, backgrounded and holding a caret.
+   Three signals for one fact, and only one of them was asked for.
+   So this ring is gated on data-kbd, which the app already knows: the input-modality tracking in
+   PaletteApp sets it on Tab and clears it on any pointer press. Click and there is no ring — the
+   caret says where you are. Tab and it is there, which is the case WCAG 2.4.7 is actually about. */
+:root[data-kbd] [data-focus="field"]:focus-visible{outline:none;box-shadow:inset 0 -2px 0 var(--on-surface)}
 
 /* ===== interaction-state contract — ONE declarative mechanism, token-driven, eased with --ease-standard.
    Full set per control: rest · hover · focus-visible (above) · active · disabled · selected.
@@ -94,7 +99,35 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --row-list-height:48px;
   /* The comparison columns. These are the whole reason the list is comparable: the sort header and
      every row read the SAME width from here, so the cells stack into a true column. Two inline
-     copies of "200px" would align until the first person edited one of them. */
+     copies of "200px" would align until the first person edited one of them.
+     The widths below are MINIMA now, not settled sizes — see --row-grid. */
+  --row-strip-col:160px;      /* the palette strip: the row's anchor, fixed so strips compare */
+  /* The row's inset — the palette's left margin, and now the timestamp's right one. The row is
+     symmetrical about this: the two things that end it are the same distance from its edges. */
+  --row-inset:16px;
+  /* The two row buttons: 30 + 6 + 30, the pair and the space between them, nothing added. They are
+     NOT a column of their own. A sixth track put them past the date, which is the one place they
+     cannot go if the date is to hold the row's right margin — so their space is reserved inside the
+     trailing column instead (see --row-time-col), and the date keeps the edge. */
+  --row-action-col:66px;
+  /* How far the button pair sits from the row's right edge: the inset the date keeps, plus the
+     stamp's own width, plus one grid gap. That is the left edge of the timestamp's narrowest
+     possible box — so the widest stamp the cell can hold still clears the buttons by a full gap,
+     and nothing has to know how wide today's date happens to render. */
+  --row-action-offset:calc(var(--row-inset) + var(--row-time-ink) + 16px);
+  /* THE ROW GRID. One template, read by the sort header and by every row, so a column cannot exist
+     in one and not the other. The metric columns are minmax(min, 1fr): they never fall below the
+     width their own label needs, and above that they divide the free space EQUALLY, which is what
+     stops the three of them from huddling in the last 320px of a 1392px row with half a screen of
+     dead air in front of them. The identity column takes 2fr — it holds a name, a chip and a tag
+     list, so it deserves the larger share, but it is on the same grid rather than being the one
+     elastic child that swallowed everything left over. */
+  --row-grid:
+    var(--row-strip-col)
+    minmax(0, 2fr)
+    minmax(var(--row-aa-col), 1fr)
+    minmax(var(--row-contrast-col), 1fr)
+    minmax(var(--row-time-col), 1fr);
   /* AA pairs and max contrast are two unrelated measurements, so they get two independent
      columns rather than one shared cluster — each sized for its own header label and value. */
   --row-aa-col:104px;         /* AA verdict badge + the pair count */
@@ -106,9 +139,18 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      AA pairs and Max contrast already keep with their values. */
   --row-aa-mark:35px;
   --row-contrast-col:88px;    /* the maximum contrast ratio */
-  --row-time-col:96px;        /* the trailing timestamp column — sized for the widest value the
-                                 cell can hold, a same-day da-DK stamp ("14.06.26, 14.32"); a column
-                                 that only fits its narrowest value is a column that jitters */
+  --row-time-ink:100px;       /* the stamp itself — sized for the widest value the cell can hold, a
+                                 same-day da-DK stamp ("14.06.26, 14.32"), which measures 100px in
+                                 the cell's own 9px tabular mono; a column that only fits its
+                                 narrowest value is a column that jitters. Everything that must
+                                 clear the stamp is derived from this, so it has to be the real
+                                 width and not a round number near it. */
+  /* The trailing column is the stamp PLUS the buttons that appear beside it, because they share it:
+     the stamp holds the column's right edge (and with it the row's margin, matching the palette on
+     the left), the buttons sit at the column's left, one grid gap apart. Reserving both in the
+     column's minimum is what guarantees they never meet, at any width — the alternative, giving the
+     buttons the last track, is what put them past the date and took the margin away from it. */
+  --row-time-col:calc(var(--row-time-ink) + 16px + var(--row-action-col));
   /* ===== status tokens (pass / partial / fail) =====
      The system is monochrome by design, so status is NEVER a hue: pass is FILLED (inverted, the
      strongest treatment the system owns), partial is OUTLINED at secondary edge strength, fail is
@@ -129,11 +171,11 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --status-none-surface:transparent;
   --status-none-ink:var(--on-surface-muted);
   --status-none-line:color-mix(in srgb,var(--on-surface) 15%,transparent);
-  /* The row's right-hand action gutter, permanently reserved. It used to be opened on hover, which
-     slid that row's columns 74px left while its neighbours stayed put — fine when the right edge
-     held a timestamp nobody compared, unreadable once the columns became the point. The buttons
-     still FADE in on hover; only the space they need is now always there. */
-  --row-action-gutter:92px;
+  /* The row's right-hand gutter is no longer a gutter at all. As padding it took 92px off the end
+     of the row and the metrics simply started 92px earlier, still bunched. As a sixth track it let
+     the columns divide the space evenly, but it stood between the timestamp and the row's edge, so
+     the date could never hold the margin the palette holds on the left. It is neither now: the
+     buttons are reserved INSIDE the trailing column, and the row ends on the date. */
   /* ===== action emphasis (three tiers) — what a control is FOR, not what it looks like.
      Every value below resolves through the chrome tokens above, so the tiers re-theme with
      everything else and no tier owns a colour of its own. Emphasis is never carried by colour
@@ -286,12 +328,14 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
 /* click-to-zoom lightbox (squared — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
-/* The gutter is reserved in the row's own padding now (--row-action-gutter), not opened on hover:
-   a row that reflows under the pointer cannot hold a column. Only the buttons still fade. */
+/* The buttons live in their own grid column (--row-action-col), so they cover nothing when they
+   arrive and the row does not reflow under the pointer: the space is always there, only the ink
+   fades in. The date stays readable while they are on screen, which is the whole point of giving
+   them a column instead of the last one's slot. */
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto}
 [data-info]{opacity:1;transition:opacity .16s var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
-   are always visible & tappable, and the row reserves the button gutter permanently. */
+   are always visible & tappable. Nothing else changes — their column is reserved either way. */
 @media (hover:none),(pointer:coarse){
   [data-del]{opacity:1;pointer-events:auto}
   [data-info]{opacity:1}

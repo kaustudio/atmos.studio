@@ -811,18 +811,23 @@ function FeedSection({ vals }) {
             the same tokens and the same 16px gap as the rows, and it ends on the same action
             gutter, which is what puts the labels directly over their numbers. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Sort palettes" style={sx('display:flex;align-items:center;gap:16px;width:100%;padding:0 var(--row-action-gutter) 7px 16px')}>
-            <span aria-hidden="true" style={sx('flex:1;min-width:0')}></span>
-            {/* AA PAIRS owns its column: the ⓘ sits over the badge below it (both are the "what is
-                this" anchor), the sort label right-aligns over the pair count. Sorting still runs
-                on the true numbers, never on the badge.
+          <div role="group" aria-label="Sort palettes" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;padding:0 var(--row-inset) 7px')}>
+            {/* the strip and identity tracks carry no label — one spacer spanning both, so the
+                header is laid out by the SAME template as the rows rather than by a flex child
+                that happens to end in the right place */}
+            <span aria-hidden="true" style={sx('grid-column:span 2;min-width:0')}></span>
+            {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
+                ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
+                on the badge.
 
-                The ⓘ takes the badge's own slot (--row-aa-mark) and right-aligns in it, so marker
-                and badge end on ONE edge instead of merely starting on one — the same trailing
-                alignment the pair count keeps under this label and the ratio keeps under MAX
-                CONTRAST. Every edge in the column is now a right edge. */}
-            <div style={sx('width:var(--row-aa-col);flex:none;display:inline-flex;align-items:center;gap:8px')}>
-              <div style={sx('position:relative;display:inline-flex;justify-content:flex-end;width:var(--row-aa-mark);flex:none')}>
+                The ⓘ used to be pinned to the far left of the column, right-aligned in the badge's
+                own 35px slot so the two shared an edge. That worked while the column was 104px
+                wide and the badge was pinned left to match. Now the column takes a share of the
+                row, and anything pinned to its left edge would stand a track-width away from the
+                thing it labels — so the marker goes where its meaning is, next to the label, and
+                the column keeps its ONE right edge: label over count, both flush. */}
+            <div style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
+              <div style={sx('position:relative;display:inline-flex;flex:none')}>
                 <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--line-strong);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.aaInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
@@ -837,7 +842,7 @@ function FeedSection({ vals }) {
                 </>)}
               </div>
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
-                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={{ ...col.style, marginLeft: 'auto' }}>
+                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={{ ...col.style, width: 'auto' }}>
                   <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
                 </button>
               ))}
@@ -867,7 +872,7 @@ function FeedSection({ vals }) {
                 {/* One row, one job: recognition. The detail surface is the overview panel above —
                     this row's only output is "which palette", so it holds a fixed height and every
                     child stays on a single line. Nothing here may grow the row. */}
-                <div data-row-main="1" style={sx('display:flex;align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-action-gutter) 12px 16px')}>
+                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-inset)')}>
                   {/* The colour IS the row's identity — people recognise a palette by how it looks,
                       not by an auto-generated name. So the strip leads and carries the mass: 24px
                       tall, which with the 12px padding is exactly --row-list-height, making the
@@ -882,9 +887,15 @@ function FeedSection({ vals }) {
                       thumbnail, "No reference" box, universe card) — quiet by system decision, and
                       matching that decision beats inventing a heavier border no sibling has.
                       box-sizing is border-box globally, so the box stays exactly 160×24. */}
-                  <div aria-hidden="true" style={sx('display:flex;width:160px;height:24px;flex:none;border:1px solid var(--line)')}>
+                  <div aria-hidden="true" style={sx('display:flex;width:100%;height:24px;border:1px solid var(--line)')}>
                     {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
                   </div>
+                  {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
+                      four siblings of the row itself, which meant the tag list was the row's single
+                      elastic child and quietly owned every pixel the metrics did not use (520 of
+                      them at 1440, most of it empty). As one cell on the 2fr track it takes a
+                      declared share instead of the remainder, and the metric columns get theirs. */}
+                  <div style={sx('display:flex;align-items:center;gap:16px;min-width:0')}>
                   {/* Secondary: down a step (16 → 13) and to regular weight. Still full --on-surface
                       ink, not muted — it is the row's only text identifier and the one thing a
                       screen reader leads with; subordination comes from size and weight, which is
@@ -901,8 +912,9 @@ function FeedSection({ vals }) {
                     <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size: 9px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
                       <span style={sx('width:7px;height:7px;background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
                   )}
-                  {/* the one flexible child — it absorbs every difference in name length, so that
-                      everything after it lands at a fixed offset from the row's right edge.
+                  {/* the flexible child WITHIN identity — it absorbs every difference in name
+                      length, so the cell's own contents settle without moving the columns beside
+                      it (they are grid tracks now, and no amount of name is a bid on them).
                       Filter-in-context: each tag is a button riding above the stretched hit
                       surface (z2 over z1) — clicking a tag filters, clicking anywhere else loads
                       the palette. Same quiet voice as before; the active tag steps up in weight
@@ -912,6 +924,7 @@ function FeedSection({ vals }) {
                       <button key={di} type="button" data-ix="press" data-focus="chrome" disabled={c.disabled} aria-pressed={d.pressed} aria-label={d.aria} onClick={d.onClick} style={{ ...c.tagBtnBase, ...(d.on ? c.tagOn : c.tagOff) }}>{d.text}</button>
                     ))}
                   </span>
+                  </div>
                   {/* the accessibility cluster — verdict first, numbers second. The badge is the
                       primary signal: fill AND glyph change per state (never colour alone), and a
                       reader who has never heard of 4.5:1 still gets pass / partial / fail. The
@@ -927,14 +940,22 @@ function FeedSection({ vals }) {
                   {/* MAX CONTRAST — a separate measurement, so a separate column */}
                   <span style={c.contrastCell}>{c.contrastValueText}</span>
                   {/* absolute stamp as the value, relative as the hover layer; the row's aria
-                      sentence still ends "Generated 3h ago", so both forms reach every modality */}
+                      sentence still ends "Generated 3h ago", so both forms reach every modality.
+                      It is the last DATA column, not the last column — the buttons have their own
+                      track after it, so it keeps its ink at full strength while they are shown. */}
                   <span style={c.timeCell} title={c.timeRel}>{c.time}</span>
                 </div>
               </div>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:52px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              {/* The buttons sit INSIDE the trailing column, at its left, with the stamp holding
+                  its right edge — one --row-action-offset from the row's edge, which is the inset
+                  the date keeps plus the stamp's own width plus a grid gap. They are absolute
+                  rather than grid children so they can lie above the row's full-bleed hit target;
+                  the offset is grid arithmetic all the same, and the column's minimum reserves the
+                  space, so the two can never meet. 6px apart, unchanged. */}
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:calc(var(--row-action-offset) + 36px);transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:16px;transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="solid" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;top:calc(var(--row-list-height) / 2);right:var(--row-action-offset);transform:translateY(-50%);z-index:6;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
@@ -1210,6 +1231,19 @@ function DetailOverlay({ vals }) {
 // on ONE reversible timeline (overlays.js drives it), Escape/backdrop/Close all reverse. What the
 // dropdown could never afford, the drawer spends on context: every tag with the dominant colour of
 // every palette that carries it — the tag's meaning shown in ink before it is clicked.
+// The facet row's name, shared by both groups — they are one grammar, so they are one style, at one
+// size. The accessibility states briefly sat two steps smaller than the tag names; a row is a row
+// whichever group it is in, and the panel reads as one list of choosables only if they match.
+// Capitals, not caps: a filter list is a list of NAMES (Flexible, Saturated, Coastal), and uppercase
+// made them read as labels of something rather than the things themselves. The system keeps
+// uppercase for what it has always meant here — chrome that labels a control (ARCHIVE FILTER,
+// COUNT, A–Z) — so dropping it from the names is what tells the two apart at a glance.
+// Medium at every state, not 400→500 on selection: the name is the row's subject and now outranks
+// its count and its example by weight instead of by having been clicked. Selection is carried by
+// the checkbox, which changes shape, fill AND glyph (SC 1.4.1), and by aria-pressed — the weight
+// step was never the accessible signal, only a second one.
+const facetLabelStyle = sx('font-family:Neue Montreal;font-size:13px;letter-spacing:var(--track-flat);text-transform:capitalize;white-space:nowrap;flex:none;font-weight:500');
+
 function TagFilterDrawer({ vals }) {
   if (!vals.facetOpen) return null;
   return (
@@ -1230,19 +1264,25 @@ function TagFilterDrawer({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
             {/* "Tags" is now one group among several, so the title names the surface, not a group */}
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
-            {/* the panel covers the right of the list, so it reports the result size itself */}
-            <span role="status" aria-live="polite" style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);font-variant-numeric:tabular-nums')}>{vals.matchLabel}</span>
+            {/* The match count is no longer printed under the title — the list it counts is right
+                there, undimmed, and the counts on the rows below are the same fact at the grain you
+                are actually choosing at. It stays as a live region, because that reasoning depends
+                on SEEING the list re-filter: a screen reader user gets no such feedback from a
+                panel that quietly narrows something behind it. Same words, no pixels. */}
+            <span role="status" aria-live="polite" style={liveRegionStyle}>{vals.matchLabel}</span>
           </div>
           <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-tg-sec="1" style={sx('padding:14px 22px 2px')}>
-          {/* PANEL-LEVEL only. This line sits above every group, so it may say nothing that is true
-              of just one of them — the previous copy described tags while sitting over
-              Accessibility. Each group states its own count semantics at its own heading, because
-              the two genuinely differ: tags AND together (adding one narrows), accessibility ORs
-              (adding one widens). One sentence cannot honestly cover both. */}
-          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Filter groups combine — a palette must match every group you use.</span>
+          {/* ONE paragraph for the whole panel now. It used to be panel-level only, on the rule that
+              a line above every group may say nothing true of just one of them — and each group
+              then carried its own heading and its own note. With those headings gone, that rule has
+              nothing left to protect: there is no second place for the accessibility semantics to
+              live, and stating them here is what keeps them stated at all. The order does the
+              scoping the headings used to: the combine rule (both groups), then the three states
+              and their counts (the group directly beneath it). */}
+          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Filter groups combine — a palette must match every group you use. {vals.a11yNote}</span>
         </div>
 
         {/* ACCESSIBILITY — a facet, and the first one, because "can I build with this?" outranks
@@ -1252,36 +1292,32 @@ function TagFilterDrawer({ vals }) {
             rules as the tag rows — one grammar for every facet. */}
         {vals.hasA11yOptions && (
           <div data-tg-sec="1" style={sx('padding:18px 22px 0')}>
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Accessibility</span>
-            {/* OR semantics stated where they apply. "Would remain if you added" would be FALSE
-                here: with Limited selected, adding Flexible gives the union (21), not Flexible's
-                own 14. So this group's counts are described as what they actually are — the size
-                of each state within the current tag scope — which holds in every selection state. */}
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding:4px 0 8px;text-wrap:pretty')}>A palette is in one state, so choosing more than one widens. Counts are how many palettes are in each.</span>
+            {/* No eyebrow, no note of its own — both moved into the panel's one paragraph above.
+                The group keeps its name for assistive tech on the role="group" below, which is
+                where it was always doing the load-bearing work. */}
             <div role="group" aria-label="Filter by accessibility" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {vals.a11yOptions.map((o) => (
                 <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
                   <FacetMark active={o.active} unavailable={o.disabled} />
-                  <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;flex:none;font-weight:' + (o.active ? 500 : 400))}>{o.label}</span>
+                  <span style={facetLabelStyle}>{o.label}</span>
                   {/* count sits beside its label (F5), not across the row */}
                   <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-                  {/* on an inert row the reason displaces the hint: why you cannot pick it outranks
-                      what picking it would have meant */}
-                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : o.hint}</span>
+                  {/* Nothing at the row's end now but the occasional reason an inert row cannot be
+                      picked. The state's meaning left this line for the note above the group: three
+                      right-aligned fragments, one per row, clipped to whatever the panel had left,
+                      asked the eye to assemble a definition out of a column. */}
+                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        <div data-tg-sec="1" style={sx('padding:18px 22px 0')}>
-          <span style={sx('display:block;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Tags</span>
-          {/* The sentence that used to head the whole panel, moved to the group it actually
-              describes. It stays verbatim because it is still exactly true here: tags AND, so the
-              count shown for a tag IS the result size after adding it — in every selection state,
-              including alongside an accessibility filter. */}
-          <span style={sx('display:block;font-family:Neue Montreal;font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding:4px 0 0;text-wrap:pretty')}>Each tag narrows further. Counts are how many palettes would remain if you added that tag.</span>
-        </div>
+        {/* No heading and no explanation over the tag list. The search field, the Count/A–Z toggle
+            and a column of tag rows say what this is without a label on top of them, and the
+            sentence that used to sit here explained a counting rule that the counts demonstrate the
+            first time you read two of them. The group keeps its accessible name (aria-label on the
+            list below), so nothing is lost to a screen reader. */}
 
         {/* A bordered field, not an underlined line of text — the old styling read as a heading,
             so the one control you are meant to type into did not look like an input. Clear button
@@ -1310,7 +1346,7 @@ function TagFilterDrawer({ vals }) {
                   all change, so it never rests on colour (SC 1.4.1). aria-pressed on the row button
                   carries the same fact to assistive tech. */}
               <FacetMark active={o.active} unavailable={o.disabled} />
-              <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;flex:none;font-weight:' + (o.active ? 500 : 400))}>{o.label}</span>
+              <span style={facetLabelStyle}>{o.label}</span>
               {/* Count belongs to the label, so it sits against it — identical placement and
                   styling to the Accessibility group. It used to be parked in a right-hand column
                   past the strip, which made the same fact read as two different kinds of thing

@@ -21,6 +21,12 @@ const A11Y_TITLE = {
   limited: 'Limited — one or two usable pairings, enough for an accent',
   none: 'None — no usable text/background pairing in this palette',
 };
+// The group note for the Accessibility facet. It lives beside A11Y_TITLE deliberately: it says what
+// the three states MEAN, which is the one thing that must never drift from the titles above it. The
+// rows used to carry these meanings one per line, right-aligned and clipped — three fragments the
+// eye had to assemble. Stated once, in sentences, it is shorter than the sum of the fragments and
+// reads as prose instead of as a legend.
+const A11Y_GROUP_NOTE = 'A palette is in one state, so choosing more than one widens. Flexible builds an interface, Limited carries an accent, None has no usable text pairing. Counts are how many palettes are in each.';
 const A11Y_SPOKEN = {
   flexible: 'flexible for interface use',
   limited: 'limited to an accent',
@@ -246,10 +252,25 @@ export const renderValsMethods = {
     // the demoted timestamp stay muted. The badge carries its own status tokens.
     // paddingRight matches the sort header's own 8px inset, so header text and value text share one
     // right edge while the header's hover tint still has room to breathe around its glyphs
-    const aaCell = { width: 'var(--row-aa-col)', flex: 'none', display: 'inline-flex', alignItems: 'center', gap: '8px', paddingRight: '8px', whiteSpace: 'nowrap' };
-    const metricValue = { marginLeft: 'auto', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { width: 'var(--row-contrast-col)', flex: 'none', textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const timeCell = { width: 'var(--row-time-col)', flex: 'none', textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    // Widths come from the grid track now (--row-grid), not from the cell: a cell that states its
+    // own width inside a wider track sits at the track's START, which would have left every metric
+    // hugging the left of its column while its header hugged the right.
+    // The badge and its count are ONE reading — "no usable pairs", "two usable pairs" — so they
+    // stay adjacent and the pair right-aligns as a unit. Pinning the badge to the column's left
+    // edge was what kept it beside its number while the column was 104px wide; on a column that
+    // takes a share of the row it would strand the badge a track away from the figure it grades.
+    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: '8px', whiteSpace: 'nowrap' };
+    // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
+    // would slide the badge left and right down the list — the one column where a wobble is most
+    // visible, because the badges are a stack of identical glyphs.
+    const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'right', paddingRight: '8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    // No trailing inset, and for a reason none of its neighbours have: this cell ENDS the row, so
+    // its ink is the row's right margin. The 8px the others keep is space before the next column;
+    // adding it here would put the stamp 24px from the edge while the palette sits 16px from the
+    // other one, and the row would not be square. The clearance from the row buttons comes from
+    // the column's own minimum (--row-time-col), not from padding.
+    const timeCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -638,8 +659,10 @@ export const renderValsMethods = {
       const disabled = !active && n > 0 && n === a11yBase.length;
       return {
         key: v, label: A11Y_LABEL[v], count: String(n), active, pressed: active ? 'true' : 'false',
-        hint: A11Y_TITLE[v].split('—')[1].trim(), disabled,
-        reason: disabled ? 'every palette here' : '',
+        // No hint any more — what the state means is said once, above the group (A11Y_GROUP_NOTE).
+        // The reason survives because it says something else entirely: not what this state is, but
+        // why THIS row cannot be picked, which is true of one row at a time and only sometimes.
+        disabled, reason: disabled ? 'Every palette here' : '',
         aria: disabled
           ? 'All ' + n + ' of these palettes are ' + A11Y_LABEL[v].toLowerCase() + ', so this cannot narrow them further'
           : (active ? 'Remove the ' : 'Filter to ') + A11Y_LABEL[v].toLowerCase() + ' accessibility, ' + n + ' palette' + (n === 1 ? '' : 's'),
@@ -828,7 +851,7 @@ export const renderValsMethods = {
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
-      a11yOptions, hasA11yOptions: a11yOptions.length > 0,
+      a11yOptions, hasA11yOptions: a11yOptions.length > 0, a11yNote: A11Y_GROUP_NOTE,
       activeTags, activeA11y,
       showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
@@ -923,11 +946,12 @@ export const renderValsMethods = {
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [
-        // 'aa' sits inside a wrapper that also holds the ⓘ, so it sizes to content; the other two
-        // own their column outright. Each label right-aligns over the values it sorts.
-        { key: 'aa', label: 'AA pairs', w: 'auto' },
-        { key: 'contrast', label: 'Max contrast', w: 'var(--row-contrast-col)' },
-        { key: 'time', label: 'Date', w: 'var(--row-time-col)' },
+        // No widths here any more: the header sits on --row-grid, the same template the rows use,
+        // so each label is sized by the track it lands in. Each right-aligns over the values it
+        // sorts. 'aa' shares its track with the ⓘ that explains the badge.
+        { key: 'aa', label: 'AA pairs' },
+        { key: 'contrast', label: 'Max contrast' },
+        { key: 'time', label: 'Date' },
       ].map((c) => {
         const active = s.sortKey === c.key;
         const desc = active && s.sortDir === 'desc';
@@ -962,9 +986,15 @@ export const renderValsMethods = {
             // which is the one place in the app a control had no inset. The SAME 8px inset is
             // applied to the value cells below (metricValue / contrastCell / timeCell), so the
             // column still aligns on one edge: label and value are both 8px off the column line.
-            width: c.w, flex: 'none',
+            // The button fills its grid track (100%, not a repeated pixel width) and right-aligns
+            // its label inside it, which is what puts the label over the value however wide the
+            // track resolves to. AA's is overridden to auto in AppView — it shares its track with
+            // the ⓘ, so it sizes to content and the pair right-aligns together.
+            width: '100%', minWidth: 0,
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            padding: '4px 8px', border: 'none', background: 'transparent', cursor: 'pointer',
+            // Date drops its trailing 8px to land on the same margin its stamps do — the label and
+            // the value have to share an edge, and that edge is the row's.
+            padding: c.key === 'time' ? '4px 0 4px 8px' : '4px 8px', border: 'none', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
           }),
