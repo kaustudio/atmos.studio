@@ -9,7 +9,7 @@ doesn't know it was ever made.
 ## 2026-07-26 — The site footer, and what it costs the 404
 
 **Decision:** a shared footer — the Atmos Gallery wordmark at full page width between two hairlines,
-over a left/centre/right meta row — closes `privacy.html`, `terms.html` and `404.html`. Not the front
+over a left/centre/right meta row — closes `/privacy`, `/terms` and `404.html`. Not the front
 page: that is the app, and it carries its own chrome. It is `.site-foot` in `public/legal.css`, from a
 design comp supplied as a 1728×418 frame in light and dark.
 
@@ -61,7 +61,7 @@ would re-fit the type mid-scroll.
 **Why the CVR line stayed behind:** `.legal-foot` still closes both legal articles, reduced to the
 controller-identity line alone. Its nav duplicated the new footer and went; the identity did not,
 because it is the E-Commerce Directive Art. 5 trader identification and the comp has no slot for a CVR
-number. On `terms.html` it now restates what *Who you are dealing with* says a few lines above — mild
+number. On `/terms` it now restates what *Who you are dealing with* says a few lines above — mild
 redundancy, kept on purpose rather than trimmed by a footer change.
 
 ---
@@ -132,7 +132,7 @@ international transfer, retention, data-subject rights, children. Previously it 
 readable but formally incomplete.
 
 **Still unverified, and worth pinning down:** Vercel's actual retention periods for access logs and
-aggregated analytics. `public/privacy.html` deliberately describes retention as Vercel's own schedule
+aggregated analytics. `src/legal/privacy.html` deliberately describes retention as Vercel's own schedule
 rather than naming a number nobody had checked. If a figure is ever wanted there, it needs to come
 from Vercel's DPA, not from memory.
 
@@ -234,12 +234,12 @@ vertical room, and the brand mark centred at the top on the line `AppView.jsx` f
 at 18.5px, the same on the landing and in the tool). Privacy and terms set themselves in a centred
 60em column because they are documents meant to be read; this page is wayfinding, and it belongs to
 the same full-bleed grid as the tool it hands you back to. So it is *not* a drift to be tidied up
-into matching `privacy.html`. Two consequences worth knowing: the display type sits flush to the 16px
+into matching the legal routes. Two consequences worth knowing: the display type sits flush to the 16px
 gutter (as the archive rows do), and `body{overflow-x:clip}` is load-bearing — the particle canvas
 deliberately overhangs the type by more than the gutter, and a particle pushed off the page should
 leave rather than open a scrollbar.
 
-**Still left alone:** the mark on `privacy.html` and `terms.html` is left-aligned inside their centred
+**Still left alone:** the mark on `/privacy` and `/terms` is left-aligned inside their centred
 column, so the centred mark here matches the app and the landing but not those two.
 
 **No analytics on it**, like privacy and terms: the two measurement tools mount inside the React app

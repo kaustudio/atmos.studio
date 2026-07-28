@@ -6,7 +6,7 @@
   "description": "Atmos Gallery — colour read from light and atmosphere: a desktop web tool that reads a palette from an image's mood.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

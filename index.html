@@ -2,32 +2,31 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <!-- The curved wipe's arrival half. Inline and first, on purpose: this paints the cover on the
-         very first frame — before any stylesheet or script has parsed — which is the only place a
-         cross-document transition can hide the browser's own blank page between unload and paint.
-         page-wipe.js takes the layer over and animates it away; the timeout is the guarantee that a page
-         can never stay covered if it does not. -->
-    <style>html.wipe-arriving::before{content:"";position:fixed;inset:0;background:#1C1B1A;z-index:200}</style>
-    <script>(function(){try{
-    if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    if(sessionStorage.getItem("atmos/page-wipe")!=="1")return;
-    sessionStorage.removeItem("atmos/page-wipe");
-    window.__atmosArriving=1;
-    document.documentElement.classList.add("wipe-arriving");
-    setTimeout(function(){document.documentElement.classList.remove("wipe-arriving")},3000);
-    }catch(e){}})();</script>
+    <!-- The inline cover that used to stand here is gone, and so is page-wipe.js. Both existed only
+         because privacy and terms were separate documents: the wipe had to be cut in half and handed
+         across an unload/paint boundary through sessionStorage, and the arriving half needed a cover
+         painted on the very first frame to hide the browser's own blank page. All three routes are
+         served by this one document now, so the swap behind the cover is a setState and the whole
+         transition is a single timeline — see src/app/methods/wipe.js navigateTo. -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- The title carries the pitch, not just the brand. It was "Atmos Gallery" alone — thirteen
          characters, matching only people who already knew the name, which for a new product is
-         nobody. The words that earn a match are "colour palettes" and "image"; "light and mood" is
-         what separates this from the dozen tools that return the most common pixels. ~517px of
+         nobody. The words that earn a match are "color palettes" and "image"; "light and mood" is
+         what separates this from the dozen tools that return the most common pixels. ~530px of
          Google's ~600px display width, so it renders whole rather than truncated.
 
-         Kept British throughout, as the rest of the site is. "color" has the larger search volume,
-         but Google treats the two as synonyms and a split spelling in the brand's own title would
-         read as a mistake. -->
-    <title>Atmos Gallery | Colour palettes read from an image's light and mood</title>
-    <meta name="description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood, not just its dominant colours." />
+         Title Case and AMERICAN spelling here, against the British spelling everywhere else on the
+         site. That is a deliberate split, not an oversight: "color palette" is the query people
+         actually type, and the title is the one string whose whole job is to match a query. Google
+         treats the two spellings as synonyms for ranking, so this buys the more familiar reading of
+         the words rather than a ranking edge.
+
+         The cost is visible and worth knowing: a search result stacks this title directly above the
+         description, which still opens "Colour read from light and atmosphere". Anyone reading both
+         sees both spellings at once. Changing the description would mean changing the product's own
+         hero line, which is brand copy rather than SEO, so the split stops here. -->
+    <title>Atmos Gallery | Color Palettes Read From an Image's Light and Mood</title>
+    <meta name="description" content="Color read from Light and Atmosphere. Drop an image and Atmos Gallery reads a Palette from its Mood, not just its dominant colours." />
     <link rel="canonical" href="https://atmos.gallery/" />
     <!-- Paints the iOS status bar and Safari toolbar in the page's own --surface, so the site fills
          the window instead of floating between two bars of the OS appearance. Not media-scoped: the
@@ -47,8 +46,8 @@
          plain summary would crop it into a small square and throw the wordmark away. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Atmos Gallery" />
-    <meta property="og:title" content="Atmos Gallery | Colour palettes read from an image's light and mood" />
-    <meta property="og:description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood, not just its dominant colours." />
+    <meta property="og:title" content="Atmos Gallery | Color Palettes Read From an Image's Light and Mood" />
+    <meta property="og:description" content="Color read from Light and Atmosphere. Drop an image and Atmos Gallery reads a Palette from its Mood, not just its dominant colours." />
     <meta property="og:url" content="https://atmos.gallery/" />
     <meta property="og:image" content="https://atmos.gallery/assets/atmos-gallery-og.png" />
     <meta property="og:image:type" content="image/png" />
@@ -57,8 +56,8 @@
     <meta property="og:image:alt" content="The Atmos Gallery wordmark, centred in a field of softly coloured orbs." />
     <meta property="og:locale" content="en" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Atmos Gallery | Colour palettes read from an image's light and mood" />
-    <meta name="twitter:description" content="Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood, not just its dominant colours." />
+    <meta name="twitter:title" content="Atmos Gallery | Color Palettes Read From an Image's Light and Mood" />
+    <meta name="twitter:description" content="Color read from Light and Atmosphere. Drop an image and Atmos Gallery reads a Palette from its Mood, not just its dominant colours." />
     <meta name="twitter:image" content="https://atmos.gallery/assets/atmos-gallery-og.png" />
     <meta name="twitter:image:alt" content="The Atmos Gallery wordmark, centred in a field of softly coloured orbs." />
     <!-- Structured data. Every field here is checkable against the build: the tool is free, it runs
@@ -80,8 +79,8 @@
       "isAccessibleForFree": true,
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
       "publisher": { "@type": "Organization", "name": "KauStudio", "email": "hello@kau.studio" },
-      "privacyPolicy": "https://atmos.gallery/privacy.html",
-      "termsOfService": "https://atmos.gallery/terms.html",
+      "privacyPolicy": "https://atmos.gallery/privacy",
+      "termsOfService": "https://atmos.gallery/terms",
       "featureList": [
         "Extracts a colour palette from an image using OKLab clustering, in the browser",
         "Names and describes the palette's mood from a fixed descriptive vocabulary",
@@ -93,23 +92,29 @@
     }
     </script>
 
-    <!-- The site footer, shared verbatim with privacy, terms and 404. A plain <link> rather than an
-         import in global.css: the file is served straight out of /public for those three pages, which
-         never pass through Vite, and one copy that all four entry points read is the whole point of it
-         being a separate file. It only consumes theme tokens, so it follows the app's [data-theme]
-         toggle here and prefers-color-scheme there without knowing which it is in. -->
+    <!-- The site footer, shared verbatim with the legal routes and 404. A plain <link> rather than an
+         import in global.css: 404.html is the last document served straight out of /public without
+         passing through the bundle, and one copy that every entry point reads is the whole point of
+         it being a separate file. It only consumes theme tokens, so it follows :root[data-theme]
+         wherever it is used without knowing which page it is on. -->
     <link rel="stylesheet" href="/site-foot.css" />
 
     <!-- Vendored motion + shader runtime (same builds the design was authored against).
          The app code reads window.gsap / window.Observer / window.Flip / window.ScrollToPlugin /
-         window.Lenis / window.OrbShader — script order matters. -->
+         window.ScrollTrigger / window.Lenis / window.OrbShader — script order matters.
+
+         ScrollTrigger is here rather than loaded with the legal routes on demand, which is the only
+         one of these the tool itself never touches. Fetching it at the moment a route swap begins
+         would put a network request inside the transition — the precise stall this restructure
+         removed — and prefetching it instead only moves the race somewhere harder to see. ~45KB
+         served once, cached, and never thought about again is the cheaper trade. -->
     <script src="/vendor/gsap.min.js"></script>
     <script src="/vendor/Observer.min.js"></script>
     <script src="/vendor/Flip.min.js"></script>
     <script src="/vendor/ScrollToPlugin.min.js"></script>
+    <script src="/vendor/ScrollTrigger.min.js"></script>
     <script src="/vendor/lenis.min.js"></script>
     <script src="/vendor/orb-shader.js"></script>
-    <script src="/page-wipe.js"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -128,7 +133,7 @@
         <p style="margin:0 0 16px"><strong>Colour read from light and atmosphere.</strong> Drop in an image and Atmos Gallery reads a palette from its mood — the light it carries, not only its dominant colours.</p>
         <p style="margin:0 0 16px">It is a free desktop web tool, made by KauStudio. There is nothing to sign up for. The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH and discarded, and the full-size image is never uploaded — only a small thumbnail, and only when you ask for a palette to be named. Palettes are kept in your own browser and can be exported as Tailwind theme values, W3C design tokens, Figma variables, CSS custom properties or an <code>.ase</code> swatch file.</p>
         <p style="margin:0 0 16px">The tool itself needs JavaScript to run, and a desktop-width window. This page is what is left without it.</p>
-        <p style="margin:24px 0 0;font-size:14px"><a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="/llms.txt">llms.txt</a></p>
+        <p style="margin:24px 0 0;font-size:14px"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/llms.txt">llms.txt</a></p>
       </div>
     </noscript>
 

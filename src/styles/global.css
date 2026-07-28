@@ -90,6 +90,15 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --track-body:0.01em;        /* body copy */
   --track-label:0.1em;        /* uppercase mono labels (system default) */
   --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
+  /* ===== page gutters =====
+     The app has no page-level container: every section runs the full width of the viewport inside a
+     gutter, and the only max-widths in it are component-level measure caps. Two figures, not one,
+     because chrome and content are not the same grid — the header bar is `padding:0 16px` while
+     content sections are `padding:20px 22px 0`, and flattening them would match neither.
+     Named here because three documents read them: the tool, the legal routes (legal.css) and
+     404.html (notfound.css). They were in legal.css while it was the only file that had them. */
+  --chrome-gutter:16px;       /* the header bar */
+  --page-gutter:22px;         /* content columns */
   /* ===== archive list rhythm =====
      The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
      of whatever the widest row happened to contain. Naming it here keeps the scan rhythm in one

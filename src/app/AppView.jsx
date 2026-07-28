@@ -3,6 +3,9 @@
 // from renderVals() untouched. No logic lives here.
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
+import { B006, ThemeSwitch } from './chrome.jsx';
+import LegalPage from './LegalPage.jsx';
+import { isLegal, pathFor } from './routes.js';
 // PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
 // any in-app action. Behavioural instrumentation is a separate decision with its own copy
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
@@ -30,14 +33,6 @@ function HBtn({ style, styleHover, styleActive, onMouseEnter, onMouseLeave, chil
 
 // button-006 — the clip-path text-swap CTA (chrome in global.css). `label` renders in both layers
 // unless a distinct `hover` node is given.
-function B006({ label, hover, btnRef, ...props }) {
-  return (
-    <button type="button" data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat)')} {...props}>
-      <span className="button-006__hover"><span className="button-006__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button-006__bg is--hover"></span></span>
-      <span className="button-006__default"><span aria-hidden="true" className="button-006__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button-006__bg is--default"></span></span>
-    </button>
-  );
-}
 
 // Copy confirmation: 'Hex list' ⇄ ✓ Copied. Both states are stacked in one grid cell with the
 // inactive one hidden, so the cell is always sized to the WIDER of the two and the row can never
@@ -248,19 +243,88 @@ function MobileShareView({ ms }) {
   );
 }
 
-function themeSwitchLabel(vals) {
+const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+
+/* Curved-wipe transition layer. Caps are transient motion shape — the one sanctioned curved
+   exception; never a persistent border-radius on UI.
+
+   Rendered by every route, not just the tool. It used to serve one handoff (Get Started); it now
+   also covers the swap to privacy and terms, and a route that did not render it would be a route
+   the wipe could not leave — wipe.js resolves its layer with a querySelector and falls back to an
+   instant swap when there is none. */
+function WipeLayer() {
   return (
-    <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
-      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;transition:background .28s var(--ease-standard)'), background: vals.switchTrackBg }}>
-        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);transition:transform .28s var(--ease-standard)'), transform: vals.switchDotX }}></span>
-      </span>{vals.themeLabel}
-    </span>
+    <div data-wipe="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:160;pointer-events:none;overflow:hidden;display:none')}>
+      <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:#1C1B1A;will-change:transform')}>
+        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
+        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
+        <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
+          <div style={sx('overflow:hidden;padding:8px 6px')}>
+            <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+/* The site footer, the same one the legal routes and 404.html close with — markup identical, styles
+   from /site-foot.css, which index.html links because this app is bundled and 404.html cannot read
+   the bundle. Classes rather than sx() for exactly one reason: the footer needs :hover,
+   :focus-visible and a 700px media query, none of which an inline style can express, so the rules
+   have to live in a stylesheet whatever we do — and then a second, inline copy of the layout would
+   only be something to keep in sync with them.
+
+   The three links are real hrefs, not buttons. onNavigate intercepts a plain left-click and turns it
+   into the wiped in-document swap; every other way of following a link — middle-click, cmd-click,
+   right-click-copy, a crawler, a reader with no JS — gets the address itself and a real document at
+   the other end. A router that swallowed those would be trading the whole no-JS floor for a
+   transition. See navigate() in renderVals. */
+function SiteFooter({ route, onNavigate }) {
+  const link = (href, label) => (
+    <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}>{label}</a>
+  );
+  return (
+    <footer className="site-foot">
+      <div className="site-foot__brand">
+        <a href="/" onClick={onNavigate} aria-label="Atmos Gallery — home"><span className="site-foot__mark" aria-hidden="true"></span></a>
+      </div>
+      <div className="site-foot__meta">
+        <p className="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
+        <nav className="site-foot__nav" aria-label="Legal">
+          {link('/privacy', 'Privacy Policy')}
+          {link('/terms', 'Terms and Conditions')}
+        </nav>
+        <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
+      </div>
+    </footer>
+  );
+}
 
 export default function AppView({ vals }) {
+  /* Privacy and terms, before anything the tool needs.
+
+     Returned early for the same reason showMobileShare is: the tool must not be in the DOM behind a
+     surface that is not it. The wipe covers the screen while this swap happens, so what a reader
+     sees is one continuous panel — but behind it the entire app, orbit stage and archive included,
+     stops existing rather than lying dormant under a legal document. Nothing to tab into, nothing
+     laid out off-screen, no WebGL context held open while somebody reads a privacy policy.
+
+     [data-app] is kept on the wrapper deliberately. It is what the desktop gate, the wipe's inert
+     guards and toggleTheme's crossfade all select on; a legal route that dropped it would be a
+     surface those three could not see. */
+  if (isLegal(vals.route)) {
+    return (
+      <div data-app="1" className="legal-route" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        <LegalPage vals={vals} />
+        <WipeLayer />
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
   // A shared link on a phone renders ONLY the read-only palette. Returning early rather than
   // layering it over the tool keeps the desktop app out of the DOM entirely on a viewport that
   // cannot use it: nothing behind to tab into, no archive laid out off-screen, no orbit stage.
@@ -376,19 +440,7 @@ export default function AppView({ vals }) {
         </div>
       )}
 
-      {/* Curved-wipe transition layer (Get Started handoff). Caps are transient motion shape —
-          the one sanctioned curved exception; never a persistent border-radius on UI. */}
-      <div data-wipe="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:160;pointer-events:none;overflow:hidden;display:none')}>
-        <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:#1C1B1A;will-change:transform')}>
-          <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
-          <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
-          <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
-            <div style={sx('overflow:hidden;padding:8px 6px')}>
-              <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
-            </div>
-          </div>
-        </div>
-      </div>
+      <WipeLayer />
 
       <header style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 16px;border-bottom:1px solid var(--line-strong);background:var(--surface);position:sticky;top:0;z-index:10')}>
         {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
@@ -396,7 +448,7 @@ export default function AppView({ vals }) {
             left-to-right scan landed on. The theme switch takes the corner instead — it is the
             control that changes how everything else on the page is READ. It is outlined, not
             filled, so it holds the edge without competing with the mark. */}
-        <B006 data-emphasis="secondary" data-focus="chrome" role="switch" aria-checked={vals.isDark} onClick={vals.toggleTheme} aria-label="Toggle dark theme" title="Light / dark" label={themeSwitchLabel(vals)} />
+        <ThemeSwitch vals={vals} />
         {/* RIGHT — the acts. New generation drives the core loop, so it stays filled and leads the
             cluster in the DOM (and therefore in the tab order); the file pair follows behind a
             hairline, outlined rather than filled, so the two never read as peers.
@@ -464,7 +516,7 @@ export default function AppView({ vals }) {
           {/* The interpretation note that used to sit here — "a small downscaled thumbnail is sent to
               the model … it isn't stored" — was removed by request, as the "everything stays in your
               browser" line above it had been earlier. The disclosure itself is unchanged: it stands in
-              the README and in full on /privacy.html, which the footer links from this same screen. */}
+              the README and in full on /privacy, which the footer links from this same screen. */}
         </>)}
 
         {vals.isProcessing && (
@@ -642,38 +694,18 @@ export default function AppView({ vals }) {
 
       <FeedSection vals={vals} />
 
-      {/* The site footer, the same one privacy, terms and 404 close with — markup identical, styles
-          from /site-foot.css, which index.html links because this app is bundled and cannot read
-          legal.css. Classes rather than sx() for exactly one reason: the footer needs :hover,
-          :focus-visible and a 700px media query, none of which an inline style can express, so the
-          rules have to live in a stylesheet whatever we do — and then a second, inline copy of the
-          layout would only be something to keep in sync with them.
-
-          Only on 'Drop a reference'. That screen is the tool at rest — nothing has been dropped, the
+      {/* Only on 'Drop a reference'. That screen is the tool at rest — nothing has been dropped, the
           reel below is empty or idle, and the page has somewhere to put a footer. The result and
           processing stages are a working surface with drawers and overlays over them, where a
           full-bleed wordmark would be arriving underneath somebody's palette. The landing is exempt
           for a different reason: it is position:fixed over this whole frame, so it covers the footer
-          rather than needing to be told about it.
+          rather than needing to be told about it. The legal routes carry it unconditionally — see
+          their branch at the top of this file.
 
           Below 720px the desktop gate hides every child of [data-app] except the gate itself, and this
           is a child of [data-app], so it goes with them — which is correct: that screen is not the
           tool, it is the notice standing in for it. */}
-      {vals.isUpload && (
-        <footer className="site-foot">
-          <div className="site-foot__brand">
-            <a href="/" aria-label="Atmos Gallery — home"><span className="site-foot__mark" aria-hidden="true"></span></a>
-          </div>
-          <div className="site-foot__meta">
-            <p className="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
-            <nav className="site-foot__nav" aria-label="Legal">
-              <a href="/privacy.html">Privacy Policy</a>
-              <a href="/terms.html">Terms and Conditions</a>
-            </nav>
-            <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
-          </div>
-        </footer>
-      )}
+      {vals.isUpload && <SiteFooter route={vals.route} onNavigate={vals.navigate} />}
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />

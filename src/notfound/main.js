@@ -13,10 +13,16 @@
    off whatever it lands on — so the 404 is as wide as the page allows and the cloud follows, at any
    viewport, with no size named twice. */
 
+// Tokens and the Neue Montreal @font-face pair. This page used to link /legal.css for them, back
+// when that file carried its own copy of both and was served straight out of /public for the legal
+// documents. Those are routes of the app now, so legal.css lost its duplicate token block and moved
+// into the bundle — leaving global.css as the one place either is defined, and an import as the way
+// this entry reaches it.
+import '../styles/global.css';
 import { createParticleField } from './particleField.js';
 import { rasterizeType, RASTER_FONT_PX } from './typeRaster.js';
 
-// Must match the @font-face family in public/legal.css, which this page loads for its chrome.
+// Must match the @font-face family in src/styles/global.css, imported above.
 const FAMILY = 'Neue Montreal';
 
 /* Tuning. The spring, damping and swirl figures are the effect's own defaults; the rest is set

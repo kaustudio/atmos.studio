@@ -72,12 +72,12 @@ Where a live path exists, a downscaled thumbnail is sent to read the mood; where
 leaves the browser. **The production deployment sets `VITE_INTERPRET_ENDPOINT`, so on atmos.gallery
 the live path is the one that runs** — the privacy copy is written against that, not against a build
 with the seam unset. The tool itself no longer carries a note about it: the disclosure was removed
-from the dropzone screen by request, and it is `/privacy.html` — linked from the footer of that same
+from the dropzone screen by request, and it is `/privacy` — linked from the footer of that same
 screen — that has to stay true.
 
 ## Privacy
 
-The statement itself is `public/privacy.html` — controller, what is collected, legal basis,
+The statement itself is `src/legal/privacy.html` — controller, what is collected, legal basis,
 processors and transfers, retention, rights. It is deliberately short, and it is the single source:
 **do not restate it here**, or the two drift apart. What matters for whoever is editing the code:
 
@@ -88,11 +88,15 @@ processors and transfers, retention, rights. It is deliberately short, and it is
   there is no consent banner.
 - Analytics is Vercel Web Analytics + Speed Insights, both cookieless.
 
-Terms are `public/terms.html`. The two are cross-linked and share `public/legal.css`,
-`public/legal-toc.js` (the Osmo table-of-contents resource, kept as delivered) and
-`public/legal-reveal.js` (masked heading reveals + rule draws). Both load the vendored `gsap` +
-`ScrollTrigger` rather than a CDN, and both degrade to plain, fully readable type with no JS, no
-GSAP, or `prefers-reduced-motion` — see the header comment in `legal-reveal.js` for why that floor
+Terms are `src/legal/terms.html`. Both are hand-authored HTML fragments rather than JSX — a clause
+should be reviewable as prose — injected by `src/app/LegalPage.jsx` and shared with
+`src/styles/legal.css`, `src/app/methods/legalToc.js` (the Osmo table-of-contents resource, kept as
+delivered bar four marked accommodations) and `src/app/methods/legalReveal.js` (masked heading
+reveals + rule draws). They are **routes of the app document**, served at `/privacy` and `/terms`;
+`scripts/prerender.mjs` writes each one out as a complete static document after the build, so a
+reader with no JavaScript and any crawler that does not run it still get the whole text. Both use the
+vendored `gsap` + `ScrollTrigger` rather than a CDN, and both degrade to plain, fully readable type
+with no JS, no GSAP, or `prefers-reduced-motion` — see the header comment in `legalReveal.js` for why that floor
 is enforced in three separate places.
 
 Last updated: 27 July 2026 · Questions: hello@kau.studio
@@ -124,7 +128,7 @@ copy must change in the same commit**:
    recipient (Anthropic, via `api/interpret.ts`) and the retention position. It is also the only
    place the claim is made now that the dropzone note is gone. Changing the thumbnail
    size, adding anything to the payload beyond `{ image, swatches }`, or changing recipient means
-   `public/privacy.html` changes in the same commit.
+   `src/legal/privacy.html` changes in the same commit.
 6. **"no cookies at all"** — verified by measurement, not assumption: `document.cookie` is empty on
    every page. Client storage is five keys — `palette-generator/feed` (the user's own archive),
    `/derived`, `/landing`, `/pagesize` and `/loader-session`. The privacy page names the prefix

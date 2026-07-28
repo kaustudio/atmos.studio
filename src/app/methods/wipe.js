@@ -1,5 +1,8 @@
-// Curved-wipe transitions between the landing and the tool (both directions), with rAF-stall
-// pumps and watchdogs so a throttled frame can never strand the covering layer or lock the app.
+// Curved-wipe transitions between the landing and the tool (both directions) and between the three
+// routes, with rAF-stall pumps and watchdogs so a throttled frame can never strand the covering
+// layer or lock the app.
+import { routeFor, pathFor, isLegal, applyHead } from '../routes.js';
+
 export const wipeMethods = {
   _resetIntroState(afterCb) {
     // journey flags only — palettes, projects, theme untouched.
@@ -255,4 +258,154 @@ export const wipeMethods = {
     tl.play(0);
     this._wipeArmStallPump(g);
   },
+
+  /* ===== route swap: /, /privacy, /terms =====
+
+     Privacy and terms were their own documents until this method existed, and the wipe between them
+     was cut in half — cover here, set location, and have the arriving document paint its own cover
+     from an inline <head> snippet and play the second half. Two halves, joined by a sessionStorage
+     key, with a browser-controlled gap in the middle that no amount of easing could hide: the
+     destination still had to fetch and parse GSAP, ScrollTrigger, a stylesheet and two .otf faces
+     before its reveal could start, and the cover just sat there while it did. That is the stall this
+     replaces. One timeline now, one document, and the swap in the middle is a setState.
+
+     The choreography is returnToIntro's, beat for beat, because it is the same gesture and should
+     not read as a second one. What differs is only what happens behind the cover. */
+  _routeDrifters(layer) {
+    // The cover's SIBLINGS — never an ancestor. A transform or an opacity below 1 makes an element
+    // the containing block for its position:fixed descendants, and the cover is one: move something
+    // it lives inside and `inset:0` starts resolving against a document-tall box, so the panel
+    // travels the height of the page instead of one screen and lands off-screen. Siblings are the
+    // page; the layer is what hides it.
+    const host = (layer && layer.parentNode) || document.body;
+    return [].filter.call(host.children, (el) => el !== layer && el.tagName !== 'SCRIPT');
+  },
+
+  navigateTo(path, options) {
+    const opts = options || {};
+    const push = opts.push !== false;
+    const next = routeFor(path);
+    if (next === this.state.route) return;
+    this._wipeRecoverStuck();
+    if (this._wipeRunning) return;
+
+    const g = window.gsap;
+    const layer = document.querySelector('[data-wipe]');
+    const commit = (afterCb) => {
+      // The address bar moves with the content, not before it — a pushState that lands ahead of the
+      // swap is a URL describing a page that is not on screen yet, and a reload in that window
+      // serves the wrong one.
+      if (push) { try { history.pushState({ route: next }, '', pathFor(next)); } catch (e) { } }
+      applyHead(next);
+      // A new document starts at the top. Lenis owns the scroll while it is running, so ask it
+      // rather than going around it and leaving its internal position stale.
+      try { if (this._lenis) this._lenis.scrollTo(0, { immediate: true }); else window.scrollTo(0, 0); } catch (e) { }
+      this.setState({ route: next, announce: '' }, afterCb || function () { });
+    };
+
+    // Reduced motion, or no GSAP to drive a timeline with: swap outright. The destination still
+    // arrives correctly, it simply arrives without the gesture — which is what reduced motion asks
+    // for, and the only honest fallback when there is nothing to animate with.
+    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => this._playLegalReveal()); return; }
+
+    this._wipeRunning = true;
+    // Tells LegalPage to ARM its reveals and wait rather than play them on mount. Without it the
+    // hero cascade runs behind an opaque panel and the cover lifts on copy that has already
+    // finished arriving — the page appears to be simply there, which is the fault this whole
+    // change exists to fix.
+    this._arrivingByWipe = true;
+
+    const panel = layer.querySelector('[data-wipe-panel]');
+    const capT = layer.querySelector('[data-wipe-cap-top]');
+    const capB = layer.querySelector('[data-wipe-cap-bottom]');
+    const word = layer.querySelector('[data-wipe-word]');
+    layer.style.display = 'block';
+    layer.style.pointerEvents = 'auto';
+    const app = document.querySelector('[data-app]');
+    if (app) { try { app.setAttribute('inert', ''); } catch (e) { } }
+    const clearGuards = () => {
+      this._wipeClearPump();
+      layer.style.pointerEvents = 'none';
+      document.querySelectorAll('[data-app]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } });
+    };
+    this._wipeClearGuards = clearGuards;
+    // L1: park focus on the transition layer so it isn't stranded on a control that is unmounting.
+    try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
+
+    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 }); g.set(word, { yPercent: 120 });
+    const parts = this._routeDrifters(layer);
+
+    let swapped = false;
+    const doSwap = (instant) => {
+      if (swapped) return; swapped = true;
+      commit(() => {
+        try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }
+        // The tool's own arrival, when it is the destination: its copy rises out of its masks
+        // exactly as it does under the loader and after Get Started, rather than the whole page
+        // block sliding up as one slab. instant=true is the starved-rAF path — be there, plainly.
+        if (!isLegal(next)) {
+          if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }
+          this._dropRevealed = false;
+          this._dropLinesArm();
+          this._listRowsArm();
+        } else if (instant) {
+          this._playLegalReveal();
+        }
+      });
+    };
+
+    const finish = () => {
+      if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; }
+      layer.style.display = 'none';
+      clearGuards(); this._wipeClearGuards = null;
+      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
+      this._wipeRunning = false; this._wipeTl = null; this._arrivingByWipe = false;
+    };
+
+    const tl = g.timeline({ paused: true, onComplete: finish });
+    // Watchdog failsafe: if the timeline stalls (throttled rAF in a backgrounded tab), the inert
+    // guard would otherwise lock the whole document. setTimeout fires even when rAF does not —
+    // force-finish the swap and clear every guard rather than leaving the UI unreadable and inert.
+    this._wipeWatchdog = setTimeout(() => {
+      this._wipeWatchdog = null;
+      if (!this._wipeRunning) return;
+      try { if (this._wipeTl) this._wipeTl.kill(); } catch (e) { }
+      this._wipeTl = null; this._wipeRunning = false;
+      layer.style.display = 'none';
+      clearGuards(); this._wipeClearGuards = null;
+      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
+      try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
+      this._arrivingByWipe = false;
+      if (!swapped) doSwap(true); else this._playLegalReveal();
+    }, 4000);
+    this._wipeTl = tl;
+
+    // 1 — COVER: panel rises over the page; the page drifts up slightly for depth
+    tl.to(panel, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);
+    tl.to(capT, { scaleY: 1, duration: 0.8, ease: this.EASE.entrance }, 0);
+    if (parts.length) tl.to(parts, { y: '-6vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
+    // 2 — BRAND beat
+    tl.to(word, { yPercent: 0, duration: 0.55, ease: this.EASE.entrance }, 0.6);
+    tl.call(doSwap, null, 1.0);       // 3 — swap the route behind the cover
+    tl.to({}, { duration: 0.45 }, '>');   // hold so the mark can be read
+    // 4 — REVEAL onto whatever arrived
+    tl.to(word, { yPercent: -130, duration: 0.6, ease: this.EASE.exit }, '>-0.05');
+    tl.to(panel, { yPercent: -100, duration: 0.9, ease: this.EASE.entrance }, '<');
+    tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
+    // The destination's own copy rises just behind the panel's trailing edge — the same offset the
+    // loader's fold and Get Started both use, so all three arrivals share one rhythm.
+    tl.call(() => {
+      if (isLegal(next)) this._playLegalReveal();
+      else { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }
+    }, null, '<+0.15');
+    // built paused: wake the clock first, then pin the playhead to 0.
+    try { g.ticker.wake(); } catch (e) { }
+    tl.play(0);
+    this._wipeArmStallPump(g);
+  },
+
+  // LegalPage hands its reveal controller up on mount and takes it back on unmount, so the timeline
+  // above has something to release without reaching into the component.
+  registerLegalReveal(controller) { this._legalReveal = controller; },
+  _playLegalReveal() { const c = this._legalReveal; if (c) { try { c.play(); } catch (e) { } } },
 };

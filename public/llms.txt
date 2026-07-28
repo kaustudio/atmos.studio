@@ -41,9 +41,9 @@ something only a browser can discover.
 ## Pages
 
 - [Atmos Gallery](https://atmos.gallery/): the tool itself.
-- [Privacy](https://atmos.gallery/privacy.html): what is collected, the legal basis, processors and
+- [Privacy](https://atmos.gallery/privacy): what is collected, the legal basis, processors and
   transfers, retention, and your rights.
-- [Terms](https://atmos.gallery/terms.html): what the tool does, what stays yours, and what it does
+- [Terms](https://atmos.gallery/terms): what the tool does, what stays yours, and what it does
   not promise.
 
 ## Contact

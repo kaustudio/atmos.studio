@@ -19,6 +19,7 @@ import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { renderValsMethods } from './renderVals.js';
+import { routeFor, pathFor, isLegal, applyHead, APP } from './routes.js';
 
 export default class PaletteApp extends React.Component {
   static defaultProps = { proportional: true, swatchCount: 5 };
@@ -81,7 +82,13 @@ export default class PaletteApp extends React.Component {
   // Reads the fragment only; nothing here writes to the recipient's archive.
   _shared = this._sharedFromHash();
 
+  // Which of the three addresses this document was opened at. Read once, before state, because the
+  // loader and the landing both branch on it: neither belongs on a legal route, and deciding that
+  // after they have already been scheduled means showing them and then taking them away.
+  _entryRoute = routeFor(typeof location !== 'undefined' ? location.pathname : '/');
+
   state = {
+    route: this._entryRoute,
     // a shared palette opens straight into the result stage, past the landing and the loader
     stage: this._shared ? 'result' : 'upload',
     current: this._shared || null,
@@ -102,11 +109,12 @@ export default class PaletteApp extends React.Component {
     recognised: null,
     assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
-    overlaySel: null, theme: 'light', contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
+    overlaySel: null, theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
-    // a share link arrives past both gates: the recipient came for the palette, not the intro
-    landingDismissed: this._shared ? true : this._landingDismissed(),
-    showLoader: this._shared ? false : this._loaderPending(),
+    // a share link arrives past both gates: the recipient came for the palette, not the intro.
+    // A legal route arrives past them for a different reason: there is no tool on it to introduce.
+    landingDismissed: (this._shared || isLegal(this._entryRoute)) ? true : this._landingDismissed(),
+    showLoader: (this._shared || isLegal(this._entryRoute)) ? false : this._loaderPending(),
     page: 0,
     // List sort. 'time' desc is the archive's own default — newest first, what the feed already
     // meant before there was anything to sort BY. Deliberately not persisted: page size is a
@@ -151,6 +159,21 @@ export default class PaletteApp extends React.Component {
   // matters is the CSS pixels the formation has to fill, not the diagonal.
   ORB_SPAN_MAX = 1728;
 
+  /* The theme this document opens in.
+
+     Light is the tool's product default and stays that way: the app forces light at mount regardless
+     of the OS, because the palette work it exists for is judged against a light surface.
+
+     A legal route is not that. Someone arriving at /privacy from a search result at night has no
+     relationship with the tool's defaults and every reason to expect their own — these are documents
+     to read, not a surface to work on, and they followed the OS faithfully for as long as they were
+     their own files. So the entry route decides, once. From then on the switch in the masthead is
+     the only thing that moves it, on either route, and the two never disagree inside a session. */
+  _entryTheme() {
+    if (!isLegal(this._entryRoute)) return 'light';
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
+  }
+
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }
   // Is the landing surface on screen? On phones it always is: the tool needs room the viewport
   // hasn't got, so the landing IS the small-screen surface (same ring stage, gate copy instead of
@@ -186,11 +209,25 @@ export default class PaletteApp extends React.Component {
     safe(() => this._initLenis(), 'lenis');
     safe(() => requestAnimationFrame(() => this._updateProjPill()), 'projpill');
     safe(() => this._initLoader(), 'loader');
-    // Light is the product default; the nav toggle overrides in-session
-    const theme = 'light';
+    // Light on the tool, the reader's own appearance on a legal route — see _entryTheme.
+    const theme = this.state.theme;
     try { document.documentElement.setAttribute('data-theme', theme); } catch (e) { }
     safe(() => syncThemeColor(), 'themecolor'); // browser chrome follows --surface, not the OS appearance
-    this.state.theme = theme;
+    /* The entry route's own metadata. On a prerendered legal document this rewrites the same values
+       back over themselves and is invisible; it earns its place in the two cases where the served
+       document is index.html — Vite's dev server, which has no prerender step, and any host that
+       falls back to the shell — where without it /privacy would wear the tool's title in the tab, in
+       the history entry and in anything the reader copies out of the address bar. */
+    safe(() => applyHead(this.state.route), 'head');
+    // Back and forward are real navigations between these routes, so the swap is wiped exactly as a
+    // click is. popstate has already moved the address bar by the time it fires, which is why
+    // navigateTo is told not to push a second entry for it.
+    this._onPop = () => {
+      const next = routeFor(location.pathname);
+      if (next === this.state.route) return;
+      this.navigateTo(pathFor(next), { push: false });
+    };
+    window.addEventListener('popstate', this._onPop);
     this.initMotion();
     // GSAP readiness. The vendored core+plugins load from index.html; register plugins once present.
     const finishGsap = () => { if (window.gsap) { try { const ps = []; if (window.Observer) ps.push(window.Observer); if (window.Flip) ps.push(window.Flip); if (window.ScrollToPlugin) ps.push(window.ScrollToPlugin); if (ps.length) window.gsap.registerPlugin.apply(window.gsap, ps); } catch (e) { } } this._gsapReady = true; if (this._landingUp() && !this._orbit) this.initOrbit(); };
@@ -325,6 +362,7 @@ export default class PaletteApp extends React.Component {
     if (this._uRetryT) clearTimeout(this._uRetryT);
     if (this._objUrls) { this._objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) { } }); this._objUrls = []; }
     if (this._storageHandler) window.removeEventListener('storage', this._storageHandler);
+    if (this._onPop) window.removeEventListener('popstate', this._onPop);
     if (this._wipeWatchdog) clearTimeout(this._wipeWatchdog);
     if (this._wipeClearGuards) { try { this._wipeClearGuards(); } catch (e) { } this._wipeClearGuards = null; }
     if (this._czDetach) { try { this._czDetach(); } catch (e) { } this._czDetach = null; this._czInit = false; }

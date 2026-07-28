@@ -1,72 +1,54 @@
-/* Atmos Gallery — shared chrome for the standalone legal pages (privacy, terms).
-   These two files are served straight out of /public and never pass through Vite, so they cannot
-   import src/styles/global.css. The token block below is therefore a deliberate subset copy of
-   global.css's :root — kept to the handful of variables these pages actually use, so a drift in
-   the palette is a one-line fix in two places rather than a rewrite.
+/* Atmos Gallery — the legal routes' own layer (privacy, terms).
 
-   The table-of-contents layout is the Osmo Supply TOC resource. Class names and every data-*
-   attribute are its own and are load-bearing (legal-toc.js targets them); only the *values* are
+   This file used to carry a subset copy of global.css's :root, plus its own @font-face pair and its
+   own @media (prefers-color-scheme:dark) block, because privacy.html and terms.html were served
+   straight out of /public and could not reach the bundle. All three are gone: the legal routes are
+   rendered by the same document as the tool now, so global.css is already loaded above this file and
+   is the only place the palette, the type faces and the dark theme are defined.
+
+   That deletion is the point of the move, not a side effect of it. Two copies of --surface meant two
+   places to retune it; worse, the copy here keyed dark off prefers-color-scheme while the app keys it
+   off :root[data-theme], so in one document the two would have fought over the same custom properties
+   on the same element and the winner would have depended on source order. There is one theme now, the
+   app's, and the legal routes carry the same toggle for it (see LegalPage).
+
+   What remains below is only what the tool has no opinion about: the page grid these documents are
+   set on, and the Osmo Supply TOC resource's layout. Class names and every data-* attribute in that
+   part are the resource's own and are load-bearing (legalToc.js targets them); only the *values* are
    restated in this project's tokens — plus the two states the resource's own CSS leaves to the
    implementer, [data-toc-status="active"] and [data-toc-depth]. */
 
-@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-display:swap}
-@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-display:swap}
+/* The article's own measurements. The page gutters these sit on — --chrome-gutter and --page-gutter
+   — are NOT here: they describe the whole site's grid rather than this layout, three documents read
+   them (the tool, these routes and 404.html), and so they live in global.css with the rest of the
+   system.
 
+   --toc-col is the sidebar track. The hero's copy and the article share the second track, so the
+   left edge of the title and the left edge of the body are the same line down the whole page, and
+   the table of contents sits in a column of its own rather than in stolen margin.
+
+   These three are the only custom properties this file defines. Everything else it reads —
+   --surface, --on-surface, the --track-* scale, the gutters — comes from global.css, which is
+   imported before it and now themes both the tool and these routes off the same :root[data-theme]. */
 :root{
-  --surface:#f5f5f3;
-  --surface-raised:#fafaf8;
-  --on-surface:#1a1a1a;
-  --on-surface-muted:#63635b;
-  --line:#e0e0db;
-  --line-strong:#d5d5d0;
-  --track-statement:-0.02em;
-  --track-title:-0.01em;
-  --track-body:0.01em;
-  --track-label:0.1em;
-  --track-flat:0px;    /* the system's intentional flat tracking — used by the footer's meta row */
-
-  /* Page grid, taken from the app rather than invented for these pages. The app has no page-level
-     container at all — every section runs the full width of the viewport inside a 22px gutter
-     (`padding:20px 22px 0` and its siblings in AppView), and the only max-widths in it are
-     component-level measure caps. These pages now do the same.
-
-     --toc-col is the sidebar track. The hero's copy and the article share the second track, so the
-     left edge of the title and the left edge of the body are the same line down the whole page, and
-     the table of contents sits in a column of its own rather than in stolen margin.
-
-     The app uses two different figures and so does this: its chrome bar is `padding:0 16px` while
-     its content sections are `padding:20px 22px 0`. Chrome and content are not the same grid there,
-     so flattening them to one number here would match neither. */
-  --chrome-gutter:16px;   /* the header bar — the app's header padding */
-  --page-gutter:22px;     /* content columns — the app's section padding */
   --toc-col:13.75em;
   --grid-gap:4em;
   --measure:40em;      /* prose measure — the one thing that must NOT be full width */
-
-  color-scheme:light;
-}
-@media (prefers-color-scheme:dark){
-  :root{
-    --surface:#141413;
-    --surface-raised:#1c1c1a;
-    --on-surface:#f3f3ef;
-    --on-surface-muted:#a2a29a;
-    --line:#333331;
-    --line-strong:#3f3f3c;
-    color-scheme:dark;
-  }
 }
 
-*{box-sizing:border-box}
-body{
-  margin:0;
+/* Scoped to the legal routes rather than left on bare `body`. global.css already sets the document's
+   background, colour and family for the tool; restating them unscoped would mean this file's copy won
+   on every screen of the app purely by being imported second. The line-height IS particular to these
+   documents — 1.6 is a reading measure, not the tool's UI rhythm — so it belongs here, on them. */
+.legal-route{
   background:var(--surface);
   color:var(--on-surface);
   font-family:'Neue Montreal',system-ui,sans-serif;
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-a{color:inherit}
+.legal-route *{box-sizing:border-box}
+.legal-route a{color:inherit}
 
 /* ---------------------------------------------------------------- masthead */
 
@@ -74,15 +56,25 @@ a{color:inherit}
    it. In the app the mark is position:fixed at left:50% (see logoStyle in AppView) so it can fly over
    the landing; here the bar is sticky and the mark sits inside it, which lands in the same place
    optically but can never overlap the prose of a document that scrolls. 165×26 is the app's own
-   measurement, not a new one. */
+   measurement, not a new one.
+
+   Three tracks, not a centred flex row: the theme switch now stands in the left one, exactly where
+   the app's header keeps it, and the mark has to stay on the page's centre line regardless of how
+   wide that switch's label happens to be. `1fr auto 1fr` centres the middle track on the bar itself,
+   so LIGHT and DARK — different widths — cannot shift the wordmark between renders. The empty third
+   track is what pays for that; it is doing real work. */
 .legal-head{
   position:sticky;top:0;z-index:20;
-  display:flex;align-items:center;justify-content:center;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
   height:64px;
   padding:0 var(--chrome-gutter);
   background:var(--surface);
   border-bottom:1px solid var(--line-strong);
 }
+.legal-head__mark{grid-column:2;display:flex}
+.legal-head__theme{grid-column:1;justify-self:start}
 .mark{
   display:block;width:165px;height:26px;background:var(--on-surface);
   -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
@@ -91,7 +83,7 @@ a{color:inherit}
 
 /* The hero carries the hierarchy: an eyebrow label, a statement-scale title, and a one-line
    summary — so the page announces what it is before any section heading is reached. */
-/* Rules are drawn with a scaleX'd pseudo-element rather than a border, so legal-reveal.js can
+/* Rules are drawn with a scaleX'd pseudo-element rather than a border, so legalReveal.js can
    animate them. --rule defaults to 1: with no JS, no GSAP, or reduced motion, the line is simply
    already there. The animation only ever removes and restores something already correct. */
 .legal-hero{
@@ -239,7 +231,7 @@ a{color:inherit}
    ("Your palettes are stored only in your browser" clips twice). The negative margin gives the
    space back so nothing below moves.
 
-   Both classes are inert by default. legal-reveal.js only ever adds them once it has confirmed
+   Both classes are inert by default. legalReveal.js only ever adds them once it has confirmed
    GSAP is present and motion is wanted, so the no-JS and reduced-motion state is plain text. */
 .reveal-mask{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
 .reveal-line{display:block}
@@ -302,7 +294,7 @@ a{color:inherit}
 
 /* The sidebar's sticky offset and the headings' scroll-margin both assume the page can scroll
    freely. Users who ask for less motion still get the layout, just without smooth travel — the
-   scroll behaviour itself is chosen in legal-toc.js. */
+   scroll behaviour itself is chosen in legalToc.js. */
 @media (prefers-reduced-motion:reduce){
   .toc-link{transition:none}
 }

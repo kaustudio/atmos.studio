@@ -1030,6 +1030,43 @@ export const renderValsMethods = {
       switchTrackBg: s.theme === 'dark' ? 'var(--on-surface)' : 'var(--line-strong)',
       switchDotX: s.theme === 'dark' ? 'translateX(14px)' : 'translateX(0px)',
       toggleTheme: () => this.toggleTheme(),
+      // ===== routing =====
+      route: s.route,
+      lenis: this._lenis,
+      /* The masked-line reveal's tokens, read off the app rather than restated in legalReveal.js.
+         The landing and the dropzone get theirs from the same two objects via orbit.js's
+         _maskReveal, so retuning DUR.reveal or EASE.entrance now moves every masked line on the
+         site at once — which is what "fluent across the site" has to mean structurally, not just
+         two files that happen to agree today. 0.09 is _maskReveal's own stagger, which is a shade
+         wider than DUR.stagger and deliberately so.
+
+         Guarded exactly as _maskReveal guards, and for the same reason: render() runs before
+         componentDidMount, so on the very first pass initMotion() has not defined DUR or EASE yet.
+         Reading through them unguarded throws during render, React unmounts the root, and the page
+         is blank — which is precisely what happened. */
+      maskMotion: {
+        duration: this.DUR ? this.DUR.reveal : 0.62,
+        stagger: 0.09,
+        ease: this.EASE ? this.EASE.entrance : 'power3.out',
+      },
+      // True only while a wiped route swap is in flight, so a legal route that mounts behind the
+      // cover arms its reveals and waits to be released instead of playing them out of sight.
+      arrivingByWipe: !!this._arrivingByWipe,
+      registerLegalReveal: (c) => this.registerLegalReveal(c),
+      /* Every in-document link goes through here. It intercepts ONLY the plain left-click that a
+         router is entitled to: a modified click, a middle-click, a download, a new tab or anything
+         off-origin falls through to the browser, which is what makes these real addresses rather
+         than decorated buttons. */
+      navigate: (e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const a = e.currentTarget;
+        if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
+        let url;
+        try { url = new URL(a.href, location.href); } catch (err) { return; }
+        if (url.origin !== location.origin) return;
+        e.preventDefault();
+        this.navigateTo(url.pathname);
+      },
       openContrast: () => this.openContrast(),
       openExport: () => this.openExport(this.contrastPalette()),
       contrastDisabled: !this.contrastPalette(),

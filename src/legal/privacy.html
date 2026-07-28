@@ -1,0 +1,63 @@
+<header class="legal-hero">
+  <div class="legal-hero__inner">
+    <h1>Privacy</h1>
+    <p class="legal-hero__sub">Atmos Gallery runs in your browser. Your images are read on your device, your palettes are never held on a server, and a shared link tells us nothing about who opened it.</p>
+    <p class="legal-hero__meta">Last updated: 27 July 2026 · Data controller: KauStudio ApS</p>
+  </div>
+</header>
+
+<div data-toc-offset="88" data-toc-wrap data-toc-levels="h2,h3" class="toc-layout">
+  <aside class="toc-sidebar">
+    <!-- The visible "on this page" eyebrow was removed by request, as .legal-hero__label was before
+         it. The nav keeps the aria-label: that is the list's accessible name, not a second copy of a
+         deleted heading, and without it a screen reader meets an unnamed navigation landmark. -->
+    <nav data-toc-list class="toc-list" aria-label="On this page">
+      <a data-toc-link data-toc-item href="#" class="toc-link"><span data-toc-text=""></span></a>
+    </nav>
+  </aside>
+
+  <div data-toc-content class="toc-article">
+    <h2>Your images are read on your device</h2>
+    <p>The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH, and discarded. The full-size image is never uploaded.</p>
+    <p>One thing does leave, and only when you ask for a palette to be named: a thumbnail of roughly 320 px, together with the hex values, goes to Anthropic's API for the reading. Nothing goes with it: no filename, no account, no identifier. We don't keep it, and Anthropic doesn't train on it. If that call fails, the tool names the palette locally instead and nothing is sent at all.</p>
+
+    <h2>Your palettes stay in your browser</h2>
+    <p>The archive lives in this browser's local storage, under a handful of first-party keys beginning <code>palette-generator</code>. There is no server holding it and no account attached to it. Clearing your browser data deletes it, so if a palette matters to you, save a project file to your own disk.</p>
+
+    <h2>Share links carry the palette itself</h2>
+    <p>A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never send that part to a server, so opening one tells us nothing.</p>
+
+    <h2>What we can see</h2>
+    <p>No accounts, no ads, <strong>no cookies at all</strong>. The site runs on Vercel, which keeps standard access logs: your IP address and user-agent, as any web server must. Two cookieless tools measure the site itself: Vercel Web Analytics for visit counts and Speed Insights for loading speed. Neither identifies you, follows you to other sites, or sees anything you do inside the tool. A tracker blocker stops both, and the tool works exactly as before.</p>
+    <p>We rely on <strong>legitimate interests</strong> for that, to serve the site and to know roughly how many people use it. Interpretation is different: it happens because you asked for a palette to be read.</p>
+
+    <h2>Where it goes, and for how long</h2>
+    <!-- Vercel's Data Processing Addendum binds by its own terms only on Pro and Enterprise, and the
+         project is on Pro. Dropping back to Hobby would make the sentence below false. -->
+    <p>Two processors, both under a written agreement and both in the United States: <strong>Vercel Inc.</strong> hosts the site, <strong>Anthropic PBC</strong> performs the reading. Those transfers rely on the EU–U.S. Data Privacy Framework and the Standard Contractual Clauses. Vercel lists its sub-processors at <a href="https://security.vercel.com">security.vercel.com</a>. There is no one else: no ad network, no third-party analytics, no CRM, no hosted fonts.</p>
+    <p>We keep nothing ourselves. Vercel discards the hash that tells visits apart after <strong>24 hours</strong>, and its runtime logs after a day; Anthropic publishes its retention at <a href="https://privacy.claude.com">privacy.claude.com</a>. Your palettes last as long as you keep them.</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask for a copy of your data, or have it corrected or deleted. Write to <a href="mailto:hello@kau.studio">hello@kau.studio</a> and we will answer within a month. One honest limit: we hold no accounts and no identifiers, so there is usually nothing linking a log entry to you, and where we cannot identify you we cannot act. You can complain to your local data protection authority, or to <strong>Datatilsynet</strong> in Denmark, which supervises us.</p>
+
+    <h2>Who we are</h2>
+    <p>
+      <strong>KauStudio ApS</strong><br />
+      Hessensgade 36, 4. tv<br />
+      2300 Copenhagen S<br />
+      Denmark<br />
+      CVR / VAT: DK39161443<br />
+      <a href="mailto:hello@kau.studio">hello@kau.studio</a>
+    </p>
+    <p>Anything unclear, or something you'd like removed: <a href="mailto:hello@kau.studio">hello@kau.studio</a>.</p>
+
+    <!-- The nav line this block used to carry (Terms · Back to Atmos Gallery) is now in the site
+         footer below, which is on every page. What stays is the controller's identity: it is not
+         decoration but the E-Commerce Directive Art. 5 trader identification, and the footer from the
+         design comp has no slot for a CVR number. -->
+    <div class="legal-foot">
+      <p>Atmos Gallery is a product of KauStudio ApS · CVR DK39161443 · <a href="/terms">Terms</a></p>
+    </div>
+
+  </div>
+</div>

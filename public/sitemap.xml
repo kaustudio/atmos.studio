@@ -5,11 +5,11 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://atmos.gallery/privacy.html</loc>
+    <loc>https://atmos.gallery/privacy</loc>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://atmos.gallery/terms.html</loc>
+    <loc>https://atmos.gallery/terms</loc>
     <priority>0.3</priority>
   </url>
 </urlset>
