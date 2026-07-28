@@ -31,6 +31,119 @@ function reswatch(s, hexStr) {
 }
 
 export const refineMethods = {
+  // ---- motion ----------------------------------------------------------------------------------
+  // THE SURFACE ARRIVES IN THE ORDER IT IS READ. A dialog that fades in as one rectangle tells you
+  // nothing about what is in it; this one assembles — the palette wipes up band by band (the same
+  // clip-path rise the result stage and the detail overlay both use), the roles cascade under it,
+  // the axis rows draw last. Sequence is the app's own grammar, not decoration bolted onto a modal.
+  _refineIn() {
+    const g = window.gsap, root = document.querySelector('[data-refine-dialog]');
+    if (!g || !root) return;
+    const panel = root, back = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]');
+    const bands = [...root.querySelectorAll('[data-refine-swatch]')];
+    const rows = [...root.querySelectorAll('[data-refine-row]')];
+    const axes = [...root.querySelectorAll('[data-refine-axis]')];
+    if (this._reduce) {
+      if (back) g.from(back, { opacity: 0, duration: .2, ease: 'none' });
+      g.from(panel, { opacity: 0, duration: .2, ease: 'none' });
+      return;
+    }
+    const tl = g.timeline();
+    if (back) tl.from(back, { opacity: 0, duration: .22, ease: 'none' }, 0);
+    tl.from(panel, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }, 0);
+    if (bands.length) {
+      tl.set(bands, { clipPath: 'inset(100% 0 0 0)' }, 0)
+        .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }, 0.1);
+    }
+    if (rows.length) tl.from(rows, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger * 0.7, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.26);
+    if (axes.length) tl.from(axes, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.34);
+    // The marker lands on the opening selection AFTER the bands have their real widths — measured,
+    // never assumed, because flexGrow decides them.
+    tl.call(() => this._refinePill(true), null, 0.1);
+  },
+  // The travelling selection marker. Same mechanic and the same curve as the project chips' pill
+  // (misc.js _updateProjPill): the movement is the feedback, so there is no static "selected"
+  // treatment on the swatch to keep in step with it. `jump` places it without a transition — on
+  // open, and after a reorder, where sliding from a position that no longer means anything would
+  // read as the wrong swatch moving.
+  _refinePill(jump) {
+    try {
+      const root = document.querySelector('[data-refine-dialog]'); if (!root) return;
+      const pill = root.querySelector('[data-refine-pill]'); if (!pill) return;
+      const cur = root.querySelector('[data-refine-swatch][aria-pressed="true"]');
+      if (!cur) { pill.style.opacity = '0'; return; }
+      const first = pill.style.opacity !== '1';
+      pill.style.transition = (jump || first || this._reduce) ? 'none'
+        : 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)';
+      pill.style.width = cur.offsetWidth + 'px';
+      pill.style.height = cur.offsetHeight + 'px';
+      pill.style.transform = 'translate(' + cur.offsetLeft + 'px,' + cur.offsetTop + 'px)';
+      pill.style.opacity = '1';
+    } catch (e) { }
+  },
+  // SWITCHING SWATCH MOVES THE SLIDERS. Without this the three thumbs teleport, and the surface
+  // reads as three unrelated readouts rather than one instrument pointed at a different colour.
+  //
+  // The tween writes input.value directly on each frame: a range input's thumb position IS its
+  // value, so there is no other way to put it in motion. Safe because no state changes during the
+  // tween, so React never re-renders over it, and the tween lands exactly on the value React
+  // already holds. Direct manipulation is untouched — dragging is 1:1, always. Only this indirect
+  // change is eased, which is the whole distinction: what the hand does is immediate, what the
+  // interface does on your behalf has a curve.
+  _refineSlide(from) {
+    const g = window.gsap, root = document.querySelector('[data-refine-dialog]');
+    if (!g || !root || this._reduce || !from) return;
+    ['l', 'c', 'h'].forEach((k) => {
+      const el = root.querySelector('#refine-' + k);
+      if (!el || typeof from[k] !== 'number') return;
+      const to = parseFloat(el.value);
+      if (!isFinite(to) || Math.abs(to - from[k]) < 1e-6) return;
+      // Hue is a circle: 350° to 10° is 20° the short way and 340° the long way, and the long way
+      // is a thumb sprinting the full width of the track to land next door.
+      let start = from[k];
+      if (k === 'h' && Math.abs(to - start) > 180) start += (to > start ? 360 : -360);
+      // Put the thumb BACK to where it came from, synchronously, before anything paints. React has
+      // already re-rendered this input with the destination value by the time this callback runs,
+      // so without this line the thumb lands first and then slides away from where it landed — the
+      // motion plays, but after the fact, which is worse than no motion at all.
+      const startVal = k === 'h' ? ((start % 360) + 360) % 360 : start;
+      el.value = String(startVal);
+      const proxy = { v: start };
+      g.to(proxy, {
+        v: to, duration: this.DUR.state * 1.4, ease: this.EASE.standard,
+        onUpdate: () => { el.value = String(k === 'h' ? ((proxy.v % 360) + 360) % 360 : proxy.v); },
+        onComplete: () => { el.value = String(to); },
+      });
+    });
+  },
+  _refineSliderValues() {
+    const root = document.querySelector('[data-refine-dialog]'); if (!root) return null;
+    const out = {};
+    ['l', 'c', 'h'].forEach((k) => { const el = root.querySelector('#refine-' + k); if (el) out[k] = parseFloat(el.value); });
+    return out;
+  },
+  // Reorder and removal move bands that already exist, so they FLIP rather than re-render: the
+  // swatch you moved travels to where you put it. Same primitive the result stage uses, scoped to
+  // this strip's own nodes.
+  _refineFlipFrom(rects) {
+    const g = window.gsap, root = document.querySelector('[data-refine-dialog]');
+    if (!g || !root || !rects || !rects.length || this._reduce) return;
+    const els = [...root.querySelectorAll('[data-refine-swatch]')];
+    els.forEach((el, i) => {
+      const from = rects[Math.min(i, rects.length - 1)], to = el.getBoundingClientRect();
+      if (!from || !to.width) return;
+      g.set(el, { transformOrigin: 'top left', x: from.left - to.left, scaleX: from.width / to.width });
+      g.to(el, { x: 0, scaleX: 1, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform' });
+    });
+  },
+  _refineStripRects() {
+    try {
+      const root = document.querySelector('[data-refine-dialog]'); if (!root) return null;
+      const els = [...root.querySelectorAll('[data-refine-swatch]')];
+      return els.length ? els.map((el) => el.getBoundingClientRect()) : null;
+    } catch (e) { return null; }
+  },
+
   // ---- lifecycle -------------------------------------------------------------------------------
   openRefine() {
     const p = this.state.current;
@@ -44,11 +157,14 @@ export const refineMethods = {
     }, () => {
       const d = document.querySelector('[data-refine-dialog]');
       if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
-      requestAnimationFrame(() => this._dialogIn('[data-refine-dialog]'));
+      requestAnimationFrame(() => this._refineIn());
     });
   },
   closeRefine() {
     const back = this._refineBack;
+    // It leaves the way it arrived, in reverse and faster: the panel drops, the backdrop follows.
+    // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
+    // discipline as every other surface here.
     this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
@@ -58,8 +174,14 @@ export const refineMethods = {
   },
   trapRefine(e) { this.trapFocusIn('[data-refine-dialog]', e); },
   refineSelect(i) {
-    const p = this.state.current; if (!p || !p.swatches[i]) return;
-    this.setState({ refineSel: i, announce: 'Swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase() + ' selected.' });
+    const p = this.state.current; if (!p || !p.swatches[i] || this.state.refineSel === i) return;
+    // Read the thumbs BEFORE the swap, so the tween has a real starting point rather than the
+    // destination it is already sitting on.
+    const from = this._refineSliderValues();
+    this.setState({ refineSel: i, announce: 'Swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase() + ' selected.' }, () => {
+      this._refinePill();
+      this._refineSlide(from);
+    });
   },
 
   // ---- the one write path ----------------------------------------------------------------------
@@ -88,7 +210,7 @@ export const refineMethods = {
     // First edit only: park the extraction's own swatches. Later edits must NOT overwrite it, or
     // Reset would return to the most recent state instead of the original — which is not a reset.
     if (!next.sourceSwatches && patch.swatches) next.sourceSwatches = p.swatches.map((s) => Object.assign({}, s));
-    if (o.structural) this._captureBandRects();
+    if (o.structural) { this._captureBandRects(); this._refineStripFrom = this._refineStripRects(); }
     this.setState((s) => ({
       current: next,
       feed: s.feed.map((x) => x.id === next.id ? next : x),
@@ -96,7 +218,11 @@ export const refineMethods = {
       bandRev: (s.bandRev || 0) + (o.structural ? 1 : 0),
       refineSel: typeof o.sel === 'number' ? o.sel : Math.min(s.refineSel, next.swatches.length - 1),
       announce: o.announce || '',
-    }), () => this.persist({ immediate: true }));
+    }), () => {
+      this.persist({ immediate: true });
+      if (o.structural) { const r = this._refineStripFrom; this._refineStripFrom = null; this._refineFlipFrom(r); this._refinePill(true); }
+      else this._refinePill();
+    });
   },
   // The FLIP's "before". Read straight off the live bands, because their laid-out widths are a
   // function of flexGrow and cannot be derived from the weights alone.
@@ -195,6 +321,7 @@ export const refineMethods = {
     const p = this.state.current;
     if (!p || !p.sourceSwatches) return;
     this._captureBandRects();
+    this._refineStripFrom = this._refineStripRects();
     const next = Object.assign({}, p, { swatches: p.sourceSwatches.map((s) => Object.assign({}, s)), sourceSwatches: null, roles: null });
     this._refineUndo = [];
     this.setState((s) => ({
@@ -204,6 +331,6 @@ export const refineMethods = {
       bandRev: (s.bandRev || 0) + 1,
       refineSel: 0,
       announce: 'Refinement reset. The palette is back to the colours read from the image.',
-    }), () => this.persist({ immediate: true }));
+    }), () => { this.persist({ immediate: true }); this._refinePill(true); });
   },
 };

@@ -425,3 +425,42 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 html.lenis,html.lenis body{height:auto}
 .lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
 .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+
+/* ===== REFINE — the axis sliders ===============================================================
+   A native <input type="range">, kept native so the keyboard, the AT tree and the OS all behave,
+   and repainted part by part because a native thumb arrives ROUNDED and this system has no radius
+   anywhere. Every rule below therefore states border-radius:0 explicitly rather than relying on a
+   reset — the UA sheet sets it on the pseudo-element, so nothing else can reach it.
+
+   The track carries --refine-track, a live gradient set per slider from the SELECTED colour: the
+   lightness axis shows that colour's own ramp from black to white, chroma shows it draining to
+   grey, hue shows the full circle at its lightness. The control shows what it does before it is
+   touched, which is a thing a bare groove cannot do and the reason the value readout can stay
+   small.
+
+   The thumb is a bar, not a knob: 8px wide and taller than the track, so it reads as a playhead
+   over a spectrum rather than a dot on a wire. It widens on hover and again on press — the only
+   two states a pointer can express here, and both on the system's own easing token. */
+[data-refine-slider]{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:34px; background:transparent; cursor:ew-resize; margin:0; }
+[data-refine-slider]:focus{ outline:none; }
+
+[data-refine-slider]::-webkit-slider-runnable-track{ height:28px; margin-top:3px; border:1px solid var(--action-line); border-radius:0; background:var(--refine-track, transparent); }
+[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:8px; height:34px; margin-top:-4px; border:none; border-radius:0; background:var(--on-surface); box-shadow:0 0 0 2px var(--surface); transition:transform .18s var(--ease-standard); transform-origin:center center; }
+[data-refine-slider]:hover::-webkit-slider-thumb{ transform:scaleX(1.5); }
+[data-refine-slider]:active::-webkit-slider-thumb{ transform:scaleX(2); }
+
+[data-refine-slider]::-moz-range-track{ height:28px; border:1px solid var(--action-line); border-radius:0; background:var(--refine-track, transparent); }
+[data-refine-slider]::-moz-range-thumb{ width:8px; height:34px; border:none; border-radius:0; background:var(--on-surface); box-shadow:0 0 0 2px var(--surface); transition:transform .18s var(--ease-standard); }
+[data-refine-slider]:hover::-moz-range-thumb{ transform:scaleX(1.5); }
+[data-refine-slider]:active::-moz-range-thumb{ transform:scaleX(2); }
+
+/* Keyboard focus only, from the same data-kbd latch the rest of the app's rings hang off, so a
+   pointer drag never paints a ring the mouse user did not ask for. */
+html[data-kbd] [data-refine-slider]:focus-visible::-webkit-slider-thumb{ box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--on-surface); }
+html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-thumb{ box-shadow:0 0 0 2px var(--surface), 0 0 0 4px var(--on-surface); }
+
+/* The selection marker that travels between swatches. Same mechanic and the same curve as the
+   project chips' sliding pill: the movement IS the feedback, so there is no second "selected"
+   treatment to keep in step. Squared, and an outline rather than a fill — it has to sit ON a
+   colour without hiding it. */
+[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-shadow:inset 0 0 0 2px var(--surface), inset 0 0 0 4px var(--on-surface); }

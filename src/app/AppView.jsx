@@ -652,18 +652,15 @@ export default function AppView({ vals }) {
                 )}
               </div>
               {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed
-                  from the same analysis the reading is, so the two can never disagree — and under
-                  it the one contrast pair worth naming, drawn in its own colours so the claim can
-                  be checked rather than taken on trust. */}
-              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px')}>
+                  from the same analysis the reading is, so the two can never disagree.
+
+                  A "Strongest pair" readout sat here for one commit and came straight back out. It
+                  was a third thing competing for the same eye-line with no hierarchy between them,
+                  and pairwise contrast already has a surface built for exactly this question — the
+                  Contrast drawer, one button away, with all C(n,2) pairs and an AA/AAA lens. One
+                  affordance per act; a number floated next to a recommendation is not an act. */}
+              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
                 <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface);text-align:right;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
-                {vals.result.hasPair && (
-                  <span data-fx="1" style={sx('display:flex;align-items:center;gap:8px')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Strongest pair</span>
-                    <span style={vals.result.pairStyle}>{vals.result.pairText}</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.result.pairRatio}</span>
-                  </span>
-                )}
               </div>
             </div>
             {/* The palette's metadata readout — the detail pane's bottom line, restored from the
@@ -1818,13 +1815,19 @@ function RefineDialog({ vals }) {
         </header>
 
         {/* The palette, at working size. Keyed by sid so a reorder moves nodes rather than
-            rewriting them, which is also what lets the result view's bands FLIP behind this. */}
-        <div role="group" aria-label="Palette swatches. Choose one to refine." style={sx('display:flex;gap:0;width:100%;padding:16px 22px 0')}>
-          {r.swatches.map((b) => (
-            <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" aria-pressed={b.pressed} aria-label={b.aria} onClick={b.onSelect} style={b.style}>
-              {b.hasRoles && <span style={b.labelStyle}>{b.roleLabels}</span>}
-            </button>
-          ))}
+            rewriting them, which is what lets both this strip and the result bands behind it FLIP.
+            The wrapper is the marker's positioning context: it travels in this box's coordinates. */}
+        <div style={sx('position:relative;width:100%;padding:18px 22px 0')}>
+          <div role="group" aria-label="Palette swatches. Choose one to refine." style={sx('position:relative;display:flex;gap:0;width:100%')}>
+            {r.swatches.map((b) => (
+              <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" aria-pressed={b.pressed} aria-label={b.aria} onClick={b.onSelect} style={b.style}>
+                {b.hasRoles && <span style={b.labelStyle}>{b.roleLabels}</span>}
+              </button>
+            ))}
+            {/* Selection, carried by movement rather than by a static ring drawn on the swatch —
+                the project chips' pill, on the same curve, doing the same job. */}
+            <span data-refine-pill="1" aria-hidden="true"></span>
+          </div>
         </div>
 
         <div style={sx('display:flex;gap:22px;flex-wrap:wrap;padding:18px 22px 0')}>
@@ -1835,7 +1838,7 @@ function RefineDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Roles</span>
             <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
             {r.roles.map((role) => (
-              <div key={role.id}>
+              <div key={role.id} data-refine-row="1">
                 <button type="button" data-ix="cell" data-focus="chrome" aria-pressed={role.here ? 'true' : 'false'} aria-label={role.aria} onClick={role.onAssign} style={sx('display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:8px 0;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
                   <span aria-hidden="true" style={role.swatchStyle}></span>
                   <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:1;min-width:0')}>{role.label}</span>
@@ -1851,12 +1854,15 @@ function RefineDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Swatch {r.selIdx + 1} · {r.selHex}</span>
             <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
             {r.sliders.map((sl) => (
-              <div key={sl.key} style={sx('display:flex;flex-direction:column;gap:5px;padding:10px 0')}>
+              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:6px;padding:11px 0')}>
                 <span style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:10px')}>
                   <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
                   <span style={sx('font-family:Neue Montreal;font-size:12px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{sl.display}</span>
                 </span>
-                <input id={'refine-' + sl.key} type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} style={sx('width:100%;accent-color:var(--on-surface);cursor:pointer')} />
+                {/* --refine-track is this axis drawn as itself: the lightness ramp, the chroma
+                    drain, the hue circle, all sampled from the selected colour. Everything painted
+                    is squared in global.css, because a native range thumb arrives round. */}
+                <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ' of the selected swatch'} style={{ '--refine-track': sl.track }} />
               </div>
             ))}
             {/* Position and removal. Two is the floor — a pair is still a palette, one is not. */}
@@ -1873,7 +1879,6 @@ function RefineDialog({ vals }) {
         <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 22px 22px;margin-top:14px;border-top:1px solid var(--line)')}>
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label="Undo the last refinement" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canUndo ? '1' : '.35'))}>Undo</button>
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label="Reset to the colours read from the image" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canReset ? '1' : '.35'))}>Reset</button>
-          <span style={sx("flex:1;min-width:180px;font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Changes are saved as you make them. Reset returns to the extraction.</span>
         </div>
       </div>
     </div>

@@ -142,6 +142,39 @@ colours so the claim can be checked rather than believed; ordered by luminance, 
 symmetric and the drawer's own `best` had been recording whichever member it reached first as the
 foreground — harmless while it tinted a sample, wrong the moment it is stated as advice.
 
+**The first Refine surface was rejected, and the notes are the useful part.** It worked and it was
+flat: a modal that faded in as one rectangle, three default range inputs, a static ring for
+selection. Four separate failures, worth naming because each has a general form.
+
+- **Direct manipulation is immediate; indirect change is eased.** Dragging a slider is 1:1 with the
+  pointer, always. Switching *which* swatch the sliders point at is the interface acting on the
+  user's behalf, and that now tweens on `EASE.standard`. A range input's thumb position *is* its
+  value, so motion means tweening a proxy and writing `input.value` per frame — safe while no state
+  changes, landing exactly on the value React holds. The start value has to be written
+  **synchronously** first: React has already re-rendered the input with the destination by the time
+  a `setState` callback runs, so without it the thumb lands and *then* slides away from where it
+  landed. Same shape as the toggletip's `requestAnimationFrame` flash, one round earlier.
+- **A native control arrives with a radius.** Every painted part of the slider is repainted with an
+  explicit `border-radius:0`, because a reset cannot reach the UA sheet's pseudo-element rules. The
+  thumb is a bar over a spectrum rather than a knob on a wire.
+- **A track can show its own axis.** Lightness draws that colour's ramp, chroma its drain to grey,
+  hue the circle at a legible lightness — sampled through `gamutMap`, so the track never shows a
+  colour the thumb cannot reach. The hue track is deliberately *not* drawn at the swatch's true
+  lightness: on a dark colour that is a hue wheel with no hue in it.
+- **Selection is carried by movement.** The travelling marker is the project chips' pill on the same
+  `cubic-bezier(.625,.05,0,1)`; the swatch itself gets no static ring, because that would state the
+  same fact twice and one of the two would eventually drift.
+
+The surface also **assembles in the order it is read** — bands wipe up in stagger, roles cascade,
+axes draw last — rather than fading in as a block.
+
+**Two things came straight back out**, and both were rules already written down. A standing line
+reading *"Changes are saved as you make them"* — the affordance-over-copy rule from the previous
+round, broken in the round that follows it. And a **Strongest pair** readout on the result view: a
+third element competing for one eye-line with no hierarchy between them, when pairwise contrast
+already has a surface built for exactly that question, one button away, with every pair and an
+AA/AAA lens. A number floated beside a recommendation is not an act, and only acts earn a slot.
+
 **Deferred, with reasons rather than by omission.** **Lock** protects a swatch against a regeneration
 that does not exist yet; shipping it now is inert UI, and it should arrive with the re-roll it
 protects. **Roles do not travel in a share link** — `encodeShare` carries four fields and its decoder

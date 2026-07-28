@@ -4,6 +4,7 @@ import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_IDS, ROLE_LABEL } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
+import { gamutMap } from '../lib/color.js';
 
 const MONO = 'Neue Montreal';
 
@@ -51,6 +52,11 @@ const aaReadout = (met) => ({
   aaBadgeTitle: A11Y_TITLE[met.aaState] + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
   aaValueText: String(met.aaPairs),
 });
+
+// A slider track drawn as its own axis. n evenly spaced samples through a colour function, emitted
+// as a linear-gradient — enough stops that the eye reads a continuum, few enough that recomputing
+// them on every render of an open dialog costs nothing measurable.
+const rampTrack = (n, at) => 'linear-gradient(90deg,' + Array.from({ length: n }, (_, i) => at(i / (n - 1)) + ' ' + ((i / (n - 1)) * 100).toFixed(1) + '%').join(',') + ')';
 
 export const renderValsMethods = {
   renderVals() {
@@ -246,7 +252,6 @@ export const renderValsMethods = {
       const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState);
       const allTraits = s.current.descriptors || [];
       const moreCount = Math.max(0, allTraits.length - 2);
-      const pair = curMet.bestPair;
       result = {
         name: s.current.name, rationale: s.current.rationale, descriptors: allTraits, bands,
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
@@ -257,13 +262,6 @@ export const renderValsMethods = {
         moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
         readingOpen: !!s.readingOpen,
         onMore: () => this.setState((st) => ({ readingOpen: !st.readingOpen, announce: st.readingOpen ? 'Reading hidden.' : 'Reading shown.' })),
-        // "Use X on Y" — the one pair in this palette with the most separation, oriented by
-        // luminance so the darker colour is always the one carrying the text. Stated as a fact
-        // about two colours rather than as a palette-level grade.
-        hasPair: !!pair,
-        pairText: pair ? pair.fg.toUpperCase() + ' on ' + pair.bg.toUpperCase() : '',
-        pairRatio: pair ? pair.ratio.toFixed(1) + ':1' : '',
-        pairStyle: pair ? { background: pair.bg, color: pair.fg, padding: '3px 8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', whiteSpace: 'nowrap' } : null,
       };
     }
     // palette-level copy affordances
@@ -776,6 +774,7 @@ export const renderValsMethods = {
       const sel = list[selIdx];
       const selC = Math.sqrt(sel.a * sel.a + sel.b * sel.b);
       let selH = Math.atan2(sel.b, sel.a) * 180 / Math.PI; if (selH < 0) selH += 360;
+      const selHr = selH * Math.PI / 180;
       // The live role map: the user's assignment where present, the heuristic everywhere else, so
       // the surface always shows six answered roles rather than a form with gaps.
       const resolved = this.semanticRoles(p, p.roles);
@@ -799,8 +798,13 @@ export const renderValsMethods = {
               + ((roleAt[i] || []).length ? '. Roles: ' + (roleAt[i] || []).map((r) => ROLE_LABEL[r]).join(', ') : '. No role')
               + (isSel ? '. Selected' : ''),
             onSelect: () => this.refineSelect(i),
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '54px', height: '132px', background: b.hex, border: 'none', padding: '10px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '4px', color: on, boxShadow: isSel ? 'inset 0 0 0 3px ' + on : 'none' },
-            labelStyle: { fontFamily: mono, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: on, opacity: 0.9, textAlign: 'left', lineHeight: 1.3, textWrap: 'pretty' },
+            // No selected treatment on the swatch itself: the travelling marker carries that, and a
+            // ring drawn here as well would be the same fact said twice, statically.
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '54px', height: '150px', background: b.hex, border: 'none', padding: '12px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '5px', color: on },
+            // The SAME micro-label the value rows on every band already use — 8.5px at .14em,
+            // uppercase, three-quarter ink. These sit on a colour field exactly as those do, so
+            // they take that recipe rather than a fourth size invented for this surface.
+            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.45, textWrap: 'pretty' }),
           };
         }),
         // Six rows, each naming the swatch that currently answers it. `derived` marks the ones the
@@ -819,10 +823,23 @@ export const renderValsMethods = {
           };
         }),
         // Absolute values, never deltas — see refineAdjust.
+        //
+        // Each track is a live gradient of its own axis, sampled through gamutMap from the SELECTED
+        // colour: move the lightness slider and you are moving along the ramp you can already see.
+        // Sampling rather than a CSS gradient of two stops, because OKLCH interpolated in sRGB is
+        // not a straight line — a two-stop gradient would draw a track the slider does not follow.
+        // gamutMap keeps L and hue and drains chroma until the colour fits, so the track never
+        // shows a colour the thumb cannot reach.
         sliders: [
-          { key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L, display: Math.round(sel.L * 100) + '%', onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)) },
-          { key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC, display: selC.toFixed(3), onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)) },
-          { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH, display: Math.round(selH) + '°', onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)) },
+          { key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L, display: Math.round(sel.L * 100) + '%', track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))), onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)) },
+          { key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC, display: selC.toFixed(3), track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))), onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)) },
+          // The hue track is a LEGEND for the axis, not a preview of the result, and it is the one
+          // of the three that has to be read at a glance. Drawn at the swatch's true lightness it
+          // goes black on a dark colour and white on a pale one — a hue wheel with no hue in it,
+          // on the only axis whose positions are meaningless without colour. So L is held inside a
+          // legible band and chroma given a floor. The swatch itself is three inches away and
+          // states the truth; this states the choice.
+          { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH, display: Math.round(selH) + '°', track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }), onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)) },
         ],
         canRemove: list.length > 2,
         removeAria: 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase(),
