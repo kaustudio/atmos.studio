@@ -522,14 +522,20 @@ function composeRationale(A, r) {
   const close = pick(CLOSINGS[A.lightness.band], r, 0);
 
   // Several shapes so consecutive palettes don't share a silhouette. Each names two or three of
-  // the most distinctive axes for THIS palette — never all six.
+  // the most distinctive axes for THIS palette, never all six.
+  //
+  // The templates return the OBSERVATION only; the closing is joined on at the end. They used to
+  // carry ' — ' + close themselves, and the accent/split clauses were spliced in by searching for
+  // that dash — so the punctuation was load-bearing string state, and two of these shapes already
+  // spend a colon earlier in the line. Building the parts and joining once is what lets the joint
+  // become a full stop without the colon templates ending up with two of them.
   const templates = [
-    () => CAP(f.tempAdj) + ', ' + f.chroma + ' ' + f.noun + ' ' + f.light + ' ' + f.contrast + ' — ' + close + '.',
-    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.contrast + ', ' + f.dom + ' — ' + close + '.',
-    () => CAP(f.hue) + ': ' + f.chroma + ' ' + f.noun + ', ' + f.temp + ' — ' + close + '.',
-    () => CAP(f.tempAdj) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail + ' — ' + close + '.',
-    () => CAP(f.dom) + ': ' + f.chroma + ' ' + f.noun + ' ' + f.contrast + ' — ' + close + '.',
-    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail + ' — ' + close + '.',
+    () => CAP(f.tempAdj) + ', ' + f.chroma + ' ' + f.noun + ' ' + f.light + ' ' + f.contrast,
+    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.contrast + ', ' + f.dom,
+    () => CAP(f.hue) + ': ' + f.chroma + ' ' + f.noun + ', ' + f.temp,
+    () => CAP(f.tempAdj) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail,
+    () => CAP(f.dom) + ': ' + f.chroma + ' ' + f.noun + ' ' + f.contrast,
+    () => CAP(f.chroma) + ' ' + f.noun + ' ' + f.light + ', ' + f.hueTail,
   ];
   // Bias toward templates that lead with a salient axis, then let the seed choose among them.
   const preferred = [];
@@ -539,14 +545,18 @@ function composeRationale(A, r) {
   if (has('dominance')) preferred.push(4);
   const poolIdx = preferred.length ? preferred : [0, 1, 2, 3, 4, 5];
   const idx = pick(poolIdx, r, 0);
-  let out = templates[idx]();
+  let body = templates[idx]();
   // Both of these are the single most distinctive thing about the palettes they apply to, so they
-  // are spliced in ahead of the closing rather than left to compete for a slot.
-  if (f.accent) out = out.replace(' — ', ', ' + f.accent + ' — ');
+  // are appended to the observation rather than left to compete for a slot in it.
+  if (f.accent) body += ', ' + f.accent;
   // …unless the sentence has already said as much: "neither warm nor cool, warm and cool both
   // holding ground" is the same fact twice.
-  else if (A.temperature.split && out.indexOf('neither warm nor cool') < 0) out = out.replace(' — ', ', warm and cool both holding ground — ');
-  return out.slice(0, 240);
+  else if (A.temperature.split && body.indexOf('neither warm nor cool') < 0) body += ', warm and cool both holding ground';
+  // Observation, then verdict, as two sentences. The closings are lowercase fragments by design
+  // ("shadowed but legible"), so the join capitalises: a fragment set as its own sentence is the
+  // register this voice already uses, and it survives being skimmed in a way a suspended clause
+  // between dashes does not.
+  return (body + '. ' + CAP(close) + '.').slice(0, 240);
 }
 
 // Archetype: a single lowercase mood keyword. Consumed as `mood` in the metrics readout

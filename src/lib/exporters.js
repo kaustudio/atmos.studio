@@ -42,7 +42,7 @@ export function buildCssFile(pal, entries, semantic) {
 }
 export function buildW3CTokens(pal, entries, semantic) {
   const group = { '$type': 'color' };
-  if (semantic) group['$description'] = 'Semantic scaffold — a role-mapped starting point to refine, not a finished system.';
+  if (semantic) group['$description'] = 'Semantic scaffold: a role-mapped starting point to refine, not a finished system.';
   entries.forEach((e) => { group[e.key] = { '$value': e.hex, '$type': 'color' }; });
   const obj = {}; obj[slugName(pal.name)] = group;
   return JSON.stringify(obj, null, 2) + '\n';

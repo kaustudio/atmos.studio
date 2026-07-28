@@ -1,6 +1,6 @@
 # Atmos Gallery
 
-> A free desktop web tool that reads a colour palette from an image — the mood its light and
+> A free desktop web tool that reads a colour palette from an image: the mood its light and
 > atmosphere carry, not only its dominant colours. Made by KauStudio. Extraction runs in the
 > browser: the full-size image is never uploaded, and palettes are stored on the visitor's own
 > machine.
@@ -21,8 +21,8 @@ something only a browser can discover.
 - Builds OKLCH colour harmonies, gamut-mapped back into sRGB.
 - Exports a palette as a Tailwind theme block, W3C design tokens, Figma variables, CSS custom
   properties, or a binary `.ase` swatch file.
-- Keeps an archive in the browser's own storage, with portable project files for moving it between
-  machines.
+- Keeps a library in the browser's own storage, with Back up and Restore writing and reading a
+  portable JSON file for moving it between machines.
 
 ## Facts worth stating plainly
 

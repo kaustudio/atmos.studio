@@ -17,9 +17,9 @@ const MONO = 'Neue Montreal';
 // name and the Accessibility facet — so the words never diverge between surfaces.
 const A11Y_LABEL = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
 const A11Y_TITLE = {
-  flexible: 'Flexible — enough usable text pairings to build an interface',
-  limited: 'Limited — one or two usable pairings, enough for an accent',
-  none: 'None — no usable text/background pairing in this palette',
+  flexible: 'Flexible: enough usable text pairings to build an interface',
+  limited: 'Limited: one or two usable pairings, enough for an accent',
+  none: 'None: no usable text or background pairing in this palette',
 };
 // The group note for the Accessibility facet. It lives beside A11Y_TITLE deliberately: it says what
 // the three states MEAN, which is the one thing that must never drift from the titles above it. The
@@ -46,7 +46,7 @@ const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justify
 const aaReadout = (met) => ({
   aaState: met.aaState,
   aaBadgeStyle: aaBadge(met.aaState),
-  aaBadgeTitle: A11Y_TITLE[met.aaState] + ' — ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
+  aaBadgeTitle: A11Y_TITLE[met.aaState] + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
   aaValueText: String(met.aaPairs),
 });
 
@@ -130,7 +130,7 @@ export const renderValsMethods = {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             display: copied ? 'Copied' : f.display,
             valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' .38s var(--ease-entrance) both' },
-            aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ' — ' + f.caveat : ''),
+            aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, key + '-' + i, 'Copied ' + f.copy),
             rowStyle: rowBase, rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
@@ -196,6 +196,31 @@ export const renderValsMethods = {
           // "Reading" is the product's own word for the interpretation layer
           title: 'Reading', rows: [
             { label: 'Archetype', value: curMet.mood },
+            // WHERE THE NAME CAME FROM. Naming is the one step that can leave the device: the live
+            // reading posts a ~320px thumbnail and the hex values (buildInterpRequest) and nothing
+            // else; the local composer sends nothing at all. /privacy has always said so, but the
+            // footer that links it renders only on the dropzone screen — so on the screen where a
+            // palette is actually named, the app said nothing. This row is that sentence, in the
+            // readout's own label:value grammar rather than as a fresh surface.
+            //
+            // Four cases, and the first two are the reason this is not just `fallback`:
+            //  · a shared palette was named on someone else's machine. Its decoded record carries
+            //    no fallback, which validates to false — so without this branch it would claim a
+            //    live reading that never happened here.
+            //  · the eight bundled examples ship with authored names. Same false claim otherwise.
+            //  · fallback === true is the honest flag: no live reading was applied, for any reason.
+            // Known limit, left alone deliberately: a palette generated before the fallback flag
+            // shipped also validates to false and reads as Live. There is no field to consult, and
+            // inventing one to guess at history would be worse than the small inaccuracy.
+            //
+            // Every value is two words that survive the cell's text-transform:capitalize intact —
+            // which is why it is not "From the link" or "Shared link".
+            {
+              label: 'Name from',
+              value: s.sharedView ? 'Shared palette'
+                : s.current.example === true ? 'Bundled example'
+                  : s.current.fallback === true ? 'Local reading' : 'Live reading',
+            },
           ],
         },
       ];
@@ -420,7 +445,7 @@ export const renderValsMethods = {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             display: copied ? 'Copied' : f.display,
             valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' .38s var(--ease-entrance) both' },
-            aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ' — ' + f.caveat : ''),
+            aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy),
             rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on, transition: 'background .2s var(--ease-standard)' },
             rowHover: { background: hoverBg },
@@ -501,7 +526,7 @@ export const renderValsMethods = {
       const mk = (id, label, ext) => ({ label, ext, onPick: () => this.doExport(p, id, semantic), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: '13px', color: 'var(--on-surface)' } });
       exportView = {
         name: p.name, semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
-        layerLabel: semantic ? 'Exporting the semantic scaffold — refine before shipping.' : 'Exporting the primitive layer (swatches by weight).',
+        layerLabel: semantic ? 'Exporting the semantic scaffold. Refine before shipping.' : 'Exporting the primitive layer (swatches by weight).',
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · css'),
           mk('tokens', 'Design tokens (W3C)', 'json'),
@@ -701,6 +726,34 @@ export const renderValsMethods = {
       };
     }
 
+    // ===== restore-from-file confirmation =====
+    // What the file holds and what would land, before anything lands. The counts come from state,
+    // never re-derived from the file here: the payload was validated once at preview and parked on
+    // the instance (previewProjectFile) precisely so these numbers describe the exact objects that
+    // will be committed.
+    let restoreView = null;
+    if (s.restorePending) {
+      const r = s.restorePending;
+      const nothingNew = r.newPalettes === 0 && r.newProjects === 0;
+      const n = (c, one) => c + ' ' + one + (c === 1 ? '' : 's');
+      restoreView = {
+        fileName: r.fileName,
+        nothingNew, hasAct: !nothingNew,
+        // Stated in words. Nothing here is carried by colour or by an icon alone.
+        line: nothingNew
+          ? 'Everything in this file is already in your library. Adding it would change nothing.'
+          : 'Nothing is replaced. Anything already in your library is left exactly as it is.',
+        rows: [
+          { label: 'Palettes', value: r.newPalettes + ' new of ' + r.palettes },
+          { label: 'Projects', value: r.newProjects + ' new of ' + r.projects },
+        ],
+        confirmAria: 'Add ' + n(r.newPalettes, 'palette') + ' and ' + n(r.newProjects, 'project') + ' to your library',
+        // With nothing to add there is nothing to cancel, so the one remaining control says so.
+        cancelLabel: nothingNew ? 'Close' : 'Cancel',
+        cancelAria: nothingNew ? 'Close, nothing was added' : 'Cancel the restore and add nothing',
+      };
+    }
+
     // ===== mobile read-only share view =====
     // Deliberately NOT a responsive port of the result stage: a separate, minimal surface that shows
     // the palette, hands over the hex values, and says plainly where to go to make one. Read-only by
@@ -862,6 +915,44 @@ export const renderValsMethods = {
       activeTags, activeA11y,
       showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
+      // WHERE THE LIBRARY LIVES — carried by a marker, not by a sentence.
+      //
+      // This began as a standing line beside the heading ("Saved in this browser. Clearing browser
+      // data deletes it."). It was accurate and it was too much: a permanent two-sentence
+      // explanation next to a one-word heading, read once and then merely occupying the page. The
+      // rule this repo works to is that an affordance should carry the fact and copy should be
+      // what you get when you ask for it — the same move the AA column already makes with its ⓘ,
+      // which is why this is that ⓘ and not a new kind of thing.
+      //
+      // Gated with the control bar below: an empty library has nothing to lose, and the cold-start
+      // empty state a few lines down already speaks for that case.
+      //
+      // TWO STATES, ONE ELEMENT. When the storage probe fails — private browsing, a locked-down
+      // profile, a full disk — makeStore() returns available:false and persist() silently does
+      // nothing (writePayload). That is not background information to be filed behind an ⓘ, so the
+      // marker changes glyph and accessible name to say something is wrong, and the panel says
+      // what. Never colour alone: the glyph and the name both carry it. _store() memoises onto
+      // this.store, so asking per render costs a property read.
+      storeInfoOpen: !!s.storeInfoOpen,
+      toggleStoreInfo: () => this.toggleTip('storeInfoOpen', '[data-tip="store"]'),
+      storeInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('storeInfoOpen', '[data-tip="store"]'); } },
+      storeInfo: (s.feed.length > 0 || s.projects.length > 0)
+        ? (this._store().available
+          ? {
+            glyph: 'i', aria: 'Where your palettes are stored',
+            lines: [
+              'Your palettes are saved in this browser, on this machine. There is no account and no server copy.',
+              'Clearing your browser data deletes them. Back up to keep a copy of your own.',
+            ],
+          }
+          : {
+            glyph: '!', aria: 'This browser is not saving your palettes',
+            lines: [
+              'This browser is not letting the library be saved. That usually means private browsing, or storage that is full or blocked.',
+              'Nothing here will survive closing the tab. Back up to keep it.',
+            ],
+          })
+        : null,
       onOpenManage: () => this.openManage(),
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
       // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
@@ -886,18 +977,24 @@ export const renderValsMethods = {
       recogniseVariation: () => this.recogniseVariation(),
       trapRecognise: (e) => this.trapFocusIn('[data-recognise-dialog]', e),
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
-      // portable project file
-      fileMenuOpen: s.fileMenuOpen, toggleFileMenu: () => this.setState((st) => ({ fileMenuOpen: !st.fileMenuOpen })),
-      showSaveActive: s.activeProject !== null,
-      saveActiveFile: () => { this.setState({ fileMenuOpen: false }); this.saveProjectFile(s.activeProject); },
-      saveArchiveFile: () => { this.setState({ fileMenuOpen: false }); this.saveProjectFile('archive'); },
+      restore: restoreView, hasRestore: !!s.restorePending,
+      closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
+      trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),
+      // the portable file — a BACKUP of the library, and the restore that reads one back. Named for
+      // the consequence rather than the file dialog; the file format itself is untouched (see the
+      // frozen `schema` note in persistence.js).
+      backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
+      showBackUpProject: s.activeProject !== null,
+      backUpProject: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile(s.activeProject); },
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('archive'); },
+      // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
       // on phones the wordmark rides at the top exactly as it does on desktop, and stays decorative:
       // there is no tool behind the small-screen surface to hand a "back to the start" button to
       showLogoButton: !!s.landingDismissed && !s.narrow,
       showLogoDecor: !s.landingDismissed || s.narrow,
       activeScopeLabel: (s.activeProject === '__unfiled__' ? 'Unfiled' : this.projectName(s.activeProject)),
-      onOpenFile: () => { const inp = this.projectFileRef && this.projectFileRef.current; if (inp) inp.click(); },
+      onRestore: () => { const inp = this.projectFileRef && this.projectFileRef.current; if (inp) inp.click(); },
       onProjectFileChange: (e) => { const f = e && e.target && e.target.files && e.target.files[0]; if (f) this.importProjectFile(f); if (e && e.target) e.target.value = ''; },
       projectFileRef: this.projectFileRef,
       isListView: s.feedView === 'list', isGridView: s.feedView === 'grid',
@@ -948,8 +1045,8 @@ export const renderValsMethods = {
       showSortHeader: s.feed.length > 0 && s.feedView === 'list',
       // the ⓘ toggletip on the header: the denominator and the badge vocabulary, explained ONCE
       aaInfoOpen: !!s.aaInfoOpen,
-      toggleAaInfo: () => this.setState((st) => ({ aaInfoOpen: !st.aaInfoOpen })),
-      aaInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.setState({ aaInfoOpen: false }); } },
+      toggleAaInfo: () => this.toggleTip('aaInfoOpen', '[data-tip="aa"]'),
+      aaInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('aaInfoOpen', '[data-tip="aa"]'); } },
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [

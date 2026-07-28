@@ -48,7 +48,7 @@ export const HEAD = {
   [APP]: {
     title: 'Atmos Gallery',
     path: '/',
-    description: "Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood — not just its dominant colours.",
+    description: "Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood, not just its dominant colours.",
     ogType: 'website',
   },
   [PRIVACY]: {

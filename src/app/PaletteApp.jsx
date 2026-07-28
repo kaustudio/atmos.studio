@@ -105,9 +105,15 @@ export default class PaletteApp extends React.Component {
     // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
+    // the Library heading's storage toggletip — same shape as aaInfoOpen, and closed the same way
+    storeInfoOpen: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
-    assignPalette: null, manageProjects: false, fileMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
+    // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
+    // that would actually import — a bad file never gets a confirmation to click.
+    restorePending: null,
+    assignPalette: null, manageProjects: false, backupMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     overlaySel: null, theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
@@ -245,7 +251,8 @@ export default class PaletteApp extends React.Component {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
-        if (this.state.fileMenuOpen) { e.preventDefault(); this.setState({ fileMenuOpen: false }); return; }
+        if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
+        if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }

@@ -10,8 +10,11 @@ export const persistenceMethods = {
     // Gallery) — which is the point: it survived both renames. Every archive that
     // already exists on someone's machine is keyed to this string, and localStorage has no rename:
     // changing it would silently orphan real palettes behind a key nothing reads any more. The same
-    // goes for the project-file `schema` value below (saveProjectFile / mergeProjectFile) — files
-    // already saved to disk carry it, and importing must keep working.
+    // goes for the project-file `schema` value below (written by buildProjectFile, matched by
+    // _readProjectFile) — files already saved to disk carry it, and restoring must keep working.
+    // The buttons that write and read those files now say Back up and Restore; the string inside
+    // the file did not move with them, deliberately, and neither did the filenames already on
+    // people's disks — a file is identified by what is in it, never by what it is called.
     //
     // Leaving them is the deliberate choice, not an oversight. They are internal identifiers, never
     // shown to a user, so they cost nothing in coherence. Renaming would need a versioned migration
@@ -230,41 +233,135 @@ export const persistenceMethods = {
     else { const pid = (scope && scope !== '__unfiled__') ? scope : null; projects = pid ? st.projects.filter((p) => p.id === pid) : []; palettes = st.feed.filter((p) => pid ? p.projectId === pid : !p.projectId); }
     return { schema: 'palette-generator/project-file', version: 1, exportedAt: new Date().toISOString(), projects, palettes };
   },
+  // The FILENAME follows the interface's vocabulary; the `schema` string inside the file does not,
+  // and must not (see the frozen-key note at the top). A file on disk is identified by what is in
+  // it, never by what it is called: mergeProjectFile matches on `schema` alone, and the input
+  // accepts any .json — so a backup written by an older build, under the old palettes_* name, still
+  // restores, and one written today still opens in an older build.
   saveProjectFile(scope) {
     const data = this.buildProjectFile(scope);
     const d = new Date(), date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let fn;
-    if (scope === 'archive') fn = 'palettes_archive_' + date + '.json';
-    else { const nm = (scope && scope !== '__unfiled__') ? this.projectName(scope) : 'unfiled'; fn = 'palettes_' + this.slugName(nm) + '_' + date + '.json'; }
+    if (scope === 'archive') fn = 'atmos_library_backup_' + date + '.json';
+    else { const nm = (scope && scope !== '__unfiled__') ? this.projectName(scope) : 'unfiled'; fn = 'atmos_project_' + this.slugName(nm) + '_' + date + '.json'; }
     this.download(fn, JSON.stringify(data, null, 2), 'application/json');
   },
+  // Restoring is TWO acts now: read the file, then commit it. Nothing reaches the library until
+  // confirmRestore runs, and the dialog in between states what the file holds and what would land.
+  // The merge has always been non-destructive, but "it never clobbers" is a promise nobody could
+  // check from a toast that arrived after the fact. The counts are the check, stated before.
+  //
+  // The four refusals below are unchanged and are still the only thing a bad file can produce: a
+  // file that fails validation never reaches a dialog, so there is never a confirmation to click
+  // for something that was not going to import anyway.
   importProjectFile(file) {
     if (!file) return;
     const rdr = new FileReader();
-    rdr.onload = () => { let obj = null; try { obj = JSON.parse(rdr.result); } catch (e) { this.showNotice('That file couldn’t be read — it may be damaged or not a palette project file.'); return; } this.mergeProjectFile(obj); };
+    rdr.onload = () => { let obj = null; try { obj = JSON.parse(rdr.result); } catch (e) { this.showNotice('That file couldn’t be read. It may be damaged, or not a palette project file.'); return; } this.previewProjectFile(obj, file.name || ''); };
     rdr.onerror = () => this.showNotice('Couldn’t open that file.');
     rdr.readAsText(file);
   },
-  // Validate + merge, never clobber: dedupe palettes by id; keep both projects if names collide but ids differ.
-  mergeProjectFile(obj) {
-    if (!obj || typeof obj !== 'object' || obj.schema !== 'palette-generator/project-file') { this.showNotice('That doesn’t look like a palette project file.'); return; }
-    if (typeof obj.version === 'number' && obj.version > 1) { this.showNotice('This file was made by a newer version — update before importing.'); return; }
-    const inProjects = this.validateProjects(obj.projects);
-    const inPalettes = this.validateFeed(obj.palettes);
-    if (!inPalettes) { this.showNotice('No valid palettes found in that file.'); return; }
+  // Validate ONLY — no state is touched. Returns the validated payload, or the one sentence saying
+  // why not, so the refusal copy lives in one place and the preview and the commit can never
+  // disagree about what "a valid file" means.
+  _readProjectFile(obj) {
+    if (!obj || typeof obj !== 'object' || obj.schema !== 'palette-generator/project-file') return { error: 'That doesn’t look like a palette project file.' };
+    if (typeof obj.version === 'number' && obj.version > 1) return { error: 'This file was made by a newer version. Update before importing.' };
+    const projects = this.validateProjects(obj.projects);
+    const palettes = this.validateFeed(obj.palettes);
+    if (!palettes) return { error: 'No valid palettes found in that file.' };
+    return { projects, palettes };
+  },
+  // Count against the library, then ask. The validated arrays are parked on the instance and are
+  // NOT re-derived on confirm — that is a correctness requirement, not a saving: validateProjects
+  // and validateFeed MINT an id for any entry arriving without one ('proj-' + Date.now() + a random
+  // suffix), so a second pass would produce different objects and the "5 new" the user agreed to
+  // would describe a set that never lands.
+  previewProjectFile(obj, fileName) {
+    const read = this._readProjectFile(obj);
+    if (read.error) { this.showNotice(read.error); return; }
+    const havePal = new Set(this.state.feed.map((p) => p.id));
+    const haveProj = new Set(this.state.projects.map((p) => p.id));
+    this.openRestore({
+      fileName: fileName || 'Backup file',
+      palettes: read.palettes.length, projects: read.projects.length,
+      newPalettes: read.palettes.filter((p) => !havePal.has(p.id)).length,
+      newProjects: read.projects.filter((p) => !haveProj.has(p.id)).length,
+    }, read);
+  },
+  // Same dialog family as re-upload recognition, and the same shape for the same reason: a pending
+  // act, stated in full, with two named outcomes. Focus moves in the setState callback and only the
+  // transition waits for a frame — see openRecognised for why that order is load-bearing.
+  openRestore(preview, pending) {
+    this._restoreBack = document.activeElement;
+    this._restorePending = pending;
+    this.setState({
+      restorePending: preview,
+      announce: 'This file holds ' + preview.palettes + ' palettes and ' + preview.projects + ' projects, of which '
+        + preview.newPalettes + ' palettes and ' + preview.newProjects + ' projects are new to your library. Choose whether to add them.',
+    }, () => {
+      const d = document.querySelector('[data-restore-dialog]');
+      if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      requestAnimationFrame(() => this._dialogIn('[data-restore-dialog]'));
+    });
+  },
+  // Every exit routes through here, so the parked payload cannot survive the dialog by any path.
+  _closeRestore(after) {
+    const back = this._restoreBack;
+    this._dialogOut('[data-restore-dialog]', () => this.setState({ restorePending: null }, () => {
+      const pending = this._restorePending; this._restorePending = null;
+      if (after) after(pending);
+      else if (back && back.focus) try { back.focus(); } catch (e) { }
+    }));
+  },
+  // Cancelling is a real outcome, not a dead end: the library is untouched.
+  closeRestore() { this._closeRestore(); this.setState({ announce: 'Restore cancelled. Nothing was added to your library.' }); },
+  confirmRestore() { this._closeRestore((pending) => { if (pending) this.mergeProjectFile(pending); }); },
+  // Merge, never clobber: dedupe palettes by id; keep both projects if names collide but ids differ.
+  // Takes the payload _readProjectFile already produced — validation happened once, before the
+  // dialog. The added/addedProj counts are still recomputed HERE rather than reused from the
+  // preview: another tab can adopt a snapshot through _onStorage between the two, so the preview is
+  // a forecast and this is the fact.
+  mergeProjectFile(payload) {
+    const inProjects = payload.projects, inPalettes = payload.palettes;
     this.setState((st) => {
       const projects = st.projects.slice(); const haveIds = new Set(projects.map((p) => p.id)); let addedProj = 0;
       inProjects.forEach((p) => { if (!haveIds.has(p.id)) { projects.push(p); haveIds.add(p.id); addedProj++; } });
       const feed = st.feed.slice(); const havePal = new Set(feed.map((p) => p.id)); let added = 0;
       inPalettes.forEach((p) => { if (!havePal.has(p.id)) { feed.unshift(p); havePal.add(p.id); added++; } });
       const pids = new Set(projects.map((p) => p.id)); feed.forEach((p) => { if (p.projectId && !pids.has(p.projectId)) p.projectId = null; });
-      this._importSummary = 'Imported ' + added + ' new palette' + (added === 1 ? '' : 's') + ' and ' + addedProj + ' project' + (addedProj === 1 ? '' : 's') + '.';
+      this._importSummary = 'Added ' + added + ' palette' + (added === 1 ? '' : 's') + ' and ' + addedProj + ' project' + (addedProj === 1 ? '' : 's') + ' to your library.';
       return { projects, feed, announce: this._importSummary };
-    }, () => { this.persist({ immediate: true }); if (this.state.feedView === 'grid') this.buildUniverse(); this.showNotice(this._importSummary || 'Import complete.'); });
+    }, () => { this.persist({ immediate: true }); if (this.state.feedView === 'grid') this.buildUniverse(); this.showNotice(this._importSummary || 'Restore complete.'); });
   },
   // ---- lightweight reversible dialog motion (assign / manage) — fade+slide, tokens, RM-instant ----
   _dialogIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const root = document.querySelector(sel); if (!root) return; const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); if (bk) g.from(bk, { opacity: 0, duration: .2, ease: 'none' }); g.from(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.state, ease: this.EASE.entrance, transformOrigin: 'center center', clearProps: 'transform' }); },
   _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: .2, ease: 'none' }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.state, ease: this.EASE.exit, transformOrigin: 'center center' }, 0); },
+  // ---- the toggletip's own beat ----------------------------------------------------------------
+  // A dialog's arrival is an event; a toggletip's is a disclosure, so it moves less and moves
+  // faster — DUR.state in, DUR.micro out, and 6px of travel against the dialog's 12, with no scale.
+  // It enters DOWNWARD from under its marker (y:-6 → 0), so the movement points away from the thing
+  // that opened it and the panel reads as unfolding from the ⓘ rather than appearing beside it.
+  //
+  // Both toggletips share these, which is the point: this app's surfaces arrive rather than appear,
+  // and one that popped instantly while everything around it eased would read as a rendering fault.
+  // Reduced motion and no-GSAP both take the instant path, as everywhere else — _tipOut calls its
+  // callback synchronously in that case, so the close path is identical with and without motion.
+  _tipIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector(sel); if (!el) return; g.from(el, { opacity: 0, y: -6, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
+  _tipOut(sel, cb) { const g = window.gsap; const el = document.querySelector(sel); if (this._reduce || !g || !el) { cb(); return; } g.to(el, { opacity: 0, y: -6, duration: this.DUR.micro, ease: this.EASE.exit, onComplete: cb }); },
+  // One open/close for every toggletip, keyed by its own state flag and its own panel. Closing has
+  // to outlive the state change — React would unmount the panel the instant the flag flips, and
+  // there would be nothing left to tween — so the exit runs first and the flag falls after it.
+  // The _tipClosing guard is what stops a second click during that ~120ms from starting a second
+  // exit on an element already on its way out (which would fire the callback twice and re-open).
+  // NOT inside a requestAnimationFrame, unlike the dialogs. The DOM is already committed in a
+  // setState callback, and gsap.from() sets its start values on the spot — so tweening here means
+  // the panel is never painted at full opacity. Deferred to a frame it was: one frame at opacity 1
+  // landed before the tween began, and the reveal opened with a flash of the thing it was about to
+  // fade in. The dialogs defer because their transition measures layout; this one does not.
+  openTip(flag, sel) { this.setState({ [flag]: true }, () => this._tipIn(sel)); },
+  closeTip(flag, sel) { if (this._tipClosing) return; this._tipClosing = true; this._tipOut(sel, () => { this._tipClosing = false; this.setState({ [flag]: false }); }); },
+  toggleTip(flag, sel) { if (this.state[flag]) this.closeTip(flag, sel); else this.openTip(flag, sel); },
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
   closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
@@ -291,7 +388,7 @@ export const persistenceMethods = {
     for (let i = feed.length - 1; i >= 0 && (!res || !res.ok); i--) {
       if (feed[i].imageUrl) { feed[i].imageUrl = null; dropped++; res = attempt(Object.assign({}, payload, { feed })); }
     }
-    if (!res || !res.ok) { this.setState({ announce: 'Storage is full — some palettes could not be saved. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full — save a project file to keep your palettes safe.'); } }
-    else if (dropped > 0) { this.setState({ announce: 'Storage nearly full — older reference images were dropped to keep your palettes. Save a project file to keep them safe.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space — save a project file to keep everything.'); } }
+    if (!res || !res.ok) { this.setState({ announce: 'Storage is full. Some palettes could not be saved, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full. Back up to keep your palettes safe.'); } }
+    else if (dropped > 0) { this.setState({ announce: 'Storage is nearly full. Older reference images were dropped to keep your palettes, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space. Back up to keep everything.'); } }
   },
 };

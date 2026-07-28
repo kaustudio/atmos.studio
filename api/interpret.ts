@@ -40,7 +40,14 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 // The prompt lives here, on the server, not in the client bundle. Move the exact string your
 // client currently sends as `system` into this constant — it is the product, and it should not
 // be attacker-replaceable or publicly readable.
-const SYSTEM_PROMPT = `You name and describe colour palettes for a design tool, in a restrained, evocative, editorial voice. You receive a downscaled reference image and the palette extracted from it as HEX swatches with weights. Read the palette’s mood from its actual character — temperature, chroma, lightness, atmosphere — grounded in the colours present; never invent colours that aren’t there. Guide toward original, descriptive names; never a brand or trademark. Return ONLY a JSON object — no preamble, no markdown fences — of exactly this shape: {"name": string, an original evocative title of 1–3 words; "descriptors": an array of 3–4 short mood adjectives; "rationale": a single evocative, precise sentence; "archetype": a short lowercase mood keyword}. Match this register for the rationale: "Cool, low-chroma greys held under a flat, even light — restrained and quietly atmospheric." / "Saturated warmth pooling toward orange — the long, low glow of the hour before dusk."`;
+// PUNCTUATION IS PART OF THE SPEC HERE, not a style note. Whatever this prompt models, the tool
+// prints: the rationale goes straight onto the result view beside the local reading, and the two
+// have to sound like one voice. The examples below used to be built around em dashes, so the model
+// produced them faithfully and the live path disagreed with composeRationale (reading.js), which no
+// longer uses any. Hence the explicit rule as well as the corrected examples: a few-shot pair
+// teaches punctuation far more strongly than an instruction does, so if these ever go back to
+// carrying a dash, the instruction will lose.
+const SYSTEM_PROMPT = `You name and describe colour palettes for a design tool, in a restrained, evocative, editorial voice. You receive a downscaled reference image and the palette extracted from it as HEX swatches with weights. Read the palette’s mood from its actual character (temperature, chroma, lightness, atmosphere), grounded in the colours present; never invent colours that aren’t there. Guide toward original, descriptive names; never a brand or trademark. Never use em dashes or en dashes anywhere in your output: use commas, colons, or separate sentences instead. Return ONLY a JSON object, with no preamble and no markdown fences, of exactly this shape: {"name": string, an original evocative title of 1 to 3 words; "descriptors": an array of 3 to 4 short mood adjectives; "rationale": a single evocative, precise sentence; "archetype": a short lowercase mood keyword}. Match this register for the rationale: "Cool, low-chroma greys held under a flat, even light. Restrained and quietly atmospheric." / "Saturated warmth pooling toward orange, the long, low glow of the hour before dusk."`;
 
 function applyCors(req: any, res: any): boolean {
   const origin = req.headers?.origin;

@@ -19,7 +19,7 @@ export const pipelineMethods = {
   handleIncoming(file) {
     if (!file) { this.showError('No file received', 'Try dropping an image again, or browse to pick one.'); return; }
     if (this.ACCEPT.indexOf(file.type) < 0 && file.type.indexOf('image/') !== 0) {
-      this.showError('That file isn’t an image', 'Upload a JPG, PNG, WEBP, or GIF — this tool reads colour from picture files only.'); return;
+      this.showError('That file isn’t an image', 'Upload a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.'); return;
     }
     if (file.size > this.MAX_BYTES) {
       this.showError('That image is too large', 'Files need to be under 20 MB. Try exporting a smaller or compressed version.'); return;
@@ -115,7 +115,7 @@ export const pipelineMethods = {
     this._procImg = img;
     let cents = [], hash = null;
     try { const r = this.extract(img); cents = r.cents; hash = r.hash; } catch (e) { cents = []; }
-    if (!cents.length) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette — try a photo with more visible tone and detail.'); return; }
+    if (!cents.length) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette. Try a photo with more visible tone and detail.'); return; }
     // RECOGNITION GATE. Now that identity is content-addressed, an image the archive has already
     // read is a fact we can state instead of a duplicate we silently manufacture. The extraction
     // above has already run — it is 5184 pixels and costs nothing — but nothing is committed, so
@@ -163,7 +163,7 @@ export const pipelineMethods = {
     // reserved for genuine failures, so a standalone build never surfaces it on every generation.
     pal.fallback = !!noLive;
     this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. Mood: ' + pal.descriptors.join(', ') + '.' }), () => this.persist({ immediate: true }));
-    if (errored) this.showNotice('Interpreted with the local reading — the live interpreter was unreachable.');
+    if (errored) this.showNotice('Interpreted with the local reading. The live interpreter was unreachable.');
   },
   // ------- live interpretation call (pluggable: proxy endpoint → artifact runtime → none) -------
   async interpretLive(thumb, swatches) {
@@ -248,56 +248,56 @@ export const pipelineMethods = {
       this.seedObj({
         key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 8 * 60e3,
         name: 'Garnet', desc: ['Low-lit', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
-        rat: 'Warm, saturated reds kept in shadow split by stark contrast — shadowed but legible.',
+        rat: 'Warm, saturated reds kept in shadow split by stark contrast. Shadowed but legible.',
         sw: [['#0f0302', .3609], ['#e12409', .2392], ['#f17645', .1454], ['#aa0906', .1416], ['#540604', .1128]],
       }),
       // 44° — orange
       this.seedObj({
         key: 'tulip', hash: 'ff280e7420bfb244', age: 3 * H,
         name: 'Dry Season', desc: ['Stark', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
-        rat: 'Saturated reds sitting at mid weight, sitting close together — even-tempered and workable.',
+        rat: 'Saturated reds sitting at mid weight, sitting close together. Even-tempered and workable.',
         sw: [['#a74b1b', .4919], ['#933913', .3580], ['#ab8766', .0972], ['#d5cdbf', .0449], ['#361905', .0079]],
       }),
       // 58° — terracotta, against the one teal in the set
       this.seedObj({
         key: 'courtyard', hash: '5b217989553d518d', age: 9 * H,
         name: 'Forged Midfield', desc: ['Warm', 'Stark', 'Monochrome'], arch: 'graphic',
-        rat: 'Warm oranges sitting at mid weight, held to a single note — plain and unhurried.',
+        rat: 'Warm oranges sitting at mid weight, held to a single note. Plain and unhurried.',
         sw: [['#e2a779', .3819], ['#472f24', .2483], ['#19110e', .2014], ['#685a48', .0961], ['#9c7b60', .0723]],
       }),
       // 82° — gold
       this.seedObj({
         key: 'poppy', hash: '9f0f8f2c2b9d30f2', age: 26 * H,
         name: 'Scorched Clear Morning', desc: ['Stark', 'Bright', 'Warm', 'Graphic'], arch: 'graphic',
-        rat: 'Warm yellows lifted high, held to a single note — airy and unforced.',
+        rat: 'Warm yellows lifted high, held to a single note. Airy and unforced.',
         sw: [['#e5e9eb', .5490], ['#664515', .1188], ['#c4b07b', .1132], ['#1e1506', .1109], ['#9d7b38', .1080]],
       }),
       // 128° — chartreuse
       this.seedObj({
         key: 'radish', hash: '4cae3f7a29e8ee24', age: 34 * H,
         name: 'High Key', desc: ['Stark', 'Pale', 'Monochrome', 'Graphic'], arch: 'graphic',
-        rat: 'Hues held to a single note: low-chroma greens, warm — washed and quiet.',
+        rat: 'Hues held to a single note: low-chroma greens, warm. Washed and quiet.',
         sw: [['#eae8dd', .7766], ['#b8cd79', .0814], ['#6c9429', .0557], ['#3c5e19', .0480], ['#1b2f0c', .0382]],
       }),
       // 164° — green, carrying its own complement
       this.seedObj({
         key: 'papaya', hash: '1e83a904f39350e0', age: 50 * H,
         name: 'Ruled Open Country', desc: ['Even', 'Varied', 'Anchored'], arch: 'neutral',
-        rat: 'One colour carrying the frame: saturated tones with clear structure between them — restrained and quietly atmospheric.',
+        rat: 'One colour carrying the frame: saturated tones with clear structure between them. Restrained and quietly atmospheric.',
         sw: [['#1b6d4e', .7556], ['#221d14', .0797], ['#c05118', .0637], ['#d17827', .0507], ['#903215', .0503]],
       }),
       // 238° — blue, carrying its own complement
       this.seedObj({
         key: 'court', hash: '480909a3cd5e5535', age: 74 * H,
         name: 'Midfield', desc: ['Stark', 'Cool', 'Monochrome'], arch: 'graphic',
-        rat: 'Hues held to a single note: restrained blues, cool — restrained and quietly atmospheric.',
+        rat: 'Hues held to a single note: restrained blues, cool. Restrained and quietly atmospheric.',
         sw: [['#547b95', .4699], ['#0a2944', .1977], ['#678da4', .1890], ['#456b85', .1140], ['#d0d2c6', .0293]],
       }),
       // 263° — periwinkle
       this.seedObj({
         key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 100 * H,
         name: 'Frozen Slate', desc: ['Restrained', 'Cool', 'Stark', 'Graphic'], arch: 'accented',
-        rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour — even-tempered and workable.',
+        rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour. Even-tempered and workable.',
         sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
       }),
     ];

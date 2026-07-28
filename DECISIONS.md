@@ -66,6 +66,164 @@ redundancy, kept on purpose rather than trimmed by a footer change.
 
 ---
 
+## 2026-07-28 — Back up and Restore, and the four things the tool never said out loud
+
+**Context:** the first round of the July 2026 UX audit, its §1 (*Product model and persistence*, P0).
+Scoped to that section alone; the audit's interactive **context preview** is a larger build and was
+explicitly held back, along with the rest of §2–§5.
+
+**The finding, restated in this repo's terms:** the persistence layer was already careful — versioned
+schema, validation, cross-tab merge, quota degradation, delete with undo, an import that dedupes by
+id and cannot clobber. What was missing was not safety. It was *disclosure*. Every one of those
+properties was invisible from inside the tool, and the two controls that let someone protect their
+work were called **Save file** and **Open file** — names that describe a file dialog rather than a
+consequence.
+
+**Five changes, all of them saying something that was already true:**
+
+1. **The archive is the Library**, on screen and in one place. The word had to mean something before
+   *Back up whole library* could.
+2. **Save file / Open file → Back up / Restore.** *Save* was the worst available word here: a palette
+   is saved the instant it is generated, a share link saves nothing, and Export writes tokens.
+   *Export / Import project* was the audit's other suggestion and lost for a narrower reason — the
+   palette screen already spends *Export* on token export, and one word cannot carry two file
+   formats.
+3. **A 16px marker beside the heading**, not a sentence — see the section below, which is the more
+   important half of this entry. Not a nudge, not a threshold toast, and deliberately **no sixth
+   localStorage key** to remember whether it has been seen: a dismissible reminder would have cost
+   the privacy copy an amendment to buy an interruption.
+4. **A share link says it is not a backup.** `copy()` only swaps the button label and writes to the
+   live region, so a sentence handed to it is heard and never seen — the confirmation stays there
+   and the *distinction* goes through `showNotice`, which is visible. Two facts, two channels.
+5. **`Name from` in the result view's Reading group.** Naming is the one step that can leave the
+   device, and the only disclosure lived on `/privacy`, linked from a footer that renders on the
+   dropzone screen alone. So on the screen where a palette is actually named, the tool said nothing.
+   Four values, and the first two are why this is not simply `fallback`: a shared palette was named
+   on someone else's machine and the eight bundled examples ship with authored names, and **both
+   validate to `fallback: false`** — either would have claimed a live reading that never happened.
+
+**Restore states what it will do, and Replace is not offered.** The merge was always non-destructive,
+but "it never clobbers" is a promise nobody could verify from a toast that had already fired. The
+counts *are* the verification, so `mergeProjectFile` split into read / preview / commit with a
+dialog between. **The validated payload is parked on the instance and is never re-derived on
+confirm** — `validateProjects` and `validateFeed` *mint* an id for any entry arriving without one,
+so a second pass produces different objects and the "5 new" the user agreed to would describe a set
+that never lands. The audit asks for Replace, Merge and Cancel; this ships two. Merge **is** the
+restore semantic — it returns what was lost and leaves what has been made since. Replace exists only
+to *remove* things added after the backup: destructive, with no undo path at library scale, and no
+stated need. If it is ever wanted, it needs its own backup-before-replace step, not a third button.
+
+**What did not move, and must not:** the `palette-generator/*` keys and the
+`palette-generator/project-file` schema string. The buttons that write and read those files changed
+name; the string inside the file did not, and neither did the filenames already on people's disks.
+A file is identified by what is in it — `_readProjectFile` matches on `schema` alone and the input
+takes any `.json` — so an old `palettes_archive_*.json` still restores. Filenames *did* move to
+`atmos_library_backup_*` / `atmos_project_*`, which is free precisely because nothing reads them.
+
+**Show intro again left the file menu.** It was never a file action, and under a button called
+*Back up* it would read as one. It was also a second door: the brand mark carries
+`aria-label="Atmos Gallery — return to the start screen"` and calls the same `returnToIntro()` on
+every screen that menu appeared on. Deleted rather than relocated, on the same reasoning that
+already removed the third clear-all.
+
+**The general rule this round established, which outlives it: facts go in affordances, copy arrives
+on demand.** Item 3 shipped first as a standing line beside the heading — *Saved in this browser.
+Clearing browser data deletes it.* Accurate, and rejected on sight: a permanent two-sentence
+explanation next to a one-word heading is read once and then merely occupies the page. In the
+user's words, *"we need to have UI elements to compliment best practice UX to avoid this. Otherwise
+the site gets cluttered in copy"* — and they had already solved it once, in the filter header.
+
+So the line became **the same 16px ⓘ toggletip the AA-pairs column already uses**: bordered button,
+`aria-expanded`, Escape on a local key handler, a `role="note"` panel behind a fixed click-catcher.
+Not a similar one — the same one, down to the computed box, so there is one "explain this"
+mechanism in the app rather than two to learn. Three things make it work without the sentence:
+
+- **The subject lives in the button's `aria-label`** (*"Where your palettes are stored"*), so the
+  fact is available to assistive tech without opening anything. What was removed is the visible
+  sentence, not the information.
+- **One element carries two states.** When the storage probe fails the marker becomes `!`, the
+  accessible name becomes *"This browser is not saving your palettes"*, and the panel says what to
+  do — rather than a second standing line existing for a case almost nobody hits. Glyph and name
+  both carry it; never colour alone.
+- **Transient copy is a different thing and stays.** The notice after copying a share link fires on
+  a deliberate act and dismisses itself. The target is *permanent* prose, not all prose. Dialogs
+  may carry sentences; that is what a dialog is for.
+
+Apply this to the remaining audit rounds before adding any explanatory line: find the element that
+can carry the fact first.
+
+**And the second standing rule, from the same review: no surface appears, every surface arrives.**
+The toggletip shipped with an instant reveal, which in an interface where everything else eases
+does not read as fast — it reads as a rendering fault. Both tips now run `_tipIn` / `_tipOut`
+(persistence.js) off the same `DUR` / `EASE` tokens as everything else, scaled to their weight: a
+dialog is an event and travels 12px with scale, a toggletip is a disclosure and travels 6px with
+none, `DUR.state` in and `DUR.micro` out, moving away from the marker that opened it. Three things
+this surfaced that will be true of the next one too:
+
+- **The exit has to outlive the state change.** React unmounts the panel the instant the flag
+  flips, leaving nothing to tween — so `closeTip` runs the out-tween first and flips the flag in
+  its callback, with a `_tipClosing` guard so a second click mid-exit cannot fire it twice.
+- **Do not defer an entrance to `requestAnimationFrame` unless it measures layout.** It was written
+  that way first, copying the dialogs, and it flashed: one frame painted at full opacity before the
+  tween began. The DOM is already committed inside a `setState` callback, and `gsap.from()` sets
+  its start values there and then. The dialogs defer because their transition genuinely needs
+  layout. This one does not, and the difference is visible.
+- **The floor is not optional and is not free.** `_tipOut` calls its callback synchronously when
+  reduced motion or no GSAP, or the panel would never close at all for the people most likely to
+  need it to. Verified by removing `window.gsap` at runtime: instant in, instant out, nothing
+  stuck.
+
+The tip copy went 11px → 12.5px in the same pass, both tips together. 11px was legible and not
+scannable, and explanation nobody can skim is explanation nobody reads.
+
+**The Library heading, and the two rows under it.** The heading is 24px and holds the view switcher
+at the far end of its own row. Scope, Manage and Filter went *onto the sort row* — the same line as
+AA PAIRS, MAX CONTRAST and DATE, bottom-aligned with them (`align-items:end`), so what narrows the
+list and what orders it read as one bank of list controls instead of two stacked strips. They are
+left-aligned with the heading, not with the columns: measured, chips and heading both on 16px, the
+chips' bottom edge and AA PAIRS' both on 718px, and the switcher's right edge on 1227px with the
+rows'.
+
+Three things that had to be true to do it, all of them easy to get wrong later:
+
+- **The negative margin is load-bearing.** That grid is inset by `--row-inset` so its columns line
+  up with the rows beneath; the scope bar has to start on the *section's* edge instead. Pulling
+  back by `calc(-1 * var(--row-inset))` is the only way to have both, and it stays correct if the
+  token moves. A hardcoded `-16px` would not.
+- **The sort row is list-only** (`showSortHeader`), and scope and filter must survive in Grid and
+  3D. So the cluster is defined once as `scopeBar` and mounted in one of two places. Two copies of
+  that markup would agree exactly until the first person edited one.
+- **The group's accessible name moved off "Sort palettes"** — it no longer contains only sort
+  controls. It is `Library controls`, with `Projects` nested inside and each sort button keeping
+  its own full label, so nothing got quieter. Verified in the accessibility tree, not assumed.
+
+**Tooltip copy takes no dashes.** The WCAG panel held its definition between two em dashes; a
+parenthetical suspended that way is a sentence the eye has to reassemble, and the panel exists to
+be skimmed. Two clauses and two full stops instead, and the same done to the storage tip's warning
+line. Note this is *tooltip* copy — the em dash is still the app's characteristic punctuation in
+notices and titles, so this is a local rule until somebody decides otherwise.
+
+**The badge legend came out** of that panel (`✓ flexible · ◐ limited · ✕ none`) rather than being
+rewritten. The accessibility work in a later stage will settle what that badge says, and an
+explanation that outlives the thing it explains is worse than no explanation.
+
+**One thing found by looking, worth keeping:** the archive menu item carried
+`text-transform: capitalize`, which nobody noticed while its subtitle read *Every project + Unfiled*
+— capitalize has nothing to do to a plus sign. Rewriting it as *and* produced "Every Project And
+Unfiled". The rule went, rather than the word.
+
+**Measured:** `main-*.js` 147.32 → 148.42 kB gzipped (+1.1 kB for the dialog), no new chunk, three
+still beside it. Note for whoever reads the three.js entry below: its *"roughly 138 kB"* was already
+stale at 147.32 kB before this change, and is not a regression from it.
+
+**Corrections to the audit itself,** recorded so the next round does not rebuild them: deletion undo
+exists (6.5 s, palettes and projects, and deleting a project refiles its palettes rather than
+destroying them); there is no *Text-ready* label anywhere — the palette verdict is Flexible /
+Limited / None over a pair count; and pair-specific contrast is built, as a full AA/AAA × normal/large
+matrix in the contrast drawer. Whether that matrix belongs on the result view is a §2 question.
+
+---
+
 ## 2026-07-25 — No analytics or tracking scripts
 
 **Decision:** Atmos Studio ships with no analytics package, no tracking script, and no tracking

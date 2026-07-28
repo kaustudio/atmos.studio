@@ -27,11 +27,24 @@ export const shareMethods = {
 
   // Copy a link to the current palette. Reuses this.copy(), so it gets the same clipboard fallback
   // and the same ✓ Copied confirmation swap as the hex/CSS actions.
+  //
+  // TWO CHANNELS, two different facts, and the split is the point. copy() only swaps the button
+  // label and writes to the live region — it shows nothing — so a sentence handed to it is heard
+  // and never seen. The confirmation (what just happened) belongs there, where the ✓ Copied swap
+  // already says the same thing visually.
+  //
+  // What the link IS goes through showNotice, which is visible. A share link is a snapshot sealed
+  // into the URL fragment: it carries the swatches, the name and the note, and deliberately not the
+  // id, the time, the project or the reference image (encodeShare, lib/share.js). It cannot be
+  // recalled, updated or restored — which is exactly the confusion a link that looks permanent
+  // invites, and the reason the audit asked for it to be said at the moment the link is made. The
+  // library's own copy is a backup file, and that is a different button entirely.
   shareCurrent(pal) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.'); return; }
     this.copy(url, 'pal-share', 'Share link copied to your clipboard.');
+    this.showNotice('A share link is a snapshot, not a backup. It can’t be recalled or restored.');
   },
 
   // Viewing a shared palette writes NOTHING to the recipient's archive. This is the only path that

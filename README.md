@@ -33,14 +33,22 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
 - **Interpretation** — the palette's name/descriptors/rationale. Local archetype reading is the
   guaranteed baseline; a live Claude reading (`claude-sonnet-4-6`) layers on when available (see
   below).
-- **Archive** — master–detail list (uniform rows led by a proportional swatch strip; sortable AA
+- **Library** — master–detail list (uniform rows led by a proportional swatch strip; sortable AA
   pairs / max contrast / date columns; tag filtering via a searchable drawer and clickable row
   tags; pagination), the infinite draggable "universe" grid, and a 3D reel; fullscreen palette
   detail; delete with undo. Selecting a row drives the overview panel above it — that panel is the
-  single detail surface, and the rows no longer expand.
+  single detail surface, and the rows no longer expand. The heading carries a 16px marker for where
+  the library lives — the same toggletip the AA column uses, and the app's one "explain this"
+  mechanism; it turns from `i` to `!` when the browser refuses to store anything.
+- **Back up / Restore** — the portable JSON file, named for what it protects rather than for the
+  file dialog. Backing up writes the whole library or one project; restoring parses and validates
+  the file, then states what it holds and how much of it is new *before* anything is added. The
+  merge is non-destructive and always was — dedupe by id, no clobbering — but that promise is now
+  something the user can check rather than read about afterwards. Replace is deliberately not
+  offered; see `DECISIONS.md`.
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
-  variables, CSS custom properties, binary `.ase`), projects with portable JSON project files.
+  variables, CSS custom properties, binary `.ase`), projects.
 - **Standalone pages** — privacy and terms, served straight out of `/public`, and a not-found page
   that is one thing only: the real Neue Montreal glyphs of *404*, fitted edge to edge across the
   viewport and rebuilt as a particle cloud the cursor pushes through, over a fixed full-viewport
@@ -83,9 +91,12 @@ processors and transfers, retention, rights. It is deliberately short, and it is
 
 - Extraction is local. The full-size image is never uploaded.
 - **Naming a palette sends a ~320 px thumbnail plus the hex values to Anthropic** (`api/interpret.ts`),
-  falling back to the local reading in `src/lib/reading.js` if that is unavailable.
+  falling back to the local reading in `src/lib/reading.js` if that is unavailable. Which of the two
+  named a given palette is now stated in the interface, as `Name from` in the result view's
+  *Reading* group — the tool's only in-app disclosure that naming can leave the device, and the
+  reason the `fallback` flag has to keep round-tripping through `validateFeed`.
 - Palettes live in localStorage only, under `palette-generator/*`. No cookies at all, which is why
-  there is no consent banner.
+  there is no consent banner. The Library heading's marker says so on screen, and says what ends it.
 - Analytics is Vercel Web Analytics + Speed Insights, both cookieless.
 
 Terms are `src/legal/terms.html`. Both are hand-authored HTML fragments rather than JSX — a clause
