@@ -113,7 +113,7 @@ export default class PaletteApp extends React.Component {
     charOpen: false,
     // the Filters panel's combine rule, on the same 16px toggletip as the Library heading
     filterInfoOpen: false,
-    // the Library heading's storage toggletip — same shape as aaInfoOpen, and closed the same way
+    // the Library heading's storage toggletip — opened and closed through the shared tip helpers
     storeInfoOpen: false,
     // the Refine surface's one explanation of how roles are assigned
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed

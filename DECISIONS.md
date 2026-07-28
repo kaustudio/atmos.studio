@@ -6,6 +6,38 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-29 — One inset, everywhere content sits inside something
+
+**Decision:** every panel, drawer, dialog and page section insets its content by `--page-gutter`.
+Floating surfaces (menus, toggletips) share one figure of their own; the two empty-state cards share
+a third. Nothing is a pixel or two off anything else.
+
+**What it replaced:** 43 declarations at 18, 20 or 22px in the horizontal slot, against a page margin
+of 24. The drawer's own header sat at 24 while its facet groups sat at 22 — a two-pixel step inside
+one panel, which is the kind of thing nobody can point at and everybody can feel. Two more pairs sat
+one pixel apart for no reason anyone recorded: menus at `12px 14px` beside toggletips at `13px 15px`,
+and the two empty states at `48px 40px` and `56px 40px` — the same card in two situations, padded
+differently.
+
+**One case needed arithmetic rather than a swap.** The drawer's facet rows carry 12px of their own
+horizontal padding so their hover tint has room to breathe past the label. Their container therefore
+insets by `calc(var(--page-gutter) - 12px)`, so the ink still lands on 24 while the tint bleeds
+either side of it. Setting the container to 24 would have put the labels at 36.
+
+**The list view's tooltip is gone.** The ⓘ in front of the `AA pairs` sort label opened a note
+defining a WCAG pair. It was a permanent explanation parked inside a column header on the one screen
+people scan rather than read, and it cost the AA column an inline element it had to lay out around.
+What it defined belongs to the contrast surface that measures it, which is one button away and has
+room to say it properly. The `--row-aa-mark` token stays — it still stops the badges ending in a
+ragged right edge — but the second reason recorded against it, that the ⓘ shared the badge's edge,
+went with the ⓘ.
+
+**Modals are not on the page grid, deliberately.** A centred dialog has a fixed width and the grid is
+fluid, so its edges can only land on columns at one viewport width. What is shared is the inset, not
+the geometry.
+
+---
+
 ## 2026-07-29 — The list row sits on the page grid
 
 **Decision:** the library row and its sort header are laid out on the page's twelve columns, not on

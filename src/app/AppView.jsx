@@ -287,13 +287,13 @@ function MobileShareView({ ms }) {
   return (
     <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name}
       style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
-      <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 0')}>
+      <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px var(--page-gutter) 0')}>
         {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
         <span role="img" aria-label="Atmos Gallery" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
         <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>{ms.eyebrow}</span>
       </div>
 
-      <div style={sx('flex:none;padding:26px 18px 22px')}>
+      <div style={sx('flex:none;padding:26px var(--page-gutter) 22px')}>
         <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
@@ -321,7 +321,7 @@ function MobileShareView({ ms }) {
 
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
-      <div style={sx('flex:none;padding:24px 18px 34px')}>
+      <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
         <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
             one control on a surface built for a thumb. */}
@@ -469,7 +469,7 @@ export default function AppView({ vals }) {
           <div data-orbit-grain="1" aria-hidden="true" style={sx('position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:soft-light;opacity:0.045;background-repeat:repeat')}></div>
           {/* brand content (above the field) — horizontal padding only: any vertical padding would
               bias the block off the viewport centre the rings clear for it */}
-          <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 26px')}>
+          <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 var(--page-gutter)')}>
             {vals.narrow ? (
               /* small screen: the honest gate copy, sized to fit inside the ring the engine builds
                  around it (_heroReach measures this block, so a narrower column = a tighter ring).
@@ -523,7 +523,7 @@ export default function AppView({ vals }) {
       {vals.showLoader && (
         <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:#ffffff')}>
           <div data-load-bg="1" style={sx('position:absolute;inset:0;background:#1C1B1A')}></div>
-          <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 16px;box-sizing:border-box')}>
+          <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 var(--page-gutter);box-sizing:border-box')}>
             <div style={{ width: '100%' }}>
               <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%')}>
                 {/* 206px is not arbitrary: the img below fills the box with no object-fit, so the box
@@ -1010,7 +1010,7 @@ function FeedSection({ vals }) {
             <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.storeInfoOpen} aria-label={vals.storeInfo.aria} onClick={vals.toggleStoreInfo} onKeyDown={vals.storeInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{vals.storeInfo.glyph}</button>
             {vals.storeInfoOpen && (<>
               <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleStoreInfo} aria-hidden="true"></div>
-              <div data-tip="store" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
+              <div data-tip="store" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>
                 {vals.storeInfo.lines.map((t, i) => (
                   <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:' + (i === 0 ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';text-wrap:pretty')}>{t}</span>
                 ))}
@@ -1069,7 +1069,7 @@ function FeedSection({ vals }) {
       )}
 
       {vals.feedEmpty && (
-        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:56px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
+        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
           <div aria-hidden="true" style={sx('position:relative;width:34px;height:34px')}>
             <div style={sx('position:absolute;left:0;top:0;width:22px;height:22px;border:1px solid var(--line-strong)')}></div>
             <div style={sx('position:absolute;right:0;bottom:0;width:22px;height:22px;border:1px solid var(--on-surface-muted);background:var(--surface-raised)')}></div>
@@ -1115,29 +1115,11 @@ function FeedSection({ vals }) {
                 thing it labels — so the marker goes where its meaning is, next to the label, and
                 the column keeps its ONE right edge: label over count, both flush. */}
             <div data-row-cell="aa" style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
-              <div style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
-                {vals.aaInfoOpen && (<>
-                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
-                  {/* Sized and set from the same figures as the Library heading's tip — 288px wide,
-                      12.5px copy, 13/15 padding, 9px between lines. 11px was legible and not
-                      scannable; explanation nobody can skim is explanation nobody reads. Both tips
-                      move together, or the second one to be edited becomes the odd one. */}
-                  <div data-tip="aa" role="note" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
-                    {/* The one place the denominator is stated, now that the rows show a bare count.
-                        Set without dashes: a parenthetical held between two of them is a sentence
-                        the eye has to reassemble, and this panel exists to be skimmed. Two clauses,
-                        two full stops.
-
-                        The third line explained the badge's three states. It is gone until the
-                        accessibility work in a later stage settles what the badge says — an
-                        explanation that outlives the thing it explains is worse than none, and
-                        this one would have had to be rewritten twice. */}
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A pair is two palette colours that reach WCAG AA against each other. That is a contrast ratio of 4.5:1, the minimum for normal text, so one can safely carry text on the other.</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every two-colour combination is tested: 5 colours make 10 pairs.</span>
-                  </div>
-                </>)}
-              </div>
+            {/* The badge marker used to stand here, in front of the sort label. It went with the
+                tooltip it opened: an explanation parked permanently inside a column header,
+                on the one screen people scan rather than read. What it defined — that a pair
+                is two colours reaching AA — belongs to the contrast surface that measures it,
+                which is one button away and has room to say it properly. */}
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
                 <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
                   <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
@@ -1351,7 +1333,7 @@ function FeedSection({ vals }) {
           )}
 
           {/* universe chrome (fixed above the field) */}
-          <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
+          <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
             <button ref={vals.universeCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
@@ -1379,7 +1361,7 @@ function FeedSection({ vals }) {
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet — drop a reference image to fill the reel.</span>
             </div>
           )}
-          <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;pointer-events:none')}>
+          <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--page-gutter);pointer-events:none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
             <button ref={vals.reelCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
@@ -1398,7 +1380,7 @@ function ContrastDrawer({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:110')}>
       <div data-cx-backdrop="1" onClick={vals.closeContrast} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
-        <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
             <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
@@ -1406,7 +1388,7 @@ function ContrastDrawer({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
         </header>
 
-        <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px 22px 0')}>
+        <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px var(--page-gutter) 0')}>
           <div style={{ display: 'flex' }} role="group" aria-label="WCAG level">
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setAA} aria-pressed={contrast.aaPressed} style={contrast.aaStyle}>AA</button>
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setAAA} aria-pressed={contrast.aaaPressed} style={contrast.aaaStyle}>AAA</button>
@@ -1418,12 +1400,12 @@ function ContrastDrawer({ vals }) {
           <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}>{contrast.passLabel}</button>
         </div>
 
-        <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px 22px 0')}>
+        <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px var(--page-gutter) 0')}>
           <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.aa} of {contrast.total} pairs pass {contrast.lensLabel}</span>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>min {contrast.threshold}:1</span>
         </div>
 
-        <div data-cx-sec="1" style={sx('padding:14px 22px 0')}>
+        <div data-cx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
           <div style={contrast.matrixColsStyle}>
             {contrast.rows.map((row, ri) => (
@@ -1452,7 +1434,7 @@ function ContrastDrawer({ vals }) {
           </div>
         </div>
 
-        <div data-cx-sec="1" style={sx('padding:20px 22px 0')}>
+        <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 0')}>
           <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
@@ -1464,7 +1446,7 @@ function ContrastDrawer({ vals }) {
           </div>
         </div>
 
-        <div data-cx-sec="1" style={sx('padding:20px 22px 26px')}>
+        <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 26px')}>
           <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
@@ -1482,7 +1464,7 @@ function DetailOverlay({ vals }) {
   const overlay = vals.overlay;
   return (
     <div ref={vals.overlayRef} data-overlay-stage="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
-      <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 20px;border-bottom:1px solid var(--line-strong);flex:none')}>
+      <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);flex:none')}>
         <div style={sx('display:flex;align-items:baseline;gap:14px;min-width:0')}>
           <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap")}>{overlay.name}</span>
           <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{overlay.time}</span>
@@ -1515,7 +1497,7 @@ function DetailOverlay({ vals }) {
         ))}
       </div>
 
-      <footer data-ochrome="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:28px;padding:22px 20px;border-top:1px solid var(--line-strong);flex:none')}>
+      <footer data-ochrome="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:28px;padding:22px var(--page-gutter);border-top:1px solid var(--line-strong);flex:none')}>
         <div style={sx('flex:1;min-width:0;display:flex;flex-direction:column;gap:14px')}>
           <div style={sx('display:flex;flex-wrap:wrap;gap:8px')}>
             {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
@@ -1578,7 +1560,7 @@ function TagFilterDrawer({ vals }) {
     // lightbox (170) and loader (190), which are whole-screen states that outrank any panel.
     <div style={sx('position:fixed;inset:0;z-index:156;pointer-events:none')}>
       <div data-tag-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Filter palettes" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:-18px 0 40px rgba(0,0,0,.10);display:flex;flex-direction:column;overflow-y:auto')}>
-        <header data-tg-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header data-tg-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
             {/* "Tags" is now one group among several, so the title names the surface, not a group */}
@@ -1591,7 +1573,7 @@ function TagFilterDrawer({ vals }) {
                 <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.filterInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleFilterInfo} aria-hidden="true"></div>
-                  <div data-tip="filters" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
+                  <div data-tip="filters" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>
                     <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A palette must match every group you use. Within one group the choices widen instead, because a palette holds only one lightness, one temperature and one accessibility state.</span>
                     <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>{vals.a11yNote}</span>
                   </div>
@@ -1615,7 +1597,7 @@ function TagFilterDrawer({ vals }) {
             AND would be unsatisfiable); AND against tags. Same checkbox, count and zero-suppression
             rules as the tag rows — one grammar for every facet. */}
         {vals.hasA11yOptions && (
-          <div data-tg-sec="1" style={sx('padding:18px 10px 0')}>
+          <div data-tg-sec="1" style={sx('padding:18px calc(var(--page-gutter) - 12px) 0')}>
             {/* No eyebrow, no note of its own — both moved into the panel's one paragraph above.
                 The group keeps its name for assistive tech on the role="group" below, which is
                 where it was always doing the load-bearing work. */}
@@ -1644,7 +1626,7 @@ function TagFilterDrawer({ vals }) {
         {/* THE OTHER TWO MEASURED FACETS. Same grammar as contrast potential above — checkbox,
             label, count — because they are the same kind of statement about a palette. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
-          <div key={g.id} data-tg-sec="1" style={sx('padding:14px 10px 0')}>
+          <div key={g.id} data-tg-sec="1" style={sx('padding:14px calc(var(--page-gutter) - 12px) 0')}>
             <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
             <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {g.options.map((o) => (
@@ -1662,7 +1644,7 @@ function TagFilterDrawer({ vals }) {
         {/* CHARACTER — behind a disclosure, because these are READINGS. Graphic, Restrained and
             Stark are interpretations of a palette; lightness and temperature are measurements of
             it. Ranked as equals, the panel invited someone to treat a judgement as a property. */}
-        <div style={sx('padding:16px 10px 0')}>
+        <div style={sx('padding:16px calc(var(--page-gutter) - 12px) 0')}>
           <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid var(--line);padding:var(--btn-pad-lg);cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
             <span data-refine-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
           </button>
@@ -1678,7 +1660,7 @@ function TagFilterDrawer({ vals }) {
         {/* A bordered field, not an underlined line of text — the old styling read as a heading,
             so the one control you are meant to type into did not look like an input. Clear button
             appears only when there is something to clear, and hands focus back to the field. */}
-        <div data-tg-sec="1" style={sx('padding:16px 22px 0;display:flex;align-items:center;gap:8px')}>
+        <div data-tg-sec="1" style={sx('padding:16px var(--page-gutter) 0;display:flex;align-items:center;gap:8px')}>
           <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--action-line);background:var(--surface-raised);padding:0 8px 0 10px')}>
             <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface)')} />
             {vals.hasTagQuery && (
@@ -1692,7 +1674,7 @@ function TagFilterDrawer({ vals }) {
           </div>
         </div>
 
-        <div data-tg-sec="1" role="group" aria-label="Tags" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px 10px 26px')}>
+        <div data-tg-sec="1" role="group" aria-label="Tags" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px calc(var(--page-gutter) - 12px) 26px')}>
           {vals.facetOptions.map((o) => (
             <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
               {/* A checkbox, not a dot that appears. The old marker was invisible when unselected,
@@ -1748,7 +1730,7 @@ function HarmonyDrawer({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:120')}>
       <div data-hx-backdrop="1" onClick={vals.closeHarmony} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
-        <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Colour harmonies</span>
             <div style={sx('display:flex;align-items:center;gap:11px')}>
@@ -1759,12 +1741,12 @@ function HarmonyDrawer({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
-        <div data-hx-sec="1" style={sx('padding:14px 22px 2px')}>
+        <div data-hx-sec="1" style={sx('padding:14px var(--page-gutter) 2px')}>
           <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Derived in OKLCH and mapped into sRGB. Tap any colour to copy its hex.</span>
         </div>
 
         {harmony.groups.map((grp, gi) => (
-          <div key={gi} data-hx-sec="1" style={sx('padding:16px 22px 0')}>
+          <div key={gi} data-hx-sec="1" style={sx('padding:16px var(--page-gutter) 0')}>
             <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
               <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{grp.name}</span>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted)')}>{grp.count}</span>
@@ -1792,7 +1774,7 @@ function ExportDialog({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Export ' + ex.name + ' as design tokens'} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
@@ -1800,11 +1782,11 @@ function ExportDialog({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
-        <div style={sx('padding:14px 22px 0')}>
+        <div style={sx('padding:14px var(--page-gutter) 0')}>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
         </div>
 
-        <div style={sx('padding:16px 22px 0;display:flex;flex-direction:column;gap:6px')}>
+        <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {ex.formats.map((f, fi) => (
             <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={f.onPick} onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur} style={f.style}>
               <span style={sx('text-transform: capitalize; font-size:var(--fs-detail)')}>{f.label}</span>
@@ -1813,7 +1795,7 @@ function ExportDialog({ vals }) {
           ))}
         </div>
 
-        <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px 0')}>
+        <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 0')}>
           <div style={{ minWidth: 0 }}>
             <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-detail); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
             <div style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);margin-top:3px;text-wrap:pretty')}>Role-mapped starting layer to refine — not a finished system.</div>
@@ -1835,7 +1817,7 @@ function ExportDialog({ vals }) {
             } />
         </div>
 
-        <div style={sx('padding:14px 22px 22px')}>
+        <div style={sx('padding:14px var(--page-gutter) 22px')}>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted)')}>{ex.layerLabel}</span>
         </div>
       </div>
@@ -1855,14 +1837,14 @@ function RecogniseDialog({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRecognise} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
         </header>
-        <div style={sx('padding:14px 22px 0;display:flex;flex-direction:column;gap:12px')}>
+        <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* the palette itself, drawn as the archive draws it — so the claim can be checked, not just read */}
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
@@ -1870,7 +1852,7 @@ function RecogniseDialog({ vals }) {
           </span>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
         </div>
-        <div style={sx('padding:18px 22px 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
+        <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
           <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Open existing palette</button>
           {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
               second run of the same image returns the same colours — this adds a separate entry,
@@ -1891,14 +1873,14 @@ function AssignDialog({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeAssign} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Move to project" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Move to project</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close move-to-project" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
-        <div style={sx('padding:16px 22px 0;display:flex;flex-direction:column;gap:6px')}>
+        <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {assign.options.map((o) => (
             <button key={o.key} type="button" data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
               <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")}>{o.label}</span>
@@ -1906,7 +1888,7 @@ function AssignDialog({ vals }) {
             </button>
           ))}
         </div>
-        <div style={sx('padding:16px 22px 22px;margin-top:8px;border-top:1px solid var(--line)')}>
+        <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
           <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
             <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
@@ -1926,23 +1908,23 @@ function ManageDialog({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeManage} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-manage-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Manage projects" onKeyDown={vals.trapManage} style={sx('position:relative;width:440px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Projects</span>
             <span style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-subtitle); letter-spacing: -.01em; color: var(--on-surface); text-transform: capitalize")}>Manage projects</span>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
-        <div style={sx('padding:16px 22px 4px')}>
+        <div style={sx('padding:16px var(--page-gutter) 4px')}>
           <div style={sx('display:flex;gap:8px')}>
             <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
           </div>
         </div>
         {manage.empty && (
-          <div style={sx("padding:18px 22px 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view.</div>
+          <div style={sx("padding:18px var(--page-gutter) 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view.</div>
         )}
-        <div style={sx('padding:12px 22px 22px;display:flex;flex-direction:column;gap:8px')}>
+        <div style={sx('padding:12px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:8px')}>
           {manage.rows.map((pr) => (
             <div key={pr.id} style={sx('display:flex;align-items:center;gap:8px')}>
               <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
@@ -1997,11 +1979,11 @@ function RefineDialog({ vals }) {
             editor that has not moved a pixel. */}
         {r.a11y && r.a11y.allOpen && (
           <div data-refine-pairs="1" role="dialog" aria-modal="true" aria-label="All text-role pairings" onKeyDown={r.trapPairings} style={sx('position:absolute;inset:0;z-index:5;background:var(--surface);display:flex;flex-direction:column')}>
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px 12px;border-bottom:1px solid var(--line)')}>
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px var(--page-gutter) 12px;border-bottom:1px solid var(--line)')}>
               <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
               <button type="button" data-ix="press" data-focus="chrome" onClick={r.a11y.closePairings} aria-label="Close pairings and return to the editor" style={sx(quiet)}>Close</button>
             </div>
-            <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px 22px 18px')}>
+            <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px var(--page-gutter) 18px')}>
               {r.a11y.rows.map((row) => (
                 <span key={row.key} style={sx('display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)')}>
                   <span aria-hidden="true" style={row.chipStyle}>Aa</span>
@@ -2014,7 +1996,7 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits
@@ -2024,7 +2006,7 @@ function RefineDialog({ vals }) {
 
         {/* 1 · THE ONE PRIMARY SELECTOR. Labelled with the instruction, so the first move is stated
                rather than inferred. Pointer, arrow keys, Home and End all land in refineSelect. */}
-        <div style={sx('position:relative;width:100%;padding:18px 22px 0')}>
+        <div style={sx('position:relative;width:100%;padding:18px var(--page-gutter) 0')}>
           {/* No standing instruction. A palette strip with one tile visibly selected is a control
               anybody has used before, and the sentence explaining it was read once and then in the
               way forever. The accessible name still says it, where it costs nothing. */}
@@ -2044,7 +2026,7 @@ function RefineDialog({ vals }) {
                made to it and reads as metadata under it; it is changed from Palette structure
                below, not from here. The source sits right-aligned as context and is deliberately
                quieter than the editing controls: no border, because it is not one of them. */}
-        <div data-refine-title="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 22px 0')}>
+        <div data-refine-title="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px var(--page-gutter) 0')}>
           <div style={sx('min-width:0')}>
             <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.15;letter-spacing:-.01em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</div>
           </div>
@@ -2060,7 +2042,7 @@ function RefineDialog({ vals }) {
 
         {/* 3 · EDIT — colour, and nothing else in this zone. Label, one integrated numeric field
                with its unit inside the boundary, one continuous track with one handle. */}
-        <div style={sx('padding:16px 22px 0')}>
+        <div style={sx('padding:16px var(--page-gutter) 0')}>
           {r.sliders.map((sl) => (
             <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
               <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
@@ -2174,7 +2156,7 @@ function RefineDialog({ vals }) {
 
         {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
                — it discards every refinement, which Undo would take many presses to equal. */}
-        <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 22px;margin-top:13px;border-top:1px solid var(--line);background:var(--surface-raised)')}>
+        <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);margin-top:13px;border-top:1px solid var(--line);background:var(--surface-raised)')}>
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
             Undo<span aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>{r.undoKeys}</span>
           </button>
@@ -2209,7 +2191,7 @@ function RestoreDialog({ vals }) {
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
@@ -2217,7 +2199,7 @@ function RestoreDialog({ vals }) {
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
         </header>
-        <div style={sx('padding:14px 22px 0;display:flex;flex-direction:column;gap:12px')}>
+        <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* Four numbers are not a sentence. Uppercase muted term, full-ink tabular value, a
               hairline under each row — so a count reads here exactly as it reads on the result
@@ -2240,7 +2222,7 @@ function RestoreDialog({ vals }) {
             act left to offer, so the footer carries no button at all rather than one that would
             commit nothing — an affordance for a non-act is worse than an absence. */}
         {r.hasAct && (
-          <div style={sx('padding:18px 22px 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
+          <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
             <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add to library</button>
             <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
           </div>

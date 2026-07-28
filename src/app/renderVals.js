@@ -1429,9 +1429,6 @@ export const renderValsMethods = {
       // action, so the label is never a lie about what activating it will do.
       showSortHeader: s.feed.length > 0 && s.feedView === 'list',
       // the ⓘ toggletip on the header: the denominator and the badge vocabulary, explained ONCE
-      aaInfoOpen: !!s.aaInfoOpen,
-      toggleAaInfo: () => this.toggleTip('aaInfoOpen', '[data-tip="aa"]'),
-      aaInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('aaInfoOpen', '[data-tip="aa"]'); } },
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [
