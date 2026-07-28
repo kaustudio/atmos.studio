@@ -763,9 +763,13 @@ export const renderValsMethods = {
     }
 
     // ===== the Refine surface =====
-    // Built only while open, like every other overlay view-model here. The selected swatch drives
-    // everything on the right of the surface, so it is resolved once and clamped: a removal can
-    // leave refineSel past the end for one render, and a crash there would strand a modal.
+    // ONE DECISION FIRST: pick a swatch. Everything below the strip is that swatch's properties,
+    // and nothing else on the surface competes to identify it.
+    //
+    // The first build had three systems doing that job — a strip, a full-height Roles list, and a
+    // heading that recited role, position and hex at one weight — so there was no single source of
+    // truth for the selection and no obvious first move. The Roles list is a menu now, position is
+    // a menu, and the heading leads with the one word that matters.
     let refineView = null;
     if (s.refineOpen && s.current) {
       const p = s.current;
@@ -776,25 +780,75 @@ export const renderValsMethods = {
       const selC = Math.sqrt(sel.a * sel.a + sel.b * sel.b);
       let selH = Math.atan2(sel.b, sel.a) * 180 / Math.PI; if (selH < 0) selH += 360;
       const selHr = selH * Math.PI / 180;
-      // The live role map: the user's assignment where present, the heuristic everywhere else, so
-      // the surface always shows six answered roles rather than a form with gaps.
       const resolved = this.semanticRoles(p, p.roles);
       const roleAt = {};
       resolved.forEach((r) => { (roleAt[r.index] = roleAt[r.index] || []).push(r.role); });
       const assigned = p.roles || {};
       const selRoles = (roleAt[selIdx] || []).map((r) => ROLE_LABEL[r]);
+      const curMet = this.paletteMetrics(p);
       refineView = {
         name: p.name,
         selIdx, selHex: sel.hex.toUpperCase(),
-        // ROLE FIRST, then position, then the number. "Swatch 2 of 5" is where it sits; "Accent" is
-        // what it is for, and that is the concept the whole surface is about. A swatch carrying no
-        // role says so rather than showing an empty slot — unassigned is a real state here.
-        selEyebrow: (selRoles.length ? selRoles.join(' · ') : 'No role') + ' · Swatch ' + (selIdx + 1) + ' of ' + N,
-        posLabel: 'Position ' + (selIdx + 1) + ' of ' + N,
-        // The source, kept in reach. Refining without it, you cannot tell whether you are correcting
-        // the extraction or deliberately leaving the photograph behind.
+        // SWATCH-FIRST, and this is an object-model decision rather than a typographic one.
+        //
+        // The heading led with the role for a while, which quietly said the user was editing a
+        // token — a fixed slot in a design system. But this tool reads palettes off photographs and
+        // lets you reorder and remove them, and none of that is true of a token: a required slot
+        // cannot be deleted. Two models were being presented as one, which is what made Remove and
+        // Position feel like they did not belong.
+        //
+        // So the object is the SWATCH. It leads. The role is an assignment made TO it, stated as
+        // metadata directly under it, and changed from the structure section below.
+        // Swatch and value, and nothing else. The role was restated here as well as in Palette
+        // structure — the same fact in two places, only one of which could act on it.
+        selTitle: 'Swatch ' + (selIdx + 1) + ' · ' + sel.hex.toUpperCase(),
+        selCount: (selIdx + 1) + ' of ' + N,
+        total: N,
+        // Named, not decorative: a labelled control that opens the reference at size, through the
+        // lightbox the result view already uses. A bare thumbnail beside a heading reads as
+        // ornament, and the question it answers — am I correcting the extraction or leaving it? —
+        // deserves to be asked out loud.
         hasSource: this.hasImg(p), sourceUrl: this.dispUrl(p),
-        note: s.refineNote || '', hasNote: !!s.refineNote,
+        sourceAria: 'View the reference image this palette was read from, at full size',
+        // VALIDATE — a live work surface, and specifically about CONTRAST. It was called
+        // "Accessibility impact", which promises far more than it measures: this evaluates text
+        // contrast, not focus order, not motion, not language. Naming the actual metric is the
+        // difference between a measurement and a claim.
+        //
+        // The count is the whole status. A "Partial coverage" badge sat beside it for a revision,
+        // restating in a word what the fraction already said exactly.
+        a11y: (() => {
+          const rc = this.roleContrast(p, selIdx);
+          if (!rc) return null;
+          const f = rc.focus;
+          return {
+            count: rc.passed + ' / ' + rc.total + ' meet AA',
+            countStyle: { fontFamily: mono, fontSize: '13px', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
+            pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
+            pairHex: f.fgHex + ' on ' + f.bgHex,
+            pairRatio: f.ratio.toFixed(1) + ':1',
+            pairLevel: f.aaa ? 'AAA' : f.aa ? 'AA' : 'Fails AA',
+            pairLevelStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
+            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: '24px', lineHeight: 1 },
+            // Depth on demand: the full matrix is available, and stays out of the way until asked.
+            // A DRILL-IN, not an accordion. Expanding inside the card pushed Palette structure
+            // down the page whenever anyone looked at the detail — the layout shift an editor
+            // cannot afford, because the canvas has to hold still while you work.
+            allOpen: !!s.refineAllPairs,
+            allLabel: 'Pairings (' + rc.total + ')',
+            toggleAll: () => this.openPairings(),
+            closePairings: () => this.closePairings(),
+            rows: rc.pairs.map((x) => ({
+              key: x.fg + '-' + x.bg,
+              roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
+              ratio: x.ratio.toFixed(1) + ':1',
+              level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
+              chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: '10px', lineHeight: 1 },
+              levelStyle: { fontFamily: mono, fontSize: '8.5px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
+            })),
+            aria: rc.passed + ' of ' + rc.total + ' text-role pairs meet AA. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + '.',
+          };
+        })(),
         onKey: (e) => this.refineKey(e),
         swatches: list.map((b, i) => {
           const on = this.onColor(b.hex);
@@ -804,54 +858,28 @@ export const renderValsMethods = {
             sid: typeof b.sid === 'number' ? b.sid : i,
             hex: b.hex, index: i, selected: isSel, pressed: isSel ? 'true' : 'false',
             tab: isSel ? 0 : -1,
-            roleLabels: names.join(' · '), hasRoles: !!names.length,
-            // Role, position and value, in that order — the same sentence the panel heading states,
-            // so the strip and the heading cannot describe the same swatch differently.
+            // ONE role name and a count, never a truncated one. A band's width is its share of the
+            // palette, which has nothing to do with how much text it has to carry, so "Primary ·
+            // Secondary" was first wrapped and then clipped to "PRIMARY · SECO…". A label that
+            // breaks because a colour happens to be narrow is a label that failed. The minimum
+            // width below fits the longest single role name at this size; the extras are a count,
+            // and the full list is in the heading, the tooltip and the accessible name.
+            // A ROLE NAME, nothing else. This carried "Primary +1" for a while, which is the
+            // system's own bookkeeping showing through: a count of assignments is not a label a
+            // designer has any use for. The rest of a swatch's roles are in the heading, the
+            // tooltip and the accessible name, where a list belongs.
+            roleLabel: names.length ? names[0] : '',
+            hasRoles: !!names.length,
             aria: (names.length ? names.join(' and ') : 'No role') + '. Swatch ' + (i + 1) + ' of ' + N + ', ' + b.hex.toUpperCase() + '.',
             title: (names.length ? names.join(' · ') + ' — ' : '') + b.hex.toUpperCase(),
             onSelect: () => this.refineSelect(i),
-            // No selected treatment on the swatch itself: the travelling outline carries that, and a
-            // ring drawn here as well would be the same fact said twice, statically.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '76px', height: '124px', background: b.hex, border: 'none', padding: '10px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '5px', color: on, overflow: 'hidden' },
-            // The SAME micro-label the value rows on every band already use — 8.5px at .14em,
-            // uppercase, three-quarter ink. ONE LINE, always: a band's width is its share of the
-            // palette, not a measure of how much text it has to hold, so "Primary · Secondary"
-            // wrapped to two lines in a narrow swatch and pushed itself off its own bottom edge.
-            // Truncated here, stated in full in the heading, the title and the accessible name.
-            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }),
+            // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
+            // destructive control inside the one element whose whole job is to be safe to click.
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '96px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', color: on, overflow: 'hidden' },
+            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap' }),
           };
         }),
-        // Six rows, each a toggle for the SELECTED swatch — not a second way to choose a swatch.
-        // The strip selects; this panel edits what the selection is for. `here` is what visually
-        // ties the two together: the rows that light up are the ones the selected swatch answers.
-        roles: ROLE_IDS.map((id) => {
-          const r = resolved.find((x) => x.role === id);
-          const isDerived = typeof assigned[id] !== 'number';
-          const here = r.index === selIdx;
-          return {
-            id, label: ROLE_LABEL[id], hex: r.hex, index: r.index, here,
-            pressed: here ? 'true' : 'false',
-            // "Derived" on all six rows was noise on every row that had nothing to say. Only a role
-            // the user has actually moved is worth marking, and it is marked as EDITED — the state
-            // that differs from the default, rather than the default itself.
-            edited: !isDerived, badge: isDerived ? '' : 'Edited',
-            onAssign: () => this.refineSetRole(id, selIdx),
-            aria: (here ? 'Unassign ' : 'Assign ') + ROLE_LABEL[id] + ' from swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase()
-              + (here ? '' : '. Currently on swatch ' + (r.index + 1) + ', ' + r.hex),
-            swatchStyle: { width: '18px', height: '18px', flex: 'none', background: r.hex, border: '1px solid var(--action-line)' },
-            rowStyle: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', background: here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none', border: 'none', padding: '8px 8px', margin: '0 -8px', width: 'calc(100% + 16px)', cursor: 'pointer', color: 'var(--on-surface)', font: 'inherit', textAlign: 'left' },
-          };
-        }),
-        rolesNote: 'Roles are assigned automatically from contrast and colour distribution. Choose a swatch, then tap a role to put it there. A role belongs to one swatch; a swatch can hold several.',
-        // Absolute values, never deltas — see refineAdjust.
-        //
-        // Each track is a live gradient of its own axis, sampled through gamutMap from the SELECTED
-        // colour: move the lightness slider and you are moving along the ramp you can already see.
-        // Sampling rather than a CSS gradient of two stops, because OKLCH interpolated in sRGB is
-        // not a straight line — a two-stop gradient would draw a track the slider does not follow.
-        //
-        // Each axis also carries a number you can TYPE. A slider is for finding a value and a field
-        // is for stating one, and a palette being matched to a brand needs the second.
+        // Colour is the main area and the only thing in it.
         sliders: [
           {
             key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L,
@@ -870,11 +898,8 @@ export const renderValsMethods = {
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'c', Math.max(0, Math.min(0.33, v))); },
           },
           {
-            // The hue track is a LEGEND for the axis, not a preview of the result, and it is the one
-            // of the three that has to be read at a glance. Drawn at the swatch's true lightness it
-            // goes black on a dark colour and white on a pale one — a hue wheel with no hue in it,
-            // on the only axis whose positions are meaningless without colour. So L is held inside a
-            // legible band and chroma given a floor. The swatch itself states the truth.
+            // The hue track is a LEGEND for the axis, not a preview: drawn at the swatch's own
+            // lightness it goes black on a dark colour, which is a hue wheel with no hue in it.
             key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH,
             display: Math.round(selH), unit: '°', numMin: 0, numMax: 360, numStep: 1,
             valueText: Math.round(selH) + ' degrees',
@@ -883,30 +908,88 @@ export const renderValsMethods = {
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'h', ((v % 360) + 360) % 360); },
           },
         ],
-        // Reordering, named for what it DOES. These were two bare arrows, which is the glyph every
-        // interface on earth uses for previous/next — so they read as swatch navigation and in fact
-        // moved the swatch. Words, not arrows, and the position they act on stated beside them.
-        canRemove: N > 3,
-        removeLabel: 'Remove swatch',
-        removeAria: selRoles.length
-          ? 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. ' + selRoles.join(' and ') + ' will be reassigned and contrast recalculated.'
-          : 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. Contrast will be recalculated.',
-        removeHint: N > 3 ? (selRoles.length ? 'Removing this reassigns ' + selRoles.join(' and ') + '.' : '') : 'Three colours is the minimum.',
-        onRemove: () => this.refineRemove(selIdx),
+        // ROLE — demoted from a column to a menu. It was consuming half the working area to restate
+        // what the strip's own labels already say, while reading as a second thing to navigate.
+        // ROLE — STATED, then changed. The menu here used to list all six roles with their swatch
+        // numbers, which turned a local act into a system inspector: to change one role you read
+        // the whole palette-to-role map. The current role is now a plain statement, and the chooser
+        // offers roles — naming a consequence only for the one role that would actually move.
+        //
+        // It opens INLINE, never as an overlay. The old dropdown covered the sliders, so choosing a
+        // role hid the colour it was being given to.
+        roleLine: selRoles.length ? selRoles.join(' · ') : 'None',
+        roleChooserOpen: !!s.refineRoleOpen,
+        roleTrigger: s.refineRoleOpen ? 'Close' : (selRoles.length ? 'Change role' : 'Assign role'),
+        roleTriggerAria: (s.refineRoleOpen ? 'Close the role chooser' : (selRoles.length ? 'Change the role of' : 'Assign a role to') + ' swatch ' + (selIdx + 1)),
+        toggleRoleChooser: () => this.toggleFold('refineRoleOpen', '[data-refine-roles]'),
+        roleItems: ROLE_IDS.map((id) => {
+          const r = resolved.find((x) => x.role === id);
+          const here = r.index === selIdx;
+          const moves = !here && typeof assigned[id] === 'number';
+          return {
+            id, label: ROLE_LABEL[id], here, pressed: here ? 'true' : 'false',
+            // The consequence, and only where there is one: a role the user has deliberately put
+            // somewhere else will move if it is taken. A derived role moving is not news.
+            consequence: moves ? ROLE_LABEL[id] + ' is currently assigned to swatch ' + (r.index + 1) + '.' : '',
+            aria: here ? 'Remove ' + ROLE_LABEL[id] + ' from this swatch'
+              : 'Give ' + ROLE_LABEL[id] + ' to swatch ' + (selIdx + 1) + (moves ? '. It is currently assigned to swatch ' + (r.index + 1) : ''),
+            onPick: () => { this.refineSetRole(id, selIdx); this.closeFold('refineRoleOpen', '[data-refine-roles]'); },
+          };
+        }),
+        // POSITION — direct, reversible, and therefore never behind a menu. Two visible controls
+        // that disable at the ends, so whether a move is possible is legible without opening
+        // anything. They were a Reorder dropdown for one revision, which added a click and hid the
+        // answer to "can this move?" behind it.
         canLeft: selIdx > 0, canRight: selIdx < N - 1,
         leftAria: 'Move this swatch to position ' + selIdx + ' of ' + N,
         rightAria: 'Move this swatch to position ' + (selIdx + 2) + ' of ' + N,
         onLeft: () => this.refineMove(selIdx, -1), onRight: () => this.refineMove(selIdx, 1),
+        posLabel: 'Position ' + (selIdx + 1) + ' of ' + N,
+        // REMOVAL — quiet by POSITION, never by ink. The system has two action tiers and killed a
+        // third for failing contrast on hover, so a destructive control cannot be made softer by
+        // going grey. It is separated instead: its own end of the row, behind a rule, with the
+        // consequence stated under it rather than hidden in a tooltip.
+        // REMOVAL: separated and low priority, no heading of its own.
+        canRemove: N > 3,
+        removeAria: 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. You will be asked to confirm.',
+        onRemoveArm: () => this.refineArmRemove(selIdx),
+        removeArmed: typeof s.refineRemoveIdx === 'number',
+        removeIdx: s.refineRemoveIdx,
+        removeTitle: typeof s.refineRemoveIdx === 'number'
+          ? 'Remove swatch ' + (s.refineRemoveIdx + 1) + ', ' + (list[s.refineRemoveIdx] ? list[s.refineRemoveIdx].hex.toUpperCase() : '') + '?'
+          : '',
+        removeLines: (() => {
+          const i = s.refineRemoveIdx;
+          if (typeof i !== 'number' || !list[i]) return [];
+          const rn = (roleAt[i] || []).map((x) => ROLE_LABEL[x]);
+          return [
+            rn.length ? rn.join(' and ') + (rn.length > 1 ? ' move to other swatches.' : ' moves to another swatch.') : 'This swatch carries no role.',
+            'Contrast is recalculated across the remaining ' + (N - 1) + ' colours.',
+          ];
+        })(),
+        onRemoveCancel: () => this.refineCancelRemove(),
+        onRemoveConfirm: () => this.refineConfirmRemove(),
         canUndo: !!(this._refineUndo && this._refineUndo.length),
         onUndo: () => this.refineUndo(),
         undoAria: 'Undo the last refinement. Keyboard shortcut: ' + (this._isMac() ? 'Command Z' : 'Control Z'),
         undoKeys: this._isMac() ? '⌘Z' : 'Ctrl Z',
-        canReset: !!p.sourceSwatches,
-        onReset: () => this.refineReset(),
-        // Edits are live and already persisted, so this exits rather than commits. Calling it Save
-        // would promise a commit that already happened and imply Cancel could undo it.
+        // Reset throws away every refinement, so it asks once. Two-step in place rather than a
+        // dialog: a confirmation stacked on top of a modal is a lot of ceremony for an act that
+        // Undo can also reach.
+        canReset: !!(p.sourceSwatches || p.roles),
+        resetArmed: !!s.refineResetArmed,
+        resetLabel: s.refineResetArmed ? 'Confirm reset' : 'Reset palette',
+        resetAria: s.refineResetArmed
+          ? 'Confirm: discard every refinement and return to the colours read from the image'
+          : 'Reset palette. Discards every refinement; you will be asked to confirm',
+        onReset: () => {
+          if (this.state.refineResetArmed) { this.setState({ refineResetArmed: false }); this.refineReset(); }
+          else this.setState({ refineResetArmed: true, announce: 'Reset palette will discard every refinement. Activate again to confirm.' });
+        },
+        onResetCancel: () => this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }),
         onClose: () => this.closeRefine(),
         trap: (e) => this.trapFocusIn('[data-refine-dialog]', e),
+        trapPairings: (e) => this.trapFocusIn('[data-refine-pairs]', e),
       };
     }
 
@@ -1163,9 +1246,6 @@ export const renderValsMethods = {
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
       refine: refineView, hasRefine: !!refineView,
       openRefine: () => this.openRefine(),
-      roleInfoOpen: !!s.roleInfoOpen,
-      toggleRoleInfo: () => this.toggleTip('roleInfoOpen', '[data-tip="role"]'),
-      roleInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('roleInfoOpen', '[data-tip="role"]'); } },
       restore: restoreView, hasRestore: !!s.restorePending,
       closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
       trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),

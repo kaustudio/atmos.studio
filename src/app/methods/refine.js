@@ -21,9 +21,6 @@
 import { gamutMap, rgb2oklab, hexToRgb } from '../../lib/color.js';
 import { ROLE_IDS, ROLE_LABEL } from '../../lib/exporters.js';
 
-// The three capability states, in the words the AA badge already uses everywhere else.
-const A11Y_STATE = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
-
 // A swatch, rebuilt around a new hex. L/a/b are recomputed rather than carried, because every
 // consumer downstream (metrics, roles, the reading engine) reads them and a stale pair would make
 // the palette describe a colour it no longer holds. sid and weight ride along untouched: identity
@@ -44,7 +41,7 @@ export const refineMethods = {
     if (!g || !root) return;
     const panel = root, back = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]');
     const bands = [...root.querySelectorAll('[data-refine-swatch]')];
-    const rows = [...root.querySelectorAll('[data-refine-row]')];
+    const title = root.querySelector('[data-refine-title]');
     const axes = [...root.querySelectorAll('[data-refine-axis]')];
     if (this._reduce) {
       if (back) g.from(back, { opacity: 0, duration: .2, ease: 'none' });
@@ -58,8 +55,9 @@ export const refineMethods = {
       tl.set(bands, { clipPath: 'inset(100% 0 0 0)' }, 0)
         .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }, 0.1);
     }
-    if (rows.length) tl.from(rows, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger * 0.7, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.26);
-    if (axes.length) tl.from(axes, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.34);
+    // Then what is in hand, then the axes that change it — the same order the eye reads them in.
+    if (title) tl.from(title, { opacity: 0, y: 10, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.24);
+    if (axes.length) tl.from(axes, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.3);
     // The marker lands on the opening selection AFTER the bands have their real widths — measured,
     // never assumed, because flexGrow decides them.
     tl.call(() => this._refinePill(true), null, 0.1);
@@ -156,7 +154,7 @@ export const refineMethods = {
     this.setState({
       refineOpen: true,
       refineSel: 0,
-      refineNote: '',
+      refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false,
       announce: 'Refining ' + p.name + '. Choose a swatch, then assign a role or adjust its colour. Press Escape to close.',
     }, () => {
       const d = document.querySelector('[data-refine-dialog]');
@@ -169,7 +167,7 @@ export const refineMethods = {
     // It leaves the way it arrived, in reverse and faster: the panel drops, the backdrop follows.
     // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
     // discipline as every other surface here.
-    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineNote: '', announce: 'Refine closed.' }, () => {
+    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false, announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
       this._refineUndo = [];
@@ -177,6 +175,40 @@ export const refineMethods = {
     }));
   },
   trapRefine(e) { this.trapFocusIn('[data-refine-dialog]', e); },
+  // PAIRING DETAIL IS A LAYER, NOT A SECTION. It overlays the canvas and scrolls inside itself, so
+  // the editor keeps its height and Palette structure never moves while somebody inspects the
+  // matrix. It arrives from the right, the way a drawer should, and leaves the same way.
+  openPairings() {
+    this._pairBack = document.activeElement;
+    this.setState({ refineAllPairs: true }, () => {
+      const el = document.querySelector('[data-refine-pairs]');
+      if (el) { const b = el.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      const g = window.gsap;
+      if (!g || this._reduce || !el) return;
+      g.from(el, { xPercent: 12, opacity: 0, duration: this.DUR.state, ease: this.EASE.fold, clearProps: 'transform,opacity' });
+    });
+  },
+  closePairings() {
+    const back = this._pairBack;
+    const g = window.gsap, el = document.querySelector('[data-refine-pairs]');
+    const done = () => this.setState({ refineAllPairs: false }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } });
+    if (!g || this._reduce || !el) { done(); return; }
+    g.to(el, { xPercent: 12, opacity: 0, duration: this.DUR.state * 0.7, ease: this.EASE.fold, onComplete: done });
+  },
+  trapPairings(e) { this.trapFocusIn('[data-refine-pairs]', e); },
+  // Removal is armed from the swatch itself; the confirmation folds open under the strip.
+  refineArmRemove(i) {
+    const p = this.state.current;
+    if (!p || p.swatches.length <= 3 || !p.swatches[i]) return;
+    const roles = this._rolesOn(p, i);
+    this.setState({ refineSel: i, refineRemoveIdx: i, announce: 'Removing swatch ' + (i + 1) + '. ' + (roles.length ? roles.join(' and ') + ' will be reassigned. ' : '') + 'Confirm or cancel.' },
+      () => { this._refinePill(); this._foldIn('[data-refine-confirm]'); });
+  },
+  refineCancelRemove() { this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => this.setState({ refineRemoveIdx: null, announce: 'Removal cancelled.' })); },
+  refineConfirmRemove() {
+    const i = this.state.refineRemoveIdx;
+    this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => { this.setState({ refineRemoveIdx: null }, () => this.refineRemove(i)); });
+  },
   // ONE SELECTION MODEL. The strip is the only thing that selects a swatch — by pointer, by arrow
   // key, by Home/End. The Roles panel is the property editor FOR that selection, not a second list
   // to pick from; every route into selection therefore lands in refineSelect and updates the strip,
@@ -214,18 +246,51 @@ export const refineMethods = {
     try { return this.semanticRoles(p, p.roles).filter((r) => r.index === i).map((r) => ROLE_LABEL[r.role]); }
     catch (e) { return []; }
   },
-  // WHAT THE EDIT COST OR BOUGHT. Refining is a design decision, not a colour tweak: raising a
-  // swatch's lightness can quietly take the palette from three usable text pairs to one. The
-  // verdict and the pair count are already computed for every palette, so the change is free to
-  // report — and it is reported only when it actually moves, so the line is never noise.
-  _refineConsequence(before, after) {
-    if (!before || !after) return '';
-    const bits = [];
-    if (before.aaState !== after.aaState) bits.push(A11Y_STATE[before.aaState] + ' to ' + A11Y_STATE[after.aaState]);
-    if (before.aaPairs !== after.aaPairs) bits.push(before.aaPairs + ' AA ' + (before.aaPairs === 1 ? 'pair' : 'pairs') + ' to ' + after.aaPairs);
-    const bp = before.bestPair, ap = after.bestPair;
-    if (bp && ap && (bp.fg !== ap.fg || bp.bg !== ap.bg)) bits.push('strongest pair now ' + ap.fg.toUpperCase() + ' on ' + ap.bg.toUpperCase());
-    return bits.length ? bits.join(', ') + '.' : '';
+  // ACCESSIBILITY AS A RESULT, NOT A STATUS WORD.
+  //
+  // "Limited" said nothing: limited against what, and how far off? And the palette-wide count it
+  // sat beside was every C(n,2) combination — 10 pairs for 5 swatches, most of which nobody would
+  // ever set type in. A denominator made of pairings no one would use is not a measure of anything.
+  //
+  // These are the pairs a designer would actually build with: the four content roles on the two
+  // ground roles. Eight, always, whatever the swatch count — the audit's example says six, but any
+  // fixed subset is arbitrary unless it can be derived, and content-on-ground is the set that can.
+  // Roles that double onto one swatch produce a same-colour pair that fails at 1:1, which is the
+  // honest answer rather than a hidden exclusion.
+  GROUND_ROLES: ['background', 'surface'],
+  CONTENT_ROLES: ['primary', 'secondary', 'accent', 'text'],
+  roleContrast(pal, selIdx) {
+    let resolved;
+    try { resolved = this.semanticRoles(pal, pal.roles); } catch (e) { return null; }
+    const at = {};
+    resolved.forEach((r) => { at[r.role] = r.hex; });
+    const pairs = [];
+    this.CONTENT_ROLES.forEach((fg) => {
+      this.GROUND_ROLES.forEach((bg) => {
+        const fgHex = at[fg], bgHex = at[bg];
+        if (!fgHex || !bgHex) return;
+        const ratio = this.contrastRatio(fgHex, bgHex);
+        pairs.push({ fg, bg, fgHex, bgHex, ratio, aa: ratio >= 4.5, aaa: ratio >= 7 });
+      });
+    });
+    if (!pairs.length) return null;
+    const passed = pairs.filter((x) => x.aa).length;
+    const byRatio = pairs.slice().sort((a, b) => b.ratio - a.ratio);
+
+    // THE PAIR SHOWN IS THE ONE THE USER IS AFFECTING, not the palette's best. Leading with the
+    // strongest pairing answers a question nobody asked while dragging: the swatch in hand may not
+    // be in it at all, so the card would sit still through an edit that changed everything about
+    // the colour being edited. Prioritise pairs that involve a role the SELECTED swatch holds —
+    // grounds show what will sit on them, content roles show where they can be set.
+    const selRoles = resolved.filter((r) => r.index === selIdx).map((r) => r.role);
+    const involving = byRatio.filter((x) => selRoles.indexOf(x.fg) >= 0 || selRoles.indexOf(x.bg) >= 0);
+    const focus = involving.length ? involving[0] : byRatio[0];
+    const onRole = selRoles.filter((rr) => this.GROUND_ROLES.indexOf(rr) >= 0)[0]
+      || selRoles.filter((rr) => this.CONTENT_ROLES.indexOf(rr) >= 0)[0] || null;
+    return {
+      pairs: byRatio, passed, total: pairs.length, best: byRatio[0],
+      focus, focusRole: onRole, contextual: !!involving.length,
+    };
   },
 
   // ---- the one write path ----------------------------------------------------------------------
@@ -251,9 +316,6 @@ export const refineMethods = {
     if (!p) return;
     const o = opts || {};
     const next = Object.assign({}, p, patch);
-    // Measured across the change, not after it: the same metrics function both sides, so the
-    // comparison cannot drift from what the badge and the readout say elsewhere.
-    const note = patch.swatches ? this._refineConsequence(this.paletteMetrics(p), this.paletteMetrics(next)) : '';
     // First edit only: park the extraction's own swatches. Later edits must NOT overwrite it, or
     // Reset would return to the most recent state instead of the original — which is not a reset.
     if (!next.sourceSwatches && patch.swatches) next.sourceSwatches = p.swatches.map((s) => Object.assign({}, s));
@@ -264,8 +326,7 @@ export const refineMethods = {
       overlay: s.overlay && s.overlay.id === next.id ? next : s.overlay,
       bandRev: (s.bandRev || 0) + (o.structural ? 1 : 0),
       refineSel: typeof o.sel === 'number' ? o.sel : Math.min(s.refineSel, next.swatches.length - 1),
-      refineNote: note || '',
-      announce: (o.announce || '') + (note ? ' ' + note : ''),
+      announce: o.announce || '',
     }), () => {
       this.persist({ immediate: true });
       if (o.structural) { const r = this._refineStripFrom; this._refineStripFrom = null; this._refineFlipFrom(r); this._refinePill(true); }
@@ -368,12 +429,15 @@ export const refineMethods = {
   },
   // Back to the extraction. Clears the refinement outright rather than pushing another undo step:
   // this is the escape hatch, and it should not need undoing itself to be trusted.
+  // Reset clears BOTH halves of a refinement, so it has to be reachable when either exists. It
+  // tested only for sourceSwatches, which meant a palette whose roles had been reassigned but whose
+  // colours were untouched offered no way back — the button sat disabled over work it could undo.
   refineReset() {
     const p = this.state.current;
-    if (!p || !p.sourceSwatches) return;
+    if (!p || !(p.sourceSwatches || p.roles)) return;
     this._captureBandRects();
     this._refineStripFrom = this._refineStripRects();
-    const next = Object.assign({}, p, { swatches: p.sourceSwatches.map((s) => Object.assign({}, s)), sourceSwatches: null, roles: null });
+    const next = Object.assign({}, p, { swatches: (p.sourceSwatches || p.swatches).map((s) => Object.assign({}, s)), sourceSwatches: null, roles: null });
     this._refineUndo = [];
     this.setState((s) => ({
       current: next,

@@ -6,7 +6,12 @@ import { syncThemeColor } from '../../lib/themeColor.js';
 export const motionMethods = {
   // ---- motion tokens: one shared set, scaled by hierarchy ----
   initMotion() {
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1) };
+    // entrance/standard are expo-out curves: almost all the travel happens in the first fifth, which
+    // is right for something arriving into place and wrong for something CHANGING SIZE — a height
+    // on that curve snaps open and then creeps, which reads as a jump however long the tween is.
+    // `fold` is the in-out curve the sliding selection marker already uses (misc.js), so a
+    // disclosure and a moving selection share one motion character.
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1) };
     this.DUR = { micro: 0.12, state: 0.24, reveal: 0.62, stagger: 0.05 };
   },
   // generic, interruptible micro-interaction handlers (transform + overlay-opacity only)

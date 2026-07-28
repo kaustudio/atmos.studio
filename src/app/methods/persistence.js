@@ -407,6 +407,54 @@ export const persistenceMethods = {
   // the panel is never painted at full opacity. Deferred to a frame it was: one frame at opacity 1
   // landed before the tween began, and the reveal opened with a flash of the thing it was about to
   // fade in. The dialogs defer because their transition measures layout; this one does not.
+  // ---- disclosures that do not jump ------------------------------------------------------------
+  // A fold that only fades leaves everything under it snapping to a new position, which is the
+  // "unnecessary position jump" that makes an interface feel unfinished however smooth the fade is.
+  // Height is what has to move: measured from the real content, tweened, then handed back to the
+  // layout so nothing stays pinned to a stale pixel value.
+  //
+  // Closing has to outlive the state change for the same reason every exit here does — React would
+  // unmount the panel before the tween had anywhere to play.
+  _foldIn(sel) {
+    const g = window.gsap; if (this._reduce || !g) return;
+    const el = document.querySelector(sel); if (!el) return;
+    // From wherever it IS, not always from zero: on a reversal the panel is part-open, and
+    // restarting at 0 would drop it to nothing before rising again.
+    const from = el.getBoundingClientRect().height;
+    const h = el.scrollHeight;
+    if (h <= 0) return;
+    g.fromTo(el, { height: from, opacity: from > 0 ? 1 : 0 }, { height: h, opacity: 1, duration: this.DUR.reveal * 0.62, ease: this.EASE.fold, clearProps: 'height,opacity,overflow' });
+  },
+  _foldOut(sel, cb) {
+    const g = window.gsap; const el = document.querySelector(sel);
+    if (this._reduce || !g || !el) { cb(); return; }
+    g.to(el, { height: 0, opacity: 0, duration: this.DUR.reveal * 0.45, ease: this.EASE.fold, onComplete: cb });
+  },
+  // REVERSIBLE MID-FLIGHT. A close tween has to outlive the state change, which means for its
+  // ~170ms the flag still reads open — so a second click during it used to be swallowed by the
+  // re-entry guard and the disclosure just sat there. Killing the running tween and re-opening from
+  // wherever it had got to is what makes the control answer every press: the panel turns round in
+  // place rather than finishing a journey nobody asked it to complete.
+  _foldKill(sel) { const g = window.gsap, el = document.querySelector(sel); if (g && el) g.killTweensOf(el); },
+  openFold(flag, sel) {
+    this._foldBusy = this._foldBusy || {};
+    this._foldBusy[flag] = false;
+    this._foldKill(sel);
+    if (this.state[flag]) { this._foldIn(sel); return; }   // still mounted mid-close: re-open in place
+    this.setState({ [flag]: true }, () => this._foldIn(sel));
+  },
+  closeFold(flag, sel, after) {
+    this._foldBusy = this._foldBusy || {};
+    if (this._foldBusy[flag]) return;
+    this._foldBusy[flag] = true;
+    this._foldKill(sel);
+    this._foldOut(sel, () => { this._foldBusy[flag] = false; this.setState({ [flag]: false }, after || null); });
+  },
+  toggleFold(flag, sel) {
+    // A press during a close means "no, open it again" — never "do nothing".
+    if (this._foldBusy && this._foldBusy[flag]) { this.openFold(flag, sel); return; }
+    if (this.state[flag]) this.closeFold(flag, sel); else this.openFold(flag, sel);
+  },
   openTip(flag, sel) { this.setState({ [flag]: true }, () => this._tipIn(sel)); },
   closeTip(flag, sel) { if (this._tipClosing) return; this._tipClosing = true; this._tipOut(sel, () => { this._tipClosing = false; this.setState({ [flag]: false }); }); },
   toggleTip(flag, sel) { if (this.state[flag]) this.closeTip(flag, sel); else this.openTip(flag, sel); },

@@ -109,7 +109,6 @@ export default class PaletteApp extends React.Component {
     // the Library heading's storage toggletip — same shape as aaInfoOpen, and closed the same way
     storeInfoOpen: false,
     // the Refine surface's one explanation of how roles are assigned
-    roleInfoOpen: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
     // Bumped by a refinement that changes the SHAPE of the swatch list (reorder, remove), so
@@ -117,8 +116,11 @@ export default class PaletteApp extends React.Component {
     bandRev: 0,
     // the Refine surface: open flag and the swatch currently being worked on
     refineOpen: false, refineSel: 0,
-    // what the last edit cost or bought — transient, shown only while it is news
-    refineNote: '',
+    // which of Refine's two secondary menus is open: 'role' | 'order' | null
+    // the inline role chooser, and the two-step arm on Reset palette
+    refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null,
+    // the full contrast matrix, on demand
+    refineAllPairs: false,
     // the result view's More: reveals the poetic reading and the traits past the first two
     readingOpen: false,
     // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
@@ -269,6 +271,10 @@ export default class PaletteApp extends React.Component {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
+        if (typeof this.state.refineRemoveIdx === 'number') { e.preventDefault(); this.refineCancelRemove(); return; }
+        if (this.state.refineResetArmed) { e.preventDefault(); this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }); return; }
+        if (this.state.refineAllPairs) { e.preventDefault(); this.closePairings(); return; }
+        if (this.state.refineRoleOpen) { e.preventDefault(); this.closeFold('refineRoleOpen', '[data-refine-roles]'); return; }
         if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }

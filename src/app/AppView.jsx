@@ -1799,131 +1799,221 @@ function ManageDialog({ vals }) {
 //
 // Every swatch shows the roles it answers, in words, on the swatch itself. That is the whole
 // picture the Export dialog has been asking for since it started telling people to refine.
+// ============================== REFINE ==============================
+// ONE DECISION FIRST, and the screen is built around it: choose a swatch, then adjust it. The
+// strip is the only thing that selects; everything under it is that swatch's properties.
+//
+// The first build broke exactly here. It had a strip AND a full-height Roles list, both large and
+// both selectable, plus a heading reciting role, position and hex at one weight — three ways to
+// identify one object, and therefore no obvious first move. Colour, order and deletion also shared
+// a row, which gave a destructive act the same standing as nudging lightness.
+//
+// So: role and position are menus, not columns; colour has the main area to itself; removal sits
+// apart behind a rule with its consequence written under it; history lives in the footer. The
+// vertical order IS the flow — select, adjust, optionally re-file or reorder, finish.
 function RefineDialog({ vals }) {
   if (!vals.hasRefine) return null;
   const r = vals.refine;
-  const stepBtn = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const eyebrow = 'font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)';
+  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:760px;max-width:96vw;max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
-          <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Refine</span>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
+      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+
+        {/* PAIRING DETAIL — a layer over the canvas with its own scroll. Closing returns to an
+            editor that has not moved a pixel. */}
+        {r.a11y && r.a11y.allOpen && (
+          <div data-refine-pairs="1" role="dialog" aria-modal="true" aria-label="All text-role pairings" onKeyDown={r.trapPairings} style={sx('position:absolute;inset:0;z-index:5;background:var(--surface);display:flex;flex-direction:column')}>
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px 12px;border-bottom:1px solid var(--line)')}>
+              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
+              <button type="button" data-ix="solid" data-focus="chrome" onClick={r.a11y.closePairings} aria-label="Close pairings and return to the editor" style={sx(quiet)}>Close</button>
+            </div>
+            <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px 22px 18px')}>
+              {r.a11y.rows.map((row) => (
+                <span key={row.key} style={sx('display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)')}>
+                  <span aria-hidden="true" style={row.chipStyle}>Aa</span>
+                  <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface)')}>{row.roles}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:11.5px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
+                  <span style={row.levelStyle}>{row.level}</span>
+                </span>
+              ))}
+            </div>
           </div>
-          {/* Done, not Save: every edit is already applied and already written. Save would promise a
-              commit that has happened and imply a Cancel that cannot exist. */}
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Done</button>
+        )}
+
+        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+          <span style={sx("font-family:'Neue Montreal';font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
+          {/* Done, not Save: every edit is already applied and already written. It is the ONE
+              filled control on this surface — completion has to out-rank Reset palette, which sits
+              at 9px in the footer and asks before it acts. */}
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 15px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Done</button>
         </header>
 
-        {/* THE STRIP IS THE ONLY THING THAT SELECTS. Pointer, arrow keys, Home and End all land in
-            refineSelect, so the strip, the role rows, the heading, the sliders and the live region
-            can never disagree about which swatch is in hand. Roving tabindex: one stop for the
-            group, arrows within it — the pattern the view switcher and the facet lists already use. */}
-        <div style={sx('position:relative;width:100%;padding:16px 22px 0')}>
-          <div role="group" aria-label="Palette swatches. Use the arrow keys to choose one." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
+        {/* 1 · THE ONE PRIMARY SELECTOR. Labelled with the instruction, so the first move is stated
+               rather than inferred. Pointer, arrow keys, Home and End all land in refineSelect. */}
+        <div style={sx('position:relative;width:100%;padding:18px 22px 0')}>
+          {/* No standing instruction. A palette strip with one tile visibly selected is a control
+              anybody has used before, and the sentence explaining it was read once and then in the
+              way forever. The accessible name still says it, where it costs nothing. */}
+          <div role="group" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
             {r.swatches.map((b) => (
               <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" tabIndex={b.tab} aria-pressed={b.pressed} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
-                {b.hasRoles && <span style={b.labelStyle}>{b.roleLabels}</span>}
+                {b.hasRoles && <span style={b.labelStyle}>{b.roleLabel}</span>}
               </button>
             ))}
-            {/* Selection, carried by movement. It sits OUTSIDE the swatch — a hairline 4px clear of
-                it — so it takes nothing off the colour it frames and shifts no layout. Keyboard
-                focus stays the app's own ring on the button itself, which is why the two never get
-                confused: this one travels, that one appears where the caret is. */}
+            {/* Selection travels; keyboard focus is the ring on the button beneath. Two states, two
+                treatments, deliberately not the same one. */}
             <span data-refine-pill="1" aria-hidden="true"></span>
           </div>
         </div>
 
-        <div style={sx('display:flex;gap:26px;flex-wrap:wrap;padding:18px 22px 0')}>
-          {/* ROLES — a property editor for the selected swatch, not a second place to pick one.
-              The rows the selection answers are tinted, which is what ties this list to the strip
-              without forcing both into one order they do not share: the strip runs in palette
-              order, these run in role order, and neither is wrong. */}
-          <div style={sx('flex:1;min-width:280px;display:flex;flex-direction:column')}>
-            <div style={sx('display:flex;align-items:center;gap:8px;padding-bottom:9px')}>
-              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>Roles</span>
-              {/* One explanation, on demand — the app's own toggletip, not six repeated words. */}
-              <div style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.roleInfoOpen} aria-label="How roles are assigned" onClick={vals.toggleRoleInfo} onKeyDown={vals.roleInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
-                {vals.roleInfoOpen && (<>
-                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleRoleInfo} aria-hidden="true"></div>
-                  <div data-tip="role" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>{r.rolesNote}</span>
-                  </div>
-                </>)}
-              </div>
-            </div>
-            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
-            {r.roles.map((role) => (
-              <div key={role.id} data-refine-row="1">
-                <button type="button" data-ix="cell" data-focus="chrome" aria-pressed={role.pressed} aria-label={role.aria} onClick={role.onAssign} style={role.rowStyle}>
-                  <span aria-hidden="true" style={role.swatchStyle}></span>
-                  <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:1;min-width:0')}>{role.label}</span>
-                  {/* Only a role the user has MOVED carries a mark. The default needs no label. */}
-                  {role.edited && <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{role.badge}</span>}
-                </button>
-                <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
-              </div>
-            ))}
+        {/* 2 · IDENTIFY — the SWATCH, which is the object being edited. The role is an assignment
+               made to it and reads as metadata under it; it is changed from Palette structure
+               below, not from here. The source sits right-aligned as context and is deliberately
+               quieter than the editing controls: no border, because it is not one of them. */}
+        <div data-refine-title="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 22px 0')}>
+          <div style={sx('min-width:0')}>
+            <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:19px;line-height:1.15;letter-spacing:-.01em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</div>
           </div>
-
-          {/* THE SELECTED SWATCH. Role first, then where it sits, then the value — the heading
-              answers "what is this for" before "which one is it". */}
-          <div style={sx('flex:1;min-width:290px;display:flex;flex-direction:column')}>
-            <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:9px')}>
-              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);text-wrap:pretty')}>{r.selEyebrow} · {r.selHex}</span>
-              {/* The photograph the palette was read from. Without it there is no way to tell a
-                  correction from a departure. */}
-              {r.hasSource && <img src={r.sourceUrl} alt="The reference image this palette was read from" style={sx('flex:none;width:54px;height:36px;object-fit:cover;border:1px solid var(--line)')} />}
-            </div>
-            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
-            {r.sliders.map((sl) => (
-              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:5px;padding:9px 0')}>
-                <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-                  <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
-                  {/* A slider finds a value; a field states one. Both write the same axis. */}
-                  <span style={sx('display:inline-flex;align-items:center;gap:3px')}>
-                    <input type="number" value={sl.display} min={sl.numMin} max={sl.numMax} step={sl.numStep} onChange={sl.onNumber} aria-label={sl.label + ' of the selected swatch, exact value'} style={sx('width:56px;background:var(--surface-raised);border:1px solid var(--action-line);padding:3px 5px;font-family:Neue Montreal;font-size:12px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums;text-align:right')} />
-                    {sl.unit && <span style={sx('font-family:Neue Montreal;font-size:12px;color:var(--on-surface-muted)')}>{sl.unit}</span>}
-                  </span>
-                </span>
-                {/* --refine-track is this axis drawn as itself: the lightness ramp, the chroma
-                    drain, the hue circle, all sampled from the selected colour. Everything painted
-                    is squared in global.css, because a native range thumb arrives round. */}
-                <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
-              </div>
-            ))}
-
-            {/* Position and removal. These were two bare arrows: the glyph every interface uses for
-                previous/next, on controls that in fact MOVE the swatch. Words now, and the position
-                they act on stated beside them. */}
-            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line);margin-top:6px')}></span>
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0 0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{r.posLabel}</span>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(stepBtn + ';opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(stepBtn + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemove} aria-label={r.removeAria} style={sx(stepBtn + ';margin-left:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>{r.removeLabel}</button>
-            </div>
-            {r.removeHint && <span style={sx("font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding-top:8px;text-wrap:pretty")}>{r.removeHint}</span>}
-          </div>
+          {/* Stacked, not a row: image over label. Side by side it made a wide horizontal object
+              that competed with the identity beside it and the controls beneath. */}
+          {r.hasSource && (
+            <button type="button" data-click-zoom="1" data-focus="chrome" aria-label={r.sourceAria} style={sx('flex:none;display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;background:none;border:none;padding:0;cursor:pointer;color:var(--on-surface-muted)')}>
+              <img src={r.sourceUrl} alt="" style={sx('width:54px;height:34px;object-fit:cover;display:block;border:1px solid var(--line)')} />
+              <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap')}>View source</span>
+            </button>
+          )}
         </div>
 
-        {/* Two reversals, and they are not the same act: Undo steps back through this session,
-            Reset palette throws the whole refinement away and returns to the extraction.
+        {/* 3 · EDIT — colour, and nothing else in this zone. Label, one integrated numeric field
+               with its unit inside the boundary, one continuous track with one handle. */}
+        <div style={sx('padding:16px 22px 0')}>
+          {r.sliders.map((sl) => (
+            <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
+              <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
+                <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
+                {/* Value and unit are ONE control: the wrapper draws the boundary, the input is
+                    borderless inside it, and the unit sits within the same box. Text rather than
+                    number, so the decimal separator is the same for everyone. */}
+                <span data-refine-num="1">
+                  <input type="text" inputMode="decimal" value={sl.display} onChange={sl.onNumber} aria-label={sl.label + ' of the selected swatch, exact value'} />
+                  {sl.unit && <span aria-hidden="true">{sl.unit}</span>}
+                </span>
+              </span>
+              <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
+            </div>
+          ))}
+        </div>
 
-            Between them, what the last edit COST. It appears only when a metric actually moved, so
-            it is news rather than furniture — the difference between a colour tweak and a design
-            decision is knowing you just went from three usable text pairs to one. */}
-        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:16px 22px 20px;margin-top:12px;border-top:1px solid var(--line)')}>
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(stepBtn + ';display:inline-flex;align-items:center;gap:8px;padding:9px 14px;opacity:' + (r.canUndo ? '1' : '.35'))}>
-            Undo<span aria-hidden="true" style={sx('font-size:9px;color:var(--on-surface-muted)')}>{r.undoKeys}</span>
-          </button>
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label="Reset palette to the colours read from the image" style={sx(stepBtn + ';padding:9px 14px;opacity:' + (r.canReset ? '1' : '.35'))}>Reset palette</button>
-          {r.hasNote && (
-            <span data-refine-note="1" style={sx("flex:1;min-width:200px;text-align:right;font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{r.note}</span>
+        {/* 4 · VALIDATE — text contrast, named for what it actually measures. The count IS the
+               status, so there is no badge restating it in a word. The pair shown is the one the
+               selected swatch is in, so the card is visibly about the colour in hand rather than
+               the palette's best result sitting still through an edit. Full matrix on demand. */}
+        {r.a11y && (
+          <div role="group" aria-label={r.a11y.aria} style={sx('margin:14px 22px 0;border:1px solid var(--line)')}>
+            <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 13px 0')}>
+              <span style={sx(eyebrow)}>Text contrast</span>
+              <span style={r.a11y.countStyle}>{r.a11y.count}</span>
+            </div>
+            {/* The specimen fills the row rather than huddling at the left: this is a working
+                surface, and the pairing is the work. */}
+            <div style={sx('display:flex;align-items:center;gap:14px;padding:11px 13px 13px')}>
+              <span aria-hidden="true" style={r.a11y.sampleStyle}>Aa</span>
+              <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
+                <span style={sx('font-family:Neue Montreal;font-size:13px;color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
+              </span>
+              <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
+                <span style={sx('font-family:Neue Montreal;font-size:15px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
+                <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
+              </span>
+            </div>
+            {/* A DRILL-IN, not an accordion. Expanding here pushed Palette structure down the
+                page every time anyone glanced at the detail — the one layout shift an editor
+                cannot afford, because the canvas has to hold still while you work. */}
+            <div style={sx('border-top:1px solid var(--line)')}>
+              <button type="button" data-ix="cell" data-focus="chrome" aria-haspopup="dialog" onClick={r.a11y.toggleAll} style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:9px 13px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
+                {r.a11y.allLabel}<span aria-hidden="true" style={sx('font-size:10px;color:var(--on-surface-muted)')}>›</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 5 · PALETTE STRUCTURE — semantics of the palette, not an administrative form. Role is
+               an ASSIGNMENT to the selected swatch; order is where that swatch sits; removal takes
+               it out of the composition. All three are palette-level, so they share one section —
+               and removal is separated by a divider and by priority rather than by a heading of
+               its own. A "Destructive action" label added taxonomy and cut the act off from the
+               object it acts on. */}
+        <div style={sx('margin:14px 22px 0;padding-top:12px;border-top:1px solid var(--line)')}>
+          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Palette structure</span>
+
+          <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
+            <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
+              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Role</span>
+              <span style={sx('font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface)')}>{r.roleLine}</span>
+            </span>
+            <button type="button" data-ix="solid" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-left:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
+          </div>
+          {/* Inline, never an overlay: a dropdown here covered the sliders, so choosing a role hid
+              the colour it was being given to. A conflict is named only when there is one. */}
+          {r.roleChooserOpen && (
+            <div data-refine-roles="1" style={sx('display:flex;flex-direction:column;margin-top:10px;border:1px solid var(--line)')}>
+              {r.roleItems.map((it) => (
+                <button key={it.id} type="button" role="switch" aria-checked={it.pressed} data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
+                  <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:10px;color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:none')}>{it.label}</span>
+                  {it.consequence && <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
+                </button>
+              ))}
+            </div>
           )}
+
+          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:14px')}>
+            <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
+              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Order</span>
+              <span style={sx('font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
+            </span>
+            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-left:auto;opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
+            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
+          </div>
+
+          {/* Removal: a divider and a low-priority action, no heading. The RULE is the separation —
+              a "Destructive action" label added taxonomy and cut the act off from its object. */}
+          {!r.removeArmed && (
+            <div style={sx('margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';margin-left:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove swatch…</button>
+            </div>
+          )}
+          {r.removeArmed && (
+            <div data-refine-confirm="1" style={sx('margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px')}>
+              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{r.removeTitle}</span>
+              {r.removeLines.map((t, i) => (
+                <span key={i} style={sx("font-family:'Neue Montreal';font-size:11.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{t}</span>
+              ))}
+              <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
+                <button type="button" data-ix="press" data-focus="chrome" onClick={r.onRemoveCancel} aria-label="Cancel the removal" style={sx(quiet)}>Cancel</button>
+                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-left:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
+               — it discards every refinement, which Undo would take many presses to equal. */}
+        <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 22px;margin-top:13px;border-top:1px solid var(--line);background:var(--surface-raised)')}>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
+            Undo<span aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>{r.undoKeys}</span>
+          </button>
+          {r.resetArmed && (
+            <span style={sx("flex:1;min-width:160px;font-family:'Neue Montreal';font-size:10.5px;line-height:1.4;color:var(--on-surface);text-wrap:pretty")}>This discards every refinement.</span>
+          )}
+          {r.resetArmed && (
+            <button type="button" data-ix="press" data-focus="chrome" onClick={r.onResetCancel} aria-label="Cancel the reset" style={sx(footBtn)}>Cancel</button>
+          )}
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn + ';margin-left:auto') + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
         </div>
       </div>
     </div>
