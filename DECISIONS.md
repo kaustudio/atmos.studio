@@ -6,6 +6,45 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-29 — The list row sits on the page grid
+
+**Decision:** the library row and its sort header are laid out on the page's twelve columns, not on
+a private template. Each cell spends a whole number of them:
+
+    strip 2 · name and tags 4 · AA pairs 2 · max contrast 2 · date 2
+
+**What it replaced:** a five-track template in pixels — `160px / 1fr / 104px / minmax(88px, pitch) /
+182px`. Every figure in it was reasoned, documented and defensible, and not one of them touched a
+column. Measured at 1440px: the page's lines fall at 24, 117, 234, 352, 469, 586, 703, 820, 937,
+1055, 1172, 1289, 1406, and the row's cells began at 40, 216, 898, 1018 and 1216. Nothing met
+anything, on the screen people spend the most time on.
+
+**Three nested insets had to go, not just the template.** The row carried `--row-inset: 16px` INSIDE
+the page's 24px margin, so the strip started at 40 on a page whose first column starts at 24 — a
+second margin nested in the first. The row also had `--row-cell-inset` as its right padding, and
+each metric cell repeated the same 8px as its own `padding-right`; header and values agreed with
+each other and with nothing else, which is the most convincing kind of misalignment. All three are
+zero now, and the ink lands on the column line: measured, `AA pairs` label and value both end at
+944, `Max contrast` both at 1180, the date cell's right edge at 1416, which is column twelve.
+
+**The even metric pitch survived for free.** `--row-metric-pitch` was hand-building equal spacing out
+of `--row-time-col`; three equal spans give it by construction. The pixel tokens remain as minima
+and as the geometry the hover buttons travel by — they no longer set a track's width.
+
+**Spans live in CSS, keyed by role, because they change at a breakpoint** and an inline style cannot
+be reached by a media query. The date column carries the stamp plus the 82px the hover buttons step
+into: two columns is 212px at 1440 but falls under 182px at about 1260, where the buttons would land
+on the date. Below 1280 the date takes a third column and the name gives it up — the name is elastic
+and truncates gracefully, a timestamp is a fixed string that cannot. Verified at 1180: date 265px,
+every cell still on a line.
+
+**The cost, stated plainly:** the name and tag column went from 666px to 448px at 1440. Two tags
+fewer are visible before the list truncates. That is the price of the row being on the grid, and it
+is the one part of this a designer might want to spend differently — the spans are four numbers in
+one CSS block.
+
+---
+
 ## 2026-07-29 — One gutter: 12 columns, 24 margin, 24 gutter
 
 **Decision:** one page gutter, `--page-gutter: 24px`, on every document and on chrome and content

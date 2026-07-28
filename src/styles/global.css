@@ -169,12 +169,17 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* The row's inset — the palette's left margin, and the margin the stamp and the row buttons keep
      on the right. The row is symmetrical about this: the things that end it are the same distance
      from its edges. */
-  --row-inset:16px;
-  /* Every metric cell's trailing inset, and half of the row's right margin. It is one token because
-     it is one measurement doing two jobs: between two columns it is the space before the next one;
-     on the last column it pairs with the row's own 8px to make the same 16px inset the palette
-     keeps. Sizing the sort header's hover tint from it too is what lets the tint be symmetrical
-     around a label AND still end on the edge its values sit on — 8 out, 8 back. */
+  /* Zero, and it has to be. The row used to hold a 16px inset INSIDE the page's margin, so the
+     strip began at 40px on a page whose first column begins at 24. A row that is on the grid has
+     the grid's edges; anything else is a second margin nested in the first. Kept as a token rather
+     than deleted because the hover buttons' offset is derived from it. */
+  --row-inset:0px;
+  /* The sort header's hover tint only. It was every metric cell's trailing inset as well, and half
+     of the row's right margin — one measurement doing three jobs, which was elegant while the row
+     had a margin of its own to be half of. On the page grid it has none: a value inset 8px from its
+     column's right edge is a value 8px off the grid, and the header above it was inset by the same
+     8px so the two agreed with each other and with nothing else. Values and headers now end on the
+     column line. The token survives for the tint, which still wants 8 out and 8 back around a label. */
   --row-cell-inset:8px;
   /* The two row buttons: 30 + 6 + 30, the pair and the space between them, nothing added. */
   --row-action-col:66px;
@@ -200,15 +205,22 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      than the screen. It shrinks toward the label's own width; the trailing column never does,
      because its extra is the stamp's escape room and losing that puts a button on a date. */
   --row-metric-pitch:var(--row-time-col);
-  /* THE ROW GRID. One template, read by the sort header and by every row, so a column cannot exist
-     in one and not the other. Fixed metric columns, one elastic identity column: the free space goes
-     where content is variable — a name, a chip and a tag list — rather than to a two-digit count. */
-  --row-grid:
-    var(--row-strip-col)
-    minmax(0, 1fr)
-    var(--row-aa-col)
-    minmax(var(--row-contrast-col), var(--row-metric-pitch))
-    var(--row-time-col);
+  /* THE ROW GRID — the page grid, not a private one.
+     It used to be a five-track template in pixels: 160 / 1fr / 104 / minmax(88, pitch) / 182. Every
+     figure in it was reasoned and none of them touched a column. At 1430px the page's lines fall at
+     24, 117, 234 … 1406, and the row's cells landed at 40, 216, 898, 1018, 1216. Not one edge met a
+     column, on the screen people spend the most time on.
+
+     Now it IS the page grid — twelve equal tracks on the same 24px gutter — and each cell spends a
+     whole number of them:
+
+       strip 2 · name and tags 4 · AA pairs 2 · max contrast 2 · date 2
+
+     The metric block keeps the even pitch it was designed with, because three equal spans give it
+     for free: what --row-metric-pitch was hand-building out of --row-time-col is now just what a
+     column is. The pixel tokens below survive as the MINIMA that decide when a column may shrink
+     and as the geometry the row's hover buttons travel by; they no longer set any track's width. */
+  --row-grid:repeat(var(--grid-cols), minmax(0, 1fr));
   /* AA pairs and max contrast are two unrelated measurements, so they get two independent
      columns rather than one shared cluster — each sized for its own header label and value. */
   --row-aa-col:104px;         /* AA verdict badge + the pair count */
@@ -432,6 +444,27 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    metrics go back to their own widths and the row spends what it has on the palette's name, which is
    the one column you cannot read the list without. Even spacing is a luxury of having the room. */
 @media (max-width:1000px){:root{--row-metric-pitch:var(--row-contrast-col)}}
+/* WHICH COLUMNS EACH CELL SPENDS. In CSS, not in the JSX, for one reason: the spans have to change
+   at a breakpoint and an inline style cannot be reached by a media query. Keyed by role, and read by
+   BOTH the sort header and the rows — a cell that spans 2 below must span 2 above, or the column
+   exists in one and not the other. */
+[data-row-cell="strip"]{grid-column:span 2}
+[data-row-cell="name"]{grid-column:span 4}
+[data-row-cell="aa"]{grid-column:span 2}
+[data-row-cell="contrast"]{grid-column:span 2}
+[data-row-cell="date"]{grid-column:span 2}
+[data-row-cell="scope"]{grid-column:span 6}
+/* The date column carries the stamp AND the room the hover buttons need to step into
+   (--row-action-gutter, 82px). Two columns is 212px at 1440 and comfortably holds both; below about
+   1260px two columns stop being 182px and the buttons would land on the date. So the date takes a
+   third column and the name gives it up — the name is elastic and truncates gracefully, the stamp
+   is a fixed string that cannot. 1280 is the breakpoint rather than 1260 because it is a real screen
+   width and the margin above the failure should be a whole one. */
+@media (max-width:1280px){
+  [data-row-cell="name"]{grid-column:span 3}
+  [data-row-cell="date"]{grid-column:span 3}
+  [data-row-cell="scope"]{grid-column:span 5}
+}
 [data-row-time]{transition:transform .18s var(--ease-standard)}
 [data-row-wrap]:hover [data-row-time],[data-row-wrap]:focus-within [data-row-time]{transform:translateX(calc(-1 * var(--row-action-gutter)))}
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}

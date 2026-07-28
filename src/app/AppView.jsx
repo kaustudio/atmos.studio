@@ -1102,8 +1102,8 @@ function FeedSection({ vals }) {
             controls. The three buttons keep their own full labels ("Sort by AA pairs, highest
             first"), so nothing about them got quieter. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Library controls" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:16px;width:100%;padding:0 var(--row-cell-inset) 7px var(--row-inset)')}>
-            <div style={sx('grid-column:span 2;min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:calc(-1 * var(--row-inset))')}>{scopeBar}</div>
+          <div role="group" aria-label="Library controls" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 0 7px')}>
+            <div data-row-cell="scope" style={sx('min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>{scopeBar}</div>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -1114,7 +1114,7 @@ function FeedSection({ vals }) {
                 row, and anything pinned to its left edge would stand a track-width away from the
                 thing it labels — so the marker goes where its meaning is, next to the label, and
                 the column keeps its ONE right edge: label over count, both flush. */}
-            <div style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
+            <div data-row-cell="aa" style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
               <div style={sx('position:relative;display:inline-flex;flex:none')}>
                 <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.aaInfoOpen && (<>
@@ -1139,14 +1139,14 @@ function FeedSection({ vals }) {
                 </>)}
               </div>
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
-                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={col.style}>
+                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
                   <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
                 </button>
               ))}
             </div>
             {/* MAX CONTRAST and DATE each own their column outright */}
             {vals.sortCols.filter((col) => col.key === 'contrast' || col.key === 'time').map((col) => (
-              <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} style={col.style}>
+              <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
                 <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} style={{ display: 'inline-flex', opacity: col.chevronDim ? 0.32 : 1 }}><IconChevron /></span>}</span>{col.label}
               </button>
             ))}
@@ -1173,7 +1173,7 @@ function FeedSection({ vals }) {
                     trailing cell carries the other 8 itself (--row-cell-inset). Splitting it that
                     way is what lets the last column's value and its header label share one right
                     edge while the header's hover tint stays symmetrical around its own label. */}
-                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:16px;width:100%;min-height:var(--row-list-height);padding:12px var(--row-cell-inset) 12px var(--row-inset)')}>
+                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:var(--grid-gutter);width:100%;min-height:var(--row-list-height);padding:12px 0')}>
                   {/* The colour IS the row's identity — people recognise a palette by how it looks,
                       not by an auto-generated name. So the strip leads and carries the mass: 24px
                       tall, which with the 12px padding is exactly --row-list-height, making the
@@ -1188,7 +1188,7 @@ function FeedSection({ vals }) {
                       thumbnail, "No reference" box, universe card) — quiet by system decision, and
                       matching that decision beats inventing a heavier border no sibling has.
                       box-sizing is border-box globally, so the box stays exactly 160×24. */}
-                  <div aria-hidden="true" style={sx('display:flex;width:100%;height:24px;border:1px solid var(--line)')}>
+                  <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px;border:1px solid var(--line)')}>
                     {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
                   </div>
                   {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
@@ -1200,7 +1200,7 @@ function FeedSection({ vals }) {
                       fixed columns do not take, so it is the one that runs out. The name and the
                       chip are flex:none and would otherwise spill into the AA column on a narrow
                       window. Clipped is recoverable; overlapping two columns is not. */}
-                  <div style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
+                  <div data-row-cell="name" style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
                   {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
                       but at the same medium weight the filter panel gives its facet names. Both are
                       the same kind of thing — the name of a choosable, the subject of its row — and
@@ -1240,19 +1240,19 @@ function FeedSection({ vals }) {
                   {/* AA PAIRS — the verdict badge and the pair count it derives from, nothing
                       else. Badge left (its own column of glyphs down the list), count right so
                       the figures share one edge. */}
-                  <span style={c.aaCell}>
+                  <span data-row-cell="aa" style={c.aaCell}>
                     <AaBadge aa={c} />
                     <span style={c.metricValue}>{c.aaValueText}</span>
                   </span>
                   {/* MAX CONTRAST — a separate measurement, so a separate column */}
-                  <span style={c.contrastCell}>{c.contrastValueText}</span>
+                  <span data-row-cell="contrast" style={c.contrastCell}>{c.contrastValueText}</span>
                   {/* absolute stamp as the value, relative as the hover layer; the row's aria
                       sentence still ends "Generated 3h ago", so both forms reach every modality.
                       data-row-time is the hook for the one movement in this row: on hover it steps
                       one gutter left, into room its own column already holds, and hands the margin
                       to the buttons. It is the only column allowed to move, which is why it is the
                       only one that carries a hook. */}
-                  <span data-row-time="1" style={c.timeCell} title={c.timeRel}>{c.time}</span>
+                  <span data-row-time="1" data-row-cell="date" style={c.timeCell} title={c.timeRel}>{c.time}</span>
                 </div>
               </div>
               {/* The buttons land on the row's own inset — the margin the stamp holds at rest and

@@ -347,18 +347,18 @@ export const renderValsMethods = {
     // stay adjacent and the pair right-aligns as a unit. Pinning the badge to the column's left
     // edge was what kept it beside its number while the column was 104px wide; on a column that
     // takes a share of the row it would strand the badge a track away from the figure it grades.
-    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: 'var(--row-cell-inset)', whiteSpace: 'nowrap' };
+    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: '0', whiteSpace: 'nowrap' };
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
     const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     // The same inset as its neighbours — the difference is what it is measured against. For them
     // it is space before the next column; for this one there is no next column, so it pairs with
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
     // not moved a pixel; the 8 it used to leave to the row's padding it now holds itself, which is
     // what lets the sort header above it be a button rather than a column-wide slab.
-    const timeCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const timeCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -1485,7 +1485,11 @@ export const renderValsMethods = {
             // Symmetrical, from the same token the value cells inset by: 8px out to the track edge,
             // 8px back around the label, so the tint is even on both sides and the label still ends
             // exactly where the figures below it end.
-            padding: '4px var(--row-cell-inset)', border: 'none', background: 'transparent', cursor: 'pointer',
+            // The tint still wants its 8px, but the LABEL has to end on the column line now that the
+            // values below it do. So the inset stays and the button is pulled back out by the same
+            // amount: tint breathes, ink lands on the grid.
+            padding: '4px var(--row-cell-inset)', marginRight: 'calc(-1 * var(--row-cell-inset))',
+            border: 'none', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
           }),
