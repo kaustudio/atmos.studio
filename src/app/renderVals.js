@@ -770,7 +770,8 @@ export const renderValsMethods = {
     if (s.refineOpen && s.current) {
       const p = s.current;
       const list = p.swatches;
-      const selIdx = Math.max(0, Math.min(s.refineSel || 0, list.length - 1));
+      const N = list.length;
+      const selIdx = Math.max(0, Math.min(s.refineSel || 0, N - 1));
       const sel = list[selIdx];
       const selC = Math.sqrt(sel.a * sel.a + sel.b * sel.b);
       let selH = Math.atan2(sel.b, sel.a) * 180 / Math.PI; if (selH < 0) selH += 360;
@@ -781,75 +782,129 @@ export const renderValsMethods = {
       const roleAt = {};
       resolved.forEach((r) => { (roleAt[r.index] = roleAt[r.index] || []).push(r.role); });
       const assigned = p.roles || {};
+      const selRoles = (roleAt[selIdx] || []).map((r) => ROLE_LABEL[r]);
       refineView = {
         name: p.name,
         selIdx, selHex: sel.hex.toUpperCase(),
+        // ROLE FIRST, then position, then the number. "Swatch 2 of 5" is where it sits; "Accent" is
+        // what it is for, and that is the concept the whole surface is about. A swatch carrying no
+        // role says so rather than showing an empty slot — unassigned is a real state here.
+        selEyebrow: (selRoles.length ? selRoles.join(' · ') : 'No role') + ' · Swatch ' + (selIdx + 1) + ' of ' + N,
+        posLabel: 'Position ' + (selIdx + 1) + ' of ' + N,
+        // The source, kept in reach. Refining without it, you cannot tell whether you are correcting
+        // the extraction or deliberately leaving the photograph behind.
+        hasSource: this.hasImg(p), sourceUrl: this.dispUrl(p),
+        note: s.refineNote || '', hasNote: !!s.refineNote,
+        onKey: (e) => this.refineKey(e),
         swatches: list.map((b, i) => {
           const on = this.onColor(b.hex);
           const isSel = i === selIdx;
+          const names = (roleAt[i] || []).map((r) => ROLE_LABEL[r]);
           return {
             sid: typeof b.sid === 'number' ? b.sid : i,
             hex: b.hex, index: i, selected: isSel, pressed: isSel ? 'true' : 'false',
-            // Which roles this swatch answers, named in full so the strip can be read without
-            // opening anything — this is the whole picture the surface exists to show.
-            roleLabels: (roleAt[i] || []).map((r) => ROLE_LABEL[r]).join(' · '),
-            hasRoles: !!(roleAt[i] || []).length,
-            aria: 'Swatch ' + (i + 1) + ' of ' + list.length + ', ' + b.hex.toUpperCase()
-              + ((roleAt[i] || []).length ? '. Roles: ' + (roleAt[i] || []).map((r) => ROLE_LABEL[r]).join(', ') : '. No role')
-              + (isSel ? '. Selected' : ''),
+            tab: isSel ? 0 : -1,
+            roleLabels: names.join(' · '), hasRoles: !!names.length,
+            // Role, position and value, in that order — the same sentence the panel heading states,
+            // so the strip and the heading cannot describe the same swatch differently.
+            aria: (names.length ? names.join(' and ') : 'No role') + '. Swatch ' + (i + 1) + ' of ' + N + ', ' + b.hex.toUpperCase() + '.',
+            title: (names.length ? names.join(' · ') + ' — ' : '') + b.hex.toUpperCase(),
             onSelect: () => this.refineSelect(i),
-            // No selected treatment on the swatch itself: the travelling marker carries that, and a
+            // No selected treatment on the swatch itself: the travelling outline carries that, and a
             // ring drawn here as well would be the same fact said twice, statically.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '54px', height: '150px', background: b.hex, border: 'none', padding: '12px 10px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '5px', color: on },
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '76px', height: '124px', background: b.hex, border: 'none', padding: '10px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '5px', color: on, overflow: 'hidden' },
             // The SAME micro-label the value rows on every band already use — 8.5px at .14em,
-            // uppercase, three-quarter ink. These sit on a colour field exactly as those do, so
-            // they take that recipe rather than a fourth size invented for this surface.
-            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.45, textWrap: 'pretty' }),
+            // uppercase, three-quarter ink. ONE LINE, always: a band's width is its share of the
+            // palette, not a measure of how much text it has to hold, so "Primary · Secondary"
+            // wrapped to two lines in a narrow swatch and pushed itself off its own bottom edge.
+            // Truncated here, stated in full in the heading, the title and the accessible name.
+            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }),
           };
         }),
-        // Six rows, each naming the swatch that currently answers it. `derived` marks the ones the
-        // user has not decided, which is the difference between "this is my choice" and "this is
-        // what the tool guessed" — the distinction the Export dialog has been asking for.
+        // Six rows, each a toggle for the SELECTED swatch — not a second way to choose a swatch.
+        // The strip selects; this panel edits what the selection is for. `here` is what visually
+        // ties the two together: the rows that light up are the ones the selected swatch answers.
         roles: ROLE_IDS.map((id) => {
           const r = resolved.find((x) => x.role === id);
           const isDerived = typeof assigned[id] !== 'number';
+          const here = r.index === selIdx;
           return {
-            id, label: ROLE_LABEL[id], hex: r.hex, index: r.index, derived: isDerived,
-            here: r.index === selIdx,
-            note: isDerived ? 'Derived' : 'Assigned',
+            id, label: ROLE_LABEL[id], hex: r.hex, index: r.index, here,
+            pressed: here ? 'true' : 'false',
+            // "Derived" on all six rows was noise on every row that had nothing to say. Only a role
+            // the user has actually moved is worth marking, and it is marked as EDITED — the state
+            // that differs from the default, rather than the default itself.
+            edited: !isDerived, badge: isDerived ? '' : 'Edited',
             onAssign: () => this.refineSetRole(id, selIdx),
-            aria: (r.index === selIdx ? 'Unassign ' : 'Assign ') + ROLE_LABEL[id] + ' to swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase(),
+            aria: (here ? 'Unassign ' : 'Assign ') + ROLE_LABEL[id] + ' from swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase()
+              + (here ? '' : '. Currently on swatch ' + (r.index + 1) + ', ' + r.hex),
             swatchStyle: { width: '18px', height: '18px', flex: 'none', background: r.hex, border: '1px solid var(--action-line)' },
+            rowStyle: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', background: here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none', border: 'none', padding: '8px 8px', margin: '0 -8px', width: 'calc(100% + 16px)', cursor: 'pointer', color: 'var(--on-surface)', font: 'inherit', textAlign: 'left' },
           };
         }),
+        rolesNote: 'Roles are assigned automatically from contrast and colour distribution. Choose a swatch, then tap a role to put it there. A role belongs to one swatch; a swatch can hold several.',
         // Absolute values, never deltas — see refineAdjust.
         //
         // Each track is a live gradient of its own axis, sampled through gamutMap from the SELECTED
         // colour: move the lightness slider and you are moving along the ramp you can already see.
         // Sampling rather than a CSS gradient of two stops, because OKLCH interpolated in sRGB is
         // not a straight line — a two-stop gradient would draw a track the slider does not follow.
-        // gamutMap keeps L and hue and drains chroma until the colour fits, so the track never
-        // shows a colour the thumb cannot reach.
+        //
+        // Each axis also carries a number you can TYPE. A slider is for finding a value and a field
+        // is for stating one, and a palette being matched to a brand needs the second.
         sliders: [
-          { key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L, display: Math.round(sel.L * 100) + '%', track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))), onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)) },
-          { key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC, display: selC.toFixed(3), track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))), onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)) },
-          // The hue track is a LEGEND for the axis, not a preview of the result, and it is the one
-          // of the three that has to be read at a glance. Drawn at the swatch's true lightness it
-          // goes black on a dark colour and white on a pale one — a hue wheel with no hue in it,
-          // on the only axis whose positions are meaningless without colour. So L is held inside a
-          // legible band and chroma given a floor. The swatch itself is three inches away and
-          // states the truth; this states the choice.
-          { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH, display: Math.round(selH) + '°', track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }), onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)) },
+          {
+            key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L,
+            display: Math.round(sel.L * 100), unit: '%', numMin: 0, numMax: 100, numStep: 1,
+            valueText: Math.round(sel.L * 100) + ' percent',
+            track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))),
+            onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)),
+            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'l', Math.max(0, Math.min(100, v)) / 100); },
+          },
+          {
+            key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC,
+            display: selC.toFixed(3), unit: '', numMin: 0, numMax: 0.33, numStep: 0.001,
+            valueText: selC.toFixed(3),
+            track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))),
+            onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)),
+            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'c', Math.max(0, Math.min(0.33, v))); },
+          },
+          {
+            // The hue track is a LEGEND for the axis, not a preview of the result, and it is the one
+            // of the three that has to be read at a glance. Drawn at the swatch's true lightness it
+            // goes black on a dark colour and white on a pale one — a hue wheel with no hue in it,
+            // on the only axis whose positions are meaningless without colour. So L is held inside a
+            // legible band and chroma given a floor. The swatch itself states the truth.
+            key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH,
+            display: Math.round(selH), unit: '°', numMin: 0, numMax: 360, numStep: 1,
+            valueText: Math.round(selH) + ' degrees',
+            track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }),
+            onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)),
+            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'h', ((v % 360) + 360) % 360); },
+          },
         ],
-        canRemove: list.length > 2,
-        removeAria: 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase(),
+        // Reordering, named for what it DOES. These were two bare arrows, which is the glyph every
+        // interface on earth uses for previous/next — so they read as swatch navigation and in fact
+        // moved the swatch. Words, not arrows, and the position they act on stated beside them.
+        canRemove: N > 3,
+        removeLabel: 'Remove swatch',
+        removeAria: selRoles.length
+          ? 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. ' + selRoles.join(' and ') + ' will be reassigned and contrast recalculated.'
+          : 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. Contrast will be recalculated.',
+        removeHint: N > 3 ? (selRoles.length ? 'Removing this reassigns ' + selRoles.join(' and ') + '.' : '') : 'Three colours is the minimum.',
         onRemove: () => this.refineRemove(selIdx),
-        canLeft: selIdx > 0, canRight: selIdx < list.length - 1,
+        canLeft: selIdx > 0, canRight: selIdx < N - 1,
+        leftAria: 'Move this swatch to position ' + selIdx + ' of ' + N,
+        rightAria: 'Move this swatch to position ' + (selIdx + 2) + ' of ' + N,
         onLeft: () => this.refineMove(selIdx, -1), onRight: () => this.refineMove(selIdx, 1),
         canUndo: !!(this._refineUndo && this._refineUndo.length),
         onUndo: () => this.refineUndo(),
+        undoAria: 'Undo the last refinement. Keyboard shortcut: ' + (this._isMac() ? 'Command Z' : 'Control Z'),
+        undoKeys: this._isMac() ? '⌘Z' : 'Ctrl Z',
         canReset: !!p.sourceSwatches,
         onReset: () => this.refineReset(),
+        // Edits are live and already persisted, so this exits rather than commits. Calling it Save
+        // would promise a commit that already happened and imply Cancel could undo it.
         onClose: () => this.closeRefine(),
         trap: (e) => this.trapFocusIn('[data-refine-dialog]', e),
       };
@@ -1108,6 +1163,9 @@ export const renderValsMethods = {
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
       refine: refineView, hasRefine: !!refineView,
       openRefine: () => this.openRefine(),
+      roleInfoOpen: !!s.roleInfoOpen,
+      toggleRoleInfo: () => this.toggleTip('roleInfoOpen', '[data-tip="role"]'),
+      roleInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('roleInfoOpen', '[data-tip="role"]'); } },
       restore: restoreView, hasRestore: !!s.restorePending,
       closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
       trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),

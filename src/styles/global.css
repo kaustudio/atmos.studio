@@ -463,4 +463,16 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-thumb{ box-shadow:
    project chips' sliding pill: the movement IS the feedback, so there is no second "selected"
    treatment to keep in step. Squared, and an outline rather than a fill — it has to sit ON a
    colour without hiding it. */
-[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-shadow:inset 0 0 0 2px var(--surface), inset 0 0 0 4px var(--on-surface); }
+/* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
+   frames and shifts no layout — it is positioned and sized by script, then inflated here by its
+   own negative inset. One hairline of ink over one hairline of surface, so it reads on a white
+   swatch and a black one without either being tinted.
+   It is SELECTION. Keyboard focus is the app's own ring on the button beneath, deliberately a
+   different thing in a different place: this one travels, that one appears where the caret is. */
+[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; margin:-4px; padding:4px; box-sizing:content-box; border:1px solid var(--on-surface); box-shadow:0 0 0 1px var(--surface); }
+
+/* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
+   only while there is something to report — so it arrives rather than blinking into place. */
+[data-refine-note]{ animation: refine-note .32s var(--ease-entrance) both; }
+@keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
+@media (prefers-reduced-motion: reduce){ [data-refine-note]{ animation:none } }

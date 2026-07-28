@@ -1802,83 +1802,128 @@ function ManageDialog({ vals }) {
 function RefineDialog({ vals }) {
   if (!vals.hasRefine) return null;
   const r = vals.refine;
+  const stepBtn = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:720px;max-width:96vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:760px;max-width:96vw;max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Refine</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={r.onClose} aria-label="Close refine" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Done</button>
+          {/* Done, not Save: every edit is already applied and already written. Save would promise a
+              commit that has happened and imply a Cancel that cannot exist. */}
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Done</button>
         </header>
 
-        {/* The palette, at working size. Keyed by sid so a reorder moves nodes rather than
-            rewriting them, which is what lets both this strip and the result bands behind it FLIP.
-            The wrapper is the marker's positioning context: it travels in this box's coordinates. */}
-        <div style={sx('position:relative;width:100%;padding:18px 22px 0')}>
-          <div role="group" aria-label="Palette swatches. Choose one to refine." style={sx('position:relative;display:flex;gap:0;width:100%')}>
+        {/* THE STRIP IS THE ONLY THING THAT SELECTS. Pointer, arrow keys, Home and End all land in
+            refineSelect, so the strip, the role rows, the heading, the sliders and the live region
+            can never disagree about which swatch is in hand. Roving tabindex: one stop for the
+            group, arrows within it — the pattern the view switcher and the facet lists already use. */}
+        <div style={sx('position:relative;width:100%;padding:16px 22px 0')}>
+          <div role="group" aria-label="Palette swatches. Use the arrow keys to choose one." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
             {r.swatches.map((b) => (
-              <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" aria-pressed={b.pressed} aria-label={b.aria} onClick={b.onSelect} style={b.style}>
+              <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" tabIndex={b.tab} aria-pressed={b.pressed} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
                 {b.hasRoles && <span style={b.labelStyle}>{b.roleLabels}</span>}
               </button>
             ))}
-            {/* Selection, carried by movement rather than by a static ring drawn on the swatch —
-                the project chips' pill, on the same curve, doing the same job. */}
+            {/* Selection, carried by movement. It sits OUTSIDE the swatch — a hairline 4px clear of
+                it — so it takes nothing off the colour it frames and shifts no layout. Keyboard
+                focus stays the app's own ring on the button itself, which is why the two never get
+                confused: this one travels, that one appears where the caret is. */}
             <span data-refine-pill="1" aria-hidden="true"></span>
           </div>
         </div>
 
-        <div style={sx('display:flex;gap:22px;flex-wrap:wrap;padding:18px 22px 0')}>
-          {/* ROLES — the reason this surface exists. Derived rows are marked as such: the tool has
-              always been guessing these, and the difference between its guess and the user's
-              decision is exactly what was invisible before. */}
-          <div style={sx('flex:1;min-width:260px;display:flex;flex-direction:column')}>
-            <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Roles</span>
+        <div style={sx('display:flex;gap:26px;flex-wrap:wrap;padding:18px 22px 0')}>
+          {/* ROLES — a property editor for the selected swatch, not a second place to pick one.
+              The rows the selection answers are tinted, which is what ties this list to the strip
+              without forcing both into one order they do not share: the strip runs in palette
+              order, these run in role order, and neither is wrong. */}
+          <div style={sx('flex:1;min-width:280px;display:flex;flex-direction:column')}>
+            <div style={sx('display:flex;align-items:center;gap:8px;padding-bottom:9px')}>
+              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>Roles</span>
+              {/* One explanation, on demand — the app's own toggletip, not six repeated words. */}
+              <div style={sx('position:relative;display:inline-flex;flex:none')}>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.roleInfoOpen} aria-label="How roles are assigned" onClick={vals.toggleRoleInfo} onKeyDown={vals.roleInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                {vals.roleInfoOpen && (<>
+                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleRoleInfo} aria-hidden="true"></div>
+                  <div data-tip="role" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>{r.rolesNote}</span>
+                  </div>
+                </>)}
+              </div>
+            </div>
             <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
             {r.roles.map((role) => (
               <div key={role.id} data-refine-row="1">
-                <button type="button" data-ix="cell" data-focus="chrome" aria-pressed={role.here ? 'true' : 'false'} aria-label={role.aria} onClick={role.onAssign} style={sx('display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:8px 0;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
+                <button type="button" data-ix="cell" data-focus="chrome" aria-pressed={role.pressed} aria-label={role.aria} onClick={role.onAssign} style={role.rowStyle}>
                   <span aria-hidden="true" style={role.swatchStyle}></span>
                   <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:1;min-width:0')}>{role.label}</span>
-                  <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{role.note}</span>
+                  {/* Only a role the user has MOVED carries a mark. The default needs no label. */}
+                  {role.edited && <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{role.badge}</span>}
                 </button>
                 <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
               </div>
             ))}
           </div>
 
-          {/* THE SELECTED SWATCH — its colour, and the three axes that change it. */}
-          <div style={sx('flex:1;min-width:260px;display:flex;flex-direction:column')}>
-            <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Swatch {r.selIdx + 1} · {r.selHex}</span>
+          {/* THE SELECTED SWATCH. Role first, then where it sits, then the value — the heading
+              answers "what is this for" before "which one is it". */}
+          <div style={sx('flex:1;min-width:290px;display:flex;flex-direction:column')}>
+            <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding-bottom:9px')}>
+              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);text-wrap:pretty')}>{r.selEyebrow} · {r.selHex}</span>
+              {/* The photograph the palette was read from. Without it there is no way to tell a
+                  correction from a departure. */}
+              {r.hasSource && <img src={r.sourceUrl} alt="The reference image this palette was read from" style={sx('flex:none;width:54px;height:36px;object-fit:cover;border:1px solid var(--line)')} />}
+            </div>
             <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
             {r.sliders.map((sl) => (
-              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:6px;padding:11px 0')}>
-                <span style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:10px')}>
+              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:5px;padding:9px 0')}>
+                <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
                   <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
-                  <span style={sx('font-family:Neue Montreal;font-size:12px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{sl.display}</span>
+                  {/* A slider finds a value; a field states one. Both write the same axis. */}
+                  <span style={sx('display:inline-flex;align-items:center;gap:3px')}>
+                    <input type="number" value={sl.display} min={sl.numMin} max={sl.numMax} step={sl.numStep} onChange={sl.onNumber} aria-label={sl.label + ' of the selected swatch, exact value'} style={sx('width:56px;background:var(--surface-raised);border:1px solid var(--action-line);padding:3px 5px;font-family:Neue Montreal;font-size:12px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums;text-align:right')} />
+                    {sl.unit && <span style={sx('font-family:Neue Montreal;font-size:12px;color:var(--on-surface-muted)')}>{sl.unit}</span>}
+                  </span>
                 </span>
                 {/* --refine-track is this axis drawn as itself: the lightness ramp, the chroma
                     drain, the hue circle, all sampled from the selected colour. Everything painted
                     is squared in global.css, because a native range thumb arrives round. */}
-                <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ' of the selected swatch'} style={{ '--refine-track': sl.track }} />
+                <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
               </div>
             ))}
-            {/* Position and removal. Two is the floor — a pair is still a palette, one is not. */}
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0 0')}>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label="Move this swatch left" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canLeft ? '1' : '.35'))}>←</button>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label="Move this swatch right" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canRight ? '1' : '.35'))}>→</button>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemove} aria-label={r.removeAria} style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove</button>
+
+            {/* Position and removal. These were two bare arrows: the glyph every interface uses for
+                previous/next, on controls that in fact MOVE the swatch. Words now, and the position
+                they act on stated beside them. */}
+            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line);margin-top:6px')}></span>
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0 0')}>
+              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{r.posLabel}</span>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(stepBtn + ';opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(stepBtn + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemove} aria-label={r.removeAria} style={sx(stepBtn + ';margin-left:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>{r.removeLabel}</button>
             </div>
+            {r.removeHint && <span style={sx("font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);padding-top:8px;text-wrap:pretty")}>{r.removeHint}</span>}
           </div>
         </div>
 
         {/* Two reversals, and they are not the same act: Undo steps back through this session,
-            Reset throws the whole refinement away and returns to the colours read from the image. */}
-        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 22px 22px;margin-top:14px;border-top:1px solid var(--line)')}>
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label="Undo the last refinement" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canUndo ? '1' : '.35'))}>Undo</button>
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label="Reset to the colours read from the image" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canReset ? '1' : '.35'))}>Reset</button>
+            Reset palette throws the whole refinement away and returns to the extraction.
+
+            Between them, what the last edit COST. It appears only when a metric actually moved, so
+            it is news rather than furniture — the difference between a colour tweak and a design
+            decision is knowing you just went from three usable text pairs to one. */}
+        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:16px 22px 20px;margin-top:12px;border-top:1px solid var(--line)')}>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(stepBtn + ';display:inline-flex;align-items:center;gap:8px;padding:9px 14px;opacity:' + (r.canUndo ? '1' : '.35'))}>
+            Undo<span aria-hidden="true" style={sx('font-size:9px;color:var(--on-surface-muted)')}>{r.undoKeys}</span>
+          </button>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label="Reset palette to the colours read from the image" style={sx(stepBtn + ';padding:9px 14px;opacity:' + (r.canReset ? '1' : '.35'))}>Reset palette</button>
+          {r.hasNote && (
+            <span data-refine-note="1" style={sx("flex:1;min-width:200px;text-align:right;font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{r.note}</span>
+          )}
         </div>
       </div>
     </div>

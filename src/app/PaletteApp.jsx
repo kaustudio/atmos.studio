@@ -108,6 +108,8 @@ export default class PaletteApp extends React.Component {
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
     // the Library heading's storage toggletip — same shape as aaInfoOpen, and closed the same way
     storeInfoOpen: false,
+    // the Refine surface's one explanation of how roles are assigned
+    roleInfoOpen: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
     // Bumped by a refinement that changes the SHAPE of the swatch list (reorder, remove), so
@@ -115,6 +117,8 @@ export default class PaletteApp extends React.Component {
     bandRev: 0,
     // the Refine surface: open flag and the swatch currently being worked on
     refineOpen: false, refineSel: 0,
+    // what the last edit cost or bought — transient, shown only while it is news
+    refineNote: '',
     // the result view's More: reveals the poetic reading and the traits past the first two
     readingOpen: false,
     // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
@@ -255,6 +259,12 @@ export default class PaletteApp extends React.Component {
       loadSeq([cdn + 'gsap.min.js', cdn + 'Observer.min.js', cdn + 'Flip.min.js', cdn + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
+      // Undo inside Refine, on the shortcut every editor already trains people to reach for. Scoped
+      // to the open surface so it can never reach the archive's own delete-undo, which is a
+      // different act with a different lifetime.
+      if (this.state.refineOpen && (e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault(); this.refineUndo(); return;
+      }
       if (e.key === 'Escape') {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }

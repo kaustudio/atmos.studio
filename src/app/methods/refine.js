@@ -21,6 +21,9 @@
 import { gamutMap, rgb2oklab, hexToRgb } from '../../lib/color.js';
 import { ROLE_IDS, ROLE_LABEL } from '../../lib/exporters.js';
 
+// The three capability states, in the words the AA badge already uses everywhere else.
+const A11Y_STATE = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
+
 // A swatch, rebuilt around a new hex. L/a/b are recomputed rather than carried, because every
 // consumer downstream (metrics, roles, the reading engine) reads them and a stale pair would make
 // the palette describe a colour it no longer holds. sid and weight ride along untouched: identity
@@ -153,6 +156,7 @@ export const refineMethods = {
     this.setState({
       refineOpen: true,
       refineSel: 0,
+      refineNote: '',
       announce: 'Refining ' + p.name + '. Choose a swatch, then assign a role or adjust its colour. Press Escape to close.',
     }, () => {
       const d = document.querySelector('[data-refine-dialog]');
@@ -165,7 +169,7 @@ export const refineMethods = {
     // It leaves the way it arrived, in reverse and faster: the panel drops, the backdrop follows.
     // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
     // discipline as every other surface here.
-    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, announce: 'Refine closed.' }, () => {
+    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineNote: '', announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
       this._refineUndo = [];
@@ -173,15 +177,55 @@ export const refineMethods = {
     }));
   },
   trapRefine(e) { this.trapFocusIn('[data-refine-dialog]', e); },
-  refineSelect(i) {
+  // ONE SELECTION MODEL. The strip is the only thing that selects a swatch — by pointer, by arrow
+  // key, by Home/End. The Roles panel is the property editor FOR that selection, not a second list
+  // to pick from; every route into selection therefore lands in refineSelect and updates the strip,
+  // the role rows, the panel heading, the sliders and the live region together.
+  refineKey(e) {
+    const p = this.state.current; if (!p) return;
+    const n = p.swatches.length, cur = this.state.refineSel || 0;
+    let next = null;
+    if (e.key === 'ArrowRight') next = Math.min(n - 1, cur + 1);
+    else if (e.key === 'ArrowLeft') next = Math.max(0, cur - 1);
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = n - 1;
+    if (next === null || next === cur) return;
+    e.preventDefault();
+    this.refineSelect(next, true);
+  },
+  refineSelect(i, focus) {
     const p = this.state.current; if (!p || !p.swatches[i] || this.state.refineSel === i) return;
     // Read the thumbs BEFORE the swap, so the tween has a real starting point rather than the
     // destination it is already sitting on.
     const from = this._refineSliderValues();
-    this.setState({ refineSel: i, announce: 'Swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase() + ' selected.' }, () => {
+    const roles = this._rolesOn(p, i);
+    this.setState({ refineSel: i, announce: (roles.length ? roles.join(' and ') + '. ' : 'No role. ') + 'Swatch ' + (i + 1) + ' of ' + p.swatches.length + ', ' + p.swatches[i].hex.toUpperCase() + ' selected.' }, () => {
       this._refinePill();
       this._refineSlide(from);
+      if (focus) { const el = document.querySelectorAll('[data-refine-swatch]')[i]; if (el) try { el.focus(); } catch (e) { } }
     });
+  },
+
+  // Which modifier the shortcut hint should name. Platform, not browser: the key a Mac user reaches
+  // for is Command whatever engine is rendering this.
+  _isMac() { try { return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || ''); } catch (e) { return false; } },
+  // Which roles a swatch answers right now, resolved (user assignment over derived) and spoken.
+  _rolesOn(p, i) {
+    try { return this.semanticRoles(p, p.roles).filter((r) => r.index === i).map((r) => ROLE_LABEL[r.role]); }
+    catch (e) { return []; }
+  },
+  // WHAT THE EDIT COST OR BOUGHT. Refining is a design decision, not a colour tweak: raising a
+  // swatch's lightness can quietly take the palette from three usable text pairs to one. The
+  // verdict and the pair count are already computed for every palette, so the change is free to
+  // report — and it is reported only when it actually moves, so the line is never noise.
+  _refineConsequence(before, after) {
+    if (!before || !after) return '';
+    const bits = [];
+    if (before.aaState !== after.aaState) bits.push(A11Y_STATE[before.aaState] + ' to ' + A11Y_STATE[after.aaState]);
+    if (before.aaPairs !== after.aaPairs) bits.push(before.aaPairs + ' AA ' + (before.aaPairs === 1 ? 'pair' : 'pairs') + ' to ' + after.aaPairs);
+    const bp = before.bestPair, ap = after.bestPair;
+    if (bp && ap && (bp.fg !== ap.fg || bp.bg !== ap.bg)) bits.push('strongest pair now ' + ap.fg.toUpperCase() + ' on ' + ap.bg.toUpperCase());
+    return bits.length ? bits.join(', ') + '.' : '';
   },
 
   // ---- the one write path ----------------------------------------------------------------------
@@ -207,6 +251,9 @@ export const refineMethods = {
     if (!p) return;
     const o = opts || {};
     const next = Object.assign({}, p, patch);
+    // Measured across the change, not after it: the same metrics function both sides, so the
+    // comparison cannot drift from what the badge and the readout say elsewhere.
+    const note = patch.swatches ? this._refineConsequence(this.paletteMetrics(p), this.paletteMetrics(next)) : '';
     // First edit only: park the extraction's own swatches. Later edits must NOT overwrite it, or
     // Reset would return to the most recent state instead of the original — which is not a reset.
     if (!next.sourceSwatches && patch.swatches) next.sourceSwatches = p.swatches.map((s) => Object.assign({}, s));
@@ -217,7 +264,8 @@ export const refineMethods = {
       overlay: s.overlay && s.overlay.id === next.id ? next : s.overlay,
       bandRev: (s.bandRev || 0) + (o.structural ? 1 : 0),
       refineSel: typeof o.sel === 'number' ? o.sel : Math.min(s.refineSel, next.swatches.length - 1),
-      announce: o.announce || '',
+      refineNote: note || '',
+      announce: (o.announce || '') + (note ? ' ' + note : ''),
     }), () => {
       this.persist({ immediate: true });
       if (o.structural) { const r = this._refineStripFrom; this._refineStripFrom = null; this._refineFlipFrom(r); this._refinePill(true); }
@@ -275,7 +323,10 @@ export const refineMethods = {
   // are dropped and fall back to the heuristic.
   refineRemove(i) {
     const p = this.state.current;
-    if (!p || p.swatches.length <= 2 || !p.swatches[i]) return;   // two is the floor: a pair is still a palette, one is not
+    // THREE IS THE FLOOR. Six roles over two swatches is not a palette a scaffold can be built
+    // from — every role would double onto one of two colours — so removal stops before it can
+    // produce an export nobody could use.
+    if (!p || p.swatches.length <= 3 || !p.swatches[i]) return;
     const swatches = p.swatches.filter((_, j) => j !== i);
     const roles = this._reindexRoles(p.roles, (j) => j === i ? -1 : (j > i ? j - 1 : j));
     this._applyRefine({ swatches, roles }, {
