@@ -7,13 +7,17 @@
      one exists to be flicked on and off against an edge you are staring at. Instant cut, no GSAP —
      which is also why this file no longer touches window.gsap at all.
 
-   · Two levels, not one, cycled by the same key: Shift+G → columns → margins → off.
+   · Two levels, not one, cycled by the same key: Shift+G → columns → columns + margins → off.
+     The second level ADDS to the first rather than replacing it, so the two are read against each
+     other: the band doubles the red where it covers the columns, and the margin is what stays
+     light.
 
        COLUMNS  12 tracks on the 24px gutter, inside the 24px page margin. Checks horizontal
                 alignment: does a cell start where a column starts.
-       MARGINS  one stretched band inset by the margin on all four sides. Checks the edges the
-                column grid cannot show you — the 24px above the navigation and below the footer.
-                A column overlay makes a page look aligned while its top margin is 18px.
+       MARGINS  the columns again, plus one stretched band inset by the margin on all four sides.
+                Checks the edges the column grid cannot show you — the 24px above the navigation and
+                below the footer. A column overlay makes a page look aligned while its top margin is
+                18px, because columns say nothing about a horizontal edge.
 
    Red at 0.2, not the resource's #f4f4f4. A neutral grey was correct on Osmo's own dark demo; here
    it is a wash the same weight as the app's own surfaces, and on the library list — the screen this
@@ -44,6 +48,11 @@ const CSS = `
 [data-animated-grid]{position:fixed;inset:0;z-index:200;pointer-events:none}
 [data-animated-grid] .ag-layer{position:absolute;inset:0;display:none}
 [data-animated-grid][data-level="columns"] .ag-layer--cols{display:block}
+/* The columns stay on at level two — the levels STACK, they do not replace each other. Where the
+   band overlaps them the red doubles (0.2 over 0.2), so the content box reads darker and the 24px
+   margins stay at single strength: the margin is legible as the lighter strip, without either grid
+   having to be hidden to show the other. */
+[data-animated-grid][data-level="margins"] .ag-layer--cols{display:block}
 [data-animated-grid][data-level="margins"] .ag-layer--margins{display:block}
 [data-animated-grid] .ag-container{width:100%;height:100%;margin-inline:auto;padding-inline:var(--page-gutter)}
 [data-animated-grid] .ag-row{display:grid;grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));gap:var(--grid-gutter);width:100%;height:100%;overflow:clip}
