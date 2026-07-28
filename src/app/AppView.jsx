@@ -65,6 +65,7 @@ const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox=
 // Sort chevron — drawn at the same 1-unit hairline weight as the rest of the icon set, so it sits
 // in the header without shouting. It points DOWN at rest (descending) and rotates 180° to point up
 // for ascending; the rotation is the state change, so the glyph never swaps out from under the eye.
+const IconClose = ({ size = 11 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="square" aria-hidden="true" style={{ display: 'block' }}><path d="M5 5l14 14M19 5L5 19"></path></svg>);
 const IconChevron = ({ size = 9 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" aria-hidden="true" style={{ display: 'block' }}><path d="M5 9l7 7 7-7"></path></svg>);
 const IconContrast = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="M8.493 20.292q-1.643-.709-2.859-1.924t-1.925-2.856T3 12.003t.709-3.51Q4.417 6.85 5.63 5.634t2.857-1.925T11.997 3t3.51.709q1.643.708 2.859 1.922t1.925 2.857t.709 3.509t-.708 3.51t-1.924 2.859t-2.856 1.925t-3.509.709t-3.51-.708m4.007-.31q3.09-.201 5.295-2.458T20 12t-2.185-5.505Q15.628 4.258 12.5 4.017z"></path></svg>);
 const IconExport = () => (<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill="currentColor" d="m12 15.577l-3.539-3.538l.708-.72L11.5 13.65V5h1v8.65l2.33-2.33l.709.719zM5 19v-4.038h1V18h12v-3.038h1V19z"></path></svg>);
@@ -231,12 +232,12 @@ function CopyMenu({ open, done, onToggle, onKey, onHex, onCss }) {
               for. The second line of each item is the shape of what lands on the clipboard, so the
               choice is made on the artefact rather than on the word for it. */}
           <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onHex} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Hex list</span>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>One value per line</span>
+            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Hex List</span>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>One Value per Line.</span>
           </button>
           <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onCss} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>CSS variables</span>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>Custom properties, ready to paste</span>
+            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>CSS Variables</span>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>Custom Properties. Ready to Paste.</span>
           </button>
         </div>
       </>)}
@@ -269,7 +270,7 @@ function MobileShareView({ ms }) {
       <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 0')}>
         {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
         <span role="img" aria-label="Atmos Gallery" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
-        <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>Shared palette</span>
+        <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>{ms.eyebrow}</span>
       </div>
 
       <div style={sx('flex:none;padding:26px 18px 22px')}>
@@ -301,7 +302,12 @@ function MobileShareView({ ms }) {
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
       <div style={sx('flex:none;padding:24px 18px 34px')}>
-        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>Open Atmos Gallery on a desktop to read a palette from your own image.</p>
+        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+        {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
+            one control on a surface built for a thumb. */}
+        {ms.canLeave && (
+          <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label="Close the example and return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:18px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
+        )}
       </div>
     </div>
   );
@@ -455,9 +461,25 @@ export default function AppView({ vals }) {
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a desktop experience.</span></span>
                 </h1>
+                {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
+                    makes it one is that it never said why, so it read as a limitation of the site
+                    rather than of the work. Reading an image means comparing swatches, roles and
+                    contrast side by side, and that is a wide-screen job. */}
                 <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Open this link on a wider screen to drop an image and pull its palette.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Reading an image means weighing colours, roles and contrast side by side. That needs room.</span></span>
                 </p>
+                {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
+                    arriving from a link with a sentence and no next move. Two acts that are honest
+                    on a phone: see what the tool makes, or keep the address for the machine that can
+                    run it. pointer-events restored — the block above it is decorative and inert. */}
+                <div style={sx('display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;margin-top:26px;pointer-events:auto')}>
+                  {vals.gateHasExample && (
+                    <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an example</button>
+                  )}
+                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
+                    {vals.gateLinkCopied ? (<><IconCheck />Link copied</>) : 'Save for desktop'}
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>
@@ -536,7 +558,10 @@ export default function AppView({ vals }) {
             this menu appears on. One act, one door. */}
         <div style={sx('display:flex;align-items:center;gap:14px')}>
           {vals.canReset && (<>
-            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New generation</span>} />
+            {/* "New generation" named the machinery. What the button makes is a palette, and the
+                rest of the app has spent five rounds learning to say so: the Library holds palettes,
+                Refine palette edits one, Add to project files one. */}
+            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New palette</span>} />
             {vals.showProjectsBar && (<span aria-hidden="true" style={sx('width:1px;height:22px;flex:none;background:var(--line-strong)')}></span>)}
           </>)}
           {vals.showProjectsBar && (
@@ -693,20 +718,29 @@ export default function AppView({ vals }) {
               <div style={sx('flex:1;min-width:0')}>
                 <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:44px;line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
                 {/* Two traits, then More. Four capitalised pills read as a legend rather than a
-                    description, and the remaining ones are one click away with the reading. */}
+                    description, and the remaining ones are one click away with the reading.
+
+                    Open, the control is a close mark and nothing else. "Less" was the honest
+                    opposite of "More · 1" and it still read as a third trait: a word in a pill, in a
+                    row of words in pills, that you had to parse before you could tell it was the way
+                    out. A ✕ is the one shape in that row nobody reads as content. The word it
+                    replaces survives in the aria-label, which is where it was doing real work. */}
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
+                  {/* The pills past the first two are marked so the reveal knows which of them are
+                      new. Marking them here rather than counting in the tween keeps the two
+                      definitions of "extra" from drifting apart. */}
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} style={sx('font-family: Neue Montreal; font-size: 12px; padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
+                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('font-family: Neue Montreal; font-size: 12px; padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
                   ))}
                   {vals.result.hasMore && (
-                    <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={sx('background:none;border:1px solid var(--action-line);padding:5px 9px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.result.moreLabel}</button>
+                    <button type="button" data-more-btn="1" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>{vals.result.readingOpen ? <IconClose /> : vals.result.moreLabel}</button>
                   )}
                 </div>
                 {/* The poetic reading, revealed rather than standing. It is the product's voice and
                     it is not deleted — it is simply no longer the first thing between the palette
                     and the person deciding what to do with it. */}
                 {vals.result.readingOpen && (
-                  <p style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
+                  <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
                 )}
               </div>
               {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed

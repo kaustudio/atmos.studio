@@ -133,7 +133,7 @@ export default class PaletteApp extends React.Component {
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
-    assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
@@ -208,7 +208,12 @@ export default class PaletteApp extends React.Component {
   // exception is the whole point: most shared links ARE opened on a phone, so gating them ends the
   // chain at its first hop and sharing never compounds. The tool itself still gates; only somebody
   // else's finished palette comes through.
-  _mobileShare() { return !!(this.state.narrow && this.state.sharedView && this.state.current); }
+  // The read-only phone view now serves two arrivals, not one: a link somebody sent you, and the
+  // example a first-time visitor asks to see from the gate. Same surface, because it answers the
+  // same question — what does this tool produce — and a second one would be a second thing to keep
+  // correct. They stay separate FLAGS though: sharedView means "this palette is not in your
+  // archive", which is false of the example and would put a save prompt on a palette already saved.
+  _mobileShare() { return !!(this.state.narrow && (this.state.sharedView || this.state.exampleView) && this.state.current); }
   _landingUp() { return (!this.state.landingDismissed || this.state.narrow) && !this._mobileShare(); }
   // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
   // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is

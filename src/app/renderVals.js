@@ -273,10 +273,21 @@ export const renderValsMethods = {
         useLine,
         traits: s.readingOpen ? allTraits : allTraits.slice(0, 2),
         hasMore: moreCount > 0 || !!s.current.rationale,
-        moreLabel: s.readingOpen ? 'Less' : (moreCount ? 'More · ' + moreCount : 'More'),
+        moreLabel: moreCount ? 'More · ' + moreCount : 'More',
+        // Square while it is a close mark, so the ✕ sits in the middle of its own box rather than
+        // inheriting padding shaped for a word.
+        moreStyle: {
+          background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
+          fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: 'var(--track-flat)',
+          textTransform: 'uppercase', color: 'var(--on-surface)',
+          ...(s.readingOpen
+            ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', padding: 0 }
+            : { padding: '5px 9px' }),
+        },
         moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
         readingOpen: !!s.readingOpen,
-        onMore: () => this.setState((st) => ({ readingOpen: !st.readingOpen, announce: st.readingOpen ? 'Reading hidden.' : 'Reading shown.' })),
+        onMore: () => this.toggleReading(),
+        traitBase: 2,
       };
     }
     // palette-level copy affordances
@@ -1110,6 +1121,14 @@ export const renderValsMethods = {
             metaStyle: { fontFamily: 'Neue Montreal', fontSize: '11px', letterSpacing: '.06em', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '6px' },
           };
         }),
+        // Only the example can be left — a shared link has nowhere to go back TO, and a control
+        // that appears for one arrival and not the other is why the two flags are separate.
+        canLeave: !!s.exampleView,
+        onLeave: () => this.closeExampleOnPhone(),
+        footLine: s.exampleView
+          ? 'This is one of the examples that ship with Atmos Gallery. Open it on a desktop to read a palette from an image of your own.'
+          : 'Open Atmos Gallery on a desktop to read a palette from your own image.',
+        eyebrow: s.exampleView ? 'Example palette' : 'Shared palette',
       };
     }
 
@@ -1124,6 +1143,12 @@ export const renderValsMethods = {
 
     return {
       showMobileShare: !!mobileShare, mobileShare,
+      // THE GATE'S TWO ACTS. Offered only where they are true: the example needs a palette in the
+      // archive to show, and both are meaningless on a screen wide enough to run the tool.
+      gateHasExample: (s.feed || []).length > 0,
+      gateExample: () => this.openExampleOnPhone(),
+      gateCopyLink: () => this.copySiteLink(),
+      gateLinkCopied: s.copied === 'gate-link',
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,

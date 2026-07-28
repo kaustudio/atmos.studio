@@ -329,8 +329,10 @@ explanation that outlives the thing it explains is worse than no explanation.
 Unfiled". The rule went, rather than the word.
 
 **Measured:** `main-*.js` 147.32 → 148.42 kB gzipped (+1.1 kB for the dialog), no new chunk, three
-still beside it. Note for whoever reads the three.js entry below: its *"roughly 138 kB"* was already
-stale at 147.32 kB before this change, and is not a regression from it.
+still beside it. Note for whoever reads the three.js entry below: its figure was already stale at
+147.32 kB before this change, and is not a regression from it. It has since been corrected to ~160 kB
+(measured 159.5 kB after the palette action row), and the number in that entry is a floor to check a
+build against rather than a budget — it has only ever gone up, one feature at a time.
 
 **Corrections to the audit itself,** recorded so the next round does not rebuild them: deletion undo
 exists (6.5 s, palettes and projects, and deleting a project refiles its palettes rather than
@@ -430,7 +432,7 @@ adapted from `@canvas-ui/particle-object`), and the landing's orb field (`src/ap
 **Why it doesn't cost either page anything:** `404.html` is the build's second entry, and the
 landing reaches `orbField.js` only through a dynamic `import()`, so three is a shared chunk
 (`three.module-*.js`, ~130 kB gzipped) that neither entry blocks on. `npm run build` should print
-`main-*.js` at roughly 138 kB gzipped with `three.module-*.js` and `orbField-*.js` beside it, not
+`main-*.js` at roughly 160 kB gzipped with `three.module-*.js` and `orbField-*.js` beside it, not
 inside it. A static import of `orbField.js` from `orbit.js` puts three straight into `main-*.js` and
 doubles the landing's payload to ~272 kB gzipped — it was written that way first, and measured.
 Re-check after touching `vite.config.ts` or that import.

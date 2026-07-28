@@ -473,6 +473,60 @@ export const motionMethods = {
     g.fromTo(inners, { yPercent: 110 }, { yPercent: 0, duration: this.DUR.reveal, stagger: 0.08, ease: this.EASE.entrance, delay: delay, onComplete: restore });
     setTimeout(() => { try { restore(); } catch (e) { } }, (delay || 0) * 1000 + this.DUR.reveal * 1000 + inners.length * 80 + 400);   // safety: never leave the split DOM behind
   },
+  /* THE READING, ARRIVING. More/Less used to swap the DOM and leave it there: two pills and a
+     paragraph appeared at full opacity while the button they came from jumped sideways to make room
+     for them. Three separate things move here, so all three are told how.
+
+     The button FLIPs from wherever it was, because the extra pills insert BEFORE it — its new
+     position is a consequence of the reveal, not a separate event, and an untweened jump reads as a
+     re-layout rather than as the same control still under your cursor. The pills stagger in behind
+     it. The paragraph takes the masked line reveal the rest of the page's prose already uses.
+
+     Closing runs the other way and outlives the state change: the exit finishes first, and only then
+     does React unmount what was tweening. Without that there is nothing left to animate by the time
+     the tween would start — the same reason closeTip works the way it does. */
+  _readingIn(from) {
+    const g = window.gsap;
+    if (this._reduce || !g) return;
+    const btn = document.querySelector('[data-more-btn]');
+    if (btn && from) {
+      const to = btn.getBoundingClientRect();
+      const dx = from.left - to.left, dy = from.top - to.top;
+      if (dx || dy) g.from(btn, { x: dx, y: dy, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' });
+    }
+    const pills = [...document.querySelectorAll('[data-trait-extra]')];
+    if (pills.length) g.from(pills, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'transform,opacity' });
+    const p = document.querySelector('[data-reading-line]');
+    if (p) this._maskLineReveal(p, this.DUR.stagger * 2);
+  },
+  _readingOut(from, cb) {
+    const g = window.gsap;
+    const targets = [...document.querySelectorAll('[data-trait-extra],[data-reading-line]')];
+    if (this._reduce || !g || !targets.length) { cb(); return; }
+    g.to(targets, { opacity: 0, y: -6, duration: this.DUR.micro, ease: this.EASE.exit, stagger: -this.DUR.stagger, onComplete: cb });
+  },
+  // One door for both directions, so the rect capture and the tween can never disagree about which
+  // way the surface is going.
+  toggleReading() {
+    const btn = document.querySelector('[data-more-btn]');
+    const from = btn ? btn.getBoundingClientRect() : null;
+    if (this.state.readingOpen) {
+      if (this._readingClosing) return;
+      this._readingClosing = true;
+      this._readingOut(from, () => {
+        this._readingClosing = false;
+        this.setState({ readingOpen: false, announce: 'Reading hidden.' }, () => {
+          const g = window.gsap, b = document.querySelector('[data-more-btn]');
+          if (this._reduce || !g || !b || !from) return;
+          const to = b.getBoundingClientRect();
+          const dx = from.left - to.left, dy = from.top - to.top;
+          if (dx || dy) g.from(b, { x: dx, y: dy, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' });
+        });
+      });
+      return;
+    }
+    this.setState({ readingOpen: true, announce: 'Reading shown.' }, () => this._readingIn(from));
+  },
   flipBandsFrom(rects) {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || !rects || !rects.length || document.hidden) return;

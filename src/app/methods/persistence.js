@@ -498,6 +498,26 @@ export const persistenceMethods = {
     const go = () => { const b = document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
     if (defer) requestAnimationFrame(go); else go();
   },
+  /* THE PHONE'S TWO WAYS OUT. The gate used to be a wall: a sentence saying the tool needs a wider
+     screen, and nothing to do about it. Someone who arrived from a link had to remember to come back
+     later, on a different machine, from memory.
+
+     So: see what it makes, or keep the address. Both are honest on a phone — the first reuses the
+     read-only palette view a shared link already gets, the second puts the URL on the clipboard so
+     the trip to a desktop survives closing the tab. Neither pretends the extractor will run here. */
+  openExampleOnPhone() {
+    const feed = this.state.feed || [];
+    const ex = feed.find((p) => p.example) || feed[0];
+    if (!ex) return;
+    this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' });
+  },
+  closeExampleOnPhone() {
+    this.setState({ exampleView: false, announce: 'Returned to the start screen.' });
+  },
+  copySiteLink() {
+    const href = (typeof location !== 'undefined' ? location.origin + '/' : 'https://atmos.gallery/');
+    this.copy(href, 'gate-link', 'Link copied. Open it on a desktop to read your own image.');
+  },
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
   closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
