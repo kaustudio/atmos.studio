@@ -6,6 +6,73 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-29 — One icon family, one press tier, four button geometries
+
+**Decision:** every icon is a filled path from `material-symbols-light` on the 24 grid, at one of
+three sizes. Every button declares an interaction tier, and its padding comes from one of four
+tokens or from an explicit `0`.
+
+### Icons
+
+Ten icons; **four were genuine** `material-symbols-light` (contrast, download-sharp,
+folder-outline-sharp, delete-outline-sharp). Of the rest:
+
+- `IconCopy` was that family's `content-copy-outline-sharp` **with two subpaths deleted**, so the
+  inner sheet had no outline.
+- `IconCheck` and `IconLink` came from the heavier `material-symbols` weight and sat visibly bolder
+  than the four beside them.
+- `IconHarmony`, `IconClose` and `IconChevron` were drawn by hand, as **strokes at 1, 1.6 and 2** —
+  three weights, in a set where nothing else was stroked at all. That is what the eye caught first.
+
+All ten are now regenerated from the Iconify API rather than transcribed, because transcription is
+how a set drifts one icon at a time. The **sharp** cut is used wherever the glyph has curves to
+square off; a check, an X and a chevron have none, so the family publishes no separate sharp variant
+of them and the base glyph *is* the sharp one. Sharp is not taste here — it is the only cut
+consistent with a design that carries no border-radius anywhere.
+
+`IconHarmony` became `join-inner`, which is the real Material Symbol for the two-overlapping-circles
+metaphor the hand-drawn one was reaching for.
+
+Three sizes, matched to the type beside them: **9** with `--fs-micro`, **12** with `--fs-label`,
+**14** with `--fs-body` and the action row. Filled paths mean scaling never changes apparent weight.
+
+### Tiers
+
+Seven `data-ix` tiers became five. `solid` and `press` had **identical** hover (16%) and active
+(24% + 1px) — the only difference was that `solid` also moved its border-colour, which is a no-op on
+the borderless controls `press` was used for. Two names for one behaviour is how a system starts
+drifting: the next person picks whichever they saw last, and eventually the two stop matching for
+real. 22 call sites moved to `press`.
+
+Seven controls had **no tier and no hover state at all** — the view and page-size toggles, the
+project scope chips, the applied-filter chips, the phone's swatch rows. The segmented ones took
+`seg`, which exists precisely to give an unpressed option a hover; the rest took `press` and `cell`.
+The controls still without a tier keep their own named state rules (`data-feed`,
+`data-refine-swatch`) or JS hover (`HBtn`), which is a system, just a different one.
+
+### Geometry
+
+Twelve paddings across the buttons that declared one, ten of them within a pixel of a neighbour in
+each direction — `8px 13px` beside `9px 14px` beside `8px 12px`, on buttons that appear in the same
+row. Four tokens now:
+
+| token | value | for |
+|---|---|---|
+| `--btn-pad-sm` | `7px 12px` | dense chrome: chips, counts, in-row controls |
+| `--btn-pad-md` | `9px 14px` | the default: toolbars, panel headers |
+| `--btn-pad-lg` | `12px 16px` | the act that closes a decision |
+| `--btn-pad-chip` | `4px 8px` | objects inside a row or a run of text |
+
+A third family takes no token: **square icon buttons** at 16, 26 and 30, sized by width/height and
+flex-centred. Their padding is meaningless — but it is now written as `0`, because a `<button>` with
+none inherits the UA's `1px 6px`, and geometry that comes half from the design and half from the
+browser is the kind of thing that looks fine until a browser changes its mind.
+
+**Not done:** `button-006` keeps its own token block and its own `0.75em 1em`. It is a licensed
+component whose clip-path text swap depends on that geometry, and it is internally consistent.
+
+---
+
 ## 2026-07-29 — Ten type steps, in rem
 
 **Decision:** every font size in the app comes from one of ten `--fs-*` tokens declared in
