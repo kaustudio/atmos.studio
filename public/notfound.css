@@ -84,7 +84,7 @@ body{display:flex;flex-direction:column}
    so the mark now also paints over the field instead of under it — as the button already did. */
 .nf-head{
   display:flex;justify-content:center;
-  padding:var(--nf-head-pad) var(--chrome-gutter) 0;
+  padding:var(--nf-head-pad) var(--page-gutter) 0;
   position:relative;z-index:2;
 }
 .nf-head a{display:block;line-height:0}

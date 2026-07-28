@@ -548,7 +548,7 @@ export default function AppView({ vals }) {
 
       <WipeLayer />
 
-      <header style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 16px;border-bottom:1px solid var(--line-strong);background:var(--surface);position:sticky;top:0;z-index:10')}>
+      <header style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);background:var(--surface);position:sticky;top:0;z-index:10')}>
         {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
             nothing about the palette, the archive or the work, yet it was the first thing every
             left-to-right scan landed on. The theme switch takes the corner instead — it is the
@@ -616,7 +616,7 @@ export default function AppView({ vals }) {
         </div>
       </header>
 
-      <main aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px 16px 8px')}>
+      <main aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
 
         {vals.isUpload && (<>
           <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Upload a reference image. Drop an image here, or activate to browse your files." style={vals.dropStyle}>
@@ -975,7 +975,7 @@ function FeedSection({ vals }) {
   </>);
 
   return (
-    <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px 16px 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
+    <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px var(--page-gutter) 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
       {/* TWO LEVELS, AND THE INDENT IS THE ARGUMENT.
 
           Level one is this row: the section's title, at the section's own edge, with the view

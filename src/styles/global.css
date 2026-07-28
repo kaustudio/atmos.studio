@@ -138,15 +138,22 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --track-body:0.01em;        /* body copy */
   --track-label:0.1em;        /* uppercase mono labels (system default) */
   --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
-  /* ===== page gutters =====
-     The app has no page-level container: every section runs the full width of the viewport inside a
-     gutter, and the only max-widths in it are component-level measure caps. Two figures, not one,
-     because chrome and content are not the same grid — the header bar is `padding:0 16px` while
-     content sections are `padding:20px 22px 0`, and flattening them would match neither.
-     Named here because three documents read them: the tool, the legal routes (legal.css) and
-     404.html (notfound.css). They were in legal.css while it was the only file that had them. */
-  --chrome-gutter:16px;       /* the header bar */
-  --page-gutter:22px;         /* content columns */
+  /* ===== THE GRID =====
+     12 columns, 24px margin, 24px gutter. One figure, not two.
+
+     It was two: --chrome-gutter at 16 for the header bar and --page-gutter at 22 for content, with a
+     note here defending the split on the grounds that chrome and content are not the same grid. They
+     are. Nothing in the design ever asked for 16 or 22 — site-foot.css still carries a comment
+     recording that the supplied comp said 24 and that the code chose 22 anyway, to avoid introducing
+     "a fourth gutter" into a file that named two. Three wrong figures were kept to avoid a fourth,
+     which is how a grid stops being one.
+
+     Read by four documents: the tool, the legal routes (legal.css), the footer (site-foot.css) and
+     404.html (notfound.css). --grid-cols and --grid-gutter exist so the overlay draws the grid the
+     layout is actually built on, rather than a second opinion about it. */
+  --page-gutter:24px;         /* the margin, every document, chrome and content alike */
+  --grid-cols:12;
+  --grid-gutter:24px;
   /* ===== archive list rhythm =====
      The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
      of whatever the widest row happened to contain. Naming it here keeps the scan rhythm in one

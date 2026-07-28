@@ -6,6 +6,46 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-29 — One gutter: 12 columns, 24 margin, 24 gutter
+
+**Decision:** one page gutter, `--page-gutter: 24px`, on every document and on chrome and content
+alike. `--grid-cols: 12` and `--grid-gutter: 24px` name the grid, and a `Shift+G` overlay draws it.
+
+**It was three figures, none of them the design's.** `--chrome-gutter` at 16 for the header bar,
+`--page-gutter` at 22 for content, and a comment here defending the split on the grounds that chrome
+and content are not the same grid. They are — and in practice the page-level containers (`header`,
+`main`, `section[data-recent]`) all used a literal `16px` anyway, so the 22 was never the page
+margin at all.
+
+**The evidence was already in the repo.** `site-foot.css` carried a note recording that the supplied
+comp specified **24px** and that the code used 22 regardless, because "a bespoke 24px would put a
+fourth gutter into a stylesheet that names two on purpose." Three wrong figures were kept to avoid a
+fourth. That is how a grid stops being one, and it is worth naming: the reasoning was locally
+sound at every step, and the result was that no edge in the app sat where the design put it.
+
+**The overlay is the instrument, not decoration.** It is the Osmo Supply *Animated Grid Overlay
+(Columns)*, integrated with its behaviour intact — same data hooks, same GSAP reveal (1s
+`expo.inOut`, 0.03 stagger), same `animatedGridState` key, same `Shift+G` suppressed inside inputs.
+Four adaptations, each forced rather than chosen, and each recorded at the top of
+`src/lib/gridOverlay.js`: it builds its own DOM (this app renders one React tree and has no static
+markup to paste into), it mounts on `document.body` (a transformed ancestor would silently break
+`position:fixed`), it has no `.container`/`--size-container` (the scaling system is not installed and
+this app has no page-level container), and its columns tint from `--on-surface` rather than a fixed
+`#f4f4f4`, which would be invisible in light and wrong in dark.
+
+It reads `--grid-cols` and `--grid-gutter` rather than hard-coding 12 and 24, so it can only ever
+draw the grid the layout is built on. An overlay that carries its own opinion of the grid is a second
+source of truth, and would eventually disagree with the first one silently.
+
+**Verified with it:** 12 columns, 24px margins both sides, 24px gutters, and the header, feed rows,
+Library heading and chips all landing on column one.
+
+**Not done:** component-internal padding. Dialogs and drawers still use their own 22px inner inset.
+That is not the page margin and does not belong to this grid; folding it in would be inventing a
+rule the design has not asked for.
+
+---
+
 ## 2026-07-29 — One icon family, one press tier, four button geometries
 
 **Decision:** every icon is a filled path from `material-symbols-light` on the 24 grid, at one of

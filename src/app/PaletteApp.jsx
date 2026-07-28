@@ -21,6 +21,7 @@ import { miscMethods } from './methods/misc.js';
 import { refineMethods } from './methods/refine.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isLegal, applyHead, APP } from './routes.js';
+import { initGridOverlay } from '../lib/gridOverlay.js';
 
 export default class PaletteApp extends React.Component {
   static defaultProps = { proportional: true, swatchCount: 5 };
@@ -236,6 +237,9 @@ export default class PaletteApp extends React.Component {
     // one feature's failure must never abort the rest of mount
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
     this._reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
+    // Shift+G, on every route. Behind `safe` like everything else here: a grid ruler is the last
+    // thing that should be able to stop the app it measures from mounting.
+    safe(() => initGridOverlay(), 'grid-overlay');
     safe(() => this.initMotion(), 'motion');   // EASE/DUR tokens must exist before the loader builds its timeline
     safe(() => this._initLenis(), 'lenis');
     safe(() => requestAnimationFrame(() => this._updateProjPill()), 'projpill');

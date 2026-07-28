@@ -38,17 +38,18 @@
                           while and is back at the comp's 12px, also by request.
      wordmark ink width   1679 — the same width as the rules, i.e. optically flush with both ends
 
-   Two deliberate departures from those figures, both in the direction of the system:
+   One deliberate departure from those figures:
 
-   · the side inset is --page-gutter (22px), not the comp's 24px. These are content-width rules, not
-     full-bleed chrome, so their ends must land on the same vertical line as the prose above them. A
-     bespoke 24px would put a fourth gutter into a stylesheet that names two on purpose. 2px at this
-     width is not visible; a left edge that misses the one above it is.
+   · the side inset is --page-gutter, which now IS the comp's 24px. It sat at 22 for a while, and the
+     note that used to be here defended the 2px gap on the grounds that matching the prose above
+     mattered more than matching the comp — true, but it was an argument for changing the token, not
+     for keeping three wrong figures to avoid a fourth. The token is 24 now, so the comp, the prose
+     and this rule are the same line. See the grid block in global.css.
    · the rules are --line-strong, not the comp's ink. The comp draws them at ~100% ink in light and
      ~40% in dark — an asymmetry no single token expresses — while --line-strong is the hairline every
      other structural rule on these pages already uses (.legal-head, .legal-hero::after, h2::before).
      Colours were flagged as not final, so the system's line wins here. */
-.site-foot{padding:0 var(--page-gutter, 22px)}
+.site-foot{padding:0 var(--page-gutter, 24px)}
 
 /* The rules ride the inner blocks, not .site-foot, so they stop at the gutter rather than running
    full bleed the way .legal-hero::after deliberately does. */
