@@ -133,7 +133,7 @@ export default class PaletteApp extends React.Component {
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
-    assignPalette: null, manageProjects: false, backupMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
@@ -284,6 +284,7 @@ export default class PaletteApp extends React.Component {
         if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
+        if (this.state.copyMenuOpen) { e.preventDefault(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }

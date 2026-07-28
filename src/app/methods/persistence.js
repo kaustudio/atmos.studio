@@ -488,6 +488,16 @@ export const persistenceMethods = {
   openTip(flag, sel) { this.setState({ [flag]: true }, () => this._tipIn(sel)); },
   closeTip(flag, sel) { if (this._tipClosing) return; this._tipClosing = true; this._tipOut(sel, () => { this._tipClosing = false; this.setState({ [flag]: false }); }); },
   toggleTip(flag, sel) { if (this.state[flag]) this.closeTip(flag, sel); else this.openTip(flag, sel); },
+  // The copy menu hands focus back to the control that opened it, on every route out — a pick, an
+  // Escape, a click on the backdrop. A menu that closes and leaves focus on the document body sends
+  // the next Tab to the top of the page, which is the one place the user was not.
+  // `defer` matters on the way out of a copy: this.copy() reaches for the clipboard and its fallback
+  // path puts focus on a scratch node of its own, so focusing the trigger in the same tick loses the
+  // race and the next Tab starts from the top of the document.
+  _focusCopyTrigger(defer) {
+    const go = () => { const b = document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
+    if (defer) requestAnimationFrame(go); else go();
+  },
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
   closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },

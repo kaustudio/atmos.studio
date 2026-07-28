@@ -174,19 +174,76 @@ function ValueRow({ v, showCaveat }) {
   );
 }
 
+// Each of these names a job, not a noun. "Contrast" and "Refine" named the subject the button is
+// about and left the user to supply the verb; in a row of six that is six subjects and no route.
 const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span>Contrast</span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span>Check contrast</span>
 );
+// The chevron is supplemental: it promises a chooser, it does not carry the meaning. Export's is a
+// dialog rather than a menu because the formats there are not a list of five equivalents — they
+// carry extensions and a semantic-scaffold decision that changes what every one of them emits.
 const exportB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export</span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export<span aria-hidden="true" style={{ fontSize: '8px' }}>▾</span></span>
+);
+// COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
+// rather than saying "Copied", because from a menu that is the only part still in question — and it
+// stops at the format name: reserving room for the word "copied" as well would have made the widest
+// state ("CSS variables copied") the permanent width of a button that usually reads "Copy". The verb
+// is carried by the check mark and by the live region, which announces the whole sentence.
+// Copy carries the same three parts as Export — glyph, word, chevron — and has to measure like it.
+// Two earlier shapes did not. Naming the copied format on the button meant sizing the label against
+// "CSS variables" so the row could not reflow mid-copy, which left Copy a third wider than anything
+// beside it. SwapLabel's ✓ Copied was closer but still added its own check mark to a button that
+// already had a glyph, and paid for it in width. So the confirmation reuses the slots that are
+// already there: the glyph becomes the check, the word becomes Copied, and the only reserve is the
+// two characters between them. The chevron holds its place, so the row still never moves, and which
+// format landed on the clipboard is said by the live region and by the menu item just pressed.
+const copyB006Label = (done) => (
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
+    <span aria-hidden="true" style={{ display: 'inline-flex' }}>{done ? <IconCheck /> : <IconCopy />}</span>
+    <span style={sx('display:inline-grid;align-items:center;justify-items:center;height:14px')}>
+      <span style={{ gridArea: '1/1' }}>{done ? 'Copied' : 'Copy'}</span>
+      <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>Copied</span>
+    </span>
+    <span aria-hidden="true" style={{ fontSize: '8px', visibility: done ? 'hidden' : 'visible' }}>▾</span>
+  </span>
 );
 // Refine carries no icon, deliberately. Every other glyph in this row stands for a NOUN the app
 // already draws elsewhere — a folder, a link, a contrast disc — whereas this one would have to
 // stand for an activity, and the sliders-and-dots marks that usually get drafted for that read as
 // "settings". The word is unambiguous and the row is short enough to carry it.
 const refineB006Label = (
-  <span style={sx('display:flex;align-items:center;height:14px')}>Refine</span>
+  <span style={sx('display:flex;align-items:center;height:14px')}>Refine palette</span>
 );
+// One menu, both surfaces. The result bar and the archive's fullscreen detail draw the same row, so
+// they draw the same chooser from the same state — only one of the two is ever mounted, which is why
+// a single flag and a single [data-copy-menu] selector are enough for the tween to find its panel.
+function CopyMenu({ open, done, onToggle, onKey, onHex, onCss }) {
+  return (
+    <span style={sx('position:relative;display:inline-flex')}>
+      <B006 data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="menu" aria-expanded={open}
+        onClick={onToggle} onKeyDown={onKey} aria-label="Copy the whole palette, in a format you choose"
+        label={copyB006Label(done)} />
+      {open && (<>
+        <span style={sx('position:fixed;inset:0;z-index:40')} onClick={onToggle} aria-hidden="true"></span>
+        <div data-copy-menu="1" role="menu" aria-label="Copy format" onKeyDown={onKey} style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;min-width:210px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column')}>
+          {/* The common format first, per the rule that a menu opens on the answer most people came
+              for. The second line of each item is the shape of what lands on the clipboard, so the
+              choice is made on the artefact rather than on the word for it. */}
+          <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onHex} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
+            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Hex list</span>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>One value per line</span>
+          </button>
+          <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onCss} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
+            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>CSS variables</span>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>Custom properties, ready to paste</span>
+          </button>
+        </div>
+      </>)}
+    </span>
+  );
+}
+
 // Filing takes the same folder glyph the archive row and the overlay header already use — one
 // concept, one mark — and a label that changes with the state rather than an icon that doesn't.
 const assignB006Label = (text) => (
@@ -606,15 +663,7 @@ export default function AppView({ vals }) {
                   user with nowhere to do it. So Refine leads until the palette carries a decision,
                   and Export takes over once it does. Still exactly ONE filled control either way —
                   the two never both light up, per the two-tier rule. */}
-              {vals.refinePrimary
-                ? (<>
-                  <B006 data-emphasis="primary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
-                  <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-                </>)
-                : (<>
-                  <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-                  <B006 data-emphasis="secondary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
-                </>)}
+              <B006 data-emphasis="primary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
               {/* filing changes the archive, so it stays on the committing side of the
                   hairline. Disabled while the palette is only in the URL — a shared palette has no
                   record to file until it is saved, and the strip above already offers that. */}
@@ -622,14 +671,23 @@ export default function AppView({ vals }) {
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
-              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+              {/* nowrap INSIDE the group. The row may wrap — it has to, between the desktop gate at
+                  720px and the width this bar was drawn for — but the validate/output trio wraps as
+                  one block or not at all. Letting it break internally put Export on a line of its
+                  own under a hairline that stayed behind with Copy, which reads as two groups where
+                  there is one. Core acts stay put; the output cluster is what moves. */}
+              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
                 <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-                <B006 data-emphasis="secondary" onClick={vals.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-                  label={<SwapLabel copied={vals.hexListCopied} idle="Hex list" />} />
-                <B006 data-emphasis="secondary" onClick={vals.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-                  label={<SwapLabel copied={vals.cssCopied} idle="CSS variables" />} />
-                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+                <CopyMenu open={vals.copyMenuOpen} done={vals.copyDone} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} />
+                <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
               </div>
+              {/* SHARE is neither editing nor output formatting, and it is the only act here that
+                  reaches outside this browser. A flexible gap, not another hairline: the distance
+                  is the statement. When the row wraps it lands alone at the right of its own line,
+                  which keeps the reading intact instead of dropping it into the middle of a group. */}
+              <span style={sx('margin-left:auto;display:inline-flex')}>
+                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+              </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
@@ -1414,15 +1472,15 @@ function DetailOverlay({ vals }) {
               acts that leave something behind, behind it the ones that only read the palette back
               to you, Contrast first because inspecting comes before copying. (No Share here: the
               overlay has no shareable URL, so the group behind the hairline is a trio, not four.) */}
-          <div style={sx('display:flex;align-items:center;gap:8px')}>
-            <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-            <B006 data-emphasis="secondary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+            {/* Filing leads here. On the result view the filled tier belongs to Refine, the one
+                creative act in the row; this surface has no Refine, so it goes to the act that is
+                first in the same sequence and available — organise, then validate, then output. */}
+            <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
               <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-              <B006 data-emphasis="secondary" onClick={overlay.copyHexList} aria-label="Copy the whole palette as a plain hex list"
-                label={<SwapLabel copied={overlay.hexListCopied} idle="Hex list" />} />
-              <B006 data-emphasis="secondary" onClick={overlay.copyCss} aria-label="Copy the whole palette as CSS custom properties"
-                label={<SwapLabel copied={overlay.cssCopied} idle="CSS variables" />} />
+              <CopyMenu open={vals.copyMenuOpen} done={overlay.copyDone} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} />
+              <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
             </div>
           </div>
         </div>

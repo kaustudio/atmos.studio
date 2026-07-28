@@ -535,12 +535,14 @@ export const renderValsMethods = {
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
         assignAria: p.projectId ? 'Move ' + p.name + ' to another project (currently in ' + this.projectName(p.projectId) + ')' : 'Add ' + p.name + ' to a project',
-        assignLabel: p.projectId ? this.projectName(p.projectId) : 'Add to project',
-        // copy state as a flag, not a label — the view owns how confirmation is drawn (✓ icon + word)
-        hexListCopied: s.copied === 'ov-pal-hex',
-        cssCopied: s.copied === 'ov-pal-css',
-        copyHexList: () => this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'),
-        copyCss: () => this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'),
+        // The state, then the project, so the button says where the palette IS and not only what
+        // pressing it will do. A bare project name read as a filter; "Add to project" on a palette
+        // already filed read as a second copy.
+        assignLabel: p.projectId ? 'In ' + this.projectName(p.projectId) : 'Add to project',
+        // Which format was copied, drawn by the view on the trigger that was pressed.
+        copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
+        copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); this._focusCopyTrigger(true); },
+        copyCss: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'); this._focusCopyTrigger(true); },
       };
     }
 
@@ -1159,10 +1161,17 @@ export const renderValsMethods = {
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
       // palette-level copy
       palBtn, palBtnHover: { background: 'var(--on-surface)', color: 'var(--surface)' }, palBtnActive: { transform: 'translateY(1px)' },
-      // copy state as a flag, not a label — the view owns how confirmation is drawn (✓ icon + word)
-      hexListCopied: s.copied === 'pal-hex',
-      cssCopied: s.copied === 'pal-css',
-      copyHexList: () => copyPal('hex'), copyCss: () => copyPal('css'),
+      // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of Refine
+      // and Export, which told the user the app has two copy features; it has one, and the format is
+      // a detail of it. The formats move into a menu on a single Copy control, and the confirmation
+      // lands on that control rather than in a status line somewhere else on the page.
+      copyMenuOpen: !!s.copyMenuOpen,
+      toggleCopyMenu: () => this.toggleTip('copyMenuOpen', '[data-copy-menu]'),
+      closeCopyMenu: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); },
+      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); } },
+      copyDone: s.copied === 'pal-hex' ? 'Hex list' : s.copied === 'pal-css' ? 'CSS variables' : '',
+      copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); copyPal('hex'); this._focusCopyTrigger(true); },
+      copyCss: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); copyPal('css'); this._focusCopyTrigger(true); },
       // share link — the palette rides in the URL fragment, which never reaches a server
       shareCopied: s.copied === 'pal-share',
       onShare: () => this.shareCurrent(),
@@ -1532,14 +1541,18 @@ export const renderValsMethods = {
       //
       // Disabled on a shared palette for the same reason filing is: it has no record in this
       // browser to write a refinement to, and the strip above already offers to save it first.
-      refinePrimary: !(s.current && s.current.roles),
+      // refinePrimary is gone. The bar used to hand the filled tier to Export once a palette carried
+      // roles, on the reasoning that an unrefined palette is not ready to ship. True, but it made the
+      // one creative act in the row change rank underneath the user: the button you pressed last time
+      // is drawn differently this time, in a row you are meant to learn once. Refine leads always.
+      // Export's own dialog still says what an unrefined export is worth.
       refineDisabled: !filedCur,
       refineAria: s.current && s.current.roles
         ? 'Refine this palette: change roles, colours or order'
         : 'Refine this palette: assign roles and adjust colours',
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: filedCur && filedCur.projectId ? this.projectName(filedCur.projectId) : 'Add to project',
+      assignLabel: filedCur && filedCur.projectId ? 'In ' + this.projectName(filedCur.projectId) : 'Add to project',
       assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
