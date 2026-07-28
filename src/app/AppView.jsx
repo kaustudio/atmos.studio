@@ -844,6 +844,15 @@ function FeedSection({ vals }) {
             either end. No clear-all here: that was a third affordance for one act (chip ✕ ·
             header CLEAR · panel CLEAR FILTER) and now lives only in the panel, beside the
             facets it clears. */}
+        {/* STATE KEPT VISIBLE. How many match, and one way out, without reopening the panel — the
+            chips said WHAT was applied but the result of applying it lived inside the drawer, so
+            the only way to see whether a filter had helped was to reopen the thing you just shut. */}
+        {vals.anyFilter && (
+          <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>
+            {vals.resultCount}
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
+          </span>
+        )}
         {vals.appliedTags.map((t) => (
           <button key={t.key} type="button" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
             {t.label}{t.count && <span style={sx('font-size:8.5px;opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: '9px' }}>✕</span>
@@ -930,6 +939,21 @@ function FeedSection({ vals }) {
       {/* Grid and 3D: no sort row to ride on, so it stands as its own strip, as it always did. */}
       {vals.showProjectsBar && !vals.showSortHeader && (
         <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px')}>{scopeBar}</div>
+      )}
+
+      {/* FILTERED TO NOTHING is not EMPTY. The cold-start message told someone holding three
+          filters that palettes would collect here — answering a question they had not asked and
+          hiding the one they had, which is that the combination is unsatisfiable. Two ways out:
+          undo the most recent narrowing, or drop the lot. */}
+      {vals.filteredEmpty && (
+        <div role="status" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
+          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:16px;color:var(--on-surface)")}>No palette matches every filter</div>
+          <div style={sx("font-family:'Neue Montreal';font-size:13.5px;line-height:1.5;color:var(--on-surface-muted);text-align:center;max-width:46ch;text-wrap:pretty")}>Filters combine, so each one you add narrows what is left. Remove the last one, or start again.</div>
+          <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} aria-label="Remove the last filter applied" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Remove last filter</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
+          </span>
+        </div>
       )}
 
       {vals.feedEmpty && (
@@ -1446,7 +1470,22 @@ function TagFilterDrawer({ vals }) {
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
             {/* "Tags" is now one group among several, so the title names the surface, not a group */}
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
+            <span style={sx('display:flex;align-items:center;gap:9px;min-width:0')}>
+              <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
+              {/* The rules of the panel, on the title that owns them. Same 16px control, same 288px
+                  sheet, same easing as the Library heading and the AA badge — a third variant would
+                  make the pattern a coincidence rather than a convention. */}
+              <span style={sx('position:relative;display:inline-flex;flex:none')}>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                {vals.filterInfoOpen && (<>
+                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleFilterInfo} aria-hidden="true"></div>
+                  <div data-tip="filters" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A palette must match every group you use. Within one group the choices widen instead, because a palette holds only one lightness, one temperature and one accessibility state.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>{vals.a11yNote}</span>
+                  </div>
+                </>)}
+              </span>
+            </span>
             {/* The match count is no longer printed under the title — the list it counts is right
                 there, undimmed, and the counts on the rows below are the same fact at the grain you
                 are actually choosing at. It stays as a live region, because that reasoning depends
@@ -1457,16 +1496,6 @@ function TagFilterDrawer({ vals }) {
           <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
-        <div data-tg-sec="1" style={sx('padding:14px 22px 2px')}>
-          {/* ONE paragraph for the whole panel now. It used to be panel-level only, on the rule that
-              a line above every group may say nothing true of just one of them — and each group
-              then carried its own heading and its own note. With those headings gone, that rule has
-              nothing left to protect: there is no second place for the accessibility semantics to
-              live, and stating them here is what keeps them stated at all. The order does the
-              scoping the headings used to: the combine rule (both groups), then the three states
-              and their counts (the group directly beneath it). */}
-          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Filter groups combine — a palette must match every group you use. {vals.a11yNote}</span>
-        </div>
 
         {/* ACCESSIBILITY — a facet, and the first one, because "can I build with this?" outranks
             "what mood is it?". Exhaustive: every palette holds exactly one state, so the group
@@ -1474,13 +1503,17 @@ function TagFilterDrawer({ vals }) {
             AND would be unsatisfiable); AND against tags. Same checkbox, count and zero-suppression
             rules as the tag rows — one grammar for every facet. */}
         {vals.hasA11yOptions && (
-          <div data-tg-sec="1" style={sx('padding:18px 22px 0')}>
+          <div data-tg-sec="1" style={sx('padding:18px 10px 0')}>
             {/* No eyebrow, no note of its own — both moved into the panel's one paragraph above.
                 The group keeps its name for assistive tech on the role="group" below, which is
                 where it was always doing the load-bearing work. */}
+            {/* An eyebrow, now that this group has siblings. Alone it needed no name; sat above
+                Lightness and Temperature without one, it read as a preamble to them rather than as
+                a group of its own rank. */}
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Contrast potential</span>
             <div role="group" aria-label="Filter by accessibility" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {vals.a11yOptions.map((o) => (
-                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 12px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={facetLabelStyle}>{o.label}</span>
                   {/* count sits beside its label (F5), not across the row */}
@@ -1495,6 +1528,34 @@ function TagFilterDrawer({ vals }) {
             </div>
           </div>
         )}
+
+        {/* THE OTHER TWO MEASURED FACETS. Same grammar as contrast potential above — checkbox,
+            label, count — because they are the same kind of statement about a palette. */}
+        {vals.hasMeasured && vals.measuredGroups.map((g) => (
+          <div key={g.id} data-tg-sec="1" style={sx('padding:14px 10px 0')}>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
+            <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
+              {g.options.map((o) => (
+                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 12px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  <FacetMark active={o.active} unavailable={o.disabled} />
+                  <span style={facetLabelStyle}>{o.label}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* CHARACTER — behind a disclosure, because these are READINGS. Graphic, Restrained and
+            Stark are interpretations of a palette; lightness and temperature are measurements of
+            it. Ranked as equals, the panel invited someone to treat a judgement as a property. */}
+        <div style={sx('padding:16px 10px 0')}>
+          <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid var(--line);padding:13px 12px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
+            <span data-refine-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
+          </button>
+        </div>
+        {vals.charOpen && (<div data-facet-char="1">
 
         {/* No heading and no explanation over the tag list. The search field, the Count/A–Z toggle
             and a column of tag rows say what this is without a label on top of them, and the
@@ -1519,9 +1580,9 @@ function TagFilterDrawer({ vals }) {
           </div>
         </div>
 
-        <div data-tg-sec="1" role="group" aria-label="Tags" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px 22px 26px')}>
+        <div data-tg-sec="1" role="group" aria-label="Tags" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px 10px 26px')}>
           {vals.facetOptions.map((o) => (
-            <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 2px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+            <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 12px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
               {/* A checkbox, not a dot that appears. The old marker was invisible when unselected,
                   so an unpicked row showed nothing where its state should be — the affordance only
                   existed once you had already used it. This box is always present and states which
@@ -1536,14 +1597,11 @@ function TagFilterDrawer({ vals }) {
                   depending on which group you were looking at, and put a whole colour strip
                   between a name and its number. */}
               <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-              {/* Names the palette the strip is showing. Sits directly against the strip so the
-                  two read as one unit — a labelled sample, not a claim about the whole tag. On an
-                  inert row the reason takes this slot instead: you cannot pick the tag, so why it
-                  is inert outranks the name of a sample you cannot act on. */}
-              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : o.exemplarName}</span>
-              <span aria-hidden="true" style={sx('display:flex;width:150px;flex:none;height:14px;border:1px solid var(--line)')}>
-                {o.strip.map((b, hi) => (<span key={hi} style={b.style}></span>))}
-              </span>
+              {/* Checkbox, label, count — the same three things every facet row now shows. An
+                  exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
+                  standing in for a whole tag, which invited the reader to generalise from it, and
+                  a second colour object competing with the swatch strips in the list behind. */}
+              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
             </button>
           ))}
           {/* An empty state that says what happened and offers the way out, rather than a dead
@@ -1564,6 +1622,7 @@ function TagFilterDrawer({ vals }) {
             <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
           )}
         </div>
+        </div>)}
       </div>
     </div>
   );

@@ -58,6 +58,21 @@ const aaReadout = (met) => ({
 // them on every render of an open dialog costs nothing measurable.
 const rampTrack = (n, at) => 'linear-gradient(90deg,' + Array.from({ length: n }, (_, i) => at(i / (n - 1)) + ' ' + ((i / (n - 1)) * 100).toFixed(1) + '%').join(',') + ')';
 
+// Chips for the two measured groups. Module scope because the applied-chip row is built before the
+// facet table exists in that scope, and one definition beats two that must agree.
+const MEAS_LABELS = { dark: 'Dark', balanced: 'Balanced', light: 'Light', warm: 'Warm', cool: 'Cool', neutral: 'Neutral' };
+const MEAS_CHIPS = (self, s, focusBack) => {
+  const out = [];
+  [['activeLight', 'lightness'], ['activeTemp', 'temperature']].forEach(([key, group]) => {
+    (s[key] || []).forEach((v) => out.push({
+      key: group + ':' + v, label: MEAS_LABELS[v] || v,
+      aria: 'Remove the ' + (MEAS_LABELS[v] || v).toLowerCase() + ' ' + group + ' filter',
+      onRemove: () => { self.setFacet(key, v); focusBack(); },
+    }));
+  });
+  return out;
+};
+
 export const renderValsMethods = {
   renderVals() {
     const s = this.state;
@@ -613,8 +628,16 @@ export const renderValsMethods = {
     // Each group counts against the OTHER groups' filters but not its own — the standard faceted
     // convention. Counting a group against itself would make every unselected option read zero the
     // moment you picked something in that group.
-    const tagBase = tagPool.filter((p) => this.matchesTags(p, activeTags) && this.matchesA11y(p, activeA11y));
-    const a11yBase = tagPool.filter((p) => this.matchesTags(p, activeTags));
+    const activeLight = s.activeLight || [], activeTemp = s.activeTemp || [];
+    // Each group counts against the OTHER groups but never against itself — the standard faceted
+    // convention. `measBase` is what the two measured groups count within.
+    const others = (skip) => tagPool.filter((p) =>
+      (skip === 'tags' || this.matchesTags(p, activeTags))
+      && (skip === 'a11y' || this.matchesA11y(p, activeA11y))
+      && (skip === 'light' || this.matchesLight(p, activeLight))
+      && (skip === 'temp' || this.matchesTemp(p, activeTemp)));
+    const tagBase = others('tags');
+    const a11yBase = others('a11y');
     const withTag = (d) => tagBase.filter((p) => p.descriptors.some((x) => x.toLowerCase() === d));
     // Two different facts were being answered with the same silence. A tag that would empty the
     // list and a tag that is true of EVERYTHING here are both unpickable, but they mean opposite
@@ -700,7 +723,7 @@ export const renderValsMethods = {
       key: 'a11y:' + v, label: A11Y_LABEL[v],
       aria: 'Remove the ' + A11Y_LABEL[v].toLowerCase() + ' accessibility filter',
       onRemove: () => { this.setA11yFilter(v); focusFacetBtn(); },
-    })).concat(activeTags.map((t) => ({
+    })).concat(MEAS_CHIPS(this, s, focusFacetBtn)).concat(activeTags.map((t) => ({
       key: 'tag:' + t, label: t,
       aria: 'Remove the ' + t + ' filter',
       onRemove: () => { this.setActiveTag(t); focusFacetBtn(); },
@@ -708,7 +731,39 @@ export const renderValsMethods = {
     const scopedNow = this.scopedFeed(s.feed).length;
     const appliedTags = appliedRaw.map((c, i) => Object.assign({}, c, { count: i === appliedRaw.length - 1 ? String(scopedNow) : '' }));
 
-    // ---- the Accessibility facet: OR within the group, exhaustive over the archive ----
+    // ---- THE MEASURED FACETS ----------------------------------------------------------------
+    // Three groups that MEASURE a palette, kept apart from the ones that INTERPRET it. Contrast
+    // potential, lightness and temperature are computed from the pixels; Graphic, Restrained and
+    // Stark are readings. Ranked as equals they invited the user to treat a judgement as a
+    // property, so the readings now sit behind Character, one disclosure down.
+    //
+    // Stable ids, separate from display labels, and one table rather than three hand-written
+    // groups: the value written into state is `dark`, never `Dark`, so a label can be reworded in
+    // any language without orphaning every filter anyone had applied.
+    const MEASURED = [
+      { id: 'lightness', key: 'activeLight', label: 'Lightness', pick: (m) => m.lightBand,
+        values: [{ id: 'dark', label: 'Dark' }, { id: 'balanced', label: 'Balanced' }, { id: 'light', label: 'Light' }] },
+      { id: 'temperature', key: 'activeTemp', label: 'Temperature', pick: (m) => m.temp.toLowerCase(),
+        values: [{ id: 'warm', label: 'Warm' }, { id: 'cool', label: 'Cool' }, { id: 'neutral', label: 'Neutral' }] },
+    ];
+    const measuredGroups = MEASURED.map((g) => {
+      const base = others(g.id === 'lightness' ? 'light' : 'temp');
+      const active = s[g.key] || [];
+      const options = g.values.map((v) => {
+        const n = base.filter((p) => g.pick(this.paletteMetrics(p)) === v.id).length;
+        const on = active.indexOf(v.id) >= 0;
+        const disabled = !on && n > 0 && n === base.length;
+        return {
+          key: v.id, label: v.label, count: String(n), active: on, pressed: on ? 'true' : 'false',
+          disabled, reason: disabled ? 'Every palette here' : '',
+          aria: (on ? 'Remove the ' : 'Show only ') + v.label.toLowerCase() + ' palettes, ' + n + ' of them',
+          onToggle: () => this.setFacet(g.key, v.id),
+        };
+      }).filter((o) => o.active || parseInt(o.count, 10) > 0);
+      return { id: g.id, label: g.label, options, has: options.length > 0 };
+    }).filter((g) => g.has);
+
+    // ---- the Contrast potential facet: OR within the group, exhaustive over the archive ----
     // Ordered most-capable first, which is the order anyone shopping for a usable palette wants.
     // Zero-result suppression applies as it does to tags: a state nothing has is not offered,
     // unless it is already selected (it must stay reachable to be removed).
@@ -1091,8 +1146,10 @@ export const renderValsMethods = {
         letterSpacing: 'var(--track-title)', whiteSpace: 'nowrap', cursor: 'pointer',
         transition: 'background-color .28s var(--ease-button-hover), border-color .28s var(--ease-button-hover), transform .12s var(--ease-standard)',
       },
-      glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', borderColor: 'var(--action-line-hover)' },
-      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', borderColor: 'var(--action-line-press)', transform: this._reduce ? 'none' : 'translateY(1px)' },
+      // Whole border string, not borderColor. The base sets the `border` shorthand, and React
+      // warns (and can drop the value) when a rerender mixes the shorthand with one of its parts.
+      glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', border: '1px solid var(--action-line-hover)' },
+      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', border: '1px solid var(--action-line-press)', transform: this._reduce ? 'none' : 'translateY(1px)' },
       // shared micro-interaction handlers (one signature across the whole UI)
       mEnter: (e) => this.mEnter(e), mLeave: (e) => this.mLeave(e), mDown: (e) => this.mDown(e), mUp: (e) => this.mUp(e),
       dimEnter: (e) => this.dimEnter(e), dimLeave: (e) => this.dimLeave(e),
@@ -1116,7 +1173,11 @@ export const renderValsMethods = {
       copyLabelStyle: this.monoLabel(10, '.12em', { color: 'var(--on-surface-muted)' }),
       deferNoteStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
       // feed states + view toggle
-      feedEmpty: scoped.length === 0, feedHasItems: scoped.length > 0,
+      // The cold-start empty state is only cold start. Filtered-to-nothing is a different message
+      // with a different way out, and showing "Palettes you generate collect here" to someone
+      // holding three filters was the app answering a question nobody asked.
+      feedEmpty: scoped.length === 0 && !(this.scopedFeed(s.feed).length === 0 && ((s.activeTags || []).length || (s.activeA11y || []).length || (s.activeLight || []).length || (s.activeTemp || []).length)),
+      feedHasItems: scoped.length > 0,
       // projects
       projectChips, hasProjects, activeIsAll: s.activeProject === null,
       // Manage rides the chip component's exact type and padding so it sits on the same baseline
@@ -1178,7 +1239,28 @@ export const renderValsMethods = {
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
+      measuredGroups, hasMeasured: measuredGroups.length > 0,
+      // Character is a DISCLOSURE now, not a peer of the measured groups.
+      charOpen: !!s.charOpen,
+      toggleChar: () => this.toggleFold('charOpen', '[data-facet-char]'),
+      charLabel: 'Character traits',
+      charAria: (s.charOpen ? 'Hide' : 'Show') + ' character traits, which are interpretations rather than measurements',
+      // State kept visible OUTSIDE the overlay: how many match, and one way out.
+      resultCount: scopedNow + (scopedNow === 1 ? ' palette' : ' palettes'),
+      anyFilter: appliedTags.length > 0,
+      onClearAll: () => this.clearTags(),
+      onRemoveLast: () => this.removeLastFilter(),
+      // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
+      filteredEmpty: scopedNow === 0 && appliedTags.length > 0,
       a11yOptions, hasA11yOptions: a11yOptions.length > 0, a11yNote: A11Y_GROUP_NOTE,
+      // The combine rule and the three accessibility states used to stand as a paragraph over
+      // the groups. It is the panel's own instruction manual, read once and then scrolled past
+      // forever, so it moves to the same 16px tip the Library heading uses: available on the
+      // title it belongs to, absent from every visit that does not need it.
+      filterInfoOpen: !!s.filterInfoOpen,
+      toggleFilterInfo: () => this.toggleTip('filterInfoOpen', '[data-tip="filters"]'),
+      filterInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('filterInfoOpen', '[data-tip="filters"]'); } },
+
       activeTags, activeA11y,
       showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
@@ -1460,7 +1542,8 @@ export const renderValsMethods = {
       assignLabel: filedCur && filedCur.projectId ? this.projectName(filedCur.projectId) : 'Add to project',
       assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
-      navBtnHover: { background: 'var(--surface-raised)', borderColor: 'var(--on-surface)' },
+      // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
+      navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast
       hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.name + ' deleted') : '', undoDelete: () => this.undoDelete(),

@@ -131,6 +131,11 @@ export const motionMethods = {
     return {
       hue: Math.round(hue), chroma, lMin: Math.round(lMin * 100), lMax: Math.round(lMax * 100),
       temp: (avgA + avgB) > 0.008 ? 'Warm' : (avgA + avgB) < -0.008 ? 'Cool' : 'Neutral',
+      // Three buckets, not the reading engine's five. A filter is a way of narrowing a shelf, and
+      // five lightness steps split it so finely that most choices return almost everything. Mean
+      // weighted by area, so a palette is dark when most of its SURFACE is dark rather than when it
+      // merely contains something dark — the same test the role heuristic uses.
+      lightBand: (() => { const t = sw.reduce((a, x) => a + (x.weight || 0), 0) || 1; const m = sw.reduce((a, x) => a + x.L * ((x.weight || 0) / t), 0); return m < 0.42 ? 'dark' : m > 0.68 ? 'light' : 'balanced'; })(),
       contrastMax: cMax, aaPairs: aa, totalPairs: total,
       // null when the palette has one swatch and therefore no pair at all.
       bestPair: n > 1 ? { fg: sw[dark].hex, bg: sw[light].hex, ratio: cMax } : null,

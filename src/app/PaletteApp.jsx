@@ -102,10 +102,16 @@ export default class PaletteApp extends React.Component {
     // Accessibility is one exclusive property per palette, so within it only OR is meaningful —
     // AND would always yield nothing.
     feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [], activeA11y: [],
+    // the two MEASURED facets, beside contrast potential. Character traits stay in activeTags.
+    activeLight: [], activeTemp: [],
     // the tag facet: one disclosure control, closed by default; the query is typeahead state.
     // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
+    // character traits, folded away beneath the measured facets
+    charOpen: false,
+    // the Filters panel's combine rule, on the same 16px toggletip as the Library heading
+    filterInfoOpen: false,
     // the Library heading's storage toggletip — same shape as aaInfoOpen, and closed the same way
     storeInfoOpen: false,
     // the Refine surface's one explanation of how roles are assigned

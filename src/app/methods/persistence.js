@@ -195,12 +195,19 @@ export const persistenceMethods = {
   // OR within the group: a palette holds exactly one accessibility state, so selecting two means
   // "either of these", never "both" — which would be unsatisfiable.
   matchesA11y(p, states) { if (!states || !states.length) return true; return states.indexOf(this.paletteMetrics(p).aaState) >= 0; },
+  // The two MEASURED facets, on the same OR-within/AND-across contract as contrast potential. Both
+  // read values paletteMetrics already computes, so filtering costs nothing a palette did not
+  // already pay for on render.
+  matchesLight(p, bands) { if (!bands || !bands.length) return true; return bands.indexOf(this.paletteMetrics(p).lightBand) >= 0; },
+  matchesTemp(p, temps) { if (!temps || !temps.length) return true; return temps.indexOf(this.paletteMetrics(p).temp.toLowerCase()) >= 0; },
   scopedFeed(feed) {
     const s = this.state || {};
-    const t = s.activeTags || [], a = s.activeA11y || [];
+    const t = s.activeTags || [], a = s.activeA11y || [], l = s.activeLight || [], w = s.activeTemp || [];
     let out = this.projectFeed(feed);
     if (t.length) out = out.filter((p) => this.matchesTags(p, t));
     if (a.length) out = out.filter((p) => this.matchesA11y(p, a));
+    if (l.length) out = out.filter((p) => this.matchesLight(p, l));
+    if (w.length) out = out.filter((p) => this.matchesTemp(p, w));
     return out;
   },
   // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
@@ -251,10 +258,33 @@ export const persistenceMethods = {
       return { activeA11y: next, page: 0, announce: say };
     }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
   },
-  // Clears BOTH groups — the single clear-all the panel and header share.
+  // One toggle for every measured facet, keyed by its stable id — the group's state key is derived
+  // from that id rather than each group getting a hand-written setter to keep in step.
+  setFacet(key, value) {
+    this._listFreezeHeight();
+    this.setState((st) => {
+      const cur = st[key] || [];
+      const on = cur.indexOf(value) >= 0;
+      const next = on ? cur.filter((x) => x !== value) : cur.concat([value]);
+      return { [key]: next, page: 0, announce: (on ? 'Removed ' : 'Added ') + value + ' filter.' };
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+  },
+  // Clears EVERY group — the single clear-all the panel and the archive header share.
   clearTags() {
     this._listFreezeHeight();
-    this.setState({ activeTags: [], activeA11y: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+    this.setState({ activeTags: [], activeA11y: [], activeLight: [], activeTemp: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+  },
+  // The way out of a zero-result state that does not throw away everything else the user chose.
+  // Order matters: the last filter added is the one most likely to have caused the conflict, and
+  // filters are appended within their group, so the newest is the tail of whichever group is last.
+  removeLastFilter() {
+    const st = this.state;
+    for (const key of ['activeTemp', 'activeLight', 'activeA11y', 'activeTags']) {
+      const cur = st[key] || [];
+      if (cur.length) { this._listFreezeHeight(); const gone = cur[cur.length - 1];
+        this.setState({ [key]: cur.slice(0, -1), page: 0, announce: 'Removed ' + gone + ' filter.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+        return; }
+    }
   },
   createProject(name) {
     name = (name || '').trim(); if (!name) return null; const id = 'proj-' + Date.now() + Math.random().toString(36).slice(2, 6);
