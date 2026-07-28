@@ -6,6 +6,54 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-29 — Ten type steps, in rem
+
+**Decision:** every font size in the app comes from one of ten `--fs-*` tokens declared in
+`global.css`, in `rem`. No px font-size anywhere in `src/`, and no helper that can mint one.
+
+**What it replaced:** 244 declarations across 24 sizes and — counting size, weight, case and
+tracking together — **93 distinct type styles**. Seven of the sizes sat half a pixel from a
+neighbour: 7.5, 8.5, 9.5, 10.5, 11.5, 12.5, 13.5. A reader cannot tell 12.5 from 13, which means
+the difference was never a level in a hierarchy; it was a decision somebody made once, in one
+component, that nobody could repeat on purpose. The cost was paid on every new element: what size
+is this? — a question with 24 defensible answers.
+
+| token | px | absorbed |
+|---|---|---|
+| `--fs-display` | 44 | 44 |
+| `--fs-statement` | 32 | 34, 32 |
+| `--fs-title` | 24 | 26, 24 |
+| `--fs-subtitle` | 20 | 22, 20, 19 |
+| `--fs-lead` | 15 | 16, 15 |
+| `--fs-body` | 13 | 14, 13.5, 13 |
+| `--fs-detail` | 12 | 12.5, 12, 11.5 |
+| `--fs-label` | 10 | 11, 10.5, 10 |
+| `--fs-micro` | 9 | 9.5, 9 |
+| `--fs-nano` | 8 | 8.5, 8, 7.5 |
+
+**Named for the job, not the number,** so the name survives the number changing — which is the
+whole point of the next paragraph.
+
+**Why rem and not px.** Two reasons, and the first is the one that matters. A px type scale
+silently overrides a reader who has raised their browser's base size, which is the most common
+accessibility failure in a type system that otherwise looks careful. Second: it makes fluid
+scaling a one-line change. Point `:root`'s `font-size` at a viewport-derived value and all ten
+steps follow, with no second migration through 244 call sites. The Osmo scaling system (July 2026)
+is written against `body`; for a rem scale it has to sit on `:root` instead, because that is what
+`rem` resolves against — that deviation is deliberate, not an oversight.
+
+**Two things fell out of the sweep.** `monoLabel(px, …)` took a number and was the last place that
+could invent a size — 8.5 got in through it and nowhere else; it now takes a scale step. And the
+contrast checker's large-text sample was set at **23px**, one pixel short of the 18pt/24px that
+WCAG actually defines as large text, while the panel around it switched to the 3:1 large-text
+threshold. It demonstrated a standard it did not meet. It is `--fs-title` now, which is 24.
+
+**Still open:** tracking. There are six `--track-*` tokens and, beside them, raw values at .01,
+.02, .05, .06, .08, .09, .1 and .12em. Same class of problem, half the size, not done here — doing
+both in one pass would have made the diff unverifiable.
+
+---
+
 ## 2026-07-26 — The site footer, and what it costs the 404
 
 **Decision:** a shared footer — the Atmos Gallery wordmark at full page width between two hairlines,

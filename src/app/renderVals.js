@@ -42,7 +42,7 @@ const A11Y_SPOKEN = {
 // badge widths and a ragged right edge. Fixed slot + flex-end = one edge, which the list header's ⓘ
 // reads from the same token — so badge and marker align exactly the way the pair count aligns
 // under AA PAIRS and the ratio under MAX CONTRAST.
-const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flex: 'none', width: 'var(--row-aa-mark)', padding: '2px 6px', fontFamily: MONO, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
+const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flex: 'none', width: 'var(--row-aa-mark)', padding: '2px 6px', fontFamily: MONO, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
 // What every surface renders: the verdict, then the count. No denominator in the VALUE — it is
 // C(n,2), a number nobody reasons in, and repeating it implied a compliance percentage. It is
 // stated once in the list header's ⓘ, and again in the title of every badge, everywhere.
@@ -78,7 +78,7 @@ export const renderValsMethods = {
     const s = this.state;
     const mono = 'Neue Montreal';
     const w = (b) => this.swatchGrow(b);   // one rule for a swatch's share, shared with the 3D card (pipeline.js)
-    const pill = { fontFamily: mono, fontSize: '10.5px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', padding: '8px 11px', lineHeight: 1 };
+    const pill = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', padding: '8px 11px', lineHeight: 1 };
     const busy = s.stage === 'processing';
 
     // ===== contrast checker view (computed from sRGB relative luminance — WCAG, not OKLCH L) =====
@@ -97,8 +97,8 @@ export const renderValsMethods = {
             return {
               blank: false, key: i + '-' + j, pass, ratio: r.toFixed(1), glyph: pass ? '✓' : '✕',
               style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent', opacity: dim ? 0.22 : 1 },
-              numStyle: { fontFamily: mono, fontSize: '11px', lineHeight: 1, color: 'var(--on-surface)' },
-              glyphStyle: { fontSize: '8px', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)' },
+              numStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', lineHeight: 1, color: 'var(--on-surface)' },
+              glyphStyle: { fontSize: 'var(--fs-nano)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)' },
             };
           });
           rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
@@ -108,8 +108,8 @@ export const renderValsMethods = {
           return {
             hex: b.hex.toUpperCase(), onLabel: on === '#000000' ? 'Black text' : 'White text', ratio: r.toFixed(1),
             style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: b.hex, color: on, padding: '10px 12px', minWidth: 0 },
-            nameStyle: { fontFamily: mono, fontSize: '11px', letterSpacing: '.02em' },
-            metaStyle: { fontFamily: mono, fontSize: '10px', opacity: 0.85, whiteSpace: 'nowrap' },
+            nameStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.02em' },
+            metaStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', opacity: 0.85, whiteSpace: 'nowrap' },
           };
         });
         // One definition of the best pair, taken from paletteMetrics so the drawer's sample and the
@@ -119,15 +119,15 @@ export const renderValsMethods = {
         const bp = this.paletteMetrics(cp).bestPair;
         const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
-        const segOn = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        const segOn = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
+        const segOff = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
         cx = {
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
           rows, textOn,
           matrixColsStyle: { display: 'flex', flexDirection: 'column', width: '100%' },
-          sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: mono, fontSize: s.contrastLarge ? '23px' : '15px', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400 },
+          sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: mono, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400 },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: aaa ? segOff : segOn, aaaStyle: aaa ? segOn : segOff, aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
@@ -167,9 +167,9 @@ export const renderValsMethods = {
             rowStyle: rowBase, rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
-            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: mono, fontSize: '7.5px', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
-            valueStyle: { fontFamily: mono, fontSize: '11.5px', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
+            caveatStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
+            valueStyle: { fontFamily: mono, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
         });
@@ -183,7 +183,7 @@ export const renderValsMethods = {
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
           style: { flexGrow: w(b), flexBasis: 0, minWidth: '190px', height: '340px', background: b.hex, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', willChange: 'opacity' },
           bandRingStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 1 },
-          weightStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
+          weightStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
           valuesWrap: { display: 'flex', flexDirection: 'column', width: '100%', position: 'relative', zIndex: 2 },
         };
       });
@@ -278,7 +278,7 @@ export const renderValsMethods = {
         // inheriting padding shaped for a word.
         moreStyle: {
           background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
-          fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: 'var(--track-flat)',
+          fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)',
           textTransform: 'uppercase', color: 'var(--on-surface)',
           ...(s.readingOpen
             ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', padding: 0 }
@@ -291,7 +291,7 @@ export const renderValsMethods = {
       };
     }
     // palette-level copy affordances
-    const palBtn = { fontFamily: mono, fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: '9px 14px', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
+    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: '9px 14px', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
     let procStatus = '';
@@ -351,14 +351,14 @@ export const renderValsMethods = {
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
-    const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     // The same inset as its neighbours — the difference is what it is measured against. For them
     // it is space before the next column; for this one there is no next column, so it pairs with
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
     // not moved a pixel; the 8 it used to leave to the row's padding it now holds itself, which is
     // what lets the sort header above it be a button rather than a column-wide slab.
-    const timeCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const timeCell = { textAlign: 'right', paddingRight: 'var(--row-cell-inset)', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -391,7 +391,7 @@ export const renderValsMethods = {
         // reachable through it. data-ix="press" gives them the shared hover/press tint spectrum.
         // 4px/8px, not 3px/6px: the hover tint sat almost on the glyphs. Still well inside the
         // row's 24px content box, so --row-list-height is untouched.
-        tagBtnBase: { position: 'relative', zIndex: 2, fontFamily: 'Neue Montreal', fontSize: '8.5px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: '4px 8px', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
+        tagBtnBase: { position: 'relative', zIndex: 2, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: '4px 8px', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
         // the row's one main action, stretched over the whole row: focus tints the row it covers
         onHitFocus: (e) => this.rowTintOn(e.currentTarget.closest('[data-row]')),
         onHitBlur: (e) => this.rowTintOff(e.currentTarget.closest('[data-row]')),
@@ -514,9 +514,9 @@ export const renderValsMethods = {
             rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
-            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: mono, fontSize: '7.5px', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
-            valueStyle: { fontFamily: mono, fontSize: '11.5px', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
+            caveatStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
+            valueStyle: { fontFamily: mono, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
         });
@@ -530,7 +530,7 @@ export const renderValsMethods = {
           groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
           weightPct: Math.round((b.weight / tw2) * 100) + '%',
           style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-          weightStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '16px 14px 0' },
+          weightStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '16px 14px 0' },
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
@@ -572,7 +572,7 @@ export const renderValsMethods = {
             style: { flex: 1, minWidth: 0, height: '56px', background: hx, border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '7px 8px', cursor: 'pointer', position: 'relative' },
             hover: { filter: this.lumHex(hx) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(hx) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
             markStyle: { position: 'absolute', top: '7px', left: '8px', width: '5px', height: '5px', background: on, opacity: isBase ? 0.9 : 0, display: 'block' },
-            hexStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
+            hexStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
           };
         }),
       }));
@@ -587,7 +587,7 @@ export const renderValsMethods = {
     if (s.exportOpen && s.exportPalette) {
       const p = s.exportPalette, semantic = !!s.exportSemantic;
       const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: '12px 14px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
-      const mk = (id, label, ext) => ({ label, ext, onPick: () => this.doExport(p, id, semantic), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: '13px', color: 'var(--on-surface)' } });
+      const mk = (id, label, ext) => ({ label, ext, onPick: () => this.doExport(p, id, semantic), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: p.name, semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
         layerLabel: semantic ? 'Exporting the semantic scaffold. Refine before shipping.' : 'Exporting the primitive layer (swatches by weight).',
@@ -607,8 +607,8 @@ export const renderValsMethods = {
     }
 
     // --- projects: filter chips + assign/manage dialog data ---
-    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
-    const countStyle = (active) => ({ fontFamily: mono, fontSize: '8.5px', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)' });
+    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
+    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-nano)', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)' });
     const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => !p.projectId).length : s.feed.filter((p) => p.projectId === id).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
     // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
     // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
@@ -891,13 +891,13 @@ export const renderValsMethods = {
           const f = rc.focus;
           return {
             count: rc.passed + ' / ' + rc.total + ' meet AA',
-            countStyle: { fontFamily: mono, fontSize: '13px', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
+            countStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
             pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
             pairHex: f.fgHex + ' on ' + f.bgHex,
             pairRatio: f.ratio.toFixed(1) + ':1',
             pairLevel: f.aaa ? 'AAA' : f.aa ? 'AA' : 'Fails AA',
-            pairLevelStyle: { fontFamily: mono, fontSize: '9px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
-            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: '24px', lineHeight: 1 },
+            pairLevelStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
+            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: 'var(--fs-title)', lineHeight: 1 },
             // Depth on demand: the full matrix is available, and stays out of the way until asked.
             // A DRILL-IN, not an accordion. Expanding inside the card pushed Palette structure
             // down the page whenever anyone looked at the detail — the layout shift an editor
@@ -911,8 +911,8 @@ export const renderValsMethods = {
               roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
               ratio: x.ratio.toFixed(1) + ':1',
               level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
-              chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: '10px', lineHeight: 1 },
-              levelStyle: { fontFamily: mono, fontSize: '8.5px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
+              chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: 'var(--fs-label)', lineHeight: 1 },
+              levelStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
             })),
             aria: rc.passed + ' of ' + rc.total + ' text-role pairs meet AA. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + '.',
           };
@@ -944,7 +944,7 @@ export const renderValsMethods = {
             // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
             // destructive control inside the one element whose whole job is to be safe to click.
             style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '96px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', color: on, overflow: 'hidden' },
-            labelStyle: this.monoLabel(8.5, '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap' }),
+            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap' }),
           };
         }),
         // Colour is the main area and the only thing in it.
@@ -1117,8 +1117,8 @@ export const renderValsMethods = {
               background: b.hex, color: on, border: 'none', cursor: 'pointer',
               fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
             },
-            hexStyle: { fontFamily: 'Neue Montreal', fontSize: '15px', letterSpacing: '.02em', textTransform: 'uppercase' },
-            metaStyle: { fontFamily: 'Neue Montreal', fontSize: '11px', letterSpacing: '.06em', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '6px' },
+            hexStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-lead)', letterSpacing: '.02em', textTransform: 'uppercase' },
+            metaStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.06em', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '6px' },
           };
         }),
         // Only the example can be left — a shared link has nowhere to go back TO, and a control
@@ -1169,7 +1169,7 @@ export const renderValsMethods = {
         background: 'color-mix(in srgb, var(--on-surface) 7%, transparent)',
         backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
         border: '1px solid var(--action-line)',
-        color: 'var(--on-surface)', fontFamily: 'Neue Montreal', fontSize: '14px', fontWeight: 500,
+        color: 'var(--on-surface)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500,
         letterSpacing: 'var(--track-title)', whiteSpace: 'nowrap', cursor: 'pointer',
         transition: 'background-color .28s var(--ease-button-hover), border-color .28s var(--ease-button-hover), transform .12s var(--ease-standard)',
       },
@@ -1204,8 +1204,8 @@ export const renderValsMethods = {
       isSharedView: !!s.sharedView,
       onSaveShared: () => this.saveShared(),
       onMakeOwn: () => this.makeOwnFromShared(),
-      copyLabelStyle: this.monoLabel(10, '.12em', { color: 'var(--on-surface-muted)' }),
-      deferNoteStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
+      copyLabelStyle: this.monoLabel('var(--fs-label)', '.12em', { color: 'var(--on-surface-muted)' }),
+      deferNoteStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
       // feed states + view toggle
       // The cold-start empty state is only cold start. Filtered-to-nothing is a different message
       // with a different way out, and showing "Palettes you generate collect here" to someone
@@ -1223,7 +1223,7 @@ export const renderValsMethods = {
       // the utility tier's muted ink and 15% edge; that tier is gone (it could not hold 4.5:1 once
       // its own hover tint darkened the ground under it), so these take what everything else takes.
       // The demotion from "New generation" is carried by fill: that one is filled, these are not.
-      tier3BtnStyle: this.monoLabel(10, 'var(--track-flat)', {
+      tier3BtnStyle: this.monoLabel('var(--fs-label)', 'var(--track-flat)', {
         display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '7px 12px',
         background: 'none', border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', cursor: 'pointer',
@@ -1406,7 +1406,7 @@ export const renderValsMethods = {
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
       pageSizeOptions: [12, 24, 36].map((n, i) => ({
         label: '' + n, pressed: pageSize === n ? 'true' : 'false', tabIndex: pageSize === n ? 0 : -1,
-        style: this.monoLabel(10, 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
+        style: this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: '6px 12px', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
         onSelect: () => this.setPageSize(n),
       })),
       pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + ([12, 24, 36].indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s cubic-bezier(.625,.05,0,1)' },
@@ -1469,7 +1469,7 @@ export const renderValsMethods = {
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
-          style: this.monoLabel(9, 'var(--track-flat)', {
+          style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
             // One label per column, right-aligned over its own values. The horizontal padding is
             // what the hover tint needs to breathe — with 0 it painted flush against the glyphs,
             // which is the one place in the app a control had no inset. The SAME 8px inset is
@@ -1579,7 +1579,7 @@ export const renderValsMethods = {
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: filedCur && filedCur.projectId ? 'In ' + this.projectName(filedCur.projectId) : 'Add to project',
       assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: '10px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
+      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: '7px 12px', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),

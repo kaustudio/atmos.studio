@@ -83,7 +83,30 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --on-surface-muted:#63635b; /* secondary text */
   --line:#e0e0db;             /* hairline dividers */
   --line-strong:#d5d5d0;      /* stronger borders */
-  /* ===== type scale (tracking tokens — bundle the system voice; no ad-hoc/0px inline) ===== */
+  /* ===== TYPE SCALE =====
+     Ten steps. It was ninety-three: 244 declarations across 24 sizes, seven of them half a pixel
+     from a neighbour (7.5 / 8.5 / 9.5 / 10.5 / 11.5 / 12.5 / 13.5), each one a decision somebody
+     made once and nobody could repeat. A size a reader cannot tell from the one beside it is not a
+     level in a hierarchy, it is noise that costs a decision every time a new element is drawn.
+
+     Declared in rem, not px, for two reasons. It respects a reader who has raised their browser's
+     base size — px silently overrides that, which is the most common accessibility failure in a
+     type system that looks careful. And it is what makes the fluid scaling system a one-line
+     change: point :root's font-size at a viewport-derived value and all ten steps follow, with no
+     second migration through 244 call sites.
+
+     Steps are named for the JOB, not the size, so the name survives the number changing. */
+  --fs-display:2.75rem;       /* 44 — the palette's name, once per screen */
+  --fs-statement:2rem;        /* 32 — landing statement, the name on a phone */
+  --fs-title:1.5rem;          /* 24 — section headings: Library, empty states */
+  --fs-subtitle:1.25rem;      /* 20 — dialog and panel titles */
+  --fs-lead:0.9375rem;        /* 15 — lead paragraphs, the "Best for" line */
+  --fs-body:0.8125rem;        /* 13 — body copy and the reading */
+  --fs-detail:0.75rem;        /* 12 — menu items, notes, secondary copy */
+  --fs-label:0.625rem;        /* 10 — uppercase labels; the workhorse, 83 uses */
+  --fs-micro:0.5625rem;       /*  9 — counts, eyebrows, row meta */
+  --fs-nano:0.5rem;           /*  8 — swatch value labels, the smallest thing drawn */
+  /* ===== tracking (bundle the system voice; no ad-hoc/0px inline) ===== */
   --track-display:-0.03em;    /* large display / wordmark */
   --track-statement:-0.02em;  /* statement-scale headings */
   --track-title:-0.01em;      /* card/section titles */
@@ -289,7 +312,7 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-dur:0.42s;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
   border-radius:var(--button-006-border-radius);
-  font-family:Neue Montreal;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
   transition:scale .12s var(--ease-button-click);
@@ -475,10 +498,10 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-colo
    OS locale, so the same palette showed 0.028 to one person and 0,028 to another, and the spinner
    arrows are useless at a step of 0.001. inputMode keeps the numeric keypad on touch. */
 [data-refine-num]{ display:inline-flex; align-items:baseline; gap:2px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 7px; }
-[data-refine-num] input{ width:44px; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:12px; letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
+[data-refine-num] input{ width:44px; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
 [data-refine-num] input:focus{ outline:none; }
 html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-[data-refine-num] span{ font-family:'Neue Montreal'; font-size:12px; color:var(--on-surface-muted); }
+[data-refine-num] span{ font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
 
 /* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
    frames and shifts no layout — it is positioned and sized by script, then inflated here by its

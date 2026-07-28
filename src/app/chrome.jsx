@@ -11,7 +11,7 @@ import { sx } from '../lib/sx.js';
 // spans are the resource's own clip-path text swap and are load-bearing.
 export function B006({ label, hover, btnRef, ...props }) {
   return (
-    <button type="button" data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat)')} {...props}>
+    <button type="button" data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
       <span className="button-006__hover"><span className="button-006__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button-006__bg is--hover"></span></span>
       <span className="button-006__default"><span aria-hidden="true" className="button-006__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button-006__bg is--default"></span></span>
     </button>

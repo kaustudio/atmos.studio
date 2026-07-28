@@ -88,7 +88,7 @@ const AaBadge = ({ aa }) => (
     <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none;line-height:1')}>
       {aa.aaState === 'flexible' && <IconCheck size={9} />}
       {aa.aaState === 'limited' && <IconContrast size={9} />}
-      {aa.aaState === 'none' && <span style={sx('font-size:8px;line-height:1')}>✕</span>}
+      {aa.aaState === 'none' && <span style={sx('font-size:var(--fs-nano);line-height:1')}>✕</span>}
     </span>
     AA
   </span>
@@ -104,13 +104,13 @@ const AaBadge = ({ aa }) => (
 // carried by shape as well as text and survives a greyscale render (SC 1.4.1).
 const CardIdentity = ({ c }) => (<>
   <span style={sx('display:flex;align-items:baseline;gap:8px;min-width:0')}>
-    <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:15px;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+    <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
     {c.isExample && (
-      <span style={sx('flex:none;font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);padding:2px 6px')}>Example</span>
+      <span style={sx('flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);padding:2px 6px')}>Example</span>
     )}
   </span>
   {c.current && (
-    <span style={sx('display:inline-flex;align-items:center;gap:6px;flex:none;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>
+    <span style={sx('display:inline-flex;align-items:center;gap:6px;flex:none;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>
       <span style={sx('width:7px;height:7px;background:var(--on-surface);flex:none')} aria-hidden="true"></span>Viewing</span>
   )}
 </>);
@@ -122,7 +122,7 @@ const CardMetrics = ({ c }) => (
   <div style={c.cardMetricsStyle} aria-hidden="true">
     {c.cardMetrics.map((m, mi) => (
       <div key={mi} style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-        <span style={sx('font-family:Neue Montreal;font-size:7.5px;letter-spacing:.09em;text-transform:uppercase;color:#a3a39c;white-space:nowrap')}>{m.label}</span>
+        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.09em;text-transform:uppercase;color:#a3a39c;white-space:nowrap')}>{m.label}</span>
         {/* Value first, badge trailing — the opposite order to the list row, and for the reason the
             row uses its own: put the number where the eye is already reading. The row's values are
             a RIGHT-aligned numeric column, so the badge leads and the count lands on the shared
@@ -130,7 +130,7 @@ const CardMetrics = ({ c }) => (
             on one line — so a leading badge indented this one number out of that column and broke
             the only alignment the grid has. The number takes the column edge; the badge follows as
             the qualifier it is. */}
-        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:11px;letter-spacing:.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
+        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
           <span style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
           {m.aa && <AaBadge aa={m.aa} />}
         </span>
@@ -162,10 +162,10 @@ function ValueRow({ v, showCaveat }) {
     <button type="button" data-ix="cell" data-focus="value" onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
       <span style={v.colStyle}>
         <span style={v.labelRowStyle}>
-          <span style={sx('font-family: Neue Montreal; font-size: 8px')}>{v.labelText}</span>
-          {showCaveat && v.hasCaveat && (<span style={sx('font-size: 8px; font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
+          <span style={sx('font-family: Neue Montreal; font-size:var(--fs-nano)')}>{v.labelText}</span>
+          {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-nano); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
         </span>
-        <span style={showCaveat ? sx('font-family: Neue Montreal; text-transform: uppercase; overflow: hidden; display: block') : sx('font-family: Neue Montreal; text-transform: uppercase; font-size: 12px; overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
+        <span style={showCaveat ? sx('font-family: Neue Montreal; text-transform: uppercase; overflow: hidden; display: block') : sx('font-family: Neue Montreal; text-transform: uppercase; font-size:var(--fs-detail); overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
       </span>
       <span style={v.iconWrapStyle} aria-hidden="true">
         {v.copied && <IconCheck />}
@@ -184,7 +184,7 @@ const contrastB006Label = (
 // dialog rather than a menu because the formats there are not a list of five equivalents — they
 // carry extensions and a semantic-scaffold decision that changes what every one of them emits.
 const exportB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export<span aria-hidden="true" style={{ fontSize: '8px' }}>▾</span></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export<span aria-hidden="true" style={{ fontSize: 'var(--fs-nano)' }}>▾</span></span>
 );
 // COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
 // rather than saying "Copied", because from a menu that is the only part still in question — and it
@@ -206,7 +206,7 @@ const copyB006Label = (done) => (
       <span style={{ gridArea: '1/1' }}>{done ? 'Copied' : 'Copy'}</span>
       <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>Copied</span>
     </span>
-    <span aria-hidden="true" style={{ fontSize: '8px', visibility: done ? 'hidden' : 'visible' }}>▾</span>
+    <span aria-hidden="true" style={{ fontSize: 'var(--fs-nano)', visibility: done ? 'hidden' : 'visible' }}>▾</span>
   </span>
 );
 // Refine carries no icon, deliberately. Every other glyph in this row stands for a NOUN the app
@@ -232,12 +232,12 @@ function CopyMenu({ open, done, onToggle, onKey, onHex, onCss }) {
               for. The second line of each item is the shape of what lands on the clipboard, so the
               choice is made on the artefact rather than on the word for it. */}
           <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onHex} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Hex List</span>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>One Value per Line.</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>Hex List</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>One Value per Line.</span>
           </button>
           <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={onCss} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-            <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>CSS Variables</span>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>Custom Properties. Ready to Paste.</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>CSS Variables</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>Custom Properties. Ready to Paste.</span>
           </button>
         </div>
       </>)}
@@ -270,20 +270,20 @@ function MobileShareView({ ms }) {
       <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 0')}>
         {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
         <span role="img" aria-label="Atmos Gallery" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
-        <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>{ms.eyebrow}</span>
+        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>{ms.eyebrow}</span>
       </div>
 
       <div style={sx('flex:none;padding:26px 18px 22px')}>
-        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:34px;line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
+        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
-              <span key={i} style={sx('font-family:Neue Montreal;font-size:11px;padding:4px 8px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:capitalize')}>{d}</span>
+              <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-label);padding:4px 8px;border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:capitalize')}>{d}</span>
             ))}
           </div>
         )}
         {ms.hasRationale && (
-          <p style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
+          <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
         )}
       </div>
 
@@ -302,11 +302,11 @@ function MobileShareView({ ms }) {
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
       <div style={sx('flex:none;padding:24px 18px 34px')}>
-        <p style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+        <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
             one control on a surface built for a thumb. */}
         {ms.canLeave && (
-          <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label="Close the example and return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:18px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label="Close the example and return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:18px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
         )}
       </div>
     </div>
@@ -458,14 +458,14 @@ export default function AppView({ vals }) {
                  there already. One pre-authored line-group per block, no split; the masks are inside
                  the h1/p so those boxes stay exactly the size _heroReach measures. */
               <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;max-width:280px')}>
-                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
+                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a desktop experience.</span></span>
                 </h1>
                 {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
                     makes it one is that it never said why, so it read as a limitation of the site
                     rather than of the work. Reading an image means comparing swatches, roles and
                     contrast side by side, and that is a wide-screen job. */}
-                <p style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
+                <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Reading an image means weighing colours, roles and contrast side by side. That needs room.</span></span>
                 </p>
                 {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
@@ -474,9 +474,9 @@ export default function AppView({ vals }) {
                     run it. pointer-events restored — the block above it is decorative and inert. */}
                 <div style={sx('display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
-                    <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an example</button>
+                    <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an example</button>
                   )}
-                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
+                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
                     {vals.gateLinkCopied ? (<><IconCheck />Link copied</>) : 'Save for desktop'}
                   </button>
                 </div>
@@ -484,8 +484,8 @@ export default function AppView({ vals }) {
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:20ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size: 32px; width: 507px')}>Colour read from light and atmosphere.</span></span>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size: 32px')}>In seconds.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); width: 507px')}>Colour read from light and atmosphere.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds.</span></span>
                 </h1>
                 <div style={sx('margin-top:36px;pointer-events:auto')}>
                   <HBtn type="button" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get started" style={vals.glassCta} styleHover={vals.glassCtaHover} styleActive={vals.glassCtaActive}>Get Started</HBtn>
@@ -567,14 +567,14 @@ export default function AppView({ vals }) {
           {vals.showProjectsBar && (
             <div style={sx('display:flex;align-items:center;gap:8px')}>
               <div style={sx('position:relative;display:flex')}>
-                <button type="button" data-ix="solid" data-focus="chrome" aria-haspopup="menu" aria-expanded={vals.backupMenuOpen} onClick={vals.toggleBackupMenu} aria-label="Back up your library to a file" style={vals.tier3BtnStyle}>Back up<span aria-hidden="true" style={{ fontSize: '8px' }}>▾</span></button>
+                <button type="button" data-ix="solid" data-focus="chrome" aria-haspopup="menu" aria-expanded={vals.backupMenuOpen} onClick={vals.toggleBackupMenu} aria-label="Back up your library to a file" style={vals.tier3BtnStyle}>Back up<span aria-hidden="true" style={{ fontSize: 'var(--fs-nano)' }}>▾</span></button>
                 {vals.backupMenuOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleBackupMenu} aria-hidden="true"></div>
                   <div role="menu" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;min-width:230px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column')}>
                     {vals.showBackUpProject && (
                       <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={vals.backUpProject} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 14px;cursor:pointer;color:var(--on-surface);font:inherit')}>
-                        <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Back up this project</span>
-                        <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>{vals.activeScopeLabel}</span>
+                        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>Back up this project</span>
+                        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{vals.activeScopeLabel}</span>
                       </button>
                     )}
                     {/* No text-transform here, unlike the item above it once had: this label is a
@@ -583,8 +583,8 @@ export default function AppView({ vals }) {
                         while the line read "Every project + Unfiled", because capitalize has
                         nothing to do to a plus sign. Sentence case, as authored. */}
                     <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={vals.backUpLibrary} style={sx('display: flex; flex-direction: column; gap: 2px; text-align: left; background: none; border: none; padding: 11px 14px; cursor: pointer; color: var(--on-surface); font: inherit')}>
-                      <span style={sx('font-family:Neue Montreal;font-size:12.5px')}>Back up whole library</span>
-                      <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>Every project and Unfiled</span>
+                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>Back up whole library</span>
+                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>Every project and Unfiled</span>
                     </button>
                   </div>
                 </>)}
@@ -609,10 +609,10 @@ export default function AppView({ vals }) {
                 overflow:hidden mask; the spacing lives on the MASK, never on the span, or the
                 translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
-              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:26px;color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div></div>
-              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:15px;color:var(--on-surface-muted)")}>We read its light and atmosphere - not its literal pixels.</div></div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div></div>
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>We read its light and atmosphere - not its literal pixels.</div></div>
             </div>
-            <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size: 13px; letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
+            <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
           {/* The interpretation note that used to sit here — "a small downscaled thumbnail is sent to
@@ -629,9 +629,9 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('width:380px;display:flex;flex-direction:column;gap:12px')}>
               <div style={sx('display:flex;justify-content:space-between;align-items:center')}>
-                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size: 9px; letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
+                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
                   <span style={sx('width:7px;height:7px;background:var(--on-surface);animation:blink 1.5s ease infinite')} aria-hidden="true"></span>{vals.procStatus}</span>
-                <span style={sx('font-family: Neue Montreal; font-size: 9px; color: var(--on-surface-muted)')}>OKLCH</span>
+                <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); color: var(--on-surface-muted)')}>OKLCH</span>
               </div>
               <div style={sx('height:2px;width:100%;background:var(--line);position:relative')}>
                 <div ref={vals.progRef} style={sx('position:absolute;left:0;top:0;height:2px;width:0%;background:var(--on-surface)')}></div>
@@ -647,7 +647,7 @@ export default function AppView({ vals }) {
                 both exits — keep it, or go make one. */}
             {vals.isSharedView && (
               <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;margin:0 0 18px;border:1px solid var(--line-strong);background:var(--surface-raised)')}>
-                <span style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A palette someone shared with you. It isn’t saved in this browser unless you save it.</span>
+                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A palette someone shared with you. It isn’t saved in this browser unless you save it.</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
                   <B006 onClick={vals.onSaveShared} aria-label="Save this shared palette to your archive" label="Save to archive" />
                   <B006 onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" label="Make your own" />
@@ -716,7 +716,7 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
-                <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:44px;line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
+                <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
                 {/* Two traits, then More. Four capitalised pills read as a legend rather than a
                     description, and the remaining ones are one click away with the reading.
 
@@ -730,7 +730,7 @@ export default function AppView({ vals }) {
                       new. Marking them here rather than counting in the tween keeps the two
                       definitions of "extra" from drifting apart. */}
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('font-family: Neue Montreal; font-size: 12px; padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
+                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('font-family: Neue Montreal; font-size:var(--fs-detail); padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
                   ))}
                   {vals.result.hasMore && (
                     <button type="button" data-more-btn="1" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>{vals.result.readingOpen ? <IconClose /> : vals.result.moreLabel}</button>
@@ -740,7 +740,7 @@ export default function AppView({ vals }) {
                     it is not deleted — it is simply no longer the first thing between the palette
                     and the person deciding what to do with it. */}
                 {vals.result.readingOpen && (
-                  <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
+                  <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
                 )}
               </div>
               {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed
@@ -752,7 +752,7 @@ export default function AppView({ vals }) {
                   Contrast drawer, one button away, with all C(n,2) pairs and an AA/AAA lens. One
                   affordance per act; a number floated next to a recommendation is not an act. */}
               <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
-                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface);text-align:right;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
+                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);text-align:right;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
             </div>
             {/* The palette's metadata readout — the detail pane's bottom line, restored from the
@@ -778,7 +778,7 @@ export default function AppView({ vals }) {
               <span data-meta-line="1" aria-hidden="true" style={sx('display:block;flex:none;width:100%;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
                 <div key={gi} style={sx('flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column')}>
-                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
+                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>
                     {g.rows.map((m, mi) => (
@@ -792,10 +792,10 @@ export default function AppView({ vals }) {
                             align-items:baseline on the wrapper, so the badge's own word sits on the
                             same line as the value it qualifies rather than floating beside it. */}
                         <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
-                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:13px;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')}>{m.value}</span>
+                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')}>{m.value}</span>
                           </dd>
                         </div>
                         <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
@@ -813,7 +813,7 @@ export default function AppView({ vals }) {
                 {vals.result.hasRef && vals.result.refImageNode}
                 {vals.result.noRef && (
                   <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
                   </div>
                 )}
               </div>
@@ -823,12 +823,12 @@ export default function AppView({ vals }) {
 
         {vals.isError && (
           <div role="alert" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;min-height:420px;padding:40px;background:var(--surface-raised);border:1px solid var(--line-strong)')}>
-            <div aria-hidden="true" style={sx('width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid var(--on-surface);font-family:Neue Montreal;font-size:22px;line-height:1;color:var(--on-surface)')}>!</div>
+            <div aria-hidden="true" style={sx('width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-subtitle);line-height:1;color:var(--on-surface)')}>!</div>
             <div style={sx('text-align:center;max-width:440px')}>
-              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:24px;color:var(--on-surface);letter-spacing:-.01em")}>{vals.errorTitle}</div>
-              <div style={sx("font-family:'Neue Montreal';font-size:15px;color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
+              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>{vals.errorTitle}</div>
+              <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
             </div>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.onBrowse} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 20px;font-family:Neue Montreal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--surface);cursor:pointer')}>Choose another image</button>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.onBrowse} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 20px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;color:var(--surface);cursor:pointer')}>Choose another image</button>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </div>
         )}
@@ -862,9 +862,9 @@ export default function AppView({ vals }) {
       {vals.hasToast && (
         <div style={sx('position:fixed;left:0;right:0;bottom:28px;z-index:130;display:flex;justify-content:center;pointer-events:none')}>
           <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);padding:11px 12px 11px 18px;box-shadow:0 14px 36px rgba(0,0,0,.24);pointer-events:auto')}>
-            <span style={sx("font-family: 'Neue Montreal'; font-size: 13px; letter-spacing:var(--track-flat); white-space: nowrap; text-transform: capitalize")}>{vals.toastLabel}</span>
+            <span style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap; text-transform: capitalize")}>{vals.toastLabel}</span>
             <HBtn type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete}
-              style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
+              style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
               styleHover={{ background: 'var(--on-surface)', color: 'var(--surface)' }}>Undo</HBtn>
           </div>
         </div>
@@ -873,7 +873,7 @@ export default function AppView({ vals }) {
       {vals.hasNotice && (
         <div data-notice="1" role="status" style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);color:var(--on-surface-muted);padding:9px 13px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
           <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;background:var(--on-surface-muted)')}></span>
-          <span style={sx('font-family:Neue Montreal;font-size:11px;line-height:1.4;letter-spacing:.01em;text-wrap:pretty')}>{vals.notice}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.4;letter-spacing:.01em;text-wrap:pretty')}>{vals.notice}</span>
         </div>
       )}
 
@@ -930,7 +930,7 @@ function FeedSection({ vals }) {
           system's own vocabulary rather than implied by whitespace. */}
       <span aria-hidden="true" style={sx('flex:none;align-self:stretch;width:1px;background:var(--line-strong)')}></span>
       <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-        <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
+        <button type="button" data-facet-btn="1" data-ix="solid" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label="Filter palettes" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
         {/* One chip per applied filter across BOTH groups — accessibility first, matching the
             panel's group order — each removable on its own, so a narrowing can be undone from
             either end. No clear-all here: that was a third affordance for one act (chip ✕ ·
@@ -940,14 +940,14 @@ function FeedSection({ vals }) {
             chips said WHAT was applied but the result of applying it lived inside the drawer, so
             the only way to see whether a filter had helped was to reopen the thing you just shut. */}
         {vals.anyFilter && (
-          <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>
+          <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>
             {vals.resultCount}
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
           </span>
         )}
         {vals.appliedTags.map((t) => (
-          <button key={t.key} type="button" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
-            {t.label}{t.count && <span style={sx('font-size:8.5px;opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: '9px' }}>✕</span>
+          <button key={t.key} type="button" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:7px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
+            {t.label}{t.count && <span style={sx('font-size:var(--fs-nano);opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
           </button>
         ))}
       </div>
@@ -976,7 +976,7 @@ function FeedSection({ vals }) {
           16px below, not the old 7: that 7 was measured against a bar of bordered 31px groups
           sitting immediately under a 15px heading, and both halves of that sum have changed. */}
       <div style={sx('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 24px; line-height:1.1; letter-spacing:-.01em; color: var(--on-surface); margin: 0")}>Library</h2>
+        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:-.01em; color: var(--on-surface); margin: 0")}>Library</h2>
         {/* A SIBLING of the h2, never a child: the section is named by that heading through
             aria-labelledby, so anything inside it would rename the whole region. The button's own
             aria-label is what states the subject, so the fact is available without opening
@@ -987,12 +987,12 @@ function FeedSection({ vals }) {
             Opens left because this one sits at the page's left edge, not its right. */}
         {vals.storeInfo && (
           <div style={sx('position:relative;display:inline-flex;flex:none')}>
-            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.storeInfoOpen} aria-label={vals.storeInfo.aria} onClick={vals.toggleStoreInfo} onKeyDown={vals.storeInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>{vals.storeInfo.glyph}</button>
+            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.storeInfoOpen} aria-label={vals.storeInfo.aria} onClick={vals.toggleStoreInfo} onKeyDown={vals.storeInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{vals.storeInfo.glyph}</button>
             {vals.storeInfoOpen && (<>
               <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleStoreInfo} aria-hidden="true"></div>
               <div data-tip="store" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
                 {vals.storeInfo.lines.map((t, i) => (
-                  <span key={i} style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:' + (i === 0 ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';text-wrap:pretty')}>{t}</span>
+                  <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:' + (i === 0 ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';text-wrap:pretty')}>{t}</span>
                 ))}
               </div>
             </>)}
@@ -1039,11 +1039,11 @@ function FeedSection({ vals }) {
           undo the most recent narrowing, or drop the lot. */}
       {vals.filteredEmpty && (
         <div role="status" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
-          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:16px;color:var(--on-surface)")}>No palette matches every filter</div>
-          <div style={sx("font-family:'Neue Montreal';font-size:13.5px;line-height:1.5;color:var(--on-surface-muted);text-align:center;max-width:46ch;text-wrap:pretty")}>Filters combine, so each one you add narrows what is left. Remove the last one, or start again.</div>
+          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>No palette matches every filter</div>
+          <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-align:center;max-width:46ch;text-wrap:pretty")}>Filters combine, so each one you add narrows what is left. Remove the last one, or start again.</div>
           <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} aria-label="Remove the last filter applied" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Remove last filter</button>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} aria-label="Remove the last filter applied" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Remove last filter</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
           </span>
         </div>
       )}
@@ -1054,8 +1054,8 @@ function FeedSection({ vals }) {
             <div style={sx('position:absolute;left:0;top:0;width:22px;height:22px;border:1px solid var(--line-strong)')}></div>
             <div style={sx('position:absolute;right:0;bottom:0;width:22px;height:22px;border:1px solid var(--on-surface-muted);background:var(--surface-raised)')}></div>
           </div>
-          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:16px;color:var(--on-surface)")}>Nothing here yet</div>
-          <div style={sx("font-family:'Neue Montreal';font-size:14px;color:var(--on-surface-muted)")}>Palettes you generate collect here, newest first.</div>
+          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing here yet</div>
+          <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>Palettes you generate collect here, newest first.</div>
         </div>
       )}
       <div ref={vals.gridRef} onKeyDown={vals.onGridKey}>
@@ -1096,7 +1096,7 @@ function FeedSection({ vals }) {
                 the column keeps its ONE right edge: label over count, both flush. */}
             <div style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0')}>
               <div style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.aaInfoOpen} aria-label="What the AA badge and the pair count mean" onClick={vals.toggleAaInfo} onKeyDown={vals.aaInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.aaInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleAaInfo} aria-hidden="true"></div>
                   {/* Sized and set from the same figures as the Library heading's tip — 288px wide,
@@ -1113,8 +1113,8 @@ function FeedSection({ vals }) {
                         accessibility work in a later stage settles what the badge says — an
                         explanation that outlives the thing it explains is worse than none, and
                         this one would have had to be rewritten twice. */}
-                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A pair is two palette colours that reach WCAG AA against each other. That is a contrast ratio of 4.5:1, the minimum for normal text, so one can safely carry text on the other.</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every two-colour combination is tested: 5 colours make 10 pairs.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A pair is two palette colours that reach WCAG AA against each other. That is a contrast ratio of 4.5:1, the minimum for normal text, so one can safely carry text on the other.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every two-colour combination is tested: 5 colours make 10 pairs.</span>
                   </div>
                 </>)}
               </div>
@@ -1187,16 +1187,16 @@ function FeedSection({ vals }) {
                       13/500 is what that is called in this app. Still full --on-surface ink, not
                       muted: it is the row's only text identifier and the one thing a screen reader
                       leads with, so the demotion is a size step and never a fade. */}
-                  <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:13px;color:var(--on-surface);flex:none")}>{c.name}</span>
+                  <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);flex:none")}>{c.name}</span>
                   {c.isExample && (
-                    <span style={sx('flex: none; font-family: Neue Montreal; font-size: 8px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 6px')}>Example</span>
+                    <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 6px')}>Example</span>
                   )}
                   {/* "Viewing" sits with the name and the Example chip — the labels that say what
                       this palette IS — and, structurally, it has to sit before the flexible column:
                       appearing on the right would push the metric columns left on whichever row was
                       selected, and a column that moves for one row is not a column. */}
                   {c.current && (
-                    <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size: 9px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
+                    <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
                       <span style={sx('width:7px;height:7px;background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
                   )}
                   {/* the flexible child WITHIN identity — it absorbs every difference in name
@@ -1254,7 +1254,7 @@ function FeedSection({ vals }) {
         {vals.showPagination && (
           <nav aria-label="Palette list pages" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
             <div role="group" aria-label="Palettes per page" style={sx('display:flex;align-items:center;gap:10px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Per page</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Per page</span>
               <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
                 <span aria-hidden="true" style={vals.pageTogglePill}></span>
                 {vals.pageSizeOptions.map((o) => (
@@ -1264,7 +1264,7 @@ function FeedSection({ vals }) {
             </div>
             <div style={sx('display:flex;align-items:center;gap:10px')}>
               <button type="button" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}>Prev</button>
-              <span aria-live="polite" style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{vals.pageLabel}</span>
+              <span aria-live="polite" style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{vals.pageLabel}</span>
               <button type="button" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}>Next</button>
             </div>
           </nav>
@@ -1292,7 +1292,7 @@ function FeedSection({ vals }) {
                           <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                             <CardIdentity c={c} />
                           </div>
-                          <span style={sx('font-family:Neue Montreal;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
+                          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
                         </div>
                         <CardMetrics c={c} />
                       </div>
@@ -1321,7 +1321,7 @@ function FeedSection({ vals }) {
                       <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                         <CardIdentity c={c} />
                       </div>
-                      <span style={sx('font-family:Neue Montreal;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
+                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
                     </div>
                     <CardMetrics c={c} />
                   </button>
@@ -1333,11 +1333,11 @@ function FeedSection({ vals }) {
           {/* universe chrome (fixed above the field) */}
           <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 20px; background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.universeCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: 9px 14px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.universeCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: 9px 14px; font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
 
           {vals.universeEngine && (
-            <span data-universe-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to explore</span>
+            <span data-universe-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to explore</span>
           )}
         </div>
 
@@ -1356,14 +1356,14 @@ function FeedSection({ vals }) {
           </div>
           {vals.reelEmpty && (
             <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>
-              <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet — drop a reference image to fill the reel.</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet — drop a reference image to fill the reel.</span>
             </div>
           )}
           <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 20px;pointer-events:none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.reelCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.reelCloseRef} type="button" data-ix="solid" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
-          <span data-reel-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to spin</span>
+          <span data-reel-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to spin</span>
         </div>
       </div>
     </section>
@@ -1380,10 +1380,10 @@ function ContrastDrawer({ vals }) {
       <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
-            <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
+            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
+            <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: 8px 13px; font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: 8px 13px; font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px 22px 0')}>
@@ -1399,12 +1399,12 @@ function ContrastDrawer({ vals }) {
         </div>
 
         <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px 22px 0')}>
-          <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:13px;color:var(--on-surface)')}>{contrast.aa} of {contrast.total} pairs pass {contrast.lensLabel}</span>
-          <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>min {contrast.threshold}:1</span>
+          <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.aa} of {contrast.total} pairs pass {contrast.lensLabel}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>min {contrast.threshold}:1</span>
         </div>
 
         <div data-cx-sec="1" style={sx('padding:14px 22px 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size: 9.5px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
+          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
           <div style={contrast.matrixColsStyle}>
             {contrast.rows.map((row, ri) => (
               <div key={ri} style={sx('display:flex;align-items:stretch')}>
@@ -1433,12 +1433,12 @@ function ContrastDrawer({ vals }) {
         </div>
 
         <div data-cx-sec="1" style={sx('padding:20px 22px 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size: 9.5px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
+          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
               <div key={ti} style={t.style}>
-                <span style={{ fontSize: '10px' }}>{t.hex}</span>
-                <span style={sx('text-transform: uppercase; font-size: 10px')}>{t.onLabel} · {t.ratio}:1</span>
+                <span style={{ fontSize: 'var(--fs-label)' }}>{t.hex}</span>
+                <span style={sx('text-transform: uppercase; font-size:var(--fs-label)')}>{t.onLabel} · {t.ratio}:1</span>
               </div>
             ))}
           </div>
@@ -1446,8 +1446,8 @@ function ContrastDrawer({ vals }) {
 
         <div data-cx-sec="1" style={sx('padding:20px 22px 26px')}>
           <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
-            <span style={sx('font-family: Neue Montreal; font-size: 9.5px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
+            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
           </div>
           <div data-cx-sample="1" style={contrast.sampleStyle}>The quick brown fox jumps over the lazy dog</div>
         </div>
@@ -1464,8 +1464,8 @@ function DetailOverlay({ vals }) {
     <div ref={vals.overlayRef} data-overlay-stage="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
       <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 20px;border-bottom:1px solid var(--line-strong);flex:none')}>
         <div style={sx('display:flex;align-items:baseline;gap:14px;min-width:0')}>
-          <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap")}>{overlay.name}</span>
-          <span style={sx('font-family: Neue Montreal; font-size: 10px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{overlay.time}</span>
+          <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap")}>{overlay.name}</span>
+          <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{overlay.time}</span>
         </div>
         {/* Filing used to stand here, in the chrome, while the result view files from its action
             row — one job wearing two different clothes depending on which door you came through.
@@ -1473,9 +1473,9 @@ function DetailOverlay({ vals }) {
             do WITH a palette already live. The header keeps only what acts on the palette's place in
             the archive or on this window: delete, and close. */}
         <div style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-          <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
+          <button type="button" data-ix="solid" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
             <IconTrash />Delete</button>
-          <button type="button" data-ix="solid" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
         </div>
       </header>
 
@@ -1518,7 +1518,7 @@ function DetailOverlay({ vals }) {
             </div>
           </div>
         </div>
-        <p style={sx("width:380px;flex:none;font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
+        <p style={sx("width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
       </footer>
     </div>
   );
@@ -1541,7 +1541,7 @@ function DetailOverlay({ vals }) {
 // its count and its example by weight instead of by having been clicked. Selection is carried by
 // the checkbox, which changes shape, fill AND glyph (SC 1.4.1), and by aria-pressed — the weight
 // step was never the accessible signal, only a second one.
-const facetLabelStyle = sx('font-family:Neue Montreal;font-size:13px;letter-spacing:var(--track-flat);text-transform:capitalize;white-space:nowrap;flex:none;font-weight:500');
+const facetLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);text-transform:capitalize;white-space:nowrap;flex:none;font-weight:500');
 
 function TagFilterDrawer({ vals }) {
   if (!vals.facetOpen) return null;
@@ -1560,20 +1560,20 @@ function TagFilterDrawer({ vals }) {
       <div data-tag-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Filter palettes" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:-18px 0 40px rgba(0,0,0,.10);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-tg-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Archive filter</span>
             {/* "Tags" is now one group among several, so the title names the surface, not a group */}
             <span style={sx('display:flex;align-items:center;gap:9px;min-width:0')}>
-              <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
+              <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>Filters</span>
               {/* The rules of the panel, on the title that owns them. Same 16px control, same 288px
                   sheet, same easing as the Library heading and the AA badge — a third variant would
                   make the pattern a coincidence rather than a convention. */}
               <span style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.filterInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleFilterInfo} aria-hidden="true"></div>
                   <div data-tip="filters" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:13px 15px;display:flex;flex-direction:column;gap:9px')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A palette must match every group you use. Within one group the choices widen instead, because a palette holds only one lightness, one temperature and one accessibility state.</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:12.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>{vals.a11yNote}</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty')}>A palette must match every group you use. Within one group the choices widen instead, because a palette holds only one lightness, one temperature and one accessibility state.</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>{vals.a11yNote}</span>
                   </div>
                 </>)}
               </span>
@@ -1585,7 +1585,7 @@ function TagFilterDrawer({ vals }) {
                 panel that quietly narrows something behind it. Same words, no pixels. */}
             <span role="status" aria-live="polite" style={liveRegionStyle}>{vals.matchLabel}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
 
@@ -1602,19 +1602,19 @@ function TagFilterDrawer({ vals }) {
             {/* An eyebrow, now that this group has siblings. Alone it needed no name; sat above
                 Lightness and Temperature without one, it read as a preamble to them rather than as
                 a group of its own rank. */}
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Contrast potential</span>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Contrast potential</span>
             <div role="group" aria-label="Filter by accessibility" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {vals.a11yOptions.map((o) => (
                 <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 12px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={facetLabelStyle}>{o.label}</span>
                   {/* count sits beside its label (F5), not across the row */}
-                  <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                   {/* Nothing at the row's end now but the occasional reason an inert row cannot be
                       picked. The state's meaning left this line for the note above the group: three
                       right-aligned fragments, one per row, clipped to whatever the panel had left,
                       asked the eye to assemble a definition out of a column. */}
-                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
@@ -1625,14 +1625,14 @@ function TagFilterDrawer({ vals }) {
             label, count — because they are the same kind of statement about a palette. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
           <div key={g.id} data-tg-sec="1" style={sx('padding:14px 10px 0')}>
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
             <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {g.options.map((o) => (
                 <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:11px 12px;font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={facetLabelStyle}>{o.label}</span>
-                  <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
@@ -1643,8 +1643,8 @@ function TagFilterDrawer({ vals }) {
             Stark are interpretations of a palette; lightness and temperature are measurements of
             it. Ranked as equals, the panel invited someone to treat a judgement as a property. */}
         <div style={sx('padding:16px 10px 0')}>
-          <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid var(--line);padding:13px 12px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
-            <span data-refine-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
+          <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid var(--line);padding:13px 12px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
+            <span data-refine-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
           </button>
         </div>
         {vals.charOpen && (<div data-facet-char="1">
@@ -1660,9 +1660,9 @@ function TagFilterDrawer({ vals }) {
             appears only when there is something to clear, and hands focus back to the field. */}
         <div data-tg-sec="1" style={sx('padding:16px 22px 0;display:flex;align-items:center;gap:8px')}>
           <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--action-line);background:var(--surface-raised);padding:0 8px 0 10px')}>
-            <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:12.5px;letter-spacing:var(--track-flat);color:var(--on-surface)')} />
+            <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search tags" aria-label="Search tags" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface)')} />
             {vals.hasTagQuery && (
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;padding:0;font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted);cursor:pointer')}>✕</button>
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;padding:0;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);cursor:pointer')}>✕</button>
             )}
           </div>
           {/* sort: discovery vs known-item lookup, on the existing segmented toggle style */}
@@ -1688,12 +1688,12 @@ function TagFilterDrawer({ vals }) {
                   past the strip, which made the same fact read as two different kinds of thing
                   depending on which group you were looking at, and put a whole colour strip
                   between a name and its number. */}
-              <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
               {/* Checkbox, label, count — the same three things every facet row now shows. An
                   exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
                   standing in for a whole tag, which invited the reader to generalise from it, and
                   a second colour object competing with the swatch strips in the list behind. */}
-              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
             </button>
           ))}
           {/* An empty state that says what happened and offers the way out, rather than a dead
@@ -1702,16 +1702,16 @@ function TagFilterDrawer({ vals }) {
               different reason and should say so. */}
           {vals.facetEmpty && (
             <div role="status" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 2px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>
                 {vals.hasTagQuery ? 'No tag matches “' + vals.tagQuery + '”.' : 'No further tag would narrow this selection.'}
               </span>
               {vals.hasTagQuery && (
-                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear search</button>
+                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear search</button>
               )}
             </div>
           )}
           {vals.facetClear && (
-            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
+            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} aria-label={vals.facetClear.label} style={sx('align-self:flex-start;margin-top:16px;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
           )}
         </div>
         </div>)}
@@ -1730,30 +1730,30 @@ function HarmonyDrawer({ vals }) {
       <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Colour harmonies</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Colour harmonies</span>
             <div style={sx('display:flex;align-items:center;gap:11px')}>
               <span aria-hidden="true" style={harmony.swatchStyle}></span>
-              <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface)")}>{harmony.hex}</span>
+              <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>{harmony.hex}</span>
             </div>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-hx-sec="1" style={sx('padding:14px 22px 2px')}>
-          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Derived in OKLCH and mapped into sRGB. Tap any colour to copy its hex.</span>
+          <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Derived in OKLCH and mapped into sRGB. Tap any colour to copy its hex.</span>
         </div>
 
         {harmony.groups.map((grp, gi) => (
           <div key={gi} data-hx-sec="1" style={sx('padding:16px 22px 0')}>
             <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
-              <span style={sx('font-family: Neue Montreal; font-size: 9.5px; letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{grp.name}</span>
-              <span style={sx('font-family:Neue Montreal;font-size:9px;color:var(--on-surface-muted)')}>{grp.count}</span>
+              <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{grp.name}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted)')}>{grp.count}</span>
             </div>
             <div style={sx('display:flex;gap:1px;width:100%')}>
               {grp.cells.map((cell, ci) => (
                 <HBtn key={ci} type="button" data-hx-cell="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
                   <span aria-hidden="true" style={cell.markStyle}></span>
-                  <span style={sx('text-transform: uppercase; font-size: 9px; letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
+                  <span style={sx('text-transform: uppercase; font-size:var(--fs-micro); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
                 </HBtn>
               ))}
             </div>
@@ -1774,20 +1774,20 @@ function ExportDialog({ vals }) {
       <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Export ' + ex.name + ' as design tokens'} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:22px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div style={sx('padding:14px 22px 0')}>
-          <span style={sx('font-family:Neue Montreal;font-size:11.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
         </div>
 
         <div style={sx('padding:16px 22px 0;display:flex;flex-direction:column;gap:6px')}>
           {ex.formats.map((f, fi) => (
             <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={f.onPick} onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur} style={f.style}>
-              <span style={sx('text-transform: capitalize; font-size: 12px')}>{f.label}</span>
+              <span style={sx('text-transform: capitalize; font-size:var(--fs-detail)')}>{f.label}</span>
               <span style={f.extStyle}>{f.ext}</span>
             </button>
           ))}
@@ -1795,8 +1795,8 @@ function ExportDialog({ vals }) {
 
         <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px 0')}>
           <div style={{ minWidth: 0 }}>
-            <div style={sx("font-family: 'Neue Montreal'; font-size: 12px; color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
-            <div style={sx('font-family:Neue Montreal;font-size:10.5px;line-height:1.45;color:var(--on-surface-muted);margin-top:3px;text-wrap:pretty')}>Role-mapped starting layer to refine — not a finished system.</div>
+            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-detail); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
+            <div style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);margin-top:3px;text-wrap:pretty')}>Role-mapped starting layer to refine — not a finished system.</div>
           </div>
           <B006 data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Toggle semantic scaffold layer"
             hover={
@@ -1816,7 +1816,7 @@ function ExportDialog({ vals }) {
         </div>
 
         <div style={sx('padding:14px 22px 22px')}>
-          <span style={sx('font-family:Neue Montreal;font-size:9.5px;letter-spacing:.02em;color:var(--on-surface-muted)')}>{ex.layerLabel}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted)')}>{ex.layerLabel}</span>
         </div>
       </div>
     </div>
@@ -1837,27 +1837,27 @@ function RecogniseDialog({ vals }) {
       <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
         </header>
         <div style={sx('padding:14px 22px 0;display:flex;flex-direction:column;gap:12px')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* the palette itself, drawn as the archive draws it — so the claim can be checked, not just read */}
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
             {r.strip.map((b, i) => (<span key={i} style={b.style}></span>))}
           </span>
-          <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
         </div>
         <div style={sx('padding:18px 22px 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 16px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Open existing palette</button>
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 16px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Open existing palette</button>
           {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
               second run of the same image returns the same colours — this adds a separate entry,
               it does not produce a different palette. Step D is what makes variations genuinely
               differ (seed = content hash + variation index); the label can promise that then. */}
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:12px 16px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Extract again anyway</button>
-          <span style={sx("font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so this adds a second entry with the same colours.</span>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:12px 16px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Extract again anyway</button>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so this adds a second entry with the same colours.</span>
         </div>
       </div>
     </div>
@@ -1873,24 +1873,24 @@ function AssignDialog({ vals }) {
       <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Move to project" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Move to project</span>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Move to project</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close move-to-project" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close move-to-project" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px 22px 0;display:flex;flex-direction:column;gap:6px')}>
           {assign.options.map((o) => (
             <button key={o.key} type="button" data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
-              <span style={sx("font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")}>{o.label}</span>
+              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")}>{o.label}</span>
               <span aria-hidden="true" style={o.markStyle}></span>
             </button>
           ))}
         </div>
         <div style={sx('padding:16px 22px 22px;margin-top:8px;border-top:1px solid var(--line)')}>
-          <label style={sx('font-family:Neue Montreal;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
+          <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
-            <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Create &amp; move</button>
+            <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Create &amp; move</button>
           </div>
         </div>
       </div>
@@ -1908,25 +1908,25 @@ function ManageDialog({ vals }) {
       <div data-manage-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Manage projects" onKeyDown={vals.trapManage} style={sx('position:relative;width:440px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Projects</span>
-            <span style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size: 20px; letter-spacing: -.01em; color: var(--on-surface); text-transform: capitalize")}>Manage projects</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Projects</span>
+            <span style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-subtitle); letter-spacing: -.01em; color: var(--on-surface); text-transform: capitalize")}>Manage projects</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px 22px 4px')}>
           <div style={sx('display:flex;gap:8px')}>
-            <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
+            <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:9px 14px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
           </div>
         </div>
         {manage.empty && (
-          <div style={sx("padding:18px 22px 24px;font-family:'Neue Montreal';font-size:12.5px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view.</div>
+          <div style={sx("padding:18px 22px 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view.</div>
         )}
         <div style={sx('padding:12px 22px 22px;display:flex;flex-direction:column;gap:8px')}>
           {manage.rows.map((pr) => (
             <div key={pr.id} style={sx('display:flex;align-items:center;gap:8px')}>
-              <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 11px;font-family:'Neue Montreal';font-size:13px;color:var(--on-surface)")} />
-              <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:none;white-space:nowrap')}>{pr.count}</span>
+              <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:none;white-space:nowrap')}>{pr.count}</span>
               <button type="button" data-ix="solid" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
@@ -1965,9 +1965,9 @@ function ManageDialog({ vals }) {
 function RefineDialog({ vals }) {
   if (!vals.hasRefine) return null;
   const r = vals.refine;
-  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
-  const eyebrow = 'font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)';
-  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const eyebrow = 'font-family:Neue Montreal;font-weight:500;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)';
+  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
@@ -1978,15 +1978,15 @@ function RefineDialog({ vals }) {
         {r.a11y && r.a11y.allOpen && (
           <div data-refine-pairs="1" role="dialog" aria-modal="true" aria-label="All text-role pairings" onKeyDown={r.trapPairings} style={sx('position:absolute;inset:0;z-index:5;background:var(--surface);display:flex;flex-direction:column')}>
             <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px 12px;border-bottom:1px solid var(--line)')}>
-              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
+              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
               <button type="button" data-ix="solid" data-focus="chrome" onClick={r.a11y.closePairings} aria-label="Close pairings and return to the editor" style={sx(quiet)}>Close</button>
             </div>
             <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px 22px 18px')}>
               {r.a11y.rows.map((row) => (
                 <span key={row.key} style={sx('display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)')}>
                   <span aria-hidden="true" style={row.chipStyle}>Aa</span>
-                  <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface)')}>{row.roles}</span>
-                  <span style={sx('font-family:Neue Montreal;font-size:11.5px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
+                  <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{row.roles}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
                   <span style={row.levelStyle}>{row.level}</span>
                 </span>
               ))}
@@ -1995,11 +1995,11 @@ function RefineDialog({ vals }) {
         )}
 
         <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:11px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits
               at 9px in the footer and asks before it acts. */}
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 15px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Done</button>
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 15px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Done</button>
         </header>
 
         {/* 1 · THE ONE PRIMARY SELECTOR. Labelled with the instruction, so the first move is stated
@@ -2026,14 +2026,14 @@ function RefineDialog({ vals }) {
                quieter than the editing controls: no border, because it is not one of them. */}
         <div data-refine-title="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 22px 0')}>
           <div style={sx('min-width:0')}>
-            <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:19px;line-height:1.15;letter-spacing:-.01em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</div>
+            <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.15;letter-spacing:-.01em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</div>
           </div>
           {/* Stacked, not a row: image over label. Side by side it made a wide horizontal object
               that competed with the identity beside it and the controls beneath. */}
           {r.hasSource && (
             <button type="button" data-click-zoom="1" data-focus="chrome" aria-label={r.sourceAria} style={sx('flex:none;display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;background:none;border:none;padding:0;cursor:pointer;color:var(--on-surface-muted)')}>
               <img src={r.sourceUrl} alt="" style={sx('width:54px;height:34px;object-fit:cover;display:block;border:1px solid var(--line)')} />
-              <span style={sx('font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap')}>View source</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap')}>View source</span>
             </button>
           )}
         </div>
@@ -2044,7 +2044,7 @@ function RefineDialog({ vals }) {
           {r.sliders.map((sl) => (
             <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
               <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-                <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
+                <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
                 {/* Value and unit are ONE control: the wrapper draws the boundary, the input is
                     borderless inside it, and the unit sits within the same box. Text rather than
                     number, so the decimal separator is the same for everyone. */}
@@ -2073,11 +2073,11 @@ function RefineDialog({ vals }) {
             <div style={sx('display:flex;align-items:center;gap:14px;padding:11px 13px 13px')}>
               <span aria-hidden="true" style={r.a11y.sampleStyle}>Aa</span>
               <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
-                <span style={sx('font-family:Neue Montreal;font-size:13px;color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
-                <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
               </span>
               <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
-                <span style={sx('font-family:Neue Montreal;font-size:15px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
                 <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
               </span>
             </div>
@@ -2085,8 +2085,8 @@ function RefineDialog({ vals }) {
                 page every time anyone glanced at the detail — the one layout shift an editor
                 cannot afford, because the canvas has to hold still while you work. */}
             <div style={sx('border-top:1px solid var(--line)')}>
-              <button type="button" data-ix="cell" data-focus="chrome" aria-haspopup="dialog" onClick={r.a11y.toggleAll} style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:9px 13px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
-                {r.a11y.allLabel}<span aria-hidden="true" style={sx('font-size:10px;color:var(--on-surface-muted)')}>›</span>
+              <button type="button" data-ix="cell" data-focus="chrome" aria-haspopup="dialog" onClick={r.a11y.toggleAll} style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:9px 13px;cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
+                {r.a11y.allLabel}<span aria-hidden="true" style={sx('font-size:var(--fs-label);color:var(--on-surface-muted)')}>›</span>
               </button>
             </div>
           </div>
@@ -2103,10 +2103,10 @@ function RefineDialog({ vals }) {
 
           <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
             <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Role</span>
-              <span style={sx('font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface)')}>{r.roleLine}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Role</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.roleLine}</span>
             </span>
-            <button type="button" data-ix="solid" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-left:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
+            <button type="button" data-ix="solid" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-left:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
           </div>
           {/* Inline, never an overlay: a dropdown here covered the sliders, so choosing a role hid
               the colour it was being given to. A conflict is named only when there is one. */}
@@ -2114,9 +2114,9 @@ function RefineDialog({ vals }) {
             <div data-refine-roles="1" style={sx('display:flex;flex-direction:column;margin-top:10px;border:1px solid var(--line)')}>
               {r.roleItems.map((it) => (
                 <button key={it.id} type="button" role="switch" aria-checked={it.pressed} data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
-                  <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:10px;color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
-                  <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:none')}>{it.label}</span>
-                  {it.consequence && <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:10px;color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
+                  <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);flex:none')}>{it.label}</span>
+                  {it.consequence && <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
                 </button>
               ))}
             </div>
@@ -2124,8 +2124,8 @@ function RefineDialog({ vals }) {
 
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:14px')}>
             <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Order</span>
-              <span style={sx('font-family:Neue Montreal;font-size:12.5px;color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Order</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
             </span>
             <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-left:auto;opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
             <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
@@ -2140,13 +2140,13 @@ function RefineDialog({ vals }) {
           )}
           {r.removeArmed && (
             <div data-refine-confirm="1" style={sx('margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{r.removeTitle}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{r.removeTitle}</span>
               {r.removeLines.map((t, i) => (
-                <span key={i} style={sx("font-family:'Neue Montreal';font-size:11.5px;line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{t}</span>
+                <span key={i} style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{t}</span>
               ))}
               <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
                 <button type="button" data-ix="press" data-focus="chrome" onClick={r.onRemoveCancel} aria-label="Cancel the removal" style={sx(quiet)}>Cancel</button>
-                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-left:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
+                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-left:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:8px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
               </span>
             </div>
           )}
@@ -2156,10 +2156,10 @@ function RefineDialog({ vals }) {
                — it discards every refinement, which Undo would take many presses to equal. */}
         <div style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 22px;margin-top:13px;border-top:1px solid var(--line);background:var(--surface-raised)')}>
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
-            Undo<span aria-hidden="true" style={sx('font-size:8px;color:var(--on-surface-muted)')}>{r.undoKeys}</span>
+            Undo<span aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>{r.undoKeys}</span>
           </button>
           {r.resetArmed && (
-            <span style={sx("flex:1;min-width:160px;font-family:'Neue Montreal';font-size:10.5px;line-height:1.4;color:var(--on-surface);text-wrap:pretty")}>This discards every refinement.</span>
+            <span style={sx("flex:1;min-width:160px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.4;color:var(--on-surface);text-wrap:pretty")}>This discards every refinement.</span>
           )}
           {r.resetArmed && (
             <button type="button" data-ix="press" data-focus="chrome" onClick={r.onResetCancel} aria-label="Cancel the reset" style={sx(footBtn)}>Cancel</button>
@@ -2191,14 +2191,14 @@ function RestoreDialog({ vals }) {
       <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</span>
           </div>
-          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
         </header>
         <div style={sx('padding:14px 22px 0;display:flex;flex-direction:column;gap:12px')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:13px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* Four numbers are not a sentence. Uppercase muted term, full-ink tabular value, a
               hairline under each row — so a count reads here exactly as it reads on the result
               view's metadata readout, and the two surfaces share one way of stating a figure. */}
@@ -2207,8 +2207,8 @@ function RestoreDialog({ vals }) {
             {r.rows.map((m, mi) => (
               <div key={mi}>
                 <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                  <dt style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
-                  <dd style={sx('margin:0;min-width:0;font-family:Neue Montreal;font-size:13px;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;font-variant-numeric:tabular-nums')}>{m.value}</dd>
+                  <dt style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                  <dd style={sx('margin:0;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;font-variant-numeric:tabular-nums')}>{m.value}</dd>
                 </div>
                 <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
               </div>
@@ -2221,8 +2221,8 @@ function RestoreDialog({ vals }) {
             commit nothing — an affordance for a non-act is worse than an absence. */}
         {r.hasAct && (
           <div style={sx('padding:18px 22px 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 16px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add to library</button>
-            <span style={sx("font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:12px 16px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add to library</button>
+            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
           </div>
         )}
       </div>
