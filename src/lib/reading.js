@@ -580,6 +580,55 @@ function composeArchetype(A) {
 // taken:    optional array of names, or of palettes ({name, swatches}), already in the feed, so two
 //           DIFFERENT palettes never ship the same name.
 // Returns the SAME shape the live reading returns: {name, descriptors, rationale, archetype}.
+// ===== WHAT THE PALETTE IS FOR ==================================================================
+// The result view used to open with the poetic reading, which says what a palette IS. This says
+// what it is good FOR, which is the question someone opening a palette tool is actually asking, and
+// it takes that leading slot: the reading is not deleted, it moves behind More. The audit asked for
+// a line like "Best for: dark editorial identity; accent-led UI".
+//
+// COMPOSED, never authored, and composed from the same analysis the reading uses — so a palette
+// cannot be described one way and recommended another. No seed and no randomness: a recommendation
+// that varied between two identical palettes would be advice nobody could trust.
+//
+// It reads: <register> <medium>, <capability>. The capability clause is the honest half — a palette
+// with no usable text pairing must not be recommended for interface work, and aaState is the same
+// verdict the AA badge shows, so the two can never disagree.
+export function composeUse(A, aaState) {
+  if (!A) return '';
+  const lb = A.lightness.band;                       // dark low mid high pale
+  const ground = (lb === 'dark' || lb === 'low') ? 'dark' : (lb === 'pale' || lb === 'high') ? 'light' : 'mid-toned';
+  const accented = A.chroma.spread === 'accented';
+  const cb = A.chroma.band;                          // grey muted restrained saturated vivid
+  const stark = A.contrast.band === 'stark' || A.contrast.band === 'structured';
+
+  // The register: how loud the palette is willing to be.
+  const register = accented ? 'accent-led'
+    : cb === 'grey' || cb === 'muted' ? 'restrained'
+      : cb === 'vivid' || cb === 'saturated' ? 'expressive'
+        : A.temperature.split ? 'contrasting'
+          : 'quiet';
+
+  // The medium it suits, from structure rather than taste: something that separates cleanly can
+  // carry a reading interface; something flat is better at atmosphere than at hierarchy.
+  //
+  // None of these may name a lightness — the sentence already opens with one, and "Best for dark,
+  // expressive dark interface work" was the first thing this composer produced. Nor may any of them
+  // carry an internal comma: the line is built out of comma-separated parts, and a medium with one
+  // of its own turns a three-part sentence into a list of five things.
+  const medium = stark
+    ? (ground === 'dark' ? 'interface work' : 'editorial layout')
+    : A.dominance.band === 'dominant' ? 'brand and identity work'
+      : A.hue.band === 'mono' ? 'tonal composition'
+        : 'photography-led layout';
+
+  // The limit, stated plainly. This is the clause that stops the line becoming a sales pitch.
+  const capability = aaState === 'flexible' ? 'enough usable pairs to build type on'
+    : aaState === 'limited' ? 'usable for accents rather than body text'
+      : 'no usable text pairing, so treat it as imagery';
+
+  return 'Best for ' + ground + ', ' + register + ' ' + medium + '. ' + CAP(capability) + '.';
+}
+
 export function composeReading(swatches, taken) {
   const A = analysePalette(swatches);
   if (!A) return { name: 'Untitled', descriptors: ['Neutral', 'Quiet', 'Even'], rationale: 'A palette with too little signal to read.', archetype: 'neutral' };

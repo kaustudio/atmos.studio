@@ -634,16 +634,36 @@ export default function AppView({ vals }) {
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
                 <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:44px;line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
-                <div data-fx="1" style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-top:18px')}>
-                  {vals.result.descriptors.map((d, di) => (
+                {/* Two traits, then More. Four capitalised pills read as a legend rather than a
+                    description, and the remaining ones are one click away with the reading. */}
+                <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
+                  {vals.result.traits.map((d, di) => (
                     <span key={di} style={sx('font-family: Neue Montreal; font-size: 12px; padding-top: 4px; padding-right: 8px; padding-bottom: 4px; padding-left: 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
                   ))}
+                  {vals.result.hasMore && (
+                    <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={sx('background:none;border:1px solid var(--action-line);padding:5px 9px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.result.moreLabel}</button>
+                  )}
                 </div>
+                {/* The poetic reading, revealed rather than standing. It is the product's voice and
+                    it is not deleted — it is simply no longer the first thing between the palette
+                    and the person deciding what to do with it. */}
+                {vals.result.readingOpen && (
+                  <p style={sx("font-family:'Neue Montreal';font-size:14px;line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
+                )}
               </div>
-              {/* rationale only — the reference image moved down into the metadata row, which
-                  frees this column's height and lets the name/rationale block sit closer to it */}
-              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
-                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:68px")}>{vals.result.rationale}</p>
+              {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed
+                  from the same analysis the reading is, so the two can never disagree — and under
+                  it the one contrast pair worth naming, drawn in its own colours so the claim can
+                  be checked rather than taken on trust. */}
+              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px')}>
+                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:15px;line-height:1.5;color:var(--on-surface);text-align:right;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
+                {vals.result.hasPair && (
+                  <span data-fx="1" style={sx('display:flex;align-items:center;gap:8px')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Strongest pair</span>
+                    <span style={vals.result.pairStyle}>{vals.result.pairText}</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:11px;letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.result.pairRatio}</span>
+                  </span>
+                )}
               </div>
             </div>
             {/* The palette's metadata readout — the detail pane's bottom line, restored from the

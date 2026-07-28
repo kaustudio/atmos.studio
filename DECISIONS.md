@@ -66,6 +66,89 @@ redundancy, kept on purpose rather than trimmed by a footer change.
 
 ---
 
+## 2026-07-28 — Roles you choose, a step in which to choose them, and a screen that leads with use
+
+**Context:** round two of the July 2026 UX audit, its §2. The interactive **context preview** stayed
+out of scope; roles are built as the backbone it will plug into later.
+
+**The hole, in the interface's own words.** The Export dialog has been offering a *Semantic scaffold*
+toggle labelled *"role-mapped starting layer to refine, not a finished system"* — telling people to
+refine, with nowhere to do it. Behind that toggle `semanticRoles()` had been guessing roles by
+lightness and chroma since it was written, and the user had never seen the guess, let alone
+corrected it.
+
+**The role vocabulary changed, and semantic exports changed with it.** Out went
+`surface / surface-raised / on-surface / on-surface-muted / accent`; in came the audit's
+**Background, Surface, Primary, Secondary, Accent, Text**. The old set was this app's *own CSS token
+names* leaking into somebody else's design system. **Tokens exported before this deploy do not match
+tokens exported after it** — accepted deliberately, and the reason to think hard before renaming any
+of them again. The five builders needed no changes at all: `doExport` is a single branch point and
+they all consume a uniform `entries` array.
+
+**Two heuristic bugs fixed on the way past, both of which had always been wrong:**
+
+- **Orientation.** Background always took the *lightest* swatch. For a dark palette that is exactly
+  backwards, and this tool reads a great many dark photographs. The area-weighted mean lightness now
+  decides which end is the ground, so a palette is "dark" when most of its surface is dark rather
+  than when it merely contains something dark.
+- **Collisions.** Taking "second most chromatic" for Secondary handed it the same swatch as Accent
+  on any palette of greys plus one loud colour — the commonest shape this tool produces, and
+  precisely the palette where two identical roles are most useless. Roles are assigned greedily now,
+  structural ones first, preferring distinct swatches; with six roles over five swatches one
+  doubling is arithmetic, not a bug. Surface is *scored* rather than filtered — near the ground,
+  quiet in chroma, chroma weighted double — because a threshold alone kept handing the dark palette
+  its accent colour as the raised surface.
+
+**Refinement is non-destructive, and the shape of that is the load-bearing decision.** `swatches`
+stays the **working set** and the extraction moves aside into `sourceSwatches` on the first edit
+only. That is what lets all six surfaces which draw a palette — result bands, list strip, universe
+card, reel band, facet exemplar, gradient stops, every one of them through `swatchGrow` — follow a
+refinement with **no changes whatsoever**. The inverse (keeping the original in `swatches` and the
+edit alongside) would have required an accessor at every one of those call sites.
+
+Two reversals, deliberately different things: **Undo** is in-session, multi-step, held on the
+instance and dropped on close, so it costs nothing in schema; **Reset** is persisted and single, and
+returns to the extraction. The archive's own undo is one slot with a 6.5s fuse, which is right for a
+deletion and useless for a sequence of edits.
+
+**Three silent failures had to be fixed before any of it could work.** Each was invisible, and each
+would have shipped undetected:
+
+1. **`validateFeed` hard allow-lists.** It rebuilds every palette from a named list of keys. A roles
+   map would have survived in memory and in the localStorage write, then vanished on the next
+   reload, on every cross-tab sync, and on every backup restore — with no error anywhere. Verified
+   by round-tripping a hand-built file: invalid role ids and out-of-range indices are rejected, the
+   rest survives.
+2. **Bands were keyed by array index**, and so were the copy-confirmation flags. The moment a swatch
+   can move, React reuses the wrong node and a "✓ Copied" lands on a colour nobody clicked. Swatches
+   carry a `sid` now, minted at creation and re-minted wholesale if any is missing or duplicated.
+3. **Nothing animated an in-place edit.** `componentDidUpdate` returned early unless the stage or the
+   palette *id* changed, so every motion primitive in the repo sat unreachable behind that guard.
+   `bandRev` is the signal, and it bumps only for **structural** changes — running a FLIP per slider
+   tick would be pointless and visibly awful.
+
+**Two dead per-swatch selection paths went in the same commit.** `overlaySelect` had no call site in
+the view, so its "Current" tag and selected ring were unreachable UI pretending to be a feature; and
+`selectSwatch` wrote state nothing read. Leaving them next to a real selection model is how the next
+person wires the wrong one.
+
+**The result view leads with use, and the reading is demoted rather than deleted.** `composeUse`
+sits beside `composeRationale` in `reading.js` and reads the same analysis, so a palette cannot be
+described one way and recommended another. It takes no seed: a recommendation that varied between
+two identical palettes would be advice nobody could trust. Two traits show, then **More** reveals
+the rest along with the poetic reading — **a net reduction in standing copy**, which is the whole
+condition under which this was worth doing. Beside it, the strongest contrast pair, drawn in its own
+colours so the claim can be checked rather than believed; ordered by luminance, because the ratio is
+symmetric and the drawer's own `best` had been recording whichever member it reached first as the
+foreground — harmless while it tinted a sample, wrong the moment it is stated as advice.
+
+**Deferred, with reasons rather than by omission.** **Lock** protects a swatch against a regeneration
+that does not exist yet; shipping it now is inert UI, and it should arrive with the re-roll it
+protects. **Roles do not travel in a share link** — `encodeShare` carries four fields and its decoder
+validates untrusted input, so a recipient gets the refined colours and derived roles.
+
+---
+
 ## 2026-07-28 — Back up and Restore, and the four things the tool never said out loud
 
 **Context:** the first round of the July 2026 UX audit, its §1 (*Product model and persistence*, P0).

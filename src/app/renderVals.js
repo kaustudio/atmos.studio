@@ -3,6 +3,7 @@
 import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_IDS, ROLE_LABEL } from '../lib/exporters.js';
+import { analysePalette, composeUse } from '../lib/reading.js';
 
 const MONO = 'Neue Montreal';
 
@@ -235,7 +236,35 @@ export const renderValsMethods = {
           ],
         },
       ];
-      result = { name: s.current.name, rationale: s.current.rationale, descriptors: s.current.descriptors, bands, refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta };
+      // LEAD WITH USE. The recommendation takes the slot the poetic reading held, and the reading
+      // goes behind More with the traits past the first two — the audit's "keep the poetic reading
+      // and character tags secondary", and a NET REDUCTION in standing copy rather than a line
+      // added on top of what was already there.
+      //
+      // Two traits visible is the audit's number and it is also where the row stops being scannable:
+      // four capitalised pills read as a legend rather than a description.
+      const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState);
+      const allTraits = s.current.descriptors || [];
+      const moreCount = Math.max(0, allTraits.length - 2);
+      const pair = curMet.bestPair;
+      result = {
+        name: s.current.name, rationale: s.current.rationale, descriptors: allTraits, bands,
+        refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
+        useLine,
+        traits: s.readingOpen ? allTraits : allTraits.slice(0, 2),
+        hasMore: moreCount > 0 || !!s.current.rationale,
+        moreLabel: s.readingOpen ? 'Less' : (moreCount ? 'More · ' + moreCount : 'More'),
+        moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
+        readingOpen: !!s.readingOpen,
+        onMore: () => this.setState((st) => ({ readingOpen: !st.readingOpen, announce: st.readingOpen ? 'Reading hidden.' : 'Reading shown.' })),
+        // "Use X on Y" — the one pair in this palette with the most separation, oriented by
+        // luminance so the darker colour is always the one carrying the text. Stated as a fact
+        // about two colours rather than as a palette-level grade.
+        hasPair: !!pair,
+        pairText: pair ? pair.fg.toUpperCase() + ' on ' + pair.bg.toUpperCase() : '',
+        pairRatio: pair ? pair.ratio.toFixed(1) + ':1' : '',
+        pairStyle: pair ? { background: pair.bg, color: pair.fg, padding: '3px 8px', fontFamily: mono, fontSize: '11px', letterSpacing: 'var(--track-flat)', whiteSpace: 'nowrap' } : null,
+      };
     }
     // palette-level copy affordances
     const palBtn = { fontFamily: mono, fontSize: '10.5px', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: '9px 14px', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };

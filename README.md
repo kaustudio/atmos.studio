@@ -46,6 +46,13 @@ Desktop-only by design (≤720px shows a calm desktop-gate).
   merge is non-destructive and always was — dedupe by id, no clobbering — but that promise is now
   something the user can check rather than read about afterwards. Replace is deliberately not
   offered; see `DECISIONS.md`.
+- **Refine** — the step between reading a palette and shipping it, on a surface of its own: assign
+  the six roles (Background, Surface, Primary, Secondary, Accent, Text), adjust a swatch's
+  lightness, chroma or hue in OKLCH, reorder or remove. Non-destructive — `swatches` stays the
+  working set and the extraction moves aside into `sourceSwatches`, so every surface that draws a
+  palette follows the refinement and **Reset** returns to the colours read from the image. Undo is
+  in-session and multi-step; Reset is persisted and single. Roles flow into the semantic export
+  layer by name.
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
   variables, CSS custom properties, binary `.ase`), projects.
