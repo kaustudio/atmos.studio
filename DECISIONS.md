@@ -62,15 +62,33 @@ fourth gutter into a stylesheet that names two on purpose." Three wrong figures 
 fourth. That is how a grid stops being one, and it is worth naming: the reasoning was locally
 sound at every step, and the result was that no edge in the app sat where the design put it.
 
-**The overlay is the instrument, not decoration.** It is the Osmo Supply *Animated Grid Overlay
-(Columns)*, integrated with its behaviour intact — same data hooks, same GSAP reveal (1s
-`expo.inOut`, 0.03 stagger), same `animatedGridState` key, same `Shift+G` suppressed inside inputs.
-Four adaptations, each forced rather than chosen, and each recorded at the top of
+**The overlay is the instrument, not decoration.** It is after Osmo Supply's *Animated Grid Overlay
+(Columns)* and keeps its hooks — `[data-animated-grid]`, `[data-animated-grid-col]`,
+`[data-animated-grid-toggle]`, the `animatedGridState` key, `Shift+G` suppressed inside inputs.
+
+Two things are deliberately not the resource's:
+
+· **No animation.** A ruler that slides in is a ruler you cannot trust for the first second, and this
+  one is flicked on and off against an edge you are already staring at. Instant cut, and with nothing
+  left to tween the file no longer touches GSAP at all.
+
+· **Two levels on the one key**: `Shift+G` → columns → margins → off. COLUMNS is 12 tracks on the
+  24px gutter inside the 24px margin, and answers *does this cell start where a column starts*.
+  MARGINS is a single stretched band inset by the margin on all four sides, and answers what a column
+  overlay structurally cannot — the 24px above the navigation and below the footer. A page can sit
+  perfectly on twelve columns with an 18px top margin, and the column view will call it aligned.
+
+Red at 0.2, not the resource's `#f4f4f4`. Neutral grey was right on Osmo's own demo; here it is a
+wash the same weight as the app's surfaces, and on the library list — the screen this gets pointed
+at most — grey columns behind grey rows read as part of the design. Red is the one hue this
+monochrome interface cannot produce, so nothing on screen can be mistaken for it.
+
+Four integration notes, each forced rather than chosen, all recorded at the top of
 `src/lib/gridOverlay.js`: it builds its own DOM (this app renders one React tree and has no static
 markup to paste into), it mounts on `document.body` (a transformed ancestor would silently break
 `position:fixed`), it has no `.container`/`--size-container` (the scaling system is not installed and
-this app has no page-level container), and its columns tint from `--on-surface` rather than a fixed
-`#f4f4f4`, which would be invisible in light and wrong in dark.
+this app has no page-level container), and every figure it draws comes from `--grid-cols`,
+`--grid-gutter` and `--page-gutter`.
 
 It reads `--grid-cols` and `--grid-gutter` rather than hard-coding 12 and 24, so it can only ever
 draw the grid the layout is built on. An overlay that carries its own opinion of the grid is a second

@@ -1,39 +1,54 @@
-/* Animated Grid Overlay (Columns) — Osmo Supply [https://osmo.supply/]
-   Integrated for Atmos Gallery. The behaviour is the resource's, unchanged: the same
-   [data-animated-grid] / [data-animated-grid-col] / [data-animated-grid-toggle] hooks, the same
-   GSAP reveal (1s expo.inOut, 0.03 stagger from start, yPercent 100 → 0 in, 0 → −100 out), the same
-   `animatedGridState` localStorage key, and the same Shift+G shortcut suppressed inside inputs.
+/* Grid overlay — after Osmo Supply's Animated Grid Overlay (Columns) [https://osmo.supply/]
+   The hooks are the resource's ([data-animated-grid], [data-animated-grid-col],
+   [data-animated-grid-toggle], the `animatedGridState` key, Shift+G suppressed inside inputs). Two
+   things about it are deliberately NOT the resource's, both asked for:
 
-   Four adaptations, all forced by this codebase rather than chosen:
+   · No animation. A ruler that slides in is a ruler you cannot trust for the first second, and this
+     one exists to be flicked on and off against an edge you are staring at. Instant cut, no GSAP —
+     which is also why this file no longer touches window.gsap at all.
 
-   1 · It builds its own DOM. The original is markup in a document; this app renders one React tree
-       and has no static HTML to paste into. Building the nodes here keeps the overlay out of the
-       component tree entirely — nothing to re-render, no state to thread, and React never touches
-       the elements GSAP is tweening.
+   · Two levels, not one, cycled by the same key: Shift+G → columns → margins → off.
+
+       COLUMNS  12 tracks on the 24px gutter, inside the 24px page margin. Checks horizontal
+                alignment: does a cell start where a column starts.
+       MARGINS  one stretched band inset by the margin on all four sides. Checks the edges the
+                column grid cannot show you — the 24px above the navigation and below the footer.
+                A column overlay makes a page look aligned while its top margin is 18px.
+
+   Red at 0.2, not the resource's #f4f4f4. A neutral grey was correct on Osmo's own dark demo; here
+   it is a wash the same weight as the app's own surfaces, and on the library list — the screen this
+   is most often pointed at — grey columns behind grey rows read as part of the design. Red is the
+   one hue this monochrome interface cannot produce, so nothing on screen can be mistaken for it.
+
+   Four integration notes, all forced by this codebase rather than chosen:
+
+   1 · It builds its own DOM. The app renders one React tree and has no static markup to paste into.
+       Building the nodes here keeps the overlay out of the component tree: nothing to re-render.
 
    2 · It mounts on document.body, per the resource's own note. The app root carries the theme
        crossfade, and a transformed ancestor would turn position:fixed into position:relative-to-
        that-ancestor — the overlay would silently stop covering the viewport.
 
-   3 · No .container/--size-container. The scaling system that supplies that variable is not
-       installed here, and this app has no page-level container: sections run full width inside the
-       gutter. So the row is the viewport minus --page-gutter on each side, which is what the layout
-       it is measuring actually does. Class names are scoped under [data-animated-grid] so the very
-       generic `.container` cannot collide with anything.
+   3 · No .container/--size-container. That scaling system is not installed here, and this app has no
+       page-level container: sections run full width inside the gutter. Class names are scoped under
+       [data-animated-grid] so the very generic `.container` cannot collide with anything.
 
-   4 · Columns are tinted from --on-surface rather than #f4f4f4, because a fixed light grey is
-       invisible on this app's light theme and wrong on its dark one. Same 0.2 weight.
-
-   The column count and gutter come from --grid-cols and --grid-gutter, so the overlay can only ever
-   draw the grid the layout is built on. If someone changes the grid and forgets the overlay, the
-   overlay changes with it. */
+   4 · Columns and margins are drawn from --grid-cols, --grid-gutter and --page-gutter, never from
+       literals. An overlay carrying its own opinion of the grid is a second source of truth that
+       eventually disagrees with the first one, silently — which is the failure it exists to catch. */
 
 const KEY = 'animatedGridState';
+const LEVELS = ['closed', 'columns', 'margins'];
+
 const CSS = `
-[data-animated-grid]{position:fixed;inset:0;z-index:200;pointer-events:none;display:none}
+[data-animated-grid]{position:fixed;inset:0;z-index:200;pointer-events:none}
+[data-animated-grid] .ag-layer{position:absolute;inset:0;display:none}
+[data-animated-grid][data-level="columns"] .ag-layer--cols{display:block}
+[data-animated-grid][data-level="margins"] .ag-layer--margins{display:block}
 [data-animated-grid] .ag-container{width:100%;height:100%;margin-inline:auto;padding-inline:var(--page-gutter)}
 [data-animated-grid] .ag-row{display:grid;grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));gap:var(--grid-gutter);width:100%;height:100%;overflow:clip}
-[data-animated-grid] .ag-col{width:100%;height:100%;min-height:100%;opacity:.2;background-color:var(--on-surface)}
+[data-animated-grid] .ag-col{width:100%;height:100%;min-height:100%;opacity:.2;background-color:#FF0000}
+[data-animated-grid] .ag-band{position:absolute;inset:var(--grid-gutter) var(--page-gutter);opacity:.2;background-color:#FF0000}
 `;
 
 export function initGridOverlay() {
@@ -47,14 +62,17 @@ export function initGridOverlay() {
   const grid = document.createElement('div');
   grid.setAttribute('data-animated-grid', '');
   grid.setAttribute('aria-hidden', 'true');
+
+  // LEVEL 1 — the columns.
+  const cols = document.createElement('div');
+  cols.className = 'ag-layer ag-layer--cols';
   const container = document.createElement('div');
   container.className = 'ag-container';
   const row = document.createElement('div');
   row.className = 'ag-row';
-
-  // The count is read from the token rather than hard-coded, so 12 lives in exactly one place.
-  const cssCols = getComputedStyle(document.documentElement).getPropertyValue('--grid-cols').trim();
-  const count = Math.max(1, parseInt(cssCols, 10) || 12);
+  // Read from the token rather than hard-coded, so 12 lives in exactly one place.
+  const declared = getComputedStyle(document.documentElement).getPropertyValue('--grid-cols').trim();
+  const count = Math.max(1, parseInt(declared, 10) || 12);
   for (let i = 0; i < count; i += 1) {
     const col = document.createElement('div');
     col.setAttribute('data-animated-grid-col', '');
@@ -62,38 +80,35 @@ export function initGridOverlay() {
     row.appendChild(col);
   }
   container.appendChild(row);
-  grid.appendChild(container);
+  cols.appendChild(container);
+
+  // LEVEL 2 — the margins. One band, stretched, inset by the margin on all four sides, so what the
+  // overlay draws is the space the layout is NOT allowed to use.
+  const margins = document.createElement('div');
+  margins.className = 'ag-layer ag-layer--margins';
+  const band = document.createElement('div');
+  band.setAttribute('data-animated-grid-band', '');
+  band.className = 'ag-band';
+  margins.appendChild(band);
+
+  grid.appendChild(cols);
+  grid.appendChild(margins);
   document.body.appendChild(grid);
 
-  const cols = grid.querySelectorAll('[data-animated-grid-col]');
-  const gsap = window.gsap;
-  if (!gsap) return;
+  let level = LEVELS.indexOf((() => {
+    try { return localStorage.getItem(KEY); } catch (e) { return null; }
+  })());
+  if (level < 0) level = 0;
 
-  let isOpen = false;
-  try { isOpen = localStorage.getItem(KEY) === 'open'; } catch (e) { }
-
-  gsap.set(grid, { display: 'block' });
-  gsap.set(cols, { yPercent: isOpen ? 0 : 100 });
-
-  function openGrid() {
-    isOpen = true;
-    try { localStorage.setItem(KEY, 'open'); } catch (e) { }
-    gsap.fromTo(cols, { yPercent: 100 }, {
-      yPercent: 0, duration: 1, ease: 'expo.inOut',
-      stagger: { each: 0.03, from: 'start' }, overwrite: true,
-    });
+  function apply() {
+    grid.setAttribute('data-level', LEVELS[level]);
+    try { localStorage.setItem(KEY, LEVELS[level]); } catch (e) { }
   }
+  apply();
 
-  function closeGrid() {
-    isOpen = false;
-    try { localStorage.setItem(KEY, 'closed'); } catch (e) { }
-    gsap.fromTo(cols, { yPercent: 0 }, {
-      yPercent: -100, duration: 1, ease: 'expo.inOut',
-      stagger: { each: 0.03, from: 'start' }, overwrite: true,
-    });
-  }
-
-  function toggleGrid() { if (isOpen) closeGrid(); else openGrid(); }
+  // One key, three states, in the order you need them: is this on the columns, then is the edge
+  // right, then get out of the way.
+  function cycleGrid() { level = (level + 1) % LEVELS.length; apply(); }
 
   function isTypingContext(e) {
     const el = e.target;
@@ -103,14 +118,14 @@ export function initGridOverlay() {
   }
 
   document.querySelectorAll('[data-animated-grid-toggle]').forEach((btn) => {
-    btn.addEventListener('click', (e) => { e.preventDefault(); toggleGrid(); });
+    btn.addEventListener('click', (e) => { e.preventDefault(); cycleGrid(); });
   });
 
   window.addEventListener('keydown', (e) => {
     if (isTypingContext(e)) return;
     if (!(e.shiftKey && (e.key || '').toLowerCase() === 'g')) return;
     e.preventDefault();
-    toggleGrid();
+    cycleGrid();
   });
 }
 
