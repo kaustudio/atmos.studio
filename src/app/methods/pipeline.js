@@ -82,7 +82,9 @@ export const pipelineMethods = {
   },
 
   buildPalette(cents, url, srcUrl, hash) {
-    const swatches = cents.map((c) => { const rgb = this.oklab2rgb(c.L, c.a, c.b); return { hex: this.hex(rgb[0], rgb[1], rgb[2]), weight: c.weight, L: c.L, a: c.a, b: c.b }; });
+    // sid: stable per-swatch identity, minted at creation so a band has it before the palette has
+    // ever been through the store. persistence._validateSwatches re-mints if any are missing.
+    const swatches = cents.map((c, i) => { const rgb = this.oklab2rgb(c.L, c.a, c.b); return { sid: i, hex: this.hex(rgb[0], rgb[1], rgb[2]), weight: c.weight, L: c.L, a: c.a, b: c.b }; });
     // The reading works from the swatches (it needs the hexes for its order-stable seed), and takes
     // the feed itself so two DIFFERENT palettes never ship the same name. Passing whole palettes
     // rather than bare names lets it recognise a regenerated palette as itself and keep its name.
@@ -130,7 +132,7 @@ export const pipelineMethods = {
     if (srcUrl) { (this._objUrls = this._objUrls || []).push(srcUrl); }   // revoke on eviction/unload, not now
     const pal = this.buildPalette(cents, thumb, srcUrl, hash); // mock interpretation baked in as the guaranteed baseline
     const myGen = ++this._genId;                       // invalidate any in-flight interpretation from a prior generate
-    this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, selectedSwatch: null, announce: 'Generating palette from your image.' });
+    this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, announce: 'Generating palette from your image.' });
     if (this._t) clearInterval(this._t);
     this._t = setInterval(() => this.setState((st) => ({ procStep: Math.min(st.procStep + 1, 3) })), 620);
     if (this._end) clearTimeout(this._end);
@@ -236,7 +238,7 @@ export const pipelineMethods = {
     return (typeof k === 'string' && Object.prototype.hasOwnProperty.call(this.EXAMPLE_SRC, k)) ? this.EXAMPLE_SRC[k] : '';
   },
   seedObj(s) {
-    const swatches = s.sw.map((e) => { const rgb = this.hexToRgb(e[0]); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { hex: e[0], weight: e[1], L: lab.L, a: lab.a, b: lab.b }; });
+    const swatches = s.sw.map((e, i) => { const rgb = this.hexToRgb(e[0]); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { sid: i, hex: e[0], weight: e[1], L: lab.L, a: lab.a, b: lab.b }; });
     // id follows the generated form (hash + variation) rather than a name, so a seed and a re-read
     // of the same image are the same identity in every place identity is compared.
     return { id: s.hash + '-0', hash: s.hash, variation: 0, imageUrl: null, exampleKey: s.key, time: Date.now() - s.age, name: s.name, descriptors: s.desc, rationale: s.rat, archetype: s.arch, example: true, swatches };
@@ -407,7 +409,7 @@ export const pipelineMethods = {
   // (reverse of the bottom-to-top entry), then the upload surface rises in a beat later.
   doReset() {
     const g = window.gsap, root = this.resultRef.current;
-    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, selectedSwatch: null, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
+    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
     if (this._reduce || !g || !root || this.state.stage !== 'result' || document.hidden) { commit(); return; }
     const bands = [...root.querySelectorAll('[data-band]')];
     const fx = [...root.querySelectorAll('[data-fx]')];
@@ -485,9 +487,8 @@ export const pipelineMethods = {
       const strip = cardEl.querySelector('[data-strip]');
       this._fromRects = strip ? [...strip.children].map((c) => c.getBoundingClientRect()) : null;
     } else { this._fromRects = null; }
-    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), selectedSwatch: null, announce: 'Showing palette: ' + p.name + '. Mood: ' + p.descriptors.join(', ') + '.' });
+    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Showing palette: ' + p.name + '. Mood: ' + p.descriptors.join(', ') + '.' });
   },
-  selectSwatch(i, hex) { this.setState((s) => { const on = s.selectedSwatch === i; return { selectedSwatch: on ? null : i, announce: on ? '' : ('Swatch ' + hex + ' selected.') }; }); },
   onGridKey(e) {
     const nav = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
     if (nav.indexOf(e.key) < 0) return;

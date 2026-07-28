@@ -20,7 +20,7 @@ export const overlayMethods = {
     this._ovDone = false; this._ovBack = null;
     // freeze the pan so the field is stable beneath the dialog until close completes
     if (!this._reduce && window.gsap && tileEl) this.freezeUniverse();
-    this.setState({ overlay: p, overlaySel: null, announce: 'Opened ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ') + '. Press Escape to close.' }, () => {
+    this.setState({ overlay: p, announce: 'Opened ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ') + '. Press Escape to close.' }, () => {
       requestAnimationFrame(() => {
         const root = this._detailRoot();
         if (root) { const btn = root.querySelector('button'); if (btn) try { btn.focus(); } catch (e) { } }   // focus immediately — never delayed by the morph
@@ -68,13 +68,12 @@ export const overlayMethods = {
     clearTimeout(this._closeGuard);
     const back = this._ovBack;
     this._ovTl = null;
-    this.setState({ overlay: null, overlaySel: null, announce: 'Closed palette detail.' }, () => {
+    this.setState({ overlay: null, announce: 'Closed palette detail.' }, () => {
       this.resumeUniverse();
       if (back && back.focus) try { back.focus(); } catch (e) { }
       this._openTileEl = null; this._ovBack = null;
     });
   },
-  overlaySelect(i, hex) { this.setState((s) => { const on = s.overlaySel === i; return { overlaySel: on ? null : i, announce: on ? '' : ('Swatch ' + hex + ' selected.') }; }); },
   trapFocus(e) {
     if (e.key !== 'Tab') return; const root = [...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].find((d) => d.offsetParent !== null) || this._detailRoot(); if (!root) return;
     const f = [...root.querySelectorAll('button,[href],input,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null);
@@ -97,10 +96,9 @@ export const overlayMethods = {
         const next = feed[idx] || feed[idx - 1] || null;
         if (next) { patch.current = next; patch.imageUrl = this.dispUrl(next); patch.stage = 'result'; }
         else { patch.current = null; patch.imageUrl = null; patch.stage = 'upload'; }
-        patch.selectedSwatch = null;
       }
       const overlayDeleted = s.overlay && s.overlay.id === id;
-      if (overlayDeleted) { patch.overlay = null; patch.overlaySel = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
+      if (overlayDeleted) { patch.overlay = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
       if (this._toastT) clearTimeout(this._toastT);
       this._deleted = { palette: removed, index: idx };
       patch.toast = { name: removed.name };
@@ -323,7 +321,9 @@ export const overlayMethods = {
   doExport(pal, format, semantic) {
     if (!pal) return;
     const slug = this.slugName(pal.name);
-    const entries = semantic ? this.semanticEntries(pal) : this.primitiveEntries(pal);
+    // The user's role assignment rides on the palette record, so it does not need threading through
+    // the call: semanticEntries takes it as a sparse override and fills the rest from the heuristic.
+    const entries = semantic ? this.semanticEntries(pal, pal.roles) : this.primitiveEntries(pal);
     const fn = (ext) => 'palette_' + slug + '_' + format + '.' + ext;
     if (format === 'tailwind') this.download(fn('css'), this.buildTailwind(pal, entries, semantic), 'text/css;charset=utf-8');
     else if (format === 'tokens') this.download(fn('json'), this.buildW3CTokens(pal, entries, semantic), 'application/json');

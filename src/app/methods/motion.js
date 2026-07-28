@@ -83,7 +83,7 @@ export const motionMethods = {
     const g = window.gsap;
     // Anchor-scroll: bring the viewport UP to the result region as the palette reveals (one eased
     // motion, coordinated with the band wipe). With a stable stage height there is no reflow to pin.
-    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), selectedSwatch: null, announce: 'Loaded ' + p.name + ' into the result.' }, () => {
+    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Loaded ' + p.name + ' into the result.' }, () => {
       // move focus to the result region so focus follows the viewport (announce carries via aria-live)
       const region = this.resultRef.current || document.querySelector('main');
       requestAnimationFrame(() => {
@@ -112,13 +112,23 @@ export const motionMethods = {
     const Ls = sw.map((s) => s.L), lMin = Math.min.apply(null, Ls), lMax = Math.max.apply(null, Ls);
     const avgA = sw.reduce((s, x) => s + x.a, 0) / n, avgB = sw.reduce((s, x) => s + x.b, 0) / n;
     const lums = sw.map((s) => this.relLum(s.hex));
-    let cMax = 1, aa = 0;
-    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = lums[i], b = lums[j], r = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); if (r > cMax) cMax = r; if (r >= 4.5) aa++; }
+    // The winning pair is captured in the loop that was already walking every pair for cMax, so
+    // every surface that asks for metrics gets "use this on that" for nothing.
+    //
+    // ORDERED BY LUMINANCE, deliberately. The contrast drawer's own `best` records whichever member
+    // it happened to visit first as the foreground, and the ratio is symmetric — so it recommends
+    // dark-on-light or light-on-dark with equal probability. Harmless while it only tinted a sample;
+    // wrong the moment it is stated as advice. Ink is the darker of the two, ground the lighter.
+    let cMax = 1, aa = 0, bi = 0, bj = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = lums[i], b = lums[j], r = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); if (r > cMax) { cMax = r; bi = i; bj = j; } if (r >= 4.5) aa++; }
+    const dark = lums[bi] <= lums[bj] ? bi : bj, light = dark === bi ? bj : bi;
     const total = n * (n - 1) / 2;
     return {
       hue: Math.round(hue), chroma, lMin: Math.round(lMin * 100), lMax: Math.round(lMax * 100),
       temp: (avgA + avgB) > 0.008 ? 'Warm' : (avgA + avgB) < -0.008 ? 'Cool' : 'Neutral',
       contrastMax: cMax, aaPairs: aa, totalPairs: total,
+      // null when the palette has one swatch and therefore no pair at all.
+      bestPair: n > 1 ? { fg: sw[dark].hex, bg: sw[light].hex, ratio: cMax } : null,
       // CAPABILITY, not a compliance score. The old scheme graded pass/partial/fail against the
       // whole pair set, and "pass" required all C(n,2) pairs to clear 4.5:1 — which no palette in a
       // 26-palette archive achieved, and which nothing short of a black-and-white ramp realistically

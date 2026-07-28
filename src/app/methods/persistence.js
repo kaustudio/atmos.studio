@@ -1,5 +1,7 @@
 // Persistence (Workstream A): swappable storage adapter over localStorage, versioned schema with
 // migration + validation, cross-tab sync, projects CRUD, and the portable project file.
+import { ROLE_IDS } from '../../lib/exporters.js';
+
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
   // now; a backend/account store can replace makeStore() later without touching call sites.
@@ -88,20 +90,60 @@ export const persistenceMethods = {
     // (future field migrations branch on v here before returning)
     return obj;
   },
+  // One swatch list, validated one way. Extracted from validateFeed so the refined set and the
+  // preserved source set cannot drift apart in what they accept — they are the same kind of thing
+  // and a palette whose two lists disagreed about validity would be unreconcilable.
+  _validateSwatches(list) {
+    if (!Array.isArray(list)) return [];
+    const sw = [];
+    for (const s of list) {
+      if (!s || typeof s.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.hex)) continue;
+      const hasLab = typeof s.L === 'number' && typeof s.a === 'number' && typeof s.b === 'number';
+      let L = s.L, a = s.a, b = s.b;
+      if (!hasLab) { const c = this.hexToRgb(s.hex); const lab = this.rgb2oklab(c[0] / 255, c[1] / 255, c[2] / 255); L = lab.L; a = lab.a; b = lab.b; }
+      sw.push({ sid: typeof s.sid === 'number' ? s.sid : -1, hex: s.hex, weight: typeof s.weight === 'number' ? s.weight : 0.2, L, a, b });
+    }
+    // STABLE IDENTITY, minted here so it can never be half-present. A swatch's sid is what the view
+    // keys a band by and what a FLIP animation matches against; the array index cannot do that job
+    // once a refinement can reorder or remove. Every palette written before this feature has none,
+    // so if a single sid is missing or a duplicate slipped in from a hand-edited backup, the whole
+    // list is re-minted by position — deterministic, collision-free, and stable from then on
+    // because it round-trips through the store.
+    const ids = sw.map((s) => s.sid);
+    if (ids.some((v) => v < 0) || new Set(ids).size !== ids.length) sw.forEach((s, i) => { s.sid = i; });
+    return sw;
+  },
+  // A sparse role → swatch-index map. Sparse is the design: an unassigned role falls through to the
+  // derived heuristic at export time, so the record stores only what the user actually decided and
+  // a palette that has never been refined stores nothing at all.
+  //
+  // Indices are range-checked against the swatch list they belong to, so a hand-edited backup file
+  // (or one written before a refinement removed a swatch) cannot point a role at a colour that does
+  // not exist. Returns null rather than {} when nothing survives: null is what "never refined"
+  // means everywhere else, and an empty object would read as "refined, then emptied".
+  _validateRoles(roles, count) {
+    if (!roles || typeof roles !== 'object' || Array.isArray(roles)) return null;
+    const out = {}; let n = 0;
+    for (const id of ROLE_IDS) {
+      const v = roles[id];
+      if (typeof v !== 'number' || !isFinite(v)) continue;
+      const i = Math.floor(v);
+      if (i < 0 || i >= count) continue;
+      out[id] = i; n++;
+    }
+    return n ? out : null;
+  },
   validateFeed(feed) {
     if (!Array.isArray(feed)) return null;
     const out = [];
     for (const p of feed) {
       if (!p || typeof p !== 'object' || !Array.isArray(p.swatches)) continue;
-      const sw = [];
-      for (const s of p.swatches) {
-        if (!s || typeof s.hex !== 'string' || !/^#[0-9a-f]{6}$/i.test(s.hex)) continue;
-        const hasLab = typeof s.L === 'number' && typeof s.a === 'number' && typeof s.b === 'number';
-        let L = s.L, a = s.a, b = s.b;
-        if (!hasLab) { const c = this.hexToRgb(s.hex); const lab = this.rgb2oklab(c[0] / 255, c[1] / 255, c[2] / 255); L = lab.L; a = lab.a; b = lab.b; }
-        sw.push({ hex: s.hex, weight: typeof s.weight === 'number' ? s.weight : 0.2, L, a, b });
-      }
+      const sw = this._validateSwatches(p.swatches);
       if (!sw.length) continue;
+      // The extraction's own output, kept only once a refinement has moved `swatches` away from it.
+      // Absent means "never refined", which is the correct state for every palette that predates
+      // this feature — so there is no migration and SCHEMA_VERSION does not move.
+      const src = this._validateSwatches(p.sourceSwatches);
       out.push({
         id: String(p.id || (Date.now() + Math.random().toString(36).slice(2, 5))),
         // Content address and which extraction of that content this is. This validator builds an
@@ -125,6 +167,12 @@ export const persistenceMethods = {
         fallback: p.fallback === true,
         projectId: (typeof p.projectId === 'string' && p.projectId) ? p.projectId : null,
         swatches: sw,
+        // REFINEMENT. Both are optional and both are allow-listed here for the reason the comment
+        // above gives: a field this validator does not name is destroyed on the next reload, on
+        // every cross-tab sync, and on every backup restore, silently and with no error. These two
+        // carry a user's decisions, so losing them that way would be the worst possible failure.
+        sourceSwatches: src.length ? src : null,
+        roles: this._validateRoles(p.roles, sw.length),
       });
     }
     return out;   // may be empty (user deleted everything) — that is a valid persisted state, not a re-seed trigger

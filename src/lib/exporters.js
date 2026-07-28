@@ -13,30 +13,99 @@ export function primitiveEntries(pal) {
   });
 }
 
+// THE ROLE VOCABULARY — one definition, read by the exporters, the persistence validator and the
+// Refine surface. Order is the order they are offered in and exported in: the two ground tones,
+// then the two that carry meaning, then the accent, then the ink.
+//
+// These replaced an earlier internal set (surface / surface-raised / on-surface / on-surface-muted
+// / accent) which was this app's own CSS-token vocabulary leaking into somebody else's design
+// system. THE KEY NAMES IN EVERY SEMANTIC EXPORT CHANGED WITH THEM — tokens exported before this
+// deploy do not match tokens exported after it. That was a deliberate call (see DECISIONS); it is
+// also the reason to think twice before renaming any of these again.
+export const ROLE_IDS = ['background', 'surface', 'primary', 'secondary', 'accent', 'text'];
+export const ROLE_LABEL = {
+  background: 'Background', surface: 'Surface', primary: 'Primary',
+  secondary: 'Secondary', accent: 'Accent', text: 'Text',
+};
+
 // Role-mapped scaffold from lightness + chroma — a starting point to refine, NOT a finished system.
-export function semanticRoles(pal) {
-  const sw = pal.swatches.map((s) => ({ hex: s.hex.toUpperCase(), L: s.L, C: Math.sqrt(s.a * s.a + s.b * s.b) }));
-  const byL = sw.slice().sort((a, b) => b.L - a.L), byC = sw.slice().sort((a, b) => b.C - a.C), n = byL.length;
-  return [
-    { role: 'surface', hex: byL[0].hex },
-    { role: 'surface-raised', hex: (byL[1] || byL[0]).hex },
-    { role: 'on-surface', hex: byL[n - 1].hex },
-    { role: 'on-surface-muted', hex: (byL[n - 2] || byL[n - 1]).hex },
-    { role: 'accent', hex: byC[0].hex },
-  ];
+//
+// ORIENTED BY THE PALETTE, not by an assumption. The previous version always handed Background the
+// lightest swatch and Text the darkest, which is exactly backwards for a dark palette — and this
+// tool reads a great many dark photographs. The mean lightness decides which end is the ground:
+// weighted by area, so a palette is "dark" when most of its surface is dark, not when it merely
+// contains something dark.
+//
+// `override` is the user's sparse map of role → swatch index. It wins where present and the
+// heuristic fills the rest, so every export always emits all six roles and a partly-refined palette
+// is never half-empty.
+export function semanticRoles(pal, override) {
+  const sw = pal.swatches.map((s, i) => ({ i, hex: s.hex.toUpperCase(), L: s.L, w: s.weight || 0, C: Math.sqrt(s.a * s.a + s.b * s.b) }));
+  const byL = sw.slice().sort((a, b) => b.L - a.L);      // lightest first
+  const byC = sw.slice().sort((a, b) => b.C - a.C);      // most chromatic first
+  const n = byL.length;
+  const totW = sw.reduce((a, s) => a + s.w, 0) || 1;
+  const meanL = sw.reduce((a, s) => a + s.L * (s.w / totW), 0);
+  const dark = meanL < 0.5;
+  // The ground end and the ink end, whichever way round this palette runs.
+  const ground = dark ? byL.slice().reverse() : byL;     // ground[0] is the ground, ground[1] its lift
+  const ink = dark ? byL : byL.slice().reverse();        // ink[0] is the ink, ink[1] its muted step
+
+  // ASSIGNED GREEDILY, PREFERRING DISTINCTNESS. Six roles over (usually) five swatches means some
+  // doubling is unavoidable, but it must be the last resort rather than an accident of ordering: a
+  // first pass that simply took "second most chromatic" for Secondary handed it the same swatch as
+  // Accent whenever the palette had one loud colour and greys — which is the commonest shape this
+  // tool produces, and precisely the palette where two identical roles are most useless.
+  //
+  // Order matters: the three structural roles claim first, because a palette with no spare colour
+  // should still have a legible ground and ink; the chromatic roles then take what is left.
+  const used = new Set();
+  const take = (cand, fallback) => {
+    for (const s of cand) if (s && !used.has(s.i)) { used.add(s.i); return s.i; }
+    return fallback;   // everything is spoken for: double up rather than leave a role empty
+  };
+  const chromatic = byC.filter((s) => s.C > 0.02);
+  // Mid-tones: nearest the palette's own mean lightness. The useful fallback for a role that wants
+  // a colour when the palette has none to give — better than handing Primary the white the
+  // background is already using.
+  const mid = sw.slice().sort((a, b) => Math.abs(a.L - meanL) - Math.abs(b.L - meanL));
+
+  const background = take([ground[0]], ground[0].i);
+  const text = take([ink[0]], ink[0].i);
+  // Surface is a QUIET NEIGHBOUR of the background, not merely the next one along. On a dark
+  // palette the second-darkest swatch is very often the loud accent, and a raised surface wearing
+  // the accent colour is the one assignment guaranteed to be wrong. Two wants pull against each
+  // other — sit near the ground, stay out of the way — so they are scored rather than filtered: a
+  // threshold on chroma alone picked whichever quiet swatch happened to exist, even one at the far
+  // end of the lightness range. Chroma is weighted double because a loud surface is a worse mistake
+  // than a slightly distant one.
+  const bgL = sw[background].L;
+  const surface = take(ground.slice(1).sort((a, b) => (Math.abs(a.L - bgL) + a.C * 2) - (Math.abs(b.L - bgL) + b.C * 2)), background);
+  // Accent wants real colour even at the cost of doubling: a greyscale palette has no accent, and
+  // pointing the role at an off-white would be a worse answer than repeating its most chromatic
+  // swatch, which is at least the closest thing to one.
+  const accent = take(chromatic, (chromatic[0] || mid[0]).i);
+  const primary = take(chromatic.concat(mid), accent);
+  const secondary = take(chromatic.concat(mid), primary);
+  const derived = { background, surface, primary, secondary, accent, text };
+  const map = Object.assign({}, derived, override || {});
+  return ROLE_IDS.map((role) => {
+    const i = (typeof map[role] === 'number' && pal.swatches[map[role]]) ? map[role] : derived[role];
+    return { role, hex: pal.swatches[i].hex.toUpperCase(), index: i };
+  });
 }
-export function semanticEntries(pal) {
+export function semanticEntries(pal, override) {
   const slug = slugName(pal.name);
-  return semanticRoles(pal).map((r) => ({ key: r.role, cssName: 'palette-' + slug + '-' + r.role, hex: r.hex.toUpperCase(), rgb: hexToRgb(r.hex) }));
+  return semanticRoles(pal, override).map((r) => ({ key: r.role, cssName: 'palette-' + slug + '-' + r.role, hex: r.hex.toUpperCase(), rgb: hexToRgb(r.hex) }));
 }
 
 export function buildTailwind(pal, entries, semantic) {
-  let out = '/* ' + pal.name + ' — Tailwind v4 @theme' + (semantic ? ' (semantic scaffold — refine before shipping)' : ' (primitive palette)') + '. HEX only. */\n@theme {\n';
+  let out = '/* ' + pal.name + '. Tailwind v4 @theme' + (semantic ? ', semantic scaffold: refine before shipping' : ', primitive palette') + '. HEX only. */\n@theme {\n';
   entries.forEach((e) => { out += '  --color-' + e.cssName + ': ' + e.hex + ';\n'; });
   return out + '}\n';
 }
 export function buildCssFile(pal, entries, semantic) {
-  let out = '/* ' + pal.name + (semantic ? ' — semantic scaffold (refine before shipping)' : ' — primitive palette') + '. HEX only. */\n:root {\n';
+  let out = '/* ' + pal.name + (semantic ? '. Semantic scaffold: refine before shipping' : '. Primitive palette') + '. HEX only. */\n:root {\n';
   entries.forEach((e) => { out += '  --' + e.cssName + ': ' + e.hex + ';\n'; });
   return out + '}\n';
 }
@@ -77,7 +146,7 @@ export function buildASE(entries) {
 export function paletteHexList(pal) { return pal.swatches.map((s) => s.hex.toUpperCase()).join('\n'); }
 export function paletteCss(pal) {
   const slug = slugName(pal.name);
-  let out = '/* ' + pal.name + ' — generated by Palette */\n:root {\n';
+  let out = '/* ' + pal.name + '. Generated by Atmos Gallery */\n:root {\n';
   pal.swatches.forEach((s, i) => { out += '  --' + slug + '-' + (i + 1) + ': ' + s.hex.toUpperCase() + ';\n'; });
   return out + '}\n';
 }

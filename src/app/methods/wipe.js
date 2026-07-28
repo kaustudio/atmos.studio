@@ -31,8 +31,9 @@ export const wipeMethods = {
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState({
       backupMenuOpen: false, landingDismissed: false,
-      stage: 'upload', current: null, imageUrl: null, selectedSwatch: null, pending: null,
-      feedView: 'list', overlay: null, overlaySel: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, assignPalette: null, manageProjects: false,
+      stage: 'upload', current: null, imageUrl: null, pending: null,
+      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, assignPalette: null, manageProjects: false,
+      refineOpen: false, refineSel: 0, restorePending: null,
       announce: 'Intro will show again.',
     }, () => {
       setTimeout(() => this.initOrbit(), 0);

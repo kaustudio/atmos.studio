@@ -180,6 +180,13 @@ const contrastB006Label = (
 const exportB006Label = (
   <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span>Export</span>
 );
+// Refine carries no icon, deliberately. Every other glyph in this row stands for a NOUN the app
+// already draws elsewhere — a folder, a link, a contrast disc — whereas this one would have to
+// stand for an activity, and the sliders-and-dots marks that usually get drafted for that read as
+// "settings". The word is unambiguous and the row is short enough to carry it.
+const refineB006Label = (
+  <span style={sx('display:flex;align-items:center;height:14px')}>Refine</span>
+);
 // Filing takes the same folder glyph the archive row and the overlay header already use — one
 // concept, one mark — and a label that changes with the state rather than an icon that doesn't.
 const assignB006Label = (text) => (
@@ -567,7 +574,7 @@ export default function AppView({ vals }) {
             )}
             <div role="group" aria-label="Generated palette swatches" style={sx('display:flex;height:340px;width:100%;gap:0')}>
               {vals.result.bands.map((b, bi) => (
-                <div key={bi} data-band="1" role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
+                <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
                   <span data-ring="1" aria-hidden="true" style={b.bandRingStyle}></span>
                   <span data-fx="1" style={b.weightStyle}>{b.weightPct}</span>
                   <button type="button" data-ix="icon" data-info="1" data-focus="value" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
@@ -593,9 +600,22 @@ export default function AppView({ vals }) {
 
                 One 8px rhythm across the whole row, matching the archive header's bar. */}
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
-              {/* tier 1 — the payoff; the only filled control on this surface */}
-              <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
-              {/* tier 2 — filing changes the archive, so it stays on the committing side of the
+              {/* TIER 1 — and which act holds it depends on where the palette is in its life.
+                  A palette that has never been refined is not ready to export: its roles are the
+                  tool's guess, and the Export dialog has been saying "refine before shipping" to a
+                  user with nowhere to do it. So Refine leads until the palette carries a decision,
+                  and Export takes over once it does. Still exactly ONE filled control either way —
+                  the two never both light up, per the two-tier rule. */}
+              {vals.refinePrimary
+                ? (<>
+                  <B006 data-emphasis="primary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
+                  <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+                </>)
+                : (<>
+                  <B006 data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+                  <B006 data-emphasis="secondary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
+                </>)}
+              {/* filing changes the archive, so it stays on the committing side of the
                   hairline. Disabled while the palette is only in the URL — a shared palette has no
                   record to file until it is saved, and the strip above already offers that. */}
               <B006 data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
@@ -727,6 +747,7 @@ export default function AppView({ vals }) {
       <RecogniseDialog vals={vals} />
       <AssignDialog vals={vals} />
       <ManageDialog vals={vals} />
+      <RefineDialog vals={vals} />
       <RestoreDialog vals={vals} />
 
       {vals.hasToast && (
@@ -1326,16 +1347,14 @@ function DetailOverlay({ vals }) {
       </header>
 
       <div ref={vals.overlayBandsRef} role="group" aria-label="Palette swatches" style={sx('display:flex;flex:1;min-height:0;width:100%')}>
-        {overlay.bands.map((b, bi) => (
-          <div key={bi} data-oband="1" role="group" aria-label={b.groupAria} style={b.style}>
+        {overlay.bands.map((b) => (
+          <div key={b.sid} data-oband="1" data-sid={b.sid} role="group" aria-label={b.groupAria} style={b.style}>
             <div data-ochrome="1" style={sx('display:flex;flex-direction:column;gap:8px')}>
               <span style={b.weightStyle}>{b.weightPct}</span>
-              <span style={b.selTagStyle}><span style={b.selDotStyle} aria-hidden="true"></span>Current</span>
             </div>
             <button type="button" data-ix="icon" data-info="1" data-focus="swatch" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
               <IconHarmony size={13} />
             </button>
-            <span style={b.ringStyle} aria-hidden="true"></span>
             <div data-ochrome="1" style={b.valuesWrap}>
               {b.values.map((v) => (<ValueRow key={v.key} v={v} showCaveat={true} />))}
             </div>
@@ -1745,6 +1764,96 @@ function ManageDialog({ vals }) {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================== REFINE ==============================
+// The step between reading a palette and shipping it. A surface of its own, on the same dialog
+// family as the others — backdrop, aria-modal, shared focus trap, shared transition — because the
+// result view is a screen people mostly READ, and permanent editing chrome there would tax every
+// visit to pay for an occasional one.
+//
+// Read left to right: the palette, then the swatch you picked, then what it is FOR. Roles are the
+// point of the surface, so they get the column; the colour sliders sit under them because adjusting
+// a colour is what you do once you know what job it has to do.
+//
+// Every swatch shows the roles it answers, in words, on the swatch itself. That is the whole
+// picture the Export dialog has been asking for since it started telling people to refine.
+function RefineDialog({ vals }) {
+  if (!vals.hasRefine) return null;
+  const r = vals.refine;
+  return (
+    <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
+      <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:720px;max-width:96vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px 0')}>
+          <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
+            <span style={sx('font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Refine</span>
+            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:20px;letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
+          </div>
+          <button type="button" data-ix="solid" data-focus="chrome" onClick={r.onClose} aria-label="Close refine" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:8px 13px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Done</button>
+        </header>
+
+        {/* The palette, at working size. Keyed by sid so a reorder moves nodes rather than
+            rewriting them, which is also what lets the result view's bands FLIP behind this. */}
+        <div role="group" aria-label="Palette swatches. Choose one to refine." style={sx('display:flex;gap:0;width:100%;padding:16px 22px 0')}>
+          {r.swatches.map((b) => (
+            <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" aria-pressed={b.pressed} aria-label={b.aria} onClick={b.onSelect} style={b.style}>
+              {b.hasRoles && <span style={b.labelStyle}>{b.roleLabels}</span>}
+            </button>
+          ))}
+        </div>
+
+        <div style={sx('display:flex;gap:22px;flex-wrap:wrap;padding:18px 22px 0')}>
+          {/* ROLES — the reason this surface exists. Derived rows are marked as such: the tool has
+              always been guessing these, and the difference between its guess and the user's
+              decision is exactly what was invisible before. */}
+          <div style={sx('flex:1;min-width:260px;display:flex;flex-direction:column')}>
+            <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Roles</span>
+            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
+            {r.roles.map((role) => (
+              <div key={role.id}>
+                <button type="button" data-ix="cell" data-focus="chrome" aria-pressed={role.here ? 'true' : 'false'} aria-label={role.aria} onClick={role.onAssign} style={sx('display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:8px 0;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
+                  <span aria-hidden="true" style={role.swatchStyle}></span>
+                  <span style={sx('font-family:Neue Montreal;font-size:12.5px;flex:1;min-width:0')}>{role.label}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{role.note}</span>
+                </button>
+                <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
+              </div>
+            ))}
+          </div>
+
+          {/* THE SELECTED SWATCH — its colour, and the three axes that change it. */}
+          <div style={sx('flex:1;min-width:260px;display:flex;flex-direction:column')}>
+            <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:9px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px')}>Swatch {r.selIdx + 1} · {r.selHex}</span>
+            <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
+            {r.sliders.map((sl) => (
+              <div key={sl.key} style={sx('display:flex;flex-direction:column;gap:5px;padding:10px 0')}>
+                <span style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:10px')}>
+                  <label htmlFor={'refine-' + sl.key} style={sx('font-family:Neue Montreal;font-size:8px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{sl.label}</label>
+                  <span style={sx('font-family:Neue Montreal;font-size:12px;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{sl.display}</span>
+                </span>
+                <input id={'refine-' + sl.key} type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} style={sx('width:100%;accent-color:var(--on-surface);cursor:pointer')} />
+              </div>
+            ))}
+            {/* Position and removal. Two is the floor — a pair is still a palette, one is not. */}
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0 0')}>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label="Move this swatch left" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canLeft ? '1' : '.35'))}>←</button>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label="Move this swatch right" style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canRight ? '1' : '.35'))}>→</button>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemove} aria-label={r.removeAria} style={sx('background:none;border:1px solid var(--action-line);padding:7px 12px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Two reversals, and they are not the same act: Undo steps back through this session,
+            Reset throws the whole refinement away and returns to the colours read from the image. */}
+        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 22px 22px;margin-top:14px;border-top:1px solid var(--line)')}>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label="Undo the last refinement" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canUndo ? '1' : '.35'))}>Undo</button>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label="Reset to the colours read from the image" style={sx('background:none;border:1px solid var(--action-line);padding:9px 14px;font-family:Neue Montreal;font-size:10px;letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;opacity:' + (r.canReset ? '1' : '.35'))}>Reset</button>
+          <span style={sx("flex:1;min-width:180px;font-family:'Neue Montreal';font-size:11px;line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Changes are saved as you make them. Reset returns to the extraction.</span>
         </div>
       </div>
     </div>

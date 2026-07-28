@@ -2,6 +2,7 @@
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
+import { ROLE_IDS, ROLE_LABEL } from '../lib/exporters.js';
 
 const MONO = 'Neue Montreal';
 
@@ -89,7 +90,12 @@ export const renderValsMethods = {
             metaStyle: { fontFamily: mono, fontSize: '10px', opacity: 0.85, whiteSpace: 'nowrap' },
           };
         });
-        let best = null; for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { if (i === j) continue; const r = this.contrastRatio(sw[i].hex, sw[j].hex); if (!best || r > best.r) best = { r, fg: sw[i].hex, bg: sw[j].hex }; }
+        // One definition of the best pair, taken from paletteMetrics so the drawer's sample and the
+        // result view's recommendation can never name different colours for the same palette. It
+        // also arrives correctly oriented: the ratio is symmetric, and this pane's own loop used to
+        // record whichever member it reached first as the foreground.
+        const bp = this.paletteMetrics(cp).bestPair;
+        const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
         const segOn = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
         const segOff = { fontFamily: mono, fontSize: '9.5px', letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 11px', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
@@ -117,6 +123,10 @@ export const renderValsMethods = {
       const n = s.current.swatches.length;
       const totW = s.current.swatches.reduce((a, x) => a + x.weight, 0) || 1;
       const bands = s.current.swatches.map((b, i) => {
+        // Keyed by sid, not by position: once a refinement can reorder or remove a swatch, an
+        // index key makes React reuse the wrong band node and makes a "✓ Copied" flag land on a
+        // colour the user never clicked. sid follows the swatch.
+        const sid = typeof b.sid === 'number' ? b.sid : i;
         const on = this.onColor(b.hex);
         const fmt = this.swatchFormats(b.hex);
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
@@ -125,13 +135,13 @@ export const renderValsMethods = {
         const rowBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on, transition: 'background .2s var(--ease-standard)' };
         const values = ['hex', 'rgb', 'cmyk', 'hsl'].map((key) => {
           const f = fmt[key];
-          const copied = s.copied === key + '-' + i;
+          const copied = s.copied === key + '-' + sid;
           return {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             display: copied ? 'Copied' : f.display,
             valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' .38s var(--ease-entrance) both' },
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
-            onCopy: () => this.copy(f.copy, key + '-' + i, 'Copied ' + f.copy),
+            onCopy: () => this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy),
             rowStyle: rowBase, rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
@@ -142,6 +152,7 @@ export const renderValsMethods = {
           };
         });
         return {
+          sid,
           weightPct: Math.round((b.weight / totW) * 100) + '%',
           groupAria: 'Swatch ' + (i + 1) + ' of ' + n + ', ' + fmt.hex.display,
           values,
@@ -435,7 +446,6 @@ export const renderValsMethods = {
       const obands = p.swatches.map((b, i) => {
         const on = on2.call(this, b.hex);
         const fmt = this.swatchFormats(b.hex);
-        const sel = s.overlaySel === i;
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
         const hoverBg = on === '#000000' ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.16)';
         const cavBorder = on === '#000000' ? 'rgba(0,0,0,.32)' : 'rgba(255,255,255,.42)';
@@ -457,21 +467,20 @@ export const renderValsMethods = {
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
         });
+        // The per-swatch SELECTION this band used to model is gone. It had no call site anywhere in
+        // the view: overlaySelect was never invoked, so `sel` was permanently false, and the
+        // "Current" tag, the selected ring and the corner select button were unreachable UI
+        // pretending to be a feature. Round 2 builds a real selection model on the Refine surface,
+        // and leaving a dead one next to it is how the next person ends up wiring the wrong one.
         return {
-          groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display + (sel ? ', selected' : ''),
-          selected: sel, pressed: sel ? 'true' : 'false',
-          onSelect: () => this.overlaySelect(i, fmt.hex.display),
+          sid: typeof b.sid === 'number' ? b.sid : i,
+          groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
           weightPct: Math.round((b.weight / tw2) * 100) + '%',
           style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
           weightStyle: { fontFamily: mono, fontSize: '10px', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '16px 14px 0' },
-          selTagStyle: { display: sel ? 'inline-flex' : 'none', alignItems: 'center', gap: '6px', margin: '0 0 0 14px', fontFamily: mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase', color: on },
-          selDotStyle: { width: '7px', height: '7px', background: on },
-          selectBtnStyle: { position: 'absolute', top: '12px', right: '12px', width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: sel ? on : 'transparent', border: '1px solid ' + on, color: sel ? b.hex : on, cursor: 'pointer', padding: 0, zIndex: 3 },
-          selectAria: (sel ? 'Deselect' : 'Select') + ' swatch ' + fmt.hex.display + ' as the current colour',
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
-          ringStyle: { position: 'absolute', inset: '0', boxShadow: 'inset 0 0 0 3px ' + on, opacity: sel ? 1 : 0, pointerEvents: 'none' },
           valuesWrap: { display: 'flex', flexDirection: 'column', width: '100%' },
           values,
         };
@@ -726,6 +735,80 @@ export const renderValsMethods = {
       };
     }
 
+    // ===== the Refine surface =====
+    // Built only while open, like every other overlay view-model here. The selected swatch drives
+    // everything on the right of the surface, so it is resolved once and clamped: a removal can
+    // leave refineSel past the end for one render, and a crash there would strand a modal.
+    let refineView = null;
+    if (s.refineOpen && s.current) {
+      const p = s.current;
+      const list = p.swatches;
+      const selIdx = Math.max(0, Math.min(s.refineSel || 0, list.length - 1));
+      const sel = list[selIdx];
+      const selC = Math.sqrt(sel.a * sel.a + sel.b * sel.b);
+      let selH = Math.atan2(sel.b, sel.a) * 180 / Math.PI; if (selH < 0) selH += 360;
+      // The live role map: the user's assignment where present, the heuristic everywhere else, so
+      // the surface always shows six answered roles rather than a form with gaps.
+      const resolved = this.semanticRoles(p, p.roles);
+      const roleAt = {};
+      resolved.forEach((r) => { (roleAt[r.index] = roleAt[r.index] || []).push(r.role); });
+      const assigned = p.roles || {};
+      refineView = {
+        name: p.name,
+        selIdx, selHex: sel.hex.toUpperCase(),
+        swatches: list.map((b, i) => {
+          const on = this.onColor(b.hex);
+          const isSel = i === selIdx;
+          return {
+            sid: typeof b.sid === 'number' ? b.sid : i,
+            hex: b.hex, index: i, selected: isSel, pressed: isSel ? 'true' : 'false',
+            // Which roles this swatch answers, named in full so the strip can be read without
+            // opening anything — this is the whole picture the surface exists to show.
+            roleLabels: (roleAt[i] || []).map((r) => ROLE_LABEL[r]).join(' · '),
+            hasRoles: !!(roleAt[i] || []).length,
+            aria: 'Swatch ' + (i + 1) + ' of ' + list.length + ', ' + b.hex.toUpperCase()
+              + ((roleAt[i] || []).length ? '. Roles: ' + (roleAt[i] || []).map((r) => ROLE_LABEL[r]).join(', ') : '. No role')
+              + (isSel ? '. Selected' : ''),
+            onSelect: () => this.refineSelect(i),
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '54px', height: '132px', background: b.hex, border: 'none', padding: '10px 8px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '4px', color: on, boxShadow: isSel ? 'inset 0 0 0 3px ' + on : 'none' },
+            labelStyle: { fontFamily: mono, fontSize: '8px', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: on, opacity: 0.9, textAlign: 'left', lineHeight: 1.3, textWrap: 'pretty' },
+          };
+        }),
+        // Six rows, each naming the swatch that currently answers it. `derived` marks the ones the
+        // user has not decided, which is the difference between "this is my choice" and "this is
+        // what the tool guessed" — the distinction the Export dialog has been asking for.
+        roles: ROLE_IDS.map((id) => {
+          const r = resolved.find((x) => x.role === id);
+          const isDerived = typeof assigned[id] !== 'number';
+          return {
+            id, label: ROLE_LABEL[id], hex: r.hex, index: r.index, derived: isDerived,
+            here: r.index === selIdx,
+            note: isDerived ? 'Derived' : 'Assigned',
+            onAssign: () => this.refineSetRole(id, selIdx),
+            aria: (r.index === selIdx ? 'Unassign ' : 'Assign ') + ROLE_LABEL[id] + ' to swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase(),
+            swatchStyle: { width: '18px', height: '18px', flex: 'none', background: r.hex, border: '1px solid var(--action-line)' },
+          };
+        }),
+        // Absolute values, never deltas — see refineAdjust.
+        sliders: [
+          { key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L, display: Math.round(sel.L * 100) + '%', onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)) },
+          { key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC, display: selC.toFixed(3), onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)) },
+          { key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH, display: Math.round(selH) + '°', onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)) },
+        ],
+        canRemove: list.length > 2,
+        removeAria: 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase(),
+        onRemove: () => this.refineRemove(selIdx),
+        canLeft: selIdx > 0, canRight: selIdx < list.length - 1,
+        onLeft: () => this.refineMove(selIdx, -1), onRight: () => this.refineMove(selIdx, 1),
+        canUndo: !!(this._refineUndo && this._refineUndo.length),
+        onUndo: () => this.refineUndo(),
+        canReset: !!p.sourceSwatches,
+        onReset: () => this.refineReset(),
+        onClose: () => this.closeRefine(),
+        trap: (e) => this.trapFocusIn('[data-refine-dialog]', e),
+      };
+    }
+
     // ===== restore-from-file confirmation =====
     // What the file holds and what would land, before anything lands. The counts come from state,
     // never re-derived from the file here: the payload was validated once at preview and parked on
@@ -977,6 +1060,8 @@ export const renderValsMethods = {
       recogniseVariation: () => this.recogniseVariation(),
       trapRecognise: (e) => this.trapFocusIn('[data-recognise-dialog]', e),
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
+      refine: refineView, hasRefine: !!refineView,
+      openRefine: () => this.openRefine(),
       restore: restoreView, hasRestore: !!s.restorePending,
       closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
       trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),
@@ -1174,6 +1259,18 @@ export const renderValsMethods = {
       // header open, so there is one way to file a palette and it says the same thing every time.
       openAssignCurrent: () => { const p = this.state.current; if (p) this.openAssign(p); },
       assignDisabled: !filedCur,
+      // WHICH ACT LEADS. Refine is primary until the palette carries a role the user chose; after
+      // that Export is, because the decision the export was waiting for has been made. `roles` is
+      // the whole test — its absence is exactly "never refined", which is why refinement stores a
+      // sparse map rather than a flag.
+      //
+      // Disabled on a shared palette for the same reason filing is: it has no record in this
+      // browser to write a refinement to, and the strip above already offers to save it first.
+      refinePrimary: !(s.current && s.current.roles),
+      refineDisabled: !filedCur,
+      refineAria: s.current && s.current.roles
+        ? 'Refine this palette: change roles, colours or order'
+        : 'Refine this palette: assign roles and adjust colours',
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: filedCur && filedCur.projectId ? this.projectName(filedCur.projectId) : 'Add to project',

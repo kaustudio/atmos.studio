@@ -18,6 +18,7 @@ import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
+import { refineMethods } from './methods/refine.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isLegal, applyHead, APP } from './routes.js';
 
@@ -109,13 +110,18 @@ export default class PaletteApp extends React.Component {
     storeInfoOpen: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
+    // Bumped by a refinement that changes the SHAPE of the swatch list (reorder, remove), so
+    // componentDidUpdate can tell an in-place edit from a re-render. See the FLIP branch there.
+    bandRev: 0,
+    // the Refine surface: open flag and the swatch currently being worked on
+    refineOpen: false, refineSel: 0,
     // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
     assignPalette: null, manageProjects: false, backupMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
-    overlaySel: null, theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
+    theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A legal route arrives past them for a different reason: there is no tool on it to introduce.
@@ -251,6 +257,7 @@ export default class PaletteApp extends React.Component {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
+        if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
@@ -325,13 +332,29 @@ export default class PaletteApp extends React.Component {
     // list-view row activation: restore/establish the active (expanded) row after any re-render
     if (s.feedView === 'list' && s.feed.length > 0) { requestAnimationFrame(() => { if (this.state.feedView === 'list') this._syncListActive(); }); }
 
-    const prev = this._prev || { stage: 'upload', curId: null };
+    const prev = this._prev || { stage: 'upload', curId: null, bandRev: 0 };
     const curId = s.current && s.current.id;
+
+    // A refinement that reorders or removes a swatch changes neither the stage nor the palette id,
+    // so the guard below would swallow it and the bands would cut to their new layout. bandRev is
+    // the signal for exactly that case: the refine action captures the band rects, bumps the
+    // counter, and the FLIP plays from the old geometry to the new.
+    //
+    // Structural changes ONLY. A lightness or hue tweak leaves every band exactly where it was —
+    // there is nothing to FLIP, and running one per slider tick would be both pointless and
+    // visibly awful. Colour transitions are the band's own business.
+    if (s.bandRev !== prev.bandRev && s.stage === prev.stage && curId === prev.curId) {
+      this._prev = { stage: s.stage, curId, bandRev: s.bandRev };
+      const rects = this._refineRects; this._refineRects = null;
+      if (rects && window.gsap && !this._reduce && !document.hidden) { try { this.flipBandsFrom(rects); } catch (err) { } }
+      return;
+    }
+
     if (s.stage === prev.stage && curId === prev.curId) return;
     if (s.stage === 'processing' && prev.stage !== 'processing') this.startCanvas();
     if (s.stage !== 'processing' && prev.stage === 'processing') this.stopCanvas();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
-    this._prev = { stage: s.stage, curId: curId };
+    this._prev = { stage: s.stage, curId: curId, bandRev: s.bandRev };
     if (enteredResult) {
       const vis = window.gsap && !document.hidden;
       try {
@@ -393,5 +416,6 @@ Object.assign(
   loaderMethods,
   shareMethods,
   miscMethods,
+  refineMethods,
   renderValsMethods,
 );
