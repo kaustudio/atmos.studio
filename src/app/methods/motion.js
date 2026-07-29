@@ -562,22 +562,39 @@ export const motionMethods = {
       targets.forEach((el) => { if (!el) return; el.style.clipPath = ''; el.style.opacity = ''; el.style.transform = ''; });
     }, (this.DUR.reveal + this.DUR.stagger * (rows + 2)) * 1000 + 400);
   },
+  /* COPY RISES OUT OF A MASK, everywhere copy lives — the same reveal the landing statement and the
+     phone's gate already use, now on the two surfaces that were fading their words in like any
+     other box. Headings and paragraphs only: a button's label is not copy, it is the button, and
+     masking it would animate a control's affordance rather than a sentence.
+     _maskLineReveal splits to word spans, groups them into real rendered lines, wraps each line in
+     its own overflow-hidden mask and slides the inner up — so the break points are whatever the
+     measure actually produced, not guesses. It restores the plain text on complete and carries its
+     own safety timer, which is why nothing here has to unwind it. */
+  _maskCopyIn(root) {
+    const g = window.gsap;
+    if (this._reduce || !g || !root) return;
+    [...root.querySelectorAll('[data-mask-copy]')].forEach((el, i) => {
+      this._maskLineReveal(el, this.DUR.stagger * (i + 1));
+    });
+  },
   _shareIn() {
     const g = window.gsap;
     const root = document.querySelector('[data-mobile-share]');
     if (this._reduce || !g || !root) return;
-    const chrome = [...document.querySelectorAll('[data-ms-head],[data-ms-foot]')];
     const rows = [...document.querySelectorAll('[data-ms-row]')];
 
     g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
-    if (chrome.length) g.from(chrome, { opacity: 0, y: 10, duration: this.DUR.reveal, ease: this.EASE.entrance, delay: this.DUR.stagger, stagger: this.DUR.stagger, clearProps: 'transform,opacity' });
+    // The block-level fade on head and foot is gone: it was a second entrance competing with the
+    // masks inside it, and a line sliding out of a mask while its own container fades reads as
+    // neither. The surface fade carries the frame; the masks carry the words.
+    this._maskCopyIn(root);
     if (rows.length) {
       g.fromTo(rows,
         { clipPath: 'inset(0 100% 0 0)' },
         { clipPath: 'inset(0 0% 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger * 2, clearProps: 'clipPath' });
     }
 
-    this._settleGuard('share', [root].concat(chrome, rows), rows.length);
+    this._settleGuard('share', [root].concat(rows), rows.length);
   },
   // The list arrives the same way the palette does, one level up: surface, then rows on a stagger.
   // Its rows slide from the leading edge rather than clip, because a row here is a strip beside a
@@ -590,6 +607,7 @@ export const motionMethods = {
     g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
     const rows = [...root.querySelectorAll('[data-ml-row]')];
     if (rows.length) g.from(rows, { opacity: 0, x: -14, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger, clearProps: 'transform,opacity' });
+    this._maskCopyIn(root);
     this._settleGuard('list', [root].concat(rows), rows.length);
   },
   _listOut(cb) { this._exitTween('[data-mobile-list]', cb); },

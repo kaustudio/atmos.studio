@@ -295,8 +295,8 @@ function MobileExampleList({ ml }) {
       <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
 
       <div style={sx('flex:none;padding:22px var(--page-gutter) 18px')}>
-        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example Palettes</h1>
-        <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
+        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example Palettes</h1>
+        <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
       </div>
 
       {/* A real ul/li. role="listitem" was on the BUTTON, which overrides the button's own role —
@@ -365,7 +365,7 @@ function MobileShareView({ ms }) {
       )}
 
       <div data-ms-head="1" style={sx('flex:none;padding:22px var(--page-gutter) 22px')}>
-        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
+        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
@@ -374,7 +374,7 @@ function MobileShareView({ ms }) {
           </div>
         )}
         {ms.hasRationale && (
-          <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
+          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
         )}
       </div>
 
@@ -394,7 +394,7 @@ function MobileShareView({ ms }) {
           stretched footer strands this line half a screen away from what it refers to. */}
       <div data-ms-foot="1" style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
         {ms.footLine && (
-          <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         )}
         {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
             one control on a surface built for a thumb. */}
