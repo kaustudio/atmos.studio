@@ -295,7 +295,7 @@ function MobileExampleList({ ml }) {
       <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
 
       <div style={sx('flex:none;padding:22px var(--page-gutter) 18px')}>
-        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example palettes</h1>
+        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example Palettes</h1>
         <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
       </div>
 
@@ -307,9 +307,20 @@ function MobileExampleList({ ml }) {
           <li key={r.key} style={sx('display:flex;width:100%')}>
           <button type="button" data-ml-row="1" data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
             style={sx('display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px var(--page-gutter);background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
-            {/* the strip carries the recognition, so it leads and takes the fixed width */}
-            <span aria-hidden="true" style={sx('flex:none;display:flex;width:72px;height:40px;border:1px solid var(--line)')}>
-              {r.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
+            {/* Photograph over its own palette, in one 72px column. The strip alone said what the
+                colours are; it could not say what they came from, which on a screen selling "read
+                from light and atmosphere" is the more persuasive half. Stacked rather than side by
+                side because a row is 64px and two thumbnails would leave the name nowhere to go. */}
+            <span aria-hidden="true" style={sx('flex:none;display:flex;flex-direction:column;width:72px;gap:2px')}>
+              {r.hasImage && (
+                <span style={sx('position:relative;display:block;width:100%;height:40px;overflow:hidden;background:var(--surface-raised)')}>
+                  <img src={r.image} alt="" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
+                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 10%, transparent)')}></span>
+                </span>
+              )}
+              <span style={sx('display:flex;width:100%;height:' + (r.hasImage ? '6px' : '40px') + ';border:1px solid var(--line)')}>
+                {r.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
+              </span>
             </span>
             <span style={sx('flex:1;min-width:0;display:flex;flex-direction:column;gap:4px')}>
               <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>

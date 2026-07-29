@@ -511,17 +511,22 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    screen gets the ring formation around the copy and the wordmark at the top, exactly as desktop
    does. Everything else in the app frame is hidden; the fixed wordmark is not.
 
-   The one exception is data-mobile-share: a shared link opened on a phone shows the palette
-   read-only instead of the gate (see MobileShareView). The gate still stands for the TOOL — that
-   path never renders this surface — but somebody else's finished palette needs no room to work in,
-   and gating it would end the sharing chain at its first hop.
+   Two exceptions are read-only palette surfaces. data-mobile-share is a shared link opened on a
+   phone, which shows the palette instead of the gate (see MobileShareView): the gate still stands
+   for the TOOL — that path never renders this surface — but somebody else's finished palette needs
+   no room to work in, and gating it would end the sharing chain at its first hop.
+   data-mobile-list is the example chooser above it, and it is here because it was NOT and the
+   failure was silent in the worst way: the surface mounted, measured, animated and took taps, while
+   this rule painted display:none over it. Everything a console could tell you said it was fine.
+   Any future phone surface has to be named here too — that is the cost of an allow-list, and it is
+   the right cost, because the alternative is the tool leaking onto a screen that cannot run it.
 
    data-load-wrap is exempt for the same reason data-logo is: it is the ARRIVAL, not the tool. The
    gate is a real destination on a phone, so it gets the same logo-reveal opening the desktop landing
    gets — without this exemption the loader still mounts and still runs its whole timeline, just
    invisibly, and the phone jumps straight to the gate. */
 @media (max-width:720px){
-  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-load-wrap]){display:none!important}
+  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-load-wrap]){display:none!important}
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders

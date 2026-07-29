@@ -1160,6 +1160,10 @@ export const renderValsMethods = {
             name: p.name,
             traits: (p.descriptors || []).slice(0, 2),
             onOpen: () => this.openExampleById(p.id),
+            // The photograph, resolved the same way the palette view resolves its own: a seeded
+            // example's key against the bundled map, '' for anything else. The list was showing the
+            // swatch strip alone, which is the palette without the thing it was read FROM.
+            image: this.dispUrl(p), hasImage: this.hasImg(p),
             aria: 'Open ' + p.name + '. ' + (p.descriptors || []).slice(0, 3).join(', ') + '.',
             strip: p.swatches.map((b, i) => ({
               key: i,
