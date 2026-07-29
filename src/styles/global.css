@@ -487,10 +487,11 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   [data-row-cell="date"]{grid-column:span 3}
   [data-row-cell="scope"]{grid-column:span 6}
 }
-/* THE DATE BREATHES. It is the only metric that ends against the page margin, so its value sits
-   16px inside its column while the column itself still runs to the grid line. Header and value take
-   the same inset, or the right edge they share would come apart. */
-[data-row-cell="date"]{padding-inline-end:16px}
+/* THE DATE BREATHES. It is the only metric ending against the page margin, so both the header chip
+   and the stamp sit 16px inside their column while the column itself still runs to the grid line.
+   The inset lives on each of the two elements (a margin on the chip, padding on the stamp) rather
+   than as a rule here: both already set those properties inline, and an inline value beats a
+   stylesheet — which is how the stamp ended up flush while the header sat inset. */
 [data-row-time]{transition:transform .18s var(--ease-standard)}
 [data-row-wrap]:hover [data-row-time],[data-row-wrap]:focus-within [data-row-time]{transform:translateX(calc(-1 * var(--row-action-gutter)))}
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}

@@ -358,7 +358,10 @@ export const renderValsMethods = {
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
     // not moved a pixel; the 8 it used to leave to the row's padding it now holds itself, which is
     // what lets the sort header above it be a button rather than a column-wide slab.
-    const timeCell = { textAlign: 'end', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    // 16px off the column line, matching the header chip above it. Inline rather than from the
+    // stylesheet because this object also sets paddingRight, and an inline shorthand beats a rule —
+    // which is exactly how the value ended up flush while the header sat inset.
+    const timeCell = { textAlign: 'end', paddingInlineEnd: '16px', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
@@ -1469,23 +1472,21 @@ export const renderValsMethods = {
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
           style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
-            // THE HEADER IS THE COLUMN. The button used to hug its label and sit at its track's
-            // end, which put a hover tint the shape of the WORD over a column of values it did not
-            // match. It fills the track now, so the tint is exactly one column wide and lands on the
-            // same two grid lines the values below it do — the state you can see is the state the
-            // grid describes. That retires the negative margin too: with the box already on the
-            // line there is nothing left to pull back out of.
+            // A CHIP, NOT A COLUMN. It hugs its label with the same padding on all four sides and
+            // sits at its track's end, so the BOX lands on the column line and the label is centred
+            // inside it. Filling the whole track was tried and removed: a tint one column wide
+            // announcing a two-word label reads as the column having a state, not the control.
             //
-            // Zero horizontal padding, for a reason as much practical as tidy: "Max contrast" is
-            // 81px of ink in a 94px column at 1440, so 8px either side would have clipped it. Date
-            // keeps a 16px end inset, matching the value below it — it is the one metric that ends
-            // against the page margin and it was asked to breathe.
+            // The border is what carries the alignment at rest — the box edge is the grid line —
+            // and the hover tint now fills exactly that box, so hovering changes the chip's colour
+            // rather than its shape. --line is the quietest edge the app owns; anything stronger
+            // turns a header row into a table.
             //
-            // The border makes the column readable AT REST, not only under the pointer. --line is
-            // the quietest edge the app owns; anything stronger turns a header row into a table.
-            width: '100%', minWidth: 0, minHeight: '24px', justifySelf: 'stretch',
+            // Date is pulled 16px off the line by margin rather than padding, so its chip stays
+            // square-padded while its edge matches the 16px inset the stamp below it keeps.
+            width: 'auto', minWidth: 0, minHeight: '24px', justifySelf: 'end',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            padding: c.key === 'time' ? '4px 16px 4px 0' : '4px 0',
+            padding: '6px', marginInlineEnd: c.key === 'time' ? '16px' : '0',
             border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
