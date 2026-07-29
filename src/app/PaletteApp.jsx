@@ -340,6 +340,12 @@ export default class PaletteApp extends React.Component {
   componentDidUpdate() {
     const s = this.state;
     this._updateProjPill();
+    // One place decides whether a modal owns the screen, rather than each dialog's own open/close
+    // remembering to say so. Driven from state so a dialog that is added later is covered by adding
+    // its flag here, and can never be half-wired: opened with the background inert, closed without.
+    const modal = !!(s.assignPalette || s.manageProjects || s.recognised || s.restorePending
+      || s.refineOpen || s.exportOpen || s.contrast || s.harmony);
+    if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
       const key = s.contrastLens + '|' + s.contrastLarge + '|' + s.contrastPassOnly;

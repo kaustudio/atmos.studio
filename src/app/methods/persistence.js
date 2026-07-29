@@ -494,6 +494,25 @@ export const persistenceMethods = {
   // `defer` matters on the way out of a copy: this.copy() reaches for the clipboard and its fallback
   // path puts focus on a scratch node of its own, so focusing the trigger in the same tick loses the
   // race and the next Tab starts from the top of the document.
+  /* MODAL BACKGROUND, OUT OF THE TREE. trapFocusIn cycles Tab inside the dialog, which is the
+     keyboard half of the job; the other half is that a screen reader's virtual cursor and the
+     browser's find-in-page both walk the DOM directly and were still reaching 73 controls behind an
+     open dialog. aria-modal="true" asks modern screen readers to ignore the background, but it is a
+     request with uneven support and it does nothing for find-in-page.
+
+     The landmarks are inerted rather than [data-app] itself, because every dialog is rendered INSIDE
+     [data-app] — inerting the wrapper would inert the dialog with it. Listing the four landmarks is
+     the honest version: they are the app's whole content surface, and a fifth would announce itself
+     by still being reachable. */
+  _bgInert(on) {
+    const app = document.querySelector('[data-app]');
+    if (!app) return;
+    ['header', 'main', 'section[data-recent]', '.site-foot'].forEach((sel) => {
+      const el = app.querySelector(sel);
+      if (!el) return;
+      if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert');
+    });
+  },
   _focusCopyTrigger(defer) {
     const go = () => { const b = document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
     if (defer) requestAnimationFrame(go); else go();

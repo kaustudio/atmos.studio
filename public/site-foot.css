@@ -94,7 +94,13 @@
 .site-foot__rights{justify-self:end}
 /* Undecorated at rest, unlike the article's underlined prose links: at this size on a single line
    these read as chrome, and the hover is the affordance. */
-.site-foot__meta a{color:inherit;text-decoration:none}
+/* 24px of target under 12px of ink. These links render on every legal route at every width, so
+   unlike the rest of the app they are genuinely reached by touch. The extender is a pseudo-element
+   rather than padding because padding here would move the three meta rows apart; -6px vertical
+   takes a 12px line to 24. The inline gap between the two nav links is wider than the extenders,
+   so they do not overlap. */
+.site-foot__meta a{color:inherit;text-decoration:none;position:relative}
+.site-foot__meta a::after{content:'';position:absolute;inset:-6px -4px}
 .site-foot__meta a:hover{color:var(--on-surface-muted)}
 .site-foot__meta a:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 

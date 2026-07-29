@@ -310,7 +310,7 @@ function MobileShareView({ ms }) {
       {/* the palette itself: full-bleed rows, each tappable to take its hex */}
       <div role="group" aria-label="Palette swatches. Tap a colour to copy its hex" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
         {ms.rows.map((r) => (
-          <button key={r.key} type="button" data-ix="cell" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
+          <button key={r.key} type="button" data-ix="cell" data-focus="value" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
             <span style={r.hexStyle}>{r.hex}</span>
             <span style={r.metaStyle}>
               {r.copied ? (<><IconCheck />Copied</>) : r.pct}
@@ -502,9 +502,9 @@ export default function AppView({ vals }) {
                 </div>
               </div>
             ) : (
-              <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; width: 606px')}>
+              <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; max-width: 606px')}>
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:20ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); width: 507px')}>Colour read from light and atmosphere.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 507px')}>Colour read from light and atmosphere.</span></span>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds.</span></span>
                 </h1>
                 <div style={sx('margin-top:36px;pointer-events:auto')}>
@@ -736,7 +736,7 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
-                <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.0;letter-spacing:-.015em;color:var(--on-surface)")}>{vals.result.name}</div>
+                <div data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</div>
                 {/* Two traits, then More. Four capitalised pills read as a legend rather than a
                     description, and the remaining ones are one click away with the reading.
 
@@ -1007,7 +1007,7 @@ function FeedSection({ vals }) {
             Opens left because this one sits at the page's left edge, not its right. */}
         {vals.storeInfo && (
           <div style={sx('position:relative;display:inline-flex;flex:none')}>
-            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.storeInfoOpen} aria-label={vals.storeInfo.aria} onClick={vals.toggleStoreInfo} onKeyDown={vals.storeInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{vals.storeInfo.glyph}</button>
+            <button type="button" data-ix="press" data-hit="24" data-focus="chrome" aria-expanded={vals.storeInfoOpen} aria-label={vals.storeInfo.aria} onClick={vals.toggleStoreInfo} onKeyDown={vals.storeInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{vals.storeInfo.glyph}</button>
             {vals.storeInfoOpen && (<>
               <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleStoreInfo} aria-hidden="true"></div>
               <div data-tip="store" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>
@@ -1520,7 +1520,7 @@ function DetailOverlay({ vals }) {
             </div>
           </div>
         </div>
-        <p style={sx("width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
+        <p style={sx("max-width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
       </footer>
     </div>
   );
@@ -1570,7 +1570,7 @@ function TagFilterDrawer({ vals }) {
                   sheet, same easing as the Library heading and the AA badge — a third variant would
                   make the pattern a coincidence rather than a convention. */}
               <span style={sx('position:relative;display:inline-flex;flex:none')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
+                <button type="button" data-ix="press" data-hit="24" data-focus="chrome" aria-expanded={vals.filterInfoOpen} aria-label="How filters combine, and what the accessibility states mean" onClick={vals.toggleFilterInfo} onKeyDown={vals.filterInfoKey} style={sx('width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>i</button>
                 {vals.filterInfoOpen && (<>
                   <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleFilterInfo} aria-hidden="true"></div>
                   <div data-tip="filters" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>

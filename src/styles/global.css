@@ -46,6 +46,13 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 /* icon — icon buttons over swatches/chrome; fill from own currentColor so it adapts to swatch + theme */
 [data-ix="icon"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 16%,transparent)!important}
 [data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important;transform:translateY(1px)}
+/* HIT AREA — a 24px target on a control that must stay smaller than 24px.
+   WCAG 2.5.8 AA asks for 24x24 CSS px. The two toggletip markers are deliberately 16px of ink: any
+   larger and an optional aside starts competing with the heading it hangs off. So the ink stays and
+   the TARGET grows underneath it, centred, which is the exception the rule is written to allow.
+   Both markers sit alone in their corner, so the extended areas cannot overlap a neighbour's. */
+[data-hit="24"]{position:relative}
+[data-hit="24"]::after{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;transform:translate(-50%,-50%)}
 /* cell — value rows & harmony cells; tint from own currentColor */
 [data-ix="cell"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 12%,transparent)!important}
 [data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}

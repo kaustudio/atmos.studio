@@ -391,7 +391,9 @@ export const renderValsMethods = {
         // reachable through it. data-ix="press" gives them the shared hover/press tint spectrum.
         // 4px/8px, not 3px/6px: the hover tint sat almost on the glyphs. Still well inside the
         // row's 24px content box, so --row-list-height is untouched.
-        tagBtnBase: { position: 'relative', zIndex: 2, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: 'var(--btn-pad-chip)', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
+        // 24px floor: WCAG 2.5.8's AA target baseline. The chip was 18px tall, and it repeats
+      // thirty-odd times down a list, so it was the app's most-repeated undersized target.
+      tagBtnBase: { position: 'relative', zIndex: 2, minHeight: '24px', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: 'var(--btn-pad-chip)', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
         // the row's one main action, stretched over the whole row: focus tints the row it covers
         onHitFocus: (e) => this.rowTintOn(e.currentTarget.closest('[data-row]')),
         onHitBlur: (e) => this.rowTintOff(e.currentTarget.closest('[data-row]')),
@@ -1477,7 +1479,7 @@ export const renderValsMethods = {
             // were content-width; once they took the metric pitch it meant a hover tint 182px wide
             // announcing a 30px word — the control looked like the column rather than like a
             // button. Hugging + justify-self does the same alignment job and admits its own size.
-            width: 'auto', minWidth: 0, justifySelf: 'end',
+            width: 'auto', minWidth: 0, minHeight: '24px', justifySelf: 'end',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
             // Symmetrical, from the same token the value cells inset by: 8px out to the track edge,
             // 8px back around the label, so the tint is even on both sides and the label still ends
