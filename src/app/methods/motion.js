@@ -541,6 +541,27 @@ export const motionMethods = {
 
      Bailing under reduced motion and without GSAP leaves everything at its natural state, because
      nothing here is animated FROM a hidden position — gsap.from() sets the start value itself. */
+  /* ONE BACKSTOP FOR EVERY ENTRANCE. It kills the tweens and then writes the end state, and it
+     KILLS FIRST — a version that only cleared was undone by the tween's next tick, which is exactly
+     the frozen half-revealed surface it exists to prevent.
+
+     It exists because GSAP rides requestAnimationFrame and a backgrounded tab stops delivering it,
+     while setTimeout keeps running. A stalled fade is survivable; a stalled clip is not, because
+     inset(0 100% 0 0) is a row you cannot see at all. Open an example, switch apps, come back to a
+     column of blanks. Clearing is idempotent, so on the normal path — where the tween finished
+     400ms ago — this does nothing.
+
+     Shared rather than copied: the exits were consolidated into _exitTween and the entrances were
+     not, which left two hand-computed durations to keep in step and a third waiting for whoever
+     adds the next surface. */
+  _settleGuard(key, targets, rows) {
+    const g = window.gsap;
+    clearTimeout(this['_guard_' + key]);
+    this['_guard_' + key] = setTimeout(() => {
+      try { g.killTweensOf(targets); } catch (e) { }
+      targets.forEach((el) => { if (!el) return; el.style.clipPath = ''; el.style.opacity = ''; el.style.transform = ''; });
+    }, (this.DUR.reveal + this.DUR.stagger * (rows + 2)) * 1000 + 400);
+  },
   _shareIn() {
     const g = window.gsap;
     const root = document.querySelector('[data-mobile-share]');
@@ -556,20 +577,7 @@ export const motionMethods = {
         { clipPath: 'inset(0 0% 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger * 2, clearProps: 'clipPath' });
     }
 
-    /* ONE BACKSTOP FOR ALL THREE, and it KILLS before it clears — an earlier version only cleared,
-       which meant the tween's next tick simply wrote the clip back and the row vanished again.
-
-       It exists because GSAP's ticker rides requestAnimationFrame and a backgrounded tab stops
-       delivering it, while setTimeout keeps running. A stalled fade is survivable; a stalled clip is
-       not, because inset(0 100% 0 0) is a row you cannot see at all. Open an example, switch apps,
-       come back to a column of blanks. Killing first and writing the end state second is idempotent,
-       so on the normal path — where the tween finished 400ms ago — this does nothing. */
-    clearTimeout(this._shareInGuard);
-    this._shareInGuard = setTimeout(() => {
-      const targets = [root].concat(chrome, rows);
-      try { g.killTweensOf(targets); } catch (e) { }
-      targets.forEach((el) => { if (!el) return; el.style.clipPath = ''; el.style.opacity = ''; el.style.transform = ''; });
-    }, (this.DUR.reveal + this.DUR.stagger * (rows.length + 2)) * 1000 + 400);
+    this._settleGuard('share', [root].concat(chrome, rows), rows.length);
   },
   // The list arrives the same way the palette does, one level up: surface, then rows on a stagger.
   // Its rows slide from the leading edge rather than clip, because a row here is a strip beside a
@@ -582,12 +590,7 @@ export const motionMethods = {
     g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
     const rows = [...root.querySelectorAll('[data-ml-row]')];
     if (rows.length) g.from(rows, { opacity: 0, x: -14, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger, clearProps: 'transform,opacity' });
-    clearTimeout(this._listInGuard);
-    this._listInGuard = setTimeout(() => {
-      const t = [root].concat(rows);
-      try { g.killTweensOf(t); } catch (e) { }
-      t.forEach((el) => { if (!el) return; el.style.opacity = ''; el.style.transform = ''; });
-    }, (this.DUR.reveal + this.DUR.stagger * (rows.length + 1)) * 1000 + 400);
+    this._settleGuard('list', [root].concat(rows), rows.length);
   },
   _listOut(cb) { this._exitTween('[data-mobile-list]', cb); },
   // Out is shorter than in and travels the other way, per the house rule that an exit is softer

@@ -299,9 +299,13 @@ function MobileExampleList({ ml }) {
         <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
       </div>
 
-      <div role="list" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
+      {/* A real ul/li. role="listitem" was on the BUTTON, which overrides the button's own role —
+          the control announced as a list item and stopped saying it could be pressed. The wrapper
+          carries the list semantics (so "8 items" is announced) and the button keeps its own. */}
+      <ul style={sx('flex:none;display:flex;flex-direction:column;width:100%;list-style:none;margin:0;padding:0')}>
         {ml.rows.map((r) => (
-          <button key={r.key} type="button" role="listitem" data-ml-row="1" data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
+          <li key={r.key} style={sx('display:flex;width:100%')}>
+          <button type="button" data-ml-row="1" data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
             style={sx('display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px var(--page-gutter);background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
             {/* the strip carries the recognition, so it leads and takes the fixed width */}
             <span aria-hidden="true" style={sx('flex:none;display:flex;width:72px;height:40px;border:1px solid var(--line)')}>
@@ -313,8 +317,9 @@ function MobileExampleList({ ml }) {
             </span>
             <span aria-hidden="true" style={sx('flex:none;display:inline-flex;color:var(--on-surface-muted);transform:rotate(-90deg)')}><IconChevron size={12} /></span>
           </button>
+          </li>
         ))}
-      </div>
+      </ul>
 
       <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
         <button type="button" data-ix="press" data-focus="chrome" onClick={ml.onLeave} aria-label="Return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
