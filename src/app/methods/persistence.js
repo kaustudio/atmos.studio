@@ -524,12 +524,33 @@ export const persistenceMethods = {
      So: see what it makes, or keep the address. Both are honest on a phone — the first reuses the
      read-only palette view a shared link already gets, the second puts the URL on the clipboard so
      the trip to a desktop survives closing the tab. Neither pretends the extractor will run here. */
+  // The eight seeded examples, in library order. One place, because three controls read it.
+  _examples() { return (this.state.feed || []).filter((p) => p.example === true); },
+
+  /* A DIFFERENT ONE EACH TIME. The gate used to open feed.find(p => p.example), which is Garnet,
+     always — press it twice and the product looks like it makes one palette. It advances through
+     the list instead, and the first index of a session is random so two visits do not both start
+     at the top. No storage key for it: the whole point is variety within a visit, and a ninth
+     preference to persist and validate would cost more than it buys. */
   openExampleOnPhone() {
-    const feed = this.state.feed || [];
-    const ex = feed.find((p) => p.example) || feed[0];
+    const list = this._examples();
+    if (!list.length) return;
+    this._exIdx = (this._exIdx == null)
+      ? Math.floor(Math.random() * list.length)
+      : (this._exIdx + 1) % list.length;
+    this.showExample(list[this._exIdx]);
+  },
+  // Opening a NAMED example from the list keeps the cursor in step, so leaving the list and
+  // pressing the gate again continues from what you last looked at rather than jumping back.
+  openExampleById(id) {
+    const list = this._examples();
+    const i = list.findIndex((p) => p.id === id);
+    if (i < 0) return;
+    this._exIdx = i;
+    this.showExample(list[i]);
+  },
+  showExample(ex) {
     if (!ex) return;
-    // The surface is staged in the setState callback, not a frame later: the DOM is committed by
-    // then and gsap.from() sets its own start values, so nothing is ever painted at rest first.
     this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' }, () => this._shareIn());
   },
   closeExampleOnPhone() {
@@ -537,7 +558,37 @@ export const persistenceMethods = {
     this._shareClosing = true;
     this._shareOut(() => {
       this._shareClosing = false;
-      this.setState({ exampleView: false, announce: 'Returned to the start screen.' });
+      // Back goes UP one level, not out: if the list is open behind this palette, that is where it
+      // came from and where it belongs. Leaving straight to the gate from a list you had just
+      // browsed threw away the position you were holding.
+      this.setState({ exampleView: false, announce: this.state.exampleList ? 'Back to the example list.' : 'Returned to the start screen.' }, () => {
+        if (this.state.exampleList) this._listIn();
+      });
+    });
+  },
+  /* Called from two places, and it has to mean the same thing in both: SHOW me the list. From the
+     gate that is one state flip. From an open palette it is a level change, so the palette has to
+     leave first — setting the flag alone armed the list UNDER a surface that stayed on top, which
+     turned one tap into two and made "See all examples" look broken. */
+  openExampleList() {
+    if (this.state.exampleList && !this.state.exampleView) return;
+    const show = () => this.setState(
+      { exampleView: false, exampleList: true, announce: 'Example palettes, ' + this._examples().length + ' to choose from.' },
+      () => this._listIn());
+    if (this.state.exampleView) {
+      if (this._shareClosing) return;
+      this._shareClosing = true;
+      this._shareOut(() => { this._shareClosing = false; show(); });
+      return;
+    }
+    show();
+  },
+  closeExampleList() {
+    if (this._listClosing) return;
+    this._listClosing = true;
+    this._listOut(() => {
+      this._listClosing = false;
+      this.setState({ exampleList: false, announce: 'Returned to the start screen.' });
     });
   },
   copySiteLink() {

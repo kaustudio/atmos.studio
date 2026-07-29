@@ -1130,11 +1130,43 @@ export const renderValsMethods = {
         // that appears for one arrival and not the other is why the two flags are separate.
         canLeave: !!s.exampleView,
         onLeave: () => this.closeExampleOnPhone(),
+        // THE PICTURE THE PALETTE CAME FROM. dispUrl resolves a seeded example's key against the
+        // bundled EXAMPLE_SRC map and returns '' for anything else, so no stored or shared string
+        // can ever reach this src — the same invariant the desktop reference image rides.
+        image: this.dispUrl(p), hasImage: this.hasImg(p),
+        onSeeAll: () => this.openExampleList(),
+        inList: !!s.exampleList,
         // Nothing under an example. The line explaining that this ships with the app was telling
         // someone who had just pressed "Try an example" what they had pressed. A shared link is a
         // different arrival — that reader did not choose this surface and has no way off it, so it
         // keeps the one sentence that says where the tool actually lives.
         footLine: s.exampleView ? '' : 'Open Atmos Gallery on a desktop to read a palette from your own image.',
+      };
+    }
+
+    /* THE EXAMPLE LIST — the phone's version of the Library list, and deliberately the same object:
+       a strip you recognise the palette by, its name, and the first two traits. Built only when it
+       is on screen; it reads the same seeded records the archive does. */
+    let mobileList = null;
+    if (this._mobileList()) {
+      const ex = this._examples();
+      mobileList = {
+        count: ex.length,
+        onLeave: () => this.closeExampleList(),
+        rows: ex.map((p) => {
+          const tot = p.swatches.reduce((a, x) => a + (x.weight || 0), 0) || 1;
+          return {
+            key: p.id,
+            name: p.name,
+            traits: (p.descriptors || []).slice(0, 2),
+            onOpen: () => this.openExampleById(p.id),
+            aria: 'Open ' + p.name + '. ' + (p.descriptors || []).slice(0, 3).join(', ') + '.',
+            strip: p.swatches.map((b, i) => ({
+              key: i,
+              style: { flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '2px', background: b.hex },
+            })),
+          };
+        }),
       };
     }
 
@@ -1149,6 +1181,7 @@ export const renderValsMethods = {
 
     return {
       showMobileShare: !!mobileShare, mobileShare,
+      showMobileList: !!mobileList, mobileList,
       // THE GATE'S TWO ACTS. Offered only where they are true: the example needs a palette in the
       // archive to show, and both are meaningless on a screen wide enough to run the tool.
       gateHasExample: (s.feed || []).length > 0,

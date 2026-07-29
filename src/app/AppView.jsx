@@ -283,16 +283,72 @@ const shareB006Label = (copied) => (
 // Mobile read-only share view. A separate lightweight surface, NOT a responsive port of the tool —
 // it exists so a shared link opened on a phone shows the palette instead of the desktop gate. The
 // tool still gates; this only ever renders somebody else's finished palette.
+/* THE PHONE'S EXAMPLE LIST — the Library list, at a thumb's scale. Deliberately the same object as
+   the desktop row: a strip you recognise the palette by, its name, and its first two traits. It is
+   the level above the palette view, so it owns the trip back to the gate and the palette view owns
+   the trip back to here. */
+function MobileExampleList({ ml }) {
+  return (
+    <div data-mobile-list="1" role="region" aria-label="Example palettes"
+      style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
+      {/* clears the fixed logo, exactly as the palette view does */}
+      <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
+
+      <div style={sx('flex:none;padding:22px var(--page-gutter) 18px')}>
+        <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example palettes</h1>
+        <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
+      </div>
+
+      <div role="list" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
+        {ml.rows.map((r) => (
+          <button key={r.key} type="button" role="listitem" data-ml-row="1" data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
+            style={sx('display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px var(--page-gutter);background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
+            {/* the strip carries the recognition, so it leads and takes the fixed width */}
+            <span aria-hidden="true" style={sx('flex:none;display:flex;width:72px;height:40px;border:1px solid var(--line)')}>
+              {r.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
+            </span>
+            <span style={sx('flex:1;min-width:0;display:flex;flex-direction:column;gap:4px')}>
+              <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.traits.join(' · ')}</span>
+            </span>
+            <span aria-hidden="true" style={sx('flex:none;display:inline-flex;color:var(--on-surface-muted);transform:rotate(-90deg)')}><IconChevron size={12} /></span>
+          </button>
+        ))}
+      </div>
+
+      <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
+        <button type="button" data-ix="press" data-focus="chrome" onClick={ml.onLeave} aria-label="Return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
+      </div>
+    </div>
+  );
+}
+
 function MobileShareView({ ms }) {
   return (
     <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name}
       style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
+      {/* Top padding for the fixed logo, which floats over this surface. It is on the scroller
+          rather than the first child, because the first child is now sometimes a full-bleed image
+          and sometimes the name — padding on whichever happened to be first would come and go. */}
+      <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
+
       {/* No wordmark of its own and no "Example palette" eyebrow. This surface used to mint a
           second, flatter Atmos mark at 104px the moment you opened an example, so the brand changed
           shape on the way in — the page's real logo is rendered above this one now (see the
           showMobileShare branch), unchanged from the front page. Top padding clears it: the mark
           sits at 18.5px and is 26px tall. */}
-      <div data-ms-head="1" style={sx('flex:none;padding:70px var(--page-gutter) 22px')}>
+      {/* The image the palette was read from. Full-bleed and 4:3 — on a phone a picture inset in
+          the gutter reads as an attachment, where this is the evidence for everything under it.
+          A 1px inset ring rather than a border: the outline must not shift the picture off the
+          edges it is bleeding to. */}
+      {ms.hasImage && (
+        <div data-ms-img="1" style={sx('flex:none;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--surface-raised);position:relative')}>
+          <img src={ms.image} alt={'The photograph ' + ms.name + ' was read from'} style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
+          <span aria-hidden="true" style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 10%, transparent)')}></span>
+        </div>
+      )}
+
+      <div data-ms-head="1" style={sx('flex:none;padding:22px var(--page-gutter) 22px')}>
         <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
@@ -327,7 +383,15 @@ function MobileShareView({ ms }) {
         {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
             one control on a surface built for a thumb. */}
         {ms.canLeave && (
-          <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label="Close the example and return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:18px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
+          <div style={sx('display:flex;flex-direction:column;gap:9px;margin-top:18px')}>
+            {/* Sideways before backwards: seeing another example is the likelier next move, and
+                putting it first means the way OUT is not also the only way ON. Hidden while the
+                list is already the level below, where it would send you where you just were. */}
+            {!ms.inList && (
+              <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See all example palettes" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>See all examples</button>
+            )}
+            <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label={ms.inList ? 'Back to the example list' : 'Close the example and return to the start screen'} style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>{ms.inList ? 'Back to examples' : 'Back to start'}</button>
+          </div>
         )}
       </div>
     </div>
@@ -419,6 +483,20 @@ export default function AppView({ vals }) {
   // A shared link on a phone renders ONLY the read-only palette. Returning early rather than
   // layering it over the tool keeps the desktop app out of the DOM entirely on a viewport that
   // cannot use it: nothing behind to tab into, no archive laid out off-screen, no orbit stage.
+  // The example list, one level above the palette view and rendered on the same terms: the tool is
+  // not in the DOM behind it, because a phone cannot use the tool and nothing should be tabbable
+  // under a surface that fills the screen.
+  if (vals.showMobileList) {
+    return (
+      <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <MobileExampleList ml={vals.mobileList} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
   if (vals.showMobileShare) {
     return (
       <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>

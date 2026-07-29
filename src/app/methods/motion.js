@@ -571,14 +571,43 @@ export const motionMethods = {
       targets.forEach((el) => { if (!el) return; el.style.clipPath = ''; el.style.opacity = ''; el.style.transform = ''; });
     }, (this.DUR.reveal + this.DUR.stagger * (rows.length + 2)) * 1000 + 400);
   },
+  // The list arrives the same way the palette does, one level up: surface, then rows on a stagger.
+  // Its rows slide from the leading edge rather than clip, because a row here is a strip beside a
+  // name — clipping would wipe the name out of existence mid-read, where the palette's rows are
+  // pure colour and have nothing to say until they are whole.
+  _listIn() {
+    const g = window.gsap;
+    const root = document.querySelector('[data-mobile-list]');
+    if (this._reduce || !g || !root) return;
+    g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
+    const rows = [...root.querySelectorAll('[data-ml-row]')];
+    if (rows.length) g.from(rows, { opacity: 0, x: -14, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger, clearProps: 'transform,opacity' });
+    clearTimeout(this._listInGuard);
+    this._listInGuard = setTimeout(() => {
+      const t = [root].concat(rows);
+      try { g.killTweensOf(t); } catch (e) { }
+      t.forEach((el) => { if (!el) return; el.style.opacity = ''; el.style.transform = ''; });
+    }, (this.DUR.reveal + this.DUR.stagger * (rows.length + 1)) * 1000 + 400);
+  },
+  _listOut(cb) { this._exitTween('[data-mobile-list]', cb); },
   // Out is shorter than in and travels the other way, per the house rule that an exit is softer
   // than an entrance. It outlives the state change: React would unmount the surface on the flag,
   // and there would be nothing left to tween.
-  _shareOut(cb) {
+  _shareOut(cb) { this._exitTween('[data-mobile-share]', cb); },
+  /* EVERY EXIT COMPLETES, tween or no tween. These callbacks do not merely finish an animation —
+     they flip the state that unmounts the surface, and the caller sets a _closing guard before
+     calling in. So an onComplete that never fires does not leave a half-faded panel; it leaves the
+     user on a screen whose Back button is now inert, with no way off it.
+     GSAP rides requestAnimationFrame, and a tab that loses the foreground mid-tap stops delivering
+     it. The timer is the floor: whichever lands first wins, the other is a no-op. */
+  _exitTween(sel, cb) {
     const g = window.gsap;
-    const root = document.querySelector('[data-mobile-share]');
+    const root = document.querySelector(sel);
     if (this._reduce || !g || !root) { cb(); return; }
-    g.to(root, { opacity: 0, y: -12, duration: this.DUR.state, ease: this.EASE.exit, onComplete: cb });
+    let done = false;
+    const finish = () => { if (done) return; done = true; clearTimeout(t); cb(); };
+    const t = setTimeout(finish, this.DUR.state * 1000 + 400);
+    g.to(root, { opacity: 0, y: -12, duration: this.DUR.state, ease: this.EASE.exit, onComplete: finish });
   },
   flipBandsFrom(rects) {
     const g = window.gsap, root = this.resultRef.current;
