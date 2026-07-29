@@ -145,6 +145,20 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --track-body:0.01em;        /* body copy */
   --track-label:0.1em;        /* uppercase mono labels (system default) */
   --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
+  /* ===== GROUND =====
+     Two colours the theme does not touch, named because they are roles rather than values.
+
+     --scrim is what a modal dims the page with. It was the literal #141413 in eight
+     color-mix() calls; eight copies of one decision, and the ninth dialog would have been a coin
+     toss. --ground is the ink the wipe panel and the first-visit loader paint themselves in.
+
+     Neither has a dark-theme variant, and that is the point. A scrim exists to push the page back
+     behind a dialog: lightening it in dark mode would make it stop doing that, because a pale veil
+     over a dark page reads as fog rather than depth. The wipe is a cover the whole screen passes
+     through — it is the same object in both themes, so it is the same colour. Everything that
+     ADAPTS lives in the theme blocks; these two deliberately do not. */
+  --scrim:#141413;
+  --ground:#1C1B1A;
   /* ===== THE GRID =====
      12 columns, 24px margin, 24px gutter. One figure, not two.
 

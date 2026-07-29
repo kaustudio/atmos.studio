@@ -345,9 +345,9 @@ const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidd
 function WipeLayer() {
   return (
     <div data-wipe="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:160;pointer-events:none;overflow:hidden;display:none')}>
-      <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:#1C1B1A;will-change:transform')}>
-        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
-        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:#1C1B1A;border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
+      <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:var(--ground);will-change:transform')}>
+        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:100%;width:116%;height:15vh;background:var(--ground);border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
+        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:var(--ground);border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
         <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
           <div style={sx('overflow:hidden;padding:8px 6px')}>
             <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
@@ -522,7 +522,7 @@ export default function AppView({ vals }) {
       {/* Logo reveal loader: first-ever visit only, before the Get Started landing. */}
       {vals.showLoader && (
         <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:#ffffff')}>
-          <div data-load-bg="1" style={sx('position:absolute;inset:0;background:#1C1B1A')}></div>
+          <div data-load-bg="1" style={sx('position:absolute;inset:0;background:var(--ground)')}></div>
           <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 var(--page-gutter);box-sizing:border-box')}>
             <div style={{ width: '100%' }}>
               <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%')}>
@@ -1378,7 +1378,7 @@ function ContrastDrawer({ vals }) {
   const contrast = vals.contrast;
   return (
     <div style={sx('position:fixed;inset:0;z-index:110')}>
-      <div data-cx-backdrop="1" onClick={vals.closeContrast} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-cx-backdrop="1" onClick={vals.closeContrast} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
@@ -1728,7 +1728,7 @@ function HarmonyDrawer({ vals }) {
   const harmony = vals.harmony;
   return (
     <div style={sx('position:fixed;inset:0;z-index:120')}>
-      <div data-hx-backdrop="1" onClick={vals.closeHarmony} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-hx-backdrop="1" onClick={vals.closeHarmony} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
@@ -1772,7 +1772,7 @@ function ExportDialog({ vals }) {
   const ex = vals.export;
   return (
     <div style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Export ' + ex.name + ' as design tokens'} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
@@ -1835,7 +1835,7 @@ function RecogniseDialog({ vals }) {
   const r = vals.recognise;
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={vals.closeRecognise} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-modal-backdrop="1" onClick={vals.closeRecognise} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
@@ -1871,7 +1871,7 @@ function AssignDialog({ vals }) {
   const assign = vals.assign;
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={vals.closeAssign} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-modal-backdrop="1" onClick={vals.closeAssign} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Move to project" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
@@ -1906,7 +1906,7 @@ function ManageDialog({ vals }) {
   const manage = vals.manage;
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={vals.closeManage} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-modal-backdrop="1" onClick={vals.closeManage} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-manage-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Manage projects" onKeyDown={vals.trapManage} style={sx('position:relative;width:440px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px')}>
@@ -1972,7 +1972,7 @@ function RefineDialog({ vals }) {
   const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
 
         {/* PAIRING DETAIL — a layer over the canvas with its own scroll. Closing returns to an
@@ -2189,7 +2189,7 @@ function RestoreDialog({ vals }) {
   const r = vals.restore;
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, #141413 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
