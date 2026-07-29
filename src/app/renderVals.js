@@ -1469,26 +1469,24 @@ export const renderValsMethods = {
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
           style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
-            // One label per column, right-aligned over its own values. The horizontal padding is
-            // what the hover tint needs to breathe — with 0 it painted flush against the glyphs,
-            // which is the one place in the app a control had no inset. The SAME 8px inset is
-            // applied to the value cells below (metricValue / contrastCell / timeCell), so the
-            // column still aligns on one edge: label and value are both 8px off the column line.
-            // The button hugs its label and sits at the END of its track, rather than filling the
-            // track at 100%. Filling was a fair way to put a label over a value while the columns
-            // were content-width; once they took the metric pitch it meant a hover tint 182px wide
-            // announcing a 30px word — the control looked like the column rather than like a
-            // button. Hugging + justify-self does the same alignment job and admits its own size.
-            width: 'auto', minWidth: 0, minHeight: '24px', justifySelf: 'end',
+            // THE HEADER IS THE COLUMN. The button used to hug its label and sit at its track's
+            // end, which put a hover tint the shape of the WORD over a column of values it did not
+            // match. It fills the track now, so the tint is exactly one column wide and lands on the
+            // same two grid lines the values below it do — the state you can see is the state the
+            // grid describes. That retires the negative margin too: with the box already on the
+            // line there is nothing left to pull back out of.
+            //
+            // Zero horizontal padding, for a reason as much practical as tidy: "Max contrast" is
+            // 81px of ink in a 94px column at 1440, so 8px either side would have clipped it. Date
+            // keeps a 16px end inset, matching the value below it — it is the one metric that ends
+            // against the page margin and it was asked to breathe.
+            //
+            // The border makes the column readable AT REST, not only under the pointer. --line is
+            // the quietest edge the app owns; anything stronger turns a header row into a table.
+            width: '100%', minWidth: 0, minHeight: '24px', justifySelf: 'stretch',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            // Symmetrical, from the same token the value cells inset by: 8px out to the track edge,
-            // 8px back around the label, so the tint is even on both sides and the label still ends
-            // exactly where the figures below it end.
-            // The tint still wants its 8px, but the LABEL has to end on the column line now that the
-            // values below it do. So the inset stays and the button is pulled back out by the same
-            // amount: tint breathes, ink lands on the grid.
-            padding: '4px var(--row-cell-inset)', marginRight: 'calc(-1 * var(--row-cell-inset))',
-            border: 'none', background: 'transparent', cursor: 'pointer',
+            padding: c.key === 'time' ? '4px 16px 4px 0' : '4px 0',
+            border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
           }),

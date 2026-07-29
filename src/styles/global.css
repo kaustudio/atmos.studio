@@ -469,22 +469,28 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    BOTH the sort header and the rows — a cell that spans 2 below must span 2 above, or the column
    exists in one and not the other. */
 [data-row-cell="strip"]{grid-column:span 2}
-[data-row-cell="name"]{grid-column:span 4}
-[data-row-cell="aa"]{grid-column:span 2}
-[data-row-cell="contrast"]{grid-column:span 2}
+[data-row-cell="name"]{grid-column:span 6}
+[data-row-cell="aa"]{grid-column:span 1}
+[data-row-cell="contrast"]{grid-column:span 1}
 [data-row-cell="date"]{grid-column:span 2}
-[data-row-cell="scope"]{grid-column:span 6}
-/* The date column carries the stamp AND the room the hover buttons need to step into
-   (--row-action-gutter, 82px). Two columns is 212px at 1440 and comfortably holds both; below about
-   1260px two columns stop being 182px and the buttons would land on the date. So the date takes a
-   third column and the name gives it up — the name is elastic and truncates gracefully, the stamp
-   is a fixed string that cannot. 1280 is the breakpoint rather than 1260 because it is a real screen
-   width and the margin above the failure should be a whole one. */
+[data-row-cell="scope"]{grid-column:span 8}
+/* The metrics are one column each now, which is what they measure: a two-digit count and a ratio.
+   The two columns that came back went to the name, which is the only cell holding variable-length
+   content and the one that had been paying for the metrics' width.
+
+   Below 1280 two things stop fitting at one column: "Max contrast" is 81px of ink against an 81px
+   track, and the date column has to hold the stamp plus the 82px the hover buttons step into. Both
+   take a second column there and the name gives them back. */
 @media (max-width:1280px){
-  [data-row-cell="name"]{grid-column:span 3}
+  [data-row-cell="name"]{grid-column:span 4}
+  [data-row-cell="contrast"]{grid-column:span 2}
   [data-row-cell="date"]{grid-column:span 3}
-  [data-row-cell="scope"]{grid-column:span 5}
+  [data-row-cell="scope"]{grid-column:span 6}
 }
+/* THE DATE BREATHES. It is the only metric that ends against the page margin, so its value sits
+   16px inside its column while the column itself still runs to the grid line. Header and value take
+   the same inset, or the right edge they share would come apart. */
+[data-row-cell="date"]{padding-inline-end:16px}
 [data-row-time]{transition:transform .18s var(--ease-standard)}
 [data-row-wrap]:hover [data-row-time],[data-row-wrap]:focus-within [data-row-time]{transform:translateX(calc(-1 * var(--row-action-gutter)))}
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
