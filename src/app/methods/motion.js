@@ -529,6 +529,57 @@ export const motionMethods = {
     }
     this.setState({ readingOpen: true, announce: 'Reading shown.' }, () => this._readingIn(from));
   },
+  /* THE PHONE'S ARRIVAL. Opening an example used to be a setState and nothing else: one surface
+     replaced another between two frames, on the only screen in the product where every other
+     transition — the wipe, the loader, the folds — is staged. It was the most static thing here.
+
+     Three parts, same tokens the desktop uses. The surface rises and fades on EASE.entrance. The
+     head and foot follow it in, offset by one stagger so the frame arrives before its contents.
+     And the swatches wipe LEFT TO RIGHT, which is the one departure: on desktop the bands wipe
+     vertically because they are columns, and here they are full-bleed rows, so the wipe runs along
+     the row rather than across it. Same primitive, turned ninety degrees.
+
+     Bailing under reduced motion and without GSAP leaves everything at its natural state, because
+     nothing here is animated FROM a hidden position — gsap.from() sets the start value itself. */
+  _shareIn() {
+    const g = window.gsap;
+    const root = document.querySelector('[data-mobile-share]');
+    if (this._reduce || !g || !root) return;
+    const chrome = [...document.querySelectorAll('[data-ms-head],[data-ms-foot]')];
+    const rows = [...document.querySelectorAll('[data-ms-row]')];
+
+    g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
+    if (chrome.length) g.from(chrome, { opacity: 0, y: 10, duration: this.DUR.reveal, ease: this.EASE.entrance, delay: this.DUR.stagger, stagger: this.DUR.stagger, clearProps: 'transform,opacity' });
+    if (rows.length) {
+      g.fromTo(rows,
+        { clipPath: 'inset(0 100% 0 0)' },
+        { clipPath: 'inset(0 0% 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger * 2, clearProps: 'clipPath' });
+    }
+
+    /* ONE BACKSTOP FOR ALL THREE, and it KILLS before it clears — an earlier version only cleared,
+       which meant the tween's next tick simply wrote the clip back and the row vanished again.
+
+       It exists because GSAP's ticker rides requestAnimationFrame and a backgrounded tab stops
+       delivering it, while setTimeout keeps running. A stalled fade is survivable; a stalled clip is
+       not, because inset(0 100% 0 0) is a row you cannot see at all. Open an example, switch apps,
+       come back to a column of blanks. Killing first and writing the end state second is idempotent,
+       so on the normal path — where the tween finished 400ms ago — this does nothing. */
+    clearTimeout(this._shareInGuard);
+    this._shareInGuard = setTimeout(() => {
+      const targets = [root].concat(chrome, rows);
+      try { g.killTweensOf(targets); } catch (e) { }
+      targets.forEach((el) => { if (!el) return; el.style.clipPath = ''; el.style.opacity = ''; el.style.transform = ''; });
+    }, (this.DUR.reveal + this.DUR.stagger * (rows.length + 2)) * 1000 + 400);
+  },
+  // Out is shorter than in and travels the other way, per the house rule that an exit is softer
+  // than an entrance. It outlives the state change: React would unmount the surface on the flag,
+  // and there would be nothing left to tween.
+  _shareOut(cb) {
+    const g = window.gsap;
+    const root = document.querySelector('[data-mobile-share]');
+    if (this._reduce || !g || !root) { cb(); return; }
+    g.to(root, { opacity: 0, y: -12, duration: this.DUR.state, ease: this.EASE.exit, onComplete: cb });
+  },
   flipBandsFrom(rects) {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || !rects || !rects.length || document.hidden) return;

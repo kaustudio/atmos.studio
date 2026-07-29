@@ -287,13 +287,12 @@ function MobileShareView({ ms }) {
   return (
     <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name}
       style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
-      <div style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px var(--page-gutter) 0')}>
-        {/* masked rather than an <img>, so the mark takes --on-surface and stays correct in both themes */}
-        <span role="img" aria-label="Atmos Gallery" style={{ ...sx('display:block;width:104px;height:16px;flex:none;background:var(--on-surface)'), WebkitMask: MARK_MASK, mask: MARK_MASK }}></span>
-        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.12em;text-transform:uppercase;color:var(--on-surface-muted)')}>{ms.eyebrow}</span>
-      </div>
-
-      <div style={sx('flex:none;padding:26px var(--page-gutter) 22px')}>
+      {/* No wordmark of its own and no "Example palette" eyebrow. This surface used to mint a
+          second, flatter Atmos mark at 104px the moment you opened an example, so the brand changed
+          shape on the way in — the page's real logo is rendered above this one now (see the
+          showMobileShare branch), unchanged from the front page. Top padding clears it: the mark
+          sits at 18.5px and is 26px tall. */}
+      <div data-ms-head="1" style={sx('flex:none;padding:70px var(--page-gutter) 22px')}>
         <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
@@ -310,7 +309,7 @@ function MobileShareView({ ms }) {
       {/* the palette itself: full-bleed rows, each tappable to take its hex */}
       <div role="group" aria-label="Palette swatches. Tap a colour to copy its hex" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
         {ms.rows.map((r) => (
-          <button key={r.key} type="button" data-ix="cell" data-focus="value" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
+          <button key={r.key} type="button" data-ms-row="1" data-ix="cell" data-focus="value" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
             <span style={r.hexStyle}>{r.hex}</span>
             <span style={r.metaStyle}>
               {r.copied ? (<><IconCheck />Copied</>) : r.pct}
@@ -321,8 +320,10 @@ function MobileShareView({ ms }) {
 
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
-      <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
-        <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+      <div data-ms-foot="1" style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
+        {ms.footLine && (
+          <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+        )}
         {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
             one control on a surface built for a thumb. */}
         {ms.canLeave && (
@@ -422,6 +423,9 @@ export default function AppView({ vals }) {
     return (
       <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
+            gradient under a difference blend. Opening an example must not change the brand. */}
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
         <Analytics />
@@ -477,22 +481,34 @@ export default function AppView({ vals }) {
                  arrival, so its copy rises out of the mask as the loader uncovers rather than being
                  there already. One pre-authored line-group per block, no split; the masks are inside
                  the h1/p so those boxes stay exactly the size _heroReach measures. */
-              <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;max-width:280px')}>
-                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:15ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a desktop experience.</span></span>
+              <div style={sx('position:relative;display:flex;flex-direction:column;align-items:center;width:100%;max-width:420px')}>
+                {/* The copy's own light. The formation is solved to clear the marks it is told
+                    about, but a phone is 375px wide and the gate now fills most of it — there is no
+                    radius left that both clears the block and stays on screen, so on this one
+                    viewport geometry cannot win. A soft radial of the surface colour sits behind the
+                    block instead: the orbs still pass through, they just pass through dimmer, and
+                    the words keep a ground to sit on. Which is the subject of the product anyway. */}
+                <span aria-hidden="true" style={sx('position:absolute;inset:-56px -40px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
+                <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
+                  {/* Two masked line-groups, not one wrapping line — the same shape the desktop statement uses.
+                      It fixes the break where it belongs ("is a" ends the first line at every width
+                      instead of wherever the measure happens to land) and gives each line its own
+                      reveal, so the heading rises in two beats rather than one. */}
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Desktop Experience.</span></span>
                 </h1>
                 {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
                     makes it one is that it never said why, so it read as a limitation of the site
                     rather than of the work. Reading an image means comparing swatches, roles and
                     contrast side by side, and that is a wide-screen job. */}
-                <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:26ch;text-wrap:pretty")}>
+                <p style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:none;text-wrap:pretty")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Reading an image means weighing colours, roles and contrast side by side. That needs room.</span></span>
                 </p>
                 {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
                     arriving from a link with a sentence and no next move. Two acts that are honest
                     on a phone: see what the tool makes, or keep the address for the machine that can
                     run it. pointer-events restored — the block above it is decorative and inert. */}
-                <div style={sx('display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;margin-top:26px;pointer-events:auto')}>
+                <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;max-width:240px;align-self:center;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
                     <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an example</button>
                   )}

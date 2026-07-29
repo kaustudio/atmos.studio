@@ -528,10 +528,17 @@ export const persistenceMethods = {
     const feed = this.state.feed || [];
     const ex = feed.find((p) => p.example) || feed[0];
     if (!ex) return;
-    this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' });
+    // The surface is staged in the setState callback, not a frame later: the DOM is committed by
+    // then and gsap.from() sets its own start values, so nothing is ever painted at rest first.
+    this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' }, () => this._shareIn());
   },
   closeExampleOnPhone() {
-    this.setState({ exampleView: false, announce: 'Returned to the start screen.' });
+    if (this._shareClosing) return;
+    this._shareClosing = true;
+    this._shareOut(() => {
+      this._shareClosing = false;
+      this.setState({ exampleView: false, announce: 'Returned to the start screen.' });
+    });
   },
   copySiteLink() {
     const href = (typeof location !== 'undefined' ? location.origin + '/' : 'https://atmos.gallery/');

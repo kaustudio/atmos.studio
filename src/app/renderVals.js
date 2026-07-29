@@ -1130,10 +1130,11 @@ export const renderValsMethods = {
         // that appears for one arrival and not the other is why the two flags are separate.
         canLeave: !!s.exampleView,
         onLeave: () => this.closeExampleOnPhone(),
-        footLine: s.exampleView
-          ? 'This is one of the examples that ship with Atmos Gallery. Open it on a desktop to read a palette from an image of your own.'
-          : 'Open Atmos Gallery on a desktop to read a palette from your own image.',
-        eyebrow: s.exampleView ? 'Example palette' : 'Shared palette',
+        // Nothing under an example. The line explaining that this ships with the app was telling
+        // someone who had just pressed "Try an example" what they had pressed. A shared link is a
+        // different arrival — that reader did not choose this surface and has no way off it, so it
+        // keeps the one sentence that says where the tool actually lives.
+        footLine: s.exampleView ? '' : 'Open Atmos Gallery on a desktop to read a palette from your own image.',
       };
     }
 

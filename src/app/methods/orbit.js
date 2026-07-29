@@ -253,7 +253,11 @@ export const orbitMethods = {
   // measurement taken mid-reveal would bake a shifted hero into the geometry. DOM read: build and
   // resize only, never in the tick.
   _heroReach() {
-    const marks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')];
+    // The gate's two buttons are marks too. They were not, so on a phone the ring was solved to
+    // clear the heading and the sentence and then drawn straight through "Try an example" — the
+    // formation cleared the words it was told about and sat on the one thing you are meant to
+    // press. [data-glass-cta] does this job on desktop; [data-gate-actions] is its narrow twin.
+    const marks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta], [data-gate-actions]')];
     if (!marks.length) return 265;                                  // pre-layout fallback: the 1280×720 measurement
     const cx = (window.innerWidth || 1440) / 2, cy = (window.innerHeight || 800) / 2;
     let dx = 0, dy = 0;
