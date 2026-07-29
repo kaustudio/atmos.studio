@@ -630,7 +630,7 @@ export default function AppView({ vals }) {
                 translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
               <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div></div>
-              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>We read its light and atmosphere - not its literal pixels.</div></div>
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>We read its light and atmosphere — not its literal pixels.</div></div>
             </div>
             <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
@@ -721,7 +721,7 @@ export default function AppView({ vals }) {
                   one block or not at all. Letting it break internally put Export on a line of its
                   own under a hairline that stayed behind with Copy, which reads as two groups where
                   there is one. Core acts stay put; the output cluster is what moves. */}
-              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-inline-start:8px;border-inline-start:1px solid var(--line-strong)')}>
                 <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
                 <CopyMenu open={vals.copyMenuOpen} done={vals.copyDone} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} />
                 <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
@@ -730,7 +730,7 @@ export default function AppView({ vals }) {
                   reaches outside this browser. A flexible gap, not another hairline: the distance
                   is the statement. When the row wraps it lands alone at the right of its own line,
                   which keeps the reading intact instead of dropping it into the middle of a group. */}
-              <span style={sx('margin-left:auto;display:inline-flex')}>
+              <span style={sx('margin-inline-start:auto;display:inline-flex')}>
                 <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
               </span>
             </div>
@@ -772,7 +772,7 @@ export default function AppView({ vals }) {
                   Contrast drawer, one button away, with all C(n,2) pairs and an AA/AAA lens. One
                   affordance per act; a number floated next to a recommendation is not an act. */}
               <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
-                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);text-align:right;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
+                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);text-align:end;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
             </div>
             {/* The palette's metadata readout — the detail pane's bottom line, restored from the
@@ -829,7 +829,7 @@ export default function AppView({ vals }) {
                   the row's right edge (the same right margin the rationale keeps above), sized
                   156×104 so it sits level with the columns beside it. data-fx keeps the y-fade it
                   had in its old home; click-to-zoom unchanged. */}
-              <div data-fx="1" style={sx('flex:none;margin-left:auto')}>
+              <div data-fx="1" style={sx('flex:none;margin-inline-start:auto')}>
                 {vals.result.hasRef && vals.result.refImageNode}
                 {vals.result.noRef && (
                   <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
@@ -1023,7 +1023,7 @@ function FeedSection({ vals }) {
             whole region looks like — grid and 3D are not the list at all. Pairing it with the title
             says that, and gives the heading row a right edge to hold. */}
         {vals.showProjectsBar && vals.feedHasItems && (
-          <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-left:auto')}>
+          <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
             <span aria-hidden="true" style={vals.viewTogglePill}></span>
             <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}>List</button>
             <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}>Grid</button>
@@ -1513,14 +1513,14 @@ function DetailOverlay({ vals }) {
                 creative act in the row; this surface has no Refine, so it goes to the act that is
                 first in the same sequence and available — organise, then validate, then output. */}
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-left:8px;border-left:1px solid var(--line-strong)')}>
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-inline-start:8px;border-inline-start:1px solid var(--line-strong)')}>
               <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
               <CopyMenu open={vals.copyMenuOpen} done={overlay.copyDone} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} />
               <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
             </div>
           </div>
         </div>
-        <p style={sx("max-width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:right;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
+        <p style={sx("max-width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:end;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
       </footer>
     </div>
   );
@@ -1616,7 +1616,7 @@ function TagFilterDrawer({ vals }) {
                       picked. The state's meaning left this line for the note above the group: three
                       right-aligned fragments, one per row, clipped to whatever the panel had left,
                       asked the eye to assemble a definition out of a column. */}
-                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+                  <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
@@ -1634,7 +1634,7 @@ function TagFilterDrawer({ vals }) {
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={facetLabelStyle}>{o.label}</span>
                   <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-                  <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+                  <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
@@ -1695,7 +1695,7 @@ function TagFilterDrawer({ vals }) {
                   exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
                   standing in for a whole tag, which invited the reader to generalise from it, and
                   a second colour object competing with the swatch strips in the list behind. */}
-              <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
+              <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
             </button>
           ))}
           {/* An empty state that says what happened and offers the way out, rather than a dead
@@ -2108,7 +2108,7 @@ function RefineDialog({ vals }) {
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Role</span>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.roleLine}</span>
             </span>
-            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-left:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
+            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-inline-start:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
           </div>
           {/* Inline, never an overlay: a dropdown here covered the sliders, so choosing a role hid
               the colour it was being given to. A conflict is named only when there is one. */}
@@ -2118,7 +2118,7 @@ function RefineDialog({ vals }) {
                 <button key={it.id} type="button" role="switch" aria-checked={it.pressed} data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-md);cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
                   <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
                   <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);flex:none')}>{it.label}</span>
-                  {it.consequence && <span style={sx('flex:1;min-width:0;text-align:right;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
+                  {it.consequence && <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
                 </button>
               ))}
             </div>
@@ -2129,7 +2129,7 @@ function RefineDialog({ vals }) {
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Order</span>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
             </span>
-            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-left:auto;opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
+            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
             <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
           </div>
 
@@ -2137,7 +2137,7 @@ function RefineDialog({ vals }) {
               a "Destructive action" label added taxonomy and cut the act off from its object. */}
           {!r.removeArmed && (
             <div style={sx('margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';margin-left:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove swatch…</button>
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove swatch…</button>
             </div>
           )}
           {r.removeArmed && (
@@ -2148,7 +2148,7 @@ function RefineDialog({ vals }) {
               ))}
               <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
                 <button type="button" data-ix="press" data-focus="chrome" onClick={r.onRemoveCancel} aria-label="Cancel the removal" style={sx(quiet)}>Cancel</button>
-                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-left:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
+                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-inline-start:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
               </span>
             </div>
           )}
@@ -2166,7 +2166,7 @@ function RefineDialog({ vals }) {
           {r.resetArmed && (
             <button type="button" data-ix="press" data-focus="chrome" onClick={r.onResetCancel} aria-label="Cancel the reset" style={sx(footBtn)}>Cancel</button>
           )}
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn + ';margin-left:auto') + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn + ';margin-inline-start:auto') + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
         </div>
       </div>
     </div>

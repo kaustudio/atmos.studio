@@ -351,14 +351,14 @@ export const renderValsMethods = {
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
-    const metricValue = { minWidth: '2ch', textAlign: 'right', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const metricValue = { minWidth: '2ch', textAlign: 'end', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'end', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     // The same inset as its neighbours — the difference is what it is measured against. For them
     // it is space before the next column; for this one there is no next column, so it pairs with
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
     // not moved a pixel; the 8 it used to leave to the row's padding it now holds itself, which is
     // what lets the sort header above it be a button rather than a column-wide slab.
-    const timeCell = { textAlign: 'right', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const timeCell = { textAlign: 'end', paddingRight: '0', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }) => {
       const isCur = p.id === curId;
