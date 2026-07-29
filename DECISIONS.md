@@ -104,14 +104,11 @@ Two things are deliberately not the resource's:
   one is flicked on and off against an edge you are already staring at. Instant cut, and with nothing
   left to tween the file no longer touches GSAP at all.
 
-· **Two levels on the one key, and they STACK**: `Shift+G` → columns → columns + margins → off.
-  COLUMNS is 12 tracks on the 24px gutter inside the 24px margin, and answers *does this cell start
-  where a column starts*. The second level adds a stretched band inset by the margin on all four
-  sides without taking the columns away, so the two are read against each other rather than in turn.
-  Where the band covers the columns the red doubles; the margins stay at single strength, which is
-  what makes them legible as margins. It answers what a column overlay structurally cannot — a page
-  can sit perfectly on twelve columns with an 18px top margin, and the column view will call it
-  aligned, because columns say nothing about a horizontal edge.
+· **One level on the one key**: `Shift+G` shows the 12 columns, again hides them. A margins band
+  shipped briefly as a stacked second level and was removed: the columns are the grid, and a second
+  state to cycle past is a second thing to remember on a shortcut whose whole value is that you can
+  hit it without thinking. The edges it checked are held by `--page-gutter`, which one token now
+  sets for every document.
 
 Red at 0.2, not the resource's `#f4f4f4`. Neutral grey was right on Osmo's own demo; here it is a
 wash the same weight as the app's surfaces, and on the library list — the screen this gets pointed
