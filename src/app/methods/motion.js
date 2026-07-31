@@ -621,13 +621,23 @@ export const motionMethods = {
      user on a screen whose Back button is now inert, with no way off it.
      GSAP rides requestAnimationFrame, and a tab that loses the foreground mid-tap stops delivering
      it. The timer is the floor: whichever lands first wins, the other is a no-op. */
+  /* The floor itself, extracted so the rule has ONE implementation. `cb` is latched — whichever of
+     the tween and the timer lands first wins and the other is a no-op — and the returned function is
+     what the tween should call on complete. `key` names the pending timer so two exits running at
+     once (the reel closing while a drawer closes over it) cannot clear each other's. */
+  _exitFloor(key, dur, cb) {
+    let done = false;
+    const k = '_exitFloorT_' + key;
+    clearTimeout(this[k]);
+    const finish = () => { if (done) return; done = true; clearTimeout(this[k]); this[k] = null; cb(); };
+    this[k] = setTimeout(finish, dur * 1000 + 400);
+    return finish;
+  },
   _exitTween(sel, cb) {
     const g = window.gsap;
     const root = document.querySelector(sel);
     if (this._reduce || !g || !root) { cb(); return; }
-    let done = false;
-    const finish = () => { if (done) return; done = true; clearTimeout(t); cb(); };
-    const t = setTimeout(finish, this.DUR.state * 1000 + 400);
+    const finish = this._exitFloor(sel, this.DUR.state, cb);
     g.to(root, { opacity: 0, y: -12, duration: this.DUR.state, ease: this.EASE.exit, onComplete: finish });
   },
   flipBandsFrom(rects) {

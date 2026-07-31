@@ -960,6 +960,7 @@ export const renderValsMethods = {
             valueText: Math.round(sel.L * 100) + ' percent',
             track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))),
             onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)),
+            onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'l', Math.max(0, Math.min(100, v)) / 100); },
           },
           {
@@ -968,6 +969,7 @@ export const renderValsMethods = {
             valueText: selC.toFixed(3),
             track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))),
             onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)),
+            onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'c', Math.max(0, Math.min(0.33, v))); },
           },
           {
@@ -978,6 +980,7 @@ export const renderValsMethods = {
             valueText: Math.round(selH) + ' degrees',
             track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }),
             onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)),
+            onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'h', ((v % 360) + 360) % 360); },
           },
         ],

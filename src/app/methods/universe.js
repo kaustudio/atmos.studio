@@ -9,36 +9,62 @@ export const universeMethods = {
     // forward from wherever it is — no teardown, no lost click. (State never left 'grid'.)
     if (v === 'grid' && v === this.state.feedView && this._uBloomTl && this._uBloomTl.reversed() && this._uBloomTl.isActive()) {
       this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate the pending close completion
-      this._uBloomTl.play();
+      // ...and with it the arrival that close was on its way to. The generation guard makes the
+      // pending finish() a no-op, so nothing else would ever release this latch or run the queued
+      // enter — the toggle would come back to life pointing at a view nobody asked for any more.
+      this._viewClosing = false; this._viewPending = null;
+      // back to entrance pace — the close ran it at 1.8x, and an assembly resuming forward at
+      // exit speed would arrive faster than one that was never interrupted
+      this._uBloomTl.timeScale(1).play();
       return;
     }
     if (v === this.state.feedView) return;
     const from = this.state.feedView;
-    if (v === 'grid') {
-      // entering grid — cancel any in-flight close, teardown/rebuild, then play the radial bloom
-      if (from === 'carousel') this.killReel();
-      this._uCloseGen = (this._uCloseGen || 0) + 1;
-      this.killSpatial();
-      this._lenisStop();                                   // the universe's Observer owns the wheel
-      try { document.body.style.overflow = 'hidden'; } catch (e) { }
-      this._bloomNext = true;                              // play the radial assembly bloom on this entrance
-      this.setState({ feedView: 'grid', announce: 'Spatial grid view. Drag to pan the field. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
-    } else if (v === 'carousel') {
-      // entering the reel — fullscreen like the universe; scroll locked (nothing to scroll to)
-      if (from === 'grid') { this._uCloseGen = (this._uCloseGen || 0) + 1; this.killSpatial(); }
-      this._lenisStop();
-      try { document.body.style.overflow = 'hidden'; } catch (e) { }
-      this.setState({ feedView: 'carousel', announce: '3D view. Drag or scroll to spin the cards. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { this.initReel(); const c = this.reelCloseRef && this.reelCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
-    } else {
-      // exiting to list — animate the exit on the still-built view, hide FIRST, teardown AFTER.
-      const finishToList = () => {
-        this._lenisStart();
-        try { document.body.style.overflow = ''; } catch (e) { }
-        this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); this.killReel(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const rx = from === 'carousel' ? /3d/i : /grid/i; const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => rx.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
-      };
-      if (from === 'carousel') { this.closeReel(finishToList); }
-      else { this.closeUniverse(finishToList); }
-    }
+    /* ONE RULE FOR EVERY DEPARTURE: whatever is on screen plays its own exit, and the next view is
+       built in that exit's completion.
+
+       Only the exit to the list ever obeyed it. The two fullscreen views could also be swapped
+       DIRECTLY — the toggle is List | Grid | 3D and the arrow keys cycle all three — and those two
+       paths called killSpatial()/killReel() synchronously on the click. Teardown empties the helix's
+       list and rips the clone layer out of the DOM, so a fully opaque layer lost its entire contents
+       between two frames while it was still the thing being looked at. Measured on the 3D→Grid
+       press: 32 cards to 0 on the same tick, layer opacity 1 throughout. It was the hardest cut in
+       the product, on the surface with the most on screen to lose. */
+    const enter = v === 'grid' ? () => this._enterGrid() : v === 'carousel' ? () => this._enterReel() : () => this._enterList(from);
+    if (from === 'list') { enter(); return; }
+    // A second press while a view is already leaving does not start a second exit — it changes where
+    // the one already running lands. Dropping it instead would swallow Escape during a Grid→3D swap,
+    // which is the one key that must always be able to get someone out of a fullscreen view.
+    if (this._viewClosing) { this._viewPending = enter; return; }
+    this._viewClosing = true;
+    const done = () => { this._viewClosing = false; const next = this._viewPending || enter; this._viewPending = null; next(); };
+    if (from === 'carousel') this.closeReel(done); else this.closeUniverse(done);
+  },
+  // The three arrivals. Each assumes the previous view has ALREADY played its exit and is hidden —
+  // which is what makes it safe to tear down here, before the state flip, rather than after it.
+  _enterGrid() {
+    this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate any pending close completion
+    this.killSpatial(); this.killReel();
+    this._lenisStop();                                   // the universe's Observer owns the wheel
+    try { document.body.style.overflow = 'hidden'; } catch (e) { }
+    this._bloomNext = true;                              // play the radial assembly bloom on this entrance
+    this.setState({ feedView: 'grid', announce: 'Spatial grid view. Drag to pan the field. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
+  },
+  _enterReel() {
+    // entering the reel — fullscreen like the universe; scroll locked (nothing to scroll to)
+    this._uCloseGen = (this._uCloseGen || 0) + 1;
+    this.killSpatial();
+    this._lenisStop();
+    try { document.body.style.overflow = 'hidden'; } catch (e) { }
+    this.setState({ feedView: 'carousel', announce: '3D view. Drag or scroll to spin the cards. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { this.initReel(); const c = this.reelCloseRef && this.reelCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
+  },
+  // The list is the one arrival that keeps its teardown INSIDE the state callback: the page behind
+  // is real document flow rather than a layer of its own, so the fullscreen surface is hidden by the
+  // re-render first and only then emptied.
+  _enterList(from) {
+    this._lenisStart();
+    try { document.body.style.overflow = ''; } catch (e) { }
+    this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); this.killReel(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const rx = from === 'carousel' ? /3d/i : /grid/i; const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => rx.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
   },
   // Open: the universe layer fades in and the tile field assembles from the viewport centre; close
   // is reverse() of the same timeline. The pan/Observer engine starts only at forward completion.
@@ -46,14 +72,47 @@ export const universeMethods = {
     const g = window.gsap, layer = document.querySelector('[data-universe-status]');
     const myGen = (this._uCloseGen = (this._uCloseGen || 0) + 1);
     const finish = () => { if (myGen !== this._uCloseGen) return; if (layer) try { layer.style.visibility = 'hidden'; } catch (e) { } done(); };   // hide synchronously before ANY teardown can un-hide
-    if (this._reduce || !g || !layer || !this._uBloomTl) { finish(); return; }
+    if (this._reduce || !g || !layer) { finish(); return; }
+    /* NO TIMELINE TO REVERSE IS NOT "NO EXIT". buildUniverse only keeps _uBloomTl when it actually
+       played the bloom, and it plays the bloom only on an entrance — so every REBUILD of a field
+       that is already up (a window resize, deleting a palette, changing a filter or a folder) left
+       this method with nothing to reverse and dropped it straight into finish(). The field vanished
+       in a frame, and which of the two it did depended on whether you had touched a filter since
+       arriving. Recede by hand instead, on the shape the reverse produces: chrome lifts out first,
+       the plane settles back, the layer goes last. */
+    if (!this._uBloomTl) {
+      try { if (this._ticker) g.ticker.remove(this._ticker); } catch (e) { }
+      const plane = document.querySelector('[data-plane]');
+      const chrome = [...layer.querySelectorAll('[data-universe-chrome]')];
+      if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } }
+      // The timeline and the floor share ONE latched completion — passing `finish` to both would let
+      // a slow-but-alive tween land after the floor had already fired, and finish() is not idempotent:
+      // it calls done(), which builds the arriving view. Twice.
+      const land = this._exitFloor('u', 0.5, finish);
+      const tl = this._uCloseTl = g.timeline({ defaults: { ease: this.EASE.exit }, onComplete: land });
+      if (chrome.length) tl.to(chrome, { opacity: 0, y: -8, duration: 0.25 }, 0);
+      if (plane) tl.to(plane, { scale: 0.96, duration: 0.45, transformOrigin: 'center center' }, 0);
+      tl.to(layer, { opacity: 0, duration: 0.45 }, 0.05);
+      return;
+    }
     const tl = this._uBloomTl;
     // Deadlock guard: an interrupted close can leave the timeline fully reversed (progress 0) with the
     // state flip never applied — reversing again fires no callback. Tear down synchronously instead.
     if (tl.progress() <= 0.001 && !tl.isActive()) { finish(); return; }
     try { if (this._ticker) g.ticker.remove(this._ticker); } catch (e) { }   // freeze the pan so the field recedes cleanly
-    // Re-point the completion at the CURRENT generation — whichever close wins still tears down.
-    tl.eventCallback('onReverseComplete', finish);
+    /* REVERSED, BUT NOT AT ENTRANCE PACE. A reverse plays the timeline's easing backwards too, and
+       every curve in it is expo-out — which reversed is expo-IN, all of the travel saved up for the
+       end. Worse, the layer's own fade lives in the first 0.31s of a 0.9s assembly, so on the way
+       out it does not begin until 0.59s in: press Close and the field holds perfectly still for
+       over half a second, then drops out at once. It read as a click that had not registered.
+       Compressed to ~0.5s the shape is unchanged and the dead stretch is halved — and it now leaves
+       on the same beat as the reel, which is the point of the two views sharing a switcher. The
+       exit being quicker than the entrance is the house rule everywhere else here (motion.js). */
+    tl.timeScale(1.8);
+    // Floored like every other exit: this callback does not merely end an animation, it flips the
+    // state that returns the reader to the page. A ticker that never wakes must not strand them on
+    // a field whose Close button no longer leads anywhere.
+    tl.eventCallback('onReverseComplete', this._exitFloor('u', tl.duration() / 1.8, finish));
     tl.reverse();
   },
   killSpatial() {
@@ -73,6 +132,9 @@ export const universeMethods = {
     if (window.gsap) {
       const g = window.gsap; const layer = document.querySelector('[data-universe-status]');
       if (this._uBloomTl) { try { this._uBloomTl.kill(); } catch (e) { } this._uBloomTl = null; }
+      // the hand-written recede too — it outlives the state flip by design, so a teardown arriving
+      // behind it would otherwise be undone by its next tick
+      if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } this._uCloseTl = null; }
       if (layer) try { g.set(layer, { clearProps: 'transform,opacity' }); } catch (e) { }
     }
   },

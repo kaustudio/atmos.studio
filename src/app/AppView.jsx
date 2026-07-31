@@ -764,7 +764,9 @@ export default function AppView({ vals }) {
                 <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); color: var(--on-surface-muted)')}>OKLCH</span>
               </div>
               <div style={sx('height:2px;width:100%;background:var(--line);position:relative')}>
-                <div ref={vals.progRef} style={sx('position:absolute;left:0;top:0;height:2px;width:0%;background:var(--on-surface)')}></div>
+                {/* Full width, drawn by scaleX from the left edge — the loader's bar primitive, not a
+                    width animation. See pipeline.js startCanvas for why this one had to change. */}
+                <div ref={vals.progRef} style={sx('position:absolute;left:0;top:0;height:2px;width:100%;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%')}></div>
               </div>
             </div>
           </div>
@@ -2083,7 +2085,7 @@ function RefineDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:620px;max-width:96vw;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
 
         {/* PAIRING DETAIL — a layer over the canvas with its own scroll. Closing returns to an
             editor that has not moved a pixel. */}
@@ -2165,7 +2167,7 @@ function RefineDialog({ vals }) {
                   {sl.unit && <span aria-hidden="true">{sl.unit}</span>}
                 </span>
               </span>
-              <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
+              <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} onPointerUp={sl.onCommit} onKeyUp={sl.onCommit} onBlur={sl.onCommit} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
             </div>
           ))}
         </div>

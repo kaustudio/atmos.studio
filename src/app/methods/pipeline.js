@@ -380,7 +380,14 @@ export const pipelineMethods = {
     if (this._procImg) { off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'); o.filter = 'blur(24px)'; this.drawCover(o, this._procImg, W, H); o.filter = 'none'; }
     const blobs = pal.swatches.map((s) => ({ hex: s.hex, x: W * (0.2 + 0.6 * Math.random()), y: H * (0.2 + 0.6 * Math.random()), r: 100 + Math.random() * 70, px: Math.random() * 6.28, py: Math.random() * 6.28, sp: 0.3 + Math.random() * 0.4, rp: Math.random() * 6.28, rs: 0.2 + Math.random() * 0.25 }));
     const reduce = this._reduce;
-    if (window.gsap && this.progRef.current) { window.gsap.fromTo(this.progRef.current, { width: '0%' }, { width: '92%', duration: (reduce ? 0.8 : 7.5), ease: 'power2.out' }); }
+    /* THE EXTRACTION BAR DRAWS, IT DOES NOT GROW. This was the one bar in the product animating
+       `width` — the loader's does scaleX (loader.js), and so do the result's meta rules
+       (motion.js) — and it was also by far the longest-running: seven and a half seconds of layout
+       and paint on every frame, laid over the exact stretch where the extraction worker and this
+       file's own canvas rAF loop are both competing for the thread. scaleX is composited, so the
+       draw costs nothing while the work that matters is happening. Same length, same curve, same
+       92% — a bar that reaches the end before the reading does is a bar that lies. */
+    if (window.gsap && this.progRef.current) { window.gsap.fromTo(this.progRef.current, { scaleX: 0 }, { scaleX: 0.92, duration: (reduce ? 0.8 : 7.5), ease: 'power2.out', transformOrigin: '0% 50%' }); }
     const t0 = performance.now();
     const draw = (now) => {
       const t = reduce ? 0 : (now - t0) / 1000;

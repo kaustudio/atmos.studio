@@ -151,6 +151,13 @@ export const refineMethods = {
     if (!p) return;
     this._refineBack = document.activeElement;
     this._refineUndo = [];
+    this._refineCoalesce = null;
+    /* The page behind stops scrolling. Lenis owns the document's scroll, so overscroll-behavior
+       alone cannot hold it: the wheel never reaches the browser's own chaining logic, Lenis reads
+       it and moves the page regardless of what is under the pointer. Stopping it is the same thing
+       the universe view already does for the same reason. The CSS containment stays as well, for
+       the case Lenis is absent — reduced motion, or the library failing to load. */
+    this._lenisStop();
     this.setState({
       refineOpen: true,
       refineSel: 0,
@@ -167,6 +174,7 @@ export const refineMethods = {
     // It leaves the way it arrived, in reverse and faster: the panel drops, the backdrop follows.
     // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
     // discipline as every other surface here.
+    this._lenisStart();
     this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false, announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
@@ -302,12 +310,27 @@ export const refineMethods = {
     const st = this.state, p = st.current;
     if (!p) return;
     const o = opts || {};
-    // Snapshot BEFORE the change, so undo restores what the user was looking at when they acted.
-    this._refineUndo = (this._refineUndo || []).concat([{
-      swatches: p.swatches.map((s) => Object.assign({}, s)),
-      roles: p.roles ? Object.assign({}, p.roles) : null,
-      sel: st.refineSel,
-    }]);
+    /* ONE DRAG IS ONE UNDO. A range input fires onChange for every value it crosses, so a single
+       pull of the lightness slider used to push forty snapshots and Cmd+Z walked back through all
+       of them one pixel at a time. Anything passing a `coalesce` key snapshots only the FIRST
+       change of that gesture; the rest write straight through.
+
+       The key is per swatch and per axis, so dragging lightness and then chroma on the same swatch
+       are two steps, which is what a user would count. The gesture ends on pointerup, keyup or blur
+       (see _refineGestureEnd) rather than on a timer — a slow drag with a pause in it is still one
+       drag, and a timer would split it. Any action without a key clears the run, so a reorder
+       between two drags cannot be swallowed into either. */
+    const key = o.coalesce || null;
+    const sameRun = key && this._refineCoalesce === key;
+    this._refineCoalesce = key;
+    if (!sameRun) {
+      // Snapshot BEFORE the change, so undo restores what the user was looking at when they acted.
+      this._refineUndo = (this._refineUndo || []).concat([{
+        swatches: p.swatches.map((s) => Object.assign({}, s)),
+        roles: p.roles ? Object.assign({}, p.roles) : null,
+        sel: st.refineSel,
+      }]);
+    }
     this._commitRefine(patch, o);
   },
   // Write a {swatches?, roles?} patch onto the current palette and its feed record.
@@ -364,6 +387,9 @@ export const refineMethods = {
   // L, C and H are absolute values, not deltas: the slider owns the number and the palette follows,
   // so a drag cannot accumulate rounding error. gamutMap keeps L and hue and reduces chroma until
   // the colour fits sRGB, so a slider can never mint a hex the screen cannot show.
+  // Called on pointerup / keyup / blur from a slider: the next move of the same control starts a
+  // new undo step rather than joining the last one.
+  _refineGestureEnd() { this._refineCoalesce = null; },
   refineAdjust(i, part, value) {
     const p = this.state.current;
     if (!p || !p.swatches[i]) return;
@@ -377,7 +403,7 @@ export const refineMethods = {
     const hexStr = gamutMap(L, c * Math.cos(H), c * Math.sin(H));
     if (hexStr.toLowerCase() === s.hex.toLowerCase()) return;   // nothing moved; do not push undo
     const swatches = p.swatches.map((x, j) => j === i ? reswatch(x, hexStr) : x);
-    this._applyRefine({ swatches }, { announce: 'Swatch ' + (i + 1) + ' is now ' + hexStr.toUpperCase() + '.' });
+    this._applyRefine({ swatches }, { announce: 'Swatch ' + (i + 1) + ' is now ' + hexStr.toUpperCase() + '.', coalesce: 'lch:' + i + ':' + part });
   },
   // Removal renumbers everything after it, so the roles map has to be renumbered with it — a role
   // pointing at index 3 means a different colour once index 1 is gone. Roles ON the removed swatch

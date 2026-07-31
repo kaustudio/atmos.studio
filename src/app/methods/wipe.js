@@ -27,6 +27,9 @@ export const wipeMethods = {
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
     if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
     if (this.state.feedView === 'carousel') { this.killReel(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
+    // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
+    // alone it would fire after the wipe and pull the reader back into the view they just left.
+    this._viewClosing = false; this._viewPending = null;
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState({
