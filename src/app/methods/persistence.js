@@ -61,7 +61,8 @@ export const persistenceMethods = {
     const feed = this.validateFeed(migrated.feed); if (!feed) return null;
     const projects = this.validateProjects(migrated.projects);
     const ids = new Set(projects.map((p) => p.id));
-    feed.forEach((p) => { if (p.projectId && !ids.has(p.projectId)) p.projectId = null; });
+    // A membership naming a project that no longer exists is dropped, not left to point at nothing.
+    feed.forEach((p, i) => { feed[i] = this.withProjects(p, this.palProjects(p).filter((x) => ids.has(x))); });
     return { feed, projects, seeded: !!migrated.seeded };
   },
   // Read + migrate + validate stored feed. Corrupt/newer/partial → null (caller seeds instead of crashing).
@@ -165,6 +166,11 @@ export const persistenceMethods = {
         archetype: typeof p.archetype === 'string' ? p.archetype : 'seed',
         example: p.example === true,
         fallback: p.fallback === true,
+        // Migrates on read: a record written before multi-membership has projectId only, and comes
+        // back as a one-element set. Both fields are kept in step by withProjects on every write.
+        projectIds: Array.isArray(p.projectIds)
+          ? p.projectIds.filter((x, i, a) => typeof x === 'string' && x && a.indexOf(x) === i)
+          : ((typeof p.projectId === 'string' && p.projectId) ? [p.projectId] : []),
         projectId: (typeof p.projectId === 'string' && p.projectId) ? p.projectId : null,
         swatches: sw,
         // REFINEMENT. Both are optional and both are allow-listed here for the reason the comment
@@ -189,7 +195,26 @@ export const persistenceMethods = {
   // tag menu are built from it, so choosing a tag never narrows the menu it was chosen from (and an
   // active tag can never delete its own way out of the UI). scopedFeed is what the whole app reads:
   // list, universe, reel, pagination counts. There is no second filter path.
-  projectFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => !p.projectId); return feed.filter((p) => p.projectId === a); },
+  /* MEMBERSHIP IS A SET, NOT A SLOT. A palette used to carry one projectId, so filing it in a
+     second project silently took it out of the first — and the action row said "In Garnet Set",
+     which was honest about a model that could not do what people expected of folders.
+
+     projectIds is the truth now. projectId is still written on every record as its first entry,
+     because a backup restored into an older build reads that field and would otherwise come back
+     with everything unfiled. Nothing in the app READS projectId any more; these two accessors are
+     the only way membership is asked about, so there is one definition of "is it in there". */
+  palProjects(p) {
+    if (!p) return [];
+    if (Array.isArray(p.projectIds)) return p.projectIds.filter((x) => typeof x === 'string' && x);
+    return (typeof p.projectId === 'string' && p.projectId) ? [p.projectId] : [];
+  },
+  inProject(p, id) { return this.palProjects(p).indexOf(id) >= 0; },
+  // One writer, so projectIds and its legacy mirror can never disagree.
+  withProjects(p, ids) {
+    const clean = (ids || []).filter((x, i, a) => typeof x === 'string' && x && a.indexOf(x) === i);
+    return Object.assign({}, p, { projectIds: clean, projectId: clean[0] || null });
+  },
+  projectFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => this.palProjects(p).length === 0); return feed.filter((p) => this.inProject(p, a)); },
   // Tags combine with AND: a palette must carry EVERY selected tag. Adding a tag narrows.
   matchesTags(p, tags) { if (!tags || !tags.length) return true; const d = p.descriptors.map((x) => x.toLowerCase()); return tags.every((t) => d.indexOf(t) >= 0); },
   // OR within the group: a palette holds exactly one accessibility state, so selecting two means
@@ -291,13 +316,30 @@ export const persistenceMethods = {
     this.setState((st) => ({ projects: [...st.projects, { id, name: name.slice(0, 60), createdAt: Date.now() }], announce: 'Project ' + name + ' created.' }), () => this.persist({ immediate: true })); return id;
   },
   renameProject(id, name) { name = (name || '').trim(); if (!name) return; this.setState((st) => ({ projects: st.projects.map((p) => p.id === id ? Object.assign({}, p, { name: name.slice(0, 60) }) : p), announce: 'Project renamed to ' + name + '.' }), () => this.persist({ immediate: true })); },
-  assignPalette(palId, projectId) { const pid = projectId || null; this.setState((st) => ({ feed: st.feed.map((p) => p.id === palId ? Object.assign({}, p, { projectId: pid }) : p), announce: 'Moved palette to ' + this.projectName(pid) + '.' }), () => { this.persist({ immediate: true }); if (this.state.feedView === 'grid') this.buildUniverse(); }); },
+  /* TOGGLE, not move. Picking a project the palette is already in removes it; picking a new one
+     adds it. Unfiled is not a project — choosing it means "belong to nothing", so it clears the
+     set rather than joining a ninth list. */
+  assignPalette(palId, projectId) {
+    const pid = projectId || null;
+    this.setState((st) => {
+      let msg = '';
+      const feed = st.feed.map((p) => {
+        if (p.id !== palId) return p;
+        if (!pid) { msg = p.name + ' removed from every project.'; return this.withProjects(p, []); }
+        const has = this.inProject(p, pid);
+        const next = has ? this.palProjects(p).filter((x) => x !== pid) : this.palProjects(p).concat([pid]);
+        msg = p.name + (has ? ' removed from ' : ' added to ') + this.projectName(pid) + '.';
+        return this.withProjects(p, next);
+      });
+      return { feed, announce: msg };
+    }, () => this.persist());
+  },
   deleteProject(id) {
     const st = this.state; const idx = st.projects.findIndex((p) => p.id === id); if (idx < 0) return;
-    const project = st.projects[idx]; const palIds = st.feed.filter((p) => p.projectId === id).map((p) => p.id);
+    const project = st.projects[idx]; const palIds = st.feed.filter((p) => this.inProject(p, id)).map((p) => p.id);
     if (this._toastT) clearTimeout(this._toastT); this._deleted = null; this._deletedProject = { project, index: idx, palIds };
     const projects = st.projects.slice(0, idx).concat(st.projects.slice(idx + 1));
-    const feed = st.feed.map((p) => p.projectId === id ? Object.assign({}, p, { projectId: null }) : p);
+    const feed = st.feed.map((p) => this.inProject(p, id) ? this.withProjects(p, this.palProjects(p).filter((x) => x !== id)) : p);
     const patch = { projects, feed, toast: { name: project.name + ' project' } };
     if (st.activeProject === id) patch.activeProject = null;
     patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
@@ -308,7 +350,7 @@ export const persistenceMethods = {
   buildProjectFile(scope) {
     const st = this.state; let projects, palettes;
     if (scope === 'archive') { projects = st.projects.slice(); palettes = st.feed.slice(); }
-    else { const pid = (scope && scope !== '__unfiled__') ? scope : null; projects = pid ? st.projects.filter((p) => p.id === pid) : []; palettes = st.feed.filter((p) => pid ? p.projectId === pid : !p.projectId); }
+    else { const pid = (scope && scope !== '__unfiled__') ? scope : null; projects = pid ? st.projects.filter((p) => p.id === pid) : []; palettes = st.feed.filter((p) => pid ? this.inProject(p, pid) : this.palProjects(p).length === 0); }
     return { schema: 'palette-generator/project-file', version: 1, exportedAt: new Date().toISOString(), projects, palettes };
   },
   // The FILENAME follows the interface's vocabulary; the `schema` string inside the file does not,
@@ -407,7 +449,7 @@ export const persistenceMethods = {
       inProjects.forEach((p) => { if (!haveIds.has(p.id)) { projects.push(p); haveIds.add(p.id); addedProj++; } });
       const feed = st.feed.slice(); const havePal = new Set(feed.map((p) => p.id)); let added = 0;
       inPalettes.forEach((p) => { if (!havePal.has(p.id)) { feed.unshift(p); havePal.add(p.id); added++; } });
-      const pids = new Set(projects.map((p) => p.id)); feed.forEach((p) => { if (p.projectId && !pids.has(p.projectId)) p.projectId = null; });
+      const pids = new Set(projects.map((p) => p.id)); feed.forEach((p, i) => { feed[i] = this.withProjects(p, this.palProjects(p).filter((x) => pids.has(x))); });
       this._importSummary = 'Added ' + added + ' palette' + (added === 1 ? '' : 's') + ' and ' + addedProj + ' project' + (addedProj === 1 ? '' : 's') + ' to your library.';
       return { projects, feed, announce: this._importSummary };
     }, () => { this.persist({ immediate: true }); if (this.state.feedView === 'grid') this.buildUniverse(); this.showNotice(this._importSummary || 'Restore complete.'); });
@@ -598,7 +640,17 @@ export const persistenceMethods = {
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
   closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
-  pickAssign(projectId) { const pal = this.state.assignPalette; if (pal) { this.assignPalette(pal.id, projectId); } this.closeAssign(); },
+  /* The dialog STAYS OPEN on a project toggle. It used to close on every pick, which was right when
+     picking was choosing — one slot, one answer, done. Now that a palette can be in several
+     projects, closing after the first tick means reopening the dialog for the second, and the whole
+     point of the change was that a palette can be in more than one place at once.
+     Unfiled still closes: "belong to nothing" is a complete answer, so there is nothing left to
+     say and the dialog would only be in the way. */
+  pickAssign(projectId) {
+    const pal = this.state.assignPalette;
+    if (pal) this.assignPalette(pal.id, projectId);
+    if (!projectId) this.closeAssign();
+  },
   newProjectAndAssign(name) { const id = this.createProject(name); if (id) { const pal = this.state.assignPalette; if (pal) setTimeout(() => { this.assignPalette(pal.id, id); this.closeAssign(); }, 0); } },
   openManage() { this._manageBack = document.activeElement; this.setState({ manageProjects: true }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-manage-dialog]'); if (d) { const b = d.querySelector('input,button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-manage-dialog]'); })); },
   closeManage() { const back = this._manageBack; this._dialogOut('[data-manage-dialog]', () => this.setState({ manageProjects: false, announce: 'Manage projects closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },

@@ -416,7 +416,7 @@ export const renderValsMethods = {
         onAssign: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.openAssign(p); },
         assignAria: 'Move ' + p.name + ' to a project',
         isExample: p.example === true,
-        projectLabel: p.projectId ? this.projectName(p.projectId) : '', hasProject: !!p.projectId,
+        projectLabel: this.palProjects(p).map((id) => this.projectName(id)).join(', '), hasProject: this.palProjects(p).length > 0,
         onEnter: (e) => this.rowTintOn(e.currentTarget),
         onLeave: (e) => this.rowTintOff(e.currentTarget),
         onFocus: (e) => this.rowTintOn(e.currentTarget),
@@ -550,11 +550,13 @@ export const renderValsMethods = {
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
-        assignAria: p.projectId ? 'Move ' + p.name + ' to another project (currently in ' + this.projectName(p.projectId) + ')' : 'Add ' + p.name + ' to a project',
+        assignAria: this.palProjects(p).length ? 'Add ' + p.name + ' to another project, or remove it from one (currently in ' + this.palProjects(p).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + p.name + ' to a project',
         // The state, then the project, so the button says where the palette IS and not only what
         // pressing it will do. A bare project name read as a filter; "Add to project" on a palette
         // already filed read as a second copy.
-        assignLabel: p.projectId ? 'In ' + this.projectName(p.projectId) : 'Add to project',
+        // Always the same words. A palette can be in several projects now, so the button is never
+        // reporting a single state — it is the way IN to the set, whatever the set already holds.
+        assignLabel: 'Add to project',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); this._focusCopyTrigger(true); },
@@ -614,11 +616,11 @@ export const renderValsMethods = {
     // --- projects: filter chips + assign/manage dialog data ---
     const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
     const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-nano)', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)' });
-    const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => !p.projectId).length : s.feed.filter((p) => p.projectId === id).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
+    const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
     // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
     // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
     // All, which is the home scope, not a filter. Unfiled follows the same rule as real projects.
-    const projCount = (id) => (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => !p.projectId).length : s.feed.filter((p) => p.projectId === id).length;
+    const projCount = (id) => (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length;
     const projectChips = [
       mkChip(null, 'All'),
       ...((projCount('__unfiled__') > 0 || s.activeProject === '__unfiled__') ? [mkChip('__unfiled__', 'Unfiled')] : []),
@@ -811,7 +813,11 @@ export const renderValsMethods = {
     if (s.assignPalette) {
       const pal = s.assignPalette;
       const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 14px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
-      const mkOpt = (id, label) => { const cur = (pal.projectId || null) === (id || null); return { key: String(id), label, current: cur, markStyle: { width: '6px', height: '6px', flex: 'none', background: 'var(--on-surface)', opacity: cur ? 1 : 0 }, style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id), aria: 'Move ' + pal.name + ' to ' + label + (cur ? ' (current)' : '') }; };
+      /* Each row is a membership toggle now, not one choice among many. `current` still drives the
+         mark, but it means "is in this project" rather than "is THE project", and Unfiled is
+         current only when the set is empty — it is the absence of membership, not a member. */
+      const live = s.feed.find((f) => f.id === pal.id) || pal;
+      const mkOpt = (id, label) => { const cur = id === null ? this.palProjects(live).length === 0 : this.inProject(live, id); return { key: String(id), label, current: cur, markStyle: { width: '6px', height: '6px', flex: 'none', background: 'var(--on-surface)', opacity: cur ? 1 : 0 }, style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id), aria: (id === null ? 'Remove ' + pal.name + ' from every project' : (cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label)) }; };
       assignView = {
         name: pal.name, options: [mkOpt(null, 'Unfiled'), ...s.projects.map((pr) => mkOpt(pr.id, pr.name))],
         onCreate: (e) => { const inp = document.querySelector('[data-assign-new]'); const v = inp ? inp.value : ''; if (v && v.trim()) { this.newProjectAndAssign(v.trim()); } },
@@ -823,7 +829,7 @@ export const renderValsMethods = {
     if (s.manageProjects) {
       manageView = {
         empty: !hasProjects, rows: s.projects.map((pr) => {
-          const count = s.feed.filter((p) => p.projectId === pr.id).length; return {
+          const count = s.feed.filter((p) => this.inProject(p, pr.id)).length; return {
             id: pr.id, name: pr.name, count: count + ' palette' + (count === 1 ? '' : 's'),
             onRename: (e) => { const inp = document.querySelector('[data-proj-name="' + pr.id + '"]'); if (inp && inp.value.trim() && inp.value.trim() !== pr.name) this.renameProject(pr.id, inp.value.trim()); },
             onRenameKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.currentTarget.value; if (v.trim()) this.renameProject(pr.id, v.trim()); e.currentTarget.blur(); } },
@@ -1620,8 +1626,8 @@ export const renderValsMethods = {
         : 'Refine this palette: assign roles and adjust colours',
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: filedCur && filedCur.projectId ? 'In ' + this.projectName(filedCur.projectId) : 'Add to project',
-      assignCurAria: filedCur ? (filedCur.projectId ? 'Move ' + filedCur.name + ' to another project (currently in ' + this.projectName(filedCur.projectId) + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
+      assignLabel: 'Add to project',
+      assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },

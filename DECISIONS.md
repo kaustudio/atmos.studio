@@ -6,6 +6,39 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-31 — A palette belongs to many projects
+
+**Decision:** membership is a set. `projectIds: string[]` is the truth; `projectId` survives on every
+record as its first entry and nothing reads it.
+
+**Why it changed:** a palette carried one `projectId`, so filing it in a second project silently took
+it out of the first. The action row was honest about that — it read `In Garnet Set` — but honest
+about a model that did not do what a folder is expected to do. Changing the label alone would have
+made it worse: `Add to project` on a filed palette would have moved it, with nothing on screen
+saying so.
+
+**The legacy field is a write-only mirror.** A backup restored into an older build reads `projectId`
+and would otherwise come back with everything unfiled. `withProjects()` is the only writer, so the
+array and the mirror cannot drift; `palProjects()` and `inProject()` are the only readers, so there
+is one definition of "is it in there" rather than nineteen inline comparisons.
+
+**Migration is on read, not a version bump.** `validateFeed` turns a bare `projectId` into a
+one-element set, which means `SCHEMA_VERSION` stays 1 — absence is meaningful, exactly as it was for
+`sourceSwatches` and `roles`. Records written before today load correctly and are rewritten in the
+new shape the first time anything touches them.
+
+**Two interaction consequences, both forced rather than chosen.** The picker no longer closes when
+you tick a project: closing after the first tick would mean reopening it for the second, which is
+the whole thing the change exists to allow. `Unfiled` still closes, because "belong to nothing" is a
+complete answer. And the action row now always reads `Add to project` — it is the way IN to the set,
+never a report of a single state it can no longer have.
+
+**Verified:** one palette in two projects; scope chips counting it under both and out of Unfiled
+(All 8, Unfiled 7, Warm work 1, Client A 1); the set surviving a reload through `validateFeed`; and
+deleting one project leaving the other membership intact with the mirror re-pointed.
+
+---
+
 ## 2026-07-29 — One inset, everywhere content sits inside something
 
 **Decision:** every panel, drawer, dialog and page section insets its content by `--page-gutter`.
