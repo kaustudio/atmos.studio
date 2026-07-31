@@ -318,7 +318,7 @@ export const reelMethods = {
     else if (revisit) {
       // re-entry: the same two-part climb, run a little quicker
       st.active = true;
-      this._reelLead = SPIN_LEAD * 0.5; this._reelFromScale = .94;
+      this._reelLead = SPIN_LEAD * 0.5; this._reelFromScale = .94; this._reelScaleT = .6;
       this._reelIntro = g.timeline()
         .fromTo(st, { lead: st.clear }, { lead: st.settleAt, duration: climbT, ease: 'none' }, 0)
         .to(st, { lead: 0, duration: settleT, ease: SETTLE }, climbT)
@@ -331,7 +331,7 @@ export const reelMethods = {
       // clears the top, then the formation settles onto its rest position (_reelKillVel frees
       // progress and boost on the first gesture — but never lead, which would strand the climb)
       st.active = true;
-      this._reelLead = SPIN_LEAD; this._reelFromScale = .8;
+      this._reelLead = SPIN_LEAD; this._reelFromScale = .8; this._reelScaleT = 1.2;
       this._reelIntro = g.timeline()
         .fromTo(st, { lead: st.clear }, { lead: st.settleAt, duration: climbT, ease: 'none' }, 0)
         .to(st, { lead: 0, duration: settleT, ease: SETTLE }, climbT)
@@ -411,17 +411,27 @@ export const reelMethods = {
      expressed the way the arrival is: as a lead ON TOP of that engine, off wherever the reader
      actually left it.
 
-       ENTRANCE (first entry, 2.20s — decelerating, arriving)
-         0.00 ─ 2.20  formation climbs st.clear steps up the spiral into place       [expo-out]
-         0.00 ─ 1.80  boost bleeds 3× ambient → ambient, holding the floor under it  [power2-out]
+       ENTRANCE (first entry, 2.22s — settling in)
+         0.00 ─ 1.50  formation climbs to st.settleAt at a flat rate                 [none]
+         1.50 ─ 2.22  ...and settles the rest of the way onto 0                      [SETTLE]
+         0.00 ─ 1.78  boost bleeds 3× ambient → ambient, holding the floor under it  [power2-out]
          0.00 ─ 1.20  stage grows 0.80 → 1
-         0.80 ─ 1.30  chrome arrives through its nearest edge
+         0.90 ─ 1.40  chrome arrives through its nearest edge
 
-       EXIT (0.68s — accelerating, departing)
-         0.00 ─ 0.68  formation descends the same st.clear steps back down it        [ease-exit]
-         0.00 ─ 0.68  boost builds ambient → the same 3×, winding up as it goes      [power2-in]
-         0.00 ─ 0.68  stage returns to the size it grew from
-         0.00 ─ 0.34  chrome leaves through the edge it arrived from
+       EXIT (2.22s — the same, reflected)
+         0.00 ─ 0.72  formation eases off 0 back onto st.settleAt                    [SETTLE_BACK]
+         0.72 ─ 2.22  ...and descends the rest at the same flat rate                 [none]
+         0.44 ─ 2.22  boost builds ambient → the same 3×, winding up as it goes      [power2-in]
+         1.02 ─ 2.22  stage returns to the size it grew from
+         0.00 ─ 0.50  chrome leaves through the edge it arrived from
+
+     IT RUNS AT THE ARRIVAL'S PACE, NOT ITS OWN. The two directions cover exactly the same distance —
+     st.clear steps, fixed by the ring — so matching the rate and matching the duration are the same
+     statement, and the exit simply takes st.arriveT. That is read off whichever arrival actually
+     played, so the quicker re-entry gets the quicker departure without a second number to keep in
+     step. It reverses the house default that an exit is the softer of the pair: this is not a panel
+     being dismissed, it is a body of thirty cards travelling a path, and a path taken at three times
+     the speed it was laid down at stops reading as the same path.
 
      THE SPIN IS MIRRORED IN SPEED, NOT IN DIRECTION. The entrance decelerates into ambient; the
      exit accelerates out of it. That is the honest reverse of the gesture, and it keeps the helix
@@ -430,17 +440,9 @@ export const reelMethods = {
      and start it the other way, on a surface the reader may still have a hand on. The reversal is
      carried by the axis that has an actual direction to reverse: the formation rises, then sinks.
 
-     Under a third of the entrance's length, per the house rule that an exit is the softer of the
-     pair — and the layer needs no beat of its own, because once the formation is st.clear steps
-     down the spiral the stage is genuinely empty and there is nothing left to hide.
-
-     WHY IT IS NOT SHORTER STILL. The clearing distance is fixed by the helix's own pitch, and at
-     roughly two and a half turns of the orbit there is a floor below which the descent stops
-     reading as cards travelling a path and starts reading as a smear. 0.52s was that smear. The
-     counterweight is dead time at the end — the stage empties before the tween lands, because the
-     cards nearest the front clear long before the ones at the top of the ring do — so this is the
-     shortest the gesture goes while the path is still legible. */
-  REEL_EXIT: .68,
+     The layer needs no beat of its own: once the formation is st.clear steps down the spiral the
+     stage is genuinely empty and there is nothing left to hide. */
+  REEL_EXIT: 2.2,   // fallback only — the live value is st.arriveT, set by whichever entrance ran
   closeReel(done) {
     const g = window.gsap, layer = document.querySelector('[data-reel-layer]');
     const finish = () => { if (layer) try { layer.style.visibility = 'hidden'; } catch (e) { } done(); };
@@ -457,7 +459,9 @@ export const reelMethods = {
        onUpdate to redraw the sink. */
     const stage = document.querySelector('[data-reel-stage]');
     const chrome = [...layer.querySelectorAll('[data-reel-chrome]')];
-    const D = this.REEL_EXIT;
+    // The arrival's own length, so the two directions travel the identical distance at the identical
+    // rate. The constant is only a floor for the case where no arrival ever ran to record one.
+    const D = (st && st.arriveT) || this.REEL_EXIT;
     // Floored: finish() flips the state that swaps the view, so a tab backgrounded mid-exit must not
     // be able to leave the reader on a stalled helix with no way off it (motion.js _exitFloor).
     const land = this._exitFloor('reel', D, finish);
@@ -479,10 +483,16 @@ export const reelMethods = {
       tl.to(st, { lead: st.clear, duration: outClimb, ease: 'none' }, outSettle);
       // ...and the boost winds UP as it goes, the mirror of the arrival's decay, so the departure is
       // still gaining speed at the moment it leaves rather than easing off at the end of a tween.
-      tl.to(st, { boost: st.ambient * st.dir * (this._reelLead || 0), duration: D, ease: 'power2.in' }, 0);
+      // Held to the arrival's own share of the whole (0.8) and pushed to the END of it, which is
+      // where the arrival's decay began.
+      tl.to(st, { boost: st.ambient * st.dir * (this._reelLead || 0), duration: D * 0.8, ease: 'power2.in' }, D * 0.2);
     }
-    if (stage) tl.to(stage, { scale: this._reelFromScale || .8, duration: D }, 0);
-    if (chrome.length) tl.to(chrome, { y: (i, el) => this._reelChromeOut(el), duration: D * 0.5 }, 0);
+    /* THE OTHER TWO KEEP THEIR OWN LENGTHS. Now that D is the arrival's full 2.2s, scaling these to
+       it would give the frame a two-second squeeze and the Close button a one-second slide out —
+       durations neither of them has on the way in. They are reflections, not stretches: the same
+       lengths the entrance used, placed at the mirrored end of the timeline. */
+    if (stage) tl.to(stage, { scale: this._reelFromScale || .8, duration: this._reelScaleT || 1.2 }, Math.max(0, D - (this._reelScaleT || 1.2)));
+    if (chrome.length) tl.to(chrome, { y: (i, el) => this._reelChromeOut(el), duration: .5 }, 0);
   },
   killReel() {
     const g = window.gsap;
