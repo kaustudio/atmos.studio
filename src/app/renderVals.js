@@ -1060,11 +1060,31 @@ export const renderValsMethods = {
             return null;
           };
           return {
-            // The COVERAGE line, stated with its denominator named. "1 / 8 meet AA" leaves the 8
-            // unexplained — it is the four content roles on the two ground roles, not every pair in
-            // the palette — and a bare fraction beside a specimen reads as a score.
+            // THE HEALTH OF THE WHOLE PALETTE LEADS, and this is a reversal worth naming. The card
+            // used to open with the selected pairing at 7.2:1 and AAA beside it, with coverage as a
+            // muted line underneath — so a palette where six of eight combinations FAIL presented
+            // itself, at a glance, as a success. The one pair the user happens to be standing on is
+            // not the state of the palette.
+            //
+            // Stated with its denominator named. "1 / 8 meet AA" leaves the 8 unexplained — it is
+            // the four content roles on the two ground roles, not every pair in the palette — and a
+            // bare fraction beside a specimen reads as a score.
             count: rc.passed + ' of ' + rc.total + ' text-role pairings meet AA',
-            countStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' },
+            countStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
+            // The failure count is the actionable half, and it is a control rather than a statistic:
+            // where there are failures the next move is to look at them, so the card offers that
+            // move instead of leaving the reader to find the disclosure below.
+            failures: rc.total - rc.passed,
+            hasFailures: rc.passed < rc.total,
+            reviewLabel: 'Review ' + (rc.total - rc.passed) + ' failure' + (rc.total - rc.passed === 1 ? '' : 's'),
+            reviewAria: 'Review the ' + (rc.total - rc.passed) + ' text-role pairing' + (rc.total - rc.passed === 1 ? '' : 's') + ' that fail AA',
+            // Fill for pass, outline for partial, ghost for none — the status tokens the AA badge
+            // uses on every other surface, so "healthy" looks the same here as it does in the list.
+            healthStyle: (() => {
+              const st = rc.passed === rc.total ? 'flexible' : rc.passed === 0 ? 'none' : 'limited';
+              return { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)', whiteSpace: 'nowrap' };
+            })(),
+            healthLabel: rc.passed === rc.total ? 'All pass' : rc.passed === 0 ? 'None pass' : 'Partial',
             pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
             pairHex: f.fgHex + ' on ' + f.bgHex,
             pairRatio: f.ratio.toFixed(1) + ':1',
@@ -1086,7 +1106,13 @@ export const renderValsMethods = {
             allLabel: 'View all ' + rc.total + ' pairings',
             toggleAll: () => this.openPairings(),
             closePairings: () => this.closePairings(),
-            rows: rc.pairs.map((x) => {
+            // FAILURES FIRST, and within them the near misses first. The list was ordered by ratio
+            // descending, which put every passing pair above every failing one — the rows you can
+            // do nothing about above the rows that are the reason you opened the list.
+            // Ordering the failures by ratio DESCENDING is the second half of the same argument: the
+            // pair closest to 4.5 is the one a small nudge fixes, so the cheapest win is at the top
+            // rather than buried under the hopeless cases.
+            rows: rc.pairs.slice().sort((a, b) => (a.aa - b.aa) || (b.ratio - a.ratio)).map((x) => {
               const rep = repairIdx(x);
               return {
                 key: x.fg + '-' + x.bg,
@@ -1281,6 +1307,9 @@ export const renderValsMethods = {
         },
         onResetCancel: () => this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }),
         onClose: () => this.closeRefine(),
+        // Measurement, not state: the two boundary rules are data attributes on the shell, so this
+        // never re-renders the dialog while somebody is scrolling it.
+        onBodyScroll: () => this._refineScrollEdges(),
         trap: (e) => this.trapFocusIn('[data-refine-dialog]', e),
         trapPairings: (e) => this.trapFocusIn('[data-refine-pairs]', e),
       };

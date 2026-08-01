@@ -625,12 +625,37 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    pushes the thing you are dragging off the bottom of a short viewport. */
 [data-refine-split]{ display:grid; grid-template-columns:1fr; gap:16px; }
 @media (min-width:860px){
-  [data-refine-split]{ grid-template-columns:1fr 232px; gap:20px; align-items:start; }
+  /* Roughly 60/40 with a 24px gutter, which is what it takes for the specimen to read as an
+     interface rather than as a large swatch: at 232px the heading, the body line and the two
+     buttons inside it were all wrapping, so the thing meant to show whether the palette WORKS was
+     itself badly set. The controls column keeps the larger share — dragging needs track length. */
+  [data-refine-split]{ grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr); gap:24px; align-items:start; }
 }
 /* The specimen is a picture of a live mapping, so it must not animate its colours: a transition
    here would make the preview lag the slider, and a preview that disagrees with the value beside it
    is worse than no preview. Direct manipulation is immediate — this is downstream of the hand. */
 [data-refine-preview] *{ transition:none !important; }
+
+/* THE SCROLL AFFORDANCE, and it is a rule rather than a gradient.
+   Content now passes UNDER a persistent header and footer, so the shell has to say where the
+   scrollport begins and ends — otherwise a heading half-cut by the header edge reads as a clipping
+   bug. One hairline at each boundary, shown only when there is actually something hidden on that
+   side, driven by data attributes the scroll handler sets (see _refineScrollEdges). A shadow was
+   tried and rejected: this app has no other soft edges, and one here would be the only place a
+   boundary is drawn in blur rather than in ink. */
+[data-refine-shell] > header{ position:relative; }
+[data-refine-shell] > header::after,
+[data-refine-foot]::before{
+  content:''; position:absolute; left:0; right:0; height:1px; background:var(--line-strong);
+  opacity:0; transition:opacity .18s var(--ease-standard); pointer-events:none;
+}
+[data-refine-shell] > header::after{ bottom:-1px; }
+[data-refine-foot]::before{ top:-1px; }
+[data-refine-shell][data-over-top="1"] > header::after,
+[data-refine-shell][data-over-bottom="1"] [data-refine-foot]::before{ opacity:1; }
+@media (prefers-reduced-motion:reduce){
+  [data-refine-shell] > header::after,[data-refine-foot]::before{ transition:none }
+}
 
 /* The role chooser unfolding in place. A disclosure inside a dialog, so it moves less and faster
    than the dialog did: this is a fold opening, not a surface arriving. */

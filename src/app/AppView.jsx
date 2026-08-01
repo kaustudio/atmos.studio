@@ -2228,11 +2228,19 @@ function RefineDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      {/* 620 → 760: the dialog gained a second column (edit | preview) and 620 left the specimen at
-          about 200px, which is narrower than the swatch strip above it and reads as a swatch rather
-          than as an interface. max-width:96vw is unchanged, so nothing widens on a small screen —
-          the split collapses there instead (see global.css). */}
-      <div data-refine-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:760px;max-width:96vw;max-height:90vh;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      {/* A FIXED SHELL WITH ONE SCROLLPORT INSIDE IT.
+          The whole dialog used to be the scroller — max-height plus overflow-y — which meant the
+          header and the footer were inside the thing that scrolled. Measured: the header left the
+          top of the dialog by 111px on the way to the bottom, so Done, Undo and Reset all scrolled
+          out of reach exactly when a long edit needed them. Three rows now: header, body, footer.
+          Only the middle one moves.
+          The height is stated rather than capped. A max-height dialog is as tall as its content, so
+          the same surface was a different size for a 3-swatch palette and a 6-swatch one, and
+          whether it scrolled at all depended on the palette. A fixed shell means the instrument is
+          the same instrument every time. 100dvh (not vh) so the mobile URL bar cannot clip it.
+          620 → 760 → 960: the second column (edit | preview) needs the width or the specimen reads
+          as a swatch rather than as an interface. max-width keeps it inside the viewport. */}
+      <div data-refine-dialog="1" data-refine-shell="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:960px;max-width:100%;height:min(860px, calc(100dvh - 48px));background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden')}>
 
         {/* PAIRING DETAIL — a layer over the canvas with its own scroll. Closing returns to an
             editor that has not moved a pixel. */}
@@ -2282,6 +2290,15 @@ function RefineDialog({ vals }) {
               at 9px in the footer and asks before it acts. */}
           <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Done</button>
         </header>
+
+        {/* THE ONLY SCROLLPORT. min-height:0 is what makes it one: a grid row sized minmax(0,1fr)
+            still refuses to shrink below its content without it, and the body would push the footer
+            off the shell instead of scrolling. overscroll-behavior:contain stops a flick at either
+            end chaining into the page — belt to the Lenis brace, which is why data-lenis-prevent
+            moved here from the dialog: the wheel has to be intercepted on the thing that scrolls.
+            scrollbar-gutter keeps the column reserved so content does not shift by the scrollbar's
+            width when a palette happens to be short enough not to overflow. */}
+        <div data-refine-body="1" data-lenis-prevent="1" onScroll={r.onBodyScroll} style={sx('min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;display:flex;flex-direction:column')}>
 
         {/* 1 · THE ONE PRIMARY SELECTOR. Labelled with the instruction, so the first move is stated
                rather than inferred. Pointer, arrow keys, Home and End all land in refineSelect. */}
@@ -2386,34 +2403,35 @@ function RefineDialog({ vals }) {
                the palette's best result sitting still through an edit. Full matrix on demand. */}
         {r.a11y && (
           <div role="group" aria-label={r.a11y.aria} style={sx('margin:14px 22px 0;border:1px solid var(--line)')}>
-            {/* THE SELECTED PAIR, THEN COVERAGE — two different statements, and they used to share
-                one line: an eyebrow on the left and a fraction on the right, reading as a heading
-                with a score beside it. The pair is what the edit in hand is changing; the coverage
-                is context for it, and now sits under the pair rather than above it. */}
-            <div style={sx('padding:12px 13px 0')}>
+            {/* THE PALETTE'S HEALTH LEADS; THE PAIR IN HAND IS DETAIL UNDER IT.
+                This card used to open with the selected pairing — a big ratio and an AAA badge —
+                and put coverage in a muted line below. On a palette where six of eight combinations
+                fail, that presented itself at a glance as a success. The pair you happen to be
+                standing on is not the state of the palette, so the summary goes first, with the
+                failure count as a control rather than a statistic: where there are failures, the
+                next move is to look at them. */}
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 13px 0')}>
               <span style={sx(eyebrow)}>Text contrast</span>
+              <span aria-hidden="true" style={r.a11y.healthStyle}>{r.a11y.healthLabel}</span>
             </div>
-            {/* The specimen fills the row rather than huddling at the left: this is a working
-                surface, and the pairing is the work. */}
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 13px 0')}>
+              <span data-drawer-split="1" style={r.a11y.countStyle}>{r.a11y.count}</span>
+              {r.a11y.hasFailures && (
+                <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{r.a11y.reviewLabel}</button>
+              )}
+            </div>
+            {/* The pair the SELECTED swatch is in, demoted to detail but not removed: it is the one
+                reading that changes while you drag, so it stays the card's live half. */}
             <div style={sx('display:flex;align-items:center;gap:14px;padding:11px 13px 13px')}>
               <span aria-hidden="true" style={r.a11y.sampleStyle}>{r.a11y.sampleText}</span>
               <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
-                {/* data-drawer-split: the two pieces of real reading text on this surface are the
-                    swatch's identity above and this pairing — statements about the palette rather
-                    than labels on a control — so they are what takes the masked line reveal. The
-                    ratio, the level badge and the coverage count beside them are DATA: they change
-                    under the hand while you drag, and animating a number that is about to be
-                    replaced draws the eye to the wrong half of the card. */}
-                <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
                 <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
               </span>
               <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
                 <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
               </span>
-            </div>
-            <div style={sx('padding:0 13px 12px')}>
-              <span style={r.a11y.countStyle}>{r.a11y.count}</span>
             </div>
             {/* A DRILL-IN, not an accordion. Expanding here pushed Palette structure down the
                 page every time anyone glanced at the detail — the one layout shift an editor
@@ -2504,9 +2522,15 @@ function RefineDialog({ vals }) {
           )}
         </div>
 
+        {/* end of the scrollport — the footer below is a sibling, outside it */}
+        <div style={sx('height:22px;flex:none')}></div>
+        </div>
+
         {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
-               — it discards every refinement, which Undo would take many presses to equal. */}
-        <div style={sx('position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);margin-top:13px;border-top:1px solid transparent;background:var(--surface-raised)')}>
+               — it discards every refinement, which Undo would take many presses to equal.
+               PERSISTENT. It was the last row of the scrolling content, so the two controls that
+               undo a mistake left the screen precisely as you made more of them. */}
+        <div data-refine-foot="1" style={sx('position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);border-top:1px solid transparent;background:var(--surface-raised)')}>
           <OvRule />
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
             Undo<span aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>{r.undoKeys}</span>

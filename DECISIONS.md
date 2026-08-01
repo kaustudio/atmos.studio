@@ -6,6 +6,67 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-01 — Refine is a fixed shell with one scrollport, and it leads with the palette's health
+
+**Context:** the 01 August *Refine Swatch Modal* audit. It was written from a screenshot with no
+build inspected, and says so — which is why the triage below matters as much as the work.
+
+**The P0 was real, in a narrower form than stated.** The audit's headline is "wrong scroll
+boundary… content is compressed to avoid page scroll". Half of that was already handled: the page
+behind never moves (Lenis is stopped, the surface carries `data-lenis-prevent`, and
+`overscroll-behavior:contain` blocks the chain), so SC-01 and SC-02 passed before any change. What
+was genuinely broken is that the **whole dialog was the scroller** — `max-height` plus
+`overflow-y:auto` — so the header and footer were inside the thing that scrolled. Measured: the
+header left the top of the dialog by 111px on the way down, which takes Done, Undo and Reset out of
+reach exactly when a long edit needs them.
+
+Three grid rows now — `auto / minmax(0,1fr) / auto` — with the body as the only scrollport.
+`min-height:0` is what makes that true: a `minmax(0,1fr)` row still refuses to shrink below its
+content without it, and the body would push the footer off the shell instead of scrolling.
+
+**The height is stated, not capped.** A `max-height` dialog is as tall as its content, so the same
+surface was a different size for a 3-swatch palette than for a 6-swatch one, and whether it scrolled
+at all depended on the palette. A fixed `min(860px, 100dvh - 48px)` means the instrument is the same
+instrument every time. `max-width:100%` rather than `calc(100vw - 48px)`: the wrapper is `inset:0`
+with 24px of padding, so 100% is already viewport−48 and cannot include the scrollbar the way `100vw`
+does.
+
+**Scroll affordance is a rule, not a shadow.** Content passes under a persistent header and footer,
+so a heading half-cut by the header edge is a clipping bug until something draws the boundary. One
+hairline per side, shown only while there is genuinely something hidden on that side — a rule that is
+always on is a border, and a border says the region is closed rather than that it continues. Driven
+by data attributes off a scroll measurement, so it never re-renders the dialog mid-scroll.
+
+**Contrast leads with the palette, not with the pair in hand.** The card opened with the selected
+pairing — a large ratio and an AAA badge — and put coverage in a muted line below, so a palette where
+six of eight combinations fail presented itself at a glance as a success. Summary first, with the
+failure count as a *control* (`Review 6 failures`) rather than a statistic, and the pairing demoted to
+the live detail it is. The drill-in orders failures first and, within them, by ratio **descending**:
+the pair closest to 4.5 is the one a small nudge fixes, so the cheapest win is at the top rather than
+buried under the hopeless cases.
+
+**What was declined, and why.** The audit collides with decisions already recorded here, and the
+collisions are all downstream of it not having run the build:
+
+- **Transactional Apply/Cancel.** Declined. Every edit already persists as it is made; "Done" is the
+  2026-07-28 decision and the 31 July review restated it — *if changes are applied immediately, the
+  top-right action is Done; do not imply an uncommitted draft*. There is no server, so there is no
+  save to fail or roll back, and a Cancel would promise a rollback nothing implements.
+- **Sentence case for section labels.** Declined. Uppercase micro-labels are this app's documented
+  chrome vocabulary; the change is a site-wide restyle, not a Refine fix.
+- **Four button tiers.** Declined. The quiet tier was removed on 2026-07-27 for failing 3:1 on its
+  control edge. Re-introducing a tier below secondary re-opens a resolved contrast problem.
+- **44×44px targets.** Declined as a blanket rule. The app's floor is 24px, which is WCAG 2.5.8 at
+  AA; 44px is the AAA figure.
+- **"No animation… keep it under 200ms."** Declined. The overlay band was set deliberately at
+  0.8s/1.0s the same week (see above), by direction.
+
+Also already true before the audit and reported as findings: the label-and-value-on-one-line slider
+layout, the AlertDialog with stated consequences before removal, focus trap and focus return, and
+slider keyboard operation.
+
+---
+
 ## 2026-07-31 — Two motion bands: arrival, and instruments
 
 **Context:** the July 2026 interface review of Refine, Colour Harmonies and Library Filtering, its

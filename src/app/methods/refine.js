@@ -147,6 +147,22 @@ export const refineMethods = {
       });
     });
   },
+  // WHERE THE SCROLLPORT ENDS. Content passes under a persistent header and footer now, so the
+  // shell has to say so: a heading half-cut by the header edge is a clipping bug until something
+  // draws the boundary. One hairline per side, and only while there is genuinely something hidden
+  // on that side — a rule that is always on is a border, and a border says the region is closed
+  // rather than that it continues.
+  // Attributes rather than inline styles, so the two rules live in the stylesheet with the rest of
+  // the shell (see [data-refine-shell] in global.css) and this stays a measurement.
+  _refineScrollEdges() {
+    const body = document.querySelector('[data-refine-body]');
+    const shell = document.querySelector('[data-refine-shell]');
+    if (!body || !shell) return;
+    const top = body.scrollTop > 1;
+    const bottom = body.scrollTop + body.clientHeight < body.scrollHeight - 1;
+    shell.setAttribute('data-over-top', top ? '1' : '0');
+    shell.setAttribute('data-over-bottom', bottom ? '1' : '0');
+  },
   _refineSliderValues() {
     const root = document.querySelector('[data-refine-dialog]'); if (!root) return null;
     const out = {};
@@ -204,7 +220,7 @@ export const refineMethods = {
         const el = d.querySelector('[data-refine-swatch][aria-pressed="true"]') || d.querySelector('button');
         if (el) try { el.focus(); } catch (e) { }
       }
-      requestAnimationFrame(() => this._refineIn());
+      requestAnimationFrame(() => { this._refineIn(); this._refineScrollEdges(); });
     });
   },
   closeRefine() {
