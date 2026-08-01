@@ -187,15 +187,22 @@ export const overlayMethods = {
     const cells = cellSel ? [...root.querySelectorAll(cellSel)] : [];
     if (backdrop) tl.from(backdrop, { opacity: 0, duration: D, ease: E }, 0);
     tl.from(root, { xPercent: 100, duration: D, ease: E }, 0);
-    // Sections MOVE, they do not fade: they are boxes holding the content, and what arrives is the
-    // content. A container fading is the one thing that makes a whole panel look like it is being
-    // developed rather than assembled.
-    if (secs.length) tl.from(secs, { y: 14, duration: D * 0.8, ease: E, stagger: this.DUR.overlayStep * 2, clearProps: 'transform' }, D * 0.28);
-    // Cells MASK. This is the app's own band wipe — the same clip-path rise the result stage and the
-    // detail overlay use — applied one row at a time. It replaced an opacity stagger, which at this
-    // tempo read as the panel resolving out of nothing; a wipe reads as each row being uncovered,
-    // which is a statement about order rather than about exposure.
-    if (cells.length) this._maskIn(tl, cells, D * 0.45, D * 0.7, this.DUR.overlayStep);
+    // SECTIONS MASK AND MOVE. They translated only for a revision, on the reasoning that a section
+    // is a box and what arrives is the content in it — which was true of the ROWS and false of
+    // everything else the box holds. A group's eyebrow, the search field, the sort toggle and every
+    // drawer header sat at full opacity from the first frame, riding in on the panel while the rows
+    // beneath them wiped: half the panel arriving, half of it already there. Masking the section
+    // covers its own furniture as well as its children.
+    if (secs.length) {
+      tl.from(secs, { y: 14, duration: D * 0.8, ease: E, stagger: this.DUR.overlayStep * 2, clearProps: 'transform' }, D * 0.28);
+      this._maskIn(tl, secs, D * 0.28, D * 0.7, this.DUR.overlayStep * 2);
+    }
+    // Cells MASK too, a beat behind their section rather than a third of the panel later. Two clips
+    // over one element intersect, so a cell is uncovered by whichever is currently the more
+    // restrictive; running them close together means the section's wipe hands off to the row's
+    // instead of holding it back, and what you see is one sweep passing across the rows rather than
+    // two reveals stacked.
+    if (cells.length) this._maskIn(tl, cells, D * 0.32, D * 0.7, this.DUR.overlayStep);
     this._drawRules(tl, root, D * 0.4);
     return tl;
   },

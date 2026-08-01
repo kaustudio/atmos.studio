@@ -69,9 +69,18 @@ same mechanic as the result stage's bands, the detail overlay and Refine's swatc
 overlay's contents arrive in the language its palettes arrive in. Opacity is *exposure*: a panel
 whose parts fade up looks like it is being developed rather than assembled, and at this tempo that
 was plainly what it looked like. A mask says the content was always there and is being uncovered,
-which is what a staggered sequence is trying to say in the first place. Sections still translate,
-because a section is the box and what arrives is what is in it. Measured across a full arrival: every
-element holds opacity 1 throughout.
+which is what a staggered sequence is trying to say in the first place. Measured across a full
+arrival: every element holds opacity 1 throughout.
+
+**Sections mask too, and the reasoning that said otherwise was half right.** They translated only for
+a revision, on the argument that a section is a box and what arrives is the content in it. True of
+the rows; false of everything else the box holds. A group's eyebrow, the search field, the sort
+toggle and every drawer header sat at full strength from the first frame, riding in on the panel
+while the rows beneath them wiped — half the panel arriving, half of it already there. Two clips over
+one element intersect rather than compound, so the section's wipe hands off to the row's if they run
+close together; at a third of the panel apart it visibly held the rows back. Refine's header was the
+last piece outside the arrival altogether. Verified by walking every text-bearing leaf in each
+overlay at 90 / 240 / 420 ms and asserting that none of them is unclipped: all three return empty.
 
 **The exit is written out, and two cleverer versions were tried first.** `DUR.overlayOut = 1.2s`, on
 the same `EASE.overlay`, stated on the same properties the entrance moved.

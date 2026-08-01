@@ -2273,7 +2273,11 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
+        {/* data-refine-head: this header was outside the arrival entirely — the one part of the
+            dialog that was simply there, at full strength, while the palette beneath it was still
+            wiping up. Its own hook rather than data-refine-sec, because it belongs at the TOP of
+            the reading order and those sections are the bottom of it. */}
+        <header data-refine-head="1" style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits

@@ -53,6 +53,7 @@ export const refineMethods = {
     const D = this.DUR.overlay, E = this.EASE.overlay, step = this.DUR.overlayStep;
     const panel = root, back = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]');
     const bands = [...root.querySelectorAll('[data-refine-swatch]')];
+    const head = root.querySelector('[data-refine-head]');
     const title = root.querySelector('[data-refine-title]');
     const axes = [...root.querySelectorAll('[data-refine-axis]')];
     const preview = root.querySelector('[data-refine-preview]');
@@ -66,9 +67,11 @@ export const refineMethods = {
     const tl = g.timeline();
     if (back) tl.from(back, { opacity: 0, duration: D, ease: 'none' }, 0);
     tl.from(panel, { opacity: 0, y: 10, duration: D, ease: E, clearProps: 'transform' }, 0);
+    // The header first — it names what you opened — then colour, which is the surface's own lead.
+    this._maskIn(tl, head ? [head] : [], D * 0.12, D * 0.7, 0);
     if (bands.length) {
       tl.set(bands, { clipPath: 'inset(100% 0 0 0)' }, 0)
-        .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: D * 0.85, stagger: step, ease: E, clearProps: 'clipPath' }, D * 0.1);
+        .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: D * 0.85, stagger: step, ease: E, clearProps: 'clipPath' }, D * 0.18);
     }
     // EVERYTHING BELOW MASKS. The band wipe above is the same mechanic, so the whole surface arrives
     // in one language: each part is uncovered from its bottom edge in the order it is read. These
