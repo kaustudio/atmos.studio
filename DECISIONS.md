@@ -82,7 +82,7 @@ close together; at a third of the panel apart it visibly held the rows back. Ref
 last piece outside the arrival altogether. Verified by walking every text-bearing leaf in each
 overlay at 90 / 240 / 420 ms and asserting that none of them is unclipped: all three return empty.
 
-**The exit is written out, and two cleverer versions were tried first.** `DUR.overlayOut = 1.2s`, on
+**The exit is written out, and two cleverer versions were tried first.** `DUR.overlayOut = 1.0s`, on
 the same `EASE.overlay`, stated on the same properties the entrance moved.
 
 - `reverse()` plays the entrance backwards at native rate. The length then follows the content
@@ -93,8 +93,8 @@ the same `EASE.overlay`, stated on the same properties the entrance moved.
   and each tween then applies its own on top — two eases composed. Measured: the panel sat still for
   160 ms, crossed 300 px in the next 200, then crept the last 16 px over half a second. Nothing in
   this motion system moves like that, because nothing in it is two eases deep.
-- Writing the exit out gives the curve directly: 44% of the travel by 106 ms, 94% by 452 ms, settled
-  by 950 ms. Away quickly, landing slowly, legible as the arrival's counterpart.
+- Writing the exit out gives the curve directly: 48% of the travel by 92 ms, 95% by 400 ms, settled
+  by 850 ms. Away quickly, landing slowly, legible as the arrival's counterpart.
 
 The entrance timeline is killed rather than left to finish — it owns the same properties, and two
 tweens arguing over one transform is how a panel jitters on the way out. Its `clearProps` never
@@ -104,7 +104,7 @@ running is harmless: the drawer unmounts, so the node carrying the stale inline 
 and has to feel prompt. A dismissal has already been decided — nothing is waiting on it — so it can
 afford to be quiet.
 
-**Measured after:** all four overlays reachable from the result stage close in 1213–1228 ms, a 15 ms
+**Measured after:** all four overlays reachable from the result stage close in 1023–1036 ms, a 13 ms
 spread, and open on one schedule whose only variation is the stagger tail of what each one holds
 (≈1.16 s end to end on the fullest panel). Under reduced motion the whole thing collapses to a 0.12 s
 fade: no masks, no rule draws — plain hairlines, full width, no transform, in and out in under 40 ms.

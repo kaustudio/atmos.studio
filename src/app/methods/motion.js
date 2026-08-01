@@ -49,9 +49,10 @@ export const motionMethods = {
     // than being a fixed number, so the sequence keeps its proportions if the duration moves again.
     // `overlayOut` is LONGER than the entrance, which is the opposite of the usual rule. An arrival
     // is answering a press and has to feel prompt; a dismissal has already been decided, so nothing
-    // is waiting on it and it can afford to be quiet. 1.2s on the expo-out playhead means the panel
-    // is most of the way gone early and the last of it settles out slowly rather than snapping.
-    this.DUR = { micro: 0.12, state: 0.24, overlay: 0.8, overlayOut: 1.2, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
+    // is waiting on it and it can afford to be quiet. On this curve the panel is most of the way
+    // gone early and the last of it settles out slowly rather than snapping — which is what the
+    // extra length over the entrance is spent on, and why 1.0s reads as unhurried rather than slow.
+    this.DUR = { micro: 0.12, state: 0.24, overlay: 0.8, overlayOut: 1, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
   },
   // generic, interruptible micro-interaction handlers (transform + overlay-opacity only)
   mEnter(e) {
