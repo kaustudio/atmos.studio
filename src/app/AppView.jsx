@@ -2494,11 +2494,18 @@ function RefineDialog({ vals }) {
             <button type="button" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-haspopup="true" aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-inline-start:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
             {r.roleChooserOpen && (
               <div data-refine-roles="1" role="group" aria-label="Assign roles to this swatch" style={sx('position:absolute;z-index:7;inset-inline-end:0;top:calc(100% + 6px);width:min(320px,100%);max-height:232px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18)')}>
+                {/* No role="switch". A switch promises on/off, and this is a three-state
+                    assignment — see roleItems for why the two-state presentation was reporting the
+                    opposite of what the press did. Each row is a plain button whose name states the
+                    act, with where the role actually sits printed beside it. */}
                 {r.roleItems.map((it) => (
-                  <button key={it.id} type="button" role="switch" aria-checked={it.pressed} data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-md);cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
+                  <button key={it.id} type="button" data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-md);cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
                     <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
                     <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);flex:none')}>{it.label}</span>
-                    {it.consequence && <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);text-wrap:pretty')}>{it.consequence}</span>}
+                    {/* The state, then the act. Both are needed and they are different facts: where
+                        the role IS, and what pressing will do to it. */}
+                    <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{it.state}</span>
+                    <span aria-hidden="true" style={sx('flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line);padding:1px 5px')}>{it.action}</span>
                   </button>
                 ))}
               </div>

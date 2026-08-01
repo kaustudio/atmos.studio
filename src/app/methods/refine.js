@@ -444,10 +444,19 @@ export const refineMethods = {
     // The spoken name, not the machine id: `primary` is a key in an export file, "Primary" is what
     // the row says and what a screen reader should hear.
     const label = ROLE_LABEL[role];
+    // THREE ACTS, THREE SENTENCES. This said "assigned" for two different things — taking a role
+    // off another swatch, and making an inferred one explicit — and the second reads as a lie,
+    // because nothing visibly moved. Whether the role ALREADY landed here before the change is what
+    // tells them apart, so it is measured before the write rather than guessed after it.
+    let wasHere = false;
+    try { wasHere = this.semanticRoles(p, p.roles).some((x) => x.role === role && x.index === i); } catch (e) { }
+    const where = 'swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase();
     this._applyRefine({ roles: Object.keys(roles).length ? roles : null }, {
-      announce: on
-        ? label + ' assigned to swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase() + '.'
-        : label + ' unassigned. It falls back to the derived default.',
+      announce: !on
+        ? label + ' released from swatch ' + (i + 1) + '. It falls back to the default.'
+        : wasHere
+          ? label + ' pinned to ' + where + '. Editing other swatches will not move it.'
+          : label + ' assigned to ' + where + '.',
     });
   },
   // L, C and H are absolute values, not deltas: the slider owns the number and the palette follows,

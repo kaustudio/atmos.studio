@@ -1244,18 +1244,46 @@ export const renderValsMethods = {
         // stop changing — it is a popover now and costs the layout nothing, so it arrives the way
         // every other popover on the surface does.
         toggleRoleChooser: () => this.toggleTip('refineRoleOpen', '[data-refine-roles]'),
+        // THESE ARE NOT SWITCHES, and presenting them as switches is what made the control lie.
+        //
+        // A switch promises on/off. The checked state was read from `resolved` — the user's sparse
+        // map merged OVER the heuristic — while the press mutated `p.roles`, the user's map alone.
+        // For a role the heuristic already lands on this swatch those two disagree: the row read
+        // checked and offered "Remove Background from this swatch", and pressing it announced
+        // "Background assigned to swatch 1". The opposite of what it said. Pressing again removed
+        // the assignment, whereupon the heuristic derived it straight back to the same swatch — so
+        // two presses produced no visible change and two contradictory announcements.
+        //
+        // The underlying model is not a toggle at all: a palette must always export six roles, so
+        // every role is ALWAYS somewhere. You cannot remove Background; you can only say where it
+        // goes, or stop saying and let the heuristic decide. That is three states, not two, and
+        // refineSetRole was already written for exactly them — assign / pin / release. Only the
+        // presentation was wrong, so nothing below changes behaviour; it stops misdescribing it.
+        //
+        //   elsewhere   ->  give it to this swatch (and it leaves wherever it is)
+        //   here, derived   ->  pin it, so editing other swatches cannot re-derive it away
+        //   here, assigned  ->  release it back to the heuristic
         roleItems: ROLE_IDS.map((id) => {
           const r = resolved.find((x) => x.role === id);
           const here = r.index === selIdx;
-          const moves = !here && typeof assigned[id] === 'number';
+          const mine = typeof assigned[id] === 'number';
+          const label = ROLE_LABEL[id];
           return {
-            id, label: ROLE_LABEL[id], here, pressed: here ? 'true' : 'false',
-            // The consequence, and only where there is one: a role the user has deliberately put
-            // somewhere else will move if it is taken. A derived role moving is not news.
-            consequence: moves ? ROLE_LABEL[id] + ' is currently assigned to swatch ' + (r.index + 1) + '.' : '',
-            aria: here ? 'Remove ' + ROLE_LABEL[id] + ' from this swatch'
-              : 'Give ' + ROLE_LABEL[id] + ' to swatch ' + (selIdx + 1) + (moves ? '. It is currently assigned to swatch ' + (r.index + 1) : ''),
-            onPick: () => { this.refineSetRole(id, selIdx); this.closeTip('refineRoleOpen', '[data-refine-roles]'); },
+            id, label, here, mine,
+            // WHERE THE ROLE ACTUALLY IS, in words, on every row — the fact the checkmark was
+            // trying and failing to carry. "Derived" and "Assigned" both mean it lands here; they
+            // differ in who decided, which is the only thing the press acts on.
+            state: here ? (mine ? 'Assigned' : 'Derived') : 'Swatch ' + (r.index + 1),
+            action: here ? (mine ? 'Release' : 'Pin') : 'Give',
+            aria: !here
+              ? 'Give ' + label + ' to swatch ' + (selIdx + 1) + '. It currently sits on swatch ' + (r.index + 1) + (mine ? ', where you put it' : ', by default')
+              : mine
+                ? 'Release ' + label + ' from swatch ' + (selIdx + 1) + ' and let it fall back to the default'
+                : 'Pin ' + label + ' to swatch ' + (selIdx + 1) + ', so editing other swatches cannot move it',
+            // The popover STAYS OPEN. A swatch can carry several roles — the trigger says "Assign
+            // roles" — and closing on every pick made a plural control single-select: two roles
+            // meant two open-and-close cycles.
+            onPick: () => this.refineSetRole(id, selIdx),
           };
         }),
         // POSITION — direct, reversible, and therefore never behind a menu. Two visible controls

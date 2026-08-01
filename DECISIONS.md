@@ -67,6 +67,28 @@ objection — that a label cuts the act off from its object — is answered by k
 attached: the impact line sits *with* the control, before the confirmation rather than inside it, so
 what removal costs is legible at the moment of deciding rather than after committing.
 
+**Assigning a role is three states, and presenting it as a switch made the control lie.** The row's
+checked state was read from `semanticRoles` — the user's sparse map merged *over* the heuristic —
+while the press mutated `p.roles`, the user's map alone. Where the heuristic already lands a role on
+the selected swatch those two disagree, and the row read checked, offered *"Remove Background from
+this swatch"*, and announced **"Background assigned to swatch 1"** when pressed. Pressing again
+removed the assignment, whereupon the heuristic derived it straight back to the same swatch: two
+presses, no visible change, two contradictory announcements.
+
+A palette must always export six roles, so every role is always *somewhere*. You cannot remove
+Background; you can only say where it goes, or stop saying and let the heuristic decide. That is
+three states — **Give / Pin / Release** — and `refineSetRole` was already written for exactly them.
+Nothing about the behaviour changed; the presentation stopped misdescribing it. `role="switch"` is
+gone, each row prints where the role actually sits (*Assigned*, *Derived*, *Swatch 4*) next to the
+act pressing it will perform, and the announcement distinguishes pinning an inferred role from
+taking one off another swatch — which the old copy called "assigned" in both cases, the second of
+which reads as a lie because nothing visibly moved.
+
+The popover also stopped closing on every pick. The trigger says *Assign roles*, a swatch can carry
+several, and closing after one made a plural control single-select. Escape now closes it with
+`closeTip` rather than `closeFold` — it stopped being an inline fold when it became an anchored
+popover, so it had been closing on a different mechanic than it opened on.
+
 **A disabled control has to say why.** Move left, Move right and Remove swatch were `disabled`, which
 takes them out of the tab order — so at exactly the moment the reason matters (the swatch is already
 first; the palette is at its three-colour floor) the reason cannot be reached. They are

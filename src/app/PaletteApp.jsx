@@ -290,7 +290,9 @@ export default class PaletteApp extends React.Component {
         if (typeof this.state.refineRemoveIdx === 'number') { e.preventDefault(); this.refineCancelRemove(); return; }
         if (this.state.refineResetArmed) { e.preventDefault(); this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }); return; }
         if (this.state.refineAllPairs) { e.preventDefault(); this.closePairings(); return; }
-        if (this.state.refineRoleOpen) { e.preventDefault(); this.closeFold('refineRoleOpen', '[data-refine-roles]'); return; }
+        // closeTip, not closeFold: this stopped being an inline height-fold when it became an
+        // anchored popover, so Escape was closing it on a different mechanic than it opened on.
+        if (this.state.refineRoleOpen) { e.preventDefault(); this.closeTip('refineRoleOpen', '[data-refine-roles]'); return; }
         if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
