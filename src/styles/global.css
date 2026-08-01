@@ -594,11 +594,19 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-colo
    borderless within it. Type is text, not number: a number input renders its decimal separator per
    OS locale, so the same palette showed 0.028 to one person and 0,028 to another, and the spinner
    arrows are useless at a step of 0.001. inputMode keeps the numeric keypad on touch. */
-[data-refine-num]{ display:inline-flex; align-items:baseline; gap:2px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 7px; }
-[data-refine-num] input{ width:44px; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
+/* ONE BOX, THREE AXES. The chip sized itself: a 44px input plus whatever the unit happened to
+   measure, which made Lightness 72px, Hue 66px and Chroma — whose unit is nothing at all, because a
+   chroma is a ratio — 60px. Three different right edges in a stack of three otherwise identical
+   rows, which is the one place stray edges are most visible.
+   Fixed inline-size fixes the box; the unit then needs its own fixed slot or the DIGITS go back to
+   sitting at three different places. So: the number right-aligns against a shared edge, and the
+   unit occupies a constant column after it whether it is '%', '°' or empty. Tabular figures were
+   already doing half this job — a stable column for the unit is the other half. */
+[data-refine-num]{ display:inline-flex; align-items:baseline; gap:3px; inline-size:92px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
+[data-refine-num] input{ flex:1; min-inline-size:0; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
 [data-refine-num] input:focus{ outline:none; }
 html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-[data-refine-num] span{ font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
+[data-refine-num] span{ flex:none; inline-size:13px; font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
 
 /* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
    frames and shifts no layout — it is positioned and sized by script, then inflated here by its

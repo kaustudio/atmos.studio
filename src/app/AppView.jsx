@@ -2361,7 +2361,12 @@ function RefineDialog({ vals }) {
                       see the numeric contract in renderVals. */}
                   <span data-refine-num="1">
                     <input type="text" inputMode="decimal" value={sl.display} onChange={sl.onNumber} onBlur={sl.onNumberCommit} onKeyDown={sl.onNumberKey} role="spinbutton" aria-valuemin={sl.numMin} aria-valuemax={sl.numMax} aria-valuenow={sl.numNow} aria-valuetext={sl.valueText} aria-label={sl.label + ' of the selected swatch, exact value' + sl.rangeHint} />
-                    {sl.unit && <span aria-hidden="true">{sl.unit}</span>}
+                    {/* ALWAYS RENDERED, even for chroma, whose unit is nothing — a chroma is a
+                        ratio. It was conditional, so chroma had no element at all and the fixed
+                        unit slot that aligns the other two simply did not exist on that row: the
+                        box matched but the digits still sat 13px off the shared edge. An empty
+                        slot is what keeps three rows in one column. */}
+                    <span aria-hidden="true">{sl.unit}</span>
                   </span>
                 </span>
                 <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} onPointerUp={sl.onCommit} onKeyUp={sl.onCommit} onBlur={sl.onCommit} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
@@ -2371,14 +2376,20 @@ function RefineDialog({ vals }) {
 
           {/* THE CONTEXT. Decorative in the accessibility tree — a picture of a mapping, and the
               mapping itself is the legend under it and the sentence on the group. */}
-          <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:8px;min-width:0')}>
+          {/* 16px between the three parts, 8px inside each. The column ran at a flat 8px, so the
+              gap between a LABEL, a SPECIMEN and a LEGEND — three different kinds of statement —
+              was the same as the gap between a heading and its body copy inside the specimen. At
+              that point the grouping is noise and everything reads as one undifferentiated block,
+              which is exactly what "the messages blend together" is describing. The rule is that
+              the gap between groups is at least twice the gap within one. */}
+          <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:16px;min-width:0')}>
             <span style={sx(eyebrow)}>In use</span>
             <div aria-hidden="true" style={r.preview.pageStyle}>
               <div style={r.preview.accentStyle}></div>
               <div style={r.preview.cardStyle}>
                 <span style={r.preview.headingStyle}>Section heading</span>
                 <span style={r.preview.bodyStyle}>Body text set on the raised surface, at the size the contrast verdict below reports.</span>
-                <span style={sx('display:flex;align-items:center;gap:7px;flex-wrap:wrap')}>
+                <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
                   <span style={r.preview.btnStyle}>Primary</span>
                   <span style={r.preview.altStyle}>Secondary</span>
                 </span>
@@ -2386,11 +2397,20 @@ function RefineDialog({ vals }) {
             </div>
             {/* The legend does the work the specimen cannot: it names which colour is which role,
                 and marks the ones the swatch in hand is currently answering — so "where is the
-                colour I am dragging?" is answered without the preview changing shape per selection. */}
-            <div aria-hidden="true" style={sx('display:flex;flex-wrap:wrap;gap:4px 10px')}>
+                colour I am dragging?" is answered without the preview changing shape per selection.
+                THREE COLUMNS, TWO ROWS — not a wrapping ribbon. Wrapping put the break wherever
+                the label lengths happened to land it, so the rows were ragged and the count per
+                row changed with the palette. A fixed 3×2 grid is deterministic, gives the six
+                roles three shared leading edges to align on, and spends the column's width rather
+                than its height — which is what leaves the specimen above the room to grow.
+                The cells are equal-width rather than content-sized so those edges hold whatever
+                the labels are; the longest of them (Background) sets the floor. */}
+            <div aria-hidden="true" style={sx('display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px')}>
               {r.preview.legend.map((l) => (
-                <span key={l.key} style={sx('display:inline-flex;align-items:center;gap:5px;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + (l.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';font-weight:' + (l.here ? '500' : '400'))}>
-                  <span style={l.chipStyle}></span>{l.label}{l.here ? ' ·' : ''}
+                <span key={l.key} style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + (l.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';font-weight:' + (l.here ? '500' : '400'))}>
+                  <span style={l.chipStyle}></span>
+                  <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{l.label}</span>
+                  {l.here ? <span aria-hidden="true" style={sx('flex:none')}>·</span> : null}
                 </span>
               ))}
             </div>
