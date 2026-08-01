@@ -317,12 +317,18 @@ export const overlayMethods = {
   // plain text node when it lands, so by the time anyone can close the drawer the DOM is back to
   // what reverse() expects to find. Started at 0.3 of the panel's travel, so the words are already
   // rising as the panel settles rather than after it.
-  _revealDrawerText(sel) {
+  // `opts.at` and `opts.duration` are fractions of the band, so a surface with a shorter arrival can
+  // pull its text in with it. Refine needs that: its sequence now ends around 0.9s, and text still
+  // rising at 1.12s is a tail hanging off a finished panel rather than part of one arrival.
+  _revealDrawerText(sel, opts) {
     if (this._reduce || !window.gsap) return;
     const root = document.querySelector(sel); if (!root) return;
+    const o = opts || {};
     const D = this.DUR.overlay;
+    const at = D * (typeof o.at === 'number' ? o.at : 0.3);
+    const dur = D * (typeof o.duration === 'number' ? o.duration : 1);
     root.querySelectorAll('[data-drawer-split]').forEach((el, i) => {
-      try { this._maskLineReveal(el, D * 0.3 + i * this.DUR.overlayStep * 2, { duration: D, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
+      try { this._maskLineReveal(el, at + i * this.DUR.overlayStep * 2, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
     });
   },
   // ONE reversible timeline — play forward on open, reverse() on close (symmetric by construction).

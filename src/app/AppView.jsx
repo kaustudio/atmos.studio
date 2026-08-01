@@ -2273,11 +2273,9 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        {/* data-refine-head: this header was outside the arrival entirely — the one part of the
-            dialog that was simply there, at full strength, while the palette beneath it was still
-            wiping up. Its own hook rather than data-refine-sec, because it belongs at the TOP of
-            the reading order and those sections are the bottom of it. */}
-        <header data-refine-head="1" style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
+        {/* No motion hook. The header rides the panel's own fade — see _refineIn on why a dialog
+            that fades up as a whole does not need its parts revealed a second time. */}
+        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits
@@ -2308,7 +2306,7 @@ function RefineDialog({ vals }) {
                made to it and reads as metadata under it; it is changed from Palette structure
                below, not from here. The source sits right-aligned as context and is deliberately
                quieter than the editing controls: no border, because it is not one of them. */}
-        <div data-refine-title="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px var(--page-gutter) 0')}>
+        <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px var(--page-gutter) 0')}>
           <div style={sx('min-width:0')}>
             {/* data-drawer-split: the identity line takes the same masked line reveal the drawers'
                 titles take, so the one piece of display type on this surface arrives the way display
@@ -2387,7 +2385,7 @@ function RefineDialog({ vals }) {
                selected swatch is in, so the card is visibly about the colour in hand rather than
                the palette's best result sitting still through an edit. Full matrix on demand. */}
         {r.a11y && (
-          <div data-refine-sec="1" role="group" aria-label={r.a11y.aria} style={sx('margin:14px 22px 0;border:1px solid var(--line)')}>
+          <div role="group" aria-label={r.a11y.aria} style={sx('margin:14px 22px 0;border:1px solid var(--line)')}>
             {/* THE SELECTED PAIR, THEN COVERAGE — two different statements, and they used to share
                 one line: an eyebrow on the left and a fraction on the right, reading as a heading
                 with a score beside it. The pair is what the edit in hand is changing; the coverage
@@ -2400,7 +2398,13 @@ function RefineDialog({ vals }) {
             <div style={sx('display:flex;align-items:center;gap:14px;padding:11px 13px 13px')}>
               <span aria-hidden="true" style={r.a11y.sampleStyle}>{r.a11y.sampleText}</span>
               <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
+                {/* data-drawer-split: the two pieces of real reading text on this surface are the
+                    swatch's identity above and this pairing — statements about the palette rather
+                    than labels on a control — so they are what takes the masked line reveal. The
+                    ratio, the level badge and the coverage count beside them are DATA: they change
+                    under the hand while you drag, and animating a number that is about to be
+                    replaced draws the eye to the wrong half of the card. */}
+                <span data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
                 <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
               </span>
               <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
@@ -2429,7 +2433,7 @@ function RefineDialog({ vals }) {
                and removal is separated by a divider and by priority rather than by a heading of
                its own. A "Destructive action" label added taxonomy and cut the act off from the
                object it acts on. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+        <div style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
           <OvRule />
           <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Palette structure</span>
 
@@ -2502,9 +2506,7 @@ function RefineDialog({ vals }) {
 
         {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
                — it discards every refinement, which Undo would take many presses to equal. */}
-        {/* data-refine-sec: the footer was outside the arrival entirely, so Undo, Reset and the rule
-            above them were the one part of the dialog that appeared rather than arrived. */}
-        <div data-refine-sec="1" style={sx('position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);margin-top:13px;border-top:1px solid transparent;background:var(--surface-raised)')}>
+        <div style={sx('position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);margin-top:13px;border-top:1px solid transparent;background:var(--surface-raised)')}>
           <OvRule />
           <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
             Undo<span aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>{r.undoKeys}</span>

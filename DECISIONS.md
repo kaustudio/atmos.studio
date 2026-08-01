@@ -72,6 +72,28 @@ was plainly what it looked like. A mask says the content was always there and is
 which is what a staggered sequence is trying to say in the first place. Measured across a full
 arrival: every element holds opacity 1 throughout.
 
+**A dialog is not a drawer, and Refine is choreographed less than the other four because of it.** A
+drawer SLIDES: its contents are legible for the whole of that travel, so anything that does not
+reveal itself is visibly being carried in — which is why the drawers mask every section and every
+row. Refine FADES UP from nothing, so everything inside it is already arriving, because the thing
+containing it is. Masking each part on top of that is the same reveal performed twice, and it read
+as one: a surface assembling itself out of parts rather than a surface opening.
+
+Three things earn their own moment there and nothing else does. The **palette** wipes band by band
+on the result stage's own clip-path rise — colour leads, and that is the thread tying Refine to the
+screen it was opened from. The **text** masks, on the site-wide line reveal, because a mask is a
+statement that something is being uncovered and that is true of a sentence. The **controls** — three
+axes and the specimen beside them — fade: masking a slider wipes across its own track and thumb,
+which reads as a rendering artefact, and they are the part a returning user is looking *for*, so they
+get the plainest arrival that is still an arrival. Done, the contrast card, Palette structure, the
+footer and the group rules have no motion of their own and need none.
+
+Two things the numbers caught. At `overlayStep × 2` the specimen landed a fifth of a second behind
+the third slider, which made it read as a *result* of the axes rather than the other half of the same
+control; at `overlayStep` all four are in hand within 120 ms. And the shared text reveal, tuned for
+drawers that run to ~1.16 s, left words still rising at 1.12 s over a dialog that had settled at
+0.9 s — `_revealDrawerText` takes a schedule now so the tail belongs to its own surface.
+
 **Sections mask too, and the reasoning that said otherwise was half right.** They translated only for
 a revision, on the argument that a section is a box and what arrives is the content in it. True of
 the rows; false of everything else the box holds. A group's eyebrow, the search field, the sort

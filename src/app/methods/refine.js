@@ -32,32 +32,39 @@ function reswatch(s, hexStr) {
 
 export const refineMethods = {
   // ---- motion ----------------------------------------------------------------------------------
-  // THE SURFACE ARRIVES IN THE ORDER IT IS READ, on the shared overlay band and curve.
+  // A DIALOG IS NOT A DRAWER, and that is the whole reason this surface is choreographed less than
+  // the other four.
   //
-  // This is the one overlay with a real reading order — palette, then the swatch in hand, then the
-  // axes that change it, then what the change does — so it is the one where a sequence is worth
-  // more than a fade. It briefly lost that to a flat 180ms settle and got it back at 0.4s, which is
-  // the length at which the panel is already present (expo-out: nearly all the travel is in the
-  // first fifth) while its contents still resolve in order.
+  // A drawer SLIDES. Its contents are legible for the whole of that travel, so anything that does
+  // not reveal itself is visibly just sitting there being carried in — which is why the drawers
+  // mask every section and every row. This dialog FADES UP from nothing. Everything inside it is
+  // already arriving, because the thing containing it is arriving. Masking each part on top of that
+  // is the same reveal performed twice, and it read exactly like that: a surface assembling itself
+  // out of parts rather than one that opened.
   //
-  // SEAMLESS means overlapped, not queued. Every stage starts while the one before it is still
-  // moving — the bands begin at 0.1 of the panel's travel, the identity at 0.3, the axes at 0.42,
-  // the preview and the contrast card behind them — so there is no frame in which exactly one thing
-  // is animating and no seam between the stages. Total tail is a shade over the panel's own 0.4s.
+  // So three things earn their own moment here and nothing else does:
   //
-  // COLOUR LEADS. The band wipe is the result stage's own clip-path rise, which is what ties this
-  // surface to the palette it came from rather than making it a generic modal.
+  //   THE PALETTE   wipes, band by band, on the result stage's own clip-path rise. Colour leads,
+  //                 and this is the thread tying Refine to the screen it was opened from rather
+  //                 than leaving it a generic modal. Unchanged.
+  //   THE TEXT      masks, on the line reveal used across the whole site. A mask is a statement
+  //                 that something is being UNCOVERED, which is true of a sentence and of colour.
+  //   THE CONTROLS  fade. The three axes and the specimen beside them are instruments, not
+  //                 content: masking a slider wipes across its own track and thumb, which reads as
+  //                 a rendering artefact rather than as a reveal. They are also the one part of
+  //                 this surface a returning user is looking FOR, so they get the plainest arrival
+  //                 that is still an arrival.
+  //
+  // Everything else — Done, the contrast card, Palette structure, the footer and the group rules —
+  // has no motion of its own and needs none. It comes up with the panel.
   _refineIn() {
     const g = window.gsap, root = document.querySelector('[data-refine-dialog]');
     if (!g || !root) return;
     const D = this.DUR.overlay, E = this.EASE.overlay, step = this.DUR.overlayStep;
     const panel = root, back = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]');
     const bands = [...root.querySelectorAll('[data-refine-swatch]')];
-    const head = root.querySelector('[data-refine-head]');
-    const title = root.querySelector('[data-refine-title]');
-    const axes = [...root.querySelectorAll('[data-refine-axis]')];
-    const preview = root.querySelector('[data-refine-preview]');
-    const evidence = [...root.querySelectorAll('[data-refine-sec]')];
+    // DOM order, so the three axes lead the specimen without either being named here.
+    const controls = [...root.querySelectorAll('[data-refine-axis],[data-refine-preview]')];
     if (this._reduce) {
       if (back) g.from(back, { opacity: 0, duration: .12, ease: 'none' });
       g.from(panel, { opacity: 0, duration: .12, ease: 'none' });
@@ -67,34 +74,23 @@ export const refineMethods = {
     const tl = g.timeline();
     if (back) tl.from(back, { opacity: 0, duration: D, ease: 'none' }, 0);
     tl.from(panel, { opacity: 0, y: 10, duration: D, ease: E, clearProps: 'transform' }, 0);
-    // The header first — it names what you opened — then colour, which is the surface's own lead.
-    this._maskIn(tl, head ? [head] : [], D * 0.12, D * 0.7, 0);
     if (bands.length) {
       tl.set(bands, { clipPath: 'inset(100% 0 0 0)' }, 0)
         .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: D * 0.85, stagger: step, ease: E, clearProps: 'clipPath' }, D * 0.18);
     }
-    // EVERYTHING BELOW MASKS. The band wipe above is the same mechanic, so the whole surface arrives
-    // in one language: each part is uncovered from its bottom edge in the order it is read. These
-    // were opacity fades, which at this tempo read as the dialog resolving out of nothing.
-    this._maskIn(tl, title ? [title] : [], D * 0.3, D * 0.7, 0);
-    this._maskIn(tl, axes, D * 0.42, D * 0.7, step * 2);
-    // The preview is uncovered WITH the axes rather than after them: it is the other half of the
-    // same control, and a specimen that arrives late reads as a result of the axes instead of a
-    // companion to them.
-    this._maskIn(tl, preview ? [preview] : [], D * 0.48, D * 0.7, 0);
-    // 2px of bleed: these sections carry the drawn group rules at -1px, outside their border box,
-    // and a flush mask would clip the rule away for the length of the wipe.
-    this._maskIn(tl, evidence, D * 0.58, D * 0.7, step * 2, 2);
-    // The group dividers draw left to right, on the same timeline so they reverse with everything
-    // else. Later than the drawers' 0.4 because Refine's own sections start later — the rule under
-    // Palette structure has to follow the section it is ruling off, not lead it.
-    this._drawRules(tl, root, D * 0.62);
+    // One tween, one stagger, no per-element offsets to keep in step with each other. It starts
+    // while the bands are still wiping, so the instrument settles as the colour finishes arriving.
+    // The step is the tight one: at twice this the specimen landed a fifth of a second behind the
+    // third slider, which made it read as a RESULT of the axes rather than the other half of the
+    // same control. Three sliders and a specimen, all in hand within 120ms of each other.
+    if (controls.length) tl.from(controls, { opacity: 0, duration: D * 0.6, ease: E, stagger: step, clearProps: 'opacity' }, D * 0.36);
     // The marker lands on the opening selection AFTER the bands have their real widths — measured,
     // never assumed, because flexGrow decides them.
     tl.call(() => this._refinePill(true), null, D * 0.95);
-    // The masked line reveal, on the same schedule the drawers use — one text mechanic across every
-    // overlay rather than a signature two of them happen to have.
-    this._revealDrawerText('[data-refine-dialog]');
+    // The masked line reveal — one text mechanic across every overlay — but pulled tighter than the
+    // drawers'. Their sequences run to ~1.16s and can carry text landing at 1.12s; this one ends
+    // around 0.9s, and the default schedule left the words still rising after the panel had settled.
+    this._revealDrawerText('[data-refine-dialog]', { at: 0.24, duration: 0.75 });
   },
   // The travelling selection marker. Same mechanic and the same curve as the project chips' pill
   // (misc.js _updateProjPill): the movement is the feedback, so there is no static "selected"
