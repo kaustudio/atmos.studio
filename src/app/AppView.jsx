@@ -2395,25 +2395,13 @@ function RefineDialog({ vals }) {
                 </span>
               </div>
             </div>
-            {/* The legend does the work the specimen cannot: it names which colour is which role,
-                and marks the ones the swatch in hand is currently answering — so "where is the
-                colour I am dragging?" is answered without the preview changing shape per selection.
-                THREE COLUMNS, TWO ROWS — not a wrapping ribbon. Wrapping put the break wherever
-                the label lengths happened to land it, so the rows were ragged and the count per
-                row changed with the palette. A fixed 3×2 grid is deterministic, gives the six
-                roles three shared leading edges to align on, and spends the column's width rather
-                than its height — which is what leaves the specimen above the room to grow.
-                The cells are equal-width rather than content-sized so those edges hold whatever
-                the labels are; the longest of them (Background) sets the floor. */}
-            <div aria-hidden="true" style={sx('display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px')}>
-              {r.preview.legend.map((l) => (
-                <span key={l.key} style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + (l.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';font-weight:' + (l.here ? '500' : '400'))}>
-                  <span style={l.chipStyle}></span>
-                  <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{l.label}</span>
-                  {l.here ? <span aria-hidden="true" style={sx('flex:none')}>·</span> : null}
-                </span>
-              ))}
-            </div>
+            {/* ONE LINE, WHERE SIX CHIPS USED TO BE. The complete role legend sat here and was the
+                second-largest object in the column, competing with the specimen it was captioning
+                — and most of it answered a question about the PALETTE (which colour holds which
+                role) rather than about this preview. That map is a usage question and lives in
+                Usage now. What stays is the only part that was doing work during a drag: where the
+                colour in your hand is, in the thing you are looking at. */}
+            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.preview.here}</span>
           </div>
         </div>
 
@@ -2465,15 +2453,31 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        {/* 5 · PALETTE STRUCTURE — semantics of the palette, not an administrative form. Role is
-               an ASSIGNMENT to the selected swatch; order is where that swatch sits; removal takes
-               it out of the composition. All three are palette-level, so they share one section —
-               and removal is separated by a divider and by priority rather than by a heading of
-               its own. A "Destructive action" label added taxonomy and cut the act off from the
-               object it acts on. */}
-        <div style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+        {/* 5 · USAGE — what this swatch is FOR. Three tasks used to share one "Palette structure"
+               section on the argument that all three are palette-level. True, and not the useful
+               grouping: assigning a role is a semantic decision, moving a swatch is a compositional
+               one, and removing it is destructive. Sharing a heading made them read as one form to
+               fill in, and put a destructive control two rows under a pair of nudge buttons.
+               This section answers "where is this colour used?" — the full role map that used to be
+               a legend crowding the live preview, plus the control that changes it. */}
+        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
           <OvRule />
-          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Palette structure</span>
+          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Usage</span>
+
+          {/* THE ROLE MAP, moved here from under the specimen. Six roles, three columns, two rows —
+              a fixed grid rather than a wrapping ribbon, so the break never lands wherever the
+              label lengths happen to put it. The roles the SELECTED swatch answers step up to full
+              ink and medium weight, which is the one thing the legend did that the preview's
+              caption still does: say where the colour in hand is at work. */}
+          <div style={sx('display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;padding-bottom:14px')}>
+            {r.preview.legend.map((l) => (
+              <span key={l.key} title={l.hex} style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + (l.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';font-weight:' + (l.here ? '500' : '400'))}>
+                <span aria-hidden="true" style={l.chipStyle}></span>
+                <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{l.label}</span>
+                {l.here ? <span aria-hidden="true" style={sx('flex:none')}>·</span> : null}
+              </span>
+            ))}
+          </div>
 
           {/* BOUNDED, and anchored to its trigger. The chooser opened INLINE and pushed Order,
               Remove and the whole footer down the dialog, so on a short viewport looking at the
@@ -2501,23 +2505,50 @@ function RefineDialog({ vals }) {
             )}
           </div>
 
-          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:14px')}>
+        </div>
+
+        {/* 6 · PALETTE ORDER — a compositional decision, not a semantic one, so it stops sharing a
+               heading with Usage. Small by design: it is management, and it sits below the editing
+               and the evidence for that reason. */}
+        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+          <OvRule />
+          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Palette order</span>
+          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
               {/* "Order" names an abstraction; this names the visible effect, which is where the
                   swatch sits in the strip above and in every surface that draws the palette. */}
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Position in palette</span>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
             </span>
-            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canLeft} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canLeft ? '1' : '.35'))}>Move left</button>
-            <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRight} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35'))}>Move right</button>
+            {/* aria-disabled, not disabled. A `disabled` button leaves the tab order, so at exactly
+                the moment the reason matters — the swatch is already first — the reason cannot be
+                reached. These stay focusable and announced; the handler no-ops and the accessible
+                name carries the reason (see leftAria/rightAria). */}
+            <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canLeft ? undefined : 'true'} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canLeft ? '1' : '.35') + (r.canLeft ? '' : ';cursor:default'))}>Move left</button>
+            <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canRight ? undefined : 'true'} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35') + (r.canRight ? '' : ';cursor:default'))}>Move right</button>
           </div>
+        </div>
 
-          {/* Removal: a divider and a low-priority action, no heading. The RULE is the separation —
-              a "Destructive action" label added taxonomy and cut the act off from its object. */}
+        {/* 7 · DANGER ZONE — and this supersedes the 2026-07-28 note that removal should carry no
+               heading of its own. That reasoning held while removal was the last row of a section
+               already named "Palette structure": a second label there added taxonomy for nothing.
+               It does not hold now. With Usage and Palette order both named above it, an unlabelled
+               trailing block reads as a continuation of Palette order — so the destructive act
+               would be the one thing on the surface without a stated scope. The original objection,
+               that a label cuts the act off from its object, is answered by keeping the consequence
+               attached: the impact line sits with the control, before the confirmation, not inside
+               it. */}
+        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+          <OvRule />
+          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Danger zone</span>
           {!r.removeArmed && (
-            <div style={sx('position:relative;margin-top:14px;padding-top:12px;border-top:1px solid transparent;display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
-              <OvRule />
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canRemove} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canRemove ? '1' : '.35'))}>Remove swatch…</button>
+            <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
+              {/* The usage impact BEFORE the press, not only inside the confirmation. The audit asks
+                  for how many roles depend on the swatch at the point of deciding; a consequence
+                  that only appears after you have committed to the act is a consequence you learn
+                  too late to use. */}
+              <span style={sx("flex:1;min-width:180px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.removeImpact}</span>
+              <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canRemove ? undefined : 'true'} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';flex:none;opacity:' + (r.canRemove ? '1' : '.35') + (r.canRemove ? '' : ';cursor:default'))}>Remove swatch…</button>
             </div>
           )}
           {/* AN ALERTDIALOG, not a fold under the row. Removing a swatch renumbers the palette,

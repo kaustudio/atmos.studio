@@ -989,6 +989,13 @@ export const renderValsMethods = {
         // swatch that carries two roles lights up in two places at once.
         hex: roleHex,
         marked: ctxRoles.filter(ctxMark).map((r) => ROLE_LABEL[r]),
+        // WHAT THE SWATCH IN HAND IS DOING HERE — one line, replacing the six-role legend that used
+        // to sit under the specimen. The full map is a USAGE question and belongs in the Usage
+        // section; the only part of it doing work during a drag is "where is the colour I am
+        // dragging?", and that is one sentence rather than six chips competing with the specimen.
+        here: selRoleIds.length
+          ? 'This swatch is the ' + selRoleIds.map((rr) => ROLE_LABEL[rr]).join(' and ') + ' here.'
+          : 'This swatch carries no role, so it does not appear here.',
         // Named in the accessible layer, because the specimen itself is decorative: a screen-reader
         // user gets the mapping as a sentence rather than a picture they cannot see.
         aria: 'Interface preview using the assigned roles: '
@@ -1255,10 +1262,19 @@ export const renderValsMethods = {
         // that disable at the ends, so whether a move is possible is legible without opening
         // anything. They were a Reorder dropdown for one revision, which added a click and hid the
         // answer to "can this move?" behind it.
+        // A DISABLED CONTROL HAS TO SAY WHY. These were `disabled`, which takes them out of the tab
+        // order — so the one moment the reason matters, the reason cannot be reached. aria-disabled
+        // keeps them focusable and announced; the handler no-ops, and the accessible name carries
+        // the reason instead of a destination that does not exist.
         canLeft: selIdx > 0, canRight: selIdx < N - 1,
-        leftAria: 'Move this swatch to position ' + selIdx + ' of ' + N,
-        rightAria: 'Move this swatch to position ' + (selIdx + 2) + ' of ' + N,
-        onLeft: () => this.refineMove(selIdx, -1), onRight: () => this.refineMove(selIdx, 1),
+        leftAria: selIdx > 0
+          ? 'Move this swatch to position ' + selIdx + ' of ' + N
+          : 'Move left is unavailable: this swatch is already first in the palette',
+        rightAria: selIdx < N - 1
+          ? 'Move this swatch to position ' + (selIdx + 2) + ' of ' + N
+          : 'Move right is unavailable: this swatch is already last in the palette',
+        onLeft: () => { if (selIdx > 0) this.refineMove(selIdx, -1); },
+        onRight: () => { if (selIdx < N - 1) this.refineMove(selIdx, 1); },
         posLabel: 'Position ' + (selIdx + 1) + ' of ' + N,
         // REMOVAL — quiet by POSITION, never by ink. The system has two action tiers and killed a
         // third for failing contrast on hover, so a destructive control cannot be made softer by
@@ -1266,7 +1282,21 @@ export const renderValsMethods = {
         // consequence stated under it rather than hidden in a tooltip.
         // REMOVAL: separated and low priority, no heading of its own.
         canRemove: N > 3,
-        removeAria: 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. You will be asked to confirm.',
+        // Same rule as the move controls: when it cannot be done, the control says why rather than
+        // going quiet. Three is the floor because six roles over two swatches is not a palette a
+        // scaffold can be built from (see refine.js).
+        removeAria: N > 3
+          ? 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. You will be asked to confirm.'
+          : 'Remove swatch is unavailable: a palette cannot go below three colours',
+        // The usage impact, stated before the act rather than inside the confirmation. The audit
+        // asks for how many roles depend on the swatch; this is that count, in words, at the point
+        // where someone is deciding whether to press.
+        removeImpact: (() => {
+          const rn = (roleAt[selIdx] || []).map((x) => ROLE_LABEL[x]);
+          if (N <= 3) return 'A palette keeps at least three colours, so this one cannot be removed.';
+          if (!rn.length) return 'This swatch carries no role. Removing it leaves ' + (N - 1) + ' colours.';
+          return rn.join(' and ') + (rn.length > 1 ? ' would move to other swatches.' : ' would move to another swatch.');
+        })(),
         onRemoveArm: () => this.refineArmRemove(selIdx),
         removeArmed: typeof s.refineRemoveIdx === 'number',
         removeIdx: s.refineRemoveIdx,

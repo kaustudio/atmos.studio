@@ -45,6 +45,34 @@ the live detail it is. The drill-in orders failures first and, within them, by r
 the pair closest to 4.5 is the one a small nudge fixes, so the cheapest win is at the top rather than
 buried under the hopeless cases.
 
+**Three sections, not one, and the role map moved out of the preview.** *Palette structure* held role
+assignment, ordering and removal on the argument that all three are palette-level. True, and not the
+useful grouping: assigning a role is a semantic decision, moving a swatch is a compositional one, and
+removing it is destructive. One heading made them read as a single form to fill in, and put a
+destructive control two rows under a pair of nudge buttons. They are **Usage**, **Palette order** and
+**Danger zone** now.
+
+The complete six-role legend went with Usage. It had been sitting under the live specimen as the
+second-largest object in that column, competing with the thing it captioned — and most of it answered
+a question about the *palette* (which colour holds which role) rather than about the preview. What
+stays in the preview is the one part that was working during a drag, as a sentence: *This swatch is
+the Background here.*
+
+**This supersedes the 2026-07-28 note that removal should carry no heading of its own.** That
+reasoning held while removal was the last row of a section already called *Palette structure*: a
+second label there added taxonomy for nothing. It does not hold now. With Usage and Palette order
+both named above it, an unlabelled trailing block reads as a continuation of Palette order, which
+would leave the destructive act as the only thing on the surface without a stated scope. The original
+objection — that a label cuts the act off from its object — is answered by keeping the consequence
+attached: the impact line sits *with* the control, before the confirmation rather than inside it, so
+what removal costs is legible at the moment of deciding rather than after committing.
+
+**A disabled control has to say why.** Move left, Move right and Remove swatch were `disabled`, which
+takes them out of the tab order — so at exactly the moment the reason matters (the swatch is already
+first; the palette is at its three-colour floor) the reason cannot be reached. They are
+`aria-disabled` now: focusable, announced, handler no-ops, and the accessible name carries the reason
+instead of naming a destination that does not exist.
+
 **What was declined, and why.** The audit collides with decisions already recorded here, and the
 collisions are all downstream of it not having run the build:
 
