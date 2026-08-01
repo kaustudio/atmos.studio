@@ -614,13 +614,33 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 @keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
 @media (prefers-reduced-motion: reduce){ [data-refine-note]{ animation:none } }
 
+/* EDIT AND PREVIEW, side by side — and one column when there is not room for two.
+   The axes need their full track width to be draggable at a useful resolution and the specimen
+   needs enough width to still look like an interface rather than a stack of coloured bars, so
+   below 860px of dialog they stop competing and stack: axes first, because that is where the hand
+   goes. The dialog itself is capped at 96vw, so this breakpoint is on the VIEWPORT and the two
+   numbers have to be read together — 860 is the width at which a 96vw dialog can hold two usable
+   columns plus its own gutters.
+   Order is deliberate on the stacked form too: preview UNDER the axes, so dragging a slider never
+   pushes the thing you are dragging off the bottom of a short viewport. */
+[data-refine-split]{ display:grid; grid-template-columns:1fr; gap:16px; }
+@media (min-width:860px){
+  [data-refine-split]{ grid-template-columns:1fr 232px; gap:20px; align-items:start; }
+}
+/* The specimen is a picture of a live mapping, so it must not animate its colours: a transition
+   here would make the preview lag the slider, and a preview that disagrees with the value beside it
+   is worse than no preview. Direct manipulation is immediate — this is downstream of the hand. */
+[data-refine-preview] *{ transition:none !important; }
+
 /* The role chooser unfolding in place. A disclosure inside a dialog, so it moves less and faster
    than the dialog did: this is a fold opening, not a surface arriving. */
 
 
 /* Disclosures animate their HEIGHT, so they have to clip while they do; GSAP clears both the
-   height and the overflow afterwards, handing the box back to the layout. */
-[data-refine-roles],[data-refine-pairs],[data-refine-confirm]{ overflow:hidden; }
+   height and the overflow afterwards, handing the box back to the layout.
+   The role chooser is NOT in this list any more: it is a popover with its own scroll now, and a
+   blanket overflow:hidden would clip the list it exists to let you scroll. */
+[data-refine-pairs],[data-refine-confirm]{ overflow:hidden; }
 /* Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no
    measurement, which is exactly what a transition is for — on the system's own easing token. */
 [data-refine-chev]{ display:inline-block; transition:transform .28s var(--ease-standard); }

@@ -11,8 +11,47 @@ export const motionMethods = {
     // on that curve snaps open and then creeps, which reads as a jump however long the tween is.
     // `fold` is the in-out curve the sliding selection marker already uses (misc.js), so a
     // disclosure and a moving selection share one motion character.
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1) };
-    this.DUR = { micro: 0.12, state: 0.24, reveal: 0.62, stagger: 0.05 };
+    // `overlay` is cubic-bezier(.19,1,.22,1) — an expo-out with a longer tail than `entrance`. It
+    // is the utility overlays' own curve: almost all of the travel is spent in the first fifth, so
+    // the panel is effectively THERE immediately and the remaining time is a settle rather than a
+    // journey. That is what lets these surfaces run at 0.4s and still feel prompt.
+    // `overlay` runs BOTH directions, stated on the properties both times. An overlay is asked to
+    // LAND — velocity → 0 at the end, in and out — and the two ways of getting there for free both
+    // fail: reversing the entrance mirrors the curve, so the panel accelerates off the screen, and
+    // easing the playhead instead composes this curve with each tween's own and produces a motion
+    // that belongs to no system. So the exit is written out (see _drawerOut and _dialogOut): same
+    // curve, its own duration, applied to the same properties the entrance moved.
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1) };
+    // `overlay` is the UTILITY-OVERLAY band, and it is a deliberate exception to the reveal token
+    // rather than a retune of it. `reveal` (620ms) is the app's arrival: a palette resolving out of
+    // a photograph, bands wiping up in sequence, a stage taking the screen. That is the moment the
+    // product is about, and it keeps its length.
+    //
+    // Refine, Harmonies, Filter, the contrast checker and the export dialog are not that. They are
+    // instruments you open, use and shut, often several times in a row, and at 620ms with a section
+    // cascade on top the close was still finishing while the user had moved on — measured in the
+    // July review, which found Harmony gone and Filter still on screen past 150ms and read the two
+    // as belonging to different systems. They do belong to one system; that system is just not the
+    // arrival system.
+    //
+    // 0.8s, and the sequence is back. This band was briefly 0.18s with everything inside the panel
+    // arriving as one flat object — which fixed the review's complaint (five overlays settling at
+    // visibly different times) by removing the thing that made them worth watching. The complaint
+    // was never that they were choreographed; it was that they were choreographed DIFFERENTLY and
+    // at arrival length. One curve, one duration, one schedule shape across all five is what
+    // actually answers it. On an expo-out the length costs nothing in perceived latency — 48% of the
+    // travel is spent in the first 10% of the time, so the panel is present from the first frame
+    // whatever the number is — and what the extra length buys is ROOM: sections, cells, rules and
+    // masked text all have to fit inside one arrival without treading on each other, and at 0.4s
+    // the last of them was still landing as the first finished.
+    //
+    // `overlayStep` is the beat between those contents. It scales with the band (0.05 × 0.8) rather
+    // than being a fixed number, so the sequence keeps its proportions if the duration moves again.
+    // `overlayOut` is LONGER than the entrance, which is the opposite of the usual rule. An arrival
+    // is answering a press and has to feel prompt; a dismissal has already been decided, so nothing
+    // is waiting on it and it can afford to be quiet. 1.2s on the expo-out playhead means the panel
+    // is most of the way gone early and the last of it settles out slowly rather than snapping.
+    this.DUR = { micro: 0.12, state: 0.24, overlay: 0.8, overlayOut: 1.2, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
   },
   // generic, interruptible micro-interaction handlers (transform + overlay-opacity only)
   mEnter(e) {
@@ -53,7 +92,12 @@ export const motionMethods = {
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
   monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
   viewToggleOptStyle(active) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
-  toggleStyle(active) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: active ? 'var(--on-surface)' : 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface)', transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
+  // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
+  // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
+  // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
+  // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
+  // plus aria-pressed), no longer the loudest thing in the panel.
+  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
   pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
@@ -452,8 +496,16 @@ export const motionMethods = {
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then
   // restore the plain text node so line-clamp, editing and future re-renders are untouched.
-  _maskLineReveal(el, delay) {
+  // `opts` lets a caller run this at a tempo other than the page's. The overlays need it: they move
+  // on their own curve and duration, and prose sliding up on the 620ms arrival curve inside a panel
+  // that settles in 400ms is two animations in one box rather than one sequence. Defaults are the
+  // original values, so every existing call site is untouched.
+  _maskLineReveal(el, delay, opts) {
     const g = window.gsap;
+    const o = opts || {};
+    const dur = typeof o.duration === 'number' ? o.duration : this.DUR.reveal;
+    const ease = o.ease || this.EASE.entrance;
+    const step = typeof o.stagger === 'number' ? o.stagger : 0.08;
     const text = el.textContent;
     if (!text || !text.trim()) return;
     if (el._splitRevert) { try { el._splitRevert(); } catch (e) { } }
@@ -472,8 +524,8 @@ export const motionMethods = {
     // 2 — rebuild: one overflow-hidden mask per line, inner slides up
     el.textContent = '';
     const inners = lines.map((ws) => { const mask = document.createElement('div'); mask.style.overflow = 'hidden'; mask.style.paddingBottom = '0.12em'; mask.style.marginBottom = '-0.12em'; const inner = document.createElement('div'); inner.textContent = ws.join(' '); inner.style.willChange = 'transform'; mask.appendChild(inner); el.appendChild(mask); return inner; });
-    g.fromTo(inners, { yPercent: 110 }, { yPercent: 0, duration: this.DUR.reveal, stagger: 0.08, ease: this.EASE.entrance, delay: delay, onComplete: restore });
-    setTimeout(() => { try { restore(); } catch (e) { } }, (delay || 0) * 1000 + this.DUR.reveal * 1000 + inners.length * 80 + 400);   // safety: never leave the split DOM behind
+    g.fromTo(inners, { yPercent: 110 }, { yPercent: 0, duration: dur, stagger: step, ease: ease, delay: delay, onComplete: restore });
+    setTimeout(() => { try { restore(); } catch (e) { } }, (delay || 0) * 1000 + dur * 1000 + inners.length * step * 1000 + 400);   // safety: never leave the split DOM behind
   },
   /* THE READING, ARRIVING. More/Less used to swap the DOM and leave it there: two pills and a
      paragraph appeared at full opacity while the button they came from jumped sideways to make room

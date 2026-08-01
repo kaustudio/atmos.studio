@@ -14,6 +14,12 @@
 //   node scripts/taxonomy-check.mjs
 
 import { readFileSync } from 'fs';
+// The colour maths below is deliberately re-implemented rather than imported — see the header. These
+// two are a different case: the artifact makes claims ABOUT them (that the runtime retired list
+// matches, that the generator's output stays inside the declared lexicon), and a claim about a
+// module can only be checked against that module.
+import { RETIRED_DESCRIPTORS } from '../src/lib/taxonomy.js';
+import { composeReading } from '../src/lib/reading.js';
 
 const vocab = JSON.parse(readFileSync(new URL('../taxonomy/vocabulary.json', import.meta.url)));
 let failures = 0;
@@ -105,7 +111,11 @@ for (const [dim, f] of Object.entries(vocab.facets)) {
 console.log('\nCLASSIFICATION — no term is both a facet value and a tag');
 const facetLabels = new Set();
 Object.values(vocab.facets).forEach((f) => f.buckets.forEach((b) => facetLabels.add(b.label.toLowerCase())));
-const tagList = [...vocab.tags.fromGenerator, ...vocab.tags.fromSeeds];
+// The declared lexicon: every term any register or flag is allowed to emit.
+const tagList = [
+  ...Object.values(vocab.tags.registers).flatMap((r) => r.terms),
+  ...vocab.tags.flags.terms,
+];
 const collisions = tagList.filter((t) => facetLabels.has(t.toLowerCase()));
 if (collisions.length) fail('terms in both systems: ' + collisions.join(', '));
 else ok(facetLabels.size + ' facet values, ' + tagList.length + ' tags, zero overlap');
@@ -114,6 +124,25 @@ const retiredAll = { ...vocab.retired.computed, ...vocab.retired.synonym };
 const stillTagged = Object.keys(retiredAll).filter((t) => tagList.some((x) => x.toLowerCase() === t.toLowerCase()));
 if (stillTagged.length) fail('retired but still listed as tags: ' + stillTagged.join(', '));
 else ok(Object.keys(retiredAll).length + ' retired terms, none still tagged');
+
+// The registers are only exhaustive if their word sets are disjoint — two registers sharing a term
+// would let one palette resolve to two descriptors and another to three.
+const regTerms = Object.values(vocab.tags.registers).flatMap((r) => r.terms);
+const dupTerm = regTerms.filter((t, i) => regTerms.indexOf(t) !== i);
+if (dupTerm.length) fail('term in two registers: ' + [...new Set(dupTerm)].join(', '));
+else ok(Object.keys(vocab.tags.registers).length + ' registers, ' + regTerms.length + ' terms, all disjoint');
+
+// ---------- 2b · the artifact and the runtime agree on what is retired ----------
+// Both directions. A term dropped from src/lib/taxonomy.js would silently start reappearing in the
+// Character group; a term dropped from the artifact would be filtered out with nothing recording why.
+console.log('\nENFORCEMENT — src/lib/taxonomy.js matches the retired block');
+const artifactRetired = new Set(Object.keys(retiredAll).map((t) => t.toLowerCase()));
+const runtimeRetired = new Set([...RETIRED_DESCRIPTORS].map((t) => t.toLowerCase()));
+const missingInRuntime = [...artifactRetired].filter((t) => !runtimeRetired.has(t));
+const missingInArtifact = [...runtimeRetired].filter((t) => !artifactRetired.has(t));
+if (missingInRuntime.length) fail('retired in the artifact but not enforced at runtime: ' + missingInRuntime.join(', '));
+if (missingInArtifact.length) fail('filtered at runtime but not recorded as retired: ' + missingInArtifact.join(', '));
+if (!missingInRuntime.length && !missingInArtifact.length) ok(artifactRetired.size + ' retired terms, artifact and runtime identical');
 
 // ---------- 3 · empirical: real seeds ----------
 const W = [0.30, 0.24, 0.20, 0.16, 0.10];
@@ -165,6 +194,42 @@ for (const d of dims) {
   const total = vocab.facets[d].buckets.length;
   console.log('    ' + d.padEnd(12) + seen[d].size + '/' + total + ' buckets reached: ' + [...seen[d]].join(', '));
 }
+
+// ---------- 5 · the generator stays inside the declared lexicon ----------
+// The claim under test is `sources.generator`: CLOSED vocabulary, exhaustive by construction. Three
+// ways it can break, and all three are silent in the product — a term the artifact never declared,
+// a retired term coming back, or a palette resolving to fewer than three descriptors (which leaves a
+// row with no tags and a metrics `mood` of '').
+console.log('\nGENERATOR — descriptors stay inside the declared lexicon');
+const declared = new Set(tagList.map((t) => t.toLowerCase()));
+const emitted = new Set();
+let thin = 0, undeclared = [], regressed = [];
+seed = 777;
+for (let i = 0; i < N; i++) {
+  const n = 2 + Math.floor(rnd() * 6);
+  const hexes = Array.from({ length: n }, () => '#' + Array.from({ length: 3 }, () => Math.floor(rnd() * 256).toString(16).padStart(2, '0')).join(''));
+  const raw = hexes.map(() => rnd());
+  const tot = raw.reduce((a, b) => a + b, 0);
+  const swatches = hexes.map((h, k) => { const [r, g, b] = hexToRgb(h); const lab = rgb2oklab(r / 255, g / 255, b / 255); return { hex: h, weight: raw[k] / tot, L: lab.L, a: lab.a, b: lab.b }; });
+  const desc = composeReading(swatches, []).descriptors || [];
+  if (desc.length < 3) thin++;
+  desc.forEach((d) => {
+    const k = d.toLowerCase();
+    emitted.add(k);
+    if (!declared.has(k)) undeclared.push(d);
+    if (runtimeRetired.has(k)) regressed.push(d);
+  });
+}
+if (thin) fail(thin + ' of ' + N + ' palettes resolved to fewer than three descriptors');
+else ok(N + ' random palettes, every one resolved to three or more descriptors');
+if (undeclared.length) fail('emitted but not declared in the artifact: ' + [...new Set(undeclared)].join(', '));
+else ok(emitted.size + ' distinct terms emitted, all declared');
+if (regressed.length) fail('emitted a retired term: ' + [...new Set(regressed)].join(', '));
+else ok('no retired term reachable from the generator');
+// Unreachable terms are not a failure — the flags are rare by design — but they are worth naming,
+// because a term nothing can produce is a term the vocabulary only claims to have.
+const unreachable = [...declared].filter((t) => !emitted.has(t));
+if (unreachable.length) console.log('    unreached in this sweep: ' + unreachable.join(', '));
 
 console.log(failures ? '\nFAILED — ' + failures + ' problem(s)\n' : '\nAll checks passed.\n');
 process.exit(failures ? 1 : 0);

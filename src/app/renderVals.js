@@ -17,23 +17,50 @@ const MONO = 'Neue Montreal';
 // three places that render it.
 
 // One vocabulary for the three capability states, used by the badge tooltip, the row's accessible
-// name and the Accessibility facet — so the words never diverge between surfaces.
-const A11Y_LABEL = { flexible: 'Flexible', limited: 'Limited', none: 'None' };
-const A11Y_TITLE = {
-  flexible: 'Flexible: enough usable text pairings to build an interface',
-  limited: 'Limited: one or two usable pairings, enough for an accent',
-  none: 'None: no usable text or background pairing in this palette',
+// name and the Text usability facet — so the words never diverge between surfaces.
+//
+// NAMED BY WHAT YOU CAN DO WITH THE PALETTE. Three vocabularies have been tried here and the
+// difference between them is worth keeping:
+//   Flexible / Limited / None      verdicts with no subject. Limited against what, and how far off?
+//                                  The panel needed a paragraph above the group to define all three.
+//   3+ / 1–2 / No AA text pairs    the measurement, stated. Self-defining, and unreadable as a
+//                                  choice: three rows of near-identical arithmetic that the reader
+//                                  has to convert back into "so can I set type in this or not?".
+//   Text-Ready / Limited Text /    the ANSWER to that question, which is what the group is for.
+//   Accent Only                    The arithmetic stays, one layer down, in A11Y_DEFINITION.
+// The state ids are untouched — they are persisted filter state and composeUse() reads them — so
+// only what is SHOWN has ever changed. The split is the same 0 / 1–2 / 3+ it has always been.
+//
+// Title Case, and the casing lives in these strings rather than in a text-transform: these are
+// names, and a name that only looks right because a stylesheet is shouting at it is a name that
+// breaks the moment it appears anywhere else — the chip, the badge title, an aria string.
+const A11Y_LABEL = {
+  flexible: 'Text-Ready',
+  limited: 'Limited Text',
+  none: 'Accent Only',
 };
-// The group note for the Accessibility facet. It lives beside A11Y_TITLE deliberately: it says what
-// the three states MEAN, which is the one thing that must never drift from the titles above it. The
-// rows used to carry these meanings one per line, right-aligned and clipped — three fragments the
-// eye had to assemble. Stated once, in sentences, it is shorter than the sum of the fragments and
-// reads as prose instead of as a legend.
-const A11Y_GROUP_NOTE = 'A palette is in one state, so choosing more than one widens. Flexible builds an interface, Limited carries an accent, None has no usable text pairing. Counts are how many palettes are in each.';
+// THE DEFINITION, one layer down. These names are answers rather than measurements, so unlike the
+// band labels they do not define themselves — and that debt has to be paid somewhere reachable
+// rather than left for the reader. It is paid three times over, on demand every time: the panel's
+// ⓘ carries all three, each row carries its own on hover, and each row's accessible name ends with
+// it so a screen-reader user is never the one who has to hover to find out.
+const A11Y_DEFINITION = {
+  flexible: '3 or more colour pairs meet WCAG AA for normal text.',
+  limited: 'Only 1–2 colour pairs meet WCAG AA. Text use requires deliberate pairing.',
+  none: 'No colour pairs meet WCAG AA for normal text without adjustment.',
+};
+// The badge's own tooltip, which has a palette in hand rather than a whole band to describe — so it
+// says the same thing in the singular and the exact count follows it (see aaReadout).
+const A11Y_TITLE = {
+  flexible: 'Text-Ready: 3 or more colour pairs meet WCAG AA for normal text',
+  limited: 'Limited Text: only 1–2 colour pairs meet WCAG AA, so text use requires deliberate pairing',
+  none: 'Accent Only: no colour pairs meet WCAG AA for normal text without adjustment',
+};
+// Lower case, because every one of these sits mid-sentence in an accessible name.
 const A11Y_SPOKEN = {
-  flexible: 'flexible for interface use',
-  limited: 'limited to an accent',
-  none: 'not usable for text',
+  flexible: 'text-ready',
+  limited: 'limited text',
+  none: 'accent only',
 };
 // the badge: status expressed by FILL (pass filled / partial outlined / fail ghost) + glyph,
 // every value resolving through the status tokens — the view only ever names the status.
@@ -49,7 +76,10 @@ const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justify
 const aaReadout = (met) => ({
   aaState: met.aaState,
   aaBadgeStyle: aaBadge(met.aaState),
-  aaBadgeTitle: A11Y_TITLE[met.aaState] + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach WCAG AA (4.5:1)',
+  // The verdict and its definition, then THIS palette's exact figure. The definition is about the
+  // band ("3 or more"); the parenthetical is about the palette in hand, which is the one thing the
+  // band cannot tell you and the reason the count still earns its place here.
+  aaBadgeTitle: A11Y_TITLE[met.aaState] + ' (' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs at 4.5:1)',
   aaValueText: String(met.aaPairs),
 });
 
@@ -302,10 +332,14 @@ export const renderValsMethods = {
     // the card SHOWS has to be said here or it is said nowhere — and the card shows the same readout
     // the list row does. Same clause order as the row's aria, so moving between views does not
     // change the shape of the sentence.
+    // THE VERDICT AND THE COUNT, in that order. This briefly spoke the count alone, on the reasoning
+    // that the label WAS the count ("3+ AA text pairs: 5 of 10 pairs…" is the same fact twice). The
+    // labels are answers again, so the two carry different information: the verdict is what the
+    // badge shows, and the figure is what the badge cannot.
     const itemAria = (p, met) => 'Open ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ')
       + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase()
-      + '. Accessibility ' + A11Y_SPOKEN[met.aaState] + ': ' + met.aaPairs + ' of ' + met.totalPairs
-      + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
+      + '. Text usability: ' + A11Y_SPOKEN[met.aaState] + ', ' + met.aaPairs + ' of ' + met.totalPairs
+      + ' colour pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
       + '. Generated ' + this.relTime(p.time) + (p.id === curId ? '. Currently viewing' : '');
 
     // --- LIST view: canonical, one row each, keyboard-navigable ---
@@ -409,7 +443,7 @@ export const renderValsMethods = {
         // each column carries ONLY its own measurement: pairs here, ratio there
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
         aaCell, metricValue, contrastCell, timeCell,
-        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. Accessibility ' + A11Y_SPOKEN[met.aaState] + ': ' + met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
+        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. Text usability: ' + A11Y_SPOKEN[met.aaState] + ', ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
         deleteAria: 'Delete ' + p.name,
@@ -565,27 +599,70 @@ export const renderValsMethods = {
     }
 
     // --- per-swatch colour harmonies (OKLCH-derived, gamut-mapped) ---
+    // CHOOSE A MODEL, THEN USE IT. This was seven sections of equal weight, one under the next, and
+    // the only thing you could do with any of them was copy a single hex — a long comparison surface
+    // ending in no act. The seven are a selector now, one is shown at size, and the drawer carries a
+    // whole-harmony destination.
     let harmony = null;
     if (s.harmony) {
       const baseHex = s.harmony.hex;
-      const groups = this.harmonyGroups(baseHex).map((grp, gi) => ({
-        name: grp.name, count: String(grp.hexes.length),
-        cells: grp.hexes.map((hx, ci) => {
-          const HX = hx.toUpperCase(), on = this.onColor(hx), copied = s.copied === 'hx-' + gi + '-' + ci, isBase = HX === baseHex;
-          return {
-            hex: HX, display: copied ? 'Copied' : HX, isBase,
-            aria: 'Copy harmony colour ' + HX + (isBase ? ' (source colour)' : ''),
-            onCopy: () => this.copy(HX, 'hx-' + gi + '-' + ci, 'Copied ' + HX),
-            style: { flex: 1, minWidth: 0, height: '56px', background: hx, border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '7px 8px', cursor: 'pointer', position: 'relative' },
-            hover: { filter: this.lumHex(hx) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(hx) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
-            markStyle: { position: 'absolute', top: '7px', left: '8px', width: '5px', height: '5px', background: on, opacity: isBase ? 0.9 : 0, display: 'block' },
-            hexStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
-          };
-        }),
-      }));
+      const all = this.harmonyGroups(baseHex);
+      const active = all.find((g) => g.id === s.harmonyModel) || all[0];
+      const models = all.map((g) => {
+        const on = g.id === active.id;
+        return {
+          id: g.id, label: g.name, active: on, pressed: on ? 'true' : 'false',
+          aria: 'Show the ' + g.name.toLowerCase() + ' harmony, ' + g.cells.length + ' colours',
+          onPick: () => this.setHarmonyModel(g.id),
+          style: this.toggleStyle(on),
+        };
+      });
+      const cells = active.cells.map((c, ci) => {
+        const on = this.onColor(c.hex), copied = s.copied === 'hx-' + active.id + '-' + ci;
+        return {
+          hex: c.hex, display: copied ? 'Copied' : c.hex, isBase: c.base, mapped: c.mapped,
+          // THE SOURCE IS NAMED. It was a 5px square in the corner with no legend anywhere — a mark
+          // that can only be decoded by someone who already knows what it means.
+          badge: c.base ? 'Source' : (c.mapped ? 'Mapped' : ''),
+          aria: 'Copy ' + c.hex + (c.base ? ', the source colour' : '')
+            + (c.mapped ? ', adjusted to fit sRGB' : ''),
+          onCopy: () => this.copy(c.hex, 'hx-' + active.id + '-' + ci, 'Copied ' + c.hex),
+          style: { flex: 1, minWidth: 0, height: '104px', background: c.hex, border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', padding: '9px 10px', cursor: 'pointer', position: 'relative' },
+          hover: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
+          // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
+          // colour the harmony can produce rather than on most of them.
+          badgeStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '1px 5px', whiteSpace: 'nowrap' },
+          hexStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
+        };
+      });
+      const mappedCount = active.cells.filter((c) => c.mapped).length;
       harmony = {
-        hex: baseHex, groups,
+        hex: baseHex, models, cells,
+        modelName: active.name,
+        // The whole set, in the order it is shown, for the two actions below.
+        hexList: active.cells.map((c) => c.hex),
         swatchStyle: { width: '26px', height: '26px', flex: 'none', background: baseHex, border: '1px solid var(--line-strong)' },
+        // METHOD ON DEMAND. The mapping sentence led the drawer, which put implementation detail
+        // above what the user can do here. It says something specific now — how many of THESE
+        // colours were adjusted — which is the only form in which it is actionable.
+        methodOpen: !!s.harmonyMethodOpen,
+        methodLabel: 'How harmonies are calculated',
+        methodAria: (s.harmonyMethodOpen ? 'Hide' : 'Show') + ' how harmonies are calculated',
+        toggleMethod: () => this.toggleHarmonyMethod(),
+        methodLines: [
+          'Every colour is the source rotated around the hue circle in OKLCH, at the same lightness and chroma. Shades hold hue and chroma and step lightness instead.',
+          mappedCount
+            ? (mappedCount === 1 ? 'One colour in this harmony sits outside sRGB, so its chroma was reduced until it fits. It is marked Mapped.' : mappedCount + ' colours in this harmony sit outside sRGB, so their chroma was reduced until they fit. They are marked Mapped.')
+            : 'Every colour in this harmony fits inside sRGB, so none of them was adjusted.',
+        ],
+        // SAVE AS A PALETTE — the act the drawer was missing. It mints a new library record rather
+        // than overwriting the palette the source swatch came from: that palette is content-addressed
+        // to a photograph and carries its own roles, and a harmony is a different object.
+        onUse: () => this.useHarmonyAsPalette(),
+        useAria: 'Save this ' + active.name.toLowerCase() + ' harmony as a new palette in your library, ' + active.cells.length + ' colours',
+        onCopyAll: () => this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'),
+        copyAllLabel: s.copied === 'hx-all' ? 'Copied' : 'Copy harmony',
+        copyAllAria: 'Copy all ' + active.cells.length + ' colours in this harmony as a hex list',
       };
     }
 
@@ -669,7 +746,7 @@ export const renderValsMethods = {
     // left tags vanishing for no stated reason.
     const universalTag = (d) => activeTags.indexOf(d) < 0 && tagBase.length > 0 && withTag(d).length === tagBase.length;
     const facetQuery = (s.tagQuery || '').trim().toLowerCase();
-    const facetOptions = [...tagCounts.keys()]
+    const facetRanked = [...tagCounts.keys()]
       .filter((d) => activeTags.indexOf(d) >= 0 || withTag(d).length > 0)
       .filter((d) => !facetQuery || d.indexOf(facetQuery) >= 0)
       // count-first for discovery, A–Z for known-item lookup; count order keeps the alphabetical
@@ -731,6 +808,20 @@ export const renderValsMethods = {
           onPick: disabled ? () => {} : () => this.setActiveTag(d),
         };
       });
+    // SIX, THEN THE REST. The list is the interpretive layer and it was the tallest thing in the
+    // panel — three measured groups of three rows each, then twenty of these, which ranks by height
+    // the exact way the Character disclosure exists to avoid.
+    //
+    // The cut is off the ranked order, so it is the six most useful under whichever sort is on. Two
+    // things are never cut: a SELECTED trait (it is how you get back out, and hiding it would strand
+    // a chip with no row) and a search result set (you asked for those by name, and a search that
+    // silently truncates is a search that lies).
+    const FACET_LEAD = 6;
+    const facetCut = !s.facetAllOpen && !facetQuery && facetRanked.length > FACET_LEAD;
+    const facetOptions = facetCut
+      ? facetRanked.filter((o, i) => i < FACET_LEAD || o.active)
+      : facetRanked;
+    const facetHidden = facetRanked.length - facetOptions.length;
     // One removable chip per selected tag, in the order they were picked, so the narrowing reads as
     // a sentence you can dismantle from either end. The count on the LAST chip is the live result
     // size; earlier chips show what the selection was worth at that point, which is why only the
@@ -741,7 +832,7 @@ export const renderValsMethods = {
     // beside each other is worse than one.
     const appliedRaw = activeA11y.map((v) => ({
       key: 'a11y:' + v, label: A11Y_LABEL[v],
-      aria: 'Remove the ' + A11Y_LABEL[v].toLowerCase() + ' accessibility filter',
+      aria: 'Remove the ' + A11Y_SPOKEN[v] + ' text usability filter',
       onRemove: () => { this.setA11yFilter(v); focusFacetBtn(); },
     })).concat(MEAS_CHIPS(this, s, focusFacetBtn)).concat(activeTags.map((t) => ({
       key: 'tag:' + t, label: t,
@@ -783,13 +874,13 @@ export const renderValsMethods = {
       return { id: g.id, label: g.label, options, has: options.length > 0 };
     }).filter((g) => g.has);
 
-    // ---- the Contrast potential facet: OR within the group, exhaustive over the archive ----
+    // ---- the Text usability facet: OR within the group, exhaustive over the archive ----
     // Ordered most-capable first, which is the order anyone shopping for a usable palette wants.
     // Zero-result suppression applies as it does to tags: a state nothing has is not offered,
     // unless it is already selected (it must stay reachable to be removed).
     // The universal case reaches this group too, and matters more here than in tags: because the
-    // states partition the archive, "every palette here is Limited" can be the whole truth about a
-    // view. Suppressed, it left one lone checkbox that did nothing and no clue why; stated, it
+    // bands partition the archive, "every palette here is Limited Text" can be the whole truth about
+    // a view. Suppressed, it left one lone checkbox that did nothing and no clue why; stated, it
     // answers the question the group exists to answer without the user having to click.
     const a11yOptions = ['flexible', 'limited', 'none'].map((v) => {
       const n = a11yBase.filter((p) => this.paletteMetrics(p).aaState === v).length;
@@ -797,13 +888,19 @@ export const renderValsMethods = {
       const disabled = !active && n > 0 && n === a11yBase.length;
       return {
         key: v, label: A11Y_LABEL[v], count: String(n), active, pressed: active ? 'true' : 'false',
-        // No hint any more — what the state means is said once, above the group (A11Y_GROUP_NOTE).
-        // The reason survives because it says something else entirely: not what this state is, but
+        // The definition rides on the row itself — as its title for a pointer, and on the end of its
+        // accessible name for everyone else. These labels are answers rather than measurements, so
+        // "Limited Text" has to be able to say what it means without the reader going looking; and
+        // it must not do so in a standing line under every row, which is the column of clipped
+        // fragments this group was built to get rid of.
+        title: A11Y_DEFINITION[v],
+        // The reason is a different fact and survives alongside it: not what this band means, but
         // why THIS row cannot be picked, which is true of one row at a time and only sometimes.
         disabled, reason: disabled ? 'Every palette here' : '',
-        aria: disabled
-          ? 'All ' + n + ' of these palettes are ' + A11Y_LABEL[v].toLowerCase() + ', so this cannot narrow them further'
-          : (active ? 'Remove the ' : 'Filter to ') + A11Y_LABEL[v].toLowerCase() + ' accessibility, ' + n + ' palette' + (n === 1 ? '' : 's'),
+        aria: (disabled
+          ? 'All ' + n + ' of these palettes are ' + A11Y_SPOKEN[v] + ', so this cannot narrow them further'
+          : (active ? 'Remove the ' : 'Filter to ') + A11Y_SPOKEN[v] + ' palettes, ' + n + ' of them')
+          + '. ' + A11Y_DEFINITION[v],
         onPick: disabled ? () => {} : () => this.setA11yFilter(v),
         show: n > 0 || active,
       };
@@ -865,8 +962,57 @@ export const renderValsMethods = {
       const assigned = p.roles || {};
       const selRoles = (roleAt[selIdx] || []).map((r) => ROLE_LABEL[r]);
       const curMet = this.paletteMetrics(p);
+      // ===== THE CONTEXT PREVIEW =====
+      // The half of the 2026-07-28 decision that was deferred: "the interactive context preview
+      // stayed out of scope; roles are built as the backbone it will plug into later." This is the
+      // plug-in, and semanticRoles is the backbone — no new model, no second source of truth.
+      //
+      // WHAT IT IS FOR. Refine could edit a value and report a ratio, but it could not show what the
+      // edit DID: dragging chroma moved a number, and whether the palette still worked as an
+      // interface was left to the imagination. This is the smallest specimen that answers it — a
+      // ground, a raised surface on it, text at the size the verdict below is about, and the two
+      // chromatic roles as the things you would actually build. It repaints from `resolved`, so it
+      // is in the same render pass as the swatch, the ratio and the AA status: one transaction, and
+      // the last visible value always matches the palette state.
+      //
+      // The SELECTED swatch's roles are marked rather than the specimen being redrawn per selection.
+      // A preview that changed shape with the selection would stop being a stable object to judge
+      // against; marking says "this is where the colour in your hand is doing its work", which is
+      // the question, without moving anything.
+      const roleHex = {};
+      resolved.forEach((r) => { roleHex[r.role] = r.hex; });
+      const selRoleIds = (roleAt[selIdx] || []);
+      const ctxMark = (role) => selRoleIds.indexOf(role) >= 0;
+      const ctxRoles = ['background', 'surface', 'text', 'primary', 'secondary', 'accent'];
+      const preview = {
+        // Every role's colour, and which of them the selected swatch is currently answering — so a
+        // swatch that carries two roles lights up in two places at once.
+        hex: roleHex,
+        marked: ctxRoles.filter(ctxMark).map((r) => ROLE_LABEL[r]),
+        // Named in the accessible layer, because the specimen itself is decorative: a screen-reader
+        // user gets the mapping as a sentence rather than a picture they cannot see.
+        aria: 'Interface preview using the assigned roles: '
+          + ctxRoles.map((r) => ROLE_LABEL[r] + ' ' + roleHex[r]).join(', ')
+          + (selRoleIds.length ? '. The selected swatch is ' + selRoleIds.map((r) => ROLE_LABEL[r]).join(' and ') + '.' : '. The selected swatch carries no role, so it does not appear here.'),
+        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' },
+        cardStyle: { background: roleHex.surface, padding: '11px 12px', display: 'flex', flexDirection: 'column', gap: '9px' },
+        // The specimen text is set at the size whose threshold the panel below reports — normal
+        // text at 4.5:1. It used to be a 'Aa' at --fs-title, which is LARGE text under WCAG and is
+        // graded at 3:1, so the sample was showing one size and the verdict was about another.
+        headingStyle: { fontFamily: mono, fontSize: 'var(--fs-detail)', fontWeight: 500, color: roleHex.text, lineHeight: 1.25 },
+        bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', color: roleHex.text, lineHeight: 1.45, opacity: 0.92 },
+        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
+        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px' },
+        accentStyle: { width: '100%', height: '4px', background: roleHex.accent },
+        // The legend under the specimen: role, its colour, and whether the swatch in hand is it.
+        legend: ctxRoles.map((r) => ({
+          key: r, label: ROLE_LABEL[r], hex: roleHex[r], here: ctxMark(r),
+          chipStyle: { width: '10px', height: '10px', flex: 'none', background: roleHex[r], border: '1px solid color-mix(in srgb, var(--on-surface) 25%, transparent)' },
+        })),
+      };
       refineView = {
         name: p.name,
+        preview,
         selIdx, selHex: sel.hex.toUpperCase(),
         // SWATCH-FIRST, and this is an object-model decision rather than a typographic one.
         //
@@ -900,32 +1046,70 @@ export const renderValsMethods = {
           const rc = this.roleContrast(p, selIdx);
           if (!rc) return null;
           const f = rc.focus;
+          // WHICH SWATCH REPAIRS THIS PAIR. A failing pairing is a fact about two roles; the fix is
+          // to change one of the colours those roles sit on, and until now the panel stated the
+          // fact and left the reader to work out where to go. Ground first: it is the larger area
+          // and the one whose change fixes every pair set on it, so it is the better first move.
+          const repairIdx = (x) => {
+            const bg = resolved.find((r) => r.role === x.bg), fg = resolved.find((r) => r.role === x.fg);
+            const g = bg ? bg.index : -1, t = fg ? fg.index : -1;
+            // If the ground IS the swatch in hand, offering to select it again is a no-op — send
+            // the user to the other half of the pair, which is the move still available.
+            if (g >= 0 && g !== selIdx) return { index: g, role: x.bg };
+            if (t >= 0 && t !== selIdx) return { index: t, role: x.fg };
+            return null;
+          };
           return {
-            count: rc.passed + ' / ' + rc.total + ' meet AA',
-            countStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
+            // The COVERAGE line, stated with its denominator named. "1 / 8 meet AA" leaves the 8
+            // unexplained — it is the four content roles on the two ground roles, not every pair in
+            // the palette — and a bare fraction beside a specimen reads as a score.
+            count: rc.passed + ' of ' + rc.total + ' text-role pairings meet AA',
+            countStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' },
             pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
             pairHex: f.fgHex + ' on ' + f.bgHex,
             pairRatio: f.ratio.toFixed(1) + ':1',
-            pairLevel: f.aaa ? 'AAA' : f.aa ? 'AA' : 'Fails AA',
+            // The size the threshold is about, said out loud. 4.5:1 is the NORMAL-text bar; the same
+            // pair at large text is graded against 3:1 and could pass where this fails, so a bare
+            // "Fails AA" was a verdict with its subject missing.
+            pairLevel: f.aaa ? 'Normal text: AAA' : f.aa ? 'Normal text: AA' : 'Normal text: Fails AA',
             pairLevelStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
-            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: 'var(--fs-title)', lineHeight: 1 },
+            // Normal text, drawn at normal-text size. It was --fs-title, which is LARGE text under
+            // WCAG and graded at 3:1 — the specimen was showing one size while the badge beside it
+            // reported the verdict for another.
+            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: 'var(--fs-detail)', lineHeight: 1.3, textAlign: 'center', padding: '0 6px' },
+            sampleText: 'Normal text',
             // Depth on demand: the full matrix is available, and stays out of the way until asked.
             // A DRILL-IN, not an accordion. Expanding inside the card pushed Palette structure
             // down the page whenever anyone looked at the detail — the layout shift an editor
             // cannot afford, because the canvas has to hold still while you work.
             allOpen: !!s.refineAllPairs,
-            allLabel: 'Pairings (' + rc.total + ')',
+            allLabel: 'View all ' + rc.total + ' pairings',
             toggleAll: () => this.openPairings(),
             closePairings: () => this.closePairings(),
-            rows: rc.pairs.map((x) => ({
-              key: x.fg + '-' + x.bg,
-              roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
-              ratio: x.ratio.toFixed(1) + ':1',
-              level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
-              chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: 'var(--fs-label)', lineHeight: 1 },
-              levelStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
-            })),
-            aria: rc.passed + ' of ' + rc.total + ' text-role pairs meet AA. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + '.',
+            rows: rc.pairs.map((x) => {
+              const rep = repairIdx(x);
+              return {
+                key: x.fg + '-' + x.bg,
+                roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
+                ratio: x.ratio.toFixed(1) + ':1',
+                level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
+                pass: x.aa,
+                // EVERY ROW IS A ROUTE BACK, not only the failing ones — a passing pair is still a
+                // pair you might want to look at, and a list where some rows are operable and some
+                // are inert teaches nothing about which is which until you have clicked both.
+                canRepair: !!rep,
+                aria: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg] + ', ' + x.ratio.toFixed(1) + ' to 1, '
+                  + (x.aaa ? 'AAA' : x.aa ? 'meets AA' : 'fails AA')
+                  + (rep ? '. Select ' + ROLE_LABEL[rep.role] + ', swatch ' + (rep.index + 1) + ', to change it' : ''),
+                // Closing first, then selecting: the drill-in covers the strip and the sliders, so
+                // selecting underneath it would move a marker nobody can see and land focus on a
+                // hidden control.
+                onRepair: rep ? () => { this.refineSelect(rep.index); this.closePairings(true); } : null,
+                chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: 'var(--fs-label)', lineHeight: 1 },
+                levelStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
+              };
+            }),
+            aria: rc.passed + ' of ' + rc.total + ' text-role pairings meet AA. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + ' for normal text.',
           };
         })(),
         onKey: (e) => this.refineKey(e),
@@ -943,49 +1127,67 @@ export const renderValsMethods = {
             // breaks because a colour happens to be narrow is a label that failed. The minimum
             // width below fits the longest single role name at this size; the extras are a count,
             // and the full list is in the heading, the tooltip and the accessible name.
-            // A ROLE NAME, nothing else. This carried "Primary +1" for a while, which is the
-            // system's own bookkeeping showing through: a count of assignments is not a label a
-            // designer has any use for. The rest of a swatch's roles are in the heading, the
-            // tooltip and the accessible name, where a list belongs.
-            roleLabel: names.length ? names[0] : '',
+            // EVERY ROLE THE SWATCH ANSWERS, in words, on the swatch. It showed names[0] only —
+            // "Primary" on a band that is Primary AND Secondary — while the accessible name listed
+            // both, so the visual and spoken labels described different palettes. Two earlier fixes
+            // are still respected: nothing is truncated (the labels wrap onto their own lines rather
+            // than being clipped mid-word), and the count-suffix form "Primary +1" stays gone,
+            // because a count of assignments is bookkeeping rather than a label.
+            roleNames: names,
             hasRoles: !!names.length,
             aria: (names.length ? names.join(' and ') : 'No role') + '. Swatch ' + (i + 1) + ' of ' + N + ', ' + b.hex.toUpperCase() + '.',
             title: (names.length ? names.join(' · ') + ' — ' : '') + b.hex.toUpperCase(),
             onSelect: () => this.refineSelect(i),
             // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
             // destructive control inside the one element whose whole job is to be safe to click.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '96px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', color: on, overflow: 'hidden' },
-            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.3, whiteSpace: 'nowrap' }),
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '96px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
+            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.25, whiteSpace: 'nowrap' }),
           };
         }),
         // Colour is the main area and the only thing in it.
+        //
+        // THE NUMERIC CONTRACT. Each axis states its own bounds, step and unit, and the text field
+        // states them too rather than borrowing them from its range twin: min/max/step lived on the
+        // <input type=range> only, so the field beside it announced no bounds at all and clamped
+        // silently on commit. role=spinbutton with aria-valuemin/max/now is what makes the field a
+        // number with limits to assistive tech; the range hint puts the same limits in its name.
+        // The unit stays INSIDE the box (see [data-refine-num]) so value and unit are one control.
         sliders: [
           {
             key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L,
             display: Math.round(sel.L * 100), unit: '%', numMin: 0, numMax: 100, numStep: 1,
+            numNow: Math.round(sel.L * 100), rangeHint: ', 0 to 100 percent',
             valueText: Math.round(sel.L * 100) + ' percent',
             track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))),
             onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)),
             onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'l', Math.max(0, Math.min(100, v)) / 100); },
+            onNumberCommit: () => this._refineGestureEnd(),
+            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'l', 1, 0, 100, (v) => v / 100),
           },
           {
             key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC,
             display: selC.toFixed(3), unit: '', numMin: 0, numMax: 0.33, numStep: 0.001,
+            numNow: Number(selC.toFixed(3)), rangeHint: ', 0 to 0.33',
             valueText: selC.toFixed(3),
             track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))),
             onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)),
             onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'c', Math.max(0, Math.min(0.33, v))); },
+            onNumberCommit: () => this._refineGestureEnd(),
+            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'c', 0.001, 0, 0.33, (v) => v),
           },
           {
             // The hue track is a LEGEND for the axis, not a preview: drawn at the swatch's own
             // lightness it goes black on a dark colour, which is a hue wheel with no hue in it.
             key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH,
             display: Math.round(selH), unit: '°', numMin: 0, numMax: 360, numStep: 1,
+            numNow: Math.round(selH), rangeHint: ', 0 to 360 degrees',
             valueText: Math.round(selH) + ' degrees',
             track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }),
             onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)),
+            onNumberCommit: () => this._refineGestureEnd(),
+            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'h', 1, 0, 360, (v) => v),
             onCommit: () => this._refineGestureEnd(),
             onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'h', ((v % 360) + 360) % 360); },
           },
@@ -1001,9 +1203,14 @@ export const renderValsMethods = {
         // role hid the colour it was being given to.
         roleLine: selRoles.length ? selRoles.join(' · ') : 'None',
         roleChooserOpen: !!s.refineRoleOpen,
-        roleTrigger: s.refineRoleOpen ? 'Close' : (selRoles.length ? 'Change role' : 'Assign role'),
-        roleTriggerAria: (s.refineRoleOpen ? 'Close the role chooser' : (selRoles.length ? 'Change the role of' : 'Assign a role to') + ' swatch ' + (selIdx + 1)),
-        toggleRoleChooser: () => this.toggleFold('refineRoleOpen', '[data-refine-roles]'),
+        // PLURAL, and it is not a typo. "Change role" says a swatch has one; it can carry several,
+        // which is exactly what the chooser's switches let you do and what the strip now shows.
+        roleTrigger: s.refineRoleOpen ? 'Close' : 'Assign roles',
+        roleTriggerAria: (s.refineRoleOpen ? 'Close the role chooser' : 'Assign roles to swatch ' + (selIdx + 1)),
+        // Tip, not fold. A fold animates HEIGHT, which is exactly the property this control must
+        // stop changing — it is a popover now and costs the layout nothing, so it arrives the way
+        // every other popover on the surface does.
+        toggleRoleChooser: () => this.toggleTip('refineRoleOpen', '[data-refine-roles]'),
         roleItems: ROLE_IDS.map((id) => {
           const r = resolved.find((x) => x.role === id);
           const here = r.index === selIdx;
@@ -1015,7 +1222,7 @@ export const renderValsMethods = {
             consequence: moves ? ROLE_LABEL[id] + ' is currently assigned to swatch ' + (r.index + 1) + '.' : '',
             aria: here ? 'Remove ' + ROLE_LABEL[id] + ' from this swatch'
               : 'Give ' + ROLE_LABEL[id] + ' to swatch ' + (selIdx + 1) + (moves ? '. It is currently assigned to swatch ' + (r.index + 1) : ''),
-            onPick: () => { this.refineSetRole(id, selIdx); this.closeFold('refineRoleOpen', '[data-refine-roles]'); },
+            onPick: () => { this.refineSetRole(id, selIdx); this.closeTip('refineRoleOpen', '[data-refine-roles]'); },
           };
         }),
         // POSITION — direct, reversible, and therefore never behind a menu. Two visible controls
@@ -1060,13 +1267,17 @@ export const renderValsMethods = {
         // Undo can also reach.
         canReset: !!(p.sourceSwatches || p.roles),
         resetArmed: !!s.refineResetArmed,
-        resetLabel: s.refineResetArmed ? 'Confirm reset' : 'Reset palette',
+        // "Reset palette" reads as though it acts on the palette as an object — next to Remove
+        // swatch, plausibly as "start this palette again". It discards REFINEMENTS and returns to
+        // the colours read from the image, which is what the word now says, so the scope no longer
+        // needs a sentence under the button to be clear.
+        resetLabel: s.refineResetArmed ? 'Confirm reset' : 'Reset all refinements',
         resetAria: s.refineResetArmed
           ? 'Confirm: discard every refinement and return to the colours read from the image'
-          : 'Reset palette. Discards every refinement; you will be asked to confirm',
+          : 'Reset all refinements. Returns to the colours read from the image; you will be asked to confirm',
         onReset: () => {
           if (this.state.refineResetArmed) { this.setState({ refineResetArmed: false }); this.refineReset(); }
-          else this.setState({ refineResetArmed: true, announce: 'Reset palette will discard every refinement. Activate again to confirm.' });
+          else this.setState({ refineResetArmed: true, announce: 'This will discard every refinement and return to the colours read from the image. Activate again to confirm.' });
         },
         onResetCancel: () => this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }),
         onClose: () => this.closeRefine(),
@@ -1282,15 +1493,26 @@ export const renderValsMethods = {
       }),
       // the tag facet: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
-      openFacet: () => this.openTagFilter(), closeFacet: () => this.closeTagFilter(),
+      // A TOGGLE, because it has always claimed to be one. The trigger carries aria-expanded, so it
+      // announces as a disclosure, and it only ever opened — pressing it while the panel was up
+      // re-ran the open and appeared to do nothing. Now that a press outside dismisses the panel,
+      // the trigger is the one press outside it that must not (it would close and immediately
+      // reopen), so it has to carry the close itself. See _facetOutside.
+      openFacet: () => { if (this.state.tagMenuOpen) this.closeTagFilter(); else this.openTagFilter(); },
+      closeFacet: () => this.closeTagFilter(),
       tagQuery: s.tagQuery || '', onTagQuery: (e) => this.setState({ tagQuery: e.target.value }),
       hasTagQuery: !!(s.tagQuery || '').trim(),
       clearTagQuery: () => this.setState({ tagQuery: '' }, () => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }),
       // The panel covers the right of the list, so it states the result size itself rather than
       // making you close it to find out. aria-live=polite on the element (see AppView) announces
       // each change without interrupting whatever the user is doing.
-      matchCount: tagBase.length,
-      matchLabel: tagBase.length + (tagBase.length === 1 ? ' palette matches' : ' palettes match'),
+      //
+      // scopedNow, not tagBase. tagBase is the facet-counting base — the result with the TAG group
+      // lifted out, which is the right denominator for a trait row's count and the wrong number
+      // entirely for a header that says how many palettes match. With a trait applied the two
+      // differ, and the panel was quietly reporting the larger one.
+      // One key, not two: `matchCount` sat beside this with no consumer at all.
+      matchLabel: scopedNow + (scopedNow === 1 ? ' palette' : ' palettes'),
       // sort the facet list: discovery (count) vs known-item lookup (A–Z)
       tagSort: s.tagSort || 'count',
       sortByCount: () => this.setState({ tagSort: 'count' }),
@@ -1315,13 +1537,26 @@ export const renderValsMethods = {
         if (opts[n]) opts[n].focus();
       },
       facetOptions, facetEmpty: facetOptions.length === 0,
+      // NO SILENT TRUNCATION. The control states how many rows are being withheld, so a short list
+      // is legibly a short list rather than the whole vocabulary.
+      facetAllOpen: !!s.facetAllOpen,
+      facetMore: (facetHidden > 0 || (s.facetAllOpen && !facetQuery && facetRanked.length > 6)) ? {
+        label: s.facetAllOpen ? 'Show fewer' : 'Show all · ' + facetHidden,
+        aria: s.facetAllOpen
+          ? 'Show only the most useful character traits'
+          : 'Show all character traits, ' + facetHidden + ' more',
+        onToggle: () => this.toggleFacetAll(),
+      } : null,
       // the in-drawer clear: focus moves to the search field after, because the clear row itself
       // disappears with the state it clears — focus must never die with the control that held it
       // ONE clear-all, living in the panel beside the facets it clears. The header's separate
       // CLEAR was a third affordance for the same act (chip ✕ · header CLEAR · panel CLEAR FILTER);
       // per-chip removal plus this is the whole set now.
-      facetClear: (activeTags.length + activeA11y.length) ? {
-        label: (activeTags.length + activeA11y.length) > 1 ? 'Clear all filters' : 'Clear filter',
+      // Counted across EVERY group. It read activeTags + activeA11y only, so a view narrowed by
+      // Temperature alone offered no clear-all in the panel at all — the two measured groups were
+      // added after this line and never reached it.
+      facetClear: appliedRaw.length ? {
+        label: appliedRaw.length > 1 ? 'Clear all' : 'Clear filter',
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
@@ -1338,7 +1573,11 @@ export const renderValsMethods = {
       onRemoveLast: () => this.removeLastFilter(),
       // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
       filteredEmpty: scopedNow === 0 && appliedTags.length > 0,
-      a11yOptions, hasA11yOptions: a11yOptions.length > 0, a11yNote: A11Y_GROUP_NOTE,
+      a11yOptions, hasA11yOptions: a11yOptions.length > 0,
+      // The three definitions, for the panel's ⓘ. On demand, in one place, rather than as a
+      // standing line under every row — the affordance-over-copy rule, and the reason the group's
+      // old right-hand hint column was removed in the first place.
+      a11yDefs: ['flexible', 'limited', 'none'].map((v) => ({ key: v, label: A11Y_LABEL[v], text: A11Y_DEFINITION[v] })),
       // The combine rule and the three accessibility states used to stand as a paragraph over
       // the groups. It is the panel's own instruction manual, read once and then scrolled past
       // forever, so it moves to the same 16px tip the Library heading uses: available on the

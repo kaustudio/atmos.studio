@@ -6,6 +6,142 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-07-31 — Two motion bands: arrival, and instruments
+
+**Context:** the July 2026 interface review of Refine, Colour Harmonies and Library Filtering, its
+§5 and IF-05. It measured Harmony closing and returning focus promptly while Filter was *still on
+screen past 150 ms and completed later*, and concluded the two overlays were governed by different
+systems. They were governed by the same one; the problem is that it was the wrong system for them.
+
+**Decision:** `DUR.overlay = 0.8` on `EASE.overlay = cubic-bezier(.19,1,.22,1)`, and the five utility
+overlays move on it — Refine, Colour Harmonies, Library Filtering, the contrast checker and the token
+export dialog. `DUR.reveal` (0.62) is untouched and stays what it has always been: the app's
+**arrival**.
+
+The distinction is what the surface IS, not how big it is. A palette resolving out of a photograph,
+bands wiping up in sequence, a stage taking the screen — that is the product's own moment. Refine and
+Filter are instruments you open, use and shut, often several times in a row, and they need their own
+band.
+
+**This landed at 0.18s first, and that was too far.** The reasoning was that a stagger cannot read at
+180 ms, so the section cascade, the cell stagger, Refine's assemble-in-reading-order sequence and the
+masked line reveal all came out and the panels arrived as one flat object. That did fix the measured
+complaint — but by deleting the thing worth measuring. The review's finding was never that these
+surfaces were choreographed; it was that they were choreographed *differently*, and at arrival
+length. **This curve is the answer to what was actually wrong.** It is an expo-out with a long tail:
+48% of the travel is spent in the first 10% of the time, so the panel is effectively present from the
+first frame whatever the duration is, and the rest is a settle.
+
+**Which is why the length ended up at 0.8s and costs nothing.** It went in at 0.4s and the sequence
+did not fit: sections, cells, rules and masked text all have to land inside one arrival without
+treading on each other, and the last of them was still moving as the first finished. The extra
+length is not slower — on this curve the panel is on screen just as fast — it is ROOM. `overlayStep`
+is derived from the band rather than fixed, so the proportions survive the next time it moves.
+
+**Sequential and seamless, which pull against each other.** The overlaps are where they meet: nothing
+waits for the thing before it to finish. Sections start at 0.28 of the panel's travel, the group
+rules at 0.4, cells at 0.45, the masked text underneath all of them. There is no frame in which only
+one thing is moving and no seam between stages. Refine reads panel → bands → identity → axes →
+preview → evidence → rules, every stage beginning while the last is still going. Measured on the
+filter panel at 405 ms: the panel is still 14 px out, a rule is 45% drawn, a section is at 0.82 and a
+cell at 0.13.
+
+**The dividers draw, and they are elements to make that possible.** A border cannot perform — it
+belongs to the box it is on, so it can only fade with it — and the rules BETWEEN content groups are
+structure. They draw left to right on the loader bar's `scaleX`-from-origin-0, which is the mechanic
+the result view's `[data-meta-line]` block already uses. The border each one replaces stays in place
+as `transparent`, so the box model is byte-identical and no padding token had to be re-derived.
+Row-to-row hairlines are deliberately excluded: a separator between two rows belongs to its row and
+fades in with it, and a list whose separators drew independently would read as two things arriving.
+
+**Two blocks were not in the arrival at all**, which is what made this visible in the first place:
+the Character-traits disclosure in the filter panel — carrying the rule that separates the measured
+groups from the interpretive ones, the panel's main distinction — and Refine's whole footer. Both
+appeared instantly while everything around them arrived.
+
+**One function, not five timelines that agree today.** `_drawerIn` builds all three drawers; the
+export dialog shares everything after its first tween (it grows from its centre rather than sliding
+from an edge). Three hand-written timelines that happened to match is how they drifted apart the
+first time.
+
+**Nothing fades. Everything masks.** Content arrives by a clip-path wipe from its bottom edge — the
+same mechanic as the result stage's bands, the detail overlay and Refine's swatch strip — so an
+overlay's contents arrive in the language its palettes arrive in. Opacity is *exposure*: a panel
+whose parts fade up looks like it is being developed rather than assembled, and at this tempo that
+was plainly what it looked like. A mask says the content was always there and is being uncovered,
+which is what a staggered sequence is trying to say in the first place. Sections still translate,
+because a section is the box and what arrives is what is in it. Measured across a full arrival: every
+element holds opacity 1 throughout.
+
+**The exit is written out, and two cleverer versions were tried first.** `DUR.overlayOut = 1.2s`, on
+the same `EASE.overlay`, stated on the same properties the entrance moved.
+
+- `reverse()` plays the entrance backwards at native rate. The length then follows the content
+  (427 ms for Refine against 714 ms for Harmony — the review's own divergence, back through the side
+  door) and the curve comes out mirrored, so the panel accelerates as it leaves and is *gone* rather
+  than landed.
+- `tweenTo(0, {ease})` eases the PLAYHEAD instead. That fixes the length, but the curve lands on time
+  and each tween then applies its own on top — two eases composed. Measured: the panel sat still for
+  160 ms, crossed 300 px in the next 200, then crept the last 16 px over half a second. Nothing in
+  this motion system moves like that, because nothing in it is two eases deep.
+- Writing the exit out gives the curve directly: 44% of the travel by 106 ms, 94% by 452 ms, settled
+  by 950 ms. Away quickly, landing slowly, legible as the arrival's counterpart.
+
+The entrance timeline is killed rather than left to finish — it owns the same properties, and two
+tweens arguing over one transform is how a panel jitters on the way out. Its `clearProps` never
+running is harmless: the drawer unmounts, so the node carrying the stale inline styles goes with it.
+
+**The dismissal is the slower of the two, which inverts the usual rule.** An arrival answers a press
+and has to feel prompt. A dismissal has already been decided — nothing is waiting on it — so it can
+afford to be quiet.
+
+**Measured after:** all four overlays reachable from the result stage close in 1213–1228 ms, a 15 ms
+spread, and open on one schedule whose only variation is the stagger tail of what each one holds
+(≈1.16 s end to end on the fullest panel). Under reduced motion the whole thing collapses to a 0.12 s
+fade: no masks, no rule draws — plain hairlines, full width, no transform, in and out in under 40 ms.
+
+---
+
+## 2026-07-31 — A measured word belongs to one dimension
+
+**Context:** the same review, its IF-01. Selecting the measured **Temperature → Warm** still offered
+an interpretive `warm` trait for three of the four surviving palettes: the same visible word, two
+classification systems, two meanings.
+
+**Decision:** `taxonomy/vocabulary.json` has recorded these terms as retired since version 1 and
+nothing enforced it. `src/lib/taxonomy.js` is the runtime half of that artifact now, and all three
+paths that can put a descriptor on a palette read it — the local engine composes from interpretive
+registers only, the live path filters what a model returns, and `validateFeed` filters on read.
+
+**Read-time filtering, not a migration.** Every stored record, backup file and cross-tab sync comes
+through `validateFeed`, so filtering there fixes an existing archive with no `SCHEMA_VERSION` move
+and no one-shot migration to get wrong. Nothing is lost: `retired.computed` records where each
+term's meaning now lives, and the palette still answers Temperature → Warm from the pixels.
+
+**Coverage is by construction.** The descriptor engine was ten independent `if`s over the axes, and
+a mid-lightness, restrained, neutral, gently-contrasted palette matched none of them — harmless
+while the mechanical labels carried the set, fatal once they were gone, because a palette with no
+descriptors has no tags in the row, none on the card and no `mood` in its metrics. It is three
+exhaustive tables now (light, temperature, structure) with disjoint word sets, so every palette
+resolves to exactly three terms before the flags and the guarantee is provable rather than swept
+for. `taxonomy-check.mjs` asserts it over 4000 random palettes, along with the artifact and the
+runtime agreeing on the retired list in both directions.
+
+**Structure comes from contrast on purpose.** Contrast is the one axis with no facet in the filter
+panel, so those four terms are the only register that cannot read as a synonym of a dimension the
+user can also filter by — which is the whole failure being removed.
+
+**The review's own suggestion was not followed, and this is the one place it is wrong.** It proposes
+*Graphic, Monochrome, Saturated, Restrained, Anchored, Even, Stark* as the Character vocabulary. Six
+of those seven are in `retired.computed`. Following it would have rebuilt the collision.
+
+**The eight seeds changed.** Their descriptors were hand-authored measured words — Garnet shipped as
+*Low-lit · Warm · Saturated* — which made the examples the archive's largest source of the
+duplication. Each is now exactly what `composeReading()` returns for its swatches. The rationales are
+untouched: an axis word belongs in a sentence.
+
+---
+
 ## 2026-07-31 — A palette belongs to many projects
 
 **Decision:** membership is a set. `projectIds: string[]` is the truth; `projectId` survives on every

@@ -1,6 +1,7 @@
 // Persistence (Workstream A): swappable storage adapter over localStorage, versioned schema with
 // migration + validation, cross-tab sync, projects CRUD, and the portable project file.
 import { ROLE_IDS } from '../../lib/exporters.js';
+import { withoutRetired } from '../../lib/taxonomy.js';
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
@@ -161,7 +162,15 @@ export const persistenceMethods = {
         exampleKey: typeof p.exampleKey === 'string' ? p.exampleKey : null,
         time: typeof p.time === 'number' ? p.time : Date.now(),
         name: typeof p.name === 'string' ? p.name : 'Untitled',
-        descriptors: Array.isArray(p.descriptors) ? p.descriptors.filter((d) => typeof d === 'string') : [],
+        // THE TAXONOMY MIGRATION, and it is a filter rather than a migration step on purpose.
+        // Every archive written before the measured words left the tag vocabulary holds descriptors
+        // like Warm and Low-lit — which are Temperature and Lightness facet values now, and would
+        // otherwise keep appearing in the Character group as duplicates of the dimensions above it.
+        // Filtering on READ fixes every stored record, every backup file and every cross-tab sync
+        // through the one door they all come through, with no SCHEMA_VERSION move and no one-shot
+        // migration to get wrong. The cost is that it runs on every load; it is a handful of string
+        // compares over a personal archive.
+        descriptors: withoutRetired(Array.isArray(p.descriptors) ? p.descriptors : []),
         rationale: typeof p.rationale === 'string' ? p.rationale : '',
         archetype: typeof p.archetype === 'string' ? p.archetype : 'seed',
         example: p.example === true,
@@ -456,7 +465,13 @@ export const persistenceMethods = {
   },
   // ---- lightweight reversible dialog motion (assign / manage) — fade+slide, tokens, RM-instant ----
   _dialogIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const root = document.querySelector(sel); if (!root) return; const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); if (bk) g.from(bk, { opacity: 0, duration: .2, ease: 'none' }); g.from(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.state, ease: this.EASE.entrance, transformOrigin: 'center center', clearProps: 'transform' }); },
-  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: .2, ease: 'none' }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.state, ease: this.EASE.exit, transformOrigin: 'center center' }, 0); },
+  // Every modal dialog's exit, on the utility-overlay band with the drawers — this is the shared
+  // half of the "all five settle in the same time" contract, and it was the one place the number
+  // was written twice (.2 for the backdrop, DUR.state for the panel) so the two never quite agreed.
+  // Every modal dialog's exit — Refine among them — on the overlays' own band and the one curve.
+  // DUR.overlayOut rather than DUR.overlay: a dismissal has already been decided, so nothing waits
+  // on it and it can afford to be the slower of the two.
+  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0); },
   // ---- the toggletip's own beat ----------------------------------------------------------------
   // A dialog's arrival is an event; a toggletip's is a disclosure, so it moves less and moves
   // faster — DUR.state in, DUR.micro out, and 6px of travel against the dialog's 12, with no scale.

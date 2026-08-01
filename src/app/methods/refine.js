@@ -32,35 +32,66 @@ function reswatch(s, hexStr) {
 
 export const refineMethods = {
   // ---- motion ----------------------------------------------------------------------------------
-  // THE SURFACE ARRIVES IN THE ORDER IT IS READ. A dialog that fades in as one rectangle tells you
-  // nothing about what is in it; this one assembles — the palette wipes up band by band (the same
-  // clip-path rise the result stage and the detail overlay both use), the roles cascade under it,
-  // the axis rows draw last. Sequence is the app's own grammar, not decoration bolted onto a modal.
+  // THE SURFACE ARRIVES IN THE ORDER IT IS READ, on the shared overlay band and curve.
+  //
+  // This is the one overlay with a real reading order — palette, then the swatch in hand, then the
+  // axes that change it, then what the change does — so it is the one where a sequence is worth
+  // more than a fade. It briefly lost that to a flat 180ms settle and got it back at 0.4s, which is
+  // the length at which the panel is already present (expo-out: nearly all the travel is in the
+  // first fifth) while its contents still resolve in order.
+  //
+  // SEAMLESS means overlapped, not queued. Every stage starts while the one before it is still
+  // moving — the bands begin at 0.1 of the panel's travel, the identity at 0.3, the axes at 0.42,
+  // the preview and the contrast card behind them — so there is no frame in which exactly one thing
+  // is animating and no seam between the stages. Total tail is a shade over the panel's own 0.4s.
+  //
+  // COLOUR LEADS. The band wipe is the result stage's own clip-path rise, which is what ties this
+  // surface to the palette it came from rather than making it a generic modal.
   _refineIn() {
     const g = window.gsap, root = document.querySelector('[data-refine-dialog]');
     if (!g || !root) return;
+    const D = this.DUR.overlay, E = this.EASE.overlay, step = this.DUR.overlayStep;
     const panel = root, back = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]');
     const bands = [...root.querySelectorAll('[data-refine-swatch]')];
     const title = root.querySelector('[data-refine-title]');
     const axes = [...root.querySelectorAll('[data-refine-axis]')];
+    const preview = root.querySelector('[data-refine-preview]');
+    const evidence = [...root.querySelectorAll('[data-refine-sec]')];
     if (this._reduce) {
-      if (back) g.from(back, { opacity: 0, duration: .2, ease: 'none' });
-      g.from(panel, { opacity: 0, duration: .2, ease: 'none' });
+      if (back) g.from(back, { opacity: 0, duration: .12, ease: 'none' });
+      g.from(panel, { opacity: 0, duration: .12, ease: 'none' });
+      this._refinePill(true);
       return;
     }
     const tl = g.timeline();
-    if (back) tl.from(back, { opacity: 0, duration: .22, ease: 'none' }, 0);
-    tl.from(panel, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }, 0);
+    if (back) tl.from(back, { opacity: 0, duration: D, ease: 'none' }, 0);
+    tl.from(panel, { opacity: 0, y: 10, duration: D, ease: E, clearProps: 'transform' }, 0);
     if (bands.length) {
       tl.set(bands, { clipPath: 'inset(100% 0 0 0)' }, 0)
-        .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }, 0.1);
+        .to(bands, { clipPath: 'inset(0% 0 0 0)', duration: D * 0.85, stagger: step, ease: E, clearProps: 'clipPath' }, D * 0.1);
     }
-    // Then what is in hand, then the axes that change it — the same order the eye reads them in.
-    if (title) tl.from(title, { opacity: 0, y: 10, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.24);
-    if (axes.length) tl.from(axes, { opacity: 0, y: 10, duration: this.DUR.state, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'transform,opacity' }, 0.3);
+    // EVERYTHING BELOW MASKS. The band wipe above is the same mechanic, so the whole surface arrives
+    // in one language: each part is uncovered from its bottom edge in the order it is read. These
+    // were opacity fades, which at this tempo read as the dialog resolving out of nothing.
+    this._maskIn(tl, title ? [title] : [], D * 0.3, D * 0.7, 0);
+    this._maskIn(tl, axes, D * 0.42, D * 0.7, step * 2);
+    // The preview is uncovered WITH the axes rather than after them: it is the other half of the
+    // same control, and a specimen that arrives late reads as a result of the axes instead of a
+    // companion to them.
+    this._maskIn(tl, preview ? [preview] : [], D * 0.48, D * 0.7, 0);
+    // 2px of bleed: these sections carry the drawn group rules at -1px, outside their border box,
+    // and a flush mask would clip the rule away for the length of the wipe.
+    this._maskIn(tl, evidence, D * 0.58, D * 0.7, step * 2, 2);
+    // The group dividers draw left to right, on the same timeline so they reverse with everything
+    // else. Later than the drawers' 0.4 because Refine's own sections start later — the rule under
+    // Palette structure has to follow the section it is ruling off, not lead it.
+    this._drawRules(tl, root, D * 0.62);
     // The marker lands on the opening selection AFTER the bands have their real widths — measured,
     // never assumed, because flexGrow decides them.
-    tl.call(() => this._refinePill(true), null, 0.1);
+    tl.call(() => this._refinePill(true), null, D * 0.95);
+    // The masked line reveal, on the same schedule the drawers use — one text mechanic across every
+    // overlay rather than a signature two of them happen to have.
+    this._revealDrawerText('[data-refine-dialog]');
   },
   // The travelling selection marker. Same mechanic and the same curve as the project chips' pill
   // (misc.js _updateProjPill): the movement is the feedback, so there is no static "selected"
@@ -164,8 +195,16 @@ export const refineMethods = {
       refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false,
       announce: 'Refining ' + p.name + '. Choose a swatch, then assign a role or adjust its colour. Press Escape to close.',
     }, () => {
+      // ENTER ON THE TASK, NOT ITS EXIT. This took the dialog's first button, which is Done in the
+      // header — so a keyboard user arrived on the way out and had to Tab past the whole surface to
+      // reach the thing they opened it to do. The selected swatch is the first meaningful control:
+      // it is the object being edited, it is where the arrow keys already work, and Tab from there
+      // runs forward through the axes in reading order.
       const d = document.querySelector('[data-refine-dialog]');
-      if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      if (d) {
+        const el = d.querySelector('[data-refine-swatch][aria-pressed="true"]') || d.querySelector('button');
+        if (el) try { el.focus(); } catch (e) { }
+      }
       requestAnimationFrame(() => this._refineIn());
     });
   },
@@ -196,10 +235,19 @@ export const refineMethods = {
       g.from(el, { xPercent: 12, opacity: 0, duration: this.DUR.state, ease: this.EASE.fold, clearProps: 'transform,opacity' });
     });
   },
-  closePairings() {
+  // `toSwatch` is the repair path: a pairing row was activated, the selection has already moved to
+  // the swatch that can fix it, and focus has to follow it there rather than snapping back to the
+  // View all pairings button. Without this the close tween outlives refineSelect's focus call and
+  // takes it back — the selection moved, the keyboard did not, and the two disagreed.
+  closePairings(toSwatch) {
     const back = this._pairBack;
     const g = window.gsap, el = document.querySelector('[data-refine-pairs]');
-    const done = () => this.setState({ refineAllPairs: false }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } });
+    const done = () => this.setState({ refineAllPairs: false }, () => {
+      const target = toSwatch
+        ? document.querySelector('[data-refine-swatch][aria-pressed="true"]')
+        : back;
+      if (target && target.focus) try { target.focus(); } catch (e) { }
+    });
     if (!g || this._reduce || !el) { done(); return; }
     g.to(el, { xPercent: 12, opacity: 0, duration: this.DUR.state * 0.7, ease: this.EASE.fold, onComplete: done });
   },
@@ -238,6 +286,9 @@ export const refineMethods = {
     // Read the thumbs BEFORE the swap, so the tween has a real starting point rather than the
     // destination it is already sitting on.
     const from = this._refineSliderValues();
+    // A new swatch is a new gesture: the latch is per (swatch, axis, value), but clearing it here
+    // as well means switching selection can never inherit a stale one.
+    this._refineGestureEnd();
     const roles = this._rolesOn(p, i);
     this.setState({ refineSel: i, announce: (roles.length ? roles.join(' and ') + '. ' : 'No role. ') + 'Swatch ' + (i + 1) + ' of ' + p.swatches.length + ', ' + p.swatches[i].hex.toUpperCase() + ' selected.' }, () => {
       this._refinePill();
@@ -389,21 +440,92 @@ export const refineMethods = {
   // the colour fits sRGB, so a slider can never mint a hex the screen cannot show.
   // Called on pointerup / keyup / blur from a slider: the next move of the same control starts a
   // new undo step rather than joining the last one.
-  _refineGestureEnd() { this._refineCoalesce = null; },
+  _refineGestureEnd() { this._refineCoalesce = null; this._refineLastReq = null; },
+  // The axis bounds and the smallest step each control offers, in the axis's own units. One table,
+  // because the search below and the keyboard handler both have to agree with the sliders.
+  AXIS: {
+    l: { min: 0, max: 1, step: 0.005 },
+    c: { min: 0, max: 0.33, step: 0.002 },
+    h: { min: 0, max: 360, step: 1 },
+  },
+  // ONE KEYPRESS, ONE VISIBLE CHANGE.
+  //
+  // The bug this exists to fix: a slider step is a step in OKLCH, and the result is gamut-mapped and
+  // then quantised to 8-bit sRGB. On plenty of real colours one step lands on the hex the swatch
+  // already has — measured at 8 of 20 consecutive steps near white — and refineAdjust used to
+  // return early on that, pushing no state and no undo. The range input is CONTROLLED, so the next
+  // render put the thumb back where it started: the press was silently discarded, and because the
+  // starting value never moved, the next press was discarded too. By keyboard the axis was stuck,
+  // with no feedback of any kind. (Dragging hid it — a pointer crosses many values at once.)
+  //
+  // So a request that quantises away is not dropped, it is CARRIED: keep going in the direction the
+  // user asked until the hex actually changes, or until the axis runs out. The walk is bounded by
+  // the axis span over its own step, so it terminates whatever it is handed, and at the end of the
+  // range — where there is genuinely nothing left — it still returns without a change, which is the
+  // honest answer rather than a value that pretends to have moved.
+  _seekAxisChange(s, part, requested) {
+    const ax = this.AXIS[part];
+    const cur = part === 'l' ? s.L
+      : part === 'c' ? Math.sqrt(s.a * s.a + s.b * s.b)
+        : ((Math.atan2(s.b, s.a) * 180 / Math.PI) + 360) % 360;
+    const C = Math.sqrt(s.a * s.a + s.b * s.b);
+    const build = (v) => {
+      const L = part === 'l' ? v : s.L;
+      const c = part === 'c' ? v : C;
+      const H = (part === 'h' ? v : ((Math.atan2(s.b, s.a) * 180 / Math.PI) + 360) % 360) * Math.PI / 180;
+      return gamutMap(L, c * Math.cos(H), c * Math.sin(H));
+    };
+    let v = Math.max(ax.min, Math.min(ax.max, requested));
+    let hexStr = build(v);
+    if (hexStr.toLowerCase() !== s.hex.toLowerCase()) return { hex: hexStr, value: v };
+    // Direction of travel. Equal means the caller asked for the value already held — a pointer
+    // landing on the same spot — and there is nothing to seek.
+    const dir = v > cur ? 1 : v < cur ? -1 : 0;
+    if (!dir) return null;
+    const guard = Math.ceil((ax.max - ax.min) / ax.step) + 2;
+    for (let n = 0; n < guard; n++) {
+      v = Math.max(ax.min, Math.min(ax.max, v + dir * ax.step));
+      hexStr = build(v);
+      if (hexStr.toLowerCase() !== s.hex.toLowerCase()) return { hex: hexStr, value: v };
+      if (v <= ax.min || v >= ax.max) break;
+    }
+    return null;   // the axis is genuinely spent in that direction
+  },
   refineAdjust(i, part, value) {
     const p = this.state.current;
-    if (!p || !p.swatches[i]) return;
+    if (!p || !p.swatches[i] || !this.AXIS[part]) return;
+    /* ONE REQUEST IS ONE MOVE, however many events carry it.
+       A range input fires BOTH `input` and `change` for a keyboard step, and React's onChange is
+       wired to both — so a single ArrowRight arrives here twice with the same requested value. The
+       first call moves the colour; the second finds the swatch already past the request, reads that
+       as "the user is asking to come back down", and walks it straight to where it started. Net
+       effect: the keyboard could not move a slider at all, and the value the user asked for was
+       both applied and reverted inside one keypress.
+       Ignoring an identical request for the same axis within the same gesture is the whole fix. It
+       cannot swallow a real move: a genuine repeat means the pointer has not left the value it is
+       already on, which is a no-op by definition, and the gesture end (pointerup / keyup / blur)
+       clears the latch so the next press starts clean. */
+    const reqKey = i + ':' + part + ':' + value;
+    if (this._refineLastReq === reqKey) return;
+    this._refineLastReq = reqKey;
     const s = p.swatches[i];
-    const C = Math.sqrt(s.a * s.a + s.b * s.b);
-    let H = Math.atan2(s.b, s.a);
-    let L = s.L, c = C;
-    if (part === 'l') L = Math.max(0, Math.min(1, value));
-    else if (part === 'c') c = Math.max(0, Math.min(0.4, value));
-    else if (part === 'h') H = value * Math.PI / 180;
-    const hexStr = gamutMap(L, c * Math.cos(H), c * Math.sin(H));
-    if (hexStr.toLowerCase() === s.hex.toLowerCase()) return;   // nothing moved; do not push undo
-    const swatches = p.swatches.map((x, j) => j === i ? reswatch(x, hexStr) : x);
-    this._applyRefine({ swatches }, { announce: 'Swatch ' + (i + 1) + ' is now ' + hexStr.toUpperCase() + '.', coalesce: 'lch:' + i + ':' + part });
+    const hit = this._seekAxisChange(s, part, value);
+    if (!hit) return;   // nothing moved and nothing left to move; do not push undo
+    const swatches = p.swatches.map((x, j) => j === i ? reswatch(x, hit.hex) : x);
+    this._applyRefine({ swatches }, { announce: 'Swatch ' + (i + 1) + ' is now ' + hit.hex.toUpperCase() + '.', coalesce: 'lch:' + i + ':' + part });
+  },
+  // Arrow keys in the NUMERIC field, which had none: the text input took typed digits only, so the
+  // one control on the surface that states an exact value could not be nudged, while the slider
+  // beside it could. Shift takes the coarse step, the way a stepper is expected to.
+  _refineNumberKey(e, i, part, step, min, max, toAxis) {
+    const dir = e.key === 'ArrowUp' ? 1 : e.key === 'ArrowDown' ? -1 : 0;
+    if (!dir) { if (e.key === 'Enter') { e.preventDefault(); this._refineGestureEnd(); } return; }
+    e.preventDefault();
+    const cur = parseFloat(e.currentTarget.value);
+    if (!isFinite(cur)) return;
+    const mult = e.shiftKey ? 10 : 1;
+    const next = Math.max(min, Math.min(max, cur + dir * step * mult));
+    this.refineAdjust(i, part, toAxis(next));
   },
   // Removal renumbers everything after it, so the roles map has to be renumbered with it — a role
   // pointing at index 3 means a different colour once index 1 is gone. Roles ON the removed swatch

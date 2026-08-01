@@ -243,62 +243,68 @@ export const pipelineMethods = {
     // of the same image are the same identity in every place identity is compared.
     return { id: s.hash + '-0', hash: s.hash, variation: 0, imageUrl: null, exampleKey: s.key, time: Date.now() - s.age, name: s.name, descriptors: s.desc, rationale: s.rat, archetype: s.arch, example: true, swatches };
   },
+  // THE DESCRIPTORS HERE ARE THE ENGINE'S OWN. They were hand-authored, and every one of them was a
+  // measured word — Garnet shipped as Low-lit · Warm · Saturated, which are Lightness, Temperature
+  // and Chroma facet values, so the eight examples were the archive's largest source of exactly the
+  // duplication the Character group now excludes (see src/lib/taxonomy.js). Each `desc` below is
+  // what composeReading() returns for that swatch set, so a seed and a freshly read palette describe
+  // themselves in one vocabulary. The RATIONALES are untouched: an axis word belongs in a sentence.
   makeSeed() {
     const H = 3600e3;
     return [
       // 30° — red
       this.seedObj({
         key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 8 * 60e3,
-        name: 'Garnet', desc: ['Low-lit', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
+        name: 'Garnet', desc: ['Smouldering', 'Golden', 'Graphic'], arch: 'graphic',
         rat: 'Warm, saturated reds kept in shadow split by stark contrast. Shadowed but legible.',
         sw: [['#0f0302', .3609], ['#e12409', .2392], ['#f17645', .1454], ['#aa0906', .1416], ['#540604', .1128]],
       }),
       // 44° — orange
       this.seedObj({
         key: 'tulip', hash: 'ff280e7420bfb244', age: 3 * H,
-        name: 'Dry Season', desc: ['Stark', 'Warm', 'Saturated', 'Graphic'], arch: 'graphic',
+        name: 'Dry Season', desc: ['Golden', 'Charged', 'Graphic'], arch: 'graphic',
         rat: 'Saturated reds sitting at mid weight, sitting close together. Even-tempered and workable.',
         sw: [['#a74b1b', .4919], ['#933913', .3580], ['#ab8766', .0972], ['#d5cdbf', .0449], ['#361905', .0079]],
       }),
       // 58° — terracotta, against the one teal in the set
       this.seedObj({
         key: 'courtyard', hash: '5b217989553d518d', age: 9 * H,
-        name: 'Forged Midfield', desc: ['Warm', 'Stark', 'Monochrome'], arch: 'graphic',
+        name: 'Forged Midfield', desc: ['Nostalgic', 'Still', 'Graphic'], arch: 'graphic',
         rat: 'Warm oranges sitting at mid weight, held to a single note. Plain and unhurried.',
         sw: [['#e2a779', .3819], ['#472f24', .2483], ['#19110e', .2014], ['#685a48', .0961], ['#9c7b60', .0723]],
       }),
       // 82° — gold
       this.seedObj({
         key: 'poppy', hash: '9f0f8f2c2b9d30f2', age: 26 * H,
-        name: 'Scorched Clear Morning', desc: ['Stark', 'Bright', 'Warm', 'Graphic'], arch: 'graphic',
+        name: 'Scorched Clear Morning', desc: ['Sunlit', 'Nostalgic', 'Graphic'], arch: 'graphic',
         rat: 'Warm yellows lifted high, held to a single note. Airy and unforced.',
         sw: [['#e5e9eb', .5490], ['#664515', .1188], ['#c4b07b', .1132], ['#1e1506', .1109], ['#9d7b38', .1080]],
       }),
       // 128° — chartreuse
       this.seedObj({
         key: 'radish', hash: '4cae3f7a29e8ee24', age: 34 * H,
-        name: 'High Key', desc: ['Stark', 'Pale', 'Monochrome', 'Graphic'], arch: 'graphic',
+        name: 'High Key', desc: ['Weightless', 'Nostalgic', 'Graphic'], arch: 'graphic',
         rat: 'Hues held to a single note: low-chroma greens, warm. Washed and quiet.',
         sw: [['#eae8dd', .7766], ['#b8cd79', .0814], ['#6c9429', .0557], ['#3c5e19', .0480], ['#1b2f0c', .0382]],
       }),
       // 164° — green, carrying its own complement
       this.seedObj({
         key: 'papaya', hash: '1e83a904f39350e0', age: 50 * H,
-        name: 'Ruled Open Country', desc: ['Even', 'Varied', 'Anchored'], arch: 'neutral',
+        name: 'Ruled Open Country', desc: ['Charged', 'Precise'], arch: 'neutral',
         rat: 'One colour carrying the frame: saturated tones with clear structure between them. Restrained and quietly atmospheric.',
         sw: [['#1b6d4e', .7556], ['#221d14', .0797], ['#c05118', .0637], ['#d17827', .0507], ['#903215', .0503]],
       }),
       // 238° — blue, carrying its own complement
       this.seedObj({
         key: 'court', hash: '480909a3cd5e5535', age: 74 * H,
-        name: 'Midfield', desc: ['Stark', 'Cool', 'Monochrome'], arch: 'graphic',
+        name: 'Midfield', desc: ['Overcast', 'Still', 'Graphic'], arch: 'graphic',
         rat: 'Hues held to a single note: restrained blues, cool. Restrained and quietly atmospheric.',
         sw: [['#547b95', .4699], ['#0a2944', .1977], ['#678da4', .1890], ['#456b85', .1140], ['#d0d2c6', .0293]],
       }),
       // 263° — periwinkle
       this.seedObj({
         key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 100 * H,
-        name: 'Frozen Slate', desc: ['Restrained', 'Cool', 'Stark', 'Graphic'], arch: 'accented',
+        name: 'Frozen Slate', desc: ['Overcast', 'Still', 'Accented', 'Graphic'], arch: 'accented',
         rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour. Even-tempered and workable.',
         sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
       }),

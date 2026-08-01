@@ -120,25 +120,42 @@ export function gamutMap(L, a, b) {
   for (let i = 0; i < 22; i++) { const mid = (lo + hi) / 2; if (inSrgb(oklabToLinear(L, a * mid, b * mid))) lo = mid; else hi = mid; }
   return labToHex(L, a * lo, b * lo);
 }
-export function rotateHue(hexStr, deg) {
+// GAMUT MAPPING, REPORTED. gamutMap silently walks chroma down until the colour fits sRGB, which is
+// the honest thing to do and the wrong thing to do silently: a harmony can hand back a colour that
+// is NOT the rotation it claims, and the drawer was covering that with one sentence of methodology
+// under the title — "derived in OKLCH and mapped into sRGB" — which is true of the whole set and
+// therefore says nothing about any member of it. These two return the flag alongside the hex so the
+// specific colour can be marked at swatch level.
+export function rotateHueMapped(hexStr, deg) {
   const c = hexToRgb(hexStr), lab = rgb2oklab(c[0] / 255, c[1] / 255, c[2] / 255);
-  const C = Math.sqrt(lab.a * lab.a + lab.b * lab.b); let H = Math.atan2(lab.b, lab.a) + deg * Math.PI / 180;
-  return gamutMap(lab.L, C * Math.cos(H), C * Math.sin(H));
+  const C = Math.sqrt(lab.a * lab.a + lab.b * lab.b); const H = Math.atan2(lab.b, lab.a) + deg * Math.PI / 180;
+  const a = C * Math.cos(H), b = C * Math.sin(H);
+  const mapped = !inSrgb(oklabToLinear(lab.L, a, b));
+  return { hex: gamutMap(lab.L, a, b), mapped };
 }
-export function shadeSet(hexStr) {
+export function rotateHue(hexStr, deg) { return rotateHueMapped(hexStr, deg).hex; }
+export function shadeSet(hexStr) { return shadeSetMapped(hexStr).map((x) => x.hex); }
+export function shadeSetMapped(hexStr) {
   const c = hexToRgb(hexStr), lab = rgb2oklab(c[0] / 255, c[1] / 255, c[2] / 255);
-  return [0.88, 0.72, 0.56, 0.40, 0.24].map((L) => gamutMap(L, lab.a, lab.b));
+  return [0.88, 0.72, 0.56, 0.40, 0.24].map((L) => ({ hex: gamutMap(L, lab.a, lab.b), mapped: !inSrgb(oklabToLinear(L, lab.a, lab.b)) }));
 }
+// One entry per model, each carrying a stable `id` — the drawer selects a model now rather than
+// listing all seven, and a selection has to survive a re-render by something other than its label.
+// `base` marks the swatch that IS the source colour, so the drawer can say so in words instead of
+// with the 5px square that used to be the only clue.
 export function harmonyGroups(hexStr) {
-  const R = (d) => rotateHue(hexStr, d), base = hexStr.toUpperCase();
+  const base = hexStr.toUpperCase();
+  const R = (d) => { const r = rotateHueMapped(hexStr, d); return { hex: r.hex.toUpperCase(), mapped: r.mapped, base: r.hex.toUpperCase() === base }; };
+  const S = () => shadeSetMapped(hexStr).map((r) => ({ hex: r.hex.toUpperCase(), mapped: r.mapped, base: r.hex.toUpperCase() === base }));
+  const B = { hex: base, mapped: false, base: true };
   return [
-    { name: 'Analogous', hexes: [R(-30), base, R(30)] },
-    { name: 'Complementary', hexes: [base, R(180)] },
-    { name: 'Split Complementary', hexes: [base, R(150), R(210)] },
-    { name: 'Triadic', hexes: [base, R(120), R(240)] },
-    { name: 'Tetradic', hexes: [base, R(60), R(180), R(240)] },
-    { name: 'Square', hexes: [base, R(90), R(180), R(270)] },
-    { name: 'Shades', hexes: shadeSet(hexStr) },
+    { id: 'analogous', name: 'Analogous', cells: [R(-30), B, R(30)] },
+    { id: 'complementary', name: 'Complementary', cells: [B, R(180)] },
+    { id: 'split', name: 'Split Complementary', cells: [B, R(150), R(210)] },
+    { id: 'triadic', name: 'Triadic', cells: [B, R(120), R(240)] },
+    { id: 'tetradic', name: 'Tetradic', cells: [B, R(60), R(180), R(240)] },
+    { id: 'square', name: 'Square', cells: [B, R(90), R(180), R(270)] },
+    { id: 'shades', name: 'Shades', cells: S() },
   ];
 }
 
