@@ -1379,3 +1379,8 @@ specimen keeps describing exactly what is drawn.
 unit is empty, so `0.030` stopped 22px short of the box edge while `53%` and `93°` reached it, and
 the one value with no unit was the one that read as not right-aligned. The unit hugs the number now
 and the content's right edge is what aligns.
+
+**The header had no bottom padding of its own.** The h1's bottom edge WAS the scrollport's top edge,
+so at any scroll position but the top, body content passed under the palette name with zero
+clearance — a section heading sitting flush against the dialog's heading. The header owns 18px now,
+and the strip's top padding drops from 24 to 6 so the resting gap stays at 24.

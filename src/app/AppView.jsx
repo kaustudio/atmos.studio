@@ -2303,7 +2303,11 @@ function RefineDialog({ vals }) {
             The palette now holds the header at display size, level with Done, and the swatch is the
             H2 in the body under the strip. No motion hook on the header itself — it rides the
             panel's own fade; see _refineIn. */}
-        <header style={sx('display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 0')}>
+        {/* The bottom padding is the header's OWN, not the first section's. The h1's bottom edge was the
+            scrollport's top edge, so scrolled content passed under the palette name with zero
+            clearance — at any scroll position but the top, a heading sat flush against another
+            heading. The strip's top padding drops to 6px so the resting gap stays 24px. */}
+        <header style={sx('display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px var(--page-gutter)')}>
           <span style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
             <span style={sx(eyebrow)}>Refine palette</span>
             <h1 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.1;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:balance")}>{r.name}</h1>
@@ -2327,7 +2331,7 @@ function RefineDialog({ vals }) {
                keys, Home and End all land in refineSelect. A listbox rather than a row of toggle
                buttons: this is "pick exactly one of five", which aria-pressed can only describe as
                five independent on/off states, and aria-selected is not valid on a button role. */}
-        <div style={sx('position:relative;width:100%;padding:24px var(--page-gutter) 0')}>
+        <div style={sx('position:relative;width:100%;padding:6px var(--page-gutter) 0')}>
           <div role="listbox" aria-orientation="horizontal" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
             {r.swatches.map((b) => (
               <button key={b.sid} type="button" role="option" data-refine-swatch="1" data-ring={b.ring} data-focus="swatch" tabIndex={b.tab} aria-selected={b.selected} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
@@ -2590,7 +2594,7 @@ function RefineDialog({ vals }) {
         </div>
 
         {/* end of the scrollport — the footer below is a sibling, outside it */}
-        <div style={sx('height:22px;flex:none')}></div>
+        <div style={sx('height:var(--page-gutter);flex:none')}></div>
         </div>
 
         {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
