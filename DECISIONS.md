@@ -1315,3 +1315,46 @@ were already there.
 automatically and may move when the palette is recalculated."* as the section's supporting line —
 the sentence removed hours earlier for overexplaining. The harmony it asks for is structural, and
 removing the contrast footer row is what achieves it; the definition stays on the toggletip.
+
+---
+
+## 2026-08-02 — Refine: one scan line, and the tokens it is built from
+
+**The body could not be scanned because seven levels shared one style.** The modal's own label and
+all six section titles rendered identically at 9px/500 uppercase `--on-surface-muted`. Sections now
+sit one step up and in full ink — `--fs-label` 10px, weight 500, `--on-surface`, as `<h3>` — and 9px
+muted is left to modal chrome and sub-labels. The contrast jump is the lever: 5.55:1 → 15.94:1.
+
+**The H1 was 4px smaller than the H2.** `--fs-subtitle` (20) on the palette, `--fs-title` (24) on the
+swatch — the child outranking its parent, which is what "no visual hierarchy" was pointing at. The
+two are swapped.
+
+**Tracking is `var(--track-flat)` throughout the dialog.** The h1's `-.01em`, the h2's `-.005em`, the
+swatch labels' `.14em` and the specimen buttons' `.08em` are gone. The rest of the app still carries
+its own ad-hoc values; that is a separate pass.
+
+**`22px` was never a token.** Section margins used it while everything else used `--page-gutter`
+(24px). They use the token now.
+
+**The selection ring is 4px clear and a 2px stroke**, via `outline:2px solid; outline-offset:-6px` —
+the outline's inner edge sits 6px in and paints outward, so the gap is exactly 4px. Still drawn
+inside the element box, so no clipping by the neighbour and no layout cost. Swatch height is back to
+124px, the value before `a3c4528`.
+
+**Text contrast said four things and repeated two of them.** A `Current pairing` eyebrow over a
+two-line stack, with the hex pair restating the chip's own colours and the selected swatch's hex from
+the metadata line, and a verdict reading "Normal text: Fails AA" beside a chip whose text is "Normal
+text". One row now: chip, role pair, ratio, verdict.
+
+**Palette order and Danger zone were two named sections for three buttons.** Both answer where the
+swatch sits in the palette, or whether it sits in it at all — one section, `Position in palette`. The
+safety on removal never lived in the word "danger": it is the two-step arm, the impact line beside
+the control, and the alertdialog, all unchanged.
+
+**The spoken contrast count contradicted the visible one** — `"1 of 8 meet AA"` against `"7 of 8 fail
+AA"`. Both are built from one string now.
+
+**Two smaller fixes from the same audit.** The slider thumb's hover/press transform had no
+`prefers-reduced-motion` override — the only Refine motion no preference could stop. And its two
+vendor pseudo-elements are separate rules: a selector list mixing `-webkit-` and `-moz-` is invalid
+in both engines, each dropping the whole rule on the selector it does not know.

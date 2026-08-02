@@ -1012,8 +1012,8 @@ export const renderValsMethods = {
         // graded at 3:1, so the sample was showing one size and the verdict was about another.
         headingStyle: { fontFamily: mono, fontSize: 'var(--fs-detail)', fontWeight: 500, color: roleHex.text, lineHeight: 1.25 },
         bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', color: roleHex.text, lineHeight: 1.45, opacity: 0.92 },
-        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
-        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px' },
+        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
+        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '4px 8px' },
         // ONE MEASURE for the whole specimen. At the old 40% column width everything shared the
         // column's measure by force; at full width the accent rule ran 910px across the panel and
         // read as a divider belonging to the dialog rather than to the page being previewed.
@@ -1109,12 +1109,12 @@ export const renderValsMethods = {
             failures: rc.total - rc.passed,
             hasFailures: rc.passed < rc.total,
             pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
-            pairHex: f.fgHex + ' on ' + f.bgHex,
             pairRatio: f.ratio.toFixed(1) + ':1',
-            // The size the threshold is about, said out loud. 4.5:1 is the NORMAL-text bar; the same
-            // pair at large text is graded against 3:1 and could pass where this fails, so a bare
-            // "Fails AA" was a verdict with its subject missing.
-            pairLevel: f.aaa ? 'Normal text: AAA' : f.aa ? 'Normal text: AA' : 'Normal text: Fails AA',
+            // "Normal text: Fails AA" beside a specimen whose own text reads "Normal text" said the
+            // subject twice. The chip carries the size; the badge carries the verdict. The hex pair
+            // that sat under the role names went with it — it is the chip's two colours, and the
+            // selected swatch's hex is already the first thing in the metadata line at the top.
+            pairLevel: f.aaa ? 'AAA' : f.aa ? 'AA' : 'Fails AA',
             pairLevelStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
             // Normal text, drawn at normal-text size. It was --fs-title, which is LARGE text under
             // WCAG and graded at 3:1 — the specimen was showing one size while the badge beside it
@@ -1164,7 +1164,13 @@ export const renderValsMethods = {
                 levelStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
               };
             }),
-            aria: rc.passed + ' of ' + rc.total + ' text-role pairings meet AA. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + ' for normal text.',
+            // ONE STRING, TWO RENDERINGS. This said "1 of 8 meet AA" while the line beside it said
+            // "7 of 8 fail AA" — the same measurement, two different numbers, one of them heard
+            // only by screen-reader users. The spoken name is built from the visible count now.
+            aria: (rc.passed === rc.total
+              ? 'All ' + rc.total + ' text-role pairings meet AA'
+              : (rc.total - rc.passed) + ' of ' + rc.total + ' text-role pairings fail AA')
+              + '. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + ' for normal text.',
           };
         })(),
         onKey: (e) => this.refineKey(e),
@@ -1201,8 +1207,8 @@ export const renderValsMethods = {
             onSelect: () => this.refineSelect(i),
             // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
             // destructive control inside the one element whose whole job is to be safe to click.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '96px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
-            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.25, whiteSpace: 'nowrap' }),
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '124px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
+            labelStyle: this.monoLabel('var(--fs-nano)', 'var(--track-flat)', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.25, whiteSpace: 'nowrap' }),
           };
         }),
         // Colour is the main area and the only thing in it.

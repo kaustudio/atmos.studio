@@ -602,7 +602,7 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-colo
    sitting at three different places. So: the number right-aligns against a shared edge, and the
    unit occupies a constant column after it whether it is '%', '°' or empty. Tabular figures were
    already doing half this job — a stable column for the unit is the other half. */
-[data-refine-num]{ display:inline-flex; align-items:baseline; gap:3px; inline-size:92px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
+[data-refine-num]{ display:inline-flex; align-items:baseline; gap:3px; inline-size:72px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
 [data-refine-num] input{ flex:1; min-inline-size:0; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
 [data-refine-num] input:focus{ outline:none; }
 html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
@@ -621,13 +621,25 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    shadow rather than an outline so the ring sits on top of the fill, cannot be clipped by the
    neighbour, and costs no layout: the marker is absolutely positioned and 3px changes nothing
    about the swatch beneath it. The ink comes from _refinePill (see data-ring). */
-[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; box-shadow:inset 0 0 0 3px var(--refine-pill-ink, var(--on-surface)); }
+/* 4px of the swatch's own colour on every side, then a 2px stroke. outline-offset:-6px puts the
+   outline's INNER edge 6px in, and the 2px stroke is painted outward from there — so the ring
+   occupies 6px..4px and the gap is exactly 4px. Drawn inside the element's box, so it cannot be
+   clipped by the neighbouring swatch and costs no layout. */
+[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:2px solid var(--refine-pill-ink, var(--on-surface)); outline-offset:-6px; }
 
 /* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
    only while there is something to report — so it arrives rather than blinking into place. */
 [data-refine-note]{ animation: refine-note .32s var(--ease-entrance) both; }
 @keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
-@media (prefers-reduced-motion: reduce){ [data-refine-note]{ animation:none } }
+@media (prefers-reduced-motion: reduce){
+  [data-refine-note]{ animation:none }
+  /* The thumb still thickens on hover and press — that cue is the affordance — it just
+     arrives without the 180ms transform tween. */
+  /* SEPARATE RULES, deliberately. A selector list mixing -webkit- and -moz- pseudo-elements is
+     invalid in both engines — each drops the whole rule on the selector it does not know. */
+  [data-refine-slider]::-webkit-slider-thumb{ transition:none }
+  [data-refine-slider]::-moz-range-thumb{ transition:none }
+}
 
 /* The two-column split that used to live here is gone: the specimen is not a caption on the
    sliders, it is the surface the edit is judged on, so it takes the full content width and follows
