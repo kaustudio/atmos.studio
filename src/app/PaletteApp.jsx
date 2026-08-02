@@ -125,7 +125,7 @@ export default class PaletteApp extends React.Component {
     refineOpen: false, refineSel: 0,
     // which of Refine's two secondary menus is open: 'role' | 'order' | null
     // the inline role chooser, and the two-step arm on Reset palette
-    refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null,
+    refineRoleOpen: false, refineRoleInfoOpen: false, refineResetArmed: false, refineRemoveIdx: null,
     // the full contrast matrix, on demand
     refineAllPairs: false,
     // the result view's More: reveals the poetic reading and the traits past the first two
@@ -292,6 +292,7 @@ export default class PaletteApp extends React.Component {
         if (this.state.refineAllPairs) { e.preventDefault(); this.closePairings(); return; }
         // closeTip, not closeFold: this stopped being an inline height-fold when it became an
         // anchored popover, so Escape was closing it on a different mechanic than it opened on.
+        if (this.state.refineRoleInfoOpen) { e.preventDefault(); this.closeTip('refineRoleInfoOpen', '[data-tip="roles"]'); return; }
         if (this.state.refineRoleOpen) { e.preventDefault(); this.toggleRoleManager(); return; }
         if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }

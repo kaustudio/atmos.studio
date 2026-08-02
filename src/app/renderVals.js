@@ -1243,24 +1243,34 @@ export const renderValsMethods = {
         // used — how many components, which ones — and the app has no such data. Naming the
         // role map "Usage" was the heading promising a report the section cannot produce.
         roleLine: selRoles.length ? selRoles.join(' · ') : 'None',
-        // The current state, stated once: what this swatch answers, and whether that was decided by
-        // the user or inferred. Per role, because a swatch can carry several with mixed status.
-        currentRoles: (roleAt[selIdx] || []).map((id) => {
-          const pinned = typeof assigned[id] === 'number';
-          return {
-            key: id, label: ROLE_LABEL[id], status: pinned ? 'Pinned' : 'Derived',
-            note: pinned
-              ? 'Pinned to this swatch. It stays here when the palette is recalculated.'
-              : 'Assigned automatically. This role may move when the palette is recalculated.',
-          };
-        }),
-        noRoleNote: 'This swatch carries no role. It still appears in the palette and in every export.',
+        // The current state, in one line per role: what this swatch answers, and whether that was
+        // decided by the user or inferred. Each carried a sentence explaining its own status, which
+        // is a definition standing permanently on screen for a word it only has to define once —
+        // and this project has reversed that pattern twice already. The definitions moved to the
+        // toggletip on the heading, where they arrive when asked and cost nothing when not.
+        currentRoles: (roleAt[selIdx] || []).map((id) => ({
+          key: id, label: ROLE_LABEL[id],
+          status: typeof assigned[id] === 'number' ? 'Pinned' : 'Derived',
+        })),
+        noRoleNote: 'No role',
+        // The two words the rows and the summary both use, defined once, on demand. Same 16px box
+        // and click-catcher as the Library and AA tips: one mechanism for "explain this".
+        rolesInfo: {
+          glyph: 'i',
+          aria: (s.refineRoleInfoOpen ? 'Hide' : 'Show') + ' what derived and pinned mean',
+          lines: [
+            ['Derived', 'chosen for you, and free to move when the palette changes.'],
+            ['Pinned', 'set by you, and it stays.'],
+          ],
+        },
+        rolesInfoOpen: !!s.refineRoleInfoOpen,
+        toggleRolesInfo: () => this.toggleTip('refineRoleInfoOpen', '[data-tip="roles"]'),
         // THE LABEL DOES NOT CHANGE. It read "Assign roles" closed and "Close" open, which threw
         // away the name of the function at the moment the panel was on screen to be understood —
         // and "Assign" undersold a control that also pins and releases.
         manageLabel: 'Manage roles',
-        manageAria: (s.refineRoleOpen ? 'Collapse' : 'Expand') + ' role management for swatch ' + (selIdx + 1),
-        manageIntro: 'Roles determine how this swatch is used throughout the generated interface. Moving a role updates its current palette assignment.',
+        // aria-expanded already says which way the press goes, so the name does not repeat it.
+        manageAria: 'Manage roles for swatch ' + (selIdx + 1),
         roleChooserOpen: !!s.refineRoleOpen,
         // PLURAL, and it is not a typo. "Change role" says a swatch has one; it can carry several,
         // which is exactly what the chooser's switches let you do and what the strip now shows.
@@ -1315,15 +1325,13 @@ export const renderValsMethods = {
             assignment: here ? 'This swatch' : 'Swatch ' + (r.index + 1),
             status: pinned ? 'Pinned' : 'Derived',
             action: here ? (pinned ? 'Unpin' : 'Pin here') : 'Move here',
-            // THE CONSEQUENCE, BEFORE THE PRESS. A transfer always takes the role off another
-            // swatch, so the name says which one and what it costs there — a pinned role being
-            // moved destroys a decision somebody made, and a derived one does not.
-            aria: !here
-              ? 'Move ' + label + ' from swatch ' + (r.index + 1) + ' to swatch ' + (selIdx + 1) + '. '
-                + (pinned ? 'It is pinned to swatch ' + (r.index + 1) + ', so this releases it from there.' : 'It sits on swatch ' + (r.index + 1) + ' automatically.')
-              : pinned
-                ? 'Unpin ' + label + ' from this swatch. It will be assigned automatically again and may move when the palette is recalculated.'
-                : 'Pin ' + label + ' to this swatch. It already resolves here automatically; pinning keeps it here when the palette is recalculated.',
+            // The row read out, then the act. It used to append a sentence explaining what derived
+            // and pinned mean — spoken on all six rows, every time the panel opened. The status
+            // word is in the row; the definition is on the heading's tip, once.
+            aria: label + ', '
+              + (here ? 'this swatch' : 'swatch ' + (r.index + 1)) + ', '
+              + (pinned ? 'pinned' : 'derived') + '. '
+              + (here ? (pinned ? 'Unpin.' : 'Pin here.') : 'Move to swatch ' + (selIdx + 1) + '.'),
             // The panel stays open: a swatch can carry several roles, and the trigger is plural.
             onPick: () => this.refineSetRole(id, selIdx),
           };

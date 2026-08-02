@@ -1250,10 +1250,13 @@ export six of them — so a transfer *always* displaces:
 nowhere, and the model cannot produce that state. Shipping the label would mean shipping a state the
 interface can never reach.
 
-**Derived and Pinned are explained where they are claimed**, not in a legend and not in a tooltip —
-one sentence under the current role, and the same distinction carried in every row's accessible name
-and in the announcement. A transfer now names both ends: *"Background moved from swatch 3 to swatch
-1, #726C59."*
+**Derived and Pinned are defined once, on demand.** The first pass explained them in standing prose
+— a sentence under the current role, a paragraph introducing the panel, a clause on all six rows'
+accessible names, and a second sentence in every announcement. That is one definition written five
+times and read aloud on every press, for two words the rows already display. It moved to the 16px
+toggletip on the heading, the same mechanism the Library and AA columns use. The section closed is
+now two lines where it was four, and a transfer announces the act alone: *"Background moved from
+swatch 3 to swatch 1, #726C59."*
 
 **Sentence case was asked for on the actions and is not shipped.** These rows sit beside `MOVE LEFT`,
 `MOVE RIGHT` and `REMOVE SWATCH…` in the same dialog; the app's micro-label convention is uppercase

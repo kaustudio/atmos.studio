@@ -470,12 +470,15 @@ export const refineMethods = {
     try { const r = this.semanticRoles(p, p.roles).find((x) => x.role === role); if (r) from = r.index; } catch (e) { }
     const wasHere = from === i;
     const where = 'swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase();
+    // THE ACT, NOT A LESSON. Each of these carried a second sentence restating what pinning means;
+    // an announcement is heard on every press, so a definition inside it is the same words read
+    // aloud for the tenth time. The verb matches the button that was pressed and stops there.
     this._applyRefine({ roles: Object.keys(roles).length ? roles : null }, {
       announce: !on
-        ? label + ' released from swatch ' + (i + 1) + '. It falls back to the default.'
+        ? label + ' unpinned from swatch ' + (i + 1) + '.'
         : wasHere
-          ? label + ' pinned to ' + where + '. Editing other swatches will not move it.'
-          : label + ' moved from swatch ' + (from + 1) + ' to ' + where + '. It stays here when the palette is recalculated.',
+          ? label + ' pinned to ' + where + '.'
+          : label + ' moved from swatch ' + (from + 1) + ' to ' + where + '.',
     });
   },
   // L, C and H are absolute values, not deltas: the slider owns the number and the palette follows,

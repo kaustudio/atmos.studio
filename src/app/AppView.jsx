@@ -2471,25 +2471,38 @@ function RefineDialog({ vals }) {
           {/* The management action sits ON the section header, so what it manages is named directly
               above the rows it changes. */}
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
-            <span style={sx(eyebrow)}>Roles</span>
+            {/* DERIVED AND PINNED, DEFINED ON DEMAND. Both words used to carry a sentence apiece,
+                standing permanently under the current role and again at the top of the panel —
+                a definition on screen forever for a term it has to define once. Same 16px box and
+                click-catcher as the Library and AA tips. */}
+            <span style={sx('display:inline-flex;align-items:center;gap:8px;position:relative')}>
+              <span style={sx(eyebrow)}>Roles</span>
+              <button type="button" data-ix="press" data-hit="24" data-focus="chrome" aria-expanded={r.rolesInfoOpen} aria-label={r.rolesInfo.aria} onClick={r.toggleRolesInfo} style={sx('width:16px;height:16px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{r.rolesInfo.glyph}</button>
+              {r.rolesInfoOpen && (<>
+                <div style={sx('position:fixed;inset:0;z-index:40')} onClick={r.toggleRolesInfo} aria-hidden="true"></div>
+                <div data-tip="roles" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>
+                  {r.rolesInfo.lines.map(([term, def]) => (
+                    <span key={term} style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>
+                      <span style={sx('color:var(--on-surface)')}>{term}</span> &mdash; {def}
+                    </span>
+                  ))}
+                </div>
+              </>)}
+            </span>
             <button type="button" data-refine-manage="1" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-controls="refine-roles-panel" aria-label={r.manageAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';flex:none;display:inline-flex;align-items:center;gap:7px')}>
               {r.manageLabel}
               <span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>&#9656;</span>
             </button>
           </div>
 
-          {/* CURRENT STATE, once. 16px under the header; 4-6px between the label, the value and the
-              sentence that explains it. Derived and Pinned were system states exposed as bare words
-              — each is now spelled out where it is claimed. */}
-          <div style={sx('display:flex;flex-direction:column;gap:6px;padding-top:16px')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Current role</span>
+          {/* CURRENT STATE, in one line. It was an eyebrow, a value and an explanatory sentence —
+              three lines for one fact, and the third of them a definition. The heading names the
+              section, the dialog names the swatch, so the value alone is already addressed. */}
+          <div style={sx('display:flex;flex-direction:column;gap:4px;padding-top:16px')}>
             {r.currentRoles.length ? r.currentRoles.map((c) => (
-              <span key={c.key} style={sx('display:flex;flex-direction:column;gap:4px')}>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{c.label} &middot; {c.status}</span>
-                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{c.note}</span>
-              </span>
+              <span key={c.key} style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{c.label} &middot; {c.status}</span>
             )) : (
-              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.noRoleNote}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface-muted)')}>{r.noRoleNote}</span>
             )}
           </div>
 
@@ -2501,9 +2514,10 @@ function RefineDialog({ vals }) {
               app draws structure in ink, not in blur. */}
           {r.roleChooserOpen && (
             <div id="refine-roles-panel" data-refine-roles="1" role="group" aria-label="Manage roles for this swatch" style={sx('margin-top:16px;border:1px solid var(--line);background:var(--surface-raised)')}>
-              <p style={sx("margin:0;padding:14px 14px 12px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.manageIntro}</p>
-              {/* Column headers, so the three facts are named rather than inferred from position. */}
-              <div aria-hidden="true" style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;padding:0 14px 8px;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>
+              {/* Column headers, so the three facts are named rather than inferred from position.
+                  A paragraph introducing the table sat above them, restating what the columns say
+                  and what the section heading already established. */}
+              <div aria-hidden="true" style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;padding:14px 14px 8px;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>
                 <span>Role</span><span>Current assignment</span><span style={sx('text-align:end')}>Action</span>
               </div>
               {r.roleRows.map((row) => (
