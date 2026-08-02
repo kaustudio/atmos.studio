@@ -507,7 +507,12 @@ export const persistenceMethods = {
     const el = document.querySelector(sel); if (!el) return;
     // From wherever it IS, not always from zero: on a reversal the panel is part-open, and
     // restarting at 0 would drop it to nothing before rising again.
-    const from = el.getBoundingClientRect().height;
+    // "Wherever it is" means an inline height LEFT BY A RUNNING TWEEN. Without that test this read
+    // the natural height of a panel React had just mounted, so `from` equalled `to` and the fold
+    // animated from full height to full height — which is to say it did not animate at all, and
+    // every disclosure in the app popped open. The reversal case still works: mid-close there is an
+    // inline height to read.
+    const from = el.style.height ? el.getBoundingClientRect().height : 0;
     const h = el.scrollHeight;
     if (h <= 0) return;
     g.fromTo(el, { height: from, opacity: from > 0 ? 1 : 0 }, { height: h, opacity: 1, duration: this.DUR.reveal * 0.62, ease: this.EASE.fold, clearProps: 'height,opacity,overflow' });

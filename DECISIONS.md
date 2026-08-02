@@ -1203,3 +1203,59 @@ order. Grouping costs no contrast to express; weight did.
 **If "make the copy buttons quieter" comes up again:** it is a contrast change, not a visual one. The
 numbers above are what it has to beat, and the muted-ink-on-hover-tint failure is what it will hit.
 Quieter is available in *position* and *fill* — never in ink or weight.
+
+---
+
+## 2026-08-02 — Refine's role area: one section, one act, said in words
+
+**The problem was not the popover; it was that three things claimed to be the same thing.** A
+`USAGE` heading sat over a six-chip colour legend, a separate `Role: Surface` line restated what the
+legend already marked, and an `Assign roles` trigger renamed itself `Close` when open. Nothing
+declared which was the parent of which, and the one control that changed anything hid inside the
+smallest of them.
+
+**`Usage` is now `Roles`, and the legend is deleted rather than relabelled.** "Usage" would have to
+mean where the swatch is actually used — how many components, which ones — and the app has no such
+data; it was a heading promising a report the section cannot produce. The legend's job (which colour
+holds which role) is the manager's first two columns, and the manager adds the assignment and the
+act. A legend duplicating two of four columns is not a second representation, it is the same one
+with information removed.
+
+**Back to an inline fold, not the anchored popover.** The popover existed for one reason: expanding
+used to push Done off the bottom of a dialog with no internal scroll. The dialog has had a scrollport
+since RS-01, so that reason expired. The panel now takes the space it needs and moves Palette order
+and Danger zone down — measured at 365px — which is honest, where floating over two unrelated
+sections was not. It is a bordered raised surface, not a shadow: it belongs to this section, and this
+app draws structure in ink.
+
+**Escape follows the same mechanic it opened on.** The popover era had Escape on `closeTip` and the
+trigger on `openFold`; the two are different animations and the panel closed on a curve it never
+opened with. Both routes are `toggleRoleManager()` now.
+
+**The trigger keeps its label in both states.** `MANAGE ROLES` with a chevron that rotates. A control
+that renames itself to `Close` is two controls sharing one position, and the user has to read it
+before every press to know which one they have.
+
+**Three states, three verbs, and the verb names the direction.** `GIVE` said nothing about what
+would happen to the role's current home. Every role always resolves somewhere — a palette must
+export six of them — so a transfer *always* displaces:
+
+| Where the role sits | Action | What it means |
+|---|---|---|
+| another swatch | `MOVE HERE` | it leaves that swatch and lands here |
+| here, derived | `PIN HERE` | it already resolves here; pinning keeps it here through a recalculation |
+| here, pinned | `UNPIN` | it goes back to being chosen automatically |
+
+`Assign here` was in the brief and is not shipped: it would describe a role that currently resolves
+nowhere, and the model cannot produce that state. Shipping the label would mean shipping a state the
+interface can never reach.
+
+**Derived and Pinned are explained where they are claimed**, not in a legend and not in a tooltip —
+one sentence under the current role, and the same distinction carried in every row's accessible name
+and in the announcement. A transfer now names both ends: *"Background moved from swatch 3 to swatch
+1, #726C59."*
+
+**Sentence case was asked for on the actions and is not shipped.** These rows sit beside `MOVE LEFT`,
+`MOVE RIGHT` and `REMOVE SWATCH…` in the same dialog; the app's micro-label convention is uppercase
+at `--fs-nano`, and one section opting out reads as a mistake rather than a distinction. The brief's
+own closing instruction — that the visual language meet the design system — is what decided it.

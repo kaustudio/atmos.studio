@@ -1011,11 +1011,6 @@ export const renderValsMethods = {
         btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
         altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px' },
         accentStyle: { width: '100%', height: '4px', background: roleHex.accent },
-        // The legend under the specimen: role, its colour, and whether the swatch in hand is it.
-        legend: ctxRoles.map((r) => ({
-          key: r, label: ROLE_LABEL[r], hex: roleHex[r], here: ctxMark(r),
-          chipStyle: { width: '10px', height: '10px', flex: 'none', background: roleHex[r], border: '1px solid color-mix(in srgb, var(--on-surface) 25%, transparent)' },
-        })),
       };
       refineView = {
         name: p.name,
@@ -1234,16 +1229,47 @@ export const renderValsMethods = {
         //
         // It opens INLINE, never as an overlay. The old dropdown covered the sliders, so choosing a
         // role hid the colour it was being given to.
+        // ===== ROLES =====
+        // One section where there were three competing things: a "Usage" heading over a colour
+        // legend, a separate "Role: Surface" line restating what the legend already marked, and a
+        // trigger that renamed itself "Close" when open. Nothing said which was the parent.
+        //
+        // The legend is gone rather than relabelled. Its job — which colour holds which role — is
+        // the manager's first two columns, and the manager adds the assignment and the act; a
+        // legend that duplicates two of four columns is not a second representation, it is the same
+        // one with information removed. The unexplained dot went with it.
+        //
+        // "Usage" is not used as the heading. It would have to mean where this swatch is actually
+        // used — how many components, which ones — and the app has no such data. Naming the
+        // role map "Usage" was the heading promising a report the section cannot produce.
         roleLine: selRoles.length ? selRoles.join(' · ') : 'None',
+        // The current state, stated once: what this swatch answers, and whether that was decided by
+        // the user or inferred. Per role, because a swatch can carry several with mixed status.
+        currentRoles: (roleAt[selIdx] || []).map((id) => {
+          const pinned = typeof assigned[id] === 'number';
+          return {
+            key: id, label: ROLE_LABEL[id], status: pinned ? 'Pinned' : 'Derived',
+            note: pinned
+              ? 'Pinned to this swatch. It stays here when the palette is recalculated.'
+              : 'Assigned automatically. This role may move when the palette is recalculated.',
+          };
+        }),
+        noRoleNote: 'This swatch carries no role. It still appears in the palette and in every export.',
+        // THE LABEL DOES NOT CHANGE. It read "Assign roles" closed and "Close" open, which threw
+        // away the name of the function at the moment the panel was on screen to be understood —
+        // and "Assign" undersold a control that also pins and releases.
+        manageLabel: 'Manage roles',
+        manageAria: (s.refineRoleOpen ? 'Collapse' : 'Expand') + ' role management for swatch ' + (selIdx + 1),
+        manageIntro: 'Roles determine how this swatch is used throughout the generated interface. Moving a role updates its current palette assignment.',
         roleChooserOpen: !!s.refineRoleOpen,
         // PLURAL, and it is not a typo. "Change role" says a swatch has one; it can carry several,
         // which is exactly what the chooser's switches let you do and what the strip now shows.
-        roleTrigger: s.refineRoleOpen ? 'Close' : 'Assign roles',
-        roleTriggerAria: (s.refineRoleOpen ? 'Close the role chooser' : 'Assign roles to swatch ' + (selIdx + 1)),
-        // Tip, not fold. A fold animates HEIGHT, which is exactly the property this control must
-        // stop changing — it is a popover now and costs the layout nothing, so it arrives the way
-        // every other popover on the surface does.
-        toggleRoleChooser: () => this.toggleTip('refineRoleOpen', '[data-refine-roles]'),
+        // FOLD, NOT TIP — and back to the mechanic this control started with, for the opposite
+        // reason. It became a popover because expanding inline pushed Done off the bottom of a
+        // dialog that had no internal scroll. The dialog has a scrollport now, so pushing content
+        // down is no longer a hazard; it is the honest thing for a panel that belongs to a section.
+        // A floating layer over Palette order and Danger zone hides the sections it is unrelated to.
+        toggleRoleChooser: () => this.toggleRoleManager(),
         // THESE ARE NOT SWITCHES, and presenting them as switches is what made the control lie.
         //
         // A switch promises on/off. The checked state was read from `resolved` — the user's sparse
@@ -1263,26 +1289,42 @@ export const renderValsMethods = {
         //   elsewhere   ->  give it to this swatch (and it leaves wherever it is)
         //   here, derived   ->  pin it, so editing other swatches cannot re-derive it away
         //   here, assigned  ->  release it back to the heuristic
-        roleItems: ROLE_IDS.map((id) => {
+        // ROLE | CURRENT ASSIGNMENT | ACTION — three columns, because they are three different
+        // facts and the old one-line row was conflating them. The action names its DIRECTION and
+        // its consequence: "Give" said neither what moved nor where from.
+        //
+        //   Move here   the role is on another swatch and will leave it
+        //   Pin here    it already resolves here by inference; pinning makes that explicit
+        //   Unpin       it is pinned here; release it back to the heuristic
+        //
+        // "Assign here" is specified in the brief for the case where nothing is displaced. There is
+        // no such case: a palette must always export six roles, so every role always resolves
+        // somewhere and a transfer always takes it off something. Shipping the label would mean
+        // shipping a state the model cannot produce.
+        roleRows: ROLE_IDS.map((id) => {
           const r = resolved.find((x) => x.role === id);
           const here = r.index === selIdx;
-          const mine = typeof assigned[id] === 'number';
+          const pinned = typeof assigned[id] === 'number';
           const label = ROLE_LABEL[id];
           return {
-            id, label, here, mine,
-            // WHERE THE ROLE ACTUALLY IS, in words, on every row — the fact the checkmark was
-            // trying and failing to carry. "Derived" and "Assigned" both mean it lands here; they
-            // differ in who decided, which is the only thing the press acts on.
-            state: here ? (mine ? 'Assigned' : 'Derived') : 'Swatch ' + (r.index + 1),
-            action: here ? (mine ? 'Release' : 'Pin') : 'Give',
+            id, label, here, pinned,
+            hex: r.hex,
+            chipStyle: { width: '12px', height: '12px', flex: 'none', background: r.hex, border: '1px solid color-mix(in srgb, var(--on-surface) 25%, transparent)' },
+            // Never colour alone, and never a checkmark alone: the current swatch is named in
+            // words in this column, and the derived/pinned status is a second word beside it.
+            assignment: here ? 'This swatch' : 'Swatch ' + (r.index + 1),
+            status: pinned ? 'Pinned' : 'Derived',
+            action: here ? (pinned ? 'Unpin' : 'Pin here') : 'Move here',
+            // THE CONSEQUENCE, BEFORE THE PRESS. A transfer always takes the role off another
+            // swatch, so the name says which one and what it costs there — a pinned role being
+            // moved destroys a decision somebody made, and a derived one does not.
             aria: !here
-              ? 'Give ' + label + ' to swatch ' + (selIdx + 1) + '. It currently sits on swatch ' + (r.index + 1) + (mine ? ', where you put it' : ', by default')
-              : mine
-                ? 'Release ' + label + ' from swatch ' + (selIdx + 1) + ' and let it fall back to the default'
-                : 'Pin ' + label + ' to swatch ' + (selIdx + 1) + ', so editing other swatches cannot move it',
-            // The popover STAYS OPEN. A swatch can carry several roles — the trigger says "Assign
-            // roles" — and closing on every pick made a plural control single-select: two roles
-            // meant two open-and-close cycles.
+              ? 'Move ' + label + ' from swatch ' + (r.index + 1) + ' to swatch ' + (selIdx + 1) + '. '
+                + (pinned ? 'It is pinned to swatch ' + (r.index + 1) + ', so this releases it from there.' : 'It sits on swatch ' + (r.index + 1) + ' automatically.')
+              : pinned
+                ? 'Unpin ' + label + ' from this swatch. It will be assigned automatically again and may move when the palette is recalculated.'
+                : 'Pin ' + label + ' to this swatch. It already resolves here automatically; pinning keeps it here when the palette is recalculated.',
+            // The panel stays open: a swatch can carry several roles, and the trigger is plural.
             onPick: () => this.refineSetRole(id, selIdx),
           };
         }),

@@ -236,6 +236,21 @@ export const refineMethods = {
       if (back && back.focus) try { back.focus(); } catch (e) { }
     }));
   },
+  // The role manager's disclosure, on the project's own fold primitive rather than a hand-rolled
+  // one. Opening deliberately does NOT move focus — the trigger stays where the user left it and
+  // the panel is next in the tab order, which is the disclosure contract. Collapsing returns focus
+  // to the trigger, because the rows that had it are about to stop existing.
+  toggleRoleManager() {
+    const wasOpen = this.state.refineRoleOpen;
+    if (wasOpen) {
+      this.closeFold('refineRoleOpen', '[data-refine-roles]', () => {
+        const t = document.querySelector('[data-refine-manage]');
+        if (t) try { t.focus(); } catch (e) { }
+      });
+    } else {
+      this.openFold('refineRoleOpen', '[data-refine-roles]');
+    }
+  },
   trapRefine(e) { this.trapFocusIn('[data-refine-dialog]', e); },
   // PAIRING DETAIL IS A LAYER, NOT A SECTION. It overlays the canvas and scrolls inside itself, so
   // the editor keeps its height and Palette structure never moves while somebody inspects the
@@ -448,15 +463,19 @@ export const refineMethods = {
     // off another swatch, and making an inferred one explicit — and the second reads as a lie,
     // because nothing visibly moved. Whether the role ALREADY landed here before the change is what
     // tells them apart, so it is measured before the write rather than guessed after it.
-    let wasHere = false;
-    try { wasHere = this.semanticRoles(p, p.roles).some((x) => x.role === role && x.index === i); } catch (e) { }
+    // Where it resolved BEFORE the write. Same index means the act was a pin; a different index
+    // means the role travelled, and the sentence has to say what it left as well as where it landed
+    // — a role is exclusive, so "moved here" is always also "moved off there".
+    let from = -1;
+    try { const r = this.semanticRoles(p, p.roles).find((x) => x.role === role); if (r) from = r.index; } catch (e) { }
+    const wasHere = from === i;
     const where = 'swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase();
     this._applyRefine({ roles: Object.keys(roles).length ? roles : null }, {
       announce: !on
         ? label + ' released from swatch ' + (i + 1) + '. It falls back to the default.'
         : wasHere
           ? label + ' pinned to ' + where + '. Editing other swatches will not move it.'
-          : label + ' assigned to ' + where + '.',
+          : label + ' moved from swatch ' + (from + 1) + ' to ' + where + '. It stays here when the palette is recalculated.',
     });
   },
   // L, C and H are absolute values, not deltas: the slider owns the number and the palette follows,

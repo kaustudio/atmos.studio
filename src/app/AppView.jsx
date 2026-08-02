@@ -2453,71 +2453,83 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        {/* 5 · USAGE — what this swatch is FOR. Three tasks used to share one "Palette structure"
-               section on the argument that all three are palette-level. True, and not the useful
-               grouping: assigning a role is a semantic decision, moving a swatch is a compositional
-               one, and removing it is destructive. Sharing a heading made them read as one form to
-               fill in, and put a destructive control two rows under a pair of nudge buttons.
-               This section answers "where is this colour used?" — the full role map that used to be
-               a legend crowding the live preview, plus the control that changes it. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
-          <OvRule />
-          <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Usage</span>
+        {/* 5 · ROLES — one section where there were three competing things: a "Usage" heading over
+               a colour legend, a separate "Role: Surface" line restating what the legend already
+               marked, and a trigger that renamed itself "Close" when open. Nothing said which was
+               the parent of which.
 
-          {/* THE ROLE MAP, moved here from under the specimen. Six roles, three columns, two rows —
-              a fixed grid rather than a wrapping ribbon, so the break never lands wherever the
-              label lengths happen to put it. The roles the SELECTED swatch answers step up to full
-              ink and medium weight, which is the one thing the legend did that the preview's
-              caption still does: say where the colour in hand is at work. */}
-          <div style={sx('display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 12px;padding-bottom:14px')}>
-            {r.preview.legend.map((l) => (
-              <span key={l.key} title={l.hex} style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + (l.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';font-weight:' + (l.here ? '500' : '400'))}>
-                <span aria-hidden="true" style={l.chipStyle}></span>
-                <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{l.label}</span>
-                {l.here ? <span aria-hidden="true" style={sx('flex:none')}>·</span> : null}
-              </span>
-            ))}
+               The legend is gone rather than relabelled. Its job — which colour holds which role —
+               is the manager's first two columns, and the manager adds the assignment and the act;
+               a legend duplicating two of four columns is not a second representation, it is the
+               same one with information removed. The unexplained dot went with it.
+
+               "Usage" is not the heading. It would have to mean where this swatch is actually used
+               — how many components, which ones — and the app has no such data. Naming the role map
+               "Usage" was a heading promising a report the section cannot produce. */}
+        <div data-refine-sec="1" style={sx('position:relative;margin:24px 22px 0;padding-top:24px;border-top:1px solid transparent')}>
+          <OvRule />
+          {/* The management action sits ON the section header, so what it manages is named directly
+              above the rows it changes. */}
+          <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
+            <span style={sx(eyebrow)}>Roles</span>
+            <button type="button" data-refine-manage="1" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-controls="refine-roles-panel" aria-label={r.manageAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';flex:none;display:inline-flex;align-items:center;gap:7px')}>
+              {r.manageLabel}
+              <span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>&#9656;</span>
+            </button>
           </div>
 
-          {/* BOUNDED, and anchored to its trigger. The chooser opened INLINE and pushed Order,
-              Remove and the whole footer down the dialog, so on a short viewport looking at the
-              roles put Done below the fold — the one thing an editing surface must never do. It is
-              a popover now: it costs the layout nothing, so the geometry under it holds still. It
-              still opens BELOW its trigger rather than over the sliders, which is the constraint
-              that made it inline in the first place — choosing a role must not hide the colour it
-              is being given to. */}
-          <div style={sx('position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap')}>
-            <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Role</span>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.roleLine}</span>
-            </span>
-            <button type="button" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-haspopup="true" aria-label={r.roleTriggerAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';margin-inline-start:auto;display:inline-flex;align-items:center;gap:7px')}><span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{r.roleTrigger}</button>
-            {r.roleChooserOpen && (
-              <div data-refine-roles="1" role="group" aria-label="Assign roles to this swatch" style={sx('position:absolute;z-index:7;inset-inline-end:0;top:calc(100% + 6px);width:min(320px,100%);max-height:232px;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18)')}>
-                {/* No role="switch". A switch promises on/off, and this is a three-state
-                    assignment — see roleItems for why the two-state presentation was reporting the
-                    opposite of what the press did. Each row is a plain button whose name states the
-                    act, with where the role actually sits printed beside it. */}
-                {r.roleItems.map((it) => (
-                  <button key={it.id} type="button" data-ix="cell" data-focus="chrome" aria-label={it.aria} onClick={it.onPick} style={sx('display:flex;align-items:baseline;gap:10px;width:100%;background:' + (it.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-md);cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
-                    <span aria-hidden="true" style={sx('width:12px;flex:none;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface)')}>{it.here ? '✓' : ''}</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);flex:none')}>{it.label}</span>
-                    {/* The state, then the act. Both are needed and they are different facts: where
-                        the role IS, and what pressing will do to it. */}
-                    <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{it.state}</span>
-                    <span aria-hidden="true" style={sx('flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line);padding:1px 5px')}>{it.action}</span>
-                  </button>
-                ))}
-              </div>
+          {/* CURRENT STATE, once. 16px under the header; 4-6px between the label, the value and the
+              sentence that explains it. Derived and Pinned were system states exposed as bare words
+              — each is now spelled out where it is claimed. */}
+          <div style={sx('display:flex;flex-direction:column;gap:6px;padding-top:16px')}>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Current role</span>
+            {r.currentRoles.length ? r.currentRoles.map((c) => (
+              <span key={c.key} style={sx('display:flex;flex-direction:column;gap:4px')}>
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{c.label} &middot; {c.status}</span>
+                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{c.note}</span>
+              </span>
+            )) : (
+              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.noRoleNote}</span>
             )}
           </div>
 
+          {/* INLINE, NOT FLOATING. This became a popover because expanding used to push Done off the
+              bottom of a dialog with no internal scroll. The dialog has a scrollport now, so the
+              panel can take the space it needs and move Palette order and Danger zone down — which
+              is honest, where covering two unrelated sections was not.
+              A bordered raised surface rather than a shadow: it belongs to this section, and this
+              app draws structure in ink, not in blur. */}
+          {r.roleChooserOpen && (
+            <div id="refine-roles-panel" data-refine-roles="1" role="group" aria-label="Manage roles for this swatch" style={sx('margin-top:16px;border:1px solid var(--line);background:var(--surface-raised)')}>
+              <p style={sx("margin:0;padding:14px 14px 12px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.manageIntro}</p>
+              {/* Column headers, so the three facts are named rather than inferred from position. */}
+              <div aria-hidden="true" style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;padding:0 14px 8px;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>
+                <span>Role</span><span>Current assignment</span><span style={sx('text-align:end')}>Action</span>
+              </div>
+              {r.roleRows.map((row) => (
+                <button key={row.id} type="button" data-ix="cell" data-focus="chrome" aria-label={row.aria} onClick={row.onPick} style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;width:100%;min-height:48px;background:' + (row.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-top:1px solid var(--line);padding:8px 14px;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
+                  <span style={sx('display:inline-flex;align-items:center;gap:8px;min-width:0')}>
+                    <span aria-hidden="true" style={row.chipStyle}></span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:' + (row.here ? '500' : '400'))}>{row.label}</span>
+                  </span>
+                  {/* Where it sits, and on whose authority. Two words, neither a colour nor a glyph:
+                      the current swatch is NAMED, not merely tinted. */}
+                  <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:' + (row.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{row.assignment}</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{row.status}</span>
+                  </span>
+                  {/* Fixed column so the actions share one edge whatever they say. */}
+                  <span aria-hidden="true" style={sx('justify-self:end;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);border:1px solid var(--action-line);padding:3px 7px;white-space:nowrap')}>{row.action}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 6 · PALETTE ORDER — a compositional decision, not a semantic one, so it stops sharing a
                heading with Usage. Small by design: it is management, and it sits below the editing
                and the evidence for that reason. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+        <div data-refine-sec="1" style={sx('position:relative;margin:24px 22px 0;padding-top:24px;border-top:1px solid transparent')}>
           <OvRule />
           <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Palette order</span>
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
@@ -2545,7 +2557,7 @@ function RefineDialog({ vals }) {
                that a label cuts the act off from its object, is answered by keeping the consequence
                attached: the impact line sits with the control, before the confirmation, not inside
                it. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:14px 22px 0;padding-top:12px;border-top:1px solid transparent')}>
+        <div data-refine-sec="1" style={sx('position:relative;margin:24px 22px 0;padding-top:24px;border-top:1px solid transparent')}>
           <OvRule />
           <span style={sx(eyebrow + ';display:block;padding-bottom:10px')}>Danger zone</span>
           {!r.removeArmed && (
