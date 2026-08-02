@@ -606,7 +606,11 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-colo
 [data-refine-num] input{ flex:1; min-inline-size:0; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
 [data-refine-num] input:focus{ outline:none; }
 html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-[data-refine-num] span{ flex:none; inline-size:13px; font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
+/* The unit hugs the number instead of sitting in a fixed 13px slot at the far right. The slot
+   column-aligned the three digit groups, but chroma's unit is empty — so 0.030 ended 22px
+   short of the box edge while 53% and 93° reached it, and the one value with no unit read as
+   not right-aligned at all. The content's right edge is the thing to align. */
+[data-refine-num] span{ flex:none; padding-inline-start:2px; font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
 
 /* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
    frames and shifts no layout — it is positioned and sized by script, then inflated here by its

@@ -1001,24 +1001,26 @@ export const renderValsMethods = {
         aria: 'Interface preview using the assigned roles: '
           + ctxRoles.map((r) => ROLE_LABEL[r] + ' ' + roleHex[r]).join(', ')
           + (selRoleIds.length ? '. The selected swatch is ' + selRoleIds.map((r) => ROLE_LABEL[r]).join(' and ') + '.' : '. The selected swatch carries no role, so it does not appear here.'),
-        // FULL WIDTH AND A FLOOR UNDER IT. In the 40% column this was 12px of padding around a
-        // card that wrapped at every line; with the whole content width it can be drawn at the
-        // scale it is meant to be judged at. min-height stops a short specimen from reading as a
-        // swatch again on a palette whose roles collapse onto few colours.
-        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '22px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '18px' },
-        cardStyle: { background: roleHex.surface, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '12px' },
-        // The specimen text is set at the size whose threshold the panel below reports — normal
-        // text at 4.5:1. It used to be a 'Aa' at --fs-title, which is LARGE text under WCAG and is
-        // graded at 3:1, so the sample was showing one size and the verdict was about another.
-        headingStyle: { fontFamily: mono, fontSize: 'var(--fs-detail)', fontWeight: 500, color: roleHex.text, lineHeight: 1.25 },
-        bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', color: roleHex.text, lineHeight: 1.45, opacity: 0.92 },
-        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
-        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '4px 8px' },
-        // ONE MEASURE for the whole specimen. At the old 40% column width everything shared the
-        // column's measure by force; at full width the accent rule ran 910px across the panel and
-        // read as a divider belonging to the dialog rather than to the page being previewed.
-        frameStyle: { width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '14px' },
-        accentStyle: { width: '100%', height: '4px', background: roleHex.accent },
+        // THE COLOURS FILL THE CONTAINER. The specimen was a 520px card centred in a 910px field,
+        // which meant the two roles under judgement — Surface and Background — were shown as a
+        // medium rectangle floating in a large one, and Accent was a 4px line. You cannot tell
+        // whether a colour works from a sample that size. Every role now holds real area: the page
+        // is the full width and 320px tall, the card spans it, and the accent is a band you can
+        // actually read a hue off.
+        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '28px', minHeight: '320px', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+        // The card takes the width; the BODY COPY keeps its measure inside it (see bodyStyle). A
+        // capped card was capping the colour to keep the text readable — two different problems
+        // solved with one cap, and the colour lost.
+        frameStyle: { width: '100%', display: 'flex', flexDirection: 'column', gap: '0' },
+        cardStyle: { background: roleHex.surface, padding: '30px 32px', display: 'flex', flexDirection: 'column', gap: '16px' },
+        // Both still NORMAL text under WCAG — the threshold is 24px, and 20px is under it — so the
+        // 4.5:1 verdict below the specimen keeps describing exactly what is drawn here. They were
+        // 12px and 10px: honest, and too small to judge a colour pairing by.
+        headingStyle: { fontFamily: mono, fontSize: 'var(--fs-subtitle)', fontWeight: 500, color: roleHex.text, lineHeight: 1.2, letterSpacing: 'var(--track-flat)' },
+        bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', color: roleHex.text, lineHeight: 1.55, opacity: 0.92, maxWidth: '62ch', textWrap: 'pretty' },
+        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '11px 18px', border: 'none' },
+        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '10px 17px' },
+        accentStyle: { width: '100%', height: '10px', background: roleHex.accent },
       };
       refineView = {
         name: p.name,

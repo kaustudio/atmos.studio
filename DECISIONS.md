@@ -1321,9 +1321,11 @@ removing the contrast footer row is what achieves it; the definition stays on th
 ## 2026-08-02 — Refine: one scan line, and the tokens it is built from
 
 **The body could not be scanned because seven levels shared one style.** The modal's own label and
-all six section titles rendered identically at 9px/500 uppercase `--on-surface-muted`. Sections now
-sit one step up and in full ink — `--fs-label` 10px, weight 500, `--on-surface`, as `<h3>` — and 9px
-muted is left to modal chrome and sub-labels. The contrast jump is the lever: 5.55:1 → 15.94:1.
+all six section titles rendered identically at 9px/500 uppercase `--on-surface-muted`. Section titles
+are now headings rather than eyebrows: `--fs-lead` (15px), weight 500, **sentence case**, full ink,
+as `<h3>`. The first attempt only darkened them and moved them to 10px, which was the same shape one
+step up — still a micro-label, still needing to be read before it could be identified. Size, case and
+ink all had to change. 9px uppercase muted is left to modal chrome and sub-labels.
 
 **The H1 was 4px smaller than the H2.** `--fs-subtitle` (20) on the palette, `--fs-title` (24) on the
 swatch — the child outranking its parent, which is what "no visual hierarchy" was pointing at. The
@@ -1358,3 +1360,22 @@ AA"`. Both are built from one string now.
 `prefers-reduced-motion` override — the only Refine motion no preference could stop. And its two
 vendor pseudo-elements are separate rules: a selector list mixing `-webkit-` and `-moz-` is invalid
 in both engines, each dropping the whole rule on the selector it does not know.
+
+---
+
+## 2026-08-02 — Refine: the preview holds enough colour to judge
+
+**A 520px card centred in a 910px field is not a preview of a colour.** The two roles actually under
+judgement — Surface and Background — were a medium rectangle floating inside a large one, and Accent
+was a 4px line. The page is full width and 320px tall now, the card fills 94% of it, and the accent
+is a 10px band. The cap was doing two jobs at once: holding the colour down to keep the text measure
+readable. The measure moved to `max-width: 62ch` on the body copy, and the colour was let go.
+
+**The specimen's type went up without making the verdict a lie.** Heading 12 → 20px, body 10 → 13px.
+WCAG's large-text threshold is 24px, so both are still NORMAL text and the 4.5:1 verdict below the
+specimen keeps describing exactly what is drawn.
+
+**The numeric fields' unit slot was fixed at 13px** so the three digit columns aligned — but chroma's
+unit is empty, so `0.030` stopped 22px short of the box edge while `53%` and `93°` reached it, and
+the one value with no unit was the one that read as not right-aligned. The unit hugs the number now
+and the content's right edge is what aligns.

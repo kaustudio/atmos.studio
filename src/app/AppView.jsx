@@ -2233,7 +2233,11 @@ function RefineDialog({ vals }) {
   //   --fs-micro     9  modal chrome, sub-labels muted
   // Tracking is var(--track-flat) throughout: the design's single flat-tracking source, 0px.
   const eyebrow = 'font-family:Neue Montreal;font-weight:500;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)';
-  const secTitle = 'margin:0;font-family:Neue Montreal;font-weight:500;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)';
+  // A HEADLINE, NOT AN EYEBROW. 10px uppercase in full ink was still a micro-label: the same
+  // shape as the chrome above it, just darker, so a section still had to be read before it could
+  // be identified. --fs-lead in sentence case at weight 500 is a heading — it has a distinct size,
+  // a distinct case and a distinct rank from both the 13px answer beneath it and the 9px chrome.
+  const secTitle = "margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface)";
   const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
