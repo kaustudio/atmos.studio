@@ -989,20 +989,24 @@ export const renderValsMethods = {
         // swatch that carries two roles lights up in two places at once.
         hex: roleHex,
         marked: ctxRoles.filter(ctxMark).map((r) => ROLE_LABEL[r]),
-        // WHAT THE SWATCH IN HAND IS DOING HERE — one line, replacing the six-role legend that used
-        // to sit under the specimen. The full map is a USAGE question and belongs in the Usage
-        // section; the only part of it doing work during a drag is "where is the colour I am
-        // dragging?", and that is one sentence rather than six chips competing with the specimen.
-        here: selRoleIds.length
-          ? 'This swatch is the ' + selRoleIds.map((rr) => ROLE_LABEL[rr]).join(' and ') + ' here.'
-          : 'This swatch carries no role, so it does not appear here.',
+        // WHAT THE SWATCH IN HAND IS DOING HERE, said in the section's own subheading rather than
+        // in a caption under the specimen. It was a sentence hanging below the preview — a fourth
+        // level of text in a column that already had a label, a picture and a verdict — and it
+        // names the subject of the preview, which is a heading's job.
+        title: selRoleIds.length
+          ? 'Testing swatch ' + (selIdx + 1) + ' as ' + selRoleIds.map((rr) => ROLE_LABEL[rr]).join(' and ')
+          : 'Swatch ' + (selIdx + 1) + ' carries no role, so it does not appear here',
         // Named in the accessible layer, because the specimen itself is decorative: a screen-reader
         // user gets the mapping as a sentence rather than a picture they cannot see.
         aria: 'Interface preview using the assigned roles: '
           + ctxRoles.map((r) => ROLE_LABEL[r] + ' ' + roleHex[r]).join(', ')
           + (selRoleIds.length ? '. The selected swatch is ' + selRoleIds.map((r) => ROLE_LABEL[r]).join(' and ') + '.' : '. The selected swatch carries no role, so it does not appear here.'),
-        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' },
-        cardStyle: { background: roleHex.surface, padding: '11px 12px', display: 'flex', flexDirection: 'column', gap: '9px' },
+        // FULL WIDTH AND A FLOOR UNDER IT. In the 40% column this was 12px of padding around a
+        // card that wrapped at every line; with the whole content width it can be drawn at the
+        // scale it is meant to be judged at. min-height stops a short specimen from reading as a
+        // swatch again on a palette whose roles collapse onto few colours.
+        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '22px', minHeight: '260px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '18px' },
+        cardStyle: { background: roleHex.surface, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '12px' },
         // The specimen text is set at the size whose threshold the panel below reports — normal
         // text at 4.5:1. It used to be a 'Aa' at --fs-title, which is LARGE text under WCAG and is
         // graded at 3:1, so the sample was showing one size and the verdict was about another.
@@ -1010,6 +1014,10 @@ export const renderValsMethods = {
         bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-label)', color: roleHex.text, lineHeight: 1.45, opacity: 0.92 },
         btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '5px 9px', border: 'none' },
         altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', padding: '4px 8px' },
+        // ONE MEASURE for the whole specimen. At the old 40% column width everything shared the
+        // column's measure by force; at full width the accent rule ran 910px across the panel and
+        // read as a divider belonging to the dialog rather than to the page being previewed.
+        frameStyle: { width: '100%', maxWidth: '520px', display: 'flex', flexDirection: 'column', gap: '14px' },
         accentStyle: { width: '100%', height: '4px', background: roleHex.accent },
       };
       refineView = {
@@ -1028,7 +1036,24 @@ export const renderValsMethods = {
         // metadata directly under it, and changed from the structure section below.
         // Swatch and value, and nothing else. The role was restated here as well as in Palette
         // structure — the same fact in two places, only one of which could act on it.
-        selTitle: 'Swatch ' + (selIdx + 1) + ' · ' + sel.hex.toUpperCase(),
+        // THREE LEVELS, IN ORDER. The palette is the H1 in the header, the swatch is the H2 here,
+        // and the hex, the role and its status are metadata under it. The hex used to be half of
+        // the largest heading on the surface — a value the sliders restate three ways, set at the
+        // size that should have been carrying the name of the palette being worked on.
+        selTitle: 'Swatch ' + (selIdx + 1),
+        selMeta: (() => {
+          const ids = roleAt[selIdx] || [];
+          if (!ids.length) return sel.hex.toUpperCase() + ' · No role';
+          const st = (id) => (typeof assigned[id] === 'number' ? 'Pinned' : 'Derived');
+          // A swatch carrying two roles produced "#E12409 · Primary · Derived · Secondary ·
+          // Derived" — four dots in a row, with nothing to say which word belongs to which. When
+          // both roles are in the same state the state is said once for both; when they differ
+          // each keeps its own, and the comma is what separates the pairs from each other.
+          const same = ids.every((id) => st(id) === st(ids[0]));
+          return sel.hex.toUpperCase() + ' · ' + (same
+            ? ids.map((id) => ROLE_LABEL[id]).join(' and ') + ' · ' + st(ids[0])
+            : ids.map((id) => ROLE_LABEL[id] + ' · ' + st(id)).join(', '));
+        })(),
         selCount: (selIdx + 1) + ' of ' + N,
         total: N,
         // Named, not decorative: a labelled control that opens the reference at size, through the
@@ -1071,22 +1096,18 @@ export const renderValsMethods = {
             // Stated with its denominator named. "1 / 8 meet AA" leaves the 8 unexplained — it is
             // the four content roles on the two ground roles, not every pair in the palette — and a
             // bare fraction beside a specimen reads as a score.
-            count: rc.passed + ' of ' + rc.total + ' text-role pairings meet AA',
+            // THE PROBLEM COUNT, NOT THE PASS COUNT — and it is the section's only status line.
+            // Three things used to state the same health at once: a PARTIAL badge, "1 of 8 meet
+            // AA", and a REVIEW 7 FAILURES button carrying the number a third time. "Partial" is
+            // the weakest of them: it is a bucket, where the failure count is the actual quantity
+            // and the thing you can act on. The badge is gone and the count leads with what is
+            // wrong, because that is what the next move is about.
+            count: rc.passed === rc.total
+              ? 'All ' + rc.total + ' text-role pairings meet AA'
+              : (rc.total - rc.passed) + ' of ' + rc.total + ' text-role pairings fail AA',
             countStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
-            // The failure count is the actionable half, and it is a control rather than a statistic:
-            // where there are failures the next move is to look at them, so the card offers that
-            // move instead of leaving the reader to find the disclosure below.
             failures: rc.total - rc.passed,
             hasFailures: rc.passed < rc.total,
-            reviewLabel: 'Review ' + (rc.total - rc.passed) + ' failure' + (rc.total - rc.passed === 1 ? '' : 's'),
-            reviewAria: 'Review the ' + (rc.total - rc.passed) + ' text-role pairing' + (rc.total - rc.passed === 1 ? '' : 's') + ' that fail AA',
-            // Fill for pass, outline for partial, ghost for none — the status tokens the AA badge
-            // uses on every other surface, so "healthy" looks the same here as it does in the list.
-            healthStyle: (() => {
-              const st = rc.passed === rc.total ? 'flexible' : rc.passed === 0 ? 'none' : 'limited';
-              return { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)', whiteSpace: 'nowrap' };
-            })(),
-            healthLabel: rc.passed === rc.total ? 'All pass' : rc.passed === 0 ? 'None pass' : 'Partial',
             pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
             pairHex: f.fgHex + ' on ' + f.bgHex,
             pairRatio: f.ratio.toFixed(1) + ':1',
@@ -1105,7 +1126,13 @@ export const renderValsMethods = {
             // down the page whenever anyone looked at the detail — the layout shift an editor
             // cannot afford, because the canvas has to hold still while you work.
             allOpen: !!s.refineAllPairs,
-            allLabel: 'View all ' + rc.total + ' pairings',
+            // ONE ACTION, ONE DESTINATION. "Review 7 failures" in the header and "View all 8
+            // pairings" in a full-width footer row were two labels on one navigation, and the
+            // second of them was the largest control in the card. The header action is the only
+            // one now; the drill-in is titled for what it contains, and orders failures first.
+            reviewLabel: 'Review pairings',
+            reviewAria: 'Review all ' + rc.total + ' text-role pairings, failures first',
+            allLabel: 'All ' + rc.total + ' pairings',
             toggleAll: () => this.openPairings(),
             closePairings: () => this.closePairings(),
             // FAILURES FIRST, and within them the near misses first. The list was ordered by ratio
@@ -1147,7 +1174,13 @@ export const renderValsMethods = {
           const names = (roleAt[i] || []).map((r) => ROLE_LABEL[r]);
           return {
             sid: typeof b.sid === 'number' ? b.sid : i,
-            hex: b.hex, index: i, selected: isSel, pressed: isSel ? 'true' : 'false',
+            // THE SELECTION RING'S INK, chosen per swatch. A fixed dark outline vanishes on a dark
+            // swatch, which is exactly where selection matters most. onColor is already the house
+            // rule for this — whichever of black and white has the greater contrast against the
+            // fill — and its crossover sits at the 0.179 relative-luminance threshold, so there is
+            // no second constant here to drift out of step with the rest of the app.
+            ring: on,
+            hex: b.hex, index: i, selected: isSel,
             tab: isSel ? 0 : -1,
             // ONE role name and a count, never a truncated one. A band's width is its share of the
             // palette, which has nothing to do with how much text it has to carry, so "Primary ·
@@ -1242,7 +1275,6 @@ export const renderValsMethods = {
         // "Usage" is not used as the heading. It would have to mean where this swatch is actually
         // used — how many components, which ones — and the app has no such data. Naming the
         // role map "Usage" was the heading promising a report the section cannot produce.
-        roleLine: selRoles.length ? selRoles.join(' · ') : 'None',
         // The current state, in one line per role: what this swatch answers, and whether that was
         // decided by the user or inferred. Each carried a sentence explaining its own status, which
         // is a definition standing permanently on screen for a word it only has to define once —

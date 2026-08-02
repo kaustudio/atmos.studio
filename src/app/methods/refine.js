@@ -101,8 +101,11 @@ export const refineMethods = {
     try {
       const root = document.querySelector('[data-refine-dialog]'); if (!root) return;
       const pill = root.querySelector('[data-refine-pill]'); if (!pill) return;
-      const cur = root.querySelector('[data-refine-swatch][aria-pressed="true"]');
+      const cur = root.querySelector('[data-refine-swatch][aria-selected="true"]');
       if (!cur) { pill.style.opacity = '0'; return; }
+      // Black on a light swatch, white on a dark one. Set here rather than in CSS because only the
+      // marker knows which swatch it has landed on, and it lands on a different one every press.
+      pill.style.setProperty('--refine-pill-ink', cur.dataset.ring || 'var(--on-surface)');
       const first = pill.style.opacity !== '1';
       pill.style.transition = (jump || first || this._reduce) ? 'none'
         : 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)';
@@ -217,7 +220,7 @@ export const refineMethods = {
       // runs forward through the axes in reading order.
       const d = document.querySelector('[data-refine-dialog]');
       if (d) {
-        const el = d.querySelector('[data-refine-swatch][aria-pressed="true"]') || d.querySelector('button');
+        const el = d.querySelector('[data-refine-swatch][aria-selected="true"]') || d.querySelector('button');
         if (el) try { el.focus(); } catch (e) { }
       }
       requestAnimationFrame(() => { this._refineIn(); this._refineScrollEdges(); });
@@ -274,7 +277,7 @@ export const refineMethods = {
     const g = window.gsap, el = document.querySelector('[data-refine-pairs]');
     const done = () => this.setState({ refineAllPairs: false }, () => {
       const target = toSwatch
-        ? document.querySelector('[data-refine-swatch][aria-pressed="true"]')
+        ? document.querySelector('[data-refine-swatch][aria-selected="true"]')
         : back;
       if (target && target.focus) try { target.focus(); } catch (e) { }
     });

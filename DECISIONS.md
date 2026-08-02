@@ -1262,3 +1262,56 @@ swatch 3 to swatch 1, #726C59."*
 `MOVE RIGHT` and `REMOVE SWATCH…` in the same dialog; the app's micro-label convention is uppercase
 at `--fs-nano`, and one section opting out reads as a mistake rather than a distinction. The brief's
 own closing instruction — that the visual language meet the design system — is what decided it.
+
+---
+
+## 2026-08-02 — Refine: three levels of identity, ranked the right way up
+
+**The surface had its hierarchy inverted.** Refine holds three levels — the palette, the swatch, the
+role — and it sized them in reverse: `Refine · Garnet` at label size in the corner, `Swatch 1 ·
+#726C59` as the largest type on screen. The thing being edited was legible; the thing it was being
+edited *inside* was nearly invisible. Now `Garnet` is the H1, level with Done; `Swatch 1` is the H2
+under the strip; and `#726C59 · Surface · Derived` is metadata beneath it. The hex left the heading —
+three sliders already state it three ways.
+
+**The preview is not a caption on the sliders.** It was the 40% half of a 60/40 split, where its
+heading, its body line and both its buttons wrapped — so the object whose whole job is to answer
+"does this still work as an interface?" was itself badly set. The split is gone. Axes full width,
+then the specimen full width at a 260px floor, with the accent rule and the card sharing one 520px
+measure so the specimen reads as a page rather than as a rule drawn across the dialog. The body
+scrolls, so the contrast section sitting below the fold costs nothing.
+
+**`In use` was a promise the app cannot keep.** It reads as a usage report — how many components,
+which ones — and there is no such data. `Live preview` says what it is, and the caption that used to
+hang under the specimen became its subheading: *Testing swatch 1 as Surface*.
+
+**One state, said once.** Text contrast reported its health three times: a `PARTIAL` badge, `1 of 8
+meet AA`, and a `REVIEW 7 FAILURES` button carrying the number again — with `VIEW ALL 8 PAIRINGS` in
+a full-width footer row underneath, a second name for the same destination. Partial went first: it is
+a bucket where the failure count is the quantity, and the quantity is what you can act on. The count
+now leads with what is wrong, `Review pairings` is the section's only action, and the drill-in is
+titled for what it contains.
+
+**Contrast and Roles are the same object now.** Contrast was a bordered card ending in a navigation
+row; Roles was a loose unboxed section. Two neighbours doing the same kind of work looked like
+different kinds of thing. Both are unboxed sections on one skeleton: heading, one action, one status,
+one supporting fact.
+
+**The selection marker takes its ink from the swatch it lands on.** A 1px ink outline at a -2px
+offset disappears into a dark swatch — the one place selection matters most. It is a 3px `inset`
+box-shadow now, coloured by `onColor(hex)`: whichever of black and white has the greater contrast
+against the fill. That function is already the house rule and its crossover is exactly the 0.179
+relative-luminance threshold, so there is no second constant here to drift. Inset rather than outline
+so the ring sits on the fill, cannot be clipped by the neighbour, and costs no layout — the marker is
+absolutely positioned, and 3px changes nothing beneath it.
+
+**The strip became a listbox.** `aria-selected` is not valid on a button role, so shipping it on the
+old markup would have shipped an attribute assistive tech drops. `role="listbox"` / `role="option"`
+makes it real, and it is the honest description anyway: this is "pick exactly one of five", which
+`aria-pressed` can only model as five independent on/off states. Roving tabindex and the arrow keys
+were already there.
+
+**One thing in the brief is not shipped.** Its harmonised Roles example restores *"Assigned
+automatically and may move when the palette is recalculated."* as the section's supporting line —
+the sentence removed hours earlier for overexplaining. The harmony it asks for is structural, and
+removing the contrast footer row is what achieves it; the definition stays on the toggletip.

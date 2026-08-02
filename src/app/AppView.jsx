@@ -2281,10 +2281,19 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        {/* No motion hook. The header rides the panel's own fade — see _refineIn on why a dialog
-            that fades up as a whole does not need its parts revealed a second time. */}
-        <header style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>Refine · <span style={sx('color:var(--on-surface)')}>{r.name}</span></span>
+        {/* THE PALETTE IS THE H1, and this is the correction the whole restructure turns on. The
+            surface has three levels of identity — the palette, the swatch, the role — and they were
+            ranked upside down: "Refine · Garnet" sat at label size in the corner while
+            "Swatch 1 · #726C59" was the largest type on screen. So the thing you were editing was
+            legible and the thing you were editing it INSIDE was nearly invisible.
+            The palette now holds the header at display size, level with Done, and the swatch is the
+            H2 in the body under the strip. No motion hook on the header itself — it rides the
+            panel's own fade; see _refineIn. */}
+        <header style={sx('display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 0')}>
+          <span style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
+            <span style={sx(eyebrow)}>Refine palette</span>
+            <h1 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.1;letter-spacing:-.01em;color:var(--on-surface);text-wrap:balance")}>{r.name}</h1>
+          </span>
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits
               at 9px in the footer and asks before it acts. */}
@@ -2300,38 +2309,35 @@ function RefineDialog({ vals }) {
             width when a palette happens to be short enough not to overflow. */}
         <div data-refine-body="1" data-lenis-prevent="1" onScroll={r.onBodyScroll} style={sx('min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;display:flex;flex-direction:column')}>
 
-        {/* 1 · THE ONE PRIMARY SELECTOR. Labelled with the instruction, so the first move is stated
-               rather than inferred. Pointer, arrow keys, Home and End all land in refineSelect. */}
-        <div style={sx('position:relative;width:100%;padding:18px var(--page-gutter) 0')}>
-          {/* No standing instruction. A palette strip with one tile visibly selected is a control
-              anybody has used before, and the sentence explaining it was read once and then in the
-              way forever. The accessible name still says it, where it costs nothing. */}
-          <div role="group" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
+        {/* 1 · THE STRIP — which swatch, chosen inside the palette named above it. Pointer, arrow
+               keys, Home and End all land in refineSelect. A listbox rather than a row of toggle
+               buttons: this is "pick exactly one of five", which aria-pressed can only describe as
+               five independent on/off states, and aria-selected is not valid on a button role. */}
+        <div style={sx('position:relative;width:100%;padding:24px var(--page-gutter) 0')}>
+          <div role="listbox" aria-orientation="horizontal" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
             {r.swatches.map((b) => (
-              <button key={b.sid} type="button" data-refine-swatch="1" data-focus="swatch" tabIndex={b.tab} aria-pressed={b.pressed} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
+              <button key={b.sid} type="button" role="option" data-refine-swatch="1" data-ring={b.ring} data-focus="swatch" tabIndex={b.tab} aria-selected={b.selected} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
                 {/* One line per role, not the first one and a silence about the rest. */}
                 {b.roleNames.map((n) => (<span key={n} style={b.labelStyle}>{n}</span>))}
               </button>
             ))}
             {/* Selection travels; keyboard focus is the ring on the button beneath. Two states, two
-                treatments, deliberately not the same one. */}
+                treatments, deliberately not the same one — and the travelling one now takes its
+                ink from the swatch it lands on (see data-ring / _refinePill). */}
             <span data-refine-pill="1" aria-hidden="true"></span>
           </div>
         </div>
 
-        {/* 2 · IDENTIFY — the SWATCH, which is the object being edited. The role is an assignment
-               made to it and reads as metadata under it; it is changed from Palette structure
-               below, not from here. The source sits right-aligned as context and is deliberately
-               quieter than the editing controls: no border, because it is not one of them. */}
-        <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px var(--page-gutter) 0')}>
-          <div style={sx('min-width:0')}>
-            {/* data-drawer-split: the identity line takes the same masked line reveal the drawers'
-                titles take, so the one piece of display type on this surface arrives the way display
-                type arrives everywhere else in the app. */}
-            <div data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.15;letter-spacing:-.01em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</div>
+        {/* 2 · THE SWATCH — the H2, one level under the palette. The hex has come out of the
+               heading and joined the role and its status as metadata: it is a value the three
+               sliders already state three ways, and it was taking half of the largest line on the
+               surface. The source sits at the end of the row as context, deliberately quieter than
+               the editing controls: no border, because it is not one of them. */}
+        <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px var(--page-gutter) 0')}>
+          <div style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
+            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.15;letter-spacing:-.005em;color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</h2>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.selMeta}</span>
           </div>
-          {/* Stacked, not a row: image over label. Side by side it made a wide horizontal object
-              that competed with the identity beside it and the controls beneath. */}
           {r.hasSource && (
             <button type="button" data-click-zoom="1" data-focus="chrome" aria-label={r.sourceAria} style={sx('flex:none;display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;background:none;border:none;padding:0;cursor:pointer;color:var(--on-surface-muted)')}>
               <img src={r.sourceUrl} alt="" style={sx('width:54px;height:34px;object-fit:cover;display:block;border:1px solid var(--line)')} />
@@ -2340,16 +2346,16 @@ function RefineDialog({ vals }) {
           )}
         </div>
 
-        {/* 3 · EDIT AND PREVIEW — the two halves of one act, side by side.
-               Left: the three axes. Right: what the palette LOOKS like with those values in it,
-               drawn from the assigned roles. Refine could report a ratio but never a consequence,
-               so a chroma nudge moved a number and left "does this still work as an interface?" to
-               the imagination. The specimen answers it in the same render pass as the slider, the
-               ratio and the AA verdict — one transaction, never a lagging second source.
-               The split collapses to one column under 860px (see global.css): at that width two
-               columns leave neither the sliders nor the specimen usable. */}
-        <div data-refine-split="1" style={sx('padding:16px var(--page-gutter) 0')}>
-          <div data-refine-edit="1">
+        {/* 3 · ADJUST COLOUR — full width, and no longer sharing the row with the preview.
+               The two were a 60/40 split, which is a defensible arrangement right up until you ask
+               what the narrow half is FOR. The preview is not a caption on the sliders; it is the
+               surface the edit is judged on, and at 40% of the width its heading, its body line and
+               its two buttons all wrapped — so the object meant to answer "does this still work as
+               an interface?" was itself badly set. They follow each other down the page now. The
+               contrast card sitting below the fold is fine: the body scrolls. */}
+        <div style={sx('padding:32px var(--page-gutter) 0')}>
+          <span style={sx(eyebrow)}>Adjust colour</span>
+          <div style={sx('padding-top:8px')}>
             {r.sliders.map((sl) => (
               <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
                 <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
@@ -2373,82 +2379,70 @@ function RefineDialog({ vals }) {
               </div>
             ))}
           </div>
+        </div>
 
-          {/* THE CONTEXT. Decorative in the accessibility tree — a picture of a mapping, and the
-              mapping itself is the legend under it and the sentence on the group. */}
-          {/* 16px between the three parts, 8px inside each. The column ran at a flat 8px, so the
-              gap between a LABEL, a SPECIMEN and a LEGEND — three different kinds of statement —
-              was the same as the gap between a heading and its body copy inside the specimen. At
-              that point the grouping is noise and everything reads as one undifferentiated block,
-              which is exactly what "the messages blend together" is describing. The rule is that
-              the gap between groups is at least twice the gap within one. */}
-          <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:16px;min-width:0')}>
-            <span style={sx(eyebrow)}>In use</span>
-            <div aria-hidden="true" style={r.preview.pageStyle}>
+        {/* 4 · LIVE PREVIEW — not "In use", which promises a usage report: how many components,
+               which ones. This surface does not know that and is not trying to; it is a specimen
+               you judge the edit against. The subject moved into the subheading, where a caption
+               under the specimen used to say the same thing as a fourth level of loose text.
+               Decorative in the accessibility tree — a picture of a mapping, with the mapping
+               itself on the group's accessible name. */}
+        <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:12px;padding:32px var(--page-gutter) 0')}>
+          <span style={sx('display:flex;flex-direction:column;gap:5px')}>
+            <span style={sx(eyebrow)}>Live preview</span>
+            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.3;color:var(--on-surface);text-wrap:pretty")}>{r.preview.title}</span>
+          </span>
+          <div aria-hidden="true" style={r.preview.pageStyle}>
+            <div style={r.preview.frameStyle}>
               <div style={r.preview.accentStyle}></div>
               <div style={r.preview.cardStyle}>
                 <span style={r.preview.headingStyle}>Section heading</span>
                 <span style={r.preview.bodyStyle}>Body text set on the raised surface, at the size the contrast verdict below reports.</span>
-                <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+                <span style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px')}>
                   <span style={r.preview.btnStyle}>Primary</span>
                   <span style={r.preview.altStyle}>Secondary</span>
                 </span>
               </div>
             </div>
-            {/* ONE LINE, WHERE SIX CHIPS USED TO BE. The complete role legend sat here and was the
-                second-largest object in the column, competing with the specimen it was captioning
-                — and most of it answered a question about the PALETTE (which colour holds which
-                role) rather than about this preview. That map is a usage question and lives in
-                Usage now. What stays is the only part that was doing work during a drag: where the
-                colour in your hand is, in the thing you are looking at. */}
-            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.preview.here}</span>
           </div>
         </div>
 
-        {/* 4 · VALIDATE — text contrast, named for what it actually measures. The count IS the
-               status, so there is no badge restating it in a word. The pair shown is the one the
-               selected swatch is in, so the card is visibly about the colour in hand rather than
-               the palette's best result sitting still through an edit. Full matrix on demand. */}
+        {/* 5 · TEXT CONTRAST — named for what it measures, and now built on the same skeleton as
+               Roles: one heading, one action, one status, one supporting fact. It was a bordered
+               card ending in a full-width navigation row while Roles began as a loose unboxed
+               section, so two neighbours doing the same kind of work looked like different kinds
+               of object. The card and the footer row are both gone.
+
+               THREE STATEMENTS OF ONE STATE became one. A PARTIAL badge, "1 of 8 meet AA" and a
+               REVIEW 7 FAILURES button all reported the same health, and the two controls were one
+               destination under two names. "Partial" was the weakest: a bucket where the failure
+               count is the quantity, and the quantity is the thing you can act on. */}
         {r.a11y && (
-          <div role="group" aria-label={r.a11y.aria} style={sx('margin:14px 22px 0;border:1px solid var(--line)')}>
-            {/* THE PALETTE'S HEALTH LEADS; THE PAIR IN HAND IS DETAIL UNDER IT.
-                This card used to open with the selected pairing — a big ratio and an AAA badge —
-                and put coverage in a muted line below. On a palette where six of eight combinations
-                fail, that presented itself at a glance as a success. The pair you happen to be
-                standing on is not the state of the palette, so the summary goes first, with the
-                failure count as a control rather than a statistic: where there are failures, the
-                next move is to look at them. */}
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 13px 0')}>
+          <div data-refine-sec="1" role="group" aria-label={r.a11y.aria} style={sx('position:relative;margin:32px 22px 0;padding-top:24px;border-top:1px solid transparent')}>
+            <OvRule />
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
               <span style={sx(eyebrow)}>Text contrast</span>
-              <span aria-hidden="true" style={r.a11y.healthStyle}>{r.a11y.healthLabel}</span>
+              <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx(quiet + ';flex:none')}>{r.a11y.reviewLabel}</button>
             </div>
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:8px 13px 0')}>
+            <div style={sx('padding-top:16px')}>
               <span data-drawer-split="1" style={r.a11y.countStyle}>{r.a11y.count}</span>
-              {r.a11y.hasFailures && (
-                <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{r.a11y.reviewLabel}</button>
-              )}
             </div>
-            {/* The pair the SELECTED swatch is in, demoted to detail but not removed: it is the one
-                reading that changes while you drag, so it stays the card's live half. */}
-            <div style={sx('display:flex;align-items:center;gap:14px;padding:11px 13px 13px')}>
-              <span aria-hidden="true" style={r.a11y.sampleStyle}>{r.a11y.sampleText}</span>
-              <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
-              </span>
-              <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
-                <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
-              </span>
-            </div>
-            {/* A DRILL-IN, not an accordion. Expanding here pushed Palette structure down the
-                page every time anyone glanced at the detail — the one layout shift an editor
-                cannot afford, because the canvas has to hold still while you work. */}
-            <div style={sx('position:relative;border-top:1px solid transparent')}>
-              <OvRule />
-              <button type="button" data-ix="cell" data-focus="chrome" aria-haspopup="dialog" onClick={r.a11y.toggleAll} style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;background:none;border:none;padding:var(--btn-pad-md);cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;text-align:left')}>
-                {r.a11y.allLabel}<span aria-hidden="true" style={sx('font-size:var(--fs-label);color:var(--on-surface-muted)')}>›</span>
-              </button>
+            {/* The pair the SELECTED swatch is in — a different scope from the line above it, so it
+                is labelled rather than left to be inferred as more of the same. It is the one
+                reading that changes while you drag, which is why it stays. */}
+            <div style={sx('display:flex;flex-direction:column;gap:8px;padding-top:16px')}>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Current pairing</span>
+              <div style={sx('display:flex;align-items:center;gap:14px')}>
+                <span aria-hidden="true" style={r.a11y.sampleStyle}>{r.a11y.sampleText}</span>
+                <span style={sx('display:flex;flex-direction:column;gap:4px;flex:1;min-width:0')}>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.a11y.pairHex}</span>
+                </span>
+                <span style={sx('display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none')}>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
+                  <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
+                </span>
+              </div>
             </div>
           </div>
         )}

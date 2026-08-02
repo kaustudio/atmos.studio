@@ -614,7 +614,14 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    swatch and a black one without either being tinted.
    It is SELECTION. Keyboard focus is the app's own ring on the button beneath, deliberately a
    different thing in a different place: this one travels, that one appears where the caret is. */
-[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:1px solid var(--on-surface); outline-offset:-2px; }
+/* THE SELECTION MARKER, drawn INSIDE the swatch it has landed on and in ink chosen against that
+   swatch's own colour. It was a 1px ink outline at a -2px offset: on #726C59 that is a dark line on
+   a medium-dark fill, and on the palette's darkest swatch it disappeared into it — the one state
+   the strip has to make unmistakable, illegible on exactly the colours where it matters. An INSET
+   shadow rather than an outline so the ring sits on top of the fill, cannot be clipped by the
+   neighbour, and costs no layout: the marker is absolutely positioned and 3px changes nothing
+   about the swatch beneath it. The ink comes from _refinePill (see data-ring). */
+[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; box-shadow:inset 0 0 0 3px var(--refine-pill-ink, var(--on-surface)); }
 
 /* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
    only while there is something to report — so it arrives rather than blinking into place. */
@@ -622,23 +629,9 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 @keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
 @media (prefers-reduced-motion: reduce){ [data-refine-note]{ animation:none } }
 
-/* EDIT AND PREVIEW, side by side — and one column when there is not room for two.
-   The axes need their full track width to be draggable at a useful resolution and the specimen
-   needs enough width to still look like an interface rather than a stack of coloured bars, so
-   below 860px of dialog they stop competing and stack: axes first, because that is where the hand
-   goes. The dialog itself is capped at 96vw, so this breakpoint is on the VIEWPORT and the two
-   numbers have to be read together — 860 is the width at which a 96vw dialog can hold two usable
-   columns plus its own gutters.
-   Order is deliberate on the stacked form too: preview UNDER the axes, so dragging a slider never
-   pushes the thing you are dragging off the bottom of a short viewport. */
-[data-refine-split]{ display:grid; grid-template-columns:1fr; gap:16px; }
-@media (min-width:860px){
-  /* Roughly 60/40 with a 24px gutter, which is what it takes for the specimen to read as an
-     interface rather than as a large swatch: at 232px the heading, the body line and the two
-     buttons inside it were all wrapping, so the thing meant to show whether the palette WORKS was
-     itself badly set. The controls column keeps the larger share — dragging needs track length. */
-  [data-refine-split]{ grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr); gap:24px; align-items:start; }
-}
+/* The two-column split that used to live here is gone: the specimen is not a caption on the
+   sliders, it is the surface the edit is judged on, so it takes the full content width and follows
+   the axes down the page. See the LIVE PREVIEW block in AppView. */
 /* The specimen is a picture of a live mapping, so it must not animate its colours: a transition
    here would make the preview lag the slider, and a preview that disagrees with the value beside it
    is worse than no preview. Direct manipulation is immediate — this is downstream of the hand. */
@@ -680,5 +673,3 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 [data-refine-chev][data-open="1"]{ transform:rotate(90deg); }
 /* The per-swatch delete: present only for the swatch in hand, or under the pointer, so the strip
    is not a row of five delete buttons. It fades and lifts rather than appearing. */
-[data-refine-del]{ opacity:0; transform:translateY(-2px); transition:opacity .2s var(--ease-standard), transform .2s var(--ease-standard); }
-[data-refine-swatch]:hover [data-refine-del],[data-refine-swatch][aria-pressed="true"] [data-refine-del],[data-refine-del]:focus-visible{ opacity:1; transform:none; }
