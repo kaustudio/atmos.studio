@@ -92,22 +92,14 @@ export const motionMethods = {
   // Takes a step off the scale, not a number. It used to take px and was the last place in the app
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
   monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
-  // The view toggle speaks the library section's control voice — Title Case at --fs-detail, not
-  // the app's uppercase label voice — because it stands in that section's heading row. "3D" is
-  // unaffected: an initialism is already its own capitalization.
-  viewToggleOptStyle(active) { return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { textTransform: 'none', position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
+  viewToggleOptStyle(active) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
   // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
   // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
-  // Title Case since 03.08.26 — the app-wide sweep. Labels arrive in their own case (harmony
-  // model names, Most Used / A–Z); monoLabel's uppercase is overridden rather than removed there
-  // because the eyebrow-voice consumers of monoLabel still want it.
-  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { textTransform: 'none', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
-  // Prev / Next. Sentence case at the library section's own chrome size — this helper has exactly
-  // one caller (the list pager), so it carries that section's voice rather than the app default.
-  pageNavStyle(disabled) { return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { textTransform: 'none', padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
+  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
+  pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 
@@ -548,15 +540,26 @@ export const motionMethods = {
      Closing runs the other way and outlives the state change: the exit finishes first, and only then
      does React unmount what was tweening. Without that there is nothing left to animate by the time
      the tween would start — the same reason closeTip works the way it does. */
+  // The button's swap is a RESIZE, not a replacement. Word-state and ✕-state share one 26px
+  // height (renderVals), so the FLIP only has to carry position and WIDTH — the box glides from
+  // word-wide to square while it travels, instead of snapping shape at the start of the slide.
+  // The incoming glyph settles inside it on the same clock: opacity with a small scale, standard
+  // tokens, cleared after. One private helper for both directions so they cannot drift.
+  _moreBtnSwap(from) {
+    const g = window.gsap, btn = document.querySelector('[data-more-btn]');
+    if (!g || !btn || !from) return;
+    const to = btn.getBoundingClientRect();
+    const dx = from.left - to.left, dy = from.top - to.top;
+    if (dx || dy || Math.abs(from.width - to.width) > 1) {
+      g.from(btn, { x: dx, y: dy, width: from.width, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform,width' });
+    }
+    const glyph = btn.firstElementChild || btn;
+    g.from(glyph, { opacity: 0, scale: 0.6, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
+  },
   _readingIn(from) {
     const g = window.gsap;
     if (this._reduce || !g) return;
-    const btn = document.querySelector('[data-more-btn]');
-    if (btn && from) {
-      const to = btn.getBoundingClientRect();
-      const dx = from.left - to.left, dy = from.top - to.top;
-      if (dx || dy) g.from(btn, { x: dx, y: dy, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' });
-    }
+    this._moreBtnSwap(from);
     const pills = [...document.querySelectorAll('[data-trait-extra]')];
     if (pills.length) g.from(pills, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'transform,opacity' });
     const p = document.querySelector('[data-reading-line]');
@@ -579,11 +582,10 @@ export const motionMethods = {
       this._readingOut(from, () => {
         this._readingClosing = false;
         this.setState({ readingOpen: false, announce: 'Reading hidden.' }, () => {
-          const g = window.gsap, b = document.querySelector('[data-more-btn]');
-          if (this._reduce || !g || !b || !from) return;
-          const to = b.getBoundingClientRect();
-          const dx = from.left - to.left, dy = from.top - to.top;
-          if (dx || dy) g.from(b, { x: dx, y: dy, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' });
+          if (this._reduce) return;
+          // Same swap as opening, run the other way: ✕-square rect in, word box out — the width
+          // tween and the glyph settle come from the shared helper, so in and out cannot drift.
+          this._moreBtnSwap(from);
         });
       });
       return;

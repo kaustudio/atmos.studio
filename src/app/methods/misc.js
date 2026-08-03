@@ -21,6 +21,41 @@ export const miscMethods = {
   _lenisStop() { if (this._lenis) { try { this._lenis.stop(); } catch (e) { } } },
   _lenisStart() { if (this._lenis) { try { this._lenis.start(); } catch (e) { } } },
 
+  // ===== A NESTED LENIS, for a dialog that owns a scrollport of its own =====
+  // The contract above says internal scrollers carry data-lenis-prevent and fall back to native
+  // scroll. That is the right default for a short drawer and the wrong one for the refine editor,
+  // which is a full page of content: scrolling it felt like a different website from the one it
+  // opened out of. So that surface gets its own instance instead of an exemption.
+  //
+  // data-lenis-prevent STAYS on the wrapper and is load-bearing twice over. The ROOT instance is
+  // stopped while the dialog is open, and a stopped Lenis does not ignore the wheel — it calls
+  // preventDefault and swallows it (verified in the vendored source), so without the attribute
+  // nothing inside the dialog would scroll at all. The NESTED instance is unaffected by the same
+  // attribute because Lenis slices its own rootElement off the composed path before testing it —
+  // an element cannot prevent the instance it is the root of.
+  //
+  // One clock, as above: the GSAP ticker drives this too, never a second rAF loop.
+  _lenisNestOn(sel) {
+    if (this._reduce || this._nestLenis) return;
+    const g = window.gsap;
+    const wrap = document.querySelector(sel);
+    // Lenis needs the single element that MOVES inside the wrapper; the scrollport's own children
+    // are the sections, so the markup provides one content div for exactly this reason.
+    const content = wrap && wrap.firstElementChild;
+    if (!window.Lenis || !g || !wrap || !content) return;
+    try { this._nestLenis = new window.Lenis({ wrapper: wrap, content }); } catch (e) { return; }
+    this._nestRaf = (time) => { try { this._nestLenis.raf(time * 1000); } catch (e) { } };
+    g.ticker.add(this._nestRaf);
+  },
+  // Torn down on close rather than left parked: it holds wheel/touch listeners on a node React is
+  // about to unmount, and a second open would otherwise stack a new instance on top of a dead one.
+  _lenisNestOff() {
+    const g = window.gsap;
+    if (this._nestRaf && g) { try { g.ticker.remove(this._nestRaf); } catch (e) { } }
+    if (this._nestLenis) { try { this._nestLenis.destroy(); } catch (e) { } }
+    this._nestLenis = null; this._nestRaf = null;
+  },
+
   // sliding pill behind the active project chip — measured (chips have variable widths)
   // Every [data-proj-group] on the page, not just the first: the tag filter is the SAME chip group
   // as the project filter, so it gets the same pill from the same code rather than a second

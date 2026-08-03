@@ -213,6 +213,10 @@ export const refineMethods = {
       refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false,
       announce: 'Refining ' + p.name + '. Choose a swatch, then assign a role or adjust its colour. Press Escape to close.',
     }, () => {
+      // The dialog's own smooth scroll, so the editor reads as the same document the library does
+      // rather than reverting to native scroll the moment it opens. Created here, after mount,
+      // because Lenis measures the wrapper it is handed.
+      this._lenisNestOn('[data-refine-body]');
       // ENTER ON THE TASK, NOT ITS EXIT. This took the dialog's first button, which is Done in the
       // header — so a keyboard user arrived on the way out and had to Tab past the whole surface to
       // reach the thing they opened it to do. The selected swatch is the first meaningful control:
@@ -232,6 +236,7 @@ export const refineMethods = {
     // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
     // discipline as every other surface here.
     this._lenisStart();
+    this._lenisNestOff();
     this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false, announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
@@ -276,12 +281,40 @@ export const refineMethods = {
     if (!p || p.swatches.length <= 3 || !p.swatches[i]) return;
     const roles = this._rolesOn(p, i);
     this.setState({ refineSel: i, refineRemoveIdx: i, announce: 'Removing swatch ' + (i + 1) + '. ' + (roles.length ? roles.join(' and ') + ' will be reassigned. ' : '') + 'Confirm or cancel.' },
-      () => { this._refinePill(); this._foldIn('[data-refine-confirm]'); });
+      () => {
+        this._refinePill(); this._foldIn('[data-refine-confirm]');
+        // FOCUS GOES WITH THE QUESTION. Arming replaces the row holding the pressed button, so
+        // without this the press drops focus to <body> — outside the dialog root whose onKeyDown
+        // carries the focus trap, which is the one place an aria-modal surface must never lose
+        // the keyboard. It lands on Cancel, not the confirm: the destructive act should be a
+        // deliberate second movement, never the default resting place (03.08.26 audit, finding 1).
+        requestAnimationFrame(() => {
+          const c = document.querySelector('[data-refine-confirm] button');
+          if (c) try { c.focus(); } catch (e) { }
+        });
+      });
   },
-  refineCancelRemove() { this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => this.setState({ refineRemoveIdx: null, announce: 'Removal cancelled.' })); },
+  // Cancel hands focus back to the control that armed it, so the keyboard round-trips: arm →
+  // Cancel → back on "Remove swatch…", ready to move on.
+  refineCancelRemove() {
+    this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => this.setState({ refineRemoveIdx: null, announce: 'Removal cancelled.' }, () => {
+      requestAnimationFrame(() => {
+        const b = document.querySelector('[data-refine-remove-arm]');
+        if (b) try { b.focus(); } catch (e) { }
+      });
+    }));
+  },
   refineConfirmRemove() {
     const i = this.state.refineRemoveIdx;
-    this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => { this.setState({ refineRemoveIdx: null }, () => this.refineRemove(i)); });
+    this.closeFold('refineRemoveIdx', '[data-refine-confirm]', () => { this.setState({ refineRemoveIdx: null }, () => {
+      this.refineRemove(i);
+      // The confirmed removal collapses the confirm block too; focus follows the consequence —
+      // the strip, where the selection has just moved to a neighbouring swatch.
+      requestAnimationFrame(() => {
+        const sw = document.querySelector('[data-refine-swatch][aria-selected="true"]');
+        if (sw) try { sw.focus(); } catch (e) { }
+      });
+    }); });
   },
   // ONE SELECTION MODEL. The strip is the only thing that selects a swatch — by pointer, by arrow
   // key, by Home/End. The Roles panel is the property editor FOR that selection, not a second list

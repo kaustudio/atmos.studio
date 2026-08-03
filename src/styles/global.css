@@ -385,9 +385,10 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-dur:0.42s;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
   border-radius:var(--button-006-border-radius);
-  /* Title Case, not uppercase (03.08.26): the CTA family follows the library's control voice —
-     the label arrives in its own case, and the wide tracking went with the caps that needed it. */
-  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);
+  /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
+     uppercase label voice, prose stays in sentence case. Sources are written in natural case and
+     this transform does the styling, so the policy can flip again without rewriting a string. */
+  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
   transition:scale .12s var(--ease-button-click);
@@ -616,12 +617,12 @@ html.lenis,html.lenis body{height:auto}
 [data-refine-slider]::-webkit-slider-runnable-track{ height:26px; margin-top:4px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
 /* 16px of hit area, 4px of ink: the line is centred in the thumb by the gradient, so the pointer
    gets a target it can hold and the track keeps its continuity. */
-[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:34px; margin-top:-5px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 10px, transparent 10px); transition:transform .18s var(--ease-standard); }
+[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:34px; margin-top:-5px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform .18s var(--ease-standard); }
 [data-refine-slider]:hover::-webkit-slider-thumb{ transform:scaleX(1.35); }
 [data-refine-slider]:active::-webkit-slider-thumb{ transform:scaleX(1.7); }
 
 [data-refine-slider]::-moz-range-track{ height:26px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
-[data-refine-slider]::-moz-range-thumb{ width:16px; height:34px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 10px, transparent 10px); transition:transform .18s var(--ease-standard); }
+[data-refine-slider]::-moz-range-thumb{ width:16px; height:34px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform .18s var(--ease-standard); }
 [data-refine-slider]:hover::-moz-range-thumb{ transform:scaleX(1.35); }
 [data-refine-slider]:active::-moz-range-thumb{ transform:scaleX(1.7); }
 
@@ -644,7 +645,12 @@ html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-colo
    sitting at three different places. So: the number right-aligns against a shared edge, and the
    unit occupies a constant column after it whether it is '%', '°' or empty. Tabular figures were
    already doing half this job — a stable column for the unit is the other half. */
-[data-refine-num]{ display:inline-flex; align-items:baseline; gap:3px; inline-size:72px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
+/* 56px, and the value CLUSTER right-aligns (03.08.26, user direction — supersedes the fixed unit
+   slot of the same morning). 72px was sized with slack the two-to-five-character values never
+   spend; at 56 the widest content ("0.028", "100 %") still fits with the 8px inset. Digits and
+   unit end together against the right padding — rows align on the cluster's edge, and chroma,
+   unitless, simply ends its digits there. */
+[data-refine-num]{ display:inline-flex; align-items:baseline; justify-content:flex-end; gap:3px; inline-size:58px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
 [data-refine-num] input{ flex:1; min-inline-size:0; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
 [data-refine-num] input:focus{ outline:none; }
 html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
@@ -652,6 +658,9 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    column-aligned the three digit groups, but chroma's unit is empty — so 0.030 ended 22px
    short of the box edge while 53% and 93° reached it, and the one value with no unit read as
    not right-aligned at all. The content's right edge is the thing to align. */
+/* Intrinsic width again: the box right-aligns the whole digits+unit cluster (see above), so the
+   slot no longer needs to fake a column — an empty chroma slot would only push its digits off the
+   shared edge the other rows end on. */
 [data-refine-num] span{ flex:none; padding-inline-start:2px; font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
 
 /* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
@@ -671,21 +680,23 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    outline's INNER edge 6px in, and the 2px stroke is painted outward from there — so the ring
    occupies 6px..4px and the gap is exactly 4px. Drawn inside the element's box, so it cannot be
    clipped by the neighbouring swatch and costs no layout. */
-[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:2px solid var(--refine-pill-ink, var(--on-surface)); outline-offset:-6px; }
+[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:1px solid var(--refine-pill-ink, var(--on-surface)); outline-offset:-6px; }
 
 /* THE ROLE CHIPS. cursor:grab is the affordance — no standing sentence telling anyone they can
    drag, the pointer says it on arrival. The hover/focus box is what makes a word on a colour read
    as a control rather than as a caption; it is drawn in the swatch's own ink so it works on a
    light band and a dark one alike (see onColor / the chip's own colour). */
-[data-role-chip]{ pointer-events:auto; transition:opacity .14s var(--ease-standard), border-color .14s var(--ease-standard); }
-[data-role-chip]:hover,[data-role-chip]:focus-visible{ opacity:1 !important; border-color:currentColor !important; }
-[data-role-chip][data-pinned="1"]{ opacity:1 !important; }
+/* Borderless in every state (03.08.26, user direction) — the scrim is the whole body. Pinned vs
+   derived is carried by the meta line's own words ("· Pinned"), not by an edge; hover keeps only
+   the cursor and the keyboard keeps the data-focus ring, which is a shadow, not this border. */
+[data-role-chip]{ pointer-events:auto; transition:opacity .14s var(--ease-standard); }
+[data-role-chip]:hover,[data-role-chip]:focus-visible{ opacity:1 !important; }
 /* Under the hand: no transition on the transform — the drag is 1:1, and a curve between the pointer
    and the thing it is carrying is the one place easing reads as lag. */
-[data-role-chip][data-dragging]{ cursor:grabbing; opacity:1 !important; border-color:currentColor !important; z-index:6; transition:none; }
+[data-role-chip][data-dragging]{ cursor:grabbing; opacity:1 !important; z-index:6; transition:none; }
 /* The swatch the chip is over. Same inset geometry as the selection ring so the two never disagree
    about where a swatch's edge is, drawn dashed so it cannot be mistaken for the selection itself. */
-[data-refine-swatch][data-drop]{ outline:2px dashed currentColor; outline-offset:-6px; }
+[data-refine-swatch][data-drop]{ outline:1px dashed currentColor; outline-offset:-6px; }
 @media (prefers-reduced-motion: reduce){ [data-role-chip]{ transition:none } }
 
 /* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered

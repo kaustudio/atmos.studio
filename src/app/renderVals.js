@@ -311,13 +311,16 @@ export const renderValsMethods = {
         moreLabel: moreCount ? 'More · ' + moreCount : 'More',
         // Square while it is a close mark, so the ✕ sits in the middle of its own box rather than
         // inheriting padding shaped for a word.
+        // ONE HEIGHT, BOTH STATES, AND THE ROW IT SITS IN: 26px, shared with the trait chips
+        // beside it (see AppView), so the word state, the ✕ state and the chips sit on one line
+        // instead of three near-heights. Width is the only dimension the toggle changes, which is
+        // what lets the swap be tweened as a resize rather than a re-layout (see _readingIn).
         moreStyle: {
           background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
           fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)',
-          color: 'var(--on-surface)',
-          ...(s.readingOpen
-            ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', padding: 0 }
-            : { padding: 'var(--btn-pad-sm)' }),
+          textTransform: 'uppercase', color: 'var(--on-surface)',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '26px',
+          ...(s.readingOpen ? { width: '26px', padding: 0 } : { padding: '0 12px' }),
         },
         moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
         readingOpen: !!s.readingOpen,
@@ -326,7 +329,7 @@ export const renderValsMethods = {
       };
     }
     // palette-level copy affordances
-    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: 'var(--btn-pad-md)', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
+    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: 'var(--btn-pad-md)', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
     let procStatus = '';
@@ -710,7 +713,7 @@ export const renderValsMethods = {
     // "Max contrast" and "Clear filters" all at once. 12px sentence case is the same optical size
     // and a readable word. Applied to this section's chrome only — the rest of the app's labels are
     // single acts, not a scan surface. AA and 3D stay uppercase because they are initialisms.
-    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
+    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
     // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
     // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
     // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
@@ -1017,13 +1020,12 @@ export const renderValsMethods = {
         // swatch that carries two roles lights up in two places at once.
         hex: roleHex,
         marked: ctxRoles.filter(ctxMark).map((r) => ROLE_LABEL[r]),
-        // WHAT THE SWATCH IN HAND IS DOING HERE, said in the section's own subheading rather than
-        // in a caption under the specimen. It was a sentence hanging below the preview — a fourth
-        // level of text in a column that already had a label, a picture and a verdict — and it
-        // names the subject of the preview, which is a heading's job.
-        title: selRoleIds.length
-          ? 'Testing swatch ' + (selIdx + 1) + ' as ' + selRoleIds.map((rr) => ROLE_LABEL[rr]).join(' and ')
-          : 'Swatch ' + (selIdx + 1) + ' carries no role, so it does not appear here',
+        // No visible subject line any more (03.08.26, user direction): "Testing swatch 1 as
+        // Background" restated what the strip's own role chips already say on the colour itself.
+        // The mapping survives in the aria below, where it is the ONLY statement rather than a
+        // second one. Watch-item: the old line's other variant — "carries no role, so it does not
+        // appear here" — was genuine information, and a sighted user now infers it from the
+        // preview simply not changing; if that proves too quiet, restore it for that case alone.
         // Named in the accessible layer, because the specimen itself is decorative: a screen-reader
         // user gets the mapping as a sentence rather than a picture they cannot see.
         aria: 'Interface preview using the assigned roles: '
@@ -1071,19 +1073,12 @@ export const renderValsMethods = {
         // the largest heading on the surface — a value the sliders restate three ways, set at the
         // size that should have been carrying the name of the palette being worked on.
         selTitle: 'Swatch ' + (selIdx + 1),
-        selMeta: (() => {
-          const ids = roleAt[selIdx] || [];
-          if (!ids.length) return sel.hex.toUpperCase() + ' · No role';
-          const st = (id) => (typeof assigned[id] === 'number' ? 'Pinned' : 'Derived');
-          // A swatch carrying two roles produced "#E12409 · Primary · Derived · Secondary ·
-          // Derived" — four dots in a row, with nothing to say which word belongs to which. When
-          // both roles are in the same state the state is said once for both; when they differ
-          // each keeps its own, and the comma is what separates the pairs from each other.
-          const same = ids.every((id) => st(id) === st(ids[0]));
-          return sel.hex.toUpperCase() + ' · ' + (same
-            ? ids.map((id) => ROLE_LABEL[id]).join(' and ') + ' · ' + st(ids[0])
-            : ids.map((id) => ROLE_LABEL[id] + ' · ' + st(id)).join(', '));
-        })(),
+        // THE HEX, AND NOTHING ELSE. This line used to append the swatch's roles and how they got
+        // there ("· Background · chosen for you"), which restated the strip directly above it —
+        // the roles are already written on the colours, in position — and then explained a
+        // distinction nobody had asked about. A metadata line under a heading called "Swatch 2"
+        // only owes you the one fact the strip cannot show: the value.
+        selMeta: sel.hex.toUpperCase(),
         selCount: (selIdx + 1) + ' of ' + N,
         total: N,
         // Named, not decorative: a labelled control that opens the reference at size, through the
@@ -1107,6 +1102,18 @@ export const renderValsMethods = {
           // to change one of the colours those roles sit on, and until now the panel stated the
           // fact and left the reader to work out where to go. Ground first: it is the larger area
           // and the one whose change fixes every pair set on it, so it is the better first move.
+          // One swatch, drawn the way the strip draws it: the colour, and the number that names it
+          // there. `target` marks the half a press would take you to, so the row says where it
+          // goes rather than only what it measures.
+          const swatchRef = (role, hex, rep) => {
+            const r = resolved.find((q) => q.role === role);
+            const idx = r ? r.index : -1;
+            return {
+              num: idx >= 0 ? String(idx + 1) : '–',
+              target: !!(rep && rep.role === role),
+              style: { width: '18px', height: '18px', flex: 'none', background: hex, border: '1px solid var(--line)' },
+            };
+          };
           const repairIdx = (x) => {
             const bg = resolved.find((r) => r.role === x.bg), fg = resolved.find((r) => r.role === x.fg);
             const g = bg ? bg.index : -1, t = fg ? fg.index : -1;
@@ -1176,6 +1183,15 @@ export const renderValsMethods = {
               return {
                 key: x.fg + '-' + x.bg,
                 roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
+                // WHICH COLOURS, AND WHICH SWATCHES. The row named two ROLES and showed one Aa
+                // specimen — enough to grade the pair, not enough to know what you are about to
+                // change. Activating a row selects a swatch, so the row now shows the two swatches
+                // it is made of: the colour itself, and the number the strip labels it by. The
+                // repair target is the one the press lands on, so it is marked rather than left
+                // for the reader to infer from the ordering rule.
+                fgRole: ROLE_LABEL[x.fg], bgRole: ROLE_LABEL[x.bg],
+                fgSwatch: swatchRef(x.fg, x.fgHex, rep),
+                bgSwatch: swatchRef(x.bg, x.bgHex, rep),
                 ratio: x.ratio.toFixed(1) + ':1',
                 level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
                 pass: x.aa,
@@ -1204,6 +1220,20 @@ export const renderValsMethods = {
           };
         })(),
         onKey: (e) => this.refineKey(e),
+        // PADDING: 0, AND IT IS A CORRECTNESS FIX, NOT TIDYING. The 9px here was left from when the
+        // role labels lived INSIDE this button; the button has been empty since they moved to the
+        // overlay, so the padding drew nothing — but it silently broke the strip's alignment.
+        // box-sizing is border-box globally, so `flex-basis: 0` on a padded item cannot resolve
+        // below its own padding: these bands entered the flex algorithm with an 18px base while the
+        // chip layer's cells — same flex-grow, no padding — entered with 0. Two different bases,
+        // two different distributions of the free space. Measured on Garnet, the chip cells landed
+        // 11.6px, 13.2px, 7.1px and 0.7px right of the bands they are supposed to cover, so a tag
+        // asked for 8px from its band's left edge sat at 19.6px on Accent while its bottom stayed a
+        // true 8px. THAT is what four rounds of "move the tags left" were pointing at; the inset
+        // was never the thing that was wrong, which is why adjusting it never fixed it.
+        // The mirrored-geometry trick is sound — it just requires the two rows to be the same kind
+        // of flex item. They are now, and the strip keeps its proportional fill (grid's
+        // minmax(92px, Nfr) was tried and does not reproduce flex-grow's distribution).
         swatches: list.map((b, i) => {
           const on = this.onColor(b.hex);
           const isSel = i === selIdx;
@@ -1240,7 +1270,7 @@ export const renderValsMethods = {
             onSelect: () => this.refineSelect(i),
             // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
             // destructive control inside the one element whose whole job is to be safe to click.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '124px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
+            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '124px', background: b.hex, border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
           };
         }),
         // Colour is the main area and the only thing in it.
@@ -1325,16 +1355,10 @@ export const renderValsMethods = {
         noRoleNote: 'No role',
         // The two words the rows and the summary both use, defined once, on demand. Same 16px box
         // and click-catcher as the Library and AA tips: one mechanism for "explain this".
-        rolesInfo: {
-          glyph: 'i',
-          aria: (s.refineRoleInfoOpen ? 'Hide' : 'Show') + ' what derived and pinned mean',
-          lines: [
-            ['Derived', 'chosen for you, and free to move when the palette changes.'],
-            ['Pinned', 'you dragged it here, so it stays.'],
-          ],
-        },
-        rolesInfoOpen: !!s.refineRoleInfoOpen,
-        toggleRolesInfo: () => this.toggleTip('refineRoleInfoOpen', '[data-tip="roles"]'),
+        // rolesInfo / rolesInfoOpen / toggleRolesInfo are gone with the words they defined. The
+        // derived-vs-pinned distinction is no longer stated anywhere in the UI: a role's location
+        // is visible on the strip, and how it got there is not something the editor asks anyone to
+        // reason about. Reset roles (below) is the one control that still acts on it.
         // THE LABEL DOES NOT CHANGE. It read "Assign roles" closed and "Close" open, which threw
         // away the name of the function at the moment the panel was on screen to be understood —
         // and "Assign" undersold a control that also pins and releases.
@@ -1378,17 +1402,45 @@ export const renderValsMethods = {
         roleChips: list.map((b, i) => ({
           key: i,
           grow: this.swatchGrow(b),
+          // The strip's own number for this band, in the chips' scrim so it reads on any colour.
+          // It is drawn only where the strip is shown for REFERENCE (the pairings layer), because
+          // that list cites swatches by number and a citation needs something to resolve against.
+          num: String(i + 1),
+          numStyle: {
+            display: 'inline-flex', alignItems: 'center', lineHeight: 1,
+            background: this.onColor(b.hex) === '#ffffff' ? 'rgba(0,0,0,.42)' : 'rgba(255,255,255,.58)',
+            padding: '4px', fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)',
+            color: this.onColor(b.hex), fontVariantNumeric: 'tabular-nums',
+          },
           chips: (roleAt[i] || []).map((id) => ({
             id, label: ROLE_LABEL[id], index: i,
             pinned: typeof assigned[id] === 'number',
             aria: ROLE_LABEL[id] + ', on swatch ' + (i + 1) + ' of ' + list.length
               + '. Drag to another swatch, or use the arrow keys to move it.',
+            // A SCRIM UNDER THE LABEL, because the chips ARE the role map. The legend was removed
+            // on the argument that the map lives here, in words on the colours — which makes chip
+            // legibility content, not decoration, and bare onColor ink cannot guarantee it: white
+            // at the old 0.75 opacity measured 3.15:1 on this repo's own Accent red, and even at
+            // full alpha that pair only reaches ≈4:1 (03.08.26 audit, finding 2). The scrim is the
+            // ink's own opposite, so it deepens whatever swatch it sits on rather than greying it,
+            // and the pair now clears 4.5:1 on any colour a palette can produce. Opacity stays 1;
+            // the resting/hover distinction the 0.75 used to carry belongs to the border, which
+            // the hover/focus rules in global.css already drive to currentColor.
+            // Borderless, equal-padded (03.08.26, user direction). The scrim is the chip's whole
+            // body — no edge on any state, including pinned, whose cue now lives entirely in the
+            // meta line's "· Pinned" text. 4px padding on every side, so with the layer's 8px the
+            // label ink sits exactly 12px from the swatch's left edge and 12px from its bottom.
             style: {
               display: 'inline-flex', alignItems: 'center', alignSelf: 'flex-start',
-              background: 'none', border: '1px solid transparent', padding: '2px 4px', margin: '0 0 0 -4px',
+              background: this.onColor(b.hex) === '#ffffff' ? 'rgba(0,0,0,.42)' : 'rgba(255,255,255,.58)',
+              border: 0, padding: '4px', margin: 0,
               fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)',
-              textTransform: 'uppercase', lineHeight: 1.25, whiteSpace: 'nowrap',
-              color: this.onColor(b.hex), opacity: 0.75, cursor: 'grab', touchAction: 'none',
+              // line-height 1, not 1.25: the box's padding was symmetric but the LEADING was not
+              // visible — 1.25 on an 8px face puts ~2px of empty line box under the glyph, inside
+              // the padding, so the ink sat ~14px off the swatch's bottom edge against 12px off
+              // its left. At 1 the box hugs the glyphs and the two gaps are the same measurement.
+              textTransform: 'uppercase', lineHeight: 1, whiteSpace: 'nowrap',
+              color: this.onColor(b.hex), cursor: 'grab', touchAction: 'none',
             },
             onDown: (e) => this._roleDragStart(e, id, i),
             onKey: (e) => this._roleChipKey(e, id, i),
@@ -1688,7 +1740,7 @@ export const renderValsMethods = {
       // named for its subject ("Manage projects") rather than for the verb alone, because a bare
       // "Manage" beside three project scopes could as easily mean managing the palettes in them.
       projManageStyle: {
-        fontFamily: 'Neue Montreal', fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)',
+        fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase',
         display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap',
         background: 'none', border: '1px solid var(--action-line)', color: 'var(--on-surface)', cursor: 'pointer',
       },
@@ -1698,7 +1750,6 @@ export const renderValsMethods = {
       // its own hover tint darkened the ground under it), so these take what everything else takes.
       // The demotion from "New generation" is carried by fill: that one is filled, these are not.
       tier3BtnStyle: this.monoLabel('var(--fs-label)', 'var(--track-flat)', {
-        textTransform: 'none',
         display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 'var(--btn-pad-sm)',
         background: 'none', border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', cursor: 'pointer',
@@ -1735,8 +1786,8 @@ export const renderValsMethods = {
       // toggleStyle is shared with the harmony drawer (result stage), so its uppercase micro voice
       // stays; the filter drawer is library-owned chrome and overrides to the library's control
       // voice locally — same component, section-appropriate clothes.
-      sortCountStyle: Object.assign(this.toggleStyle((s.tagSort || 'count') === 'count'), { fontSize: 'var(--fs-detail)', textTransform: 'none' }),
-      sortAlphaStyle: Object.assign(this.toggleStyle(s.tagSort === 'alpha'), { fontSize: 'var(--fs-detail)', textTransform: 'none' }),
+      sortCountStyle: this.toggleStyle((s.tagSort || 'count') === 'count'),
+      sortAlphaStyle: this.toggleStyle(s.tagSort === 'alpha'),
       // roving arrow traversal inside the option list — Down/Up step, Home/End jump. Typing stays
       // with the search field, which is where focus lands on open.
       onFacetListKey: (e) => {
@@ -1985,7 +2036,7 @@ export const renderValsMethods = {
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
       pageSizeOptions: PAGE_SIZES.map((n) => ({
         label: '' + n, pressed: pageSize === n ? 'true' : 'false', tabIndex: pageSize === n ? 0 : -1,
-        style: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
+        style: this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
         onSelect: () => this.setPageSize(n),
       })),
       pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (PAGE_SIZES.indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s var(--ease-pill)' },
@@ -2058,11 +2109,7 @@ export const renderValsMethods = {
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
-          style: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', {
-            // textTransform overrides monoLabel's uppercase. This row is now a true column header
-            // over a table of numbers, and a header is read as a word, not spelled out — see the
-            // chipStyle note above for why the whole bar dropped the case.
-            textTransform: 'none',
+          style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
             // A CHIP, NOT A COLUMN. It hugs its label with the same padding on all four sides and
             // sits at its track's end, so the BOX lands on the column line and the label is centred
             // inside it. Filling the whole track was tried and removed: a tint one column wide
@@ -2178,7 +2225,7 @@ export const renderValsMethods = {
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to Project',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
+      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),

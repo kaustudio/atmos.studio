@@ -26,14 +26,17 @@ here first.
 | Rows | The table | — |
 | Footer | Per page · pager | Each appears only when it can do something |
 
-**Voices** — one per kind of thing:
+**Voices** — one per kind of thing. (Revised 03.08.26, second pass: after a day in Title Case the
+controls returned to uppercase by decision — uppercase for buttons, normal text for body only.
+Sources stay written in natural case; `text-transform` carries the policy, so it can flip again
+without touching a string.)
 
 | Kind | Treatment | Examples |
 | --- | --- | --- |
-| Controls (section chrome) | `--fs-detail` (12px), Title Case, no transform | Manage Projects, Clear Filters, Max Contrast, List/Grid/3D |
+| Controls (all buttons) | uppercase, `--fs-label` (CTAs/chips) or `--fs-micro` (dense chrome), flat tracking (`.1em` on the CTA family) | MANAGE PROJECTS, CLEAR FILTERS, LIST/GRID/3D, REFINE PALETTE |
 | Status labels | `--fs-nano/micro`, uppercase | EXAMPLE, VIEWING, AA badge |
 | Values | mono, tabular-nums | counts, ratios, stamps |
-| Metadata (unpressable) | `--fs-detail`, muted, no border/fill | Showing 4 of 8 palettes |
+| Body & metadata (unpressable) | sentence case, never uppercase | Showing 4 of 8 palettes, names, rationales, dialog body copy |
 
 **Geometry**
 

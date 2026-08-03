@@ -333,7 +333,7 @@ function MobileExampleList({ ml }) {
       </ul>
 
       <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
-        <button type="button" data-ix="press" data-focus="chrome" onClick={ml.onLeave} aria-label="Return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to Start</button>
+        <button type="button" data-ix="press" data-focus="chrome" onClick={ml.onLeave} aria-label="Return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to Start</button>
       </div>
     </div>
   );
@@ -369,7 +369,7 @@ function MobileShareView({ ms }) {
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
-              <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-label);padding:var(--btn-pad-chip);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:capitalize')}>{d}</span>
+              <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-label);padding:var(--btn-pad-chip);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:uppercase')}>{d}</span>
             ))}
           </div>
         )}
@@ -404,9 +404,9 @@ function MobileShareView({ ms }) {
                 putting it first means the way OUT is not also the only way ON. Hidden while the
                 list is already the level below, where it would send you where you just were. */}
             {!ms.inList && (
-              <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See all example palettes" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>See All Examples</button>
+              <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See all example palettes" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>See All Examples</button>
             )}
-            <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label={ms.inList ? 'Back to the example list' : 'Close the example and return to the start screen'} style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>{ms.inList ? 'Back to Examples' : 'Back to Start'}</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label={ms.inList ? 'Back to the example list' : 'Close the example and return to the start screen'} style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>{ms.inList ? 'Back to Examples' : 'Back to Start'}</button>
           </div>
         )}
       </div>
@@ -604,9 +604,9 @@ export default function AppView({ vals }) {
                     run it. pointer-events restored — the block above it is decorative and inert. */}
                 <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;max-width:240px;align-self:center;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
-                    <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an Example</button>
+                    <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an Example</button>
                   )}
-                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);cursor:pointer;-webkit-tap-highlight-color:transparent')}>
+                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
                     {vals.gateLinkCopied ? (<><IconCheck />Link copied</>) : 'Save for desktop'}
                   </button>
                 </div>
@@ -861,8 +861,13 @@ export default function AppView({ vals }) {
                   {/* The pills past the first two are marked so the reveal knows which of them are
                       new. Marking them here rather than counting in the tween keeps the two
                       definitions of "extra" from drifting apart. */}
+                  {/* Uppercase, at the More button's own size and height (03.08.26): the row
+                      previously mixed a 24px/12px chip with a 28px word-state and a 26px ✕-state
+                      — three heights and two sizes on one line. The chips are not buttons, but
+                      they queue with one, and a queue aligns on its tallest member: 26px tall,
+                      --fs-label, stated once on all of them. */}
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('font-family: Neue Montreal; font-size:var(--fs-detail); padding: var(--btn-pad-chip); border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: capitalize')}>{d}</span>
+                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding: 0 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase')}>{d}</span>
                   ))}
                   {vals.result.hasMore && (
                     <button type="button" data-more-btn="1" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>{vals.result.readingOpen ? <IconClose /> : vals.result.moreLabel}</button>
@@ -960,7 +965,7 @@ export default function AppView({ vals }) {
               <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>{vals.errorTitle}</div>
               <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
             </div>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.onBrowse} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Choose Another Image</button>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.onBrowse} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;color:var(--surface);cursor:pointer')}>Choose Another Image</button>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </div>
         )}
@@ -999,7 +1004,7 @@ export default function AppView({ vals }) {
                 verb stays lowercase — and a status line is prose, not a button. */}
             <span style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap")}>{vals.toastLabel}</span>
             <HBtn type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete}
-              style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
+              style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.12em;text-transform:uppercase;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:7px 13px;cursor:pointer')}
               styleHover={{ background: 'var(--on-surface)', color: 'var(--surface)' }}>Undo</HBtn>
             {/* The toast no longer times out (it holds an action — see the note in overlays.js), so
                 letting the undo go needs a control of its own. Icon-only, so it carries a name; a
@@ -1106,7 +1111,7 @@ function FeedSection({ vals }) {
   // would remove the next one from.
   const filterRow = vals.showProjectsBar && vals.showFacet && (
     <div role="toolbar" aria-label="Filter and result count" aria-controls="library-list" data-filter-toolbar="1" data-applied-filters="1" onKeyDown={vals.toolbarKey} style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px')}>
-      <button type="button" data-facet-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.filterAria} style={sx('display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>
+      <button type="button" data-facet-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.filterAria} style={sx('display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>
         Filter{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
       </button>
       {/* One chip per applied filter across every group — accessibility first, matching the
@@ -1115,7 +1120,7 @@ function FeedSection({ vals }) {
           facet tables ("Text-Ready") and lowercase from the open tag vocabulary ("golden"), and
           this is the one rule that renders both as words. */}
       {vals.appliedTags.map((t) => (
-        <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);text-transform:capitalize;color:var(--surface);cursor:pointer')}>
+        <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
           {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
         </button>
       ))}
@@ -1123,7 +1128,7 @@ function FeedSection({ vals }) {
           control to read past on every visit that does not need it. No aria-label: the visible
           text is the accessible name, so label-in-name (SC 2.5.3) can never drift. */}
       {vals.anyFilter && (
-        <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Clear Filters</button>
+        <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear Filters</button>
       )}
       {/* METADATA, AND IT LOOKS LIKE IT. No border, no fill, no hit area: this is the only thing
           in the toolbar that cannot be pressed, so it is the only thing wearing none of the
@@ -1222,8 +1227,8 @@ function FeedSection({ vals }) {
               voice: these act on the same filter state the toolbar above owns, so they wear the
               toolbar's clothes. No aria-labels — the visible text is the name (SC 2.5.3). */}
           <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Remove Last Filter</button>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Clear Filters</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Remove Last Filter</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear Filters</button>
           </span>
         </div>
       )}
@@ -1273,7 +1278,7 @@ function FeedSection({ vals }) {
                 grid padding puts its text edge exactly where the strip below begins — so the line
                 it must state is already stated by its text. Boxing it would push the word 6px off
                 that line. Each column aligns by the rule its content needs. */}
-            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
+            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -1524,7 +1529,7 @@ function FeedSection({ vals }) {
           {/* universe chrome (fixed above the field) */}
           <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.universeCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.universeCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe" style={sx('pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
 
           {vals.universeEngine && (
@@ -1552,7 +1557,7 @@ function FeedSection({ vals }) {
           )}
           <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--page-gutter);pointer-events:none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            <button ref={vals.reelCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
+            <button ref={vals.reelCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close reel" style={sx('pointer-events:auto;display:inline-flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close <span aria-hidden="true">Esc</span></button>
           </div>
           <span data-reel-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to spin</span>
         </div>
@@ -1574,7 +1579,7 @@ function ContrastDrawer({ vals }) {
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
             <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer; transition: background .15s var(--ease-standard), color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px var(--page-gutter) 0')}>
@@ -1664,9 +1669,9 @@ function DetailOverlay({ vals }) {
             do WITH a palette already live. The header keeps only what acts on the palette's place in
             the archive or on this window: delete, and close. */}
         <div style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-          <button type="button" data-ix="press" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
+          <button type="button" data-ix="press" data-focus="chrome" aria-label={overlay.deleteAria} onClick={overlay.onDelete} style={sx('display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>
             <IconTrash />Delete</button>
-          <button type="button" data-ix="press" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="press" data-focus="chrome" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('display:inline-flex;align-items:center;gap:9px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard)')}>Close</button>
         </div>
       </header>
 
@@ -1827,7 +1832,7 @@ function TagFilterDrawer({ vals }) {
           </div>
           {/* Done, not Close: selections apply live to the list behind, so nothing is pending and
               nothing is cancelled by leaving. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeFacet} aria-label="Done, close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Done</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeFacet} aria-label="Done, close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Done</button>
         </div>
         {/* ACTIVE FILTERS, pinned. One removable chip per applied value across every group, and the
             one Clear all. These used to sit at the bottom of the Character list — the longest thing
@@ -1838,13 +1843,13 @@ function TagFilterDrawer({ vals }) {
             {/* Identical treatment to the toolbar's applied chips outside — same fact, same
                 clothes; two renderings of one chip would read as two states. */}
             {vals.appliedTags.map((t) => (
-              <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);text-transform:capitalize;color:var(--surface);cursor:pointer')}>
+              <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
                 <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{t.label}</span>
                 <span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)', flex: 'none' }}>✕</span>
               </button>
             ))}
             {vals.facetClear && (
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.facetClear.onClear} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{vals.facetClear.label}</button>
             )}
           </div>
         )}
@@ -1988,7 +1993,7 @@ function TagFilterDrawer({ vals }) {
                 {vals.hasTagQuery ? 'No character trait matches “' + vals.tagQuery + '”.' : 'No further trait would narrow this selection.'}
               </span>
               {vals.hasTagQuery && (
-                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Clear Search</button>
+                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear Search</button>
               )}
             </div>
           )}
@@ -1998,7 +2003,7 @@ function TagFilterDrawer({ vals }) {
               where the answer almost always is; Show all is one press away and never hides a
               SELECTED trait, which stays listed whatever the cut is (see facetOptions). */}
           {vals.facetMore && (
-            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" aria-expanded={vals.facetAllOpen} aria-label={vals.facetMore.aria} onClick={vals.facetMore.onToggle} style={sx('align-self:flex-start;margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>
+            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" aria-expanded={vals.facetAllOpen} aria-label={vals.facetMore.aria} onClick={vals.facetMore.onToggle} style={sx('align-self:flex-start;margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>
               <span data-refine-chev="1" data-open={vals.facetAllOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.facetMore.label}
             </button>
           )}
@@ -2030,7 +2035,7 @@ function HarmonyDrawer({ vals }) {
           </div>
           {/* Done, not Close. The drawer can act now — Save as palette writes a record — so leaving
               it is completion rather than the dismissal of a read-only view. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Done, close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Done</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeHarmony} aria-label="Done, close colour harmonies" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Done</button>
         </header>
 
         {/* WHAT YOU CAN DO, not how it was made. The methodology sentence led this drawer and has
@@ -2072,8 +2077,8 @@ function HarmonyDrawer({ vals }) {
             version of what a swatch already does and stays quiet beside it. Both act on the model
             currently shown, which is why the label names it. */}
         <div data-hx-sec="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}>Save as Palette</button>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{harmony.copyAllLabel}</button>
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer;white-space:nowrap')}>Save as Palette</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{harmony.copyAllLabel}</button>
         </div>
 
         {/* METHOD, ON DEMAND. It says something specific about THIS harmony — how many of these
@@ -2113,7 +2118,7 @@ function ExportDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;transition:background .15s var(--ease-standard),color .15s var(--ease-standard)')}>Close</button>
         </header>
 
         <div style={sx('padding:14px var(--page-gutter) 0')}>
@@ -2176,7 +2181,7 @@ function RecogniseDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Cancel</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Cancel</button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
@@ -2187,12 +2192,12 @@ function RecogniseDialog({ vals }) {
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
         </div>
         <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Open Existing Palette</button>
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Open Existing Palette</button>
           {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
               second run of the same image returns the same colours — this adds a separate entry,
               it does not produce a different palette. Step D is what makes variations genuinely
               differ (seed = content hash + variation index); the label can promise that then. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Extract Again Anyway</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Extract Again Anyway</button>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so this adds a second entry with the same colours.</span>
         </div>
       </div>
@@ -2212,7 +2217,7 @@ function AssignDialog({ vals }) {
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Add to projects</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close the project picker" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close the project picker" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {assign.options.map((o) => (
@@ -2226,7 +2231,7 @@ function AssignDialog({ vals }) {
           <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
             <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Create &amp; Add</button>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Create &amp; Add</button>
           </div>
         </div>
       </div>
@@ -2250,12 +2255,12 @@ function ManageDialog({ vals }) {
                 it — "Manage Projects", exactly. */}
             <span style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-subtitle); letter-spacing: -.01em; color: var(--on-surface)")}>Manage Projects</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Close</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeManage} aria-label="Close manage projects" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Close</button>
         </header>
         <div style={sx('padding:16px var(--page-gutter) 4px')}>
           <div style={sx('display:flex;gap:8px')}>
             <input data-manage-new="1" type="text" maxLength={60} placeholder="New project name" onKeyDown={manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Add</button>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
           </div>
         </div>
         {manage.empty && (
@@ -2276,6 +2281,50 @@ function ManageDialog({ vals }) {
     </div>
   );
 }
+
+// THE PALETTE STRIP, READ-ONLY — the same view the editor opens with, for a layer that needs its
+// context without its controls. Same geometry as the interactive strip: one flex row on the shares
+// swatchGrow hands out, one chip layer over it on the same shares, chips on the same 8px inset. It
+// is not a second selection mechanism — the rows beneath it are the controls here, and two ways to
+// pick a swatch inside one modal layer is one too many — so it renders as spans and is hidden from
+// assistive tech, which reads the rows' own labels instead.
+// The band numbers only appear here: this is the surface whose rows cite swatches by number, so
+// the citation needs something to resolve against.
+const RefineStripRef = ({ swatches, roleChips }) => (
+  <div aria-hidden="true" style={sx('position:relative;width:100%;flex:none')}>
+    <div style={sx('position:relative;display:flex;gap:0;width:100%')}>
+      {/* No height override: the band's own 124px comes through, so this IS the editor's strip
+          rather than a squashed likeness of it. At 64px the chips, the number and the band's
+          padding were fighting for the same rows and everything clamped. */}
+      {swatches.map((b) => (
+        <span key={b.sid} style={{ ...b.style, cursor: 'default' }}></span>
+      ))}
+    </div>
+    <div style={sx('position:absolute;inset:0;display:flex;pointer-events:none')}>
+      {roleChips.map((cell) => (
+        <span key={cell.key} style={{ flexGrow: cell.grow, flexBasis: 0, minWidth: '92px', position: 'relative' }}>
+          <span style={{ ...sx('position:absolute;left:8px;top:8px'), ...cell.numStyle }}>{cell.num}</span>
+          <span style={sx('position:absolute;left:8px;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
+            {cell.chips.map((c) => (
+              <span key={c.id} style={{ ...c.style, cursor: 'default' }}>{c.label}</span>
+            ))}
+          </span>
+        </span>
+      ))}
+    </div>
+  </div>
+);
+
+// One half of a contrast pair in the Review pairings list: the swatch's colour, its role, and the
+// number the strip labels it by. The target half — the one a press on the row selects — carries
+// its number in full ink so the row states its destination rather than implying it.
+const PairHalf = ({ half, role }) => (
+  <span style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0')}>
+    <span aria-hidden="true" style={half.style}></span>
+    <span style={sx('white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{role}</span>
+    <span aria-hidden="true" style={{ ...sx('font-family:Neue Montreal;font-size:var(--fs-micro);font-variant-numeric:tabular-nums;flex:none'), color: half.target ? 'var(--on-surface)' : 'var(--on-surface-muted)' }}>{half.num}</span>
+  </span>
+);
 
 // ============================== REFINE ==============================
 // The step between reading a palette and shipping it. A surface of its own, on the same dialog
@@ -2304,7 +2353,7 @@ function ManageDialog({ vals }) {
 function RefineDialog({ vals }) {
   if (!vals.hasRefine) return null;
   const r = vals.refine;
-  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   // THE LADDER, and every step is a token. Seven structural levels shared one 9px muted style —
   // the modal's own label and all six section titles — which is why the body could not be scanned:
   // nothing marked where one task ended and the next began. Two levels now do what one was doing.
@@ -2320,7 +2369,7 @@ function RefineDialog({ vals }) {
   // be identified. --fs-lead in sentence case at weight 500 is a heading — it has a distinct size,
   // a distinct case and a distinct rank from both the 13px answer beneath it and the 9px chrome.
   const secTitle = "margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface)";
-  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap';
+  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
   return (
     <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
@@ -2346,33 +2395,49 @@ function RefineDialog({ vals }) {
               <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
               <button type="button" data-ix="press" data-focus="chrome" onClick={r.a11y.closePairings} aria-label="Close pairings and return to the editor" style={sx(quiet)}>Close</button>
             </div>
+            {/* THE PALETTE, ON THE SURFACE THAT GRADES IT. The list names roles and swatch numbers;
+                without the strip those were coordinates with no map, and the layer covers the
+                editor's own strip exactly when you need it most. */}
+            <div style={sx('padding:12px var(--page-gutter) 0')}>
+              <RefineStripRef swatches={r.swatches} roleChips={r.roleChips} />
+            </div>
             {/* EVERY ROW LEADS BACK TO A SWATCH. The matrix used to be a read-only report: it told
                 you Primary on Background fails and stopped there, leaving the reader to work out
                 which of the two colours to go and change. Activating a row closes the drill-in and
                 selects the swatch carrying the offending role — ground first, because it is the
                 larger area and fixing it repairs every pair set on it. */}
             <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px var(--page-gutter) 18px')}>
-              {r.a11y.rows.map((row) => (
-                row.canRepair ? (
+              {/* ONE ROW SHAPE, rendered as a button or a span. The two variants used to be two
+                  copies of the same five children, which is how they would eventually stop
+                  matching; the contents are written once here and the wrapper is the only branch. */}
+              {r.a11y.rows.map((row) => {
+                const body = (<>
+                  <span aria-hidden="true" style={row.chipStyle}>Aa</span>
+                  {/* The pair, as the two swatches it actually is: colour, role, and the number
+                      the strip labels that swatch by. The one a press would take you to is marked
+                      — see swatchRef in renderVals. */}
+                  <span style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>
+                    <PairHalf half={row.fgSwatch} role={row.fgRole} />
+                    <span style={sx('flex:none;color:var(--on-surface-muted)')}>on</span>
+                    <PairHalf half={row.bgSwatch} role={row.bgRole} />
+                  </span>
+                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
+                  <span style={row.levelStyle}>{row.level}</span>
+                </>);
+                return row.canRepair ? (
                   <button key={row.key} type="button" data-ix="cell" data-focus="chrome" aria-label={row.aria} onClick={row.onRepair} style={sx('display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:10px 0;font:inherit;color:var(--on-surface);cursor:pointer')}>
-                    <span aria-hidden="true" style={row.chipStyle}>Aa</span>
-                    <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{row.roles}</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
-                    <span style={row.levelStyle}>{row.level}</span>
+                    {body}
                     <span aria-hidden="true" style={sx('flex:none;font-size:var(--fs-label);color:var(--on-surface-muted)')}>›</span>
                   </button>
                 ) : (
                   // Both halves of this pair are the swatch already selected, so there is nowhere to
                   // send anyone: it stays a statement rather than a control that would do nothing.
                   <span key={row.key} style={sx('display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)')}>
-                    <span aria-hidden="true" style={row.chipStyle}>Aa</span>
-                    <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{row.roles}</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
-                    <span style={row.levelStyle}>{row.level}</span>
+                    {body}
                     <span aria-hidden="true" style={sx('flex:none;width:8px')}></span>
                   </span>
-                )
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -2397,7 +2462,7 @@ function RefineDialog({ vals }) {
           {/* Done, not Save: every edit is already applied and already written. It is the ONE
               filled control on this surface — completion has to out-rank Reset palette, which sits
               at 9px in the footer and asks before it acts. */}
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Done</button>
+          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Done</button>
         </header>
 
         {/* THE ONLY SCROLLPORT. min-height:0 is what makes it one: a grid row sized minmax(0,1fr)
@@ -2406,8 +2471,16 @@ function RefineDialog({ vals }) {
             end chaining into the page — belt to the Lenis brace, which is why data-lenis-prevent
             moved here from the dialog: the wheel has to be intercepted on the thing that scrolls.
             scrollbar-gutter keeps the column reserved so content does not shift by the scrollbar's
-            width when a palette happens to be short enough not to overflow. */}
-        <div data-refine-body="1" data-lenis-prevent="1" onScroll={r.onBodyScroll} style={sx('min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;display:flex;flex-direction:column')}>
+            width when a palette happens to be short enough not to overflow.
+
+            data-lenis-prevent stays, and now does the OPPOSITE of exempting this surface: it holds
+            the stopped root instance off (a stopped Lenis swallows the wheel rather than ignoring
+            it) so the nested instance below can own the scroll. See _lenisNestOn in misc.js. */}
+        <div data-refine-body="1" data-lenis-prevent="1" onScroll={r.onBodyScroll} style={sx('min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable')}>
+        {/* THE MOVING ELEMENT. Lenis translates one content node inside its wrapper, and the
+            scrollport's own children are the sections — so this div exists to be that node. It
+            carries the column layout the scrollport used to hold itself. */}
+        <div data-refine-content="1" style={sx('display:flex;flex-direction:column')}>
 
         {/* 1 · THE STRIP — which swatch, chosen inside the palette named above it. Pointer, arrow
                keys, Home and End all land in refineSelect. A listbox rather than a row of toggle
@@ -2436,7 +2509,12 @@ function RefineDialog({ vals }) {
             <div role="group" aria-label="Palette roles. Drag a role onto a swatch to move it there, or focus one and use the arrow keys." style={sx('position:absolute;inset:0;display:flex;pointer-events:none;z-index:4')}>
               {r.roleChips.map((cell) => (
                 <div key={cell.key} style={{ flexGrow: cell.grow, flexBasis: 0, minWidth: '92px', position: 'relative' }}>
-                  <div style={sx('position:absolute;left:9px;right:9px;bottom:9px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
+                  {/* 8px from the band's left edge and 8px from its bottom edge, measured on the
+                      TAG ITSELF — the scrim box, which is the thing with visible edges and so the
+                      thing the eye spaces. Not the glyph inside it (that has side bearings and a
+                      descender gap that no two axes share), and not the cluster minus the chip's
+                      own padding. Both numbers are asserted per band in the verification. */}
+                  <div style={sx('position:absolute;left:8px;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
                     {cell.chips.map((c) => (
                       <button key={c.id} type="button" data-role-chip={c.id} data-pinned={c.pinned ? '1' : '0'} data-focus="swatch" aria-label={c.aria} onPointerDown={c.onDown} onKeyDown={c.onKey} style={c.style}>{c.label}</button>
                     ))}
@@ -2455,6 +2533,9 @@ function RefineDialog({ vals }) {
         <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px var(--page-gutter) 0')}>
           <div style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
             <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.15;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</h2>
+            {/* The hex, on its own. It carried the swatch's roles and their origin until the strip
+                above was doing both jobs better — the roles are written on the colours themselves,
+                so repeating them here in grey text was the same map with the colour taken out. */}
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.selMeta}</span>
           </div>
           {r.hasSource && (
@@ -2475,10 +2556,16 @@ function RefineDialog({ vals }) {
                an interface?" was itself badly set. They follow each other down the page now. The
                contrast card sitting below the fold is fine: the body scrolls. */}
         <div style={sx('padding:32px var(--page-gutter) 0')}>
-          <h3 style={sx(secTitle)}>Adjust Colour</h3>
-          <div style={sx('padding-top:8px')}>
+          {/* The headline is ruled off from its content — every section title in this dialog now
+              carries the same --line underline, so the hierarchy is drawn, not implied. */}
+          <h3 style={sx(secTitle + ';padding-bottom:8px;border-bottom:1px solid var(--line)')}>Adjust Colour</h3>
+          {/* EACH AXIS IS A CARD, not a floating row: the raised surface + quiet hairline the
+              app's other islands use (export rows, thumbnails), on an 8px rhythm throughout —
+              8 between cards, 8 inside them. The reference's contained parameter rows, spoken
+              in this system's squared, token-built accent. */}
+          <div style={sx('padding-top:8px;display:flex;flex-direction:column;gap:8px')}>
             {r.sliders.map((sl) => (
-              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
+              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--surface-raised);border:1px solid var(--line)')}>
                 <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
                   <label htmlFor={'refine-' + sl.key} style={sx(eyebrow + ';font-weight:400')}>{sl.label}</label>
                   {/* Value and unit are ONE control: the wrapper draws the boundary, the input is
@@ -2508,11 +2595,11 @@ function RefineDialog({ vals }) {
                under the specimen used to say the same thing as a fourth level of loose text.
                Decorative in the accessibility tree — a picture of a mapping, with the mapping
                itself on the group's accessible name. */}
+        {/* No "Testing swatch x as Background" line: the strip above already names the mapping on
+            the swatch itself, so the sentence restated what two visible labels were saying — the
+            fact stays on the group's accessible name, where it is not redundant. */}
         <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:12px;padding:32px var(--page-gutter) 0')}>
-          <span style={sx('display:flex;flex-direction:column;gap:5px')}>
-            <h3 style={sx(secTitle)}>Live Preview</h3>
-            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.3;color:var(--on-surface);text-wrap:pretty")}>{r.preview.title}</span>
-          </span>
+          <h3 style={sx(secTitle + ';padding-bottom:8px;border-bottom:1px solid var(--line)')}>Live Preview</h3>
           <div aria-hidden="true" style={r.preview.pageStyle}>
             <div style={r.preview.frameStyle}>
               <div style={r.preview.accentStyle}></div>
@@ -2541,7 +2628,7 @@ function RefineDialog({ vals }) {
         {r.a11y && (
           <div data-refine-sec="1" role="group" aria-label={r.a11y.aria} style={sx('position:relative;margin:32px var(--page-gutter) 0;padding-top:24px;border-top:1px solid transparent')}>
             <OvRule />
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--line)')}>
               <h3 style={sx(secTitle)}>Text Contrast</h3>
               <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx(quiet + ';flex:none')}>{r.a11y.reviewLabel}</button>
             </div>
@@ -2563,107 +2650,21 @@ function RefineDialog({ vals }) {
           </div>
         )}
 
-        {/* 5 · ROLES — one section where there were three competing things: a "Usage" heading over
-               a colour legend, a separate "Role: Surface" line restating what the legend already
-               marked, and a trigger that renamed itself "Close" when open. Nothing said which was
-               the parent of which.
-
-               The legend is gone rather than relabelled. Its job — which colour holds which role —
-               is the manager's first two columns, and the manager adds the assignment and the act;
-               a legend duplicating two of four columns is not a second representation, it is the
-               same one with information removed. The unexplained dot went with it.
-
-               "Usage" is not the heading. It would have to mean where this swatch is actually used
-               — how many components, which ones — and the app has no such data. Naming the role map
-               "Usage" was a heading promising a report the section cannot produce. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:24px var(--page-gutter) 0;padding-top:24px;border-top:1px solid transparent')}>
-          <OvRule />
-          {/* The management action sits ON the section header, so what it manages is named directly
-              above the rows it changes. */}
-          <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
-            {/* DERIVED AND PINNED, DEFINED ON DEMAND. Both words used to carry a sentence apiece,
-                standing permanently under the current role and again at the top of the panel —
-                a definition on screen forever for a term it has to define once. Same 16px box and
-                click-catcher as the Library and AA tips. */}
-            <span style={sx('display:inline-flex;align-items:center;gap:8px;position:relative')}>
-              <h3 style={sx(secTitle)}>Roles</h3>
-              <button type="button" data-ix="press" data-hit="24" data-focus="chrome" aria-expanded={r.rolesInfoOpen} aria-label={r.rolesInfo.aria} onClick={r.toggleRolesInfo} style={sx('width:16px;height:16px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--action-line);padding:0;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);cursor:pointer')}>{r.rolesInfo.glyph}</button>
-              {r.rolesInfoOpen && (<>
-                <div style={sx('position:fixed;inset:0;z-index:40')} onClick={r.toggleRolesInfo} aria-hidden="true"></div>
-                <div data-tip="roles" role="note" style={sx('position:absolute;top:calc(100% + 6px);left:0;z-index:41;width:288px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);padding:12px 14px;display:flex;flex-direction:column;gap:9px')}>
-                  {r.rolesInfo.lines.map(([term, def]) => (
-                    <span key={term} style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>
-                      <span style={sx('color:var(--on-surface)')}>{term}</span> &mdash; {def}
-                    </span>
-                  ))}
-                </div>
-              </>)}
-            </span>
-            {/* ONE WAY BACK, and only when there is something to go back to. Six per-role Unpin
-                buttons were six ways to reverse a decision the interface never showed you make. */}
-            {r.anyPinned && (
-              <button type="button" data-ix="press" data-focus="chrome" aria-label={r.resetRolesAria} onClick={r.onResetRoles} style={sx(quiet + ';flex:none')}>Reset roles</button>
-            )}
-          </div>
-
-          {/* CURRENT STATE, in one line. The map of which role sits where is on the strip itself
-              now — in words, on the colours — so restating it in a table here would be the same
-              information twice, and the copy of it further from the thing it describes. */}
-          <div style={sx('display:flex;flex-direction:column;gap:4px;padding-top:16px')}>
-            {r.currentRoles.length ? r.currentRoles.map((c) => (
-              <span key={c.key} style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{c.label} &middot; {c.status}</span>
-            )) : (
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface-muted)')}>{r.noRoleNote}</span>
-            )}
-          </div>
-        </div>
-
-        {/* 6 · POSITION IN PALETTE — where the swatch sits, and whether it sits here at all.
-               Management rather than editing, which is why it comes after the evidence. */}
-        <div data-refine-sec="1" style={sx('position:relative;margin:24px var(--page-gutter) 0;padding-top:24px;border-top:1px solid transparent')}>
-          <OvRule />
-          {/* ONE SECTION WHERE THERE WERE TWO. "Palette order" and "Danger zone" were separate
-              named sections carrying one control each, with the same divider and the same eyebrow
-              — two headings' worth of taxonomy for three buttons. Both answer the same question:
-              where does this swatch sit in the palette, or does it sit in it at all. The safety on
-              removal never lived in the word "danger": it lives in the two-step arm, the impact
-              line beside the control, and the alertdialog below. All three are unchanged. */}
-          <h3 style={sx(secTitle + ';display:block;padding-bottom:10px')}>Position in Palette</h3>
-          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-            <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
-            {/* aria-disabled, not disabled. A `disabled` button leaves the tab order, so at exactly
-                the moment the reason matters — the swatch is already first — the reason cannot be
-                reached. These stay focusable and announced; the handler no-ops and the accessible
-                name carries the reason (see leftAria/rightAria). */}
-            <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canLeft ? undefined : 'true'} onClick={r.onLeft} aria-label={r.leftAria} style={sx(quiet + ';margin-inline-start:auto;opacity:' + (r.canLeft ? '1' : '.35') + (r.canLeft ? '' : ';cursor:default'))}>Move left</button>
-            <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canRight ? undefined : 'true'} onClick={r.onRight} aria-label={r.rightAria} style={sx(quiet + ';opacity:' + (r.canRight ? '1' : '.35') + (r.canRight ? '' : ';cursor:default'))}>Move right</button>
-          </div>
-          {!r.removeArmed && (
-            <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:14px')}>
-              {/* The usage impact BEFORE the press, not only inside the confirmation: a consequence
-                  that appears after you have committed is one you learn too late to use. */}
-              <span style={sx("flex:1;min-width:180px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);text-wrap:pretty")}>{r.removeImpact}</span>
-              <button type="button" data-ix="press" data-focus="chrome" aria-disabled={r.canRemove ? undefined : 'true'} onClick={r.onRemoveArm} aria-label={r.removeAria} style={sx(quiet + ';flex:none;opacity:' + (r.canRemove ? '1' : '.35') + (r.canRemove ? '' : ';cursor:default'))}>Remove swatch…</button>
-            </div>
-          )}
-          {r.removeArmed && (
-            <div data-refine-confirm="1" role="alertdialog" aria-modal="false" aria-label={r.removeTitle} aria-describedby="refine-remove-why" style={sx('margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:9px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{r.removeTitle}</span>
-              <span id="refine-remove-why" style={sx('display:flex;flex-direction:column;gap:9px')}>
-                {r.removeLines.map((t, i) => (
-                  <span key={i} style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface);text-wrap:pretty")}>{t}</span>
-                ))}
-              </span>
-              <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
-                <button type="button" data-ix="press" data-focus="chrome" onClick={r.onRemoveCancel} aria-label="Cancel the removal" style={sx(quiet)}>Cancel</button>
-                <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onRemoveConfirm} aria-label="Confirm: remove this swatch" style={sx('margin-inline-start:auto;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}>Remove swatch</button>
-              </span>
-            </div>
-          )}
-        </div>
+        {/* ROLES had a section here and no longer does (03.08.26, Option A of the plan in
+            docs/refine-audit.md). It printed one line per role on the SELECTED swatch —
+            "Background · Derived" — which failed four ways at once: it restated what the strip
+            already says in colour and in position; it reported provenance before anyone had been
+            told what the role is FOR or whether it works; scoped to one swatch it showed 0-2 of
+            the palette's 6 roles under a heading promising all of them; and it carried no verbs,
+            because every act on a role happens on the strip. Its two live parts moved to where
+            they belong: the derived/pinned definition to the swatch's own metadata line, which is
+            the only place those words are now spoken, and Reset roles to the footer beside Reset
+            all refinements — both undo decisions, at two scopes, and they had been sitting 400px
+            apart. */}
 
         {/* end of the scrollport — the footer below is a sibling, outside it */}
         <div style={sx('height:var(--page-gutter);flex:none')}></div>
+        </div>
         </div>
 
         {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
@@ -2681,7 +2682,18 @@ function RefineDialog({ vals }) {
           {r.resetArmed && (
             <button type="button" data-ix="press" data-focus="chrome" onClick={r.onResetCancel} aria-label="Cancel the reset" style={sx(footBtn)}>Cancel</button>
           )}
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn + ';margin-inline-start:auto') + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
+          {/* An explicit spacer rather than an auto margin on whichever button happens to be last:
+              the reset cluster can be one button or two, and the armed state inserts a sentence
+              that supplies its own flex:1. One rule for where the right-hand group starts. */}
+          {!r.resetArmed && <span aria-hidden="true" style={sx('flex:1')}></span>}
+          {/* Reset roles, relocated from the deleted Roles section. It belongs beside Reset all
+              refinements because they are the same act at two scopes — one undoes where the roles
+              sit, the other undoes everything — and they were 400px apart. Shown only when there
+              is a placement to undo. */}
+          {r.anyPinned && !r.resetArmed && (
+            <button type="button" data-ix="press" data-focus="chrome" aria-label={r.resetRolesAria} onClick={r.onResetRoles} style={sx(footBtn)}>Reset roles</button>
+          )}
+          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn) + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
         </div>
       </div>
     </div>
@@ -2712,7 +2724,7 @@ function RestoreDialog({ vals }) {
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</span>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
           <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
@@ -2738,7 +2750,7 @@ function RestoreDialog({ vals }) {
             commit nothing — an affordance for a non-act is worse than an absence. */}
         {r.hasAct && (
           <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>Add to Library</button>
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add to Library</button>
             <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
           </div>
         )}
