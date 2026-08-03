@@ -603,14 +603,43 @@ export const persistenceMethods = {
       : (this._exIdx + 1) % list.length;
     this.showExample(list[this._exIdx]);
   },
-  // Opening a NAMED example from the list keeps the cursor in step, so leaving the list and
-  // pressing the gate again continues from what you last looked at rather than jumping back.
+  /* THE LIST'S SCROLL POSITION, held across the trip down to a palette and back. The list is not a
+     layer that stays behind the palette — it unmounts outright (see AppView's early returns), so
+     the browser has no scroller left to restore and every return landed at the top of a list
+     somebody had scrolled halfway down. Captured on the way out, applied on the way back, in the
+     same commit the list remounts in so nothing paints at the wrong offset first. */
+  _holdListScroll() { const el = document.querySelector('[data-mobile-list]'); this._listScroll = el ? el.scrollTop : 0; },
+  /* Focus goes back on the row that was opened, for the same reason the offset does — the row
+     unmounted under the reader's cursor and focus fell to the body, so a keyboard or switch user
+     came back to a list they had to tab into from the top. preventScroll because the offset above
+     has ALREADY put the row where it belongs; letting focus() scroll as well would undo it. */
+  _restoreListScroll() {
+    const el = document.querySelector('[data-mobile-list]'); if (!el) return;
+    if (this._listScroll) el.scrollTop = this._listScroll;
+    const row = this._listRowId && el.querySelector('[data-ml-row="' + this._listRowId + '"]');
+    if (row && row.focus) { try { row.focus({ preventScroll: true }); } catch (e) { } }
+  },
+  /* Opening a NAMED example from the list keeps the cursor in step, so leaving the list and
+     pressing the gate again continues from what you last looked at rather than jumping back.
+
+     A LEVEL CHANGE, so the level being left has to leave. Every other trip between these two
+     surfaces already pairs an exit with an entrance — openExampleList plays _shareOut before the
+     list arrives, closeExampleOnPhone plays it before the list comes back — and this one alone cut
+     straight to showExample. The list vanished in a single frame and the palette then spent
+     DUR.reveal rising out of an empty screen: the surface that was there did not leave, it was
+     deleted, which is the jump. _listClosing is the same guard closeExampleList holds, because two
+     exits of one surface must not overlap whichever way the reader is going. */
   openExampleById(id) {
     const list = this._examples();
     const i = list.findIndex((p) => p.id === id);
     if (i < 0) return;
     this._exIdx = i;
-    this.showExample(list[i]);
+    if (!this.state.exampleList) { this.showExample(list[i]); return; }
+    if (this._listClosing) return;
+    this._listClosing = true;
+    this._listRowId = id;
+    this._holdListScroll();
+    this._listOut(() => { this._listClosing = false; this.showExample(list[i]); });
   },
   showExample(ex) {
     if (!ex) return;
@@ -625,7 +654,9 @@ export const persistenceMethods = {
       // came from and where it belongs. Leaving straight to the gate from a list you had just
       // browsed threw away the position you were holding.
       this.setState({ exampleView: false, announce: this.state.exampleList ? 'Back to the example list.' : 'Returned to the start screen.' }, () => {
-        if (this.state.exampleList) this._listIn();
+        // Scroll BEFORE the entrance, and outside it: _listIn returns early under reduced motion,
+        // and the position you were holding is not an animation — it is where you were.
+        if (this.state.exampleList) { this._restoreListScroll(); this._listIn(); }
       });
     });
   },
@@ -635,6 +666,10 @@ export const persistenceMethods = {
      turned one tap into two and made "See all examples" look broken. */
   openExampleList() {
     if (this.state.exampleList && !this.state.exampleView) return;
+    // Reached only from OUTSIDE the list (the control is hidden while inList), so this is a fresh
+    // arrival at it and the top is where it belongs — a held offset here would be from some earlier
+    // visit and would read as the list opening halfway down for no reason.
+    this._listScroll = 0; this._listRowId = null;
     const show = () => this.setState(
       { exampleView: false, exampleList: true, announce: 'Example palettes, ' + this._examples().length + ' to choose from.' },
       () => this._listIn());

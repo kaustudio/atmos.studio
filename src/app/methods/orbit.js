@@ -1086,7 +1086,9 @@ export const orbitMethods = {
     };
     this._orbit = o;
     this.playOrbit();
-    if (!this._orbitVis) { this._orbitVis = () => { if (document.hidden) this.pauseOrbit(); else if (this._orbit && this._landingUp()) this.playOrbit(); }; document.addEventListener('visibilitychange', this._orbitVis); }
+    // _landingLit, not _landingUp: coming back to the tab with an example open should not restart the
+    // drift behind the panel covering it. The two questions are separate — see PaletteApp.
+    if (!this._orbitVis) { this._orbitVis = () => { if (document.hidden) this.pauseOrbit(); else if (this._orbit && this._landingLit()) this.playOrbit(); }; document.addEventListener('visibilitychange', this._orbitVis); }
   },
   playOrbit() {
     this._glPaused = false; const o = this._orbit; if (!o || this._reduce) return;

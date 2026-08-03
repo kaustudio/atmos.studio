@@ -289,8 +289,15 @@ const shareB006Label = (copied) => (
    the trip back to here. */
 function MobileExampleList({ ml }) {
   return (
-    <div data-mobile-list="1" role="region" aria-label="Example palettes"
-      style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
+    /* height:100dvh over the inset, per the rule the refine dialog already states: a fixed box on a
+       phone resolves bottom:0 against the LARGE viewport, so with the URL bar showing its last rows
+       and the way back sit below the fold. overscroll-behavior:contain stops a flick past the end of
+       the list from chaining into the document and dragging the browser chrome with it — the list is
+       the scroller, and nothing behind it should move. data-lenis-prevent is the house contract for
+       an internal scrollport (see misc.js): without it Lenis swallows the wheel and applies it to a
+       document that cannot scroll, so a narrow desktop window could not move this list at all. */
+    <div data-mobile-list="1" role="region" aria-label="Example palettes" data-lenis-prevent="1"
+      style={sx('position:fixed;inset:0;height:100dvh;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
       {/* clears the fixed logo, exactly as the palette view does */}
       <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
 
@@ -305,7 +312,10 @@ function MobileExampleList({ ml }) {
       <ul style={sx('flex:none;display:flex;flex-direction:column;width:100%;list-style:none;margin:0;padding:0')}>
         {ml.rows.map((r) => (
           <li key={r.key} style={sx('display:flex;width:100%')}>
-          <button type="button" data-ml-row="1" data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
+          {/* data-ml-row carries the palette's id rather than a bare "1": motion.js only ever tests
+              the attribute's presence, and naming the row is what lets the trip back put focus on
+              the one you opened instead of dropping it on the body. */}
+          <button type="button" data-ml-row={r.key} data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
             style={sx('display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px var(--page-gutter);background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
             {/* Photograph over its own palette, in one 72px column. The strip alone said what the
                 colours are; it could not say what they came from, which on a screen selling "read
@@ -341,8 +351,11 @@ function MobileExampleList({ ml }) {
 
 function MobileShareView({ ms }) {
   return (
-    <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name}
-      style={sx('position:fixed;inset:0;z-index:150;overflow-y:auto;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
+    /* 100dvh, contained overscroll and the Lenis exemption, for the reasons spelled out on the list
+       above — this surface is the taller of the two, so it is the one where a clipped foot cost you
+       the way back out. */
+    <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name} data-lenis-prevent="1"
+      style={sx('position:fixed;inset:0;height:100dvh;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
       {/* Top padding for the fixed logo, which floats over this surface. It is on the scroller
           rather than the first child, because the first child is now sometimes a full-bleed image
           and sometimes the name — padding on whichever happened to be first would come and go. */}
@@ -473,82 +486,26 @@ function SiteFooter({ route, onNavigate }) {
   );
 }
 
-export default function AppView({ vals }) {
-  /* Privacy and terms, before anything the tool needs.
+/* THE LANDING STAGE — ring formation, brand copy, and on a phone the gate's two acts. Lifted out of
+   AppView's main return because it is no longer that return's alone: the example list and the
+   read-only palette render it too, underneath themselves.
 
-     Returned early for the same reason showMobileShare is: the tool must not be in the DOM behind a
-     surface that is not it. The wipe covers the screen while this swap happens, so what a reader
-     sees is one continuous panel — but behind it the entire app, orbit stage and archive included,
-     stops existing rather than lying dormant under a legal document. Nothing to tab into, nothing
-     laid out off-screen, no WebGL context held open while somebody reads a privacy policy.
+   They used to REPLACE it, and the orbs paid for it. The formation is a WebGL particle field over a
+   painted DOM floor, both built by initOrbit from freshly encoded tile textures — so a landing that
+   unmounts is a formation destroyed, and a landing that comes back is a formation rebuilt from
+   nothing, with a visible hole where the rings should be while it uploads. Covering it costs one
+   opaque panel and keeps every orb exactly where it was left.
 
-     [data-app] is kept on the wrapper deliberately. It is what the desktop gate, the wipe's inert
-     guards and toggleTheme's crossfade all select on; a legal route that dropped it would be a
-     surface those three could not see. */
-  if (isLegal(vals.route)) {
-    return (
-      <div data-app="1" className="legal-route" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
-        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        <LegalPage vals={vals} />
-        <WipeLayer />
-        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        <Analytics />
-        <SpeedInsights />
-      </div>
-    );
-  }
-  // A shared link on a phone renders ONLY the read-only palette. Returning early rather than
-  // layering it over the tool keeps the desktop app out of the DOM entirely on a viewport that
-  // cannot use it: nothing behind to tab into, no archive laid out off-screen, no orbit stage.
-  // The example list, one level above the palette view and rendered on the same terms: the tool is
-  // not in the DOM behind it, because a phone cannot use the tool and nothing should be tabbable
-  // under a surface that fills the screen.
-  if (vals.showMobileList) {
-    return (
-      <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
-        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
-        <MobileExampleList ml={vals.mobileList} />
-        <Analytics />
-        <SpeedInsights />
-      </div>
-    );
-  }
-  if (vals.showMobileShare) {
-    return (
-      <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
-        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
-            gradient under a difference blend. Opening an example must not change the brand. */}
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
-        <MobileShareView ms={vals.mobileShare} />
-        {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
-        <Analytics />
-        <SpeedInsights />
-      </div>
-    );
-  }
+   `covered` is passed by those two paths: aria-hidden and inert together, so nothing under a
+   full-screen surface is readable, focusable or tabbable — which is the whole reason the early
+   returns existed. The tool is still left out of the tree entirely; only this stage stays. */
+function LandingStage({ vals, covered }) {
   return (
-    <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
-
-      <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-
-      {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
-          composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
-      {vals.showLogoDecor && (
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
-      )}
-      {vals.showLogoButton && (
-        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
-          style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
-      )}
-
-      {/* One surface, two copies. On a phone the landing IS the small-screen gate — same ring stage,
-          same centred block, gate copy instead of the statement + CTA — so there is never a second
-          [data-orbit] in the DOM for the engine to find. data-desk-gate marks it for the CSS that
-          hides the tool behind it. */}
-      {vals.showLanding && (
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} role="region" aria-label={vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery'} style={sx('position:fixed;inset:0;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+        /* height:100dvh for the same reason the two phone surfaces carry it: this block is centred
+           in its own box, and a box that runs to the LARGE viewport's bottom centres the gate copy
+           below the middle of what the reader can actually see — and pushes the ring formation,
+           which is solved around that centre, off with it. */
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...(covered ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* scatter field (decorative) — one global light (upper-left); everything baked or static */}
           <div data-orbit-bloom="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}></div>
           <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none')}>
@@ -625,6 +582,103 @@ export default function AppView({ vals }) {
             )}
           </div>
         </div>
+  );
+}
+
+export default function AppView({ vals }) {
+  /* Privacy and terms, before anything the tool needs.
+
+     Returned early for the same reason showMobileShare is: the tool must not be in the DOM behind a
+     surface that is not it. The wipe covers the screen while this swap happens, so what a reader
+     sees is one continuous panel — but behind it the entire app, orbit stage and archive included,
+     stops existing rather than lying dormant under a legal document. Nothing to tab into, nothing
+     laid out off-screen, no WebGL context held open while somebody reads a privacy policy.
+
+     [data-app] is kept on the wrapper deliberately. It is what the desktop gate, the wipe's inert
+     guards and toggleTheme's crossfade all select on; a legal route that dropped it would be a
+     surface those three could not see. */
+  if (isLegal(vals.route)) {
+    return (
+      <div data-app="1" className="legal-route" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        <LegalPage vals={vals} />
+        <WipeLayer />
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
+  /* A shared link on a phone renders ONLY the read-only palette, and the example list one level
+     above it on the same terms. Returning early rather than layering these over the tool keeps the
+     desktop app out of the DOM entirely on a viewport that cannot use it: nothing behind to tab
+     into, no archive laid out off-screen.
+
+     THE LANDING IS THE EXCEPTION, and it is deliberate. It used to go with the tool, and the ring
+     formation went with it — killed on the way in, rebuilt from scratch on the way back, with a
+     stretch of empty gate while the field re-encoded its tiles and re-uploaded. The orbs are the
+     brand; they do not blink out because somebody looked at a palette. So the stage stays mounted
+     and these surfaces cover it, inert and aria-hidden, which buys the same "nothing under here is
+     reachable" the early return was protecting. Its motion is parked while it is covered — see the
+     landing lifecycle in PaletteApp's componentDidUpdate — so nothing renders behind an opaque
+     panel; it simply resumes from the angle it was left at. */
+  if (vals.showMobileList) {
+    return (
+      /* dvh on the two phone wrappers, where 100vh is a document TALLER than the screen: the surface
+         over it is fixed and holds all the content, so the only thing that height ever produced was
+         a strip of empty page to rubber-band into below the fold. */
+      <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        {vals.showLanding && <LandingStage vals={vals} covered />}
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <MobileExampleList ml={vals.mobileList} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
+  if (vals.showMobileShare) {
+    return (
+      <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        {vals.showLanding && <LandingStage vals={vals} covered />}
+        {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
+            gradient under a difference blend. Opening an example must not change the brand. */}
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <MobileShareView ms={vals.mobileShare} />
+        {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
+  return (
+    <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+
+      <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+
+      {/* One surface, two copies. On a phone the landing IS the small-screen gate — same ring stage,
+          same centred block, gate copy instead of the statement + CTA — so there is never a second
+          [data-orbit] in the DOM for the engine to find. data-desk-gate marks it for the CSS that
+          hides the tool behind it.
+
+          SECOND CHILD ON ALL THREE PATHS, and that position is load-bearing. React reconciles
+          unkeyed children by index, so the stage is only the SAME DOM across a return-branch switch
+          if it sits at the same index in each branch — and only the same DOM keeps the canvas that
+          _buildOrbField appended to it imperatively. Rendered fourth here, as it was, it was
+          index-matched against the phone path's logo, torn down, and rebuilt: the exact hole this
+          was meant to close, just moved from the state layer into the reconciler. Everything below
+          is z-155 or higher (logo, wipe, lightbox, loader), so nothing lost cover by moving up. */}
+      {vals.showLanding && <LandingStage vals={vals} />}
+
+      {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
+          composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
+      {vals.showLogoDecor && (
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+      )}
+      {vals.showLogoButton && (
+        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
+          style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
       )}
 
       {/* click-to-zoom lightbox: fixed overlay the zoomed reference image FLIPs into */}

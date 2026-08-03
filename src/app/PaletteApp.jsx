@@ -215,7 +215,14 @@ export default class PaletteApp extends React.Component {
   // archive", which is false of the example and would put a save prompt on a palette already saved.
   _mobileShare() { return !!(this.state.narrow && (this.state.sharedView || this.state.exampleView) && this.state.current); }
   _mobileList() { return !!(this.state.narrow && this.state.exampleList && !this._mobileShare()); }
-  _landingUp() { return (!this.state.landingDismissed || this.state.narrow) && !this._mobileShare(); }
+  /* TWO QUESTIONS, and conflating them is what cost the orbs. _landingUp is "is the stage in the
+     document" — it gates building the formation and rendering its slots, and the phone surfaces do
+     not change the answer, because they cover the stage rather than replacing it. _landingLit is "can
+     anybody see it", which is what the drift should actually be spending frames on: a formation
+     integrating its angles behind an opaque panel is work for nobody, and one that was TORN DOWN
+     there is a gate that comes back empty. Parked, not killed. */
+  _landingUp() { return (!this.state.landingDismissed || this.state.narrow); }
+  _landingLit() { return this._landingUp() && !this._mobileShare() && !this._mobileList(); }
   // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
   // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is
   // the ARRIVAL, and a returning visitor arrives just as much as a first-time one; keying it to the
@@ -265,7 +272,7 @@ export default class PaletteApp extends React.Component {
     window.addEventListener('popstate', this._onPop);
     this.initMotion();
     // GSAP readiness. The vendored core+plugins load from index.html; register plugins once present.
-    const finishGsap = () => { if (window.gsap) { try { const ps = []; if (window.Observer) ps.push(window.Observer); if (window.Flip) ps.push(window.Flip); if (window.ScrollToPlugin) ps.push(window.ScrollToPlugin); if (ps.length) window.gsap.registerPlugin.apply(window.gsap, ps); } catch (e) { } } this._gsapReady = true; if (this._landingUp() && !this._orbit) this.initOrbit(); };
+    const finishGsap = () => { if (window.gsap) { try { const ps = []; if (window.Observer) ps.push(window.Observer); if (window.Flip) ps.push(window.Flip); if (window.ScrollToPlugin) ps.push(window.ScrollToPlugin); if (ps.length) window.gsap.registerPlugin.apply(window.gsap, ps); } catch (e) { } } this._gsapReady = true; if (this._landingLit() && !this._orbit) this.initOrbit(); };
     if (window.gsap) {
       let tries = 0;
       const waitLocal = () => { if ((window.Observer && window.Flip && window.ScrollToPlugin) || tries >= 40) { finishGsap(); return; } tries++; setTimeout(waitLocal, 50); };
@@ -330,14 +337,19 @@ export default class PaletteApp extends React.Component {
     // breakpoint rebuilds the formation rather than leaving desktop-sized decisions in place.
     try {
       this._mq = window.matchMedia('(max-width:720px)');
-      this._onMq = (e) => { if (e.matches === this.state.narrow) return; this.setState({ narrow: e.matches }, () => { this.killOrbit(); if (this._landingUp()) requestAnimationFrame(() => this.initOrbit()); }); };
+      // The one teardown that stays: a breakpoint crossing rebuilds the formation because it is
+      // SIZED for the viewport class (see the ring count in _rings), which no amount of parking
+      // fixes. Rebuilt only if the stage is lit — crossing into narrow with an example open would
+      // otherwise upload a field behind the panel covering it.
+      this._onMq = (e) => { if (e.matches === this.state.narrow) return; this.setState({ narrow: e.matches }, () => { this.killOrbit(); if (this._landingLit()) requestAnimationFrame(() => this.initOrbit()); }); };
       if (this._mq.addEventListener) this._mq.addEventListener('change', this._onMq); else this._mq.addListener(this._onMq);
     } catch (e) { }
     if (this._needSeedPersist) { this._needSeedPersist = false; this.persist({ immediate: true }); }
     this.initClickZoom();
     // ring landing: first-visit brand arrival, and the permanent small-screen surface (retries
     // internally until gsap is ready)
-    if (this._landingUp()) { requestAnimationFrame(() => this.initOrbit()); }
+    this._prevLandLit = this._landingLit();
+    if (this._prevLandLit) { requestAnimationFrame(() => this.initOrbit()); }
   }
 
   componentDidUpdate() {
@@ -355,8 +367,22 @@ export default class PaletteApp extends React.Component {
       if (this._cxToggleKey && this._cxToggleKey !== key) this.animateContrastDelta(this._cxToggleKey, key);
       this._cxToggleKey = key;
     } else { this._cxToggleKey = null; }
-    // orbit landing safety net: if gsap is already ready and the orbit isn't built, kick it
-    if (this._landingUp() && this._gsapReady && !this._orbit && !this._reduce) { this.initOrbit(); }
+    /* LANDING LIFECYCLE — park and resume, never tear down. The phone's example surfaces cover the
+       stage; its formation keeps every orb, every uploaded tile and its live WebGL context, and only
+       stops integrating its angles while nothing can see it. So the gate you come back to is the
+       gate you left, at the angle you left it, with no rebuild and therefore no stretch of empty
+       screen where the rings belong.
+       Tearing down here instead — the obvious move, and the wrong one — costs a full re-encode of
+       the tile textures and a fresh field upload on every return, all of it visible. */
+    const lit = this._landingLit();
+    const prevLit = this._prevLandLit; this._prevLandLit = lit;
+    if (lit !== prevLit && this._orbit) { if (lit) this.playOrbit(); else this.pauseOrbit(); }
+    /* orbit landing safety net: if gsap is already ready and the orbit isn't built, kick it. Gated on
+       LIT rather than up, so a shared link opened on a phone — which lands straight on the palette,
+       with the stage mounted but covered — does not spend a slow connection's first seconds
+       uploading a particle field nobody is looking at. It builds if that reader ever reaches the
+       gate, and from then on it is only ever parked. */
+    if (lit && this._gsapReady && !this._orbit && !this._reduce) { this.initOrbit(); }
     // spatial grid lifecycle (independent of stage/current — runs on view toggle too)
     const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;

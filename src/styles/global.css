@@ -35,16 +35,25 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    Two names for one behaviour is how a system starts drifting: the next person picks whichever
    they saw last, and eventually the two stop matching for real. One tier, and the border-colour
    move rides along harmlessly wherever there is no border. */
+/* HOVER IS A POINTER STATE, and a touchscreen has no pointer. Tapping a control on a phone leaves
+   :hover latched on it until something else is tapped, so the row you just opened, or the gate
+   button you just pressed, sat there tinted as if the finger were still on it — a state reporting a
+   relationship that ended. Gating the hover tier on (hover:hover) is the whole fix: every mouse and
+   trackpad answers true, so the desktop contract below is unchanged, and touch falls through to
+   :active, which is exactly the state a tap actually has. The active/disabled/selected tiers stay
+   outside the query — they are true on both. */
 /* cta — solid on-surface rest (inverted): hover lightens within its own color, active deepens */
-[data-ix="cta"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important}
+@media (hover:hover){
+  [data-ix="cta"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 84%,var(--surface))!important}
+  /* seg — segmented toggle; unselected tints on the same 16/24 spectrum, selected stays solid */
+  [data-ix="seg"][aria-pressed="false"]:hover{background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important}
+  [data-ix="seg"][aria-pressed="true"]:hover{filter:brightness(1.14)}
+  /* icon — icon buttons over swatches/chrome; fill from own currentColor so it adapts to swatch + theme */
+  [data-ix="icon"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 16%,transparent)!important}
+}
 [data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;transform:translateY(1px)}
-/* seg — segmented toggle; unselected tints on the same 16/24 spectrum, selected (aria-pressed) stays solid and lifts */
-[data-ix="seg"][aria-pressed="false"]:hover{background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important}
 [data-ix="seg"][aria-pressed="false"]:active{background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important}
-[data-ix="seg"][aria-pressed="true"]:hover{filter:brightness(1.14)}
 [data-ix="seg"]:active:not(:disabled){transform:translateY(1px)}
-/* icon — icon buttons over swatches/chrome; fill from own currentColor so it adapts to swatch + theme */
-[data-ix="icon"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 16%,transparent)!important}
 [data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important;transform:translateY(1px)}
 /* HIT AREA — a 24px target on a control that must stay smaller than 24px.
    WCAG 2.5.8 AA asks for 24x24 CSS px. The two toggletip markers are deliberately 16px of ink: any
@@ -54,10 +63,12 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-hit="24"]{position:relative}
 [data-hit="24"]::after{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;transform:translate(-50%,-50%)}
 /* cell — value rows & harmony cells; tint from own currentColor */
-[data-ix="cell"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 12%,transparent)!important}
-[data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
 /* press — text/icon chrome without its own bg: hover/active tint on the shared 16/24 spectrum */
-[data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:var(--action-line-hover)!important}
+@media (hover:hover){
+  [data-ix="cell"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 12%,transparent)!important}
+  [data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:var(--action-line-hover)!important}
+}
+[data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
 [data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important;transform:translateY(1px)}
 /* lift is GSAP-driven on transform — transition only the shadow/border (style-hover) so CSS never fights the tween */
 [data-ix="lift"]{transition:box-shadow .16s var(--ease-standard),border-color .16s var(--ease-standard)}
