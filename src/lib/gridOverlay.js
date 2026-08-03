@@ -35,7 +35,15 @@
 
    4 · The columns are drawn from --grid-cols, --grid-gutter and --page-gutter, never from
        literals. An overlay carrying its own opinion of the grid is a second source of truth that
-       eventually disagrees with the first one, silently — which is the failure it exists to catch. */
+       eventually disagrees with the first one, silently — which is the failure it exists to catch.
+
+   One KNOWN, INTENTIONAL divergence (03.08.26): the library table's cells do not start on these
+   columns. Its header and row grids are padded by --row-inset (16px) inside the page margin,
+   because the row is a raised surface whose content keeps a margin from its own edges — see the
+   token's comment in global.css. So against this overlay, the table's interior edges sit a
+   compressed hair off the red lines. That is the design, not drift: the overlay answers "where
+   are the page's columns", and the table answers to its surface first. If a second ruler for the
+   row grid is ever wanted, draw it from --row-inset and --row-grid, not by eye. */
 
 const KEY = 'animatedGridState';
 const LEVELS = ['closed', 'columns'];

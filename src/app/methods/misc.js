@@ -34,7 +34,7 @@ export const miscMethods = {
         if (!cur) { pill.style.opacity = '0'; return; }
         const w = cur.offsetWidth, h = cur.offsetHeight, x = cur.offsetLeft, y = cur.offsetTop;
         const first = pill.style.opacity !== '1';
-        if (first || this._reduce) { pill.style.transition = 'none'; } else { pill.style.transition = 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)'; }
+        if (first || this._reduce) { pill.style.transition = 'none'; } else { pill.style.transition = 'transform .5s var(--ease-pill), width .5s var(--ease-pill), height .5s var(--ease-pill)'; }
         pill.style.width = w + 'px'; pill.style.height = h + 'px';
         pill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
         pill.style.opacity = '1';

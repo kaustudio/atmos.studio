@@ -44,6 +44,11 @@ const A11Y_LABEL = {
 // rather than left for the reader. It is paid three times over, on demand every time: the panel's
 // ⓘ carries all three, each row carries its own on hover, and each row's accessible name ends with
 // it so a screen-reader user is never the one who has to hover to find out.
+// The list's page sizes, in one place. They were three inline copies of [12, 24, 36] — the toggle's
+// options, its pill offset and its arrow-key wrap — which agreed only for as long as nobody edited
+// one of them. The first entry is load-bearing beyond the toggle: it is the smallest page a list can
+// be cut into, and therefore the size below which the pager has nothing to offer (see showPageSize).
+const PAGE_SIZES = [12, 24, 36];
 const A11Y_DEFINITION = {
   flexible: '3 or more colour pairs meet WCAG AA for normal text.',
   limited: 'Only 1–2 colour pairs meet WCAG AA. Text use requires deliberate pairing.',
@@ -309,7 +314,7 @@ export const renderValsMethods = {
         moreStyle: {
           background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
           fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)',
-          textTransform: 'uppercase', color: 'var(--on-surface)',
+          color: 'var(--on-surface)',
           ...(s.readingOpen
             ? { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '26px', padding: 0 }
             : { padding: 'var(--btn-pad-sm)' }),
@@ -321,7 +326,7 @@ export const renderValsMethods = {
       };
     }
     // palette-level copy affordances
-    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: 'var(--btn-pad-md)', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
+    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: 'var(--btn-pad-md)', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
     let procStatus = '';
@@ -395,7 +400,9 @@ export const renderValsMethods = {
     // 16px off the column line, matching the header chip above it. Inline rather than from the
     // stylesheet because this object also sets paddingRight, and an inline shorthand beats a rule —
     // which is exactly how the value ended up flush while the header sat inset.
-    const timeCell = { textAlign: 'end', paddingInlineEnd: '16px', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    // No private inset any more: the row grid's own --row-inset padding is the 16px this cell used
+    // to carry itself, back when it was the only edge of the row that kept one.
+    const timeCell = { textAlign: 'end', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
@@ -410,9 +417,10 @@ export const renderValsMethods = {
         //
         // The de-emphasis is SIZE, not ink, and that is a constraint rather than a preference: a
         // descriptor is content (it is the palette's mood), so WCAG 1.4.3 wants 4.5:1 on it. The
-        // muted token clears that at 6.06:1 with almost no headroom — mixing it even 10% toward the
-        // surface already fails. So the step down is 9 → 8.5px, an existing scale step, and the ink
-        // stays on the token.
+        // muted token clears that — measured 5.55:1 on --surface, 7.17:1 in the dark theme
+        // (03.08.26; an older note here claimed 6.06) — with limited headroom, so mixing it toward
+        // the surface or wrapping it in opacity fails. The step down is 9 → 8.5px, an existing
+        // scale step, and the ink stays on the token, at full alpha.
         //
         // Filter-in-context: each tag is a real button now (the row restructure makes that legal —
         // see AppView), applying itself through the SAME setActiveTag the facet panel uses. The tag
@@ -594,7 +602,7 @@ export const renderValsMethods = {
         // already filed read as a second copy.
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
-        assignLabel: 'Add to project',
+        assignLabel: 'Add to Project',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); this._focusCopyTrigger(true); },
@@ -665,7 +673,7 @@ export const renderValsMethods = {
         onUse: () => this.useHarmonyAsPalette(),
         useAria: 'Save this ' + active.name.toLowerCase() + ' harmony as a new palette in your library, ' + active.cells.length + ' colours',
         onCopyAll: () => this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'),
-        copyAllLabel: s.copied === 'hx-all' ? 'Copied' : 'Copy harmony',
+        copyAllLabel: s.copied === 'hx-all' ? 'Copied' : 'Copy Harmony',
         copyAllAria: 'Copy all ' + active.cells.length + ' colours in this harmony as a hex list',
       };
     }
@@ -703,7 +711,11 @@ export const renderValsMethods = {
     // and a readable word. Applied to this section's chrome only — the rest of the app's labels are
     // single acts, not a scan surface. AA and 3D stay uppercase because they are initialisms.
     const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
-    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-micro)', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
+    // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
+    // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
+    // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
+    // by SIZE alone (12 → 9), which was already doing the work.
+    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-micro)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
     const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
     // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
     // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
@@ -1456,7 +1468,7 @@ export const renderValsMethods = {
         // swatch, plausibly as "start this palette again". It discards REFINEMENTS and returns to
         // the colours read from the image, which is what the word now says, so the scope no longer
         // needs a sentence under the button to be clear.
-        resetLabel: s.refineResetArmed ? 'Confirm reset' : 'Reset all refinements',
+        resetLabel: s.refineResetArmed ? 'Confirm Reset' : 'Reset All Refinements',
         resetAria: s.refineResetArmed
           ? 'Confirm: discard every refinement and return to the colours read from the image'
           : 'Reset all refinements. Returns to the colours read from the image; you will be asked to confirm',
@@ -1686,6 +1698,7 @@ export const renderValsMethods = {
       // its own hover tint darkened the ground under it), so these take what everything else takes.
       // The demotion from "New generation" is carried by fill: that one is filled, these are not.
       tier3BtnStyle: this.monoLabel('var(--fs-label)', 'var(--track-flat)', {
+        textTransform: 'none',
         display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 'var(--btn-pad-sm)',
         background: 'none', border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', cursor: 'pointer',
@@ -1719,8 +1732,11 @@ export const renderValsMethods = {
       tagSort: s.tagSort || 'count',
       sortByCount: () => this.setState({ tagSort: 'count' }),
       sortByAlpha: () => this.setState({ tagSort: 'alpha' }),
-      sortCountStyle: this.toggleStyle((s.tagSort || 'count') === 'count'),
-      sortAlphaStyle: this.toggleStyle(s.tagSort === 'alpha'),
+      // toggleStyle is shared with the harmony drawer (result stage), so its uppercase micro voice
+      // stays; the filter drawer is library-owned chrome and overrides to the library's control
+      // voice locally — same component, section-appropriate clothes.
+      sortCountStyle: Object.assign(this.toggleStyle((s.tagSort || 'count') === 'count'), { fontSize: 'var(--fs-detail)', textTransform: 'none' }),
+      sortAlphaStyle: Object.assign(this.toggleStyle(s.tagSort === 'alpha'), { fontSize: 'var(--fs-detail)', textTransform: 'none' }),
       // roving arrow traversal inside the option list — Down/Up step, Home/End jump. Typing stays
       // with the search field, which is where focus lands on open.
       onFacetListKey: (e) => {
@@ -1743,7 +1759,7 @@ export const renderValsMethods = {
       // is legibly a short list rather than the whole vocabulary.
       facetAllOpen: !!s.facetAllOpen,
       facetMore: (facetHidden > 0 || (s.facetAllOpen && !facetQuery && facetRanked.length > 6)) ? {
-        label: s.facetAllOpen ? 'Show fewer' : 'Show all · ' + facetHidden,
+        label: s.facetAllOpen ? 'Show Fewer' : 'Show All · ' + facetHidden,
         aria: s.facetAllOpen
           ? 'Show only the most useful character traits'
           : 'Show all character traits, ' + facetHidden + ' more',
@@ -1760,7 +1776,7 @@ export const renderValsMethods = {
       facetClear: appliedRaw.length ? {
         // Never "Clear all": on a page whose other destructive act deletes palettes, a verb with no
         // object is a verb that could mean the library. It names what it clears, at both counts.
-        label: appliedRaw.length > 1 ? 'Clear filters' : 'Clear filter',
+        label: appliedRaw.length > 1 ? 'Clear Filters' : 'Clear Filter',
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
@@ -1780,16 +1796,21 @@ export const renderValsMethods = {
       filterAria: appliedRaw.length
         ? (s.tagMenuOpen ? 'Close filters' : 'Filter palettes, ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied')
         : (s.tagMenuOpen ? 'Close filters' : 'Filter palettes'),
-      // SHOWING n OF m, NOT "n PALETTES". The bare count answered "how many are here" — the
-      // question nobody with a filter applied is asking. What they want to know is what the filter
-      // COST them, and that needs the denominator: 5 of 8 says a narrowing happened and roughly how
-      // hard. The denominator is the project scope's own total, not the whole archive, because the
-      // scope chips above already declared which library segment we are inside; counting against
-      // the archive would make Unfiled + a filter report a number that matches neither row.
-      // Unfiltered it stays a plain total — "Showing 8 of 8" is a sentence about nothing.
+      // A COUNT ONLY WHEN A FILTER IS HOLDING SOMETHING BACK, and never a bare total.
+      //
+      // This was "8 palettes" at rest, which is a number the page already states twice — the All
+      // chip carries the scope's count and the rows themselves are countable — and which answers
+      // "how many are here", the question nobody looking at the list needs answered. Worse, it made
+      // the count look like standing metadata about the library rather than what it actually is:
+      // the RESULT of filtering. So it now exists only while a filter does, and says what the
+      // filter cost: 5 of 8, a narrowing and its size in one line.
+      //
+      // The denominator is the project scope's own total, not the whole archive, because the scope
+      // chips above already declared which library segment we are inside; counting against the
+      // archive would make Unfiled + a filter report a number matching neither row.
       resultSummary: appliedRaw.length
         ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
-        : tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's'),
+        : '',
       anyFilter: appliedTags.length > 0,
       // "Clear all" is now "Clear filters", and it sits AFTER the chips rather than before them.
       // Both are the same correction: the old label named no object, so on a page whose other
@@ -1797,6 +1818,28 @@ export const renderValsMethods = {
       // between the Filter button and the filters it clears, so the way out was read before the
       // thing to get out of. Order is now trigger → what is applied → how to undo all of it.
       onClearAll: () => this.clearTags(),
+      // The toolbar's arrow keys. role="toolbar" sets the expectation that Left/Right walk the
+      // controls, and the chip count is open-ended — six narrowings is six extra tab stops between
+      // the list and everything after it — so the expectation is worth honouring.
+      //
+      // Every control stays in the tab order rather than roving on a single tabindex=0. Roving is
+      // the stricter reading of the pattern, but it needs a remembered index, and this toolbar's
+      // membership changes underneath that index on every press: removing a chip deletes the very
+      // control the index pointed at. APG allows the simpler form, and a toolbar that is merely
+      // more tab stops than ideal beats one that loses focus when you use it.
+      toolbarKey: (e) => {
+        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        const home = e.key === 'Home', end = e.key === 'End';
+        if (!dir && !home && !end) return;
+        const bar = e.currentTarget.closest('[data-filter-toolbar]');
+        if (!bar) return;
+        const btns = [...bar.querySelectorAll('button')].filter((b) => !b.disabled && b.offsetParent !== null);
+        if (btns.length < 2) return;
+        e.preventDefault();
+        const i = btns.indexOf(document.activeElement);
+        const n = home ? 0 : end ? btns.length - 1 : (i < 0 ? 0 : (i + dir + btns.length) % btns.length);
+        try { btns[n].focus(); } catch (err) { }
+      },
       onRemoveLast: () => this.removeLastFilter(),
       // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
       filteredEmpty: scopedNow === 0 && appliedTags.length > 0,
@@ -1908,7 +1951,7 @@ export const renderValsMethods = {
       reelStyle: { display: s.feedView === 'carousel' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: 'hidden', overscrollBehavior: 'none' },
       reelEmpty: s.feedView === 'carousel' && this.reelPalettes().length === 0,
       reelCloseRef: (this.reelCloseRef = this.reelCloseRef || React.createRef()),
-      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (s.feedView === 'carousel' ? 200 : s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s cubic-bezier(.625,.05,0,1)' },
+      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (s.feedView === 'carousel' ? 200 : s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s var(--ease-pill)' },
       viewToggleKey: (e) => {
         const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
         e.preventDefault();
@@ -1919,19 +1962,37 @@ export const renderValsMethods = {
         if (grp) { const btns = [...grp.querySelectorAll('[data-toggle-btn]')]; const nb = btns[order.indexOf(next)]; if (nb) nb.focus(); }
       },
       feedList, feedNodes,
-      showPagination: s.feed.length > 0 && s.feedView === 'list',
+      // THE PAGER APPEARS WHEN THERE IS PAGING TO DO, and not before.
+      //
+      // Two different controls with two different conditions, which is why this is two flags and
+      // not one. "Prev · Page 1 of 1 · Next" is a navigation control for a list with one page: both
+      // buttons permanently disabled, and a live region announcing a position that cannot change.
+      // It goes whenever pageCount is 1.
+      //
+      // Per page outlives it by one step. A 20-palette list at 24 per page is also one page, but
+      // choosing 12 there WOULD split it, so the control still does something and stays. It goes
+      // only when even the smallest size cannot produce a second page — at or below 12 palettes,
+      // every option on that toggle draws the identical list, and a control whose every setting
+      // has the same effect is a control that is lying about having settings.
+      //
+      // The whole footer is gone when both are, which is the common case for a young library:
+      // eight seeded palettes and nothing to page through.
+      // scopedAll, never `scoped`: in list view `scoped` is the CURRENT PAGE's rows, so testing it
+      // would hide the pager exactly when paging had done its job and left 12 rows on screen.
+      showPageSize: s.feed.length > 0 && s.feedView === 'list' && scopedAll.length > PAGE_SIZES[0],
+      showPager: s.feed.length > 0 && s.feedView === 'list' && pageCount > 1,
       // Osmo toggle-switch mechanic, adapted: sliding pill driven by the active index (squared, token
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
-      pageSizeOptions: [12, 24, 36].map((n, i) => ({
+      pageSizeOptions: PAGE_SIZES.map((n) => ({
         label: '' + n, pressed: pageSize === n ? 'true' : 'false', tabIndex: pageSize === n ? 0 : -1,
         style: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
         onSelect: () => this.setPageSize(n),
       })),
-      pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + ([12, 24, 36].indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s cubic-bezier(.625,.05,0,1)' },
+      pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (PAGE_SIZES.indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s var(--ease-pill)' },
       pageToggleKey: (e) => {
         const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
         e.preventDefault();
-        const sizes = [12, 24, 36]; const next = sizes[(sizes.indexOf(this.state.pageSize) + dir + 3) % 3];
+        const sizes = PAGE_SIZES; const next = sizes[(sizes.indexOf(this.state.pageSize) + dir + sizes.length) % sizes.length];
         this.setPageSize(next);
         const btns = [...document.querySelectorAll('[data-toggle-init] [data-toggle-btn]')]; const nb = btns[sizes.indexOf(next)]; if (nb) nb.focus();
       },
@@ -1955,8 +2016,8 @@ export const renderValsMethods = {
         // No widths here any more: the header sits on --row-grid, the same template the rows use,
         // so each label is sized by the track it lands in. Each right-aligns over the values it
         // sorts. 'aa' shares its track with the ⓘ that explains the badge.
-        { key: 'aa', label: 'AA pairs' },
-        { key: 'contrast', label: 'Max contrast' },
+        { key: 'aa', label: 'AA Pairs' },
+        { key: 'contrast', label: 'Max Contrast' },
         // "Date" named the type of the value, not the event. Created, because that is what the
         // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
         // touches it — _commitRefine rewrites swatches and roles and leaves the stamp alone. So
@@ -1979,12 +2040,19 @@ export const renderValsMethods = {
           // ascending, tweened through --ease-standard so the flip is a movement the eye can
           // follow instead of a substitution it has to re-read.
           //
-          // The chevron now renders on EVERY sortable column, not just the active one. Previously
-          // only the active column showed it, so AA PAIRS and MAX CONTRAST read as inert labels —
-          // sortable but undiscoverable. At rest it is dimmed and points down (the direction a
-          // first click will give); active it comes to full strength and rotates to match. Active
-          // is never carried by the chevron alone: the label also steps to 500 and full ink, so
-          // the state survives greyscale (SC 1.4.1).
+          // ONE ARROW ON THE PAGE, AND IT IS THE TRUE ONE.
+          //
+          // Every column used to draw a dimmed chevron at rest, so that inactive columns would not
+          // read as inert labels. The cost was three arrows in a header where exactly one ordering
+          // is in force: two of them pointed down while describing nothing, and the reader had to
+          // compare opacities to work out which was the state and which were the invitations. A
+          // sort indicator is a statement about the list, and only one such statement is true.
+          //
+          // Discoverability is paid for by the interaction instead: the slot is still reserved on
+          // every column (so no label shifts) and the chevron fades in on hover or keyboard focus —
+          // see the [data-sort-chevron][data-dim] rules in global.css. Active is never carried by
+          // the chevron alone in any case: the label steps to 500 and full ink, so the state
+          // survives greyscale and a viewer who cannot separate the two inks (SC 1.4.1).
           showChevron: true, chevronDim: !active, dir: desc ? 'desc' : 'asc',
           pressed: active ? 'true' : 'false',
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
@@ -2000,16 +2068,22 @@ export const renderValsMethods = {
             // inside it. Filling the whole track was tried and removed: a tint one column wide
             // announcing a two-word label reads as the column having a state, not the control.
             //
-            // The border is what carries the alignment at rest — the box edge is the grid line —
-            // and the hover tint now fills exactly that box, so hovering changes the chip's colour
-            // rather than its shape. --line is the quietest edge the app owns; anything stronger
-            // turns a header row into a table.
+            // THE BORDER IS LOAD-BEARING AND MUST NOT BE REMOVED. It is what carries the alignment
+            // at rest — the box edge IS the grid line, which is the only way the header can be
+            // seen to sit on the same column the values below it sit on. Dropping it was tried
+            // once, on the theory that a header should read as a plain label; what actually
+            // happened is that the header stopped declaring the grid at all, and three
+            // right-aligned words floated over three columns with nothing stating the relationship.
+            // The hover tint fills exactly that box, so hovering changes the chip's colour rather
+            // than its shape. --line is the quietest edge the app owns; anything stronger turns a
+            // header row into a table.
             //
-            // Date is pulled 16px off the line by margin rather than padding, so its chip stays
-            // square-padded while its edge matches the 16px inset the stamp below it keeps.
+            // Created carries no private margin any more: the header grid's --row-inset padding is
+            // the 16px it used to hold for itself, and the stamp below gets the same figure from
+            // the row grid — one token, both edges, cannot drift.
             width: 'auto', minWidth: 0, minHeight: '24px', justifySelf: 'end',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            padding: '6px', marginInlineEnd: c.key === 'time' ? '16px' : '0',
+            padding: '6px',
             border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
             fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
@@ -2102,14 +2176,15 @@ export const renderValsMethods = {
         : 'Refine this palette: assign roles and adjust colours',
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: 'Add to project',
+      assignLabel: 'Add to Project',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
+      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast
       hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.name + ' deleted') : '', undoDelete: () => this.undoDelete(),
+      onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',
       // per-swatch colour harmonies

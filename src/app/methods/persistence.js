@@ -346,14 +346,15 @@ export const persistenceMethods = {
   deleteProject(id) {
     const st = this.state; const idx = st.projects.findIndex((p) => p.id === id); if (idx < 0) return;
     const project = st.projects[idx]; const palIds = st.feed.filter((p) => this.inProject(p, id)).map((p) => p.id);
-    if (this._toastT) clearTimeout(this._toastT); this._deleted = null; this._deletedProject = { project, index: idx, palIds };
+    this._deleted = null; this._deletedProject = { project, index: idx, palIds };
     const projects = st.projects.slice(0, idx).concat(st.projects.slice(idx + 1));
     const feed = st.feed.map((p) => this.inProject(p, id) ? this.withProjects(p, this.palProjects(p).filter((x) => x !== id)) : p);
     const patch = { projects, feed, toast: { name: project.name + ' project' } };
     if (st.activeProject === id) patch.activeProject = null;
     patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
+    // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next
+    // deletion replaces it — see the note in overlays.js where the palette path says the same.
     this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); if (this.state.feedView === 'grid') this.buildUniverse(); });
-    this._toastT = setTimeout(() => { this._deletedProject = null; this._dismissToast(); }, 6500);
   },
   // ---- portable project file (accountless permanence) — DISTINCT from token export ----
   buildProjectFile(scope) {

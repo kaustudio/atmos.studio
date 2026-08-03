@@ -103,7 +103,6 @@ export const overlayMethods = {
       }
       const overlayDeleted = s.overlay && s.overlay.id === id;
       if (overlayDeleted) { patch.overlay = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
-      if (this._toastT) clearTimeout(this._toastT);
       this._deleted = { palette: removed, index: idx };
       patch.toast = { name: removed.name };
       patch.announce = 'Palette ' + removed.name + ' deleted. Undo available.';
@@ -122,7 +121,12 @@ export const overlayMethods = {
           else { const u = document.querySelector('[data-undo-btn]'); if (u) try { u.focus(); } catch (e) { } }
         });
       });
-      this._toastT = setTimeout(() => { this._deleted = null; this._dismissToast(); }, 6500);
+      // NO TIMER. The toast carries an ACTION — it is the only route to undoing a permanent
+      // deletion of data that exists nowhere but this browser — and an action-bearing toast that
+      // dismisses itself is a race against the reader (WCAG 2.2.1; it lost that race twice during
+      // the 03.08.26 audit). It stays until the user acts: Undo restores, Dismiss (the ✕) lets it
+      // go, and the next deletion replaces it. Info-only notices (showNotice) keep their timer —
+      // nothing is lost when one of those goes unread.
     };
     if (!this._reduce && g && rowEl && s.feedView === 'list') {
       g.set(rowEl, { height: rowEl.offsetHeight, overflow: 'hidden' });
@@ -130,7 +134,6 @@ export const overlayMethods = {
     } else { commit(); }
   },
   undoDelete() {
-    if (this._toastT) clearTimeout(this._toastT);
     if (this._deletedProject) {
       const dp = this._deletedProject; this._deletedProject = null;
       this.setState((st) => { const projects = st.projects.slice(); projects.splice(Math.min(dp.index, projects.length), 0, dp.project); const feed = st.feed.map((p) => dp.palIds.indexOf(p.id) >= 0 ? Object.assign({}, p, { projectId: dp.project.id }) : p); return { projects, feed, announce: 'Restored project ' + dp.project.name + '.' }; }, () => { this.persist({ immediate: true }); this._dismissToast(); });
@@ -147,6 +150,17 @@ export const overlayMethods = {
   // toast enter/exit — fade + small slide, --ease-standard; instant under reduced motion
   _toastIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
   _dismissToast() { const g = window.gsap; const el = document.querySelector('[data-toast]'); const clear = () => this.setState({ toast: null }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
+  // The ✕ on the toast: letting the undo go is a decision, so it discards the held record — the
+  // same forfeit the old timer performed silently. If focus was inside the toast it would die with
+  // it (the control disappears mid-press), so it is handed to the first row's own hit surface —
+  // the list the deletion just edited; a mouse user's focus, elsewhere, is left alone.
+  dismissUndoToast() {
+    this._deleted = null; this._deletedProject = null;
+    const el = document.querySelector('[data-toast]');
+    const hadFocus = !!(el && el.contains(document.activeElement));
+    this._dismissToast();
+    if (hadFocus) { const r = document.querySelector('[data-row-hit]') || document.querySelector('[data-facet-btn]'); if (r) try { r.focus(); } catch (e) { } }
+  },
 
   // ===== contrast checker (opt-in surface over the current palette) =====
   contrastPalette() { const s = this.state; return s.overlay || s.current || (s.feed && s.feed[0]) || null; },

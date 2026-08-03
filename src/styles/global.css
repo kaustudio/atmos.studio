@@ -83,6 +83,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --ease-button-hover:cubic-bezier(0.675,0.15,0.1,1);
   --ease-button-click:cubic-bezier(0.4,0,0.2,1);
   --ease-button-focus:cubic-bezier(0.32,0.72,0,1);
+  /* the sliding pill behind every segmented toggle (view, per-page, project scope). It was the
+     same literal bezier pasted in three places — one motion, three copies, the usual drift risk. */
+  --ease-pill:cubic-bezier(0.625,0.05,0,1);
 }
 /* ===== semantic chrome tokens (theme affects chrome only — never palette swatches) ===== */
 :root{
@@ -190,11 +193,17 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* The row's inset — the palette's left margin, and the margin the stamp and the row buttons keep
      on the right. The row is symmetrical about this: the things that end it are the same distance
      from its edges. */
-  /* Zero, and it has to be. The row used to hold a 16px inset INSIDE the page's margin, so the
-     strip began at 40px on a page whose first column begins at 24. A row that is on the grid has
-     the grid's edges; anything else is a second margin nested in the first. Kept as a token rather
-     than deleted because the hover buttons' offset is derived from it. */
-  --row-inset:0px;
+  /* 16 again, by decision (03.08.26), reversing the earlier zero. The zero-era argument was that a
+     row on the grid should have the grid's edges — true of a row that is only ink. But this row is
+     a SURFACE: it carries a hover tint, a selected fill and a 3px current marker, and content flush
+     against a surface's edge reads as clipped, not aligned. The date column had privately kept its
+     16 all along (stamp padding, header-chip margin), so the right side already disagreed with the
+     left, and the hover buttons were landing at 0 — ON the edge the stamp stood 16 away from.
+     One token now feeds all three: the header and row grids pad by it on BOTH sides (the private
+     date insets are gone), and --row-action-offset still derives from it, so the buttons land
+     exactly where the stamp rests. The trade accepted with it: the interior column edges sit a
+     compressed hair off the page grid's lines — the row aligns to its own surface first. */
+  --row-inset:16px;
   /* The sort header's hover tint only. It was every metric cell's trailing inset as well, and half
      of the row's right margin — one measurement doing three jobs, which was elegant while the row
      had a margin of its own to be half of. On the page grid it has none: a value inset 8px from its
@@ -376,7 +385,9 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-dur:0.42s;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
   border-radius:var(--button-006-border-radius);
-  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;
+  /* Title Case, not uppercase (03.08.26): the CTA family follows the library's control voice —
+     the label arrives in its own case, and the wide tracking went with the caps that needed it. */
+  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
   transition:scale .12s var(--ease-button-click);
@@ -439,8 +450,36 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    turns a half-circle to point up (ascending). Declarative like the [data-ix] contract — the state
    lives on data-dir, the motion is one transition on --ease-standard, and it reverses by construction
    because the same rule drives both directions. transform-origin is centred so it pivots in place. */
-[data-sort-chevron]{transform-origin:50% 50%;transition:transform .28s var(--ease-standard)}
+/* HIDDEN CHIPS ANNOUNCE THEMSELVES. The project group scrolls horizontally once the chips outgrow
+   it, and a scroll container with no cue is content that may as well not exist. The classic
+   scrolling-shadows pair: two surface-coloured covers pinned to the CONTENT (background-attachment:
+   local) and two shadows pinned to the BOX (scroll). With nothing clipped, each cover sits over its
+   shadow and the group looks exactly as before; the moment chips continue past an edge, that edge's
+   cover has scrolled away and the shadow shows. No JS, no state to update, and the shadow ink is
+   the same on-surface mix the hairlines use, so it reads in both themes. */
+[data-proj-group]{
+  background:
+    linear-gradient(to right, var(--surface) 40%, transparent) left center,
+    linear-gradient(to left,  var(--surface) 40%, transparent) right center,
+    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--on-surface) 22%, transparent), transparent) left center,
+    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--on-surface) 22%, transparent), transparent) right center;
+  background-repeat:no-repeat;
+  background-size:36px 100%, 36px 100%, 12px 100%, 12px 100%;
+  background-attachment:local, local, scroll, scroll;
+}
+[data-sort-chevron]{display:inline-flex;transform-origin:50% 50%;transition:transform .28s var(--ease-standard),opacity .18s var(--ease-standard)}
 [data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
+/* ONE ARROW, AND IT IS THE TRUE ONE. Every column used to draw a chevron at rest — the active one
+   at full strength, the others at .32 — so a header where exactly one ordering is in force showed
+   three indicators, two of them describing nothing. A sort arrow is a claim about the list, and
+   only one such claim is true at a time.
+   The invitation survives as an interaction rather than as standing ink: the slot is reserved on
+   every column (fixed 9px in the JSX, so no label shifts), and an inactive chevron fades in when
+   the pointer or the keyboard reaches its control. Focus, not just hover — the affordance has to
+   exist for someone tabbing through the header, who has no pointer to reveal it with. */
+[data-sort-chevron][data-dim]{opacity:0}
+[data-ix="press"]:hover>span>[data-sort-chevron][data-dim],
+[data-ix="press"]:focus-visible>span>[data-sort-chevron][data-dim]{opacity:.42}
 @media (prefers-reduced-motion:reduce){[data-sort-chevron]{transition:none}}
 /* The pair arrives with the gutter that makes room for it: same duration, same ease, so the push and
    the fade are one gesture rather than two things that happen to coincide. The 10px is a hint of

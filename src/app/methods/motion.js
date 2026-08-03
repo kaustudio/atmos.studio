@@ -92,13 +92,19 @@ export const motionMethods = {
   // Takes a step off the scale, not a number. It used to take px and was the last place in the app
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
   monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
-  viewToggleOptStyle(active) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
+  // The view toggle speaks the library section's control voice — Title Case at --fs-detail, not
+  // the app's uppercase label voice — because it stands in that section's heading row. "3D" is
+  // unaffected: an initialism is already its own capitalization.
+  viewToggleOptStyle(active) { return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { textTransform: 'none', position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
   // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
   // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
+  // Title Case since 03.08.26 — the app-wide sweep. Labels arrive in their own case (harmony
+  // model names, Most Used / A–Z); monoLabel's uppercase is overridden rather than removed there
+  // because the eyebrow-voice consumers of monoLabel still want it.
+  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { textTransform: 'none', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
   // Prev / Next. Sentence case at the library section's own chrome size — this helper has exactly
   // one caller (the list pager), so it carries that section's voice rather than the app default.
   pageNavStyle(disabled) { return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { textTransform: 'none', padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
