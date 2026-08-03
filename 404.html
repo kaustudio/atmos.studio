@@ -22,16 +22,17 @@
 <link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
 <!-- global.css carries the tokens and the Neue Montreal @font-face rules; it is imported by
      src/notfound/main.js rather than linked, because this page is a Vite entry and the bundler
-     should be the one to hash and inline it. site-foot.css stays a plain link — 404 is the last
-     document that reads it straight from /public, so it cannot go into the bundle without leaving
-     this page without a footer. notfound.css adds the display 404, the grid and the particle layer. -->
-<link rel="stylesheet" href="/site-foot.css" />
+     should be the one to hash and inline it. notfound.css adds the display 404, the grid and the
+     particle layer, and is now the only stylesheet this page links: site-foot.css went with the
+     footer, which this page no longer carries. -->
 <link rel="stylesheet" href="/notfound.css" />
 </head>
 <body>
 
 <div class="nf-head">
-  <a href="/" aria-label="Atmos Gallery"><span class="nf-mark" role="img" aria-label="Atmos Gallery"></span></a>
+  <!-- data-logo is the app's own attribute for this wordmark, and it is here for global.css's
+       reduced-motion rule, which stops the gradient drift by that attribute — see notfound.css. -->
+  <a href="/" aria-label="Atmos Gallery"><span class="nf-mark" data-logo="1" role="img" aria-label="Atmos Gallery"></span></a>
 </div>
 
 <main class="nf">
@@ -50,23 +51,10 @@
   <p class="nf-actions"><a class="nf-cta" href="/">Back to Atmos Gallery</a></p>
 </main>
 
-<!-- The shared site footer, from site-foot.css — after .nf rather than inside it, and BELOW THE FOLD: .nf is
-     one viewport less the mark's band, so this footer's top rule is the first thing a scroll reveals.
-     That is why the page scrolls at all now; it used to be pinned to 100vh with overflow:hidden, which
-     a full-bleed wordmark cannot share with a full-bleed 404. See notfound.css. -->
-<footer class="site-foot">
-  <div class="site-foot__brand">
-    <a href="/" aria-label="Atmos Gallery home"><span class="site-foot__mark" aria-hidden="true"></span></a>
-  </div>
-  <div class="site-foot__meta">
-    <p class="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
-    <nav class="site-foot__nav" aria-label="Legal">
-      <a href="/privacy">Privacy Policy</a>
-      <a href="/terms">Terms and Conditions</a>
-    </nav>
-    <p class="site-foot__rights">All Rights Reserved &copy; 2026</p>
-  </div>
-</footer>
+<!-- The shared site footer used to sit here, below the fold. It is gone: this page is one screen and
+     one answer — the mark, the 404 and the way back — and the legal links it carried are on every
+     page the way back leads to. .nf is still sized to a viewport less the mark's band, so what that
+     removal leaves is a page with nothing under the fold rather than a gap. See notfound.css. -->
 
 <!-- The field is a fixed layer over the whole viewport, not a box around the heading: a particle
      pushed off the glyphs has the entire page to travel through and is never clipped by a container.

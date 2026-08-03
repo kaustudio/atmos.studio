@@ -1,20 +1,20 @@
 /* Atmos Gallery — the site footer.
 
-   One file because FOUR entry points draw this footer and only two of them share a stylesheet:
-   privacy, terms and 404 load legal.css, while the app at / is Vite-bundled and loads
-   src/styles/global.css. Duplicating a component of this size into both is how the two copies start
-   disagreeing — the tokens at the top of legal.css are a deliberate subset copy of global.css's and
-   are documented as such, but that is a handful of values, not sixty lines of layout. So the footer
-   lives here and every page links it.
+   One file because this footer was drawn by entry points that did not share a stylesheet: 404.html
+   read it straight from /public while the app at / is Vite-bundled and loads src/styles/global.css.
+   Duplicating a component of this size into both is how the two copies start disagreeing, so the
+   footer lived here and every page linked it. 404.html has since dropped its footer entirely, which
+   leaves index.html as the only document linking this file — and the legal routes, which are that
+   document. Kept as a linked file rather than folded into the bundle because nothing is gained by
+   moving it and the link is one line.
 
-   It therefore cannot assume either stylesheet's variables. --on-surface, --on-surface-muted and
-   --line-strong exist in both. --page-gutter and --track-flat do NOT: they are legal.css's, so both
-   are written with the fallback the app needs, and the fallback is the same value legal.css defines
-   rather than a second opinion about it.
+   It therefore assumes no stylesheet's variables. --on-surface, --on-surface-muted and --line-strong
+   are global.css's and are relied on. --page-gutter and --track-flat are written with a fallback,
+   which is the same value legal.css defines rather than a second opinion about it.
 
    The footer from the design comp (footer-light-mode.pdf / footer-dark-mode.pdf, a 1728×418 frame).
-   It closes privacy, terms and 404 — every page except the front page, which is the app itself and
-   carries its own chrome.
+   It closes the tool and both legal routes. Not the 404: that page is one screen and one way back,
+   and a footer under it was a second thing to read on a page nobody arrived at to read anything.
 
    The wordmark is the brand SVG used as a MASK, exactly as .mark and .nf-mark already are: one asset,
    inked with --on-surface, so light and dark are one rule and no second file can drift from the first.

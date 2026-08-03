@@ -182,10 +182,10 @@ async function init() {
   /* And on scroll, which is a third kind of change and needs saying because it is not obvious from
      placement(): every offset it returns is the gap between the heading's rect and the canvas's, both
      read in VIEWPORT pixels. The canvas is position:fixed, so its rect never moves — but the heading's
-     does, the moment the page scrolls. Until the footer moved past the fold this page could not scroll
-     at all, so resizing was the only way those two could ever disagree; now scrolling is another, and
-     without this the cloud stays parked mid-screen while the type it is standing in for slides out from
-     under it.
+     does, the moment the page scrolls. With the footer gone the page fits one screen and ordinarily
+     never scrolls, so this rarely fires — but nothing pins the document to the viewport, and a window
+     too short for the mark, the type and the button still scrolls. Without this the cloud would stay
+     parked mid-screen there while the type it is standing in for slid out from under it.
 
      rAF-throttled because scroll fires far faster than the compositor can use, and the work is only a
      uniform update. Safe to throttle this way, unlike the field's start-up failsafe: this is a response

@@ -439,9 +439,10 @@ function WipeLayer() {
   );
 }
 
-/* The site footer, the same one the legal routes and 404.html close with — markup identical, styles
-   from /site-foot.css, which index.html links because this app is bundled and 404.html cannot read
-   the bundle. Classes rather than sx() for exactly one reason: the footer needs :hover,
+/* The site footer, closing the tool and both legal routes — styles from /site-foot.css, which
+   index.html links rather than the bundle importing it, because that file predates this being the
+   only document that draws the footer at all. 404.html used to be the other one and no longer
+   carries a footer. Classes rather than sx() for exactly one reason: the footer needs :hover,
    :focus-visible and a 700px media query, none of which an inline style can express, so the rules
    have to live in a stylesheet whatever we do — and then a second, inline copy of the layout would
    only be something to keep in sync with them.

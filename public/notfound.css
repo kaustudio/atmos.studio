@@ -1,38 +1,38 @@
 /* Atmos Gallery — the not-found page.
 
-   Tokens, fonts and the footer's type come from legal.css, which this page loads first: a 404 is
-   where a visitor is most likely to doubt they are still on the same site, so it borrows what the
-   standalone pages already carry rather than restating it. What lives here is what they have no
+   Tokens and fonts come from global.css, which src/notfound/main.js imports: a 404 is where a
+   visitor is most likely to doubt they are still on the same site, so it borrows what the rest of
+   the site already carries rather than restating it. What lives here is what nothing else has an
    equivalent of — one word of display type, sized to the page, and the field of particles that
    stands in for it.
 
    The grid is the app's, and it is now the same grid the legal pages use — they were a centred 60em
    measure when this file was written and are full-bleed since. So the gutters are not restated here
-   as figures: --chrome-gutter (16px, the app's header padding) and --page-gutter (22px, the app's
-   section padding) come from legal.css, and every page reads them from that one place. The app itself
+   as figures: --chrome-gutter (the app's header padding) and --page-gutter (its section padding)
+   come from global.css, and every page reads them from that one place. The app itself
    holds chrome and content to different gutters, so flattening them to a single number would match
    neither. What still separates this page from privacy and terms is only the measure: they cap prose
    at --measure because they are documents, and this one has no prose to cap. Content is centred on
    that grid, under the centred mark.
 
    Three rules hold the whole page together and are worth reading before changing any of them:
-     · the 404 owns the first viewport and the footer begins where it ends — the mark plus .nf are
-       exactly 100vh, so the fold falls on the footer's top rule and the page scrolls from there;
+     · the 404 owns the viewport and nothing follows it — the mark plus .nf are exactly 100vh, and
+       with the footer gone that is the whole document;
      · the 404's size is not in this file — fit-width.js measures .nf-type and sets the font-size
        that fills it, so .nf-type's width is the only thing that decides how big the 404 gets;
      · the particle canvas is a fixed layer over the whole viewport rather than a box around the
-       heading, so a pushed particle is never clipped by a container. Because it is fixed and the page
-       now scrolls, main.js re-places the field on scroll — see the note there.
+       heading, so a pushed particle is never clipped by a container. Because it is fixed, main.js
+       re-places the field whenever the heading can have moved under it — see the note there.
 
-   This page USED to be exactly 100vh with overflow:hidden on html and body, and the footer lived
-   inside that. It cannot any more: the site footer's height is a function of viewport WIDTH, so on a
-   short window it took the whole screen and the 404 was clipped off the top of a page that could not
-   be scrolled. Letting the page scroll and putting the footer past the fold is what removes that class
-   of bug rather than tuning around it — --nf-reserve below is a flat figure again as a direct result. */
+   This page USED to be exactly 100vh with overflow:hidden on html and body, with the site footer
+   inside that. It could not stay: the footer's height is a function of viewport WIDTH, so on a short
+   window it took the whole screen and the 404 was clipped off the top of a page that could not be
+   scrolled. The footer first moved past the fold and is now off the page entirely, which is what lets
+   the height rules below be a single flat sum — see --nf-reserve. Nothing here pins the document's
+   height even so: the page is as tall as it needs to be, so a window too short for the mark, the type
+   and the button still scrolls rather than clipping them. */
 
-/* The first screen is the mark plus .nf; the footer follows it and is reached by scrolling. Nothing
-   here pins the document's height, so the page is as tall as it needs to be — and the scrollbar is the
-   affordance telling a visitor the footer is down there (legal.css does not hide it, unlike the app). */
+/* The first screen is the mark plus .nf, and on any ordinary window that is the last screen too. */
 body{display:flex;flex-direction:column}
 
 /* One viewport, less the band the mark sits in, so the footer's first rule lands exactly on the fold.
@@ -60,10 +60,20 @@ body{display:flex;flex-direction:column}
 }
 
 /* The mark sits centred at the top, on the line the app fixes it to — 165 × 26 at 18.5px, which is
-   where it is on the landing and on every screen of the tool, so a visitor arriving here from either
-   finds it where they left it. The app's version masks a drifting gradient with mix-blend difference;
-   those keyframes live in global.css, which this page doesn't load, so the ink is flat --on-surface
-   exactly as on privacy and terms. */
+   where it is on the landing, on every screen of the tool and on privacy and terms, so a visitor
+   arriving here from any of them finds it where they left it.
+
+   And it is the SAME mark now, not merely the same box: the drifting grayscale gradient composited
+   with mix-blend difference, every figure copied from `logoStyle` in src/app/AppView.jsx. The note
+   that stood here said this page could only have flat ink because gradient-drift lives in global.css
+   and this page doesn't load it — that stopped being true when src/notfound/main.js started importing
+   global.css, so the keyframes and the [data-logo] reduced-motion rule are both already here and the
+   flat fill was the last thing left of a limitation that had lifted. The span carries data-logo for
+   that second rule specifically: the stop belongs with the animation, not restated per page.
+
+   difference is what lets one declaration serve both themes — the pale gradient differenced against
+   the light surface reads as near-black ink, against the dark surface as near-white — which is also
+   why the blend has to see the page. See the stacking note below. */
 /* The two figures are named because .nf's 100vh split reads them: the band above the 404 has to be
    the band the mark actually occupies, and two literals would agree only until someone edited one. */
 :root{
@@ -77,21 +87,35 @@ body{display:flex;flex-direction:column}
    box by about that much on each side. At 1280×800 the 404 is set at 702px: a 520px line box against
    an 843px natural one, so the glyphs' hit area runs ~161px past the box top and bottom. The box
    starts at y=132, so the h1 answers clicks from y≈-29 — straight over this band — and the mark,
-   sitting earlier in the DOM with no z-index of its own, loses every one of them. It is not the
-   canvas: that is pointer-events:none and passes clicks through untouched.
+   with no z-index of its own, loses every one of them. It is not the canvas: that is
+   pointer-events:none and passes clicks through untouched.
    The same overhang reaches DOWN over the button, which is what .nf-cta's z-index has always been
-   for; the head was simply never given the matching pair. Both are z-index:2, above the canvas's 1,
-   so the mark now also paints over the field instead of under it — as the button already did. */
+   for. Both raises are z-index:2, above the canvas's 1, so the mark also paints over the field
+   rather than under it — as the button already did.
+
+   The raise is on .nf-MARK rather than on .nf-head, and that is the blend's doing, not a preference.
+   mix-blend-mode composites an element against the backdrop of its nearest stacking-context ancestor,
+   so a positioned .nf-head would hand the mark its own empty box to difference against — the gradient
+   over nothing, which is a pale grey wordmark in both themes and invisible in one of them. Raising
+   the mark itself leaves the root as that ancestor, so what it differences against is the page: the
+   surface, and the particles where they pass beneath it. Hit-testing is unaffected — the span is the
+   topmost thing in the band, it fills the anchor exactly, and the click bubbles to the link. */
 .nf-head{
   display:flex;justify-content:center;
   padding:var(--nf-head-pad) var(--page-gutter) 0;
-  position:relative;z-index:2;
 }
 .nf-head a{display:block;line-height:0}
 .nf-mark{
-  display:block;width:165px;height:var(--nf-mark-height);background:var(--on-surface);
+  display:block;width:165px;height:var(--nf-mark-height);
+  /* The app's gradient, its 280% frame and its 9s drift, verbatim — one wordmark, one motion, on
+     whichever page a visitor is looking at. gradient-drift itself is global.css's. */
+  background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);
+  background-size:280% 280%;
+  animation:gradient-drift 9s ease-in-out infinite;
+  mix-blend-mode:difference;
   -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
   mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
+  position:relative;z-index:2;
 }
 
 /* ------------------------------------------------------ the 404, fitted to the page
@@ -127,9 +151,9 @@ body{display:flex;flex-direction:column}
        48px              .nf's own vertical padding, 24 top and 24 bottom
        24px + 36px       .nf-actions' margin-top, and the button
        24px              air, so the type never crowds the button
-     It is a flat figure again — while the footer lived inside the viewport this had to carry the
-     footer's width-dependent height, and got the arithmetic wrong on any short window. The footer is
-     past the fold now, so it is none of this sum's business. */
+     It is a flat figure — while the footer lived inside the viewport this had to carry the footer's
+     width-dependent height, and got the arithmetic wrong on any short window. There is no footer on
+     this page at all now, so every term above is one this page's own rules set. */
   --nf-reserve:calc(var(--nf-head-height) + 48px + 24px + 36px + 24px);
   text-align:center;
   /* The heading is an inline-block, so it sits on a line box here — and that line box carries a strut
@@ -157,6 +181,22 @@ body{display:flex;flex-direction:column}
   font-size:5rem;font-weight:500;line-height:.74;
   letter-spacing:var(--track-statement);
   transition:opacity .5s ease;
+  /* The clip is about the SCROLLBAR, not the look. line-height:.74 is far tighter than the font's
+     own ascent+descent, and a browser counts that full metric box — not the ink — into the document's
+     scrollable height. So with the footer gone and the page finally one screen, it still scrolled
+     ~17px at 1280×800: the empty descender under a line of digits that have no descenders. Clipping
+     the heading's own overflow is what stops that box being counted; the page is now exactly its
+     viewport, and the only thing that can still make it scroll is a window too short for the content.
+
+     The margin is what keeps this a scroll fix rather than a crop. All that reaches past the border
+     box is the "0"'s overshoot below the baseline — 12.5px at the 708px size that window fits, or
+     ~0.018em — so 0.03em clears it with room over. In em because fit-width.js sets a different
+     font-size on every viewport and a px figure would be right on exactly one of them; still far
+     inside the ~108px the reserve leaves under the box, so the clip region never reaches the fold
+     it was added to protect. Where overflow-clip-margin is unsupported the overshoot is shaved in
+     the no-JS fallback; where overflow:clip is, the old harmless 17px comes back. */
+  overflow:clip;
+  overflow-clip-margin:0.03em;
 }
 /* Set by main.js once the field is live and drawing. The heading keeps its place in the layout and
    in the accessibility tree, and stays selectable — it is handed over visually and only visually. */
@@ -166,8 +206,8 @@ body{display:flex;flex-direction:column}
    throws particles well past the glyphs, and any box drawn around them is a box they get clipped
    against. Here the whole page is the box.
 
-   pointer-events:none is load-bearing — the canvas covers the mark, the button and the footer links,
-   and must not swallow a click, a tap or a selection. The field tracks the pointer on window instead,
+   pointer-events:none is load-bearing — the canvas covers the mark and the button, and must not
+   swallow a click, a tap or a selection. The field tracks the pointer on window instead,
    so it also reacts as the cursor approaches from outside the glyphs. */
 .nf-canvas{
   position:fixed;inset:0;
@@ -219,17 +259,18 @@ body{display:flex;flex-direction:column}
 }
 .nf-cta:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 
-/* The footer needs nothing from this file any more. It used to be a 404-only .nf-foot that added the
-   page's gutter and centring to legal.css's .legal-foot; the shared .site-foot carries its own gutter,
-   its own rules and its own bottom padding, and is identical here to what privacy and terms show. */
+/* There is no footer rule here because there is no footer on this page. It was a 404-only .nf-foot,
+   then the shared .site-foot carrying its own gutter and rules, and now it is neither: the page ends
+   with the button. The links it held — privacy, terms, kau.studio — are on every page the button
+   leads to, and this one is an answer to a bad address rather than a place to read anything.
 
-/* One grid at every width — the app's gutters hold on a phone as much as on a desktop, and the legal
-   pages now do the same, so no page here has a breakpoint-specific inset. The vertical reserve needs no
+   One grid at every width — the app's gutters hold on a phone as much as on a desktop, and the legal
+   routes do the same, so no page here has a breakpoint-specific inset. The vertical reserve needs no
    breakpoint either: it is summed from the mark, this page's own padding and its button, none of which
    change with width. It carried three width- and height-dependent overrides while the footer shared the
-   viewport with the 404 — every one of them existed to keep the footer from crowding the type, and the
-   fold does that job now. Deleted rather than kept "just in case": each was a number that had to be
-   right, and none of them can be checked any more. */
+   viewport with the 404 — every one of them existed to keep the footer from crowding the type, and
+   there is nothing left to crowd it. Deleted rather than kept "just in case": each was a number that
+   had to be right, and none of them can be checked any more. */
 
 /* legal.css carries no blanket motion floor, so the two transitions above are stood down here. The
    particle field itself never starts under this preference — see src/notfound/main.js. */
