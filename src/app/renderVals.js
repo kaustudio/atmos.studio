@@ -319,9 +319,33 @@ export const renderValsMethods = {
           background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
           fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)',
           textTransform: 'uppercase', color: 'var(--on-surface)',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '26px',
+          // THE WIDTH IS THE MASK. Both labels live in the button at once and neither is swapped
+          // in or out: the box narrows to a square and its own right edge sweeps left across the
+          // word, wiping it. overflow:hidden is what makes that a wipe rather than an overflow,
+          // and justify-content:flex-start pins the word to the left so the sweep eats it from the
+          // right. Nothing about the content changes mid-flight, which is what makes the motion
+          // continuous — a content swap can only ever cut.
+          overflow: 'hidden', position: 'relative',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-start', height: '26px',
           ...(s.readingOpen ? { width: '26px', padding: 0 } : { padding: '0 12px' }),
         },
+        // In flow, so the CLOSED button sizes itself to its own label — the count varies per
+        // palette, so an auto width is the only correct one. flex:none and nowrap keep it from
+        // reflowing as the box closes over it; it is clipped, never re-wrapped.
+        moreWordStyle: { flex: 'none', whiteSpace: 'nowrap', opacity: s.readingOpen ? 0 : 1 },
+        // Out of flow, centred on the square the box lands at, so it cannot influence the closed
+        // width. It fades up as the wipe passes rather than being revealed by it: at the final
+        // 26px the word's own first letter still sits under this slot, and two marks stacked in
+        // one square is the one thing the wipe cannot resolve on its own.
+        moreCloseStyle: { position: 'absolute', insetInlineEnd: 0, top: 0, bottom: 0, width: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: s.readingOpen ? 1 : 0 },
+        // The same width, exposed for the swap tween to hand back. GSAP's clearProps deletes the
+        // inline width when the tween ends, and React — whose virtual DOM still holds '26px' —
+        // sees no change to patch, so the square silently collapsed to its 14px intrinsic width
+        // (12px glyph + two borders) against a 26px height. The tween restores THIS value instead
+        // of clearing blind, and it is read off a React-owned attribute so an interrupted or
+        // double-fired tween can never hand back a stale number. Empty string in the word state,
+        // where auto width is correct because the label's length is not fixed.
+        moreWidth: s.readingOpen ? '26px' : '',
         moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
         readingOpen: !!s.readingOpen,
         onMore: () => this.toggleReading(),

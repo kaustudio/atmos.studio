@@ -869,8 +869,16 @@ export default function AppView({ vals }) {
                   {vals.result.traits.map((d, di) => (
                     <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding: 0 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase')}>{d}</span>
                   ))}
+                  {/* BOTH MARKS ARE ALWAYS HERE — the button's own width wipes between them (see
+                      moreStyle). data-more-w carries the width the tween hands back at the end,
+                      because GSAP's clearProps deletes the inline 26px React set and React, whose
+                      virtual DOM still holds it, has no change left to patch. The button is named
+                      by aria-label, so neither mark contributes to its accessible name. */}
                   {vals.result.hasMore && (
-                    <button type="button" data-more-btn="1" data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>{vals.result.readingOpen ? <IconClose /> : vals.result.moreLabel}</button>
+                    <button type="button" data-more-btn="1" data-more-w={vals.result.moreWidth} data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>
+                      <span data-more-word="1" aria-hidden="true" style={vals.result.moreWordStyle}>{vals.result.moreLabel}</span>
+                      <span data-more-close="1" aria-hidden="true" style={vals.result.moreCloseStyle}><IconClose /></span>
+                    </button>
                   )}
                 </div>
                 {/* The poetic reading, revealed rather than standing. It is the product's voice and

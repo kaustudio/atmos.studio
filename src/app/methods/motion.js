@@ -551,10 +551,28 @@ export const motionMethods = {
     const to = btn.getBoundingClientRect();
     const dx = from.left - to.left, dy = from.top - to.top;
     if (dx || dy || Math.abs(from.width - to.width) > 1) {
-      g.from(btn, { x: dx, y: dy, width: from.width, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform,width' });
+      g.from(btn, {
+        x: dx, y: dy, width: from.width, duration: this.DUR.state, ease: this.EASE.standard,
+        // WIDTH IS RESTORED, NEVER CLEARED. clearProps deletes the inline width outright, and the
+        // ✕ state's 26px is React's — deleting it left a 14px sliver in a 26px-tall box, because
+        // React's virtual DOM still held '26px' and so had no change to patch back. Handing back
+        // the React-owned attribute is correct in both directions: '26px' for the square, '' for
+        // the word state, where auto width is right because the label's length varies.
+        clearProps: 'transform',
+        overwrite: 'auto',
+        onComplete: () => { btn.style.width = btn.dataset.moreW || ''; },
+      });
     }
-    const glyph = btn.firstElementChild || btn;
-    g.from(glyph, { opacity: 0, scale: 0.6, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
+    // THE TWO MARKS CROSS UNDER THE WIPE. Both are resident (see moreStyle), so this only has to
+    // hand each one from its old resting opacity to its new one — fromTo, because React has
+    // already committed the new value and a plain from() would read the destination as the start.
+    // No clearProps: each tween ENDS on React's own value, so leaving it inline changes nothing,
+    // and React still patches on the next toggle because its virtual DOM sees a different value.
+    // Clearing here is what broke the width, and the same trap applies to opacity.
+    const opening = !!this.state.readingOpen;
+    const fade = (el, a, b) => { if (el) g.fromTo(el, { opacity: a }, { opacity: b, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' }); };
+    fade(btn.querySelector('[data-more-word]'), opening ? 1 : 0, opening ? 0 : 1);
+    fade(btn.querySelector('[data-more-close]'), opening ? 0 : 1, opening ? 1 : 0);
   },
   _readingIn(from) {
     const g = window.gsap;
