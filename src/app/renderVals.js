@@ -154,8 +154,8 @@ export const renderValsMethods = {
         const bp = this.paletteMetrics(cp).bestPair;
         const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
-        const segOn = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.1em', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.1em', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        const segOn = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
+        const segOff = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
         cx = {
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
@@ -189,14 +189,14 @@ export const renderValsMethods = {
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
         const hoverBg = on === '#000000' ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.16)';
         const cavBorder = on === '#000000' ? 'rgba(0,0,0,.32)' : 'rgba(255,255,255,.42)';
-        const rowBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on, transition: 'background .2s var(--ease-standard)' };
+        const rowBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on };
         const values = ['hex', 'rgb', 'cmyk', 'hsl'].map((key) => {
           const f = fmt[key];
           const copied = s.copied === key + '-' + sid;
           return {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             display: copied ? 'Copied' : f.display,
-            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' .38s var(--ease-entrance) both' },
+            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' var(--dur-swap) var(--ease-entrance) both' },
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy),
             rowStyle: rowBase, rowHover: { background: hoverBg },
@@ -312,8 +312,10 @@ export const renderValsMethods = {
         traits: allTraits, hasTraits: allTraits.length > 0,
       };
     }
-    // palette-level copy affordances
-    const palBtn = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'var(--surface-white)', border: '1px solid var(--on-surface)', padding: 'var(--btn-pad-md)', cursor: 'pointer', transition: 'background .15s ease,color .15s ease' };
+    // palette-level copy affordances. palBtn / palBtnHover / palBtnActive lived here and are gone
+    // (08.26) with the two standalone copy buttons they styled — the formats moved into a menu on a
+    // single Copy control, and the styles were left behind exported but unrendered. copyPal stays:
+    // the menu calls it.
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
     let procStatus = '';
@@ -545,10 +547,10 @@ export const renderValsMethods = {
           return {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             display: copied ? 'Copied' : f.display,
-            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' .38s var(--ease-entrance) both' },
+            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' var(--dur-swap) var(--ease-entrance) both' },
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy),
-            rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on, transition: 'background .2s var(--ease-standard)' },
+            rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on },
             rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
@@ -681,8 +683,8 @@ export const renderValsMethods = {
           mk('css', 'CSS custom properties', 'css'),
           mk('ase', 'Adobe swatches', 'ase'),
         ],
-        toggleTrackStyle: { position: 'relative', display: 'inline-block', width: '34px', height: '18px', flex: 'none', background: semantic ? 'var(--on-surface)' : 'var(--line-strong)', transition: 'background .2s var(--ease-standard)', cursor: 'pointer' },
-        toggleDotStyle: { position: 'absolute', left: '2px', top: '2px', width: '14px', height: '14px', background: 'var(--surface)', transform: semantic ? 'translateX(16px)' : 'translateX(0px)', transition: 'transform .2s var(--ease-standard)' },
+        toggleTrackStyle: { position: 'relative', display: 'inline-block', width: '34px', height: '18px', flex: 'none', background: semantic ? 'var(--on-surface)' : 'var(--line-strong)', transition: 'background var(--dur-fast) var(--ease-standard)', cursor: 'pointer' },
+        toggleDotStyle: { position: 'absolute', left: '2px', top: '2px', width: '14px', height: '14px', background: 'var(--surface)', transform: semantic ? 'translateX(16px)' : 'translateX(0px)', transition: 'transform var(--dur-fast) var(--ease-standard)' },
         semanticTrackBg: semantic ? 'var(--on-surface)' : 'var(--line-strong)',
         semanticDotX: semantic ? 'translateX(14px)' : 'translateX(0px)',
         semanticLabel: semantic ? 'On' : 'Off',
@@ -697,7 +699,10 @@ export const renderValsMethods = {
     // "Max contrast" and "Clear filters" all at once. 12px sentence case is the same optical size
     // and a readable word. Applied to this section's chrome only — the rest of the app's labels are
     // single acts, not a scan surface. AA and 3D stay uppercase because they are initialisms.
-    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
+    // The scope chips ARE view-toggle options — same segmented control, same states — and were a
+    // hand-copy of that builder down to a truncated transition that left their background tint
+    // cutting. Only the row layout differs, so only the row layout is stated.
+    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px' });
     // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
     // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
     // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
@@ -1670,21 +1675,21 @@ export const renderValsMethods = {
         border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500,
         letterSpacing: 'var(--track-title)', whiteSpace: 'nowrap', cursor: 'pointer',
-        transition: 'background-color .28s var(--ease-button-hover), border-color .28s var(--ease-button-hover), transform .12s var(--ease-standard)',
+        // Same press contract as the [data-ix] tiers in global.css: tint only, no geometry.
+        transition: 'background-color var(--dur-chrome) var(--ease-button-hover), border-color var(--dur-chrome) var(--ease-button-hover)',
       },
       // Whole border string, not borderColor. The base sets the `border` shorthand, and React
       // warns (and can drop the value) when a rerender mixes the shorthand with one of its parts.
       glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', border: '1px solid var(--action-line-hover)' },
-      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', border: '1px solid var(--action-line-press)', transform: this._reduce ? 'none' : 'translateY(1px)' },
-      // shared micro-interaction handlers (one signature across the whole UI)
-      mEnter: (e) => this.mEnter(e), mLeave: (e) => this.mLeave(e), mDown: (e) => this.mDown(e), mUp: (e) => this.mUp(e),
+      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', border: '1px solid var(--action-line-press)' },
+      // shared micro-interaction handlers (one signature across the whole UI). The m* quartet that
+      // sat here went with the dead GSAP press system — see the tombstone in methods/motion.js.
       dimEnter: (e) => this.dimEnter(e), dimLeave: (e) => this.dimLeave(e),
       uploadHover: { background: 'color-mix(in srgb, var(--on-surface) 4%, var(--surface-white))' },
       // dropzone hover tint — JS-driven; leave restores the explicit defaults (never clears inline styles)
       dropEnter: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
       // palette-level copy
-      palBtn, palBtnHover: { background: 'var(--on-surface)', color: 'var(--surface)' }, palBtnActive: { transform: 'translateY(1px)' },
       // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of Refine
       // and Export, which told the user the app has two copy features; it has one, and the format is
       // a detail of it. The formats move into a menu on a single Copy control, and the confirmation
@@ -1986,7 +1991,7 @@ export const renderValsMethods = {
       reelStyle: { display: s.feedView === 'carousel' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: 'hidden', overscrollBehavior: 'none' },
       reelEmpty: s.feedView === 'carousel' && this.reelPalettes().length === 0,
       reelCloseRef: (this.reelCloseRef = this.reelCloseRef || React.createRef()),
-      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (s.feedView === 'carousel' ? 200 : s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s var(--ease-pill)' },
+      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (s.feedView === 'carousel' ? 200 : s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)' },
       viewToggleKey: (e) => {
         const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
         e.preventDefault();
@@ -2020,10 +2025,12 @@ export const renderValsMethods = {
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
       pageSizeOptions: PAGE_SIZES.map((n) => ({
         label: '' + n, pressed: pageSize === n ? 'true' : 'false', tabIndex: pageSize === n ? 0 : -1,
-        style: this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
+        // Third copy of viewToggleOptStyle, now a call. Tabular numerals are the only difference:
+        // the three counts have to occupy the same width or the pill behind them jitters as it slides.
+        style: this.viewToggleOptStyle(pageSize === n, { fontVariantNumeric: 'tabular-nums' }),
         onSelect: () => this.setPageSize(n),
       })),
-      pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (PAGE_SIZES.indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s var(--ease-pill)' },
+      pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (PAGE_SIZES.indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)' },
       pageToggleKey: (e) => {
         const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
         e.preventDefault();
@@ -2135,7 +2142,7 @@ export const renderValsMethods = {
       onDragLeave: (e) => { e.preventDefault(); this.setState({ dragOver: false }); },
       onGridKey: (e) => this.onGridKey(e),
       fileRef: this.fileRef, canvasRef: this.canvasRef, resultRef: this.resultRef, progRef: this.progRef, gridRef: this.gridRef,
-      dropStyle: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background .2s ease,border-color .2s ease' },
+      dropStyle: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)' },
       // ===== nav controls: theme toggle + contrast checker =====
       isDark: s.theme === 'dark' ? 'true' : 'false',
       themeLabel: s.theme === 'dark' ? 'Dark' : 'Light',
@@ -2209,7 +2216,7 @@ export const renderValsMethods = {
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to Project',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s ease' },
+      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
       // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),

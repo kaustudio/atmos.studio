@@ -27,7 +27,20 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 /* ===== interaction-state contract — ONE declarative mechanism, token-driven, eased with --ease-standard.
    Full set per control: rest · hover · focus-visible (above) · active · disabled · selected.
    !important is required only to layer hover/active over each control's inline rest background. ===== */
-[data-ix]{transition:background-color .28s var(--ease-button-hover),color .28s var(--ease-button-hover),border-color .28s var(--ease-button-hover),box-shadow .28s var(--ease-button-hover),filter .16s var(--ease-standard),transform .12s var(--ease-standard)}
+/* A PRESS DOES NOT MOVE THE CONTROL. It has been two wrong things in a row here: first
+   translateY(1px) on --ease-standard, an expo-out, which over one pixel is not an ease but a
+   sub-pixel step — the compositor drew a discrete jump down and, :active being binary, a second one
+   back up. Then scale(.98) on the click curve, which fixed the jump by making the movement smooth
+   and kept the thing that was actually wrong: the movement.
+   The press was never carrying the feedback. Every tier below already deepens background, border
+   and colour on :active, and that state change is what says "pressed" — the geometry was additive,
+   and a control that shifts or shrinks under the cursor reads as the layout moving rather than the
+   button answering. So there is no transform, no scale, and no --press-dur asymmetry to maintain:
+   the tint transition is the whole contract, one duration, one curve. */
+/* `opacity` is on the list because :disabled below changes it, and a control that greys out
+   between two frames is the same fault as one that snaps: every state this contract can enter has
+   to be reachable by a transition, or the contract is only describing some of itself. */
+[data-ix]{transition:background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard)}
 [data-ix]:disabled{opacity:.42;cursor:default}
 /* press — ALL chrome that responds to a press: bordered or not. Was two tiers, "solid" and
    "press", with identical hover (16%) and active (24% + 1px) — the only difference was that solid
@@ -51,10 +64,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* icon — icon buttons over swatches/chrome; fill from own currentColor so it adapts to swatch + theme */
   [data-ix="icon"]:hover:not(:disabled){background:color-mix(in srgb,currentColor 16%,transparent)!important}
 }
-[data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;transform:translateY(1px)}
+[data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important}
 [data-ix="seg"][aria-pressed="false"]:active{background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important}
-[data-ix="seg"]:active:not(:disabled){transform:translateY(1px)}
-[data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important;transform:translateY(1px)}
+[data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important}
 /* HIT AREA — a 24px target on a control that must stay smaller than 24px.
    WCAG 2.5.8 AA asks for 24x24 CSS px. The two toggletip markers are deliberately 16px of ink: any
    larger and an optional aside starts competing with the heading it hangs off. So the ink stays and
@@ -69,19 +81,20 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   [data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;border-color:var(--action-line-hover)!important}
 }
 [data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
-[data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important;transform:translateY(1px)}
+[data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important}
 /* lift is GSAP-driven on transform — transition only the shadow/border (style-hover) so CSS never fights the tween */
-[data-ix="lift"]{transition:box-shadow .16s var(--ease-standard),border-color .16s var(--ease-standard)}
+[data-ix="lift"]{transition:box-shadow var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)}
 /* ===== the three sanctioned specializations (richer motion the declarative rules above can't express) =====
-   button-006 — the clip-path text-swap CTA (own CSS block below).
+   button-006 — the masked text-swap CTA: the label rises through a mask on hover (own CSS block below).
    rich-tint  — feed rows, universe cards, export items: JS brightness tint for continuous motion.
    lift       — the hero dropzone only: GSAP-tweened rise + shadow + ring, interruptible. */
 /* rich-tint family (feed rows, universe cards, export items) keep the JS tint for motion; unify the active press */
-[data-row],[data-ex-item]{transition:filter .14s var(--ease-standard)}
+[data-row],[data-ex-item]{transition:filter var(--dur-micro) var(--ease-standard)}
 [data-row]:active:not(:disabled),[data-feed]:active,[data-ex-item]:active{filter:brightness(.97)}
 @media (prefers-reduced-motion: reduce){
   [data-ix]{transition:none}
-  [data-ix="cta"]:active:not(:disabled),[data-ix="seg"]:active:not(:disabled),[data-ix="icon"]:active:not(:disabled),[data-ix="press"]:active:not(:disabled){transform:none}
+  /* The press-geometry override that sat here is gone with the geometry itself: nothing on these
+     tiers moves under any preference now, so there is nothing left to neutralise. */
   [data-row],[data-ex-item]{transition:none}
   [data-row]:active,[data-feed]:active,[data-ex-item]:active{filter:none}
 }
@@ -94,9 +107,48 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --ease-button-hover:cubic-bezier(0.675,0.15,0.1,1);
   --ease-button-click:cubic-bezier(0.4,0,0.2,1);
   --ease-button-focus:cubic-bezier(0.32,0.72,0,1);
-  /* the sliding pill behind every segmented toggle (view, per-page, project scope). It was the
-     same literal bezier pasted in three places — one motion, three copies, the usual drift risk. */
-  --ease-pill:cubic-bezier(0.625,0.05,0,1);
+  /* ONE curve, serving two motions that had each named it after themselves: this was --ease-pill
+     over here (the sliding marker behind every segmented toggle) and EASE.fold in motion.js (the
+     disclosure folds in refine.js and persistence.js). Same bezier, two names, four consumers each
+     — which is how the two eventually stop matching for real. `fold` is the name that carries both,
+     and initMotion already argues for it: a disclosure and a moving selection share one motion
+     character. */
+  --ease-fold:cubic-bezier(0.625,0.05,0,1);
+  /* the utility-overlay curve — an expo-out with a longer tail than --ease-entrance. Mirrors
+     EASE.overlay in methods/motion.js, which documents why it runs in BOTH directions. */
+  --ease-overlay:cubic-bezier(0.19,1,0.22,1);
+}
+/* ===== shared duration tokens (named; mirrored by the JS DUR map in methods/motion.js) =====
+   Easing was tokenised in both languages and duration never was: a documented seven-value scale in
+   JS, and fifteen ad-hoc literals over here answering to nothing. One scale now, both languages.
+   micro/state/reveal/overlay/overlayOut/stagger mirror the GSAP tokens exactly. `fast` and `chrome`
+   are the two steps the interaction contract had been expressing as literals — .16/.18 and .28,
+   twenty-three occurrences between them — and they sit ON the scale now rather than beside it.
+   The JS scale was built for reveals and overlays and has nothing between .24 and .62; crushing the
+   chrome durations into that gap would retime the whole interaction contract to no purpose. */
+:root{
+  --dur-micro:.12s;         /* press, thumb nudge, the smallest state change */
+  --dur-fast:.18s;          /* chevrons, row affordances, slider thumb, focus ring */
+  --dur-state:.24s;         /* a control changing what it says it is */
+  --dur-chrome:.28s;        /* hover tints across the interaction contract */
+  /* Two signature lengths that have no near neighbour on the scale and are NOT remapped onto one.
+     The audit's rule was nearest-step, but nearest for these is 100-120ms away, and both are
+     motions people recognise: forcing them would retune a signature to tidy a table. Named instead,
+     exactly as their curves already are. */
+  /* ONE WORD REPLACING ANOTHER THROUGH A MASK, wherever that happens: the copy confirmation's
+     val-mask-a/b keyframes and every hover swap on a button, sort header or footer link. They were
+     never two motions — both slide a line out of a clipped box and the next one in — so they answer
+     to one number. It was .38s as the confirmation's own value; .4s now, which is where the hover
+     swap stopped reading as snappy, and 20ms is nothing to the confirmation that came with it. */
+  --dur-swap:.4s;
+  --dur-fold:.5s;           /* the travelling selection marker — pairs with --ease-fold */
+  --dur-reveal:.62s;        /* the app's arrival — bands, masked lines, list cascade */
+  --dur-overlay:.8s;        /* utility overlays in */
+  --dur-overlay-out:1s;     /* utility overlays out — longer, per the house rule */
+  --dur-stagger:.05s;       /* beat between siblings in a reveal */
+  --dur-overlay-step:.04s;  /* beat between sections inside an overlay */
+  /* There is no --press-scale. A press changes the control's colour, never its geometry — see the
+     interaction contract above for why the two attempts at a moving press were both wrong. */
 }
 /* ===== semantic chrome tokens (theme affects chrome only — never palette swatches) ===== */
 :root{
@@ -368,13 +420,13 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --line-strong:#454542;
   color-scheme:dark;
 }
-html,body{background:var(--surface);transition:background .3s var(--ease-standard)}
+html,body{background:var(--surface);transition:background var(--dur-chrome) var(--ease-standard)}
 @keyframes gradient-drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 /* value→Copied text swap: masked line reveal (two identical keyframes so the swap back restarts it) */
 @keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
 @keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){ [data-logo],[data-wipe-word]{animation:none!important} }
-/* ===== button-006 (clip-path text-swap CTA), remapped to system tokens ===== */
+/* ===== button-006 (masked text-swap CTA), remapped to system tokens ===== */
 .button-006{
   --button-006-border-radius:0;
   --button-006-surface:color-mix(in srgb, var(--on-surface) 7%, transparent);   /* rest bg  → glass */
@@ -388,37 +440,109 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   --button-006-line-hover:var(--action-line-hover);
   --button-006-press:color-mix(in srgb, var(--on-surface) 24%, transparent);
   --button-006-line-press:var(--action-line-press);
-  --button-006-click-scale:0.955 0.925;
-  --button-006-default-text-scale:1;
-  --button-006-hover-text-scale:1;
+  /* --button-006-default-text-scale, --button-006-hover-text-scale and --button-006-dur went with
+     the clip-path swap (08.26). The two scales had both been 1 for some time — a knob wired to
+     nothing — and the 0.42s was the last duration in the app that answered to no scale; the swap
+     runs on --dur-chrome now, with the tint it moves with. */
   --button-006-padding:0.75em 1em;
   --button-006-focus-inset:-0.125em;
-  --button-006-dur:0.42s;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
   border-radius:var(--button-006-border-radius);
   /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
      uppercase label voice, prose stays in sentence case. Sources are written in natural case and
      this transform does the styling, so the policy can flip again without rewriting a string. */
-  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.1em;text-transform:uppercase;
+  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
-  transition:scale .12s var(--ease-button-click);
 }
-.button-006:active{scale:var(--button-006-click-scale);}
+/* NO PRESS GEOMETRY, here or anywhere (08.26). This carried scale:0.955 0.925 on :active — a
+   non-uniform squash, ~3x the depth of the shared press token that briefly existed beside it — and
+   the house rule now is that a press does not move the control. The press is still fully stated:
+   .button-006:active below swaps both background layers to --button-006-press and their inset ring
+   to --button-006-line-press, which is a louder state change than the squash ever was.
+   The scale on .button-006__text is a DIFFERENT mechanic and stays — that is the hover text swap,
+   not a press. */
+/* THE LABEL SWAPS THROUGH A MASK, rising. This was a clip-path fill sweeping DOWN from the top —
+   the resource's own mechanic, and the last motion on the site that belonged to no family. Every
+   other piece of text here arrives the same way: _maskLineReveal wraps each rendered line in an
+   overflow-hidden mask and slides the inner up from yPercent 110, and the copy confirmation's
+   val-mask keyframes do the identical thing at 110%. The button now speaks that language — one copy
+   of the label leaves upward while the next rises into its place, both clipped by the layer they
+   sit in, which is the same masked-line move at the scale of a single line.
+   Both spans travel together and in the SAME direction, which is what makes it read as one strip
+   moving rather than two labels crossfading.
+   --dur-chrome, not the old bespoke 0.42s: the tint underneath runs on that token on every control
+   in the app, and text and tint arriving together is what makes this one gesture instead of two.
+   --ease-entrance is the masked-reveal curve, so the label lands exactly as a revealed line does. */
 .button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
-.button-006__hover{position:absolute;inset:0;z-index:2;clip-path:inset(0 0 100% 0);transition:clip-path var(--button-006-dur) var(--ease-button-hover);}
-.button-006:hover:not(:disabled) .button-006__hover{clip-path:inset(0 0 0% 0);}
-.button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;transition:scale var(--button-006-dur) var(--ease-button-hover);transform-origin:center;will-change:scale;}
+.button-006__hover{position:absolute;inset:0;z-index:2;}
+.button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
 .button-006__default .button-006__text{color:var(--button-006-on-surface);}
-.button-006__hover .button-006__text{color:var(--button-006-on-accent);scale:var(--button-006-hover-text-scale);}
-.button-006:hover .button-006__default .button-006__text{scale:var(--button-006-default-text-scale);}
-.button-006:hover .button-006__hover .button-006__text{scale:1;}
-.button-006__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;}
+.button-006__hover .button-006__text{color:var(--button-006-on-accent);}
+/* TEXT ONLY. .b006-swap is the per-line mask (see B006Text in chrome.jsx); the row around it — icon,
+   chevron, toggle track — never moves. vertical-align:top keeps the mask on the row's baseline box
+   rather than letting an inline-block sink to the text baseline and shift the label by a pixel. */
+/* --ease-fold, not --ease-entrance. Entrance is an expo-out: ~48% of the travel in the first tenth
+   of the time, which is right for something ARRIVING out of nothing and wrong for a swap — the word
+   left in a snap and then crept the last few pixels, which is what read as snappy. fold eases both
+   ends, and it is already the site's curve for the interface moving something on your behalf: the
+   sliding selection marker, the disclosure fold. A label handing over to the next one is that.
+   --dur-state, the scale's step for "a control changing what it says it is", which is this exactly. */
+.b006-swap{display:inline-block;overflow:hidden;vertical-align:top;}
+.b006-swap__in{display:block;transition:transform var(--dur-swap) var(--ease-fold);will-change:transform;}
+/* parked one full line below its mask — the next label, waiting under the floor of the line */
+.button-006__hover .b006-swap__in{transform:translateY(100%);}
+.button-006:hover:not(:disabled) .button-006__default .b006-swap__in{transform:translateY(-100%);}
+.button-006:hover:not(:disabled) .button-006__hover .b006-swap__in{transform:translateY(0);}
+/* ===== the same swap, for single-layer controls and links (TextSwap in chrome.jsx) =====
+   button-006 gets its second copy of the label from its second LAYER; everything else — a
+   [data-ix] button, a sort header, a footer link — renders its label once, so TextSwap stacks the
+   twin itself. Same duration and same curve as .b006-swap above, deliberately: two structures, one
+   motion, and if the tokens move both move together.
+   The trigger is the ancestor control rather than a component class, so a link and a button take it
+   identically. Gated on (hover:hover) for the same reason the [data-ix] tiers are — a tap leaves
+   :hover latched on a touchscreen, and a label frozen mid-swap is worse than no swap. */
+.tswap{display:inline-block;overflow:hidden;position:relative;vertical-align:top;}
+.tswap__a,.tswap__b{display:block;transition:transform var(--dur-swap) var(--ease-fold);will-change:transform;}
+.tswap__b{position:absolute;left:0;top:0;width:100%;transform:translateY(100%);}
+@media (hover:hover){
+  :is(button,a,[role="button"]):hover:not(:disabled) .tswap__a{transform:translateY(-100%);}
+  :is(button,a,[role="button"]):hover:not(:disabled) .tswap__b{transform:translateY(0);}
+}
+@media (prefers-reduced-motion:reduce){
+  .tswap__a,:is(button,a,[role="button"]):hover:not(:disabled) .tswap__a{transform:none}
+  .tswap__b,:is(button,a,[role="button"]):hover:not(:disabled) .tswap__b{transform:translateY(100%)}
+}
+/* The hover layer's glyphs are hidden rather than removed: the row still has to reserve their space
+   so its words line up with the layer beneath, but painting a second identical icon over the first
+   is two copies of a thing that never moves. The default layer's icon is the one you see, always. */
+.button-006__hover .button-006__text [aria-hidden="true"]{visibility:hidden;}
+/* Reduced motion keeps the tint and drops the swap outright. The global rule only collapses the
+   DURATION, which would leave the two labels jumping a full line height between frames — the exact
+   thing the preference is asking not to happen. Parked stays parked. */
+@media (prefers-reduced-motion:reduce){
+  .button-006__default .b006-swap__in,
+  .button-006:hover:not(:disabled) .button-006__default .b006-swap__in{transform:none}
+  .button-006__hover .b006-swap__in,
+  .button-006:hover:not(:disabled) .button-006__hover .b006-swap__in{transform:translateY(100%)}
+}
+/* The press tint has to EASE, and until the squash was removed nothing here said so: these layers
+   carried no transition at all, and the scale was doing the felt work while the colour cut
+   instantly underneath it. With the geometry gone that cut is the entire press, and an unanimated
+   one reads as a fault rather than as a response. Same properties, duration and curve the [data-ix]
+   tiers use, so the signature CTA and ordinary chrome answer a press at the same speed. */
+.button-006__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;transition:background-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover);}
 .button-006__bg.is--default{background:var(--button-006-surface);box-shadow:inset 0 0 0 1px var(--button-006-line);}
-.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px var(--button-006-line-hover);}
+/* The hover fill FADES now. It used to be uncovered by the clip-path sweeping down the layer above
+   it, so the tint had a direction and a leading edge — which is the part that read as foreign: no
+   other control on the site fills from a side. Every [data-ix] tier answers a hover by changing
+   colour in place, and this one does the same, on the same token and curve. The label carries the
+   direction; the surface underneath just deepens. */
+.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px var(--button-006-line-hover);opacity:0;}
+.button-006:hover:not(:disabled) .button-006__bg.is--hover{opacity:1;}
 /* pressed: the deepest step of the same tint spectrum — clearly distinct from rest and hover in both themes */
 .button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:var(--button-006-press);box-shadow:inset 0 0 0 1px var(--button-006-line-press);}
-.button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow .2s var(--ease-button-focus);}
+.button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow var(--dur-fast) var(--ease-button-focus);}
 .button-006:focus-visible{outline:none;}
 .button-006:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-006-focus);}
 /* disabled — same value the [data-ix] contract uses, restated here because button-006 is outside
@@ -427,7 +551,7 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    pair to check); the tiers only stay readable if unavailability is legible too. */
 .button-006:disabled{opacity:.42;cursor:default;}
 /* ===== emphasis variants — the three action tiers, expressed ONLY as remapped button-006
-   properties. Nothing about the clip-path text swap, the press scale or the focus ring is
+   properties. Nothing about the masked text swap or the focus ring is
    restated, so every tier inherits the same motion and the same keyboard affordance: a quiet
    button is quiet at rest, never quiet when focused. An untagged .button-006 is untouched. */
 .button-006[data-emphasis="primary"]{
@@ -479,7 +603,7 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   background-size:36px 100%, 36px 100%, 12px 100%, 12px 100%;
   background-attachment:local, local, scroll, scroll;
 }
-[data-sort-chevron]{display:inline-flex;transform-origin:50% 50%;transition:transform .28s var(--ease-standard),opacity .18s var(--ease-standard)}
+[data-sort-chevron]{display:inline-flex;transform-origin:50% 50%;transition:transform var(--dur-chrome) var(--ease-standard),opacity var(--dur-fast) var(--ease-standard)}
 [data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
 /* ONE ARROW, AND IT IS THE TRUE ONE. Every column used to draw a chevron at rest — the active one
    at full strength, the others at .32 — so a header where exactly one ordering is in force showed
@@ -497,7 +621,12 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    the fade are one gesture rather than two things that happen to coincide. The 10px is a hint of
    travel, not the full 82 — they come from the right, they do not fly in from off-screen (and could
    not: the row ends at the section's edge, so real travel would be horizontal overflow). */
-[data-del]{opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity .18s var(--ease-standard),transform .18s var(--ease-standard)}
+/* This rule carries the CONTRACT'S properties as well as its own, and it has to. [data-del] and
+   [data-ix] have identical specificity (0,1,0) and this one is written later, so `transition` here
+   REPLACES the contract rather than adding to it — which left these buttons revealing themselves
+   correctly on opacity/transform while their hover and press tint cut between two frames. Same
+   trap as an inline transition, arrived at through the cascade instead. */
+[data-del]{opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity var(--dur-fast) var(--ease-standard),transform var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover)}
 /* click-to-zoom lightbox (squared — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
@@ -546,10 +675,10 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
    The inset lives on each of the two elements (a margin on the chip, padding on the stamp) rather
    than as a rule here: both already set those properties inline, and an inline value beats a
    stylesheet — which is how the stamp ended up flush while the header sat inset. */
-[data-row-time]{transition:transform .18s var(--ease-standard)}
+[data-row-time]{transition:transform var(--dur-fast) var(--ease-standard)}
 [data-row-wrap]:hover [data-row-time],[data-row-wrap]:focus-within [data-row-time]{transform:translateX(calc(-1 * var(--row-action-gutter)))}
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
-[data-info]{opacity:1;transition:opacity .16s var(--ease-standard)}
+[data-info]{opacity:1;transition:opacity var(--dur-fast) var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
    are always visible & tappable — and with the buttons permanently on screen the stamp has to stand
    permanently aside, or they would sit on top of it. Same offset, held rather than animated: this is
@@ -628,12 +757,12 @@ html.lenis,html.lenis body{height:auto}
 [data-refine-slider]::-webkit-slider-runnable-track{ height:26px; margin-top:4px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
 /* 16px of hit area, 4px of ink: the line is centred in the thumb by the gradient, so the pointer
    gets a target it can hold and the track keeps its continuity. */
-[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:34px; margin-top:-5px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform .18s var(--ease-standard); }
+[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:34px; margin-top:-5px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform var(--dur-fast) var(--ease-standard); }
 [data-refine-slider]:hover::-webkit-slider-thumb{ transform:scaleX(1.35); }
 [data-refine-slider]:active::-webkit-slider-thumb{ transform:scaleX(1.7); }
 
 [data-refine-slider]::-moz-range-track{ height:26px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
-[data-refine-slider]::-moz-range-thumb{ width:16px; height:34px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform .18s var(--ease-standard); }
+[data-refine-slider]::-moz-range-thumb{ width:16px; height:34px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform var(--dur-fast) var(--ease-standard); }
 [data-refine-slider]:hover::-moz-range-thumb{ transform:scaleX(1.35); }
 [data-refine-slider]:active::-moz-range-thumb{ transform:scaleX(1.7); }
 
@@ -700,7 +829,7 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 /* Borderless in every state (03.08.26, user direction) — the scrim is the whole body. Pinned vs
    derived is carried by the meta line's own words ("· Pinned"), not by an edge; hover keeps only
    the cursor and the keyboard keeps the data-focus ring, which is a shadow, not this border. */
-[data-role-chip]{ pointer-events:auto; transition:opacity .14s var(--ease-standard); }
+[data-role-chip]{ pointer-events:auto; transition:opacity var(--dur-micro) var(--ease-standard); }
 [data-role-chip]:hover,[data-role-chip]:focus-visible{ opacity:1 !important; }
 /* Under the hand: no transition on the transform — the drag is 1:1, and a curve between the pointer
    and the thing it is carrying is the one place easing reads as lag. */
@@ -712,7 +841,7 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 
 /* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
    only while there is something to report — so it arrives rather than blinking into place. */
-[data-refine-note]{ animation: refine-note .32s var(--ease-entrance) both; }
+[data-refine-note]{ animation: refine-note var(--dur-chrome) var(--ease-entrance) both; }
 @keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
 @media (prefers-reduced-motion: reduce){
   [data-refine-note]{ animation:none }
@@ -743,7 +872,7 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 [data-refine-shell] > header::after,
 [data-refine-foot]::before{
   content:''; position:absolute; left:0; right:0; height:1px; background:var(--line-strong);
-  opacity:0; transition:opacity .18s var(--ease-standard); pointer-events:none;
+  opacity:0; transition:opacity var(--dur-fast) var(--ease-standard); pointer-events:none;
 }
 [data-refine-shell] > header::after{ bottom:-1px; }
 [data-refine-foot]::before{ top:-1px; }
@@ -764,7 +893,7 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 [data-refine-pairs],[data-refine-confirm]{ overflow:hidden; }
 /* Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no
    measurement, which is exactly what a transition is for — on the system's own easing token. */
-[data-refine-chev]{ display:inline-block; transition:transform .28s var(--ease-standard); }
+[data-refine-chev]{ display:inline-block; transition:transform var(--dur-chrome) var(--ease-standard); }
 [data-refine-chev][data-open="1"]{ transform:rotate(90deg); }
 /* The per-swatch delete: present only for the swatch in hand, or under the pointer, so the strip
    is not a row of five delete buttons. It fades and lifts rather than appearing. */

@@ -108,7 +108,10 @@ export const refineMethods = {
       pill.style.setProperty('--refine-pill-ink', cur.dataset.ring || 'var(--on-surface)');
       const first = pill.style.opacity !== '1';
       pill.style.transition = (jump || first || this._reduce) ? 'none'
-        : 'transform .5s cubic-bezier(.625,.05,0,1), width .5s cubic-bezier(.625,.05,0,1), height .5s cubic-bezier(.625,.05,0,1)';
+        // The literal bezier this used to spell out three times was the third hand-copy of the fold
+        // curve in the codebase — precisely the drift --ease-fold was minted to stop, which it had
+        // escaped by being a literal rather than a reference. Same values, by name now.
+        : 'transform var(--dur-fold) var(--ease-fold), width var(--dur-fold) var(--ease-fold), height var(--dur-fold) var(--ease-fold)';
       pill.style.width = cur.offsetWidth + 'px';
       pill.style.height = cur.offsetHeight + 'px';
       pill.style.transform = 'translate(' + cur.offsetLeft + 'px,' + cur.offsetTop + 'px)';

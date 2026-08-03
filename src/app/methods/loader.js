@@ -107,7 +107,11 @@ export const loaderMethods = {
         tl.to(logo, { yPercent: -110, duration: 0.6, ease: ex }, 0);                                 // 1. wordmark out the top
         tl.to(num, { yPercent: -110, duration: 0.6, ease: ex }, 0.15);                               // 2. progress (at 100) follows out the top
         tl.to(bar, { scaleX: 0, transformOrigin: 'right center', duration: 0.6, ease: ex }, 0.3);      // 3. bar exits to the right
-        tl.to(bg, { yPercent: -101, duration: 0.95, ease: this._foldEase || (this._foldEase = this.cubicBezier(0.19, 1, 0.22, 1)) }, 0.8);   // fold lifts, unchanged
+        // Was a locally-cached cubicBezier(0.19,1,0.22,1) called _foldEase — which is EASE.overlay,
+        // built once in initMotion, under the name of a DIFFERENT token (EASE.fold is the in-out
+        // marker curve). Identical value, so the lift is unchanged; it just stops being a second
+        // private copy of a curve the system already names.
+        tl.to(bg, { yPercent: -101, duration: 0.95, ease: this.EASE.overlay }, 0.8);   // fold lifts, unchanged
         // the fold is expo-out: it clears the centre of the viewport ~0.1s in, so the lines start
         // rising just behind its trailing edge rather than after a beat of empty landing
         // One arrival, in reading order: the dropzone copy first, the archive a beat behind it, so

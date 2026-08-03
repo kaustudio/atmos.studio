@@ -101,6 +101,11 @@
    so they do not overlap. */
 .site-foot__meta a{color:inherit;text-decoration:none;position:relative}
 .site-foot__meta a::after{content:'';position:absolute;inset:-6px -4px}
+/* This file had NO transitions in it at all, so the hover colour cut between two frames — the last
+   instant interaction on the site, missed because the sweep that found the others read the bundle's
+   stylesheets and this one is linked straight out of /public. The tokens resolve here because
+   index.html loads global.css alongside it. */
+.site-foot__meta a{transition:color var(--dur-chrome) var(--ease-button-hover)}
 .site-foot__meta a:hover{color:var(--on-surface-muted)}
 .site-foot__meta a:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 

@@ -691,7 +691,16 @@ export const overlayMethods = {
     tl.from(root, { opacity: 0, y: 12, scale: 0.98, duration: D, ease: E, transformOrigin: 'center center' }, 0);
     // The dialog itself still fades — it has no edge to slide from, so the fade IS its arrival. Its
     // CONTENTS mask, like every other overlay's.
-    this._maskIn(tl, items, D * 0.45, D * 0.7, this.DUR.overlayStep * 2);
+    //
+    // ON THE CELL SCHEDULE, not the section one. The format list is five leaf choices — the same
+    // kind of thing as a drawer's rows — and it was being timed as though each were a section: the
+    // coarse `overlayStep * 2` beat, starting at D * 0.45. That is the "third of the panel later"
+    // the cells comment above argues against, and this call site was never brought onto that fix.
+    // The list read slow for it, and it read slow in a way nothing else here does: five items on a
+    // doubled step is 320ms of pure stagger, and the last one landed at ~1.24s.
+    // Matching the cells exactly — D * 0.32 and one step — brings the last item in at ~0.98s and,
+    // more to the point, means the export list and every drawer row arrive on ONE beat.
+    this._maskIn(tl, items, D * 0.32, D * 0.7, this.DUR.overlayStep);
     this._drawRules(tl, root, D * 0.4);
     this._exTl = tl;
   },

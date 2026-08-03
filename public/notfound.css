@@ -81,6 +81,10 @@ body{display:flex;flex-direction:column}
   --nf-head-pad:18.5px;
   --nf-head-height:calc(var(--nf-head-pad) + var(--nf-mark-height));
 }
+/* The motion tokens this sheet uses are NOT redeclared here. It reads as if they should be — this
+   file is the 404's only <link> and lives in /public rather than the bundle — but notfound/main.js
+   imports global.css, so the built page carries /assets/global-*.css alongside this one and the
+   whole :root scale resolves. Verified against dist/404.html, not assumed. */
 /* Raised out of the flow for the same reason .nf-cta is, and it is the link that needs it, not the
    look. .nf-title's line-height is .74 — far tighter than the font's natural line box — so at the
    fitted size the half-leading goes hugely NEGATIVE and the text fragment overhangs its own border
@@ -180,7 +184,7 @@ body{display:flex;flex-direction:column}
 .nf-title{
   font-size:5rem;font-weight:500;line-height:.74;
   letter-spacing:var(--track-statement);
-  transition:opacity .5s ease;
+  transition:opacity var(--dur-reveal) var(--ease-standard);
   /* The clip is about the SCROLLBAR, not the look. line-height:.74 is far tighter than the font's
      own ascent+descent, and a browser counts that full metric box — not the ink — into the document's
      scrollable height. So with the footer gone and the page finally one screen, it still scrolled
@@ -243,9 +247,12 @@ body{display:flex;flex-direction:column}
   font-size:14px;font-weight:500;
   letter-spacing:var(--track-title);white-space:nowrap;
   text-decoration:none;
-  transition:background-color .28s cubic-bezier(0.675,0.15,0.1,1),
-             border-color .28s cubic-bezier(0.675,0.15,0.1,1),
-             transform .12s cubic-bezier(0.22,1,0.36,1);
+  /* This was the whole interaction contract hand-copied — both beziers written out as literals and
+     a translateY(1px) press. It is the same button as a [data-ix="press"], just on the one page
+     that does not render through the app, so it takes the contract by reference now: tint only, no
+     press geometry, matching global.css. */
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover);
   position:relative;z-index:2;
 }
 .nf-cta:hover{
@@ -255,7 +262,6 @@ body{display:flex;flex-direction:column}
 .nf-cta:active{
   background:color-mix(in srgb,var(--on-surface) 24%,transparent);
   border-color:color-mix(in srgb,var(--on-surface) 48%,transparent);
-  transform:translateY(1px);
 }
 .nf-cta:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 
@@ -276,6 +282,5 @@ body{display:flex;flex-direction:column}
    particle field itself never starts under this preference — see src/notfound/main.js. */
 @media (prefers-reduced-motion:reduce){
   .nf-title,.nf-cta{transition:none}
-  /* glassCta drops its press shift under this preference too — renderVals.js does the same in JS. */
-  .nf-cta:active{transform:none}
+  /* No press-geometry override needed: .nf-cta no longer moves under any preference. */
 }

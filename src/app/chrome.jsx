@@ -7,8 +7,39 @@
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
 
+/* THE PART THAT SWAPS. Wrap the WORDS of a label in this and nothing else — an icon, a chevron or a
+   toggle track passed as a sibling stays exactly where it is while the text rises through its mask.
+   The first cut of the masked swap slid .button-006__text, which is the whole label row, so every
+   glyph travelled with the words: a control's icon is part of its identity, not part of its
+   sentence, and moving it made the button look like it was reloading rather than answering.
+   The mask has to hug the TEXT, not the button. .button-006__default / __hover are the full button
+   box, and translateY(100%) on a 14px line inside a 29px box only clears the line's own height —
+   the words would slide into the padding and sit there half-visible. A mask the size of the line
+   means 100% is exactly one line, which is the same arithmetic _maskLineReveal does per line. */
+export function B006Text({ children }) {
+  return <span className="b006-swap"><span className="b006-swap__in">{children}</span></span>;
+}
+
+/* THE SAME SWAP, for controls that do not have button-006's two layers. B006Text can carry one copy
+   of the words because the button already renders the whole label twice; an ordinary [data-ix]
+   button or a footer link renders it once, so this supplies the second copy itself and stacks them.
+   The twin is aria-hidden — it is the same word arriving, not a second thing to read.
+   Works under any button, link or role=button because the hover rule keys off the ancestor rather
+   than off a component class, so a text link in the footer and a sort header in the archive take it
+   the same way and on the same tokens as the CTA. */
+export function TextSwap({ children }) {
+  return (
+    <span className="tswap">
+      <span className="tswap__a">{children}</span>
+      <span className="tswap__b" aria-hidden="true">{children}</span>
+    </span>
+  );
+}
+
 // The project's button, remapped to system tokens in global.css (.button-006). The two stacked
-// spans are the resource's own clip-path text swap and are load-bearing.
+// spans are load-bearing: they are the two copies of the label the hover swap slides between, each
+// clipped by its own layer. `hover` gives the second copy different words; omitted, both spans hold
+// the same label and the swap reads as the line refreshing itself.
 export function B006({ label, hover, btnRef, ...props }) {
   return (
     <button type="button" data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
@@ -21,9 +52,9 @@ export function B006({ label, hover, btnRef, ...props }) {
 function themeSwitchLabel(vals) {
   return (
     <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
-      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;transition:background .28s var(--ease-standard)'), background: vals.switchTrackBg }}>
-        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);transition:transform .28s var(--ease-standard)'), transform: vals.switchDotX }}></span>
-      </span>{vals.themeLabel}
+      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;transition:background var(--dur-chrome) var(--ease-standard)'), background: vals.switchTrackBg }}>
+        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: vals.switchDotX }}></span>
+      </span><B006Text>{vals.themeLabel}</B006Text>
     </span>
   );
 }

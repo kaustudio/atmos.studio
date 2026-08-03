@@ -180,7 +180,14 @@
   padding:.4rem .5em .4rem 1em;
   font-size:var(--fs-body);line-height:1.45;letter-spacing:var(--track-body);
   text-decoration:none;text-wrap:pretty;
-  transition:color .25s,border-color .25s,background-color .25s;
+  /* Was `.25s` three times with NO easing function at all, so these ran on the browser default
+     `ease` — a curve belonging to no part of this system, on the one route a reader spends real
+     time on. legal.css is bundled and inherits :root from global.css, so the tokens resolve.
+     box-shadow is on the list because [data-toc-status="active"] draws the 2px inset ink rule that
+     marks the section you are reading. That state changes on its own as the page scrolls, and
+     without this the rule snapped in while the colour and background beside it eased — one marker
+     arriving two different ways. */
+  transition:color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard),background-color var(--dur-state) var(--ease-standard),box-shadow var(--dur-state) var(--ease-standard);
 }
 .toc-link:hover{color:var(--on-surface);border-left-color:var(--line-strong)}
 

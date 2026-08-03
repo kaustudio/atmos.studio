@@ -52,25 +52,27 @@ export const motionMethods = {
     // is waiting on it and it can afford to be quiet. On this curve the panel is most of the way
     // gone early and the last of it settles out slowly rather than snapping — which is what the
     // extra length over the entrance is spent on, and why 1.0s reads as unhurried rather than slow.
-    this.DUR = { micro: 0.12, state: 0.24, overlay: 0.8, overlayOut: 1, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
+    // `fast` and `chrome` mirror --dur-fast / --dur-chrome in global.css, so the CSS interaction
+    // contract and the GSAP tweens quote ONE scale rather than two that drift. No tween used either
+    // value before this line was written, so their arrival cannot retime anything already running.
+    // `swap` and `fold` are the two signature lengths that have no near neighbour on the scale, and
+    // are named rather than remapped because nearest-step for both is 100ms+ away and would retune a
+    // motion people recognise. Carried here so the two languages hold the SAME scale.
+    // `swap` is ONE WORD REPLACING ANOTHER THROUGH A MASK, everywhere that happens — the copy
+    // confirmation's val-mask keyframes and every hover swap on a button, sort header or footer
+    // link. It was `confirm` at 0.38s while the confirmation was its only consumer; the hover swap
+    // turned out to be the same motion, and 0.4 is where that stopped reading as snappy.
+    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 1, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
   },
-  // generic, interruptible micro-interaction handlers (transform + overlay-opacity only)
-  mEnter(e) {
-    if (this._reduce || !window.gsap) return; const el = e.currentTarget; const y = +(el.dataset.mY || 0), sc = +(el.dataset.mScale || 1);
-    window.gsap.to(el, { y: -y, scale: sc, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
-    const r = el.querySelector('[data-ring]'); if (r) window.gsap.to(r, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
-    el.style.zIndex = '5';
-  },
-  mLeave(e) {
-    if (this._reduce || !window.gsap) return; const el = e.currentTarget; const selected = el.dataset.selected === '1';
-    window.gsap.to(el, { y: 0, scale: 1, duration: this.DUR.state, ease: this.EASE.exit, overwrite: 'auto', onComplete: () => { el.style.zIndex = selected ? '2' : ''; } });
-    const r = el.querySelector('[data-ring]'); if (r) window.gsap.to(r, { opacity: selected ? 1 : 0, duration: this.DUR.state, ease: this.EASE.exit, overwrite: 'auto' });
-  },
-  mDown(e) { if (this._reduce || !window.gsap) return; window.gsap.to(e.currentTarget, { scale: 0.98, duration: this.DUR.micro, ease: this.EASE.standard, overwrite: 'auto' }); },
-  mUp(e) {
-    if (this._reduce || !window.gsap) return; const el = e.currentTarget; const sc = +(el.dataset.mScale || 1);
-    window.gsap.to(el, { scale: sc, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
-  },
+  /* mEnter / mLeave / mDown / mUp lived here — a GSAP hover-and-press system driven by a
+     data-m-y / data-m-scale attribute protocol — and are gone (08.26). Nothing had ever bound them:
+     they were plumbed through renderVals to the view model and no element read them, and no element
+     anywhere set either attribute.
+     Worth stating why they were a hazard rather than merely unused. mDown tweened scale 0.98 on
+     DUR.micro — the same depression the live press contract now uses — but on EASE.standard, which
+     is the expo-out that made the old translateY press read as a jump. So the tree held a
+     plausible-looking press handler that was both unreachable AND wrong, beside the real one in
+     global.css. The next person to grep for "press" would have found two and no way to tell. */
   // "clicks into place": committed selected state arrives with ease-entrance (settle-with-authority)
   commitSelected(el) {
     if (!el || this._reduce || !window.gsap) return;
@@ -92,14 +94,31 @@ export const motionMethods = {
   // Takes a step off the scale, not a number. It used to take px and was the last place in the app
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
   monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
-  viewToggleOptStyle(active) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' }); },
+  /* NONE OF THESE THREE DECLARE A TRANSITION, and that is the point. Every one of them is rendered
+     on an element carrying data-ix, and an inline `transition` does not merge with the stylesheet's
+     — it REPLACES it. So each of these was silently overriding the whole interaction contract with
+     a shorter list, and every property it left out changed instantly.
+     It was not theoretical: the two view toggles and the two sort toggles named only `color`, while
+     [data-ix="seg"] tints its background on hover and brightens the selected one with a filter —
+     both of which were therefore cutting between two frames on the app's most-clicked controls. The
+     pager named four and happened to cover its own, which is worse in a way, because it looked like
+     the pattern worked.
+     Dropping the declaration is the entire fix: global.css already states background-color, color,
+     border-color, box-shadow, opacity and filter for every data-ix tier, and reduced motion is
+     handled there too — hence no _reduce branch here any more. */
+  /* `extra` exists because this builder had been COPIED twice rather than called: the project-scope
+     chips and the per-page options each restated the same eight properties inline, differing only
+     by a layout detail (a gap and a flex, tabular numerals) — and each carried its own truncated
+     transition, which is how they all ended up cutting their background tint. One builder, three
+     call sites, and the difference stated as the difference. */
+  viewToggleOptStyle(active, extra) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', Object.assign({ position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)' }, extra || {})); },
   // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
   // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
-  pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
+  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
+  pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1 }); },
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 

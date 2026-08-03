@@ -243,7 +243,20 @@ export default class PaletteApp extends React.Component {
     if (!window.__pgErrHook) { window.__pgErrHook = true; window.addEventListener('error', (e) => { try { console.error('[pg:onerror]', e.message, e.filename, e.lineno, e.error && e.error.stack); } catch (_) { } }); }
     // one feature's failure must never abort the rest of mount
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
-    this._reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches);
+    // Live, not a snapshot. CSS re-evaluates its own reduced-motion blocks the moment the OS setting
+    // changes, and _reduce gates every GSAP path in the app — read once, the two halves disagree
+    // until reload. The timing is what makes it matter: reduced motion is usually switched on IN
+    // RESPONSE to motion, so the one moment it has to work is precisely the one a snapshot misses.
+    // Only the field is updated, never the running tweens. Every animated method reads _reduce at
+    // its top rather than capturing it, so surfaces already in flight finish on the old value and
+    // the next interaction takes the new one — which is correct: killing tweens on the change would
+    // itself be an abrupt motion, in service of the setting that asked for less of them.
+    try {
+      this._rmq = window.matchMedia('(prefers-reduced-motion:reduce)');
+      this._reduce = !!this._rmq.matches;
+      this._onRmq = (e) => { this._reduce = !!e.matches; };
+      if (this._rmq.addEventListener) this._rmq.addEventListener('change', this._onRmq); else this._rmq.addListener(this._onRmq);
+    } catch (e) { this._reduce = false; }
     // Shift+G, on every route. Behind `safe` like everything else here: a grid ruler is the last
     // thing that should be able to stop the app it measures from mounting.
     safe(() => initGridOverlay(), 'grid-overlay');
@@ -453,6 +466,7 @@ export default class PaletteApp extends React.Component {
     if (this._lenis) { try { window.gsap && window.gsap.ticker.remove(this._lenisRaf); } catch (e) { } try { this._lenis.destroy(); } catch (e) { } this._lenis = null; }
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }
     if (this._mq && this._onMq) { try { if (this._mq.removeEventListener) this._mq.removeEventListener('change', this._onMq); else this._mq.removeListener(this._onMq); } catch (e) { } this._mq = null; this._onMq = null; }
+    if (this._rmq && this._onRmq) { try { if (this._rmq.removeEventListener) this._rmq.removeEventListener('change', this._onRmq); else this._rmq.removeListener(this._onRmq); } catch (e) { } this._rmq = null; this._onRmq = null; }
     this.stopCanvas(); this.killSpatial(); this.killOrbit();
     try { document.body.style.overflow = ''; } catch (e) { }
     if (this._t) clearInterval(this._t);
