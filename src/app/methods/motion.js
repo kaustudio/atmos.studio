@@ -540,76 +540,10 @@ export const motionMethods = {
      Closing runs the other way and outlives the state change: the exit finishes first, and only then
      does React unmount what was tweening. Without that there is nothing left to animate by the time
      the tween would start — the same reason closeTip works the way it does. */
-  // The button's swap is a RESIZE, not a replacement. Word-state and ✕-state share one 26px
-  // height (renderVals), so the FLIP only has to carry position and WIDTH — the box glides from
-  // word-wide to square while it travels, instead of snapping shape at the start of the slide.
-  // The incoming glyph settles inside it on the same clock: opacity with a small scale, standard
-  // tokens, cleared after. One private helper for both directions so they cannot drift.
-  _moreBtnSwap(from) {
-    const g = window.gsap, btn = document.querySelector('[data-more-btn]');
-    if (!g || !btn || !from) return;
-    const to = btn.getBoundingClientRect();
-    const dx = from.left - to.left, dy = from.top - to.top;
-    if (dx || dy || Math.abs(from.width - to.width) > 1) {
-      g.from(btn, {
-        x: dx, y: dy, width: from.width, duration: this.DUR.state, ease: this.EASE.standard,
-        // WIDTH IS RESTORED, NEVER CLEARED. clearProps deletes the inline width outright, and the
-        // ✕ state's 26px is React's — deleting it left a 14px sliver in a 26px-tall box, because
-        // React's virtual DOM still held '26px' and so had no change to patch back. Handing back
-        // the React-owned attribute is correct in both directions: '26px' for the square, '' for
-        // the word state, where auto width is right because the label's length varies.
-        clearProps: 'transform',
-        overwrite: 'auto',
-        onComplete: () => { btn.style.width = btn.dataset.moreW || ''; },
-      });
-    }
-    // THE TWO MARKS CROSS UNDER THE WIPE. Both are resident (see moreStyle), so this only has to
-    // hand each one from its old resting opacity to its new one — fromTo, because React has
-    // already committed the new value and a plain from() would read the destination as the start.
-    // No clearProps: each tween ENDS on React's own value, so leaving it inline changes nothing,
-    // and React still patches on the next toggle because its virtual DOM sees a different value.
-    // Clearing here is what broke the width, and the same trap applies to opacity.
-    const opening = !!this.state.readingOpen;
-    const fade = (el, a, b) => { if (el) g.fromTo(el, { opacity: a }, { opacity: b, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' }); };
-    fade(btn.querySelector('[data-more-word]'), opening ? 1 : 0, opening ? 0 : 1);
-    fade(btn.querySelector('[data-more-close]'), opening ? 0 : 1, opening ? 1 : 0);
-  },
-  _readingIn(from) {
-    const g = window.gsap;
-    if (this._reduce || !g) return;
-    this._moreBtnSwap(from);
-    const pills = [...document.querySelectorAll('[data-trait-extra]')];
-    if (pills.length) g.from(pills, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'transform,opacity' });
-    const p = document.querySelector('[data-reading-line]');
-    if (p) this._maskLineReveal(p, this.DUR.stagger * 2);
-  },
-  _readingOut(from, cb) {
-    const g = window.gsap;
-    const targets = [...document.querySelectorAll('[data-trait-extra],[data-reading-line]')];
-    if (this._reduce || !g || !targets.length) { cb(); return; }
-    g.to(targets, { opacity: 0, y: -6, duration: this.DUR.micro, ease: this.EASE.exit, stagger: -this.DUR.stagger, onComplete: cb });
-  },
-  // One door for both directions, so the rect capture and the tween can never disagree about which
-  // way the surface is going.
-  toggleReading() {
-    const btn = document.querySelector('[data-more-btn]');
-    const from = btn ? btn.getBoundingClientRect() : null;
-    if (this.state.readingOpen) {
-      if (this._readingClosing) return;
-      this._readingClosing = true;
-      this._readingOut(from, () => {
-        this._readingClosing = false;
-        this.setState({ readingOpen: false, announce: 'Reading hidden.' }, () => {
-          if (this._reduce) return;
-          // Same swap as opening, run the other way: ✕-square rect in, word box out — the width
-          // tween and the glyph settle come from the shared helper, so in and out cannot drift.
-          this._moreBtnSwap(from);
-        });
-      });
-      return;
-    }
-    this.setState({ readingOpen: true, announce: 'Reading shown.' }, () => this._readingIn(from));
-  },
+  // _moreBtnSwap / _readingIn / _readingOut / toggleReading lived here and are gone with the More
+  // disclosure they animated (03.08.26). Every trait is on screen now and the reading stands, so
+  // there is no state to cross-fade, no box to wipe and no height to collapse — the whole
+  // interaction, and the four tweens that had accumulated on it, resolved by not having it.
   /* THE PHONE'S ARRIVAL. Opening an example used to be a setState and nothing else: one surface
      replaced another between two frames, on the only screen in the product where every other
      transition — the wipe, the loader, the folds — is staged. It was the most static thing here.

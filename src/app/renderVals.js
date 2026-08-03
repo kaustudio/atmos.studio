@@ -297,59 +297,19 @@ export const renderValsMethods = {
       // and character tags secondary", and a NET REDUCTION in standing copy rather than a line
       // added on top of what was already there.
       //
-      // Two traits visible is the audit's number and it is also where the row stops being scannable:
-      // four capitalised pills read as a legend rather than a description.
+      // ALL TRAITS, ALWAYS, AND NO DISCLOSURE OVER THEM. This used to show two and hide the rest
+      // behind a More button that also carried the reading. composeDescriptors caps the list at
+      // four (src/lib/reading.js), so at its very worst the control was hiding two short chips —
+      // and at the common count of three it was hiding exactly one, which costs a press, a state,
+      // a width animation and a second row of motion to save 40px of a row that had 400 to spare.
+      // A disclosure has to hide enough to be worth opening; this one never could.
       const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState);
       const allTraits = s.current.descriptors || [];
-      const moreCount = Math.max(0, allTraits.length - 2);
       result = {
         name: s.current.name, rationale: s.current.rationale, descriptors: allTraits, bands,
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
         useLine,
-        traits: s.readingOpen ? allTraits : allTraits.slice(0, 2),
-        hasMore: moreCount > 0 || !!s.current.rationale,
-        moreLabel: moreCount ? 'More · ' + moreCount : 'More',
-        // Square while it is a close mark, so the ✕ sits in the middle of its own box rather than
-        // inheriting padding shaped for a word.
-        // ONE HEIGHT, BOTH STATES, AND THE ROW IT SITS IN: 26px, shared with the trait chips
-        // beside it (see AppView), so the word state, the ✕ state and the chips sit on one line
-        // instead of three near-heights. Width is the only dimension the toggle changes, which is
-        // what lets the swap be tweened as a resize rather than a re-layout (see _readingIn).
-        moreStyle: {
-          background: 'none', border: '1px solid var(--action-line)', cursor: 'pointer',
-          fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)',
-          textTransform: 'uppercase', color: 'var(--on-surface)',
-          // THE WIDTH IS THE MASK. Both labels live in the button at once and neither is swapped
-          // in or out: the box narrows to a square and its own right edge sweeps left across the
-          // word, wiping it. overflow:hidden is what makes that a wipe rather than an overflow,
-          // and justify-content:flex-start pins the word to the left so the sweep eats it from the
-          // right. Nothing about the content changes mid-flight, which is what makes the motion
-          // continuous — a content swap can only ever cut.
-          overflow: 'hidden', position: 'relative',
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-start', height: '26px',
-          ...(s.readingOpen ? { width: '26px', padding: 0 } : { padding: '0 12px' }),
-        },
-        // In flow, so the CLOSED button sizes itself to its own label — the count varies per
-        // palette, so an auto width is the only correct one. flex:none and nowrap keep it from
-        // reflowing as the box closes over it; it is clipped, never re-wrapped.
-        moreWordStyle: { flex: 'none', whiteSpace: 'nowrap', opacity: s.readingOpen ? 0 : 1 },
-        // Out of flow, centred on the square the box lands at, so it cannot influence the closed
-        // width. It fades up as the wipe passes rather than being revealed by it: at the final
-        // 26px the word's own first letter still sits under this slot, and two marks stacked in
-        // one square is the one thing the wipe cannot resolve on its own.
-        moreCloseStyle: { position: 'absolute', insetInlineEnd: 0, top: 0, bottom: 0, width: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: s.readingOpen ? 1 : 0 },
-        // The same width, exposed for the swap tween to hand back. GSAP's clearProps deletes the
-        // inline width when the tween ends, and React — whose virtual DOM still holds '26px' —
-        // sees no change to patch, so the square silently collapsed to its 14px intrinsic width
-        // (12px glyph + two borders) against a 26px height. The tween restores THIS value instead
-        // of clearing blind, and it is read off a React-owned attribute so an interrupted or
-        // double-fired tween can never hand back a stale number. Empty string in the word state,
-        // where auto width is correct because the label's length is not fixed.
-        moreWidth: s.readingOpen ? '26px' : '',
-        moreAria: s.readingOpen ? 'Hide the reading and the remaining traits' : 'Show the reading and the remaining traits',
-        readingOpen: !!s.readingOpen,
-        onMore: () => this.toggleReading(),
-        traitBase: 2,
+        traits: allTraits, hasTraits: allTraits.length > 0,
       };
     }
     // palette-level copy affordances

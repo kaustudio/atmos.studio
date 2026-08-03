@@ -604,7 +604,7 @@ export default function AppView({ vals }) {
                     run it. pointer-events restored — the block above it is decorative and inert. */}
                 <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;max-width:240px;align-self:center;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
-                    <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an Example</button>
+                    <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an Example</button>
                   )}
                   <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
                     {vals.gateLinkCopied ? (<><IconCheck />Link copied</>) : 'Save for desktop'}
@@ -857,36 +857,22 @@ export default function AppView({ vals }) {
                     row of words in pills, that you had to parse before you could tell it was the way
                     out. A ✕ is the one shape in that row nobody reads as content. The word it
                     replaces survives in the aria-label, which is where it was doing real work. */}
+                {/* Uppercase, at --fs-label, on one 26px row, and ALL of them — a disclosure over
+                    this many chips costs more than it hides (see renderVals). The row is gated on
+                    having any: the taxonomy prune leaves several palettes with no traits at all
+                    (three of the eight seeds), and an empty flex row still spends its 18px margin. */}
+                {vals.result.hasTraits && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
-                  {/* The pills past the first two are marked so the reveal knows which of them are
-                      new. Marking them here rather than counting in the tween keeps the two
-                      definitions of "extra" from drifting apart. */}
-                  {/* Uppercase, at the More button's own size and height (03.08.26): the row
-                      previously mixed a 24px/12px chip with a 28px word-state and a 26px ✕-state
-                      — three heights and two sizes on one line. The chips are not buttons, but
-                      they queue with one, and a queue aligns on its tallest member: 26px tall,
-                      --fs-label, stated once on all of them. */}
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} {...(di >= vals.result.traitBase ? { 'data-trait-extra': '1' } : {})} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding: 0 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase')}>{d}</span>
+                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding: 0 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase')}>{d}</span>
                   ))}
-                  {/* BOTH MARKS ARE ALWAYS HERE — the button's own width wipes between them (see
-                      moreStyle). data-more-w carries the width the tween hands back at the end,
-                      because GSAP's clearProps deletes the inline 26px React set and React, whose
-                      virtual DOM still holds it, has no change left to patch. The button is named
-                      by aria-label, so neither mark contributes to its accessible name. */}
-                  {vals.result.hasMore && (
-                    <button type="button" data-more-btn="1" data-more-w={vals.result.moreWidth} data-ix="press" data-focus="chrome" aria-expanded={vals.result.readingOpen} aria-label={vals.result.moreAria} onClick={vals.result.onMore} style={vals.result.moreStyle}>
-                      <span data-more-word="1" aria-hidden="true" style={vals.result.moreWordStyle}>{vals.result.moreLabel}</span>
-                      <span data-more-close="1" aria-hidden="true" style={vals.result.moreCloseStyle}><IconClose /></span>
-                    </button>
-                  )}
                 </div>
-                {/* The poetic reading, revealed rather than standing. It is the product's voice and
-                    it is not deleted — it is simply no longer the first thing between the palette
-                    and the person deciding what to do with it. */}
-                {vals.result.readingOpen && (
-                  <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
                 )}
+                {/* THE READING, STANDING. It sat behind the More disclosure so it would not come
+                    between the palette and the decision — but that disclosure is gone (it was
+                    hiding one or two chips, see renderVals), and this is one muted 13px line. It
+                    arrives with the result view's own reveal rather than on a press of its own. */}
+                <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
               </div>
               {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed
                   from the same analysis the reading is, so the two can never disagree.
@@ -1089,7 +1075,9 @@ function FeedSection({ vals }) {
     // stretch, not center: Manage takes its height FROM the chip group (34px next to its 30px of
     // border-plus-padding), so the two can never disagree again — a hardcoded matching height
     // would have agreed until the next padding-token edit. Manage centers its own label.
-    <div style={sx('display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin-bottom:24px')}>
+    // 12px below, matching the 12px BETWEEN the group and Manage Projects. One number for the gap
+    // around this band whichever way it is measured, rather than 12 across and 24 down.
+    <div style={sx('display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
       {/* Background lives in global.css, not here: it is the scrolling-shadow pair that cues
           overflow when the chip row exceeds the group, and inline background would override it. */}
       <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);min-width:0;max-width:100%;overflow-x:auto')}>
@@ -1099,6 +1087,20 @@ function FeedSection({ vals }) {
         ))}
       </div>
       <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage Projects: create, rename, or delete" style={vals.projManageStyle}>Manage Projects</button>
+      {/* HOW the section is drawn, on the row with the controls that decide WHAT it holds. It sat
+          on the heading row, which paired it with the title but left it floating above a band of
+          same-height bordered controls it never lined up with. Here the three boxes — chip group,
+          Manage Projects, this — share one baseline and one row; align-items:stretch already gives
+          them a common height, so the alignment is structural rather than three matching numbers.
+          margin-inline-start:auto keeps it at the far edge, away from the pair it does not join. */}
+      {vals.feedHasItems && (
+        <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
+          <span aria-hidden="true" style={vals.viewTogglePill}></span>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}>List</button>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}>Grid</button>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.reelPressed} tabIndex={vals.reelTab} onClick={vals.setReel} onKeyDown={vals.viewToggleKey} style={vals.reelToggleStyle}>3D</button>
+        </div>
+      )}
     </div>
   );
 
@@ -1128,7 +1130,7 @@ function FeedSection({ vals }) {
           facet tables ("Text-Ready") and lowercase from the open tag vocabulary ("golden"), and
           this is the one rule that renders both as words. */}
       {vals.appliedTags.map((t) => (
-        <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
+        <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
           {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
         </button>
       ))}
@@ -1138,41 +1140,28 @@ function FeedSection({ vals }) {
       {vals.anyFilter && (
         <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear Filters</button>
       )}
-      {/* METADATA, AND IT LOOKS LIKE IT. No border, no fill, no hit area: this is the only thing
-          in the toolbar that cannot be pressed, so it is the only thing wearing none of the
-          vocabulary of pressing. It sits here rather than beside the heading because it is not a
-          fact about the library — it is what the controls to its left just did.
-
-          ALWAYS MOUNTED, often empty. resultSummary is '' with no filter applied, so there is
-          nothing to read at rest — but the ELEMENT stays, because a live region has to be in the
-          DOM before the change it announces. Mounting the span and its first text in the same
-          commit is the classic way to get an announcement that never fires. Empty, it costs a
-          zero-width box and the auto margin it is holding. */}
-      <span role="status" aria-live="polite" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>{vals.resultSummary}</span>
+      {/* SPOKEN, NOT PRINTED. "Showing 5 of 8 palettes" is redundant on screen — the list below IS
+          the count, and a filtered list that visibly shrank does not need a sentence saying so.
+          It is NOT redundant to a screen reader: the filter setters announce "Added Balanced
+          filter" and stop, so without this the one thing you cannot perceive — how much was left —
+          would go unsaid. The element stays, in the app's own visually-hidden live-region style,
+          and stays MOUNTED even when empty because a live region has to be in the DOM before the
+          change it announces. */}
+      <span role="status" aria-live="polite" style={liveRegionStyle}>{vals.resultSummary}</span>
     </div>
   );
 
   return (
     <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px var(--page-gutter) 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
-      {/* TWO LEVELS, AND THE INDENT IS THE ARGUMENT.
+      {/* THE HEADING NAMES THE SECTION AND HOLDS NOTHING ELSE. The view switcher used to end this
+          row, paired with the title on the argument that both are scoped to the whole region. True,
+          and it still left a bordered control floating alone above a band of three more bordered
+          controls it never lined up with — the pairing was conceptual and the misalignment was on
+          screen. It has gone down to that band, where it shares a row, a height and a baseline with
+          the chip group and Manage Projects.
 
-          Level one is this row: the section's title, at the section's own edge, with the view
-          switcher holding the opposite end. Those two belong together — one names the surface, the
-          other decides how the whole of it is drawn — and nothing between them is scoped to a
-          subset. File work used to hold this right edge and left for the top bar, because it acts
-          on the library rather than describing it.
-
-          Level two is the bar below, and it is indented to --row-inset so it starts on the same
-          vertical line as every palette strip and every sort label beneath it. That is the whole
-          point: scope, filter and the list are one region, and a shared left edge says so before
-          any label is read. At the section's edge they sat over the list rather than with it, and
-          read as chrome that happened to be nearby.
-
-          The heading marker is not a control and must never read as one: no border tier, no fill,
-          16px of glyph. See the region comment above.
-
-          16px below, not the old 7: that 7 was measured against a bar of bordered 31px groups
-          sitting immediately under a 15px heading, and both halves of that sum have changed. */}
+          What is left is the name and its marker. The marker is not a control and must never read
+          as one: no border tier, no fill, 16px of glyph. See the region comment above. */}
       <div style={sx('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
         <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:-.01em; color: var(--on-surface); margin: 0")}>Library</h2>
         {/* A SIBLING of the h2, never a child: the section is named by that heading through
@@ -1194,18 +1183,6 @@ function FeedSection({ vals }) {
                 ))}
               </div>
             </>)}
-          </div>
-        )}
-        {/* HOW the section is drawn, holding the end of the row the section's name opens. It is not
-            a list control: scope and filter change what the list CONTAINS, this changes what the
-            whole region looks like — grid and 3D are not the list at all. Pairing it with the title
-            says that, and gives the heading row a right edge to hold. */}
-        {vals.showProjectsBar && vals.feedHasItems && (
-          <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
-            <span aria-hidden="true" style={vals.viewTogglePill}></span>
-            <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}>List</button>
-            <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}>Grid</button>
-            <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.reelPressed} tabIndex={vals.reelTab} onClick={vals.setReel} onKeyDown={vals.viewToggleKey} style={vals.reelToggleStyle}>3D</button>
           </div>
         )}
       </div>
@@ -1851,7 +1828,7 @@ function TagFilterDrawer({ vals }) {
             {/* Identical treatment to the toolbar's applied chips outside — same fact, same
                 clothes; two renderings of one chip would read as two states. */}
             {vals.appliedTags.map((t) => (
-              <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
+              <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
                 <span style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{t.label}</span>
                 <span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)', flex: 'none' }}>✕</span>
               </button>

@@ -129,7 +129,6 @@ export default class PaletteApp extends React.Component {
     // the full contrast matrix, on demand
     refineAllPairs: false,
     // the result view's More: reveals the poetic reading and the traits past the first two
-    readingOpen: false,
     // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
