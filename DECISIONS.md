@@ -1384,3 +1384,46 @@ and the content's right edge is what aligns.
 so at any scroll position but the top, body content passed under the palette name with zero
 clearance — a section heading sitting flush against the dialog's heading. The header owns 18px now,
 and the strip's top padding drops from 24 to 6 so the resting gap stays at 24.
+
+---
+
+## 2026-08-02 — Roles are dragged onto swatches
+
+**The manager table asked you to press a row on one surface to change a colour on another.** By the
+time you had scrolled down to it the strip was out of sight, so the act had no visible result — you
+pressed `MOVE HERE` and nothing you could see moved. That is the whole objection, and no amount of
+labelling fixes it: the control was in the wrong place.
+
+**Pin and Unpin were two verbs for a state the interface never showed you entering.** Nothing about
+pressing `PIN HERE` looked different from not pressing it, so "pinned" was a word you had to take on
+trust. Dragging a role onto a swatch *is* pinning it — you placed it, so it stays. There is nothing
+left to name and both verbs are gone.
+
+**The chips are on the swatches, and they are the control.** They were already there as `<span>`s —
+the right place to read them, and the one place they could never be operated, because a button
+cannot contain a button. They are lifted onto their own layer over the strip: a flex row with the
+same shares, so a chip sits on its swatch by geometry rather than by measurement, and it stays right
+through a reorder, a resize and a removal. `pointer-events: none` on the layer keeps the swatch
+clickable everywhere a chip is not, and the listbox stays a listbox — options with buttons inside
+them are not a listbox in any screen reader.
+
+**1:1 under the hand, eased only on abandonment.** No transition on the dragged transform: a curve
+between the pointer and the thing it is carrying is the one place easing reads as lag. The return
+tween is the exception, because giving up on a gesture is the interface acting on its own behalf.
+Drop targets are hit-tested against the swatch rects rather than `elementFromPoint`, so the chip
+under the cursor cannot shadow the swatch beneath it.
+
+**The keyboard does what the hand does.** Arrow keys walk a role along the strip one swatch at a
+time, Home and End send it to either end, and focus follows the role so the next press continues the
+journey. Same announcement as the drop.
+
+**`cursor: grab` is the affordance.** No standing sentence telling anyone they can drag; the pointer
+says it on arrival, the hover box makes a word on a colour read as a control, and the tip carries
+the one remaining concept on demand.
+
+**One way back, not six.** `Reset roles` appears only when something has been placed. Six per-role
+`Unpin` buttons were six ways to reverse a decision the interface never showed you making.
+
+**Section headings are Title Case**, and `PORT` now wins in `vite.config.ts` — Vite does not read it
+on its own, so a harness that assigns a free port got 5173 every time and then could not reach the
+server it had just started.

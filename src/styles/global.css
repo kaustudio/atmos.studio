@@ -473,7 +473,10 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
 [data-row-cell="aa"]{grid-column:span 1}
 [data-row-cell="contrast"]{grid-column:span 1}
 [data-row-cell="date"]{grid-column:span 2}
-[data-row-cell="scope"]{grid-column:span 8}
+/* The header's first label spans exactly what the strip and the name span together, so "Palette"
+   heads the row's whole identity block rather than only its swatches. It was "scope" while the
+   project chips lived in these tracks; the tracks are the same, the tenant is not. */
+[data-row-cell="head"]{grid-column:span 8}
 /* The metrics are one column each now, which is what they measure: a two-digit count and a ratio.
    The two columns that came back went to the name, which is the only cell holding variable-length
    content and the one that had been paying for the metrics' width.
@@ -485,7 +488,7 @@ html,body{background:var(--surface);transition:background .3s var(--ease-standar
   [data-row-cell="name"]{grid-column:span 4}
   [data-row-cell="contrast"]{grid-column:span 2}
   [data-row-cell="date"]{grid-column:span 3}
-  [data-row-cell="scope"]{grid-column:span 6}
+  [data-row-cell="head"]{grid-column:span 6}
 }
 /* THE DATE BREATHES. It is the only metric ending against the page margin, so both the header chip
    and the stamp sit 16px inside their column while the column itself still runs to the grid line.
@@ -630,6 +633,21 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
    occupies 6px..4px and the gap is exactly 4px. Drawn inside the element's box, so it cannot be
    clipped by the neighbouring swatch and costs no layout. */
 [data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:2px solid var(--refine-pill-ink, var(--on-surface)); outline-offset:-6px; }
+
+/* THE ROLE CHIPS. cursor:grab is the affordance — no standing sentence telling anyone they can
+   drag, the pointer says it on arrival. The hover/focus box is what makes a word on a colour read
+   as a control rather than as a caption; it is drawn in the swatch's own ink so it works on a
+   light band and a dark one alike (see onColor / the chip's own colour). */
+[data-role-chip]{ pointer-events:auto; transition:opacity .14s var(--ease-standard), border-color .14s var(--ease-standard); }
+[data-role-chip]:hover,[data-role-chip]:focus-visible{ opacity:1 !important; border-color:currentColor !important; }
+[data-role-chip][data-pinned="1"]{ opacity:1 !important; }
+/* Under the hand: no transition on the transform — the drag is 1:1, and a curve between the pointer
+   and the thing it is carrying is the one place easing reads as lag. */
+[data-role-chip][data-dragging]{ cursor:grabbing; opacity:1 !important; border-color:currentColor !important; z-index:6; transition:none; }
+/* The swatch the chip is over. Same inset geometry as the selection ring so the two never disagree
+   about where a swatch's edge is, drawn dashed so it cannot be mistaken for the selection itself. */
+[data-refine-swatch][data-drop]{ outline:2px dashed currentColor; outline-offset:-6px; }
+@media (prefers-reduced-motion: reduce){ [data-role-chip]{ transition:none } }
 
 /* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
    only while there is something to report — so it arrives rather than blinking into place. */

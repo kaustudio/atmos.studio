@@ -99,7 +99,9 @@ export const motionMethods = {
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
   toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400, transition: 'color .15s var(--ease-standard),border-color .15s var(--ease-standard)' }); },
-  pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
+  // Prev / Next. Sentence case at the library section's own chrome size — this helper has exactly
+  // one caller (the list pager), so it carries that section's voice rather than the app default.
+  pageNavStyle(disabled) { return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { textTransform: 'none', padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1, transition: 'background .15s var(--ease-standard),color .15s var(--ease-standard),border-color .15s var(--ease-standard),opacity .15s var(--ease-standard)' }); },
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 
@@ -108,7 +110,7 @@ export const motionMethods = {
   // it — most contrast, most accessible pairs, most recent — rather than a blanket ascending. A
   // second activation on the same column flips it. Sorting resets to page 1: staying on page 4 of a
   // reordered list shows a slice of rows that has nothing to do with what was just asked for.
-  SORT_LABELS: { contrast: 'max contrast', aa: 'AA pairs', time: 'date' },
+  SORT_LABELS: { contrast: 'max contrast', aa: 'AA pairs', time: 'date created' },
   setSort(key) {
     // Reordering replaces every row's contents just as wholesale as a page change does, so it takes
     // the same arrival rather than snapping to a new order in place.

@@ -44,7 +44,11 @@ function cleanUrls() {
 
 export default defineConfig({
   plugins: [react(), cleanUrls()],
-  server: { port: 5173 },
+  // PORT wins when the environment sets one. Vite does not read it on its own, so a harness that
+  // assigns a free port and expects the server to take it got 5173 every time — and then could not
+  // reach the thing it had just started. 5173 stays as the default for a plain `npm run dev`.
+  server: { port: Number(process.env.PORT) || 5173 },
+  preview: { port: Number(process.env.PORT) || 4173 },
   build: {
     rollupOptions: {
       // Two entries. 404.html is a Vite entry rather than a static file in public/ because it is the

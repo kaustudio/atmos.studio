@@ -1031,64 +1031,80 @@ function FeedSection({ vals }) {
   // is trying not to accumulate — every line of it is read once and then permanently in the way —
   // so the fact lives in an affordance and the words arrive only when asked for.
 
-  // The scope + filter cluster, written once and mounted in one of two places below: on the sort
-  // row in list view, standalone in Grid and 3D. See the placement comment further down.
-  const scopeBar = vals.showProjectsBar && (<>
-    {/* ONE home for the project concept. The tab row was already project navigation; managing
-        projects used to be a second door to the same idea, standing in the utility cluster
-        wearing a utility button's clothes. Scoping and management now share one surface and
-        one border: the scope chips, then a hairline, then Manage. Nothing about the chips or
-        the sliding pill changes — Manage deliberately carries no data-proj-chip and no
-        aria-pressed, so the pill (which selects [data-proj-chip][aria-pressed="true"]) can
-        never mistake an action for a scope. */}
-    <div role="group" data-proj-group="1" aria-label="Projects" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
-      <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
-      {vals.projectChips.map((ch) => (
-        <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} onClick={ch.onClick} style={ch.chipStyle}>{ch.label}<span style={ch.countStyle}>{ch.count}</span></button>
-      ))}
-      <span aria-hidden="true" style={sx('flex:none;width:1px;margin:4px 4px;background:color-mix(in srgb, var(--on-surface) 15%, transparent)')}></span>
-      <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage projects: create, rename, or delete" style={vals.projManageStyle}>Manage</button>
-    </div>
-    {/* TIER 2 — what am I seeing. The filter panel and its applied chips: controls that change
-        what the list CONTAINS, sitting beside the scopes that do the same at a broader grain.
-        Sort now sits on this same row, in its own columns; per-page stays with the pager. Both
-        are view manipulation too, but they stay bound to the thing they act on — lifting the
-        sort labels out of their columns would undo the header/value alignment the list is
-        built on, which is exactly why the scope bar came to them instead. */}
-    {vals.showFacet && (<>
-      {/* Divider between Tier 1 and Tier 2: the 28px gap alone left them reading as one long
-          strip of controls. A hairline states the boundary outright — same --line-strong the
-          section rules and the row separators already use, so the grouping is declared in the
-          system's own vocabulary rather than implied by whitespace. */}
-      <span aria-hidden="true" style={sx('flex:none;align-self:stretch;width:1px;background:var(--line-strong)')}></span>
-      {/* data-applied-filters: the panel dismisses on any pointerdown outside itself, and this
-          cluster is the exception — the chips and Clear all ARE filtering, just parked outside the
-          panel so the state stays visible when it is shut. Removing a narrowing should not also put
-          away the surface you would remove the next one from. */}
-      <div data-applied-filters="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-        <button type="button" data-facet-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.facetOpen ? 'Close filters' : 'Filter palettes'} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Filter</button>
-        {/* One chip per applied filter across BOTH groups — accessibility first, matching the
-            panel's group order — each removable on its own, so a narrowing can be undone from
-            either end. No clear-all here: that was a third affordance for one act (chip ✕ ·
-            header CLEAR · panel CLEAR FILTER) and now lives only in the panel, beside the
-            facets it clears. */}
-        {/* STATE KEPT VISIBLE. How many match, and one way out, without reopening the panel — the
-            chips said WHAT was applied but the result of applying it lived inside the drawer, so
-            the only way to see whether a filter had helped was to reopen the thing you just shut. */}
-        {vals.anyFilter && (
-          <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>
-            {vals.resultCount}
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
-          </span>
-        )}
-        {vals.appliedTags.map((t) => (
-          <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>
-            {t.label}{t.count && <span style={sx('font-size:var(--fs-nano);opacity:.7;font-variant-numeric:tabular-nums')}>{t.count}</span>}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
-          </button>
+  // FIVE JOBS WERE ON ONE LINE, AND THE LINE COULD NOT SAY WHICH WAS WHICH.
+  //
+  // Library segment (All / Unfiled / a project), management (Manage), filtering (Filter + the
+  // applied chips), the result size, and sorting (AA pairs / Max contrast / Date) all shared one
+  // horizontal strip, several of them in the same borders and all of them in the same 10px
+  // uppercase. Black fill meant "selected scope" and "selected view" and "applied filter" at once.
+  // Nothing on the row declared what was navigation, what was state, what was metadata and what
+  // was an act, so the row had to be decoded rather than read.
+  //
+  // It is now four bands, top to bottom, in the order the questions are actually asked:
+  //
+  //   heading   Library ⓘ                                     [ List | Grid | 3D ]
+  //   segment   [ All 8 ][ Unfiled 7 ]                            Manage projects
+  //   filter    [ Filter 1 ][ Text-ready ✕ ][ Clear filters ]  Showing 5 of 8 palettes
+  //   header    Palette                     AA pairs · Max contrast · Created
+  //
+  // Where am I → which segment → what is applied and what it left → how it is ordered → the list.
+  // Each band answers one question and holds one kind of thing, so its treatment can mean one
+  // thing too.
+
+  // BAND 2 — WHICH SEGMENT OF THE LIBRARY. Alternative views of the same shelf, so they stay a
+  // segmented control with a sliding pill; Manage is the one act here and stands outside the
+  // group at the far end, because inside it (after a hairline, in chip clothes) it read as a
+  // fourth scope. The pill selects [data-proj-chip][aria-pressed="true"], and Manage carries
+  // neither, so it was never at risk of being SELECTED — only of looking selectable.
+  const viewRow = vals.showProjectsBar && (
+    <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px')}>
+      <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);background:transparent;min-width:0;max-width:100%;overflow-x:auto')}>
+        <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
+        {vals.projectChips.map((ch) => (
+          <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} onClick={ch.onClick} style={ch.chipStyle}>{ch.label}<span style={ch.countStyle}>{ch.count}</span></button>
         ))}
       </div>
-    </>)}
-  </>);
+      <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage projects: create, rename, or delete" style={{ ...vals.projManageStyle, marginInlineStart: 'auto' }}>Manage projects</button>
+    </div>
+  );
+
+  // BAND 3 — WHAT IS APPLIED, AND WHAT IT LEFT. One reading order, left to right: the trigger
+  // (carrying how many filters are on), then the filters themselves, then the way out of all of
+  // them, then the consequence at the far end. It used to run trigger → consequence → way out →
+  // filters, which put the escape hatch before the thing to escape and the count before the
+  // narrowing that produced it.
+  //
+  // data-applied-filters: the panel dismisses on any pointerdown outside itself, and this row is
+  // the exception — everything on it IS filtering, just parked outside the panel so the state
+  // stays visible when it is shut. Removing a narrowing should not also put away the surface you
+  // would remove the next one from.
+  const filterRow = vals.showProjectsBar && vals.showFacet && (
+    <div data-applied-filters="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px')}>
+      <button type="button" data-facet-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.filterAria} style={sx('display:inline-flex;align-items:center;gap:7px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>
+        Filter{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);opacity:.7;font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+      </button>
+      {/* One chip per applied filter across every group — accessibility first, matching the
+          panel's group order — each removable on its own, so a narrowing can be undone from
+          either end. capitalize rather than uppercase: the labels arrive in mixed case from the
+          facet tables ("Text-Ready") and lowercase from the open tag vocabulary ("golden"), and
+          this is the one rule that renders both as words. */}
+      {vals.appliedTags.map((t) => (
+        <button key={t.key} type="button" data-ix="press" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);text-transform:capitalize;color:var(--surface);cursor:pointer')}>
+          {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
+        </button>
+      ))}
+      {/* Absent when nothing is applied — an escape from a state you are not in is one more
+          control to read past on every visit that does not need it. */}
+      {vals.anyFilter && (
+        <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>Clear filters</button>
+      )}
+      {/* METADATA, AND IT LOOKS LIKE IT. No border, no fill, no hit area: this is the only thing
+          on the two control bands that cannot be pressed, so it is the only thing wearing none of
+          the vocabulary of pressing. aria-live because it changes as a RESULT of a press
+          elsewhere on the row, and that consequence has to reach a screen reader too. */}
+      <span role="status" aria-live="polite" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>{vals.resultSummary}</span>
+    </div>
+  );
 
   return (
     <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px var(--page-gutter) 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
@@ -1148,26 +1164,18 @@ function FeedSection({ vals }) {
         )}
       </div>
 
-      {/* Two intent tiers, left to right in DOM = on screen = in the tab order:
-            1 · WHERE AM I — project scoping + management (constant, structural)
-            2 · WHAT AM I SEEING — the filter panel (constant, changes what the list contains)
-          Both narrow the SET, which is why they sit together. HOW the result is drawn was the third
-          tier and has gone up to the heading row: it does not change what the list contains, it
-          changes what the whole section looks like. File work left earlier, to the top bar, for the
-          mirror of the same reason — it acts on the library rather than on a view of it.
-          The two tiers are told apart by proximity first (a hairline plus 8px between them vs 8px
-          inside one), so the grouping survives greyscale and does not lean on colour.
+      {/* THE TWO CONTROL BANDS, in every view. They used to be one strip that rode the sort row in
+          list view and stood alone in Grid and 3D — a conditional placement whose whole purpose was
+          to make scope, filter and sort read as "one bank of list controls". That was the mistake:
+          they are not one bank. Scope says which segment of the library you are in, filter says
+          what is being held back, sort says how what is left is ordered, and putting all three on
+          a line asked the user to work out which was which every time they looked.
 
-          DEFINED ONCE, PLACED TWICE. In list view this bar belongs ON the sort row — bottom-aligned
-          with AA PAIRS, MAX CONTRAST and DATE, so what narrows the list and what orders it read as
-          one bank of list controls rather than two stacked strips. But the sort row is list-only
-          (showSortHeader), and scope and filter still have to exist in Grid and 3D, so the same
-          element is rendered standalone there. One definition either way: two copies of this markup
-          would agree until the first person edited one of them. */}
-      {/* Grid and 3D: no sort row to ride on, so it stands as its own strip, as it always did. */}
-      {vals.showProjectsBar && !vals.showSortHeader && (
-        <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:22px')}>{scopeBar}</div>
-      )}
+          Sort has gone back to the column header where it belongs — over the numbers it orders —
+          and these two stand on their own rows, in one place rather than two, above every view.
+          Their vertical order is the order the questions arrive in; see the band diagram above. */}
+      {viewRow}
+      {filterRow}
 
       {/* FILTERED TO NOTHING is not EMPTY. The cold-start message told someone holding three
           filters that palettes would collect here — answering a question they had not asked and
@@ -1179,7 +1187,7 @@ function FeedSection({ vals }) {
           <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-align:center;max-width:46ch;text-wrap:pretty")}>Filters combine, so each one you add narrows what is left. Remove the last one, or start again.</div>
           <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
             <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} aria-label="Remove the last filter applied" style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Remove last filter</button>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear all</button>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} aria-label="Clear all filters" style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}>Clear filters</button>
           </span>
         </div>
       )}
@@ -1196,30 +1204,29 @@ function FeedSection({ vals }) {
       )}
       <div ref={vals.gridRef} onKeyDown={vals.onGridKey}>
 
-        {/* The list's control row. It is NOT a table header — the rows below are buttons, not cells
-            — so it claims no table semantics it cannot honour: the ordering is announced through
-            the live region on activation. Its columns are laid out from the same tokens and the
-            same 16px gap as the rows, and it ends on the same action gutter, which is what puts
-            the labels directly over their numbers.
+        {/* THE COLUMN HEADER. It is NOT a table in the ARIA sense — the rows below are buttons, not
+            cells — so it claims no table semantics it cannot honour: the ordering is announced
+            through the live region on activation. But it is a column header in every way that
+            matters to the eye: its columns come from the same --row-grid and the same gutter as
+            the rows, so each label stands directly over the figures it names, and it closes with a
+            rule so the band it heads has a visible top.
 
-            The strip and identity tracks used to hold an empty spacer. They now hold the scope and
-            filter controls, which is what makes this ONE bank of list controls instead of two
-            stacked strips: what narrows the list and what orders it, on one line, bottom-aligned.
-            align-items:end rather than center, so the 31px control cluster and the 10px sort
-            labels sit on a shared baseline edge instead of the labels floating mid-cluster.
+            The strip and identity tracks used to hold the scope and filter controls, which is what
+            made this "one bank of list controls" — and what made three sort buttons impossible to
+            tell apart from two scope chips and a filter chip a few pixels to their left. Those
+            controls now have their own bands above (see the diagram at the top of this component)
+            and the tracks hold what they should have held all along: the name of the first column.
 
-            The negative margin is load-bearing, not a nudge. This grid is inset by --row-inset so
-            its columns line up with the rows beneath; the scope bar has to start on the SECTION's
-            edge instead, under the Library heading. Pulling back by exactly the token the padding
-            added is the only way to have both — and it stays correct if the token ever changes,
-            which a hardcoded -16px would not.
-
-            The group's accessible name moved off "Sort palettes": it no longer contains only sort
-            controls. The three buttons keep their own full labels ("Sort by AA pairs, highest
-            first"), so nothing about them got quieter. */}
+            align-items:end so the labels sit on a shared bottom edge, and the whole header is one
+            group named for what it does — every button still carries its own full label ("Sort by
+            AA pairs, highest first"), so nothing got quieter for a screen reader. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Library controls" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 0 7px')}>
-            <div data-row-cell="scope" style={sx('min-width:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>{scopeBar}</div>
+          <div role="group" aria-label="Sort the palette list" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 0 8px;border-bottom:1px solid var(--line-strong)')}>
+            {/* Not a button: there is no name sort, and a label that looks pressable but is not is
+                worse than a label. It names the two tracks the strip and the palette name share —
+                the row's identity — so the header accounts for every column rather than starting
+                two thirds of the way across. */}
+            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -1372,7 +1379,10 @@ function FeedSection({ vals }) {
         {vals.showPagination && (
           <nav aria-label="Palette list pages" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
             <div role="group" aria-label="Palettes per page" style={sx('display:flex;align-items:center;gap:10px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Per page</span>
+              {/* Sentence case, --fs-detail: the footer is the same section's chrome as the two
+                  control bands at its top, and a region that changes voice halfway down reads as
+                  two regions. See the chipStyle note in renderVals. */}
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Per page</span>
               <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
                 <span aria-hidden="true" style={vals.pageTogglePill}></span>
                 {vals.pageSizeOptions.map((o) => (
@@ -1382,7 +1392,7 @@ function FeedSection({ vals }) {
             </div>
             <div style={sx('display:flex;align-items:center;gap:10px')}>
               <button type="button" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}>Prev</button>
-              <span aria-live="polite" style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{vals.pageLabel}</span>
+              <span aria-live="polite" style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>{vals.pageLabel}</span>
               <button type="button" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}>Next</button>
             </div>
           </nav>
@@ -2332,17 +2342,36 @@ function RefineDialog({ vals }) {
                buttons: this is "pick exactly one of five", which aria-pressed can only describe as
                five independent on/off states, and aria-selected is not valid on a button role. */}
         <div style={sx('position:relative;width:100%;padding:6px var(--page-gutter) 0')}>
-          <div role="listbox" aria-orientation="horizontal" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
-            {r.swatches.map((b) => (
-              <button key={b.sid} type="button" role="option" data-refine-swatch="1" data-ring={b.ring} data-focus="swatch" tabIndex={b.tab} aria-selected={b.selected} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}>
-                {/* One line per role, not the first one and a silence about the rest. */}
-                {b.roleNames.map((n) => (<span key={n} style={b.labelStyle}>{n}</span>))}
-              </button>
-            ))}
-            {/* Selection travels; keyboard focus is the ring on the button beneath. Two states, two
-                treatments, deliberately not the same one — and the travelling one now takes its
-                ink from the swatch it lands on (see data-ring / _refinePill). */}
-            <span data-refine-pill="1" aria-hidden="true"></span>
+          <div style={sx('position:relative;width:100%')}>
+            <div role="listbox" aria-orientation="horizontal" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
+              {r.swatches.map((b) => (
+                <button key={b.sid} type="button" role="option" data-refine-swatch="1" data-ring={b.ring} data-focus="swatch" tabIndex={b.tab} aria-selected={b.selected} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}></button>
+              ))}
+              {/* Selection travels; keyboard focus is the ring on the button beneath. Two states,
+                  two treatments, deliberately not the same one — and the travelling one takes its
+                  ink from the swatch it lands on (see data-ring / _refinePill). */}
+              <span data-refine-pill="1" aria-hidden="true"></span>
+            </div>
+
+            {/* THE ROLE CHIPS, on their own layer over the strip.
+                They used to be spans inside the swatch buttons, which is where they read best and
+                where they could never be operated: a button cannot contain a button. Lifting them
+                out makes each one a control you can pick up, and keeps the listbox a listbox —
+                options with buttons inside them are not a listbox in any screen reader.
+                The layer is a second flex row with the same shares as the strip, so a chip sits on
+                its swatch by geometry rather than by measurement. pointer-events:none on the layer
+                so the swatch underneath stays clickable everywhere a chip is not. */}
+            <div role="group" aria-label="Palette roles. Drag a role onto a swatch to move it there, or focus one and use the arrow keys." style={sx('position:absolute;inset:0;display:flex;pointer-events:none;z-index:4')}>
+              {r.roleChips.map((cell) => (
+                <div key={cell.key} style={{ flexGrow: cell.grow, flexBasis: 0, minWidth: '92px', position: 'relative' }}>
+                  <div style={sx('position:absolute;left:9px;right:9px;bottom:9px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
+                    {cell.chips.map((c) => (
+                      <button key={c.id} type="button" data-role-chip={c.id} data-pinned={c.pinned ? '1' : '0'} data-focus="swatch" aria-label={c.aria} onPointerDown={c.onDown} onKeyDown={c.onKey} style={c.style}>{c.label}</button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -2374,7 +2403,7 @@ function RefineDialog({ vals }) {
                an interface?" was itself badly set. They follow each other down the page now. The
                contrast card sitting below the fold is fine: the body scrolls. */}
         <div style={sx('padding:32px var(--page-gutter) 0')}>
-          <h3 style={sx(secTitle)}>Adjust colour</h3>
+          <h3 style={sx(secTitle)}>Adjust Colour</h3>
           <div style={sx('padding-top:8px')}>
             {r.sliders.map((sl) => (
               <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:4px;padding:7px 0')}>
@@ -2409,7 +2438,7 @@ function RefineDialog({ vals }) {
                itself on the group's accessible name. */}
         <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:12px;padding:32px var(--page-gutter) 0')}>
           <span style={sx('display:flex;flex-direction:column;gap:5px')}>
-            <h3 style={sx(secTitle)}>Live preview</h3>
+            <h3 style={sx(secTitle)}>Live Preview</h3>
             <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.3;color:var(--on-surface);text-wrap:pretty")}>{r.preview.title}</span>
           </span>
           <div aria-hidden="true" style={r.preview.pageStyle}>
@@ -2441,7 +2470,7 @@ function RefineDialog({ vals }) {
           <div data-refine-sec="1" role="group" aria-label={r.a11y.aria} style={sx('position:relative;margin:32px var(--page-gutter) 0;padding-top:24px;border-top:1px solid transparent')}>
             <OvRule />
             <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px')}>
-              <h3 style={sx(secTitle)}>Text contrast</h3>
+              <h3 style={sx(secTitle)}>Text Contrast</h3>
               <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx(quiet + ';flex:none')}>{r.a11y.reviewLabel}</button>
             </div>
             <div style={sx('padding-top:16px')}>
@@ -2498,15 +2527,16 @@ function RefineDialog({ vals }) {
                 </div>
               </>)}
             </span>
-            <button type="button" data-refine-manage="1" data-ix="press" data-focus="chrome" aria-expanded={r.roleChooserOpen} aria-controls="refine-roles-panel" aria-label={r.manageAria} onClick={r.toggleRoleChooser} style={sx(quiet + ';flex:none;display:inline-flex;align-items:center;gap:7px')}>
-              {r.manageLabel}
-              <span data-refine-chev="1" data-open={r.roleChooserOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>&#9656;</span>
-            </button>
+            {/* ONE WAY BACK, and only when there is something to go back to. Six per-role Unpin
+                buttons were six ways to reverse a decision the interface never showed you make. */}
+            {r.anyPinned && (
+              <button type="button" data-ix="press" data-focus="chrome" aria-label={r.resetRolesAria} onClick={r.onResetRoles} style={sx(quiet + ';flex:none')}>Reset roles</button>
+            )}
           </div>
 
-          {/* CURRENT STATE, in one line. It was an eyebrow, a value and an explanatory sentence —
-              three lines for one fact, and the third of them a definition. The heading names the
-              section, the dialog names the swatch, so the value alone is already addressed. */}
+          {/* CURRENT STATE, in one line. The map of which role sits where is on the strip itself
+              now — in words, on the colours — so restating it in a table here would be the same
+              information twice, and the copy of it further from the thing it describes. */}
           <div style={sx('display:flex;flex-direction:column;gap:4px;padding-top:16px')}>
             {r.currentRoles.length ? r.currentRoles.map((c) => (
               <span key={c.key} style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{c.label} &middot; {c.status}</span>
@@ -2514,39 +2544,6 @@ function RefineDialog({ vals }) {
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface-muted)')}>{r.noRoleNote}</span>
             )}
           </div>
-
-          {/* INLINE, NOT FLOATING. This became a popover because expanding used to push Done off the
-              bottom of a dialog with no internal scroll. The dialog has a scrollport now, so the
-              panel can take the space it needs and move Palette order and Danger zone down — which
-              is honest, where covering two unrelated sections was not.
-              A bordered raised surface rather than a shadow: it belongs to this section, and this
-              app draws structure in ink, not in blur. */}
-          {r.roleChooserOpen && (
-            <div id="refine-roles-panel" data-refine-roles="1" role="group" aria-label="Manage roles for this swatch" style={sx('margin-top:16px;border:1px solid var(--line);background:var(--surface-raised)')}>
-              {/* Column headers, so the three facts are named rather than inferred from position.
-                  A paragraph introducing the table sat above them, restating what the columns say
-                  and what the section heading already established. */}
-              <div aria-hidden="true" style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;padding:14px 14px 8px;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>
-                <span>Role</span><span>Current assignment</span><span style={sx('text-align:end')}>Action</span>
-              </div>
-              {r.roleRows.map((row) => (
-                <button key={row.id} type="button" data-ix="cell" data-focus="chrome" aria-label={row.aria} onClick={row.onPick} style={sx('display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 104px;gap:12px;align-items:center;width:100%;min-height:48px;background:' + (row.here ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'none') + ';border:none;border-top:1px solid var(--line);padding:8px 14px;cursor:pointer;color:var(--on-surface);font:inherit;text-align:left')}>
-                  <span style={sx('display:inline-flex;align-items:center;gap:8px;min-width:0')}>
-                    <span aria-hidden="true" style={row.chipStyle}></span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:' + (row.here ? '500' : '400'))}>{row.label}</span>
-                  </span>
-                  {/* Where it sits, and on whose authority. Two words, neither a colour nor a glyph:
-                      the current swatch is NAMED, not merely tinted. */}
-                  <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:' + (row.here ? 'var(--on-surface)' : 'var(--on-surface-muted)') + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{row.assignment}</span>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{row.status}</span>
-                  </span>
-                  {/* Fixed column so the actions share one edge whatever they say. */}
-                  <span aria-hidden="true" style={sx('justify-self:end;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);border:1px solid var(--action-line);padding:3px 7px;white-space:nowrap')}>{row.action}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* 6 · POSITION IN PALETTE — where the swatch sits, and whether it sits here at all.
@@ -2559,7 +2556,7 @@ function RefineDialog({ vals }) {
               where does this swatch sit in the palette, or does it sit in it at all. The safety on
               removal never lived in the word "danger": it lives in the two-step arm, the impact
               line beside the control, and the alertdialog below. All three are unchanged. */}
-          <h3 style={sx(secTitle + ';display:block;padding-bottom:10px')}>Position in palette</h3>
+          <h3 style={sx(secTitle + ';display:block;padding-bottom:10px')}>Position in Palette</h3>
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.selCount}</span>
             {/* aria-disabled, not disabled. A `disabled` button leaves the tab order, so at exactly

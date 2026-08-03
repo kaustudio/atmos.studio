@@ -315,18 +315,25 @@ export const pipelineMethods = {
   // relative stamps collapse into ten identical "12M AGO"s within a session. Everything comes from
   // Intl under da-DK — including the same-day variant, which is ONE formatter carrying both date
   // and time parts, so even the joiner between them is the locale's, never a concatenated string.
-  // (da-DK's own separators throughout: 14.06.26, and 14.32 for the clock.) Same-day entries carry
-  // the clock because a date alone cannot distinguish this morning's five generations.
+  // (da-DK's own separators throughout: 14.06.26, and 14.32 for the clock.)
+  //
+  // ONE SHAPE FOR EVERY ROW. This used to switch formatter by age: date and clock for today's
+  // entries, date alone for everything older — so a column of eight values held two different
+  // shapes, and the eye had to parse each one before it could compare them. It is a Created column
+  // in a table now, and a column whose values change shape row to row is not a column.
+  //
+  // The clock was there for a real reason and it keeps it: a date alone cannot tell this morning's
+  // five generations apart, and this is the sort key. Carrying it on every row satisfies both, and
+  // costs no layout at all — --row-time-ink was already sized for the longer variant, because a
+  // column that only fits its narrowest value is a column that jitters.
+  //
   // Relative time is not deleted — it survives as the secondary layer (title tooltip on the cell,
   // and the row's accessible name still says "Generated 3h ago").
   absTime(ts) {
-    if (!this._dfDate) {
-      this._dfDate = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    if (!this._dfDateTime) {
       this._dfDateTime = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
     }
-    const d = new Date(ts), now = new Date();
-    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-    return (sameDay ? this._dfDateTime : this._dfDate).format(d);
+    return this._dfDateTime.format(new Date(ts));
   },
 
   // Downscaled reference thumbnail as a data URL — object URLs are session-only; this survives reload.

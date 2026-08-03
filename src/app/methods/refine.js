@@ -210,7 +210,7 @@ export const refineMethods = {
     this.setState({
       refineOpen: true,
       refineSel: 0,
-      refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false,
+      refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false,
       announce: 'Refining ' + p.name + '. Choose a swatch, then assign a role or adjust its colour. Press Escape to close.',
     }, () => {
       // ENTER ON THE TASK, NOT ITS EXIT. This took the dialog's first button, which is Done in the
@@ -232,27 +232,12 @@ export const refineMethods = {
     // Exit outlives the state change (React would unmount the node mid-tween otherwise) — the same
     // discipline as every other surface here.
     this._lenisStart();
-    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineRoleOpen: false, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false, announce: 'Refine closed.' }, () => {
+    this._dialogOut('[data-refine-dialog]', () => this.setState({ refineOpen: false, refineSel: 0, refineResetArmed: false, refineRemoveIdx: null, refineAllPairs: false, announce: 'Refine closed.' }, () => {
       // The undo stack is a property of the session, not of the palette. Dropping it here is what
       // keeps it out of the schema and out of the quota story.
       this._refineUndo = [];
       if (back && back.focus) try { back.focus(); } catch (e) { }
     }));
-  },
-  // The role manager's disclosure, on the project's own fold primitive rather than a hand-rolled
-  // one. Opening deliberately does NOT move focus — the trigger stays where the user left it and
-  // the panel is next in the tab order, which is the disclosure contract. Collapsing returns focus
-  // to the trigger, because the rows that had it are about to stop existing.
-  toggleRoleManager() {
-    const wasOpen = this.state.refineRoleOpen;
-    if (wasOpen) {
-      this.closeFold('refineRoleOpen', '[data-refine-roles]', () => {
-        const t = document.querySelector('[data-refine-manage]');
-        if (t) try { t.focus(); } catch (e) { }
-      });
-    } else {
-      this.openFold('refineRoleOpen', '[data-refine-roles]');
-    }
   },
   trapRefine(e) { this.trapFocusIn('[data-refine-dialog]', e); },
   // PAIRING DETAIL IS A LAYER, NOT A SECTION. It overlays the canvas and scrolls inside itself, so
@@ -452,6 +437,107 @@ export const refineMethods = {
   // ---- operations ------------------------------------------------------------------------------
   // A role belongs to one swatch; a swatch may carry several. Assigning a role that is already
   // somewhere else MOVES it, rather than leaving the palette claiming two backgrounds.
+  // DIRECT PLACEMENT. refineSetRole toggles — pressing a role that already sits here removes it —
+  // which is the right model for a button and the wrong one for a drag: dropping a role where it
+  // already is must mean "leave it there", never "take it off". This always sets.
+  refinePlaceRole(role, i) {
+    const p = this.state.current;
+    if (!p || ROLE_IDS.indexOf(role) < 0 || !p.swatches[i]) return;
+    const cur = p.roles || {};
+    if (cur[role] === i) return;                       // already pinned here: nothing to say or do
+    let from = -1;
+    try { const r = this.semanticRoles(p, cur).find((x) => x.role === role); if (r) from = r.index; } catch (e) { }
+    const roles = Object.assign({}, cur); roles[role] = i;
+    const label = ROLE_LABEL[role];
+    const where = 'swatch ' + (i + 1) + ', ' + p.swatches[i].hex.toUpperCase();
+    this._applyRefine({ roles }, {
+      announce: from === i
+        ? label + ' pinned to ' + where + '.'
+        : label + ' moved from swatch ' + (from + 1) + ' to ' + where + '.',
+    });
+  },
+  // The one way back, and it is one control rather than six. "Unpin" per role was the half of the
+  // old chooser nobody could explain: it undid a decision the interface never showed you making.
+  refineResetRoles() {
+    const p = this.state.current;
+    if (!p || !p.roles || !Object.keys(p.roles).length) return;
+    this._applyRefine({ roles: null }, { announce: 'Roles reset. Every role is chosen automatically again.' });
+  },
+  // THE DRAG. 1:1 under the hand — no easing, no lag, nothing between the pointer and the chip —
+  // and an eased return only when the gesture is abandoned, which is the one part the interface
+  // does on its own behalf. Targets are hit-tested against the swatch rects rather than
+  // elementFromPoint, so the chip being under the cursor cannot shadow the swatch beneath it.
+  _roleDragStart(e, role, fromIdx) {
+    if (e.button != null && e.button !== 0) return;
+    const g = window.gsap;
+    const chip = e.currentTarget;
+    const root = document.querySelector('[data-refine-dialog]'); if (!root) return;
+    const cells = [...root.querySelectorAll('[data-refine-swatch]')];
+    const rects = cells.map((c) => c.getBoundingClientRect());
+    const x0 = e.clientX, y0 = e.clientY;
+    let moved = false, target = -1;
+    try { chip.setPointerCapture(e.pointerId); } catch (err) { }
+    const mark = (idx) => {
+      if (idx === target) return;
+      target = idx;
+      cells.forEach((c, i) => { if (i === idx) c.setAttribute('data-drop', '1'); else c.removeAttribute('data-drop'); });
+    };
+    const move = (ev) => {
+      const dx = ev.clientX - x0, dy = ev.clientY - y0;
+      if (!moved) {
+        if (Math.abs(dx) + Math.abs(dy) < 4) return;   // a press is not a drag until it travels
+        moved = true; chip.setAttribute('data-dragging', '1');
+      }
+      if (g) g.set(chip, { x: dx, y: dy }); else chip.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+      let hit = -1;
+      for (let i = 0; i < rects.length; i++) {
+        const r = rects[i];
+        if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) { hit = i; break; }
+      }
+      mark(hit);
+    };
+    const end = () => {
+      chip.removeEventListener('pointermove', move);
+      chip.removeEventListener('pointerup', end);
+      chip.removeEventListener('pointercancel', end);
+      chip.removeAttribute('data-dragging');
+      cells.forEach((c) => c.removeAttribute('data-drop'));
+      const drop = target;
+      if (moved && drop >= 0 && drop !== fromIdx) {
+        // The chip is about to be re-rendered inside the target cell, so the transform has to go
+        // in the same tick — otherwise it lands offset by the distance it was dragged.
+        if (g) g.set(chip, { clearProps: 'transform' }); else chip.style.transform = '';
+        this.refinePlaceRole(role, drop);
+        return;
+      }
+      if (!moved) return;                              // a click that never travelled: leave it be
+      if (g && !this._reduce) g.to(chip, { x: 0, y: 0, duration: this.DUR.state, ease: this.EASE.exit });
+      else if (g) g.set(chip, { x: 0, y: 0 });
+      else chip.style.transform = '';
+    };
+    chip.addEventListener('pointermove', move);
+    chip.addEventListener('pointerup', end);
+    chip.addEventListener('pointercancel', end);
+  },
+  // The keyboard has to be able to do what the hand does. Arrow keys walk the role along the strip
+  // one swatch at a time; the announcement is the same one the drop makes.
+  _roleChipKey(e, role, fromIdx) {
+    const n = (this.state.current && this.state.current.swatches.length) || 0;
+    let to = -1;
+    if (e.key === 'ArrowLeft') to = fromIdx - 1;
+    else if (e.key === 'ArrowRight') to = fromIdx + 1;
+    else if (e.key === 'Home') to = 0;
+    else if (e.key === 'End') to = n - 1;
+    else return;
+    e.preventDefault(); e.stopPropagation();
+    if (to < 0 || to >= n || to === fromIdx) return;
+    this.refinePlaceRole(role, to);
+    // Focus follows the role to its new swatch, so the next arrow press continues the same journey.
+    requestAnimationFrame(() => {
+      const el = document.querySelector('[data-role-chip="' + role + '"]');
+      if (el) try { el.focus(); } catch (err) { }
+    });
+  },
   refineSetRole(role, i) {
     const p = this.state.current;
     if (!p || ROLE_IDS.indexOf(role) < 0 || !p.swatches[i]) return;

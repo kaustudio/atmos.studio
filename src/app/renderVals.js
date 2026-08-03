@@ -397,7 +397,7 @@ export const renderValsMethods = {
     // which is exactly how the value ended up flush while the header sat inset.
     const timeCell = { textAlign: 'end', paddingInlineEnd: '16px', fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
-    const feedList = listDecorated.map(({ p, met }) => {
+    const feedList = listDecorated.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
       return {
         // the column shows the absolute stamp (comparable down a sorted column); the relative form
@@ -455,7 +455,11 @@ export const renderValsMethods = {
         onLeave: (e) => this.rowTintOff(e.currentTarget),
         onFocus: (e) => this.rowTintOn(e.currentTarget),
         rowid: p.id,
-        rowStyle: { position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', textAlign: 'left', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', border: '0', borderTop: '1px solid var(--line)', padding: '0', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', font: 'inherit', opacity: busy ? 0.45 : 1 },
+        // The first row gives its top border up to the column header, which now closes with a
+        // --line-strong rule of its own. Two rules a pixel apart read as one thick smudge, not as a
+        // boundary — and it has to be decided HERE rather than in a stylesheet, because this border
+        // is an inline style and no CSS rule can outrank it (see the note by --row-cell-inset).
+        rowStyle: { position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', textAlign: 'left', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', border: '0', borderTop: rowIdx === 0 ? '0' : '1px solid var(--line)', padding: '0', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', font: 'inherit', opacity: busy ? 0.45 : 1 },
         markerStyle: { position: 'absolute', left: '0', top: '0', bottom: '0', width: '3px', background: 'var(--on-surface)', opacity: isCur ? 1 : 0, pointerEvents: 'none', zIndex: 3 },
         restStrip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
@@ -691,8 +695,15 @@ export const renderValsMethods = {
     }
 
     // --- projects: filter chips + assign/manage dialog data ---
-    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
-    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-nano)', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)' });
+    // SENTENCE CASE, AND ONE SIZE FOR THE WHOLE LIBRARY BAR.
+    // These were 10px uppercase, which is the app's label voice — right for a CTA of two words,
+    // wrong for a bar of eight controls someone has to scan and tell apart. Uppercase removes the
+    // word-shape the eye actually reads, and at 10px it was doing that to "Unfiled", "Manage",
+    // "Max contrast" and "Clear filters" all at once. 12px sentence case is the same optical size
+    // and a readable word. Applied to this section's chrome only — the rest of the app's labels are
+    // single acts, not a scan surface. AA and 3D stay uppercase because they are initialisms.
+    const chipStyle = (active) => ({ position: 'relative', zIndex: 1, fontFamily: 'Neue Montreal', fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)' });
+    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-micro)', opacity: 0.7, color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
     const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
     // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
     // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
@@ -840,7 +851,12 @@ export const renderValsMethods = {
       onRemove: () => { this.setActiveTag(t); focusFacetBtn(); },
     })));
     const scopedNow = this.scopedFeed(s.feed).length;
-    const appliedTags = appliedRaw.map((c, i) => Object.assign({}, c, { count: i === appliedRaw.length - 1 ? String(scopedNow) : '' }));
+    // NO COUNT ON THE CHIP. The last chip used to carry the live result size, which was the only
+    // place the result size was stated — so it had to be somewhere. It is now its own sentence on
+    // the filter row ("Showing 5 of 8 palettes"), and a chip reading "Text-ready 5" beside a line
+    // reading "Showing 5 of 8" is the same number twice, once without its denominator. A chip's
+    // whole job here is to name one narrowing and offer to remove it.
+    const appliedTags = appliedRaw;
 
     // ---- THE MEASURED FACETS ----------------------------------------------------------------
     // Three groups that MEASURE a palette, kept apart from the ones that INTERPRET it. Contrast
@@ -1189,6 +1205,10 @@ export const renderValsMethods = {
             // no second constant here to drift out of step with the rest of the app.
             ring: on,
             hex: b.hex, index: i, selected: isSel,
+            // The chip overlay is a second flex row laid over this one, so it needs the same share
+            // each band takes. Mirroring the geometry is what puts a chip on its swatch without a
+            // measuring pass — and it stays right through a reorder, a resize and a removal.
+            grow: this.swatchGrow(b),
             tab: isSel ? 0 : -1,
             // ONE role name and a count, never a truncated one. A band's width is its share of the
             // palette, which has nothing to do with how much text it has to carry, so "Primary ·
@@ -1202,7 +1222,6 @@ export const renderValsMethods = {
             // are still respected: nothing is truncated (the labels wrap onto their own lines rather
             // than being clipped mid-word), and the count-suffix form "Primary +1" stays gone,
             // because a count of assignments is bookkeeping rather than a label.
-            roleNames: names,
             hasRoles: !!names.length,
             aria: (names.length ? names.join(' and ') : 'No role') + '. Swatch ' + (i + 1) + ' of ' + N + ', ' + b.hex.toUpperCase() + '.',
             title: (names.length ? names.join(' · ') + ' — ' : '') + b.hex.toUpperCase(),
@@ -1210,7 +1229,6 @@ export const renderValsMethods = {
             // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
             // destructive control inside the one element whose whole job is to be safe to click.
             style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '124px', background: b.hex, border: 'none', padding: '9px 9px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
-            labelStyle: this.monoLabel('var(--fs-nano)', 'var(--track-flat)', { color: on, opacity: 0.75, textAlign: 'left', lineHeight: 1.25, whiteSpace: 'nowrap' }),
           };
         }),
         // Colour is the main area and the only thing in it.
@@ -1300,7 +1318,7 @@ export const renderValsMethods = {
           aria: (s.refineRoleInfoOpen ? 'Hide' : 'Show') + ' what derived and pinned mean',
           lines: [
             ['Derived', 'chosen for you, and free to move when the palette changes.'],
-            ['Pinned', 'set by you, and it stays.'],
+            ['Pinned', 'you dragged it here, so it stays.'],
           ],
         },
         rolesInfoOpen: !!s.refineRoleInfoOpen,
@@ -1308,18 +1326,6 @@ export const renderValsMethods = {
         // THE LABEL DOES NOT CHANGE. It read "Assign roles" closed and "Close" open, which threw
         // away the name of the function at the moment the panel was on screen to be understood —
         // and "Assign" undersold a control that also pins and releases.
-        manageLabel: 'Manage roles',
-        // aria-expanded already says which way the press goes, so the name does not repeat it.
-        manageAria: 'Manage roles for swatch ' + (selIdx + 1),
-        roleChooserOpen: !!s.refineRoleOpen,
-        // PLURAL, and it is not a typo. "Change role" says a swatch has one; it can carry several,
-        // which is exactly what the chooser's switches let you do and what the strip now shows.
-        // FOLD, NOT TIP — and back to the mechanic this control started with, for the opposite
-        // reason. It became a popover because expanding inline pushed Done off the bottom of a
-        // dialog that had no internal scroll. The dialog has a scrollport now, so pushing content
-        // down is no longer a hazard; it is the honest thing for a panel that belongs to a section.
-        // A floating layer over Palette order and Danger zone hides the sections it is unrelated to.
-        toggleRoleChooser: () => this.toggleRoleManager(),
         // THESE ARE NOT SWITCHES, and presenting them as switches is what made the control lie.
         //
         // A switch promises on/off. The checked state was read from `resolved` — the user's sparse
@@ -1351,31 +1357,36 @@ export const renderValsMethods = {
         // no such case: a palette must always export six roles, so every role always resolves
         // somewhere and a transfer always takes it off something. Shipping the label would mean
         // shipping a state the model cannot produce.
-        roleRows: ROLE_IDS.map((id) => {
-          const r = resolved.find((x) => x.role === id);
-          const here = r.index === selIdx;
-          const pinned = typeof assigned[id] === 'number';
-          const label = ROLE_LABEL[id];
-          return {
-            id, label, here, pinned,
-            hex: r.hex,
-            chipStyle: { width: '12px', height: '12px', flex: 'none', background: r.hex, border: '1px solid color-mix(in srgb, var(--on-surface) 25%, transparent)' },
-            // Never colour alone, and never a checkmark alone: the current swatch is named in
-            // words in this column, and the derived/pinned status is a second word beside it.
-            assignment: here ? 'This swatch' : 'Swatch ' + (r.index + 1),
-            status: pinned ? 'Pinned' : 'Derived',
-            action: here ? (pinned ? 'Unpin' : 'Pin here') : 'Move here',
-            // The row read out, then the act. It used to append a sentence explaining what derived
-            // and pinned mean — spoken on all six rows, every time the panel opened. The status
-            // word is in the row; the definition is on the heading's tip, once.
-            aria: label + ', '
-              + (here ? 'this swatch' : 'swatch ' + (r.index + 1)) + ', '
-              + (pinned ? 'pinned' : 'derived') + '. '
-              + (here ? (pinned ? 'Unpin.' : 'Pin here.') : 'Move to swatch ' + (selIdx + 1) + '.'),
-            // The panel stays open: a swatch can carry several roles, and the trigger is plural.
-            onPick: () => this.refineSetRole(id, selIdx),
-          };
-        }),
+        // THE CHIPS ARE THE CONTROL, and they live on the swatches rather than in a table below
+        // them. The table asked you to press a row on one surface to change a colour on another,
+        // with the strip scrolled out of sight by the time you got there — so the act had no
+        // visible result. And its three verbs included two, Pin and Unpin, that describe a state
+        // the interface never showed you entering. Dragging a role onto a swatch IS pinning it;
+        // there is nothing left to name.
+        roleChips: list.map((b, i) => ({
+          key: i,
+          grow: this.swatchGrow(b),
+          chips: (roleAt[i] || []).map((id) => ({
+            id, label: ROLE_LABEL[id], index: i,
+            pinned: typeof assigned[id] === 'number',
+            aria: ROLE_LABEL[id] + ', on swatch ' + (i + 1) + ' of ' + list.length
+              + '. Drag to another swatch, or use the arrow keys to move it.',
+            style: {
+              display: 'inline-flex', alignItems: 'center', alignSelf: 'flex-start',
+              background: 'none', border: '1px solid transparent', padding: '2px 4px', margin: '0 0 0 -4px',
+              fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)',
+              textTransform: 'uppercase', lineHeight: 1.25, whiteSpace: 'nowrap',
+              color: this.onColor(b.hex), opacity: 0.75, cursor: 'grab', touchAction: 'none',
+            },
+            onDown: (e) => this._roleDragStart(e, id, i),
+            onKey: (e) => this._roleChipKey(e, id, i),
+          })),
+        })),
+        // One control, shown only when there is something to undo. Six per-role "Unpin" buttons
+        // were six ways to reverse a decision the interface never showed you making.
+        anyPinned: Object.keys(assigned).length > 0,
+        resetRolesAria: 'Reset every role to be chosen automatically',
+        onResetRoles: () => this.refineResetRoles(),
         // POSITION — direct, reversible, and therefore never behind a menu. Two visible controls
         // that disable at the ends, so whether a move is possible is legible without opening
         // anything. They were a Reorder dropdown for one revision, which added a click and hid the
@@ -1654,10 +1665,21 @@ export const renderValsMethods = {
       feedHasItems: scoped.length > 0,
       // projects
       projectChips, hasProjects, activeIsAll: s.activeProject === null,
-      // Manage rides the chip component's exact type and padding so it sits on the same baseline
-      // inside the shared border. Full --on-surface, not the chips' muted ink: it is always
-      // available rather than selectable, so it should not wear an "unselected scope" colour.
-      projManageStyle: Object.assign({}, chipStyle(false), { color: 'var(--on-surface)' }),
+      // MANAGE IS AN ACT, AND IT LEFT THE SCOPE GROUP TO SAY SO.
+      // It used to sit inside the chips' shared border, after a hairline, wearing the chip
+      // component's exact type and padding. Everything about that placement said "one more scope":
+      // same box, same baseline, last in a row of four. The hairline was carrying the entire
+      // distinction between navigating the library and changing its structure.
+      //
+      // Now it stands outside the group at the far end of the same row — a secondary bordered
+      // action, the same edge and ink every other unfilled control in the app takes. It is also
+      // named for its subject ("Manage projects") rather than for the verb alone, because a bare
+      // "Manage" beside three project scopes could as easily mean managing the palettes in them.
+      projManageStyle: {
+        fontFamily: 'Neue Montreal', fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)',
+        display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap',
+        background: 'none', border: '1px solid var(--action-line)', color: 'var(--on-surface)', cursor: 'pointer',
+      },
       // The file pair (save / open) reads at the action row's SECONDARY emphasis — the same edge
       // and the same full-strength ink as every other unfilled control in the app. It used to take
       // the utility tier's muted ink and 15% edge; that tier is gone (it could not hold 4.5:1 once
@@ -1689,7 +1711,10 @@ export const renderValsMethods = {
       // entirely for a header that says how many palettes match. With a trait applied the two
       // differ, and the panel was quietly reporting the larger one.
       // One key, not two: `matchCount` sat beside this with no consumer at all.
-      matchLabel: scopedNow + (scopedNow === 1 ? ' palette' : ' palettes'),
+      // Same sentence the bar states, so the panel and the row it sits over never disagree.
+      matchLabel: appliedRaw.length
+        ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
+        : tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's'),
       // sort the facet list: discovery (count) vs known-item lookup (A–Z)
       tagSort: s.tagSort || 'count',
       sortByCount: () => this.setState({ tagSort: 'count' }),
@@ -1733,7 +1758,9 @@ export const renderValsMethods = {
       // Temperature alone offered no clear-all in the panel at all — the two measured groups were
       // added after this line and never reached it.
       facetClear: appliedRaw.length ? {
-        label: appliedRaw.length > 1 ? 'Clear all' : 'Clear filter',
+        // Never "Clear all": on a page whose other destructive act deletes palettes, a verb with no
+        // object is a verb that could mean the library. It names what it clears, at both counts.
+        label: appliedRaw.length > 1 ? 'Clear filters' : 'Clear filter',
         onClear: () => { this.clearTags(); requestAnimationFrame(() => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }); },
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
@@ -1743,9 +1770,32 @@ export const renderValsMethods = {
       toggleChar: () => this.toggleFold('charOpen', '[data-facet-char]'),
       charLabel: 'Character traits',
       charAria: (s.charOpen ? 'Hide' : 'Show') + ' character traits, which are interpretations rather than measurements',
-      // State kept visible OUTSIDE the overlay: how many match, and one way out.
-      resultCount: scopedNow + (scopedNow === 1 ? ' palette' : ' palettes'),
+      // ===== the filter row's own state, kept visible OUTSIDE the overlay =====
+      //
+      // A NUMBER ON THE TRIGGER. "Filter" said nothing about whether anything was filtered; the
+      // only evidence was the chips beside it, which is fine until they wrap or the row is scanned
+      // at a glance. "Filter 1" is the count of narrowings currently applied, in the same place the
+      // scope chips carry theirs, so the two rows report themselves the same way.
+      filterCount: appliedRaw.length ? String(appliedRaw.length) : '',
+      filterAria: appliedRaw.length
+        ? (s.tagMenuOpen ? 'Close filters' : 'Filter palettes, ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied')
+        : (s.tagMenuOpen ? 'Close filters' : 'Filter palettes'),
+      // SHOWING n OF m, NOT "n PALETTES". The bare count answered "how many are here" — the
+      // question nobody with a filter applied is asking. What they want to know is what the filter
+      // COST them, and that needs the denominator: 5 of 8 says a narrowing happened and roughly how
+      // hard. The denominator is the project scope's own total, not the whole archive, because the
+      // scope chips above already declared which library segment we are inside; counting against
+      // the archive would make Unfiled + a filter report a number that matches neither row.
+      // Unfiltered it stays a plain total — "Showing 8 of 8" is a sentence about nothing.
+      resultSummary: appliedRaw.length
+        ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
+        : tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's'),
       anyFilter: appliedTags.length > 0,
+      // "Clear all" is now "Clear filters", and it sits AFTER the chips rather than before them.
+      // Both are the same correction: the old label named no object, so on a page whose other
+      // destructive verb deletes palettes it could be read as clearing the library — and it stood
+      // between the Filter button and the filters it clears, so the way out was read before the
+      // thing to get out of. Order is now trigger → what is applied → how to undo all of it.
       onClearAll: () => this.clearTags(),
       onRemoveLast: () => this.removeLastFilter(),
       // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
@@ -1874,7 +1924,7 @@ export const renderValsMethods = {
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
       pageSizeOptions: [12, 24, 36].map((n, i) => ({
         label: '' + n, pressed: pageSize === n ? 'true' : 'false', tabIndex: pageSize === n ? 0 : -1,
-        style: this.monoLabel('var(--fs-label)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
+        style: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', { position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: pageSize === n ? 'var(--surface)' : 'var(--on-surface-muted)', transition: this._reduce ? 'none' : 'color .2s var(--ease-standard)', fontVariantNumeric: 'tabular-nums' }),
         onSelect: () => this.setPageSize(n),
       })),
       pageTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + ([12, 24, 36].indexOf(pageSize) * 100) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform .5s cubic-bezier(.625,.05,0,1)' },
@@ -1885,7 +1935,9 @@ export const renderValsMethods = {
         this.setPageSize(next);
         const btns = [...document.querySelectorAll('[data-toggle-init] [data-toggle-btn]')]; const nb = btns[sizes.indexOf(next)]; if (nb) nb.focus();
       },
-      pageLabel: 'Page ' + (page + 1) + ' / ' + pageCount,
+      // "of", not "/". The same word the result summary above uses for the same relationship —
+      // a position inside a total — so the section states it one way rather than two.
+      pageLabel: 'Page ' + (page + 1) + ' of ' + pageCount,
       prevDisabled: page <= 0, nextDisabled: page >= pageCount - 1,
       prevPage: () => this.setPage(page - 1), nextPage: () => this.setPage(page + 1),
       prevStyle: this.pageNavStyle(page <= 0), nextStyle: this.pageNavStyle(page >= pageCount - 1),
@@ -1905,7 +1957,11 @@ export const renderValsMethods = {
         // sorts. 'aa' shares its track with the ⓘ that explains the badge.
         { key: 'aa', label: 'AA pairs' },
         { key: 'contrast', label: 'Max contrast' },
-        { key: 'time', label: 'Date' },
+        // "Date" named the type of the value, not the event. Created, because that is what the
+        // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
+        // touches it — _commitRefine rewrites swatches and roles and leaves the stamp alone. So
+        // "Updated" would have been a plausible label for a column that never updates.
+        { key: 'time', label: 'Created' },
       ].map((c) => {
         const active = s.sortKey === c.key;
         const desc = active && s.sortDir === 'desc';
@@ -1934,7 +1990,11 @@ export const renderValsMethods = {
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
-          style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
+          style: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', {
+            // textTransform overrides monoLabel's uppercase. This row is now a true column header
+            // over a table of numbers, and a header is read as a word, not spelled out — see the
+            // chipStyle note above for why the whole bar dropped the case.
+            textTransform: 'none',
             // A CHIP, NOT A COLUMN. It hugs its label with the same padding on all four sides and
             // sits at its track's end, so the BOX lands on the column line and the label is centred
             // inside it. Filling the whole track was tried and removed: a tint one column wide
