@@ -35,7 +35,7 @@ export const wipeMethods = {
     this.setState({
       backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, landingDismissed: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
-      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, assignPalette: null, manageProjects: false,
+      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null, manageProjects: false,
       refineOpen: false, refineSel: 0, restorePending: null,
       announce: 'Intro will show again.',
     }, () => {

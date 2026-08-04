@@ -56,6 +56,71 @@ export const miscMethods = {
     this._nestLenis = null; this._nestRaf = null;
   },
 
+  /* THE CONTAINER CARRIES THE SELECTION, so a scope past the edge is not something you have to go
+     and find afterwards. Picking a chip that sits half under the fade used to leave it there: the
+     list re-scoped, the pill moved to a chip you could not fully see, and the only way to confirm
+     what you had chosen was to scroll the group by hand. With four columns as the frame there are
+     nearly always scopes outside it, so this stopped being an edge case.
+
+     IT ALSO TEACHES THE GESTURE. Landing the chip PEEK short of the edge rather than flush against
+     it reveals a slice of whatever comes next, so the container answers "there is more this way"
+     every time it moves — which is the quiet version of telling someone the row scrolls.
+
+     Three restraints, and each one is what keeps it from becoming annoying:
+       · It moves ONLY when the selection actually changes, never on a re-render. A reveal that ran
+         on every update would yank the row back the moment the user scrolled it themselves.
+       · It does nothing when the chip already sits PEEK clear of both edges. Note the margin is
+         part of the test, not just the destination: a chip 20px from the edge is technically
+         visible and still gets nudged out to the full peek, because the rule is "the selection is
+         never against an edge", and a rule that only fired on total clipping would leave it there.
+         What the test does prevent is the re-centring some scrollers do on every press, which
+         fidgets, and fidgeting reads as instability rather than help.
+       · DUR.fold on EASE.fold: the exact tokens the pill behind the chip already slides on, so the
+         mark and the container are one movement rather than two things that happen to coincide.
+         Indirect change gets a curve; reduced motion gets the same destination with no travel.
+
+     IT ALSO OWNS THE KEYBOARD, because the browser does not do this job well enough to leave alone.
+     Measured in Chrome: focusing a chip that is ENTIRELY out of view centres it, and focusing one
+     that is merely CLIPPED — 37px past the edge, the normal case when tabbing along the row — scrolls
+     it not at all, so the focused control sits half hidden. scroll-margin-inline does not reach
+     either case. Running the same reveal from the chip's own focus handler is what makes tabbing to
+     a chip and clicking it land in the same place, and is what stops a keyboard user having to take
+     it on trust that the control they are on is fully on screen. */
+  // Where the row stood at the moment of the press, captured before focus can move it. See the
+  // note in renderVals' mkChip for why the browser's focus scroll is undone rather than prevented.
+  _holdProjScroll() { const grp = document.querySelector('[data-proj-group]'); this._projScrollAtPress = grp ? grp.scrollLeft : null; },
+  _revealProjChip(el) {
+    try {
+      const grp = document.querySelector('[data-proj-group]');
+      if (!grp) return;
+      // Rewind the browser's own scroll-into-view, still inside the focus event and so ahead of the
+      // next paint: the tween then starts from where the user actually left the row. Consumed here
+      // so a later keyboard focus, which had no press, is never wound back to a stale offset.
+      if (this._projScrollAtPress != null) { grp.scrollLeft = this._projScrollAtPress; this._projScrollAtPress = null; }
+      // Default subject is the SELECTED chip; the focus handler passes the focused one instead.
+      const cur = el || grp.querySelector('[data-proj-chip][aria-pressed="true"]');
+      if (!cur || !grp.contains(cur)) return;
+      const max = grp.scrollWidth - grp.clientWidth;
+      if (max <= 0) return;                        // everything fits: there is no "along" to move
+      // Clear of the 36px cover gradient, so the chosen chip never settles under the fade that
+      // means "there is more" — and wide enough past it to show the edge of its neighbour.
+      const PEEK = 44;
+      const from = grp.scrollLeft, view = grp.clientWidth;
+      // offsetLeft is content-space (the group is the offsetParent and is position:relative), so it
+      // does not move as the group scrolls — the same measure the pill is placed with.
+      const left = cur.offsetLeft, width = cur.offsetWidth;
+      let target;
+      if (left - PEEK < from) target = left - PEEK;                    // it lies back the way we came
+      else if (left + width + PEEK > from + view) target = left + width + PEEK - view;
+      else return;                                                     // comfortably in view already
+      target = Math.max(0, Math.min(target, max));
+      if (Math.abs(target - from) < 1) return;
+      const g = window.gsap;
+      if (this._reduce || !g) { grp.scrollLeft = target; return; }
+      g.to(grp, { duration: this.DUR.fold, ease: this.EASE.fold, scrollTo: { x: target }, overwrite: 'auto' });
+    } catch (e) { }
+  },
+
   // sliding pill behind the active project chip — measured (chips have variable widths)
   // Every [data-proj-group] on the page, not just the first: the tag filter is the SAME chip group
   // as the project filter, so it gets the same pill from the same code rather than a second

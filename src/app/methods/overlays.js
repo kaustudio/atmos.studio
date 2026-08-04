@@ -661,11 +661,47 @@ export const overlayMethods = {
     else if (format === 'ase') this.download('palette_' + slug + '.ase', this.buildASE(entries), 'application/octet-stream');
     this.closeExport(true);
   },
+  // THE SAME FIVE FORMATS, over a whole folder. Everything above writes one palette; this writes a
+  // project as one file per format, and it is deliberately the same surface and the same five
+  // choices — a folder is not a different kind of export, it is the same export at a different
+  // scope, and giving it its own vocabulary would make people learn the tool twice.
+  //
+  // FILENAME says which it is: palette_* for one, project_* for a folder. The two land in the same
+  // downloads directory and a folder's file is the one that will be opened months later.
+  doProjectExport(id, format, semantic) {
+    const pals = this.projectPalettes(id);
+    if (!pals.length) return;
+    const title = this.projectName(id), slug = this.slugName(title);
+    const groups = this.projectEntryGroups(pals, semantic);
+    const fn = (ext) => 'project_' + slug + '_' + format + '.' + ext;
+    if (format === 'tailwind') this.download(fn('css'), this.buildTailwindSet(title, groups, semantic), 'text/css;charset=utf-8');
+    else if (format === 'tokens') this.download(fn('json'), this.buildW3CTokensSet(title, groups, semantic), 'application/json');
+    else if (format === 'figma') this.download(fn('json'), this.buildFigmaTokensSet(title, groups), 'application/json');
+    else if (format === 'css') this.download(fn('css'), this.buildCssFileSet(title, groups, semantic), 'text/css;charset=utf-8');
+    else if (format === 'ase') this.download('project_' + slug + '.ase', this.buildASESet(groups), 'application/octet-stream');
+    this.closeExport(true);
+  },
   openExport(p) {
     if (!p) return;
+    this._openExportSurface({ exportPalette: p, exportProject: null }, 'Export options for ' + p.name + ' opened. Press Escape to close.');
+  },
+  /* Opened from INSIDE Manage Projects, and it stays on top of it rather than replacing it: the
+     folder you are exporting is the row you just pressed, and closing the manager to ask which
+     format would throw away the place you were in. Escape closes this one first (see the ordering
+     in PaletteApp's key handler) and focus goes back to the row's own Export button, so the trip
+     out is the trip in, reversed. */
+  openProjectExport(id) {
+    const n = this.projectPalettes(id).length;
+    if (!n) return;   // an empty folder has nothing to write; the control is disabled anyway
+    this._openExportSurface({ exportPalette: null, exportProject: id },
+      'Export options for the project ' + this.projectName(id) + ', ' + n + ' palette' + (n === 1 ? '' : 's') + ', opened. Press Escape to close.');
+  },
+  // One arrival for both scopes, so a dialog opened two ways cannot be focused, animated or
+  // announced two ways.
+  _openExportSurface(patch, announce) {
     this._exportBack = document.activeElement; this._exDone = false;
     clearTimeout(this._exGuard);
-    this.setState({ exportOpen: true, exportPalette: p, announce: 'Export options for ' + p.name + ' opened. Press Escape to close.' }, () => {
+    this.setState(Object.assign({ exportOpen: true, announce }, patch), () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-export-dialog]');
         if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
@@ -726,7 +762,7 @@ export const overlayMethods = {
     if (this._exDone) return; this._exDone = true;
     clearTimeout(this._exGuard);
     const back = this._exportBack; this._exTl = null;
-    const patch = { exportOpen: false, exportPalette: null };
+    const patch = { exportOpen: false, exportPalette: null, exportProject: null };
     if (!keepAnnounce) patch.announce = 'Export options closed.';
     this.setState(patch, () => { if (back && back.focus) try { back.focus(); } catch (e) { } this._exportBack = null; });
   },

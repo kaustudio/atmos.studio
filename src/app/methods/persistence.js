@@ -246,6 +246,11 @@ export const persistenceMethods = {
   },
   // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
   projectName(id) { if (!id) return 'Unfiled'; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : 'Unfiled'; },
+  // What is IN a folder, in library order, ignoring whatever the archive is currently scoped or
+  // filtered to. Exporting a project must write the whole project — a filter is a way of looking at
+  // the library, never a silent edit to what a folder contains — so this reads the feed, not
+  // scopedFeed. Used by the manage rows' counts and by the whole-project export.
+  projectPalettes(id) { return (this.state.feed || []).filter((p) => this.inProject(p, id)); },
   // Scoping the archive replaces every row in it, so it takes the same arrival as a page change:
   // the list restates itself top-down instead of cutting to a different set in place.
   //
@@ -255,7 +260,11 @@ export const persistenceMethods = {
   // below the list, so anchoring moves toward what you were touching, not away from it.
   // Folders hold different counts, so the list's height changes with the scope — see _listFreezeHeight
   // for why that has to be ramped rather than stepped. Freeze BEFORE the swap, ramp after it.
-  setActiveProject(id) { this._listFreezeHeight(); this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); }); },
+  // _revealProjChip rides HERE rather than in componentDidUpdate, and that placement is the whole
+  // safeguard: this is the one path a scope change comes through, so the container moves when the
+  // user chooses and at no other time. Hung off the render pass it would re-assert itself on every
+  // unrelated update and fight anyone scrolling the row by hand.
+  setActiveProject(id) { this._listFreezeHeight(); this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._revealProjChip(); this._listRowsReveal(); this._listSettleHeight(); }); },
   // Tag scoping. Activating the pressed tag clears it — the chip is the toggle, so there is no
   // separate "clear" control to find, and no way to end up filtered with nothing to unfilter with.
   // Same shape as setActiveProject deliberately: same state pipeline, same universe rebuild, same
@@ -328,20 +337,32 @@ export const persistenceMethods = {
   /* TOGGLE, not move. Picking a project the palette is already in removes it; picking a new one
      adds it. Unfiled is not a project — choosing it means "belong to nothing", so it clears the
      set rather than joining a ninth list. */
+  /* THE ACT IS CONFIRMED, VISIBLY. Filing a palette used to say so in `announce` alone — which is
+     the live region, which is to say: to screen readers only. Everyone else got a 6px dot appearing
+     beside a row and had to infer from it that a specific palette had joined a specific folder. The
+     one question the dialog raises ("did that do anything?") was answered for the smallest group of
+     the people asking it.
+     So the same sentence goes to both channels now. The notice names the palette AND the project,
+     because "Added." would confirm that something happened without confirming what — and this
+     dialog's whole job is that the user picked THIS palette for THAT folder. */
   assignPalette(palId, projectId) {
     const pid = projectId || null;
-    this.setState((st) => {
-      let msg = '';
-      const feed = st.feed.map((p) => {
+    // Read the sentence off the CURRENT record rather than building it inside the updater: it is
+    // needed in two places now (the live region and the visible notice), and an updater that writes
+    // to a variable outside itself is a side effect React is entitled to run twice.
+    const cur = (this.state.feed || []).find((p) => p.id === palId);
+    if (!cur) return;
+    const msg = !pid ? cur.name + ' removed from every project.'
+      : cur.name + (this.inProject(cur, pid) ? ' removed from ' : ' added to ') + this.projectName(pid) + '.';
+    this.setState((st) => ({
+      feed: st.feed.map((p) => {
         if (p.id !== palId) return p;
-        if (!pid) { msg = p.name + ' removed from every project.'; return this.withProjects(p, []); }
+        if (!pid) return this.withProjects(p, []);
         const has = this.inProject(p, pid);
-        const next = has ? this.palProjects(p).filter((x) => x !== pid) : this.palProjects(p).concat([pid]);
-        msg = p.name + (has ? ' removed from ' : ' added to ') + this.projectName(pid) + '.';
-        return this.withProjects(p, next);
-      });
-      return { feed, announce: msg };
-    }, () => this.persist());
+        return this.withProjects(p, has ? this.palProjects(p).filter((x) => x !== pid) : this.palProjects(p).concat([pid]));
+      }),
+      announce: msg,
+    }), () => { this.persist(); this.showNotice(msg); });
   },
   deleteProject(id) {
     const st = this.state; const idx = st.projects.findIndex((p) => p.id === id); if (idx < 0) return;
@@ -354,7 +375,10 @@ export const persistenceMethods = {
     patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
     // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next
     // deletion replaces it — see the note in overlays.js where the palette path says the same.
-    this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); if (this.state.feedView === 'grid') this.buildUniverse(); });
+    // A deletion reflows the row, and if the deleted project WAS the scope the app has just fallen
+    // back to All — which sits at the far left of a group that may be scrolled well past it. Same
+    // reveal, same reason: the active chip should never be the one you cannot see.
+    this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); this._revealProjChip(); if (this.state.feedView === 'grid') this.buildUniverse(); });
   },
   // ---- portable project file (accountless permanence) — DISTINCT from token export ----
   buildProjectFile(scope) {

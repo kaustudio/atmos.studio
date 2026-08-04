@@ -430,6 +430,8 @@ function MobileShareView({ ms }) {
 }
 
 const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+// Off-screen but IN the accessibility tree — the live regions' own style, and the one to reach for
+// whenever a control's spoken form has to carry a word its visible form leaves out.
 
 /* Curved-wipe transition layer. Caps are transient motion shape — the one sanctioned curved
    exception; never a persistent border-radius on UI.
@@ -1137,12 +1139,32 @@ function FeedSection({ vals }) {
     // 12px below, matching the 12px BETWEEN the group and Manage Projects. One number for the gap
     // around this band whichever way it is measured, rather than 12 across and 24 down.
     <div style={sx('display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
-      {/* Background lives in global.css, not here: it is the scrolling-shadow pair that cues
-          overflow when the chip row exceeds the group, and inline background would override it. */}
-      <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);min-width:0;max-width:100%;overflow-x:auto')}>
+      {/* THE SCOPES GET FOUR COLUMNS, AND THE GRID DECIDES HOW WIDE THAT IS.
+
+          The group used to size to its own content with no ceiling, and that is what cost Manage
+          Projects its place. flex-wrap breaks lines by HYPOTHETICAL size — an item's content width,
+          measured before any shrinking — and shrink then applies only WITHIN a line. An unbounded
+          group therefore never got a shrink pass: two long project names made it 693px, it took the
+          whole line alone, and Manage wrapped underneath at a 908px viewport. Not a phone; a laptop
+          with the window not maximised.
+
+          Capping it fixes that at the cause rather than fencing it off, because a hypothetical size
+          is clamped by max-width (Flexbox §9.2) — so the group can no longer claim a line it cannot
+          fill. It also fixes the thing the wrap was a symptom of: Manage used to slide rightward as
+          project names grew, so the control moved every time the library did. Against a fixed frame
+          it lands in the same place whatever the folders are called.
+
+          FOUR OF TWELVE, derived rather than guessed — see the max-width note in global.css. The
+          group takes as much of that frame as it needs and no more (flex 0 1 auto, never 1), so a
+          library with two short scopes is not a wide box mostly full of nothing; past four columns
+          the chips scroll inside it and the shadow cue in global.css finally has work to do. */}
+      <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);flex:0 1 auto;min-width:0;overflow-x:auto')}>
         <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
         {vals.projectChips.map((ch) => (
-          <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} onClick={ch.onClick} style={ch.chipStyle}>{ch.label}<span style={ch.countStyle}>{ch.count}</span></button>
+          /* The label is its own span so it can be the ONLY part that truncates. As a bare text
+             node beside the count there was nothing to put an ellipsis on, and a 46-character
+             project name simply became a 294px chip — one name eating the whole frame. */
+          <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}>{ch.label}</span><span style={ch.countStyle}>{ch.count}</span></button>
         ))}
       </div>
       <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage Projects: create, rename, or delete" style={vals.projManageStyle}><TextSwap>Manage Projects</TextSwap></button>
@@ -2156,12 +2178,15 @@ function ExportDialog({ vals }) {
   if (!vals.hasExport) return null;
   const ex = vals.export;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
+    // 125 as it always was, EXCEPT when this was opened from Manage Projects — a folder's export is
+    // a sub-decision of the dialog that raised it, so it has to sit over the 126 that dialog holds
+    // rather than under it. Every other route into this surface stacks exactly where it did.
+    <div style={{ ...sx('position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px'), zIndex: ex.stacked ? 127 : 125 }}>
       <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Export ' + ex.name + ' as design tokens'} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Export tokens</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{ex.kicker}</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}><TextSwap>Close</TextSwap></button>
@@ -2171,6 +2196,10 @@ function ExportDialog({ vals }) {
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
         </div>
 
+            {/* The scale of a folder export, stated before a format is picked — see scopeLine. */}
+            {ex.scopeLine && (
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{ex.scopeLine}</span>
+            )}
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {ex.formats.map((f, fi) => (
             <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={f.onPick} onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur} style={f.style}>
@@ -2267,13 +2296,21 @@ function AssignDialog({ vals }) {
         </header>
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {assign.options.map((o) => (
-            <button key={o.key} type="button" data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
-              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")}>{o.label}</span>
-              <span aria-hidden="true" style={o.markStyle}></span>
+            <button key={o.key} type="button" role="checkbox" aria-checked={o.checked} data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
+              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{o.label}</span>
+              <span aria-hidden="true" style={o.markStyle}><IconCheck /> {o.markLabel}</span>
+            {/* WHERE IT IS NOW, restated every time it changes. role=status so the sentence is
+                spoken as well as shown — a tick that appears in a list of eight is the kind of
+                change a reader who has already walked past the row never learns about. */}
+            <span role="status" style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;line-height:1.4;color:var(--on-surface-muted);text-wrap:pretty')}>{assign.memberLine}</span>
             </button>
           ))}
         </div>
         <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
+          {/* role=checkbox, because that is what these rows ARE: a set of independent memberships a
+              palette can hold any number of, not a list of alternatives. As plain buttons they gave
+              a reader no state at all — only an aria-label that flipped between "Add" and "Remove",
+              which describes the next press rather than the current fact. */}
           <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
             <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
@@ -2310,16 +2347,42 @@ function ManageDialog({ vals }) {
           </div>
         </div>
         {manage.empty && (
-          <div style={sx("padding:18px var(--page-gutter) 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view.</div>
+          <div style={sx("padding:18px var(--page-gutter) 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view — and export the whole folder as one set of tokens.</div>
         )}
         <div style={sx('padding:12px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:8px')}>
           {manage.rows.map((pr) => (
             <div key={pr.id} style={sx('display:flex;align-items:center;gap:8px')}>
-              <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);flex:none;white-space:nowrap')}>{pr.count}</span>
+              <span style={sx('position:relative;flex:1;min-width:0;display:flex')}>
+                {/* padding-right clears the numeral's column so a long project name runs under the
+                    caret, never under the count. */}
+                <input data-proj-name={pr.id} type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" aria-describedby={'projn-' + pr.id} style={sx("width:100%;min-width:0;background:var(--surface-raised);border:1px solid var(--line);padding:9px 38px 9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+                {/* The numeral is painted; the noun is spoken. A bare "8" announced after a project
+                    name is a quantity of nothing in particular, and aria-label on a span with no
+                    role is not reliably read — so the description this field points at carries the
+                    whole sentence as real text, and only the digits are visible. */}
+                <span id={'projn-' + pr.id} style={sx('position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
+                  <span aria-hidden="true">{pr.count}</span>
+                  <span style={liveRegionStyle}>{pr.countAria}</span>
+                </span>
+              </span>
+              {/* cursor written from state, not left to [data-ix]:disabled — that rule is in the
+                  stylesheet and this style is inline, so a hardcoded `pointer` would outrank it and
+                  the empty project's control would still invite the press it refuses. */}
+              <button type="button" data-ix="press" data-focus="chrome" disabled={!pr.canExport} aria-label={pr.exportAria} title={pr.exportTitle} onClick={pr.onExport} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:0;cursor:' + (pr.canExport ? 'pointer' : 'default'))}>
+                <IconExport />
+              </button>
+        {/* The empty state is the one place a folder can be explained without the explanation
+            becoming permanent furniture — it is gone the moment there is a project to look at.
+            Worth the extra clause, because "what is a project FOR" is the question, and the answer
+            is now: it is the unit you export. */}
               <button type="button" data-ix="press" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
+        {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
+            as a whole. The count moved INSIDE the name field (see the note on manageView.count) and
+            what it paid for is the Export button — the act a folder existed for and did not have.
+            Order is name → export → delete: the constructive act sits next to the thing it acts on,
+            and the destructive one stays at the far edge where it is hardest to hit by accident. */}
             </div>
           ))}
         </div>

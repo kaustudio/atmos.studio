@@ -60,6 +60,12 @@ export default class PaletteApp extends React.Component {
   buildW3CTokens = X.buildW3CTokens;
   buildFigmaTokens = X.buildFigmaTokens;
   buildASE = X.buildASE;
+  projectEntryGroups = X.projectEntryGroups;
+  buildTailwindSet = X.buildTailwindSet;
+  buildCssFileSet = X.buildCssFileSet;
+  buildW3CTokensSet = X.buildW3CTokensSet;
+  buildFigmaTokensSet = X.buildFigmaTokensSet;
+  buildASESet = X.buildASESet;
   paletteHexList = X.paletteHexList;
   paletteCss = X.paletteCss;
   interpret = I.interpretLocal;
@@ -136,7 +142,9 @@ export default class PaletteApp extends React.Component {
     assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
-    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportSemantic: false, notice: null,
+    // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
+    // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
+    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, exportSemantic: false, notice: null,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A legal route arrives past them for a different reason: there is no tool on it to introduce.
     landingDismissed: (this._shared || isLegal(this._entryRoute)) ? true : this._landingDismissed(),
@@ -305,6 +313,11 @@ export default class PaletteApp extends React.Component {
       if (e.key === 'Escape') {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
+        // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
+        // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
+        // dismiss the surface that is actually in front. The palette export can never coexist with
+        // either of the two below it, so nothing else changes order by this.
+        if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
         if (typeof this.state.refineRemoveIdx === 'number') { e.preventDefault(); this.refineCancelRemove(); return; }
         if (this.state.refineResetArmed) { e.preventDefault(); this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }); return; }
@@ -318,7 +331,6 @@ export default class PaletteApp extends React.Component {
         if (this.state.exampleList) { e.preventDefault(); this.closeExampleList(); return; }
         if (this.state.copyMenuOpen) { e.preventDefault(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
-        if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
         if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
         if (this.state.overlay) { e.preventDefault(); this.closeOverlay(); return; }

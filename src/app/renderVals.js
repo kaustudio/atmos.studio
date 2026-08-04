@@ -445,7 +445,13 @@ export const renderValsMethods = {
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
         deleteAria: 'Delete ' + p.name,
         onAssign: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.openAssign(p); },
-        assignAria: 'Move ' + p.name + ' to a project',
+        // "Move" is left over from the single-slot model, where filing a palette in a second project
+        // took it out of the first. Membership is a set now, and the row states where it already is
+        // — the same sentence the overlay's control uses, so the two doors into one dialog describe
+        // the same act.
+        assignAria: this.palProjects(p).length
+          ? 'Add ' + p.name + ' to another project, or remove it from one (currently in ' + this.palProjects(p).map((id) => this.projectName(id)).join(', ') + ')'
+          : 'Add ' + p.name + ' to a project',
         isExample: p.example === true,
         projectLabel: this.palProjects(p).map((id) => this.projectName(id)).join(', '), hasProject: this.palProjects(p).length > 0,
         onEnter: (e) => this.rowTintOn(e.currentTarget),
@@ -668,14 +674,38 @@ export const renderValsMethods = {
     }
 
     // --- token export dialog ---
+    /* ONE DIALOG, TWO SCOPES. It writes either a palette or a whole project, and everything below
+       the header is identical between them — the same five formats, the same semantic toggle, the
+       same wording about what a scaffold is. Only the subject changes, so only the subject is
+       branched: a second dialog for folders would have meant two places to keep the format list
+       right, and would have taught people that exporting a folder is a different act. It is not. */
     let exportView = null;
-    if (s.exportOpen && s.exportPalette) {
-      const p = s.exportPalette, semantic = !!s.exportSemantic;
+    if (s.exportOpen && (s.exportPalette || s.exportProject)) {
+      const semantic = !!s.exportSemantic;
+      const p = s.exportPalette;
+      const pid = p ? null : s.exportProject;
+      const pals = pid ? this.projectPalettes(pid) : [p];
+      const n = pals.length;
+      const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
       const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: '12px 14px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
-      const mk = (id, label, ext) => ({ label, ext, onPick: () => this.doExport(p, id, semantic), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+      const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
-        name: p.name, semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
-        layerLabel: semantic ? 'Exporting the semantic scaffold. Refine before shipping.' : 'Exporting the primitive layer (swatches by weight).',
+        name: pid ? this.projectName(pid) : p.name,
+        kicker: pid ? 'Export project' : 'Export tokens',
+        stacked: !!pid,   // opened from Manage Projects, so it renders above it
+        // WHAT THE FILE WILL HOLD, before a format is chosen. A folder export is the one act here
+        // whose scale is not obvious from the thing you pressed, and "8 palettes, 40 colours, one
+        // file" is the sentence that stops someone expecting eight downloads.
+        scopeLine: pid
+          ? n + ' palette' + (n === 1 ? '' : 's') + ' · ' + colours + ' colour' + (colours === 1 ? '' : 's') + ' · one file'
+          : null,
+        aria: pid
+          ? 'Export the project ' + this.projectName(pid) + ' as design tokens, ' + n + ' palette' + (n === 1 ? '' : 's') + ' in one file'
+          : 'Export ' + p.name + ' as design tokens',
+        semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
+        layerLabel: semantic
+          ? 'Exporting the semantic scaffold' + (pid ? ', six roles per palette' : '') + '. Refine before shipping.'
+          : 'Exporting the primitive layer (swatches by weight)' + (pid ? ', grouped by palette' : '') + '.',
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · css'),
           mk('tokens', 'Design tokens (W3C)', 'json'),
@@ -702,13 +732,47 @@ export const renderValsMethods = {
     // The scope chips ARE view-toggle options — same segmented control, same states — and were a
     // hand-copy of that builder down to a truncated transition that left their background tint
     // cutting. Only the row layout differs, so only the row layout is stated.
-    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px' });
+    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', maxWidth: '100%' });
+    /* ONE NAME CANNOT TAKE THE WHOLE ROW. A project name may be 60 characters, and at 10px that is
+       a 294px chip — two of them and the scope group is 693px wide before All and Unfiled have had
+       a turn. The cap is stated in `ch` rather than px so it stays a CHARACTER budget: it tracks
+       --fs-label if that token ever moves, which a pixel value would not.
+       Truncation hides content, so the full name stays reachable two ways — the aria-label has
+       always carried it, and `title` now carries it for a pointer. */
+    const CHIP_CHARS = 26;
+    const labelStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, maxWidth: CHIP_CHARS + 'ch' };
     // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
     // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
     // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
     // by SIZE alone (12 → 9), which was already doing the work.
-    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-micro)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
-    const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), countStyle: countStyle(active), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : '') }; };
+    // flex:none so the ellipsis eats the NAME and never the number: a scope chip whose count has
+    // been truncated away is a chip that has stopped saying the one thing only it can say.
+    const countStyle = (active) => ({ fontFamily: mono, fontSize: 'var(--fs-micro)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', flex: 'none' });
+    /* NATIVE FOCUS, LEFT ALONE — and that is the whole point of this handler being a recorder
+       rather than a preventDefault.
+
+       The chip must not take a focus RING on a mouse click. It carries data-focus="chrome", which is
+       3px of --on-surface at a 3px offset over a 3px --surface shadow; the group clips vertically, so
+       all that survives of that ring is its left and right segments, and they arrive as two black
+       bars flanking the selected chip with a pale gap inside them. The browser gets this right on
+       its own: a genuine mouse click does not match :focus-visible. Every attempt to take focus by
+       hand does — preventDefault plus focus() from the click handler, and equally from the mousedown
+       handler; both were measured resolving :focus-visible to true. There is no programmatic focus
+       that Chrome will attribute to a pointer, so the only correct move is not to make one.
+
+       That leaves the scroll jump the preventDefault was there to stop: focus makes the browser
+       scroll the group the minimum needed to expose the chip — 368px, instantly — and the reveal
+       tween then eased backward to its peek position, which read as an overshoot correcting itself.
+       So the press records where the row was BEFORE focus touched it, and _revealProjChip winds it
+       back to that value before tweening. Both happen inside the focus event, ahead of the next
+       paint, so the browser's jump is never seen and the row makes one movement on one curve.
+
+       onFocus carries the reveal for BOTH routes, which is what puts the keyboard on equal footing
+       rather than leaving it to the browser — measured, the browser leaves a clipped chip clipped.
+       On the pointer route it fires before the click that selects, so by the time setActiveProject
+       calls the reveal again the chip is already in place and that second call returns doing
+       nothing. */
+    const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), labelStyle, countStyle: countStyle(active), onMouseDown: () => this._holdProjScroll(), onFocus: (e) => this._revealProjChip(e.currentTarget), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : ''), title: label.length > CHIP_CHARS ? label : undefined }; };
     // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
     // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
     // All, which is the home scope, not a filter. Unfiled follows the same rule as real projects.
@@ -934,9 +998,43 @@ export const renderValsMethods = {
          mark, but it means "is in this project" rather than "is THE project", and Unfiled is
          current only when the set is empty — it is the absence of membership, not a member. */
       const live = s.feed.find((f) => f.id === pal.id) || pal;
-      const mkOpt = (id, label) => { const cur = id === null ? this.palProjects(live).length === 0 : this.inProject(live, id); return { key: String(id), label, current: cur, markStyle: { width: '6px', height: '6px', flex: 'none', background: 'var(--on-surface)', opacity: cur ? 1 : 0 }, style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id), aria: (id === null ? 'Remove ' + pal.name + ' from every project' : (cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label)) }; };
+      const memberOf = this.palProjects(live).map((id) => this.projectName(id));
+      /* THE MARK IS A WORD AND A TICK, not a 6px dot. The dot said "current" to whoever already knew
+         the convention and nothing at all to anyone else — and it flipped between opacity 0 and 1
+         with no transition, so the one piece of feedback the dialog gave arrived as a pop, which
+         this app's own contract reads as a rendering fault rather than a response.
+         `Added` is stated in words beside the tick because a tick alone is a colourless icon
+         carrying the whole state of the row (SC 1.4.1), and it eases in on the chrome band like
+         every other state change here. */
+      const mkOpt = (id, label) => {
+        const cur = id === null ? this.palProjects(live).length === 0 : this.inProject(live, id);
+        return {
+          key: String(id), label, current: cur, checked: cur ? 'true' : 'false',
+          markStyle: {
+            display: 'inline-flex', alignItems: 'center', gap: '5px', flex: 'none',
+            fontFamily: 'Neue Montreal', fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)',
+            textTransform: 'uppercase', color: 'var(--on-surface)',
+            opacity: cur ? 1 : 0, transform: cur ? 'translateX(0)' : 'translateX(4px)',
+            transition: this._reduce ? 'none' : 'opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)',
+          },
+          // Unfiled is not a membership, so it never reads as one. "Added" on the row that means
+          // "belong to nothing" would be a contradiction; the tick there says this is already where
+          // the palette stands, which is also why pressing it would do nothing.
+          markLabel: id === null ? 'Current' : 'Added',
+          style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id),
+          aria: (id === null ? 'Remove ' + pal.name + ' from every project' : (cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label)),
+        };
+      };
       assignView = {
         name: pal.name, options: [mkOpt(null, 'Unfiled'), ...s.projects.map((pr) => mkOpt(pr.id, pr.name))],
+        /* WHERE THIS PALETTE IS, RIGHT NOW, in one line under its name — the standing answer the
+           dialog was missing. A toggle tells you what a press DID; this tells you what is true, so
+           someone who has ticked three rows and lost track can read the result instead of
+           reconstructing it from the marks. It is a live region as well, because the sentence
+           changes underneath a screen reader that has already passed it. */
+        memberLine: memberOf.length
+          ? 'In ' + (memberOf.length === 1 ? memberOf[0] : memberOf.slice(0, -1).join(', ') + ' and ' + memberOf[memberOf.length - 1])
+          : 'Not in any project yet',
         onCreate: (e) => { const inp = document.querySelector('[data-assign-new]'); const v = inp ? inp.value : ''; if (v && v.trim()) { this.newProjectAndAssign(v.trim()); } },
         onCreateKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.currentTarget.value; if (v && v.trim()) this.newProjectAndAssign(v.trim()); } },
       };
@@ -946,10 +1044,29 @@ export const renderValsMethods = {
     if (s.manageProjects) {
       manageView = {
         empty: !hasProjects, rows: s.projects.map((pr) => {
-          const count = s.feed.filter((p) => this.inProject(p, pr.id)).length; return {
-            id: pr.id, name: pr.name, count: count + ' palette' + (count === 1 ? '' : 's'),
+          const count = this.projectPalettes(pr.id).length; return {
+            id: pr.id, name: pr.name,
+            /* THE COUNT IS A NUMBER, and it lives inside the name field rather than after it.
+               "8 palettes" sat in the row as a third column, and at the widest plural it took a
+               third of a 440px dialog to say something the numeral says alone — which is why there
+               was no room here for the one control this dialog was missing. The container the
+               number sits in IS the project's name, so the pairing needs no label: a folder and
+               how much is in it. The spoken form keeps the noun (see countAria), because a bare
+               "8" read out after a project name is a fact without a unit. */
+            count: String(count),
+            countAria: count + ' palette' + (count === 1 ? '' : 's') + ' in this project',
             onRename: (e) => { const inp = document.querySelector('[data-proj-name="' + pr.id + '"]'); if (inp && inp.value.trim() && inp.value.trim() !== pr.name) this.renameProject(pr.id, inp.value.trim()); },
             onRenameKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.currentTarget.value; if (v.trim()) this.renameProject(pr.id, v.trim()); e.currentTarget.blur(); } },
+            // EXPORT THE FOLDER, from the row that names it. Disabled rather than hidden while the
+            // project is empty: a control that vanishes leaves you wondering whether folders can be
+            // exported at all, and the name says exactly why it cannot be pressed yet.
+            canExport: count > 0,
+            onExport: () => this.openProjectExport(pr.id),
+            // Icon-only, so the words arrive on hover rather than standing in the row forever.
+            exportTitle: count ? 'Export all ' + count + ' palette' + (count === 1 ? '' : 's') + ' as one file' : 'Nothing in this project to export yet',
+            exportAria: count
+              ? 'Export the project ' + pr.name + ' as design tokens, all ' + count + ' palette' + (count === 1 ? '' : 's') + ' in one file'
+              : pr.name + ' is empty, so there is nothing to export yet',
             onDelete: () => this.deleteProject(pr.id), deleteAria: 'Delete project ' + pr.name + ' (its palettes move to Unfiled)',
           };
         }),
@@ -1728,9 +1845,13 @@ export const renderValsMethods = {
       // action, the same edge and ink every other unfilled control in the app takes. It is also
       // named for its subject ("Manage projects") rather than for the verb alone, because a bare
       // "Manage" beside three project scopes could as easily mean managing the palettes in them.
+      // flex:none is load-bearing, not tidiness. This is the only door to creating, renaming,
+      // deleting and exporting a project, so it is the one control on the band that must never be
+      // the thing that gives way — the scroller beside it exists precisely so that it doesn't have
+      // to. Without it the button is a shrinkable flex item whose nowrap label is its only floor.
       projManageStyle: {
         fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase',
-        display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap',
+        display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap', flex: 'none',
         background: 'none', border: '1px solid var(--action-line)', color: 'var(--on-surface)', cursor: 'pointer',
       },
       // The file pair (save / open) reads at the action row's SECONDARY emphasis — the same edge

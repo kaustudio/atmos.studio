@@ -592,17 +592,59 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    local) and two shadows pinned to the BOX (scroll). With nothing clipped, each cover sits over its
    shadow and the group looks exactly as before; the moment chips continue past an edge, that edge's
    cover has scrolled away and the shadow shows. No JS, no state to update, and the shadow ink is
-   the same on-surface mix the hairlines use, so it reads in both themes. */
+   the same on-surface mix the hairlines use, so it reads in both themes.
+
+   ONE CUE, AT THE END ONLY. There were two, one per edge, and the pair was the problem: a hard mark
+   at the leading edge sat right where the selected chip sits, in ink close enough to the pill behind
+   it to read as part of the selection rather than as the boundary of the row. The start of the row
+   needs no announcement — you can see where it begins. Only the end hides anything.
+
+   AND IT DISSOLVES RATHER THAN DRAWS. --surface at 90%, ramped from transparent across 28px, so the
+   chips fade into the container instead of having a line drawn beside them. It is the SURFACE colour
+   and not an ink, which is what stops it competing with the selection: nothing darkens, the row just
+   stops being legible at its end. The 10% left unfilled is what keeps it a blur rather than a wipe —
+   the last chip stays faintly visible under it instead of being cut off. */
+/* FOUR OF THE TWELVE COLUMNS, and it is derived from the grid rather than eyeballed:
+     col   = (100% − 11 × gutter) / 12          ← 12 tracks, 11 gutters between them
+     4 col = 4 × col + 3 × gutter               ← the three gutters the span swallows
+   which reduces to the expression below. 100% resolves against the band, and the band is a
+   block-level flex container filling the section's content box — so this really is four of the
+   page's own columns, and it re-derives itself if --grid-gutter ever moves.
+
+   It lives here rather than inline because it is grid knowledge, and because it belongs beside the
+   cue below: the cap is what makes the group overflow, and the cue is what says so. The two are one
+   mechanism. Anything past four columns scrolls; see the note in AppView for why the ceiling is
+   what keeps Manage Projects on the row and in one place.
+
+   The 280px floor is not a second rule, it is a guard on this one. Four columns is a PROPORTION, so
+   it shrinks with the window — and at the narrowest width the desktop gate still allows it came out
+   at 192px, which is one chip and the edge of another. The grid governs above a ~936px viewport,
+   where four columns is already wider than the floor; below that the floor holds the scroller at a
+   width you can still read two scopes in. It costs nothing: measured at 673px the whole band is
+   still one row with 54px to spare, so the guard never pushes anything onto a second line. */
 [data-proj-group]{
+  max-width:max(280px, calc((100% - 11 * var(--grid-gutter)) / 3 + 3 * var(--grid-gutter)));
   background:
-    linear-gradient(to right, var(--surface) 40%, transparent) left center,
-    linear-gradient(to left,  var(--surface) 40%, transparent) right center,
-    radial-gradient(farthest-side at 0 50%, color-mix(in srgb, var(--on-surface) 22%, transparent), transparent) left center,
-    radial-gradient(farthest-side at 100% 50%, color-mix(in srgb, var(--on-surface) 22%, transparent), transparent) right center;
+    linear-gradient(var(--surface), var(--surface)) right center,
+    linear-gradient(to right, transparent, color-mix(in srgb, var(--surface) 90%, transparent)) right center;
   background-repeat:no-repeat;
-  background-size:36px 100%, 36px 100%, 12px 100%, 12px 100%;
-  background-attachment:local, local, scroll, scroll;
+  background-size:32px 100%, 28px 100%;
+  background-attachment:local, scroll;
+  /* NO SCROLLBAR, because the shadows above ARE the scrollbar's job done better. A horizontal bar
+     inside a 30px segmented control is a third of its height, it sits under the chips it belongs to,
+     and on Windows it is permanently there rather than fading like macOS's overlay bars — so the
+     control looks broken in exactly the state it is working correctly.
+     This is only safe because the affordance is not being dropped, only moved: the edge shadow says
+     there is more, every chip is a tab stop that the browser scrolls into view on focus, and a
+     trackpad or wheel still scrolls the group. Never hide a bar without one of those in place. */
+  scrollbar-width:none;         /* Firefox */
+  -ms-overflow-style:none;      /* legacy Edge */
 }
+[data-proj-group]::-webkit-scrollbar{display:none}   /* WebKit, Blink */
+/* No scroll-margin-inline here, and that is a finding rather than an omission: it was tried, and it
+   changes nothing on the path it was meant to fix. Chrome's focus scroll-into-view centres a chip
+   that is entirely out of view and leaves a merely-clipped one where it is, honouring the margin in
+   neither case. The reveal in misc.js drives the keyboard path instead — see the note there. */
 [data-sort-chevron]{display:inline-flex;transform-origin:50% 50%;transition:transform var(--dur-chrome) var(--ease-standard),opacity var(--dur-fast) var(--ease-standard)}
 [data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
 /* ONE ARROW, AND IT IS THE TRUE ONE. Every column used to draw a chevron at rest — the active one
