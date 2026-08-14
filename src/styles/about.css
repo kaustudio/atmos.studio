@@ -211,7 +211,7 @@
   /* Held well under --block-gap so the gap down to the image still reads as the bigger
      boundary: at 4vh against a 6.5vh block gap it was 1.63x, which is not a hierarchy. */
   margin:clamp(22px,3vh,38px) 0 0;
-  font-size:20px;font-weight:500;line-height:1.35;letter-spacing:var(--track-body);
+  font-size:20px;font-weight:500;line-height:1.35;letter-spacing:-0.5px;
   color:color-mix(in srgb,var(--on-surface) 58%,transparent);
   text-wrap:balance;
 }
@@ -977,6 +977,29 @@
    size to tell what kind of thing they are looking at when the same kind of thing has three sizes.
    The variants keep their real differences — the quiet one is quieter by COLOUR, the takeover one is
    bigger in effect by having a whole screen to itself — and none of them differs by scale. */
+/* ===== THE NUMBER BEFORE THE HEADING.
+
+   Fourteen sections is more than a reader can hold, and until now nothing told them where they were
+   in it. The prefix is a two-level scheme — four parts, their sections beneath — so 3.2 says both
+   "you are two thirds through" and "this belongs with 3.1 and 3.3". aria-hidden, because a screen
+   reader gets the heading text and the document outline and a spoken "three point two" in front of
+   every one of them is noise rather than orientation.
+
+   It sits in the label voice the page already uses for figure names, and takes --on-surface-muted so
+   it reads as apparatus rather than as part of the sentence. Tabular figures so the column of them
+   down the page lines up. Both tokens flip with the theme, so this needs no light/dark rule of its
+   own. */
+.about-route .about-sec__num{
+  display:block;margin-bottom:.55em;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-detail);font-weight:400;line-height:1;
+  letter-spacing:var(--track-flat);
+  color:var(--on-surface-muted);
+  font-variant-numeric:tabular-nums;
+}
+/* Anchor jumps land with air above them rather than flush under the fixed masthead. */
+.about-route section[id]{scroll-margin-top:calc(var(--band-gap) / 2)}
+
 .about-route{
   --fs-statement:clamp(28px,4.2vw,58px);
   /* AT EVERY WIDTH, not only under 820. --fs-nano is 8px, and this route reaches for it in nine
@@ -1313,7 +1336,7 @@
   height:36px;padding:0 16px;
   background:color-mix(in srgb,var(--on-surface) 7%,transparent);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent);
+  border:1px solid color-mix(in srgb,var(--on-surface) 36%,transparent);
   color:var(--on-surface);
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:14px;font-weight:500;
@@ -1323,13 +1346,23 @@
   transition:background-color var(--dur-chrome) var(--ease-button-hover),
              border-color var(--dur-chrome) var(--ease-button-hover);
 }
+/* THE EDGE CARRIES THE STATE, NOT THE FILL, and that is the readability fix.
+
+   Both the fill and the label are mixes of --on-surface, so every step that lightened the fill walked
+   it toward the label. Measured, the fill went 36 to 56 to 74 while the label stayed at 243 — the text
+   never actually failed (14.04, 10.61, 8.04 to 1) but the button visibly closed up under the pointer.
+
+   The boundary was the real fault. WCAG 1.4.11 asks 3 to 1 of a control's visual boundary and the
+   border measured 1.51 to 1 against the page at rest, so the shape only became visible ON hover,
+   which is backwards — a control has to look like a control before you point at it. 36% clears 3 to 1
+   at rest, and the two states brighten the edge sharply while the fill barely moves. */
 .doc-route .about-cta:hover{
-  background:color-mix(in srgb,var(--on-surface) 16%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 38%,transparent);
+  background:color-mix(in srgb,var(--on-surface) 12%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 62%,transparent);
 }
 .doc-route .about-cta:active{
-  background:color-mix(in srgb,var(--on-surface) 24%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 48%,transparent);
+  background:color-mix(in srgb,var(--on-surface) 18%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 82%,transparent);
 }
 
 /* ---------------------------------------------------------------- responsive
