@@ -4,8 +4,9 @@
 // are here rather than exported from there for one reason: AppView imports LegalPage, so LegalPage
 // importing back out of AppView would close a cycle — which ES modules tolerate and nobody should
 // have to reason about. A third file both sides import is the honest shape of "shared".
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { sx } from '../lib/sx.js';
+import { initDocHeadHide } from './methods/docHeadHide.js';
 
 /* THE PART THAT SWAPS. Wrap the WORDS of a label in this and nothing else — an icon, a chevron or a
    toggle track passed as a sibling stays exactly where it is while the text rises through its mask.
@@ -49,6 +50,32 @@ export function B006({ label, hover, btnRef, ...props }) {
   );
 }
 
+/* THE GLASS, as seven stacked layers (Osmo Supply — Glass Effect / Background).
+   Ported verbatim: the class names are the resource's, the order is the resource's, and every layer
+   is load-bearing. `__fill` is the tint, `__fill-burn` deepens it through colour-burn, the two
+   `__highlight-*` are the lit top-left and the falling-away bottom-right, the two `__edge-*` draw
+   the rim, and `__inner-glow` is the light caught inside the pane. Take one out and the pane stops
+   reading as a thickness and goes back to being a blurred rectangle.
+
+   It carries no attributes of its own — no aria-hidden, no data hook. Seven empty divs are already
+   nothing to a screen reader, and the effect is styled entirely from .glass-effect in global.css.
+
+   Rendered as the FIRST child of the bar it fills, which is what puts it behind the bar's own
+   content; .glass-bar in global.css is the two lines that make that stacking explicit. */
+export function GlassEffect() {
+  return (
+    <div className="glass-effect">
+      <div className="glass-effect__fill"></div>
+      <div className="glass-effect__fill-burn"></div>
+      <div className="glass-effect__highlight-soft"></div>
+      <div className="glass-effect__highlight-strong"></div>
+      <div className="glass-effect__edge-light"></div>
+      <div className="glass-effect__edge-dark"></div>
+      <div className="glass-effect__inner-glow"></div>
+    </div>
+  );
+}
+
 function themeSwitchLabel(vals) {
   return (
     <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
@@ -89,8 +116,17 @@ export function ThemeSwitch({ vals }) {
    has started as. Styles are in doc.css beside the route's own base rules; scripts/prerender.mjs
    restates this markup for the no-JS floor and has to be kept in step with it. */
 export function DocHead({ vals }) {
+  /* The bar leaves on the way down and comes back on the way up — see methods/docHeadHide.js for
+     why that is here rather than on the app's header, and why it is a transition rather than a
+     tween. Mounted from DocHead itself, not from the two pages that render it, so the behaviour
+     cannot drift between /about and the legal routes or be forgotten by a fourth document. init
+     returns its own teardown, which is exactly what useEffect wants back. */
+  const barRef = useRef(null);
+  useEffect(() => initDocHeadHide(barRef.current), []);
+
   return (
-    <div className="doc-head">
+    <div className="doc-head glass-bar" ref={barRef}>
+      <GlassEffect />
       <span className="doc-head__theme"><ThemeSwitch vals={vals} /></span>
       <span className="doc-head__mark">
         <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery">

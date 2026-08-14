@@ -109,8 +109,22 @@ const ROUTES = {
 // switch is deliberately absent; it does nothing without a script, and a dead control is worse than
 // no control. KEEP IN STEP with those two components: this is the one duplication in the build, and
 // the class names are what doc.css and site-foot.css style.
+// The glass pane goes in even though the theme switch does not, and the asymmetry is the point: the
+// switch is a control that does nothing without a script, and a dead control is worse than none —
+// the pane is seven empty divs styled entirely from global.css, so it renders identically with the
+// bundle and without it. Leaving it out would give a no-JS reader a masthead with no background at
+// all, since .doc-head's own var(--surface) came off when the glass went on.
 const head = () => `
-<div class="doc-head">
+<div class="doc-head glass-bar">
+  <div class="glass-effect">
+    <div class="glass-effect__fill"></div>
+    <div class="glass-effect__fill-burn"></div>
+    <div class="glass-effect__highlight-soft"></div>
+    <div class="glass-effect__highlight-strong"></div>
+    <div class="glass-effect__edge-light"></div>
+    <div class="glass-effect__edge-dark"></div>
+    <div class="glass-effect__inner-glow"></div>
+  </div>
   <span class="doc-head__mark"><a href="/" aria-label="Atmos Gallery"><span class="mark" role="img" aria-label="Atmos Gallery"></span></a></span>
 </div>`;
 

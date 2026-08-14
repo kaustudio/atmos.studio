@@ -956,3 +956,150 @@ html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); b
 [data-refine-chev][data-open="1"]{ transform:rotate(90deg); }
 /* The per-swatch delete: present only for the swatch in hand, or under the pointer, so the strip
    is not a row of five delete buttons. It fades and lifts rather than appearing. */
+
+/* ===== GLASS EFFECT (Osmo Supply — Glass Effect / Background) ==================================
+   Ported verbatim. Every declaration below .glass-bar is the resource's own: the same seven layers,
+   the same em-based box-shadows, the same blend modes and the same order. Nothing is retuned to
+   this site's tokens, and it should not be — the numbers are a set, and .28125em/.09375em/-.328125em
+   are the falloff of one lit edge, not three knobs.
+
+   WHAT IT NEEDS FROM ITS HOST, and the only thing this file adds:
+     · a containing block — inset:0 resolves against the nearest positioned ancestor. Both bars that
+       wear this are already position:sticky, so .glass-bar deliberately sets NO position: a
+       `position:relative` here would win over .doc-head's `position:sticky` on source order and
+       quietly unstick the masthead.
+     · no opaque background of its own — a backdrop-filter with var(--surface) painted over it
+       blurs a backdrop nobody can see. Both bars dropped theirs (AppView's header inline style,
+       .doc-head in doc.css); the tint they lose is what .glass-effect__fill gives back.
+     · its content above the pane. The glass is position:absolute and the first child, so in-flow
+       siblings would paint UNDER it; one z-index lifts them out. :not(.glass-effect) rather than a
+       class per child, so a control added to either bar tomorrow is above the glass by default.
+
+   The demo's .demo-element is not here. That rule sized the resource's 15em pill — it is the
+   harness, not the effect, and the host on this site is the bar. */
+.glass-bar > *:not(.glass-effect){position:relative;z-index:1}
+/* ONE HAIRLINE, MIXED RATHER THAN TOKENED. --line and --line-strong are both opaque, and an opaque
+   rule under a pane that is 30% see-through is the heaviest thing in the bar — that is the edge
+   that came off in the first place. A mix of the ink at 12% carries the same weight in both themes
+   (dark ink on the light surface, light ink on the dark one) and stays translucent, so it reads as
+   the pane's own boundary rather than as a rule drawn beneath it. Stated here rather than on either
+   bar, because both wear it and one of them sets its box inline. */
+.glass-bar{border-bottom:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent)}
+
+/* THE EFFECT IS TWO THINGS: A TINT OF THE MODE'S OWN SURFACE, AND A BLUR.
+
+   It arrived as the Osmo seven-layer pane and was walked back over three rounds — rims too
+   dominant, then the bottom edge too strong, then the whole thing still competing with the page.
+   The third note is the one that settles the shape rather than the numbers: a chrome bar is not a
+   thing to look at. Every layer that gave the pane a MATERIAL — the specular slivers, the two rims,
+   the burn, the highlight clamp — was working to make the bar interesting, and interesting is the
+   one thing it must not be while somebody is reading a palette through it. So they are parked at
+   transparent, and what is left is the tint and the blur.
+
+   THE TINT IS var(--surface), NOT A FIXED GREY, and that is the whole of the light/dark story now.
+   The resource's #d4d4d4 is a single near-white that has to sit ABOVE one theme's surface and
+   BELOW the other's, which is why it needed two hand-tuned sets and still read as a grey plate on
+   dark. Mixed from --surface it is the page's own colour at 70%, so the bar is the surface it
+   floats over with three tenths of what passes beneath showing through — correct in both themes by
+   construction, and with no second set of numbers to keep in step. There is no
+   :root[data-theme="dark"] block here any more because there is nothing left for it to say.
+
+   NO saturate(). The resource pairs the blur with saturate(120%), which pushes the colour of
+   whatever is behind the pane. On this site the thing behind the pane is usually a palette, and a
+   bar that renders somebody's swatches more vivid than they are is not decoration, it is a wrong
+   reading of the one value the app exists to report.
+
+   No radius, on purpose and by system: .glass-effect takes border-radius:inherit and every surface
+   on this site is square, so the reference's own .rounded (4px) is the one property of it that does
+   not come across.
+
+   THE FIVE PARKED LAYERS still render — they are transparent, not removed. The markup is the
+   resource's and stays intact (GlassEffect in chrome.jsx, restated in scripts/prerender.mjs), so
+   re-arming any of them is a token away rather than a component rewrite. Nothing paints: a
+   box-shadow in transparent and a background-color in transparent are both no-ops. */
+.glass-effect {
+  --glass-tint: color-mix(in srgb, var(--surface) 70%, transparent);
+  --glass-burn: transparent;
+  --glass-highlight-soft: transparent;
+  --glass-highlight-strong: transparent;
+  --glass-edge-light: transparent;
+  --glass-edge-dark: transparent;
+  --glass-clamp: transparent;
+  --glass-clamp-blend: normal;
+
+  -webkit-backdrop-filter: blur(.75em);
+  backdrop-filter: blur(.75em);
+  pointer-events: none;
+  isolation: isolate;
+  color: var(--glass-burn);
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* THE PANE CROSSFADES WITH THE PAGE. html/body already ease their background over --dur-chrome when
+   the switch is thrown, and since the tint is mixed from --surface it is the same value moving —
+   a bar that jumped between the two surfaces while the page behind it eased would be the one
+   surface on the site that appears rather than arrives. Declared on the fill rather than on
+   .glass-effect, because a custom property is not itself animatable; what transitions is the
+   background-color the token feeds. The blanket reduced-motion rule at the top of this file already
+   flattens it to .001ms, so nothing extra is needed here. The five parked layers carry no
+   transition — transparent to transparent is not a crossfade. */
+.glass-effect__fill { transition: background-color var(--dur-chrome) var(--ease-standard); }
+
+.glass-effect__fill {
+  opacity: 1;
+  border-radius: inherit;
+  background-color: var(--glass-tint);
+  position: absolute;
+  inset: 0;
+}
+
+.glass-effect__fill-burn {
+  opacity: .05;
+  mix-blend-mode: color-burn;
+  border-radius: inherit;
+  background-color: currentColor;
+  position: absolute;
+  inset: 0;
+}
+
+.glass-effect__highlight-soft {
+  mix-blend-mode: overlay;
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -.28125em -.28125em .09375em -.328125em var(--glass-highlight-soft);
+}
+
+.glass-effect__highlight-strong {
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset .28125em .28125em .09375em -.328125em var(--glass-highlight-strong);
+}
+
+.glass-effect__edge-light {
+  border-radius: inherit;
+  mix-blend-mode: plus-lighter;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset .1875em .28125em .09375em -.1875em var(--glass-edge-light);
+}
+
+.glass-effect__edge-dark {
+  mix-blend-mode: overlay;
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -.1875em -.28125em .09375em -.1875em var(--glass-edge-dark);
+}
+
+.glass-effect__inner-glow {
+  mix-blend-mode: var(--glass-clamp-blend);
+  border-radius: inherit;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 1.75em var(--glass-clamp);
+}

@@ -29,7 +29,7 @@
 
 /* ---------------------------------------------------------------- masthead */
 
-/* Restates the app's chrome bar: 64px tall, full width, hairline underneath, and the mark centred in
+/* Restates the app's chrome bar: 64px tall, full width, and the mark centred in
    it. In the app the mark is position:fixed at left:50% (see logoStyle in AppView) so it can fly over
    the landing; here the bar is sticky and the mark sits inside it, which lands in the same place
    optically but can never overlap the prose of a document that scrolls. 165×26 is the app's own
@@ -39,7 +39,15 @@
    app's header keeps it, and the mark has to stay on the page's centre line regardless of how wide
    that switch's label happens to be. `1fr auto 1fr` centres the middle track on the bar itself, so
    LIGHT and DARK — different widths — cannot shift the wordmark between renders. The empty third
-   track is what pays for that; it is doing real work. */
+   track is what pays for that; it is doing real work.
+
+   NO BACKGROUND AND NO BOTTOM RULE, and that is the app bar's arrangement too. Both wear the glass
+   pane now (see .glass-effect in global.css, GlassEffect in chrome.jsx). The pane's whole job is to
+   blur what passes beneath it, which var(--surface) painted here would hide; and the hairline that
+   used to close the bar off doubled up with the pane's own bottom shade, so the one place the bar
+   met the page carried two edges and read heavier than anything else on the screen. The tint and
+   the boundary both come from the pane now. position:sticky stays, and is what its inset:0
+   resolves against. */
 .doc-head{
   position:sticky;top:0;z-index:20;
   display:grid;
@@ -47,9 +55,22 @@
   align-items:center;
   height:64px;
   padding:0 var(--page-gutter);
-  background:var(--surface);
-  border-bottom:1px solid var(--line-strong);
+  transition:transform var(--dur-chrome) var(--ease-standard);
 }
+
+/* THE BAR LEAVES ON THE WAY DOWN. methods/docHeadHide.js sets the attribute and explains the rule;
+   this owns the move, because two states with nothing measured between them is a transition's job
+   and not a tween's. 100% of the bar's own height clears it completely — there is no shadow or
+   glow hanging below it to leave a stripe behind, the pane's boundary being the 1px hairline that
+   travels with it.
+
+   Only the document routes take this, and only because only they render .doc-head. The tool's
+   header holds actions you reach for mid-task; chrome that moves while you are working is a
+   different and much worse idea than chrome that moves while you are reading.
+
+   Inert without JS and under reduced motion: the attribute is the only thing that triggers it, and
+   nothing sets the attribute in either case. */
+.doc-head[data-nav-hidden="1"]{transform:translateY(-100%)}
 .doc-head__mark{grid-column:2;display:flex}
 .doc-head__theme{grid-column:1;justify-self:start}
 .mark{

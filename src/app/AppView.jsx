@@ -3,7 +3,7 @@
 // from renderVals() untouched. No logic lives here.
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
-import { B006, B006Text, TextSwap, ThemeSwitch } from './chrome.jsx';
+import { B006, B006Text, GlassEffect, TextSwap, ThemeSwitch } from './chrome.jsx';
 import LegalPage from './LegalPage.jsx';
 import AboutPage from './AboutPage.jsx';
 import { isDoc, isLegal, pathFor } from './routes.js';
@@ -727,7 +727,21 @@ export default function AppView({ vals }) {
 
       <WipeLayer />
 
-      <header style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);background:var(--surface);position:sticky;top:0;z-index:10')}>
+      {/* THE BAR IS GLASS NOW. Same 64px, same two clusters in the same corners — the only thing
+          that changed is what fills it. Two declarations left this string, both because the glass
+          replaces them rather than because they were wrong:
+
+          `background:var(--surface)` was an opaque plate, and a backdrop-filter under an opaque
+          plate blurs nothing. GlassEffect's __fill layer is the tint now.
+
+          `border-bottom:1px solid var(--line-strong)` was the boundary, and the pane already draws
+          one — a hairline plus the glass's own bottom shade stacked two edges on top of each other
+          at the one place the bar meets the page, which is the heaviest line on the screen for a
+          surface that is supposed to be barely there. The fill is what separates the bar from what
+          scrolls beneath it. Removing it also hands the pane the last pixel: inset:0 resolves
+          against the padding box, so the glass now fills all 64px rather than stopping at 63. */}
+      <header className="glass-bar" style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 var(--page-gutter);position:sticky;top:0;z-index:10')}>
+        <GlassEffect />
         {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
             nothing about the palette, the archive or the work, yet it was the first thing every
             left-to-right scan landed on. The theme switch takes the corner instead — it is the
