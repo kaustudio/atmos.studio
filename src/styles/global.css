@@ -1,8 +1,8 @@
 /* Atmos Gallery. Global chrome styles, ported verbatim from the design comp helmet.
    Asset URLs remapped to /fonts and /assets. */
 
-@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -181,6 +181,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --fs-detail:0.75rem;        /* 12 — menu items, notes, secondary copy */
   --fs-label:0.625rem;        /* 10 — uppercase labels; the workhorse, 83 uses */
   --fs-micro:0.5625rem;       /*  9 — counts, eyebrows, row meta */
+  /* PURE, not a tinted neutral. An image outline picks up whatever it is drawn over, so a near-white
+     like --on-surface (#f3f3ef) reads as dirt along the edge of a photograph rather than as an edge.
+     Black in light, white in dark, at a tenth. */
+  --img-outline:rgb(0 0 0 / .10);
   --fs-nano:0.5rem;           /*  8 — swatch value labels, the smallest thing drawn */
   /* ===== BUTTON GEOMETRY =====
      Three sizes. It was twelve paddings across the forty buttons that declared one, and ten of
@@ -411,6 +415,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
+  --img-outline:rgb(255 255 255 / .10);
   --surface:#141413;
   --surface-raised:#1f1f1e;
   --surface-white:#2a2a28;

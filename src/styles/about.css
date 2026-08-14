@@ -278,7 +278,7 @@
    picture inside a box whose size is being animated. */
 .about-plate__target::after{
   content:'';position:absolute;inset:0;pointer-events:none;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 10%,transparent);
+  box-shadow:inset 0 0 0 1px var(--img-outline);
 }
 
 .about-grow{padding-block:0 var(--band-gap);row-gap:var(--block-gap)}
@@ -348,7 +348,7 @@
 .about-shot__inner img{display:block;width:100%;height:100%;object-fit:cover}
 .about-shot::after{
   content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 10%,transparent);
+  box-shadow:inset 0 0 0 1px var(--img-outline);
 }
 
 /* ------------------------------------------------------------- the spectrum plot
@@ -985,7 +985,15 @@
    size to tell what kind of thing they are looking at when the same kind of thing has three sizes.
    The variants keep their real differences — the quiet one is quieter by COLOUR, the takeover one is
    bigger in effect by having a whole screen to itself — and none of them differs by scale. */
-.about-route{--fs-statement:clamp(28px,4.2vw,58px)}
+.about-route{
+  --fs-statement:clamp(28px,4.2vw,58px);
+  /* AT EVERY WIDTH, not only under 820. --fs-nano is 8px, and this route reaches for it in nine
+     figure-annotation rules — axis ticks, interval hexes and their deltas, matrix use labels. It was
+     raised on phones and left at 8px on desktop, which is 35 nodes of technical readout at a size
+     nobody leans in for. The token moves for this route; the tool keeps its own 8px, where the same
+     value labels a swatch it has to fit inside. */
+  --fs-nano:var(--fs-label);
+}
 .about-route .about-statement{
   grid-column:2 / span 10;
   margin:0 0 clamp(48px,7vh,88px);
@@ -1360,7 +1368,7 @@
      tick marks, the contrast matrix's use labels, the interval hexes and their delta stacks. All nine
      rules that reach for this token are figure annotations, so the token moves rather than the rules,
      and it moves to the step above it rather than to a number invented here. */
-  .about-route{--band-gap:clamp(56px,9vh,96px);--block-gap:clamp(30px,5vh,50px);--fs-nano:var(--fs-label)}
+  .about-route{--band-gap:clamp(56px,9vh,96px);--block-gap:clamp(30px,5vh,50px)}
   .about-col,.about-hero__inner,.about-hero__ref{grid-column:1 / -1}
   /* The split collapses with the columns. Two edges need width between them to read as two edges;
      inside 327px there is none, so the heading and the body share one column and stack in order.
