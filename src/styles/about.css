@@ -226,14 +226,6 @@
    Filling its four columns is what the grid placement above already says; the caption was only ever
    holding the box open by accident. */
 .about-hero__ref{grid-column:5 / span 4;margin:0;justify-self:stretch}
-.about-hero__orb-row{grid-column:1 / -1;display:flex;justify-content:center}
-.about-hero__orb{margin:0;text-align:center;width:clamp(150px,16vw,200px)}
-/* SQUARE, because the orb is a sphere and aboutOrbs sizes it from min(width, height). The slot had
-   a width and no height at all, so that min was zero and the radius fell to its 8px floor — the orb
-   has been rendering as a sixteen-pixel dot. The figcaption above it was giving the FIGURE height,
-   which is why nothing looked obviously broken until the caption came out and the row collapsed to
-   nothing. An aspect ratio states the height the slot always needed. */
-.about-hero__orb .about-orb{width:100%;max-width:none;margin:0;aspect-ratio:1}
 
 /* ------------------------------------------------------- the reference plate
 

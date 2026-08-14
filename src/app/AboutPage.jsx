@@ -25,7 +25,6 @@
      aboutPills      the six roles, explained one at a time, each with a photograph of its own
      aboutCascade    the sets that had no entrance — role cells, pills, matrix rows, weight key
      aboutOptical    display type nudged so its INK lands on the column line, not its box
-     aboutOrbs       the landing's WebGL particle field, standing an orb beside the reference
 
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
    all of them are torn down together. None is load-bearing for reading the page. */
@@ -46,7 +45,6 @@ import { initFeaturePills } from './methods/aboutPills.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
-import { initAboutOrbs } from './methods/aboutOrbs.js';
 import aboutHtml from '../about/about.html?raw';
 import '../styles/doc.css';
 import '../styles/about.css';
@@ -58,8 +56,7 @@ import '../styles/about.css';
    some prose in a measure, and one or more demonstrations that are grids and figures rather than
    paragraphs. So the markup says where the boundaries are and this reads them.
 
-   Deliberately absent from every group: [data-highlight-text] and anything inside the plates and orb
-   slots. Those carry scroll behaviour of their own, and a block cannot both be held at opacity 0
+   Deliberately absent from every group: [data-highlight-text] and anything inside the plates. Those carry scroll behaviour of their own, and a block cannot both be held at opacity 0
    waiting for a cascade and be resolving its own characters against the scrollbar. */
 function aboutGroups(root) {
   return [].slice.call(root.querySelectorAll('[data-sec]')).map((sec) => ({
@@ -119,7 +116,6 @@ export default class AboutPage extends React.Component {
     this._killSticky = initStickyTitle(root);
     this._killCascade = initCascade(root, vals.maskMotion);
     this._killOptical = initOptical(root);
-    this._killOrbs = initAboutOrbs(root);
 
     /* The one thing the shared engine does not do for us: this page creates ScrollTriggers from
        eleven modules at mount, and mount here is before the local Neue Montreal .otf has loaded.
@@ -135,15 +131,12 @@ export default class AboutPage extends React.Component {
       });
     }
 
-    /* Armed, not played — the same contract LegalPage describes. On a wiped arrival the reveal and
-       the orb layer are both released as the cover's trailing edge clears, at wipe.js's '<+0.15'; on
-       a cold load there is no cover to wait for. `arrivingByWipe` is how the app tells them apart. */
+    /* Armed, not played — the same contract LegalPage describes. On a wiped arrival the reveal waits
+       for the cover's trailing edge; on a cold load there is nothing to wait for. `arrivingByWipe` is
+       how the app tells them apart. */
     const controller = {
       play: () => {
         try { this._reveal.play(); } catch (e) { }
-        if (this._killOrbs && this._killOrbs.reveal) {
-          try { this._killOrbs.reveal(vals.maskMotion); } catch (e) { }
-        }
       },
       destroy: () => { },
     };
@@ -155,7 +148,7 @@ export default class AboutPage extends React.Component {
      are the last to let go. Killing a pin first would reflow the page underneath modules that are
      still holding measurements of it. */
   _teardown() {
-    ['_killOrbs', '_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killSpectrum', '_killSplitter', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
+    ['_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killSpectrum', '_killSplitter', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
       '_killStream', '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
