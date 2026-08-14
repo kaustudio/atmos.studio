@@ -18,12 +18,13 @@
    no JavaScript, and any crawler that does not run it, gets exactly these bytes. See
    scripts/prerender.mjs. */
 import React from 'react';
-import { ThemeSwitch } from './chrome.jsx';
+import { DocHead } from './chrome.jsx';
 import { PRIVACY } from './routes.js';
 import { initTableOfContents } from './methods/legalToc.js';
-import { initLegalReveal } from './methods/legalReveal.js';
+import { initPageReveal, articleGroups } from './methods/pageReveal.js';
 import privacyHtml from '../legal/privacy.html?raw';
 import termsHtml from '../legal/terms.html?raw';
+import '../styles/doc.css';
 import '../styles/legal.css';
 
 const BODY = { privacy: privacyHtml, terms: termsHtml };
@@ -56,19 +57,29 @@ export default class LegalPage extends React.Component {
     // The app's own Lenis instance, handed down so the TOC's in-page jumps use the same smooth
     // scroll the rest of the document is on. Going around it would fight its rAF loop.
     this._killToc = initTableOfContents(root, { lenis: vals.lenis });
-    this._reveal = initLegalReveal(root, { motion: vals.maskMotion });
+    /* The page's structure, stated here rather than assumed by the engine — see pageReveal.js. The
+       hero parts are listed in the order they should arrive, and .legal-hero__label is kept in the
+       list although the markup no longer carries one: the filter drops it, and the day an eyebrow
+       comes back it takes its place in the cascade rather than appearing all at once behind it. */
+    const hero = root.querySelector('.legal-hero');
+    this._reveal = initPageReveal(root, {
+      motion: vals.maskMotion,
+      hero,
+      heroParts: hero ? ['.legal-hero__label', 'h1', '.legal-hero__sub', '.legal-hero__meta'].map((s) => hero.querySelector(s)) : [],
+      groups: articleGroups(root.querySelector('[data-toc-content]')),
+    });
     /* Armed, not played. The reveal starts when the wipe's panel clears — wipe.js calls
-       vals.registerLegalReveal's controller at the same '<+0.15' offset the loader and Get Started
+       vals.registerPageReveal's controller at the same '<+0.15' offset the loader and Get Started
        use. On a cold load there is no wipe to wait for, so play immediately; `arriving` is how the
        app tells the difference. */
-    if (vals.arrivingByWipe) vals.registerLegalReveal(this._reveal);
+    if (vals.arrivingByWipe) vals.registerPageReveal(this._reveal);
     else this._reveal.play();
   }
 
   _teardown() {
     if (this._killToc) { try { this._killToc(); } catch (e) { } this._killToc = null; }
     if (this._reveal) { try { this._reveal.destroy(); } catch (e) { } this._reveal = null; }
-    if (this.props.vals.registerLegalReveal) this.props.vals.registerLegalReveal(null);
+    if (this.props.vals.registerPageReveal) this.props.vals.registerPageReveal(null);
   }
 
   render() {
@@ -76,22 +87,15 @@ export default class LegalPage extends React.Component {
     const route = vals.route;
     return (
       <>
-        {/* The masthead. The mark is a link home rather than the app's fixed [data-logo] button:
-            these routes are read by people who arrived from a search result as often as from the
-            tool, and on a document that scrolls the mark has to sit in a bar rather than fly over
-            the content. The theme switch stands in the same corner it does in the app. */}
-        <div className="legal-head">
-          <span className="legal-head__theme"><ThemeSwitch vals={vals} /></span>
-          <span className="legal-head__mark">
-            <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery">
-              <span className="mark" role="img" aria-label="Atmos Gallery"></span>
-            </a>
-          </span>
-        </div>
+        {/* The masthead every document route wears — see DocHead in chrome.jsx. */}
+        <DocHead vals={vals} />
         {/* key on the route: React must replace this subtree wholesale when privacy becomes terms,
             not try to reconcile one legal document's markup into another's. Without it the TOC and
-            the reveal helpers would rebuild against half-patched DOM. */}
-        <div key={route} ref={this.rootRef} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
+            the reveal helpers would rebuild against half-patched DOM.
+            <main> rather than a div, for the reason spelled out in AboutPage: the tool has a main
+            landmark and these documents had none, so landmark navigation had nothing to skip the
+            masthead with on the pages most likely to be read with a screen reader. */}
+        <main key={route} ref={this.rootRef} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
       </>
     );
   }

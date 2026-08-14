@@ -749,9 +749,21 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    data-load-wrap is exempt for the same reason data-logo is: it is the ARRIVAL, not the tool. The
    gate is a real destination on a phone, so it gets the same logo-reveal opening the desktop landing
    gets — without this exemption the loader still mounts and still runs its whole timeline, just
-   invisibly, and the phone jumps straight to the gate. */
+   invisibly, and the phone jumps straight to the gate.
+
+   THE DOCUMENT ROUTES ARE EXEMPT WHOLESALE, and this is a fix rather than a new allowance. The gate
+   stands for the TOOL — that is what the paragraph above says and what every exception here has been
+   granted against — but the selector was `[data-app] > *`, and [data-app] is on the legal routes too
+   (AppView keeps it there so the wipe's inert guards and the theme crossfade can see them). So below
+   720px /privacy and /terms rendered their masthead, their whole statement and the footer, and this
+   rule painted display:none over all of it: a blank page, on the two documents most likely to be
+   opened from a phone, and — via the prerender — for a reader with no JavaScript as well. It was the
+   allow-list failing exactly the way its own note warns a new surface will.
+   Naming .doc-route rather than adding three more :not()s, because the answer is not "these
+   particular children are allowed" but "this whole route is not the tool". /about arrives under the
+   same class and needs no further entry. */
 @media (max-width:720px){
-  [data-app]>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-load-wrap]){display:none!important}
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-load-wrap]){display:none!important}
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders

@@ -1,0 +1,860 @@
+<!-- Atmos Gallery — /about.
+
+     HTML, not JSX, for the same reason the two legal statements are (see LegalPage's own note): this
+     is a document that gets edited as prose, a sentence at a time, and a diff on a paragraph of
+     markup is legible in a way the same paragraph broken across JSX expressions is not. It is also
+     what scripts/prerender.mjs writes into dist/about.html, so a reader with no JavaScript — and any
+     crawler that does not run it — gets this file's bytes and the whole argument with them.
+
+     EVERY NUMBER ON THIS PAGE IS REAL, and on this version it carries more weight than before: the
+     page now argues the science of a colour space, so it quotes one. The palettes are the eight seeded
+     examples in src/app/methods/pipeline.js, and every hue angle, lightness, chroma, interval and
+     contrast ratio was computed from those hex values through the app's own src/lib/color.js. The role
+     assignments are what src/lib/exporters.js semanticRoles() actually returns. A figure invented to
+     look good here would be the one thing that undoes the page.
+
+     THE NARRATIVE. One photograph is carried the whole way down: it arrives, is counted by area, is
+     read as three dimensions, is given roles, is checked as pairs, is read again as intervals, is
+     refined, and leaves as a system. Every section is a step in one journey rather than a feature of
+     a product.
+
+     THE GRID. Every section is 100% wide and lays its contents on the site's own twelve columns
+     (--grid-cols / --grid-gutter / --page-gutter in global.css) through .about-grid. Prose sits in a
+     left-aligned span of that grid; only the opening is centred. Nothing on this page is capped to a
+     container width — the grid is the measure.
+
+     THE ATTRIBUTE CONTRACTS, read by AboutPage and the six effects it builds:
+       data-sec / data-sec-head / data-reveal   — a reveal group, its heading, its masked blocks
+       data-rule                                — this section's own hairline draws with it
+       data-divider                             — a standalone hairline that draws on scroll
+       data-flip-element="wrapper" | "target"   — the opening photograph's two waypoints
+       data-parallax="trigger" | "target"       — anything moving against the scroll
+       data-highlight-text                      — a statement resolving character by character
+                                     — the hero photograph, as cloth under the pointer
+       data-spectrum / data-spec-dot            — the hue/lightness/chroma plot
+       data-intervals / data-step               — the spacing that is itself a measurement
+       data-splitter="wrap" | "after" | "handle" — the before/after comparison
+       data-stack-slide / -wrap / -content      — the falling card stack
+       data-rail / -track / -card               — the pinned horizontal gallery
+       data-stream / -frame / -src              — the image sequence -->
+
+<header class="about-hero about-grid" data-about-hero>
+  <!-- CENTRED, and the only block on the page that is. An opening is an address to the reader; the
+       argument that follows is a document, and a document is read from a left edge. -->
+  <div class="about-hero__inner">
+    <h1>Colour begins as atmosphere</h1>
+    <!-- The line the whole product turns on. Everything below is an expansion of it. -->
+    <p class="about-hero__lead">Start with an image.<br />Atmos turns its atmosphere into a colour system.</p>
+  </div>
+
+  <!-- The opening image, centred under the opening headline. Waypoint one of the flip: it starts here
+       at plate size and grows into the full-width frame below as you scroll. Without JS it stays a
+       plate, which is a photograph under a headline. -->
+  <figure class="about-hero__ref">
+    <div class="about-plate about-plate--sm">
+      <div data-flip-element="wrapper" class="about-plate__wrap">
+        <div data-flip-element="target" class="about-plate__target">
+          <img class="about-plate__img" src="/assets/story/anthurium.webp" alt="A dark green anthurium leaf filling the frame, one small red bloom low and to the side." />
+        </div>
+      </div>
+    </div>
+  </figure>
+
+</header>
+
+<!-- Waypoint two. Empty in the markup on purpose — the plate above travels into it — so without JS
+     this is a blank frame and the section is carried by its copy. -->
+<section class="about-grow about-grid" data-sec>
+  <div class="about-plate about-plate--lg">
+    <div data-flip-element="wrapper" class="about-plate__wrap"></div>
+  </div>
+  <div class="about-col">
+    <p data-reveal>Before colour becomes a value, a token or a role, it is something we experience. The warmth of late-afternoon light. The cool distance of a horizon. A bright surface held against a quiet shadow. Every image contains a particular balance of colour, light and contrast. That balance is what gives it a mood.</p>
+    <p class="about-lead" data-reveal>Atmos begins there. It reads the visual character of an image, then translates it into a colour system made for use.</p>
+  </div>
+</section>
+
+<!-- THE GAP THE PRODUCT EXISTS IN. Placed immediately after the opening image because it is the
+     reason the rest of the page is worth reading: a designer usually knows the feeling before the
+     values, and nothing in the usual toolchain carries the feeling across. Prose only, deliberately.
+     The page has ten figures after this one and the argument for why they matter should not have to
+     compete with a diagram. -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>From visual instinct to a usable system</h2>
+    <p data-reveal>Designers often know how something should feel before they know which colours will create it. The reference might be a photograph, a material, a landscape or a moment of light. Its atmosphere can be immediate, but translating that feeling into a working system is rarely straightforward.</p>
+    <p class="about-lead" data-reveal>Atmos is not a replacement for judgement. It gives that judgement a clearer starting point. The relationships are made visible. The roles are made explicit. Every adjustment remains open to the designer.</p>
+  </div>
+</section>
+
+<!-- THE TAKEOVER — Osmo Supply's Sticky Title Scroll Effect, used as it is meant to be used.
+
+     The whole viewport is given to one statement at a time, at display size, with nothing else on
+     screen. This is the one place the page stops explaining and simply states, and it is the three
+     beats of its central argument: what sampling gives you, what a contrast checker gives you, and
+     what sits between them. The words are the section's own, moved out of a paragraph and given a
+     screen each rather than rewritten.
+
+     <p> rather than <h2>, which is the one adaptation. The resource's markup uses headings because
+     its demo has no surrounding outline; these three are statements inside a section that already
+     has its heading, and three more h2s would claim to open three more sections. The data-sticky-title
+     attributes are untouched — the effect targets the attribute, not the tag. -->
+<section class="about-takeover" data-sticky-title="wrap" data-sec>
+  <div class="about-takeover__container">
+    <div class="about-takeover__inner">
+      <p data-sticky-title="heading" class="about-takeover__el" data-optical>Sampling can produce colours. It does not explain which ones matter, how they relate or what each one should do.</p>
+      <p data-sticky-title="heading" class="about-takeover__el is--stacked" data-optical>A contrast checker can validate a pair. It does not preserve the character of the image that inspired it.</p>
+      <p data-sticky-title="heading" class="about-takeover__el is--stacked" data-optical>Atmos connects those decisions. It helps designers move from reference to system without losing the reason the reference was chosen in the first place.</p>
+    </div>
+  </div>
+</section>
+
+<!-- THE TWO LENSES, introduced before the first measured example so that every number later in the
+     page has somewhere to belong. The figure is the distinction itself, drawn rather than described:
+     one swatch on the left carrying three coordinates, two swatches on the right carrying one ratio.
+     A reader who takes nothing else from this section should still leave with "one describes the
+     colour, the other validates the relationship". -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>How Atmos reads colour</h2>
+    <p data-reveal>Atmos uses two complementary ways of reading colour. OKLCH describes the character of each colour. WCAG measures whether two colours create enough contrast for a particular purpose.</p>
+    <p data-reveal>Neither provides the full answer alone. A palette can feel coherent and still contain pairings that are difficult to read. A pair can meet a contrast requirement and still feel disconnected from the atmosphere around it.</p>
+    <p data-reveal>Atmos uses both. One preserves the visual character of the image. The other helps turn that character into a usable system.</p>
+  </div>
+
+  <figure class="about-figure about-figure--full about-lenses" data-cascade>
+    <div class="about-lens">
+      <p class="about-figure__label">OKLCH</p>
+      <div class="about-lens__art" role="img" aria-label="One swatch, the accent of Dusk Slate, carrying three coordinates.">
+        <div class="about-lens__body" style="--lens-swatch:#B34E41"></div>
+      </div>
+      <dl class="about-lens__read">
+        <div><dt>Lightness</dt><dd>0.551</dd></div>
+        <div><dt>Chroma</dt><dd>0.134</dd></div>
+        <div><dt>Hue</dt><dd>29&deg;</dd></div>
+      </dl>
+      <p class="about-lens__note">Describes what a colour is. It belongs to one colour on its own.</p>
+    </div>
+    <div class="about-lens">
+      <p class="about-figure__label">WCAG contrast</p>
+      <div class="about-lens__art about-lens__art--pair" role="img" aria-label="Two swatches of Dusk Slate, the background and the text, measured against each other.">
+        <div class="about-lens__body" style="--lens-swatch:#1A1D0D"></div>
+        <div class="about-lens__body" style="--lens-swatch:#A09269"></div>
+      </div>
+      <p class="about-lens__ratio">5.56<span> to 1</span></p>
+      <p class="about-lens__note">Describes what a pair can do. It has no meaning until a second colour is named.</p>
+    </div>
+  </figure>
+</section>
+
+<!-- THE READING GUIDE. Three ramps, each holding two of the three coordinates still and moving the
+     third, so the axis being described is the only thing changing. Every step is generated by the
+     app's own gamutMap, so nothing here is an illustration of OKLCH, it IS OKLCH. -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Reading OKLCH</h2>
+    <p data-reveal>Every sampled colour is described through lightness, chroma and hue. Together they reveal the shape of a colour. They do not determine whether it is accessible.</p>
+  </div>
+
+  <div class="about-axes" data-cascade>
+    <div class="about-axis">
+      <p class="about-figure__label">Lightness</p>
+      <div class="about-axis__ramp" role="img" aria-label="A ramp from lightness 0 to lightness 1 at a fixed hue and chroma."><span class="about-axis__step" style="background:#010000"><span>0.0</span></span><span class="about-axis__step" style="background:#350000"><span>0.2</span></span><span class="about-axis__step" style="background:#70322A"><span>0.4</span></span><span class="about-axis__step" style="background:#B06B61"><span>0.6</span></span><span class="about-axis__step" style="background:#F2A89C"><span>0.8</span></span><span class="about-axis__step" style="background:#FFE9DC"><span>1.0</span></span></div>
+      <p class="about-axis__note">How light or dark a colour appears, on a scale from 0 to 1. Zero is black. One is white. This is perceptual lightness, which helps designers make changes that feel visually consistent. It is not the same measurement as the relative luminance used by WCAG.</p>
+    </div>
+    <div class="about-axis">
+      <p class="about-figure__label">Chroma</p>
+      <div class="about-axis__ramp" role="img" aria-label="A ramp from chroma 0 to chroma 0.20 at a fixed hue and lightness."><span class="about-axis__step" style="background:#868686"><span>0.00</span></span><span class="about-axis__step" style="background:#9D7E78"><span>0.04</span></span><span class="about-axis__step" style="background:#B1746A"><span>0.08</span></span><span class="about-axis__step" style="background:#C4685B"><span>0.12</span></span><span class="about-axis__step" style="background:#D5594A"><span>0.16</span></span><span class="about-axis__step" style="background:#E64537"><span>0.20</span></span></div>
+      <p class="about-axis__note">How strongly a colour departs from neutral. At zero the colour is grey. As chroma rises the colour becomes more vivid. A chroma value only makes sense as part of the complete colour, because its visible effect depends on lightness, hue and the available gamut.</p>
+    </div>
+    <div class="about-axis">
+      <p class="about-figure__label">Hue</p>
+      <div class="about-axis__ramp" role="img" aria-label="A ring of hues from 0 to 330 degrees at a fixed lightness and chroma."><span class="about-axis__step about-axis__step--hue" style="background:#B76C84"><span>0&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#BB6E62"><span>30&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#B27744"><span>60&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#9E8337"><span>90&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#7E8F46"><span>120&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#579766"><span>150&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#2C9A88"><span>180&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#2196A7"><span>210&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#478EBC"><span>240&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#6F83C3"><span>270&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#8F78BA"><span>300&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#A86FA3"><span>330&deg;</span></span></div>
+      <p class="about-axis__note">The colour&rsquo;s position around a perceptual colour wheel, measured as an angle from 0&deg; to 360&deg;. As chroma approaches zero, hue carries less visible meaning. A nearly neutral grey can still have a recorded hue, but that hue contributes very little to what the eye sees.</p>
+    </div>
+  </div>
+</section>
+
+<!-- THE THRESHOLDS, stated once, near the top, so that every ratio printed later in the page can be
+     read against a rule the reader has already met. A pass always belongs to a role. -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Reading WCAG contrast</h2>
+    <p data-reveal>Contrast belongs to a pair, not to an individual colour. WCAG compares the relative luminance of a foreground colour and the colour behind it. The result sits between 1 to 1 and 21 to 1. A ratio of 1 to 1 means there is no luminance contrast. A ratio of 21 to 1 is the maximum contrast between black and white.</p>
+    <p data-reveal>A result below 3 to 1 does not make the colours unusable. The pair can still create atmosphere, depth and decorative separation. It should not be responsible for legibility, interaction or essential visual information.</p>
+    <p class="about-lead" data-reveal>A pair does not simply pass WCAG. It passes for body text, for large text or for a meaningful non-text element.</p>
+  </div>
+
+  <figure class="about-figure about-figure--full">
+    <ul class="about-thresholds" data-cascade>
+      <li><span class="about-thresholds__role">Body text</span><span class="about-thresholds__val">4.5 to 1 or higher</span></li>
+      <li><span class="about-thresholds__role">Large text</span><span class="about-thresholds__val">3 to 1 or higher</span></li>
+      <li><span class="about-thresholds__role">Meaningful graphics and interface elements</span><span class="about-thresholds__val">3 to 1 or higher against adjacent colours</span></li>
+    </ul>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>WCAG defines large text as at least 18 point in regular weight or 14 point in bold.</figcaption>
+  </figure>
+</section>
+
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>An image is more than its most common colours</h2>
+    <p data-reveal>Conventional colour extraction often begins with frequency. It identifies the colours that occupy the largest areas of an image and ranks them by prevalence.</p>
+    <p data-reveal>But prevalence is not the same as importance. A small highlight can define an image&rsquo;s energy. A near-black shadow can create its depth. A muted field can make a single saturated detail feel vivid.</p>
+    <p data-reveal>Atmos considers how much of each colour is present, how the colours relate and what each one contributes to the image as a whole.</p>
+  </div>
+
+  <!-- The demonstration, in the reference's own figures. Every width is that swatch's measured share
+       of the frame, so the bar is the photograph counted rather than an illustration of one. Full
+       width: it is a measurement of the whole picture and it should read as the whole picture. -->
+  <figure class="about-figure about-figure--full">
+    <div class="about-weights" role="img" aria-label="Dusk Slate by area: darkest green 44.1 per cent, deep green 42.2, olive 6.7, sand 5.2, red 1.9.">
+      <span class="about-weights__part" style="width:44.1%;background:#1a1d0d"></span>
+      <span class="about-weights__part" style="width:42.2%;background:#3b3d20"></span>
+      <span class="about-weights__part" style="width:6.7%;background:#62663e"></span>
+      <span class="about-weights__part" style="width:5.2%;background:#a09269"></span>
+      <span class="about-weights__part" style="width:1.9%;background:#b34e41"></span>
+    </div>
+    <ol class="about-weights__key" data-cascade>
+      <li><span class="about-key__chip" style="background:#1a1d0d"></span><span class="about-key__hex">#1A1D0D</span><span class="about-key__ok">L .22 &middot; C .029 &middot; H 118&deg;</span><span class="about-key__pct">44.1%</span></li>
+      <li><span class="about-key__chip" style="background:#3b3d20"></span><span class="about-key__hex">#3B3D20</span><span class="about-key__ok">L .35 &middot; C .046 &middot; H 112&deg;</span><span class="about-key__pct">42.2%</span></li>
+      <li><span class="about-key__chip" style="background:#62663e"></span><span class="about-key__hex">#62663E</span><span class="about-key__ok">L .50 &middot; C .059 &middot; H 113&deg;</span><span class="about-key__pct">6.7%</span></li>
+      <li><span class="about-key__chip" style="background:#a09269"></span><span class="about-key__hex">#A09269</span><span class="about-key__ok">L .66 &middot; C .060 &middot; H 91&deg;</span><span class="about-key__pct">5.2%</span></li>
+      <li><span class="about-key__chip" style="background:#b34e41"></span><span class="about-key__hex">#B34E41</span><span class="about-key__ok">L .55 &middot; C .134 &middot; H 29&deg;</span><span class="about-key__pct">1.9%</span></li>
+    </ol>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>Together, the two dominant greens account for more than 86 per cent of the frame. The red bloom occupies just 1.9 per cent, yet it is the image&rsquo;s focal point. Frequency explains how much space each colour occupies. OKLCH reveals how the colours differ. Neither measurement alone decides the role a colour should play. Ranked by area, the subject comes last.</figcaption>
+  </figure>
+</section>
+
+<!-- READING THE SPECTRUM — the science section, and the page's centrepiece.
+
+     THE PLOT. Each dot carries this palette's own OKLCH coordinates and aboutSpectrum.js moves it
+     there: hue across, lightness up, chroma as diameter. At rest they are an even row along the floor
+     — the strip every other tool draws — and the scroll turns that row into the measurement it was
+     hiding. Without JS the row and the spectrum band under it are the figure, correctly coloured. -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Reading the shape of a palette</h2>
+    <p data-reveal>Two colours can share a hue and still perform entirely different roles. A change in lightness can separate one surface from another. It can also determine whether text can be read at all.</p>
+    <p data-reveal>A change in chroma can turn a quiet detail into a focal point without changing its underlying hue.</p>
+    <p class="about-lead" data-reveal>Atmos reads all three dimensions together.</p>
+  </div>
+
+  <figure class="about-figure about-figure--full">
+    <div class="about-spectrum" data-spectrum>
+      <div class="about-spectrum__band" aria-hidden="true"></div>
+      <div class="about-spectrum__field" data-spectrum-field role="img"
+           aria-label="The five colours of Cut Powder plotted by hue and lightness: they climb from a deep red at 30 degrees and lightness 0.37 to a near-white at 96 degrees and lightness 0.95, the dots shrinking as they rise.">
+        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="96" data-l="0.945" data-c="0.021" style="background:#f1edde" aria-label="Background #F1EDDE, hue 96°, lightness 0.945, chroma 0.021"><span class="about-spectrum__read" aria-hidden="true">#F1EDDE &middot; hue 96° &middot; L 0.945 &middot; C 0.021</span></button>
+        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="81" data-l="0.818" data-c="0.103" style="background:#e6bd74" aria-label="Text #E6BD74, hue 81°, lightness 0.818, chroma 0.103"><span class="about-spectrum__read" aria-hidden="true">#E6BD74 &middot; hue 81° &middot; L 0.818 &middot; C 0.103</span></button>
+        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="36" data-l="0.509" data-c="0.166" style="background:#b0350c" aria-label="Primary #B0350C, hue 36°, lightness 0.509, chroma 0.166"><span class="about-spectrum__read" aria-hidden="true">#B0350C &middot; hue 36° &middot; L 0.509 &middot; C 0.166</span></button>
+        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="61" data-l="0.673" data-c="0.136" style="background:#d1802f" aria-label="Accent #D1802F, hue 61°, lightness 0.673, chroma 0.136"><span class="about-spectrum__read" aria-hidden="true">#D1802F &middot; hue 61° &middot; L 0.673 &middot; C 0.136</span></button>
+        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="30" data-l="0.366" data-c="0.139" style="background:#770e05" aria-label="Surface #770E05, hue 30°, lightness 0.366, chroma 0.139"><span class="about-spectrum__read" aria-hidden="true">#770E05 &middot; hue 30° &middot; L 0.366 &middot; C 0.139</span></button>
+        <span class="about-spectrum__axis about-spectrum__axis--y" data-spec-axis aria-hidden="true">Lightness</span>
+        <span class="about-spectrum__axis about-spectrum__axis--x" data-spec-axis aria-hidden="true">Hue, 0&deg; to 360&deg;</span>
+      </div>
+    </div>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>Cut Powder moves from a deep, chromatic red to a pale, nearly neutral cream. As lightness rises, chroma falls. The palette becomes lighter by becoming quieter. This is visible in the OKLCH values. Lightness climbs from 0.366 to 0.945 while chroma falls from 0.139 to 0.021. Getting lighter and becoming more vivid are not the same move. Cut Powder does one by giving up the other.</figcaption>
+  </figure>
+</section>
+
+<!-- The three dimensions, one card each. Each card's ground and ink are a real pair from the seeded
+     archive chosen to demonstrate its own dimension — a wide hue separation, a wide lightness
+     separation, a vivid colour against a near-neutral — and every one clears AA. -->
+<section class="about-stack" data-sec data-rule>
+  <div class="about-grid">
+    <div class="about-col">
+      <h2 data-sec-head data-optical>One model, read three ways</h2>
+      <p data-reveal>The same three dimensions, read from three different images.</p>
+    </div>
+  </div>
+
+  <div class="about-stack__set">
+    <div class="about-stack__slide" data-stack-slide>
+      <div class="about-stack__wrap" data-stack-wrap>
+        <div class="about-stack__card" data-stack-content style="--r-bg:#A28C7E;--r-text:#280807;--r-mark:#542C23">
+          <div class="about-stack__top"><p class="about-stack__n" data-optical>01</p><p class="about-stack__ref">Cut Limestone</p></div>
+          <div class="about-stack__bottom">
+            <p class="about-stack__t" data-optical>Hue</p>
+            <p class="about-stack__d">All five colours sit within a narrow warm range between 26&deg; and 60&deg;. Lightness and chroma change, but the underlying hue remains closely held. That restraint is what makes the palette feel coherent. One warm note, expressed at five different weights.</p>
+            <span class="about-stack__strip" role="img" aria-label="The five colours of Cut Limestone: #A28C7E, #BDAFA3, #846351, #280807, #542C23."><span style="background:#a28c7e"></span><span style="background:#bdafa3"></span><span style="background:#846351"></span><span style="background:#280807"></span><span style="background:#542c23"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-stack__slide" data-stack-slide>
+      <div class="about-stack__wrap" data-stack-wrap>
+        <div class="about-stack__card" data-stack-content style="--r-bg:#20110C;--r-text:#E0D8CC;--r-mark:#B1927B">
+          <div class="about-stack__top"><p class="about-stack__n" data-optical>02</p><p class="about-stack__ref">Sable &amp; Bracken</p></div>
+          <div class="about-stack__bottom">
+            <p class="about-stack__t" data-optical>Lightness</p>
+            <p class="about-stack__d">This palette spans almost the full OKLCH lightness axis from 0.008 to 0.885. Its hierarchy is created primarily through light. Deep browns establish weight and distance. Pale tones bring surfaces and details forward. This does not make every light and dark pairing accessible. WCAG contrast still has to be measured between the colours assigned to each role.</p>
+            <span class="about-stack__strip" role="img" aria-label="The five colours of Sable &amp; Bracken: #000000, #E0D8CC, #B1927B, #724F3D, #20110C."><span style="background:#000000"></span><span style="background:#e0d8cc"></span><span style="background:#b1927b"></span><span style="background:#724f3d"></span><span style="background:#20110c"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="about-stack__slide" data-stack-slide>
+      <div class="about-stack__wrap" data-stack-wrap>
+        <div class="about-stack__card" data-stack-content style="--r-bg:#540303;--r-text:#FFD5C2;--r-mark:#F46442">
+          <div class="about-stack__top"><p class="about-stack__n" data-optical>03</p><p class="about-stack__ref">Coral</p></div>
+          <div class="about-stack__bottom">
+            <p class="about-stack__t" data-optical>Chroma</p>
+            <p class="about-stack__d">Here, chroma ranges from 0.004 to 0.184. The ground and numeral share almost the same red hue but differ in intensity. One stays muted. The other moves further from neutral and comes forward. If that emphasis communicates meaning, contrast or another visual cue must support it. Hue alone should not carry the message.</p>
+            <span class="about-stack__strip" role="img" aria-label="The five colours of Coral: #010101, #F46442, #FFD5C2, #540303, #AA160C."><span style="background:#010101"></span><span style="background:#f46442"></span><span style="background:#ffd5c2"></span><span style="background:#540303"></span><span style="background:#aa160c"></span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>From sampled colours to purposeful roles</h2>
+    <p data-reveal>Colour becomes useful when it has a job. A working palette is more than a row of attractive swatches. It is a system in which every colour has a reason to exist.</p>
+    <p data-reveal>Atmos translates the visual character of an image into functional roles such as background, surface, text, primary, secondary and accent. The image provides the atmosphere. OKLCH preserves its relationships. The roles provide the structure. WCAG tests whether those roles work together.</p>
+    <p data-reveal>This gives designers a considered starting point rather than a fixed answer. The system retains the feeling of its source while becoming practical enough to use in an interface, identity or digital product.</p>
+  </div>
+
+  <!-- The same five colours, reordered by job — the tool's OWN output. semanticRoles() weighs
+       lightness, chroma and area, and this is what it returns for this palette. Note what it did: the
+       Nightfall here, a fourth palette and a fourth image — the near-black that fills half the frame
+       becomes the background, and the 2.6% highlight becomes the text, which is the whole inversion
+       the section is about. Six cells on the twelve-column grid, two columns each. -->
+  <div class="about-roles" data-cascade>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#080b06"></span>
+      <span class="about-role__name">Background</span>
+      <span class="about-role__hex">#080B06</span>
+      <span class="about-role__note">52.7% of the frame</span>
+    </div>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#302f18"></span>
+      <span class="about-role__name">Surface</span>
+      <span class="about-role__hex">#302F18</span>
+      <span class="about-role__note">20.1% of the frame</span>
+    </div>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#867a57"></span>
+      <span class="about-role__name">Primary</span>
+      <span class="about-role__hex">#867A57</span>
+      <span class="about-role__note">5.7% of the frame</span>
+    </div>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#867a57"></span>
+      <span class="about-role__name">Secondary</span>
+      <span class="about-role__hex">#867A57</span>
+      <span class="about-role__note">shares the primary swatch</span>
+    </div>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#55502c"></span>
+      <span class="about-role__name">Accent</span>
+      <span class="about-role__hex">#55502C</span>
+      <span class="about-role__note">18.8% of the frame</span>
+    </div>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape">
+      <span class="about-role__swatch" style="background:#c4bcaf"></span>
+      <span class="about-role__name">Text</span>
+      <span class="about-role__hex">#C4BCAF</span>
+      <span class="about-role__note">2.6% of the frame</span>
+    </div>
+  </div>
+
+  <p class="about-roles__after" data-reveal>With five sampled colours and six functional roles, one colour must serve more than one purpose. In Nightfall, the primary and secondary roles share a swatch. Their difference must therefore come from context, scale, placement or treatment rather than colour alone.</p>
+
+  <!-- WHAT EACH ROLE IS FOR — offered one at a time. The grid above says what the roles ARE; six
+       paragraphs printed under it would be a wall nobody reads. Osmo Supply's Expanding Feature
+       Pills: one open at a time, the pill growing to hold its own answer, a photograph beside it
+       whose character argues for that role. Every data-feature-pills-* attribute is the resource's
+       contract and is load-bearing — see aboutPills.js. -->
+  <figure class="about-figure about-figure--full about-figure--pills">
+    <div data-feature-pills-init data-feature-pills-active="false" class="pills" aria-label="The six semantic roles">
+      <div class="pills__list-wrap">
+        <ul role="list" class="pills__list" data-cascade>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Background</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Background</span>
+                  <p class="pills__body">The furthest surface back. It gives the system its ground without asking for attention. Area alone cannot determine this role. The most common colour in a photograph is not necessarily the colour best suited to holding an interface.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Surface</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Surface</span>
+                  <p class="pills__body">Cards, panels, rows and everything that sits above the background. A surface must separate clearly from its ground without becoming a competing focal point. A subtle difference can be enough when the separation is decorative. If the boundary is necessary for identifying a control or understanding the interface, it must meet the relevant non-text contrast requirement.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Text</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Text</span>
+                  <p class="pills__body">Text is never evaluated on its own. It is tested against the surface beneath it. Body text needs a contrast ratio of at least 4.5 to 1 at level AA. Large text needs at least 3 to 1. The assigned text colour must therefore be tested against every surface on which it will appear.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Primary</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Primary</span>
+                  <p class="pills__body">The action with the greatest visual priority. Its fill must be distinguishable where the shape of the control matters. Its label must also be tested separately against the fill. A strong primary colour is not enough. The complete button must work as a pair of relationships.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Secondary</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Secondary</span>
+                  <p class="pills__body">An action that should remain visible without competing with the primary one. The distinction may come from lightness, contrast, outline, placement or type treatment. It does not necessarily require a different hue. Any visual information required to identify the control still needs sufficient contrast against its surroundings.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+          <li data-feature-pills-item data-active="false" class="pills__item">
+            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
+              <span class="pills__label">Accent</span>
+              <span class="pills__plus" aria-hidden="true"></span>
+            </button>
+            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
+              <div class="pills__mask">
+                <div data-feature-pills-inner class="pills__inner">
+                  <span class="pills__inner-label">Accent</span>
+                  <p class="pills__body">A colour used to mark, highlight or direct attention. Its strength comes from its relationship with the surrounding palette. A restrained ground can make even a small chromatic shift feel vivid. If an accent communicates status, selection or meaning, it cannot rely on hue alone. Contrast, shape, text or an icon must support it.</p>
+                </div>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      <div class="pills__visual">
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/runner.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/stone.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/pearls.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/pump.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/profile-pearl.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/padel.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-cover data-active="true" class="pills__cover"><img src="/assets/story/comb.webp" alt="" loading="lazy" decoding="async" /></div>
+        <button data-feature-pills-close aria-hidden="true" tabindex="-1" aria-label="Close" data-focus="chrome" class="pills__close"></button>
+      </div>
+    </div>
+  </figure>
+</section>
+
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Contrast creates hierarchy</h2>
+    <p data-reveal>Compliance is not something added after the palette has been designed. Contrast shapes which relationships can carry content and which should remain atmospheric.</p>
+    <p data-reveal>OKLCH helps us understand why colours feel close or distant. WCAG tells us whether that distance is sufficient for a particular role.</p>
+    <p data-reveal>A strong system needs quiet relationships as well as accessible ones. Backgrounds and surfaces may use restrained intervals to create depth. Text and essential controls need stronger separation because they carry information or action. Atmos evaluates colours as pairs rather than isolated values.</p>
+  </div>
+
+  <!-- THE EDIT, UNDER THE READER'S THUMB. Both halves are the SAME interface in the SAME five
+       colours; the only difference across the split is the one ground value. Drag it and you are not
+       comparing two palettes, you are watching one change decided — which is the argument this
+       section makes in words directly above.
+       Live DOM rather than two images, which the resource explicitly allows. It also means the
+       "after" side is the real thing: those contrast ratios are the browser drawing those hexes. -->
+  <!-- Every pair five colours can make, all ten, with nothing hidden. This is the palette's real
+       capability and it is mostly negative: one pairing carries body text. The page says so. -->
+  <figure class="about-figure about-figure--full">
+    <ul class="about-matrix" data-cascade>
+      <li class="is--text"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#d1cecc"></span><span class="about-key__chip" style="background:#2f2721"></span></span><span class="about-matrix__val">9.36 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#bcb5b1"></span><span class="about-key__chip" style="background:#2f2721"></span></span><span class="about-matrix__val">7.25 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#d1cecc"></span><span class="about-key__chip" style="background:#584b41"></span></span><span class="about-matrix__val">5.37 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
+      <li class="is--large"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#bcb5b1"></span><span class="about-key__chip" style="background:#584b41"></span></span><span class="about-matrix__val">4.16 to 1</span><span class="about-matrix__use">Large text and UI at AA</span></li>
+      <li class="is--large"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#807166"></span><span class="about-key__chip" style="background:#2f2721"></span></span><span class="about-matrix__val">3.12 to 1</span><span class="about-matrix__use">Large text and UI at AA</span></li>
+      <li class="is--large"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#d1cecc"></span><span class="about-key__chip" style="background:#807166"></span></span><span class="about-matrix__val">3.00 to 1</span><span class="about-matrix__use">Large text and UI at AA</span></li>
+      <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#bcb5b1"></span><span class="about-key__chip" style="background:#807166"></span></span><span class="about-matrix__val">2.32 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
+      <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#807166"></span><span class="about-key__chip" style="background:#584b41"></span></span><span class="about-matrix__val">1.79 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
+      <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#584b41"></span><span class="about-key__chip" style="background:#2f2721"></span></span><span class="about-matrix__val">1.74 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
+      <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#bcb5b1"></span><span class="about-key__chip" style="background:#d1cecc"></span></span><span class="about-matrix__val">1.29 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
+    </ul>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>Three pairs support body text. Three more support large text and meaningful non-text elements. The remaining four can still create atmosphere and visual depth, and should not carry essential information on their own. Cut High Room is almost achromatic, with chroma ranging from 0.004 to 0.025. Because chroma contributes very little separation, the palette builds its hierarchy through lightness. When colour stays quiet, light carries the structure. WCAG verifies which of those lightness relationships are strong enough to carry content.</figcaption>
+  </figure>
+
+</section>
+
+<!-- SOME IMAGES ALREADY WORK, and that earns its own section rather than a footnote to the one about
+     contrast. Frozen Slate clears AA on five of its ten pairs; nothing in the eight-palette gallery
+     below reaches more than four. It is the honest answer to "does this ever just come out right",
+     and the one interface on this page a reader can simply read. -->
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Some images already contain the required relationships</h2>
+    <p data-reveal>Cool blue-greys sit at similar visual temperatures, while one clearer blue carries the palette&rsquo;s strongest chromatic note.</p>
+    <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
+  </div>
+
+  <figure class="about-figure about-figure--split">
+    <div class="about-figure__media">
+      <div class="about-shot" data-parallax="trigger" data-parallax-start="-7" data-parallax-end="7" data-parallax-disable="mobileLandscape">
+        <div class="about-shot__inner" data-parallax="target">
+          <img src="/assets/examples/profile-sky.webp" alt="A profile in silhouette against a clear evening sky." />
+        </div>
+      </div>
+    </div>
+    <div class="about-figure__side">
+      <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text and a blue accent on near-black grounds, every pairing clearing AA." style="--r-bg:#000000;--r-surface:#090606;--r-text:#8CA6D5;--r-primary:#383B49;--r-accent:#6881AE">
+        <div class="about-ui__card">
+          <p class="about-ui__title">Frozen Slate</p>
+          <p class="about-ui__body">Cool blue-greys at one temperature, with a single clearer blue carrying the chromatic note.</p>
+          <p class="about-ui__actions"><span class="about-ui__btn">Primary</span><span class="about-ui__link">Accent</span></p>
+        </div>
+      </div>
+      <ul class="about-checks">
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__use">Body text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__use">Body text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__use">Body text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__use">Meaningful non-text elements at AA</span></li>
+      </ul>
+      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least 4.5 to 1. They can support body text at AA when used as foreground and background.</p>
+    </div>
+  </figure>
+</section>
+
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>The intervals matter</h2>
+    <p data-reveal>The character of a palette often lives in the distance between its colours. A narrow change in OKLCH lightness can create subtle depth. A wider one can establish hierarchy. Related hues can produce harmony, while a controlled shift in chroma can introduce tension and focus.</p>
+    <p data-reveal>Atmos makes these intervals visible. It reveals which colours belong together and why they feel connected.</p>
+  </div>
+
+  <!-- THE GAPS ARE THE MEASUREMENT. data-step is the perceptual distance between two neighbours in
+       OKLab; aboutIntervals.js grows each gap to the size of its own step, so the rhythm of the row is
+       the palette's rhythm rather than a spacing decision. Ordered by lightness, the axis the eye
+       reads first. Without JS the gaps stay even and the readouts are simply a legible table. -->
+  <figure class="about-figure about-figure--full">
+    <div class="about-intervals" data-intervals role="img" aria-label="Shale ordered by lightness. Between #0D0D11 and #1D2025 the step is 0.081; then 0.151 to #44464B; then 0.242 to #838D92; then 0.220 to #C5D2D7. Each gap is drawn at the size of its step.">
+      <span class="about-intervals__swatch" style="background:#0d0d11"><span class="about-intervals__hex">#0D0D11</span></span>
+      <span class="about-intervals__gap" data-step="0.081">
+        <span class="about-intervals__read" data-step-read>
+          <span class="about-intervals__step">0.081</span>
+          <span class="about-intervals__dim" aria-hidden="true"></span>
+          <span class="about-intervals__deltas">Lightness +0.081<br />Chroma +0.004<br />Hue 23&deg;</span>
+        </span>
+      </span>
+      <span class="about-intervals__swatch" style="background:#1d2025"><span class="about-intervals__hex">#1D2025</span></span>
+      <span class="about-intervals__gap" data-step="0.151">
+        <span class="about-intervals__read" data-step-read>
+          <span class="about-intervals__step">0.151</span>
+          <span class="about-intervals__dim" aria-hidden="true"></span>
+          <span class="about-intervals__deltas">Lightness +0.151<br />Chroma &minus;0.001<br />Hue 9&deg;</span>
+        </span>
+      </span>
+      <span class="about-intervals__swatch" style="background:#44464b"><span class="about-intervals__hex">#44464B</span></span>
+      <span class="about-intervals__gap" data-step="0.242">
+        <span class="about-intervals__read" data-step-read>
+          <span class="about-intervals__step">0.242</span>
+          <span class="about-intervals__dim" aria-hidden="true"></span>
+          <span class="about-intervals__deltas">Lightness +0.242<br />Chroma +0.005<br />Hue 35&deg;</span>
+        </span>
+      </span>
+      <span class="about-intervals__swatch" style="background:#838d92"><span class="about-intervals__hex">#838D92</span></span>
+      <span class="about-intervals__gap" data-step="0.220">
+        <span class="about-intervals__read" data-step-read>
+          <span class="about-intervals__step">0.220</span>
+          <span class="about-intervals__dim" aria-hidden="true"></span>
+          <span class="about-intervals__deltas">Lightness +0.220<br />Chroma +0.002<br />Hue 11&deg;</span>
+        </span>
+      </span>
+      <span class="about-intervals__swatch" style="background:#c5d2d7"><span class="about-intervals__hex">#C5D2D7</span></span>
+    </div>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>Every colour in Shale sits within 0.016 chroma of neutral, and no step between them changes chroma by more than 0.005. At chroma this low, hue carries almost no visible influence. The palette&rsquo;s character is created primarily through lightness. The lower steps are restrained, creating depth in the darker part of the palette. The upper steps open more widely, giving the lighter colours clearer separation. Evenly spaced swatches would conceal that rhythm. The swatches show the colours. The gaps show how the palette works. These intervals describe the palette&rsquo;s structure. WCAG determines which of them are strong enough to carry text, controls or essential graphics.</figcaption>
+  </figure>
+</section>
+
+<section class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical>Refine the system without losing its atmosphere</h2>
+    <p data-reveal>A generated palette is a beginning, not a fixed answer. Strengthen a contrast. Quiet a surface. Shift an accent. Change the balance between hierarchy and harmony.</p>
+    <p data-reveal>OKLCH makes those adjustments more controlled. One dimension can move while the others remain stable. WCAG verifies whether the adjusted relationship now meets its intended role. Atmos keeps the reasoning visible throughout, so the designer can see what changed, why it changed and which part of the original colour was preserved.</p>
+  </div>
+
+  <figure class="about-figure about-figure--full">
+    <div class="about-split__ref">
+      <div class="about-split__shot" data-parallax="trigger" data-parallax-start="-6" data-parallax-end="6" data-parallax-disable="mobileLandscape">
+        <div data-parallax="target"><img src="/assets/story/dusk.webp" alt="A wide dusk sky graded from grey-blue at the top through amber to a dark rust band at the horizon." /></div>
+      </div>
+      <p class="about-split__note">The source image holds every sampled colour between OKLCH lightness 0.50 and 0.85. It creates a beautiful sky, but leaves the palette without a colour dark enough to carry body text against its lighter surfaces. None of the original ten pairs reaches 4.5 to 1.</p>
+    </div>
+    <div class="about-split" data-splitter-initial="42" data-splitter="wrap">
+      <div class="splitter-content">
+        <!-- A PICTURE OF A SYSTEM, not a system. role="img" is what makes that true for a screen
+             reader, and it is doing two jobs: the text inside this layer is deliberately illegible
+             (1.92:1 body, 1.33:1 link, 2.42:1 button) because being illegible is the point, and it
+             must not be read out as though it were the page talking; and the two layers of the
+             splitter hold the SAME card, so without a single name each they announce the whole thing
+             twice with nothing to say which is the before. The label carries the verdict instead. -->
+        <div class="about-ui" role="img" aria-label="The palette as read: a rust specimen on the palette\u2019s lightest ground, measuring 3.96 to 1. Large enough to clear the large-text threshold, short of the body-copy one." style="--r-bg:#C0AA90;--r-surface:#DFC9A8;--r-text:#904D33;--r-chrome:#6E2F14;--r-primary:#DFC9A8;--r-accent:#6E2F14">
+          <div class="about-ui__bar"><span class="about-ui__dot"></span><span class="about-ui__rule"></span><span class="about-ui__tag">As read</span></div>
+          <div class="about-ui__card">
+            <p class="about-ui__title">Late Shell</p>
+            <p class="about-ui__body">3.96 to 1. Suitable for large text at AA. Not suitable for body text at AA.</p>
+            <p class="about-ui__actions"><span class="about-ui__btn">Lightness 0.496</span><span class="about-ui__btn">Chroma 0.098</span><span class="about-ui__link">Hue 42&deg;</span></p>
+          </div>
+        </div>
+      </div>
+      <div data-splitter="after" class="splitter-content is--after">
+        <div class="about-ui" role="img" aria-label="The same specimen after one change: the rust carried down the lightness axis to 0.388, measuring 4.52 to 1, which clears body copy." style="--r-bg:#C0AA90;--r-surface:#DFC9A8;--r-text:#87442B;--r-chrome:#6E2F14;--r-primary:#DFC9A8;--r-accent:#6E2F14">
+          <div class="about-ui__bar"><span class="about-ui__dot"></span><span class="about-ui__rule"></span><span class="about-ui__tag">Adjusted</span></div>
+          <div class="about-ui__card">
+            <p class="about-ui__title">Late Shell</p>
+            <p class="about-ui__body">4.52 to 1. Suitable for large text at AA. Suitable for body text at AA.</p>
+            <p class="about-ui__actions"><span class="about-ui__btn">Lightness 0.388</span><span class="about-ui__btn">Chroma 0.098</span><span class="about-ui__link">Hue 42&deg;</span></p>
+          </div>
+        </div>
+      </div>
+      <!-- A real slider, not just a draggable bar: arrow keys move it, Home and End take it to either
+           end, and it carries a name and a value. A comparison reachable only by dragging is one a
+           keyboard cannot make. -->
+      <div data-splitter="handle" class="about-split__handle" role="slider" tabindex="0" data-focus="chrome"
+           aria-label="Compare the palette as read with the adjusted text"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="42" aria-valuetext="Comparison split">
+        <span class="about-split__grip" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" class="about-split__icon"><path d="M20.7931 11.5L15.2931 5.99995L16.0002 5.29285L22.3537 11.6464V12.3535L16.0002 18.7071L15.2931 18L20.793 12.5L3.20719 12.5L8.70714 18L8.00004 18.7071L1.64648 12.3535L1.64648 11.6464L8.00004 5.29285L8.70714 5.99995L3.2071 11.5L20.7931 11.5Z" fill="currentColor"></path></svg>
+        </span>
+      </div>
+    </div>
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <figcaption data-reveal>Only the OKLCH lightness changes, from 0.496 to 0.388. Hue remains at 42&deg;. Chroma remains at 0.098. The warmth survives because the colour&rsquo;s hue and intensity are preserved. The result is then measured again using WCAG contrast, and this final test matters because OKLCH lightness and WCAG relative luminance are not the same measurement. Moving lightness guides the adjustment. It does not prove compliance on its own. The relationship becomes more usable without losing its atmosphere, and the designer remains in control of the decision.</figcaption>
+  </figure>
+</section>
+
+<!-- THE SEQUENCE, AS A SEQUENCE. Five steps, five cards, each pinned while it recedes and hands off
+     to the next — the one part of the copy that is genuinely an order of operations, performed
+     instead of listed. Deliberately carries no [data-reveal]: these cards have their own motion and a
+     block cannot be both held for a cascade and driven by a pin. -->
+
+<!-- THE GALLERY, AS A SHELF. Eight palettes is more than a column wants and exactly what a rail is
+     for: the section pins and the row travels, and each card drifts and levels out as it crosses the
+     middle. The three sensory fragments open it, resolving character by character — and two of the
+     three name photographs that are actually on the rail. -->
+<section class="about-sec about-sec--gallery" data-sec data-rule>
+  <div class="about-grid">
+    <div class="about-col">
+      <h2 data-sec-head data-optical>Eight images. Eight systems.</h2>
+      <p data-reveal>The same process, applied eight times. Each saved palette preserves more than a row of hex values. It holds a particular relationship between atmosphere, contrast and function.</p>
+    </div>
+  </div>
+
+  <div class="about-rail" data-rail>
+    <div class="about-rail__track" data-rail-track>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/story/lounge.webp" alt="A coupe glass held out over a polished bar, lit by a single brass wall lamp against dark panelling." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
+          <div>
+            <h3>Peat</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #0E0604, #2F1209, #71351C, #AA7046, #EDD4B1.">
+              <span style="background:#0e0604"></span><span style="background:#2f1209"></span><span style="background:#71351c"></span><span style="background:#aa7046"></span><span style="background:#edd4b1"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/examples/tulip.webp" alt="A tulip field in dry, low-angle light." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
+          <div>
+            <h3>Dry Season</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #A74B1B, #933913, #AB8766, #D5CDBF, #361905.">
+              <span style="background:#a74b1b"></span><span style="background:#933913"></span><span style="background:#ab8766"></span><span style="background:#d5cdbf"></span><span style="background:#361905"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/examples/courtyard.webp" alt="A swimmer crossing a long narrow pool between sunlit ochre concrete walls." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
+          <div>
+            <h3>Forged Midfield</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #E2A779, #472F24, #19110E, #685A48, #9C7B60.">
+              <span style="background:#e2a779"></span><span style="background:#472f24"></span><span style="background:#19110e"></span><span style="background:#685a48"></span><span style="background:#9c7b60"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/examples/poppy.webp" alt="A poppy against a bright, washed-out sky." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 6 of 10</span></p>
+          <div>
+            <h3>Scorched Clear Morning</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #E5E9EB, #664515, #C4B07B, #1E1506, #9D7B38.">
+              <span style="background:#e5e9eb"></span><span style="background:#664515"></span><span style="background:#c4b07b"></span><span style="background:#1e1506"></span><span style="background:#9d7b38"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/examples/radish.webp" alt="A watermelon radish cut across, its green rim and pale centre on a light ground." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
+          <div>
+            <h3>High Key</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #EAE8DD, #B8CD79, #6C9429, #3C5E19, #1B2F0C.">
+              <span style="background:#eae8dd"></span><span style="background:#b8cd79"></span><span style="background:#6c9429"></span><span style="background:#3c5e19"></span><span style="background:#1b2f0c"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/story/glass.webp" alt="A pale bottle seen through misted glass, its edges dissolving into a dark green ground." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 2 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
+          <div>
+            <h3>Raked Moss</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #04110B, #324435, #13261F, #586757, #90967D.">
+              <span style="background:#04110b"></span><span style="background:#324435"></span><span style="background:#13261f"></span><span style="background:#586757"></span><span style="background:#90967d"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/examples/court.webp" alt="A tennis court from above, pale balls scattered on blue ground." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 1 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
+          <div>
+            <h3>Midfield</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #547B95, #0A2944, #678DA4, #456B85, #D0D2C6.">
+              <span style="background:#547b95"></span><span style="background:#0a2944"></span><span style="background:#678da4"></span><span style="background:#456b85"></span><span style="background:#d0d2c6"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+      <article class="about-rail__card" data-rail-card>
+        <img src="/assets/story/driftwood.webp" alt="A weathered piece of driftwood curving across a plain pale ground, its grain running the length of it." />
+        <div class="about-rail__content">
+          <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 6 of 10</span></p>
+          <div>
+            <h3>Shell &amp; Buff</h3>
+            <span class="about-rail__strip" role="img" aria-label="Five swatches: #E6E5E5, #C6AD96, #96755D, #5B3D2B, #25120A.">
+              <span style="background:#e6e5e5"></span><span style="background:#c6ad96"></span><span style="background:#96755d"></span><span style="background:#5b3d2b"></span><span style="background:#25120a"></span>
+            </span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- The last section with nothing to demonstrate, so the photographs simply pass. Eight frames
+     blooming out of the centre while the belief resolves over them. Without JS it is one image. -->
+<section class="about-sec about-sec--belief" data-sec data-rule>
+  <div class="about-grid">
+    <div class="about-col">
+      <h2 data-sec-head data-optical>One image. A complete colour system.</h2>
+      <!-- BEFORE the images, not after them. This paragraph spent a version sitting alone underneath
+           the stream, where a small left-aligned block arriving after a full-bleed pinned sequence read
+           as a footnote to the photographs and was easy to scroll straight past. Ahead of them it is
+           ordinary section prose under its own heading — the same shape every other section uses — and
+           it doubles as the reading the stream needs as a run-up, which was 76px of heading and
+           nothing else. The images then illustrate a belief the reader already holds. -->
+      <p data-reveal>Atmos was made for the distance between inspiration and implementation. It does not turn images into rules. It turns visual instinct into a system that designers can understand, adapt and use. What begins as light, texture and atmosphere becomes a palette with structure, hierarchy and purpose. OKLCH preserves how the colours feel. WCAG tests what their relationships can do.</p>
+    </div>
+  </div>
+
+  <!-- A DIFFERENT EIGHT FROM THE RAIL, on purpose. The gallery above shows the eight seeded palettes
+       and its photographs are load-bearing — each one is the image its hex strip and AA count were
+       actually read from, so they cannot be swapped for something that looks better. These carry no
+       claim at all: the closing belief plays over them and they exist to widen what the page has
+       shown you. Reusing the rail's eight here made the last thing you see the same as the last thing
+       you saw.
+       Ordered for rhythm rather than subject — pale, dark, saturated, near-black, warm, dark, pale,
+       landscape — so consecutive frames never sit at the same weight.
+       loading="lazy" because this section is some sixteen thousand pixels down: the script assigns
+       every src at mount, and without it that is 563 kB fetched before the reader has left the hero. -->
+  <div class="about-stream" data-stream>
+    <span data-stream-src="/assets/story/profile-pearl.webp" hidden></span>
+    <span data-stream-src="/assets/story/dusk.webp" hidden></span>
+    <span data-stream-src="/assets/story/turbine.webp" hidden></span>
+    <span data-stream-src="/assets/story/ember-disc.webp" hidden></span>
+    <span data-stream-src="/assets/story/lilies.webp" hidden></span>
+    <span data-stream-src="/assets/story/driftwood.webp" hidden></span>
+    <span data-stream-src="/assets/story/pines.webp" hidden></span>
+    <span data-stream-src="/assets/story/anthurium.webp" hidden></span>
+    <!-- The first frame carries a real src so the no-JS floor is one photograph rather than an empty
+         box, and it is medias[0] so the scripted and unscripted first frames agree. The other seven
+         carry NO src attribute at all — `src=""` is not an empty image, it resolves against the
+         document URL and re-requests the page, and it draws a broken-image box without JS. -->
+    <div class="about-stream__stage" aria-hidden="true">
+      <img class="about-stream__frame" data-stream-frame src="/assets/story/profile-pearl.webp" alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
+    </div>
+    <p class="about-statement about-statement--over" data-highlight-text data-highlight-scroll-start="top 86%" data-highlight-scroll-end="center 45%" data-highlight-stagger="0.05">Not a literal copy of the image. A translation of how it feels.</p>
+  </div>
+
+</section>
+
+<!-- THE CONCLUSION, in one block: the belief, then the invitation, then the act.
+
+     The belief paragraph used to sit alone in the reading column immediately under the stream — a
+     single small left-aligned paragraph arriving after a full-bleed pinned sequence, which is the
+     quietest possible thing in the loudest possible place. It read as a footnote to the images
+     rather than as what the page had been building toward, and it was easy to scroll straight past.
+
+     Here it has structure to hold it: the divider opens the block, the belief states the position,
+     the statement turns it into an offer and the button acts on it. Four parts, one centred column,
+     one idea — which is also what stops the close being a bare button under a photograph. -->
+<section class="about-end about-grid" data-sec>
+  <div class="about-end__inner">
+    <div class="about-divider" data-divider aria-hidden="true"></div>
+    <p class="about-end__line" data-reveal>Start with an image.<br />Leave with a colour system.</p>
+    <!-- data-ix="cta" and data-focus="chrome" are not decoration: the first hands this control the
+         app's interaction contract from global.css, and without the second the global
+         `:focus{outline:none}` reset leaves the page's only action with no focus ring at all. -->
+    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-ix="cta" data-focus="chrome">Create from an image</a></p>
+  </div>
+</section>

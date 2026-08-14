@@ -2273,7 +2273,7 @@ export const renderValsMethods = {
       // ===== routing =====
       route: s.route,
       lenis: this._lenis,
-      /* The masked-line reveal's tokens, read off the app rather than restated in legalReveal.js.
+      /* The masked-line reveal's tokens, read off the app rather than restated in pageReveal.js.
          The landing and the dropzone get theirs from the same two objects via orbit.js's
          _maskReveal, so retuning DUR.reveal or EASE.entrance now moves every masked line on the
          site at once — which is what "fluent across the site" has to mean structurally, not just
@@ -2289,10 +2289,10 @@ export const renderValsMethods = {
         stagger: 0.09,
         ease: this.EASE ? this.EASE.entrance : 'power3.out',
       },
-      // True only while a wiped route swap is in flight, so a legal route that mounts behind the
+      // True only while a wiped route swap is in flight, so a document route that mounts behind the
       // cover arms its reveals and waits to be released instead of playing them out of sight.
       arrivingByWipe: !!this._arrivingByWipe,
-      registerLegalReveal: (c) => this.registerLegalReveal(c),
+      registerPageReveal: (c) => this.registerPageReveal(c),
       /* Every in-document link goes through here. It intercepts ONLY the plain left-click that a
          router is entitled to: a modified click, a middle-click, a download, a new tab or anything
          off-origin falls through to the browser, which is what makes these real addresses rather
@@ -2307,6 +2307,12 @@ export const renderValsMethods = {
         e.preventDefault();
         this.navigateTo(url.pathname);
       },
+      /* The same swap, addressed directly. AboutPage's copy is injected HTML, so its links are not
+         React elements and navigate()'s currentTarget contract cannot apply — that page resolves the
+         anchor with closest() and calls this. Kept as a separate entry rather than loosening
+         navigate(), because navigate() being a plain onClick handler is what makes every link in JSX
+         a real address with a router in front of it. */
+      navigateTo: (p) => this.navigateTo(p),
       openContrast: () => this.openContrast(),
       openExport: () => this.openExport(this.contrastPalette()),
       contrastDisabled: !this.contrastPalette(),

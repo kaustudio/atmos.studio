@@ -5,7 +5,8 @@ import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
 import { B006, B006Text, TextSwap, ThemeSwitch } from './chrome.jsx';
 import LegalPage from './LegalPage.jsx';
-import { isLegal, pathFor } from './routes.js';
+import AboutPage from './AboutPage.jsx';
+import { isDoc, isLegal, pathFor } from './routes.js';
 // PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
 // any in-app action. Behavioural instrumentation is a separate decision with its own copy
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
@@ -429,9 +430,9 @@ function MobileShareView({ ms }) {
   );
 }
 
-const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
 // Off-screen but IN the accessibility tree — the live regions' own style, and the one to reach for
 // whenever a control's spoken form has to carry a word its visible form leaves out.
+const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
 
 /* Curved-wipe transition layer. Caps are transient motion shape — the one sanctioned curved
    exception; never a persistent border-radius on UI.
@@ -482,7 +483,11 @@ function SiteFooter({ route, onNavigate }) {
         {/* One word, so inline-block costs no wrapping — the swap is safe here in a way it is not
             for a multi-word link inside running prose. */}
         <p className="site-foot__origin">A Part of <a href="https://kau.studio"><TextSwap>KauStudio</TextSwap></a></p>
-        <nav className="site-foot__nav" aria-label="Legal">
+        {/* No longer only legal, so the landmark is no longer named for it: About stands beside the
+            two statements as the site's third document, and it leads because it is the one somebody
+            arriving here might actually be looking for. */}
+        <nav className="site-foot__nav" aria-label="Site">
+          {link('/about', 'About')}
           {link('/privacy', 'Privacy Policy')}
           {link('/terms', 'Terms and Conditions')}
         </nav>
@@ -592,22 +597,25 @@ function LandingStage({ vals, covered }) {
 }
 
 export default function AppView({ vals }) {
-  /* Privacy and terms, before anything the tool needs.
+  /* About, privacy and terms, before anything the tool needs.
 
      Returned early for the same reason showMobileShare is: the tool must not be in the DOM behind a
      surface that is not it. The wipe covers the screen while this swap happens, so what a reader
      sees is one continuous panel — but behind it the entire app, orbit stage and archive included,
-     stops existing rather than lying dormant under a legal document. Nothing to tab into, nothing
-     laid out off-screen, no WebGL context held open while somebody reads a privacy policy.
+     stops existing rather than lying dormant under a document. Nothing to tab into, nothing laid out
+     off-screen, no WebGL context held open while somebody reads a privacy policy — which matters
+     more now than it did, because /about opens a context of its own for the orbs.
 
      [data-app] is kept on the wrapper deliberately. It is what the desktop gate, the wipe's inert
-     guards and toggleTheme's crossfade all select on; a legal route that dropped it would be a
-     surface those three could not see. */
-  if (isLegal(vals.route)) {
+     guards and toggleTheme's crossfade all select on; a document route that dropped it would be a
+     surface those three could not see. .doc-route carries what all three share (doc.css); the second
+     class is the page's own scope for its measures and layout. */
+  if (isDoc(vals.route)) {
+    const legal = isLegal(vals.route);
     return (
-      <div data-app="1" className="legal-route" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+      <div data-app="1" className={'doc-route ' + (legal ? 'legal-route' : 'about-route')} style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        <LegalPage vals={vals} />
+        {legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}
         <WipeLayer />
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
         <Analytics />
@@ -2188,6 +2196,10 @@ function ExportDialog({ vals }) {
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{ex.kicker}</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
+            {/* The scale of a folder export, stated before a format is picked — see scopeLine. */}
+            {ex.scopeLine && (
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{ex.scopeLine}</span>
+            )}
           </div>
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}><TextSwap>Close</TextSwap></button>
         </header>
@@ -2196,10 +2208,6 @@ function ExportDialog({ vals }) {
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
         </div>
 
-            {/* The scale of a folder export, stated before a format is picked — see scopeLine. */}
-            {ex.scopeLine && (
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{ex.scopeLine}</span>
-            )}
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {ex.formats.map((f, fi) => (
             <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={f.onPick} onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur} style={f.style}>
@@ -2291,26 +2299,26 @@ function AssignDialog({ vals }) {
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Add to projects</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</span>
-          </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close the project picker" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}><TextSwap>Close</TextSwap></button>
-        </header>
-        <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
-          {assign.options.map((o) => (
-            <button key={o.key} type="button" role="checkbox" aria-checked={o.checked} data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
-              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{o.label}</span>
-              <span aria-hidden="true" style={o.markStyle}><IconCheck /> {o.markLabel}</span>
             {/* WHERE IT IS NOW, restated every time it changes. role=status so the sentence is
                 spoken as well as shown — a tick that appears in a list of eight is the kind of
                 change a reader who has already walked past the row never learns about. */}
             <span role="status" style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;line-height:1.4;color:var(--on-surface-muted);text-wrap:pretty')}>{assign.memberLine}</span>
-            </button>
-          ))}
-        </div>
-        <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
+          </div>
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeAssign} aria-label="Close the project picker" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer')}><TextSwap>Close</TextSwap></button>
+        </header>
+        <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {/* role=checkbox, because that is what these rows ARE: a set of independent memberships a
               palette can hold any number of, not a list of alternatives. As plain buttons they gave
               a reader no state at all — only an aria-label that flipped between "Add" and "Remove",
               which describes the next press rather than the current fact. */}
+          {assign.options.map((o) => (
+            <button key={o.key} type="button" role="checkbox" aria-checked={o.checked} data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
+              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{o.label}</span>
+              <span aria-hidden="true" style={o.markStyle}><IconCheck /> {o.markLabel}</span>
+            </button>
+          ))}
+        </div>
+        <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
           <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           <div style={sx('display:flex;gap:8px')}>
             <input data-assign-new="1" type="text" maxLength={60} placeholder="Project name" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--action-line);padding:9px 11px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
@@ -2346,9 +2354,18 @@ function ManageDialog({ vals }) {
             <button type="button" data-ix="cta" data-focus="chrome" onClick={manage.onCreate} style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--surface);cursor:pointer')}>Add</button>
           </div>
         </div>
+        {/* The empty state is the one place a folder can be explained without the explanation
+            becoming permanent furniture — it is gone the moment there is a project to look at.
+            Worth the extra clause, because "what is a project FOR" is the question, and the answer
+            is now: it is the unit you export. */}
         {manage.empty && (
           <div style={sx("padding:18px var(--page-gutter) 24px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Create one above, then move palettes into it from any row or the detail view — and export the whole folder as one set of tokens.</div>
         )}
+        {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
+            as a whole. The count moved INSIDE the name field (see the note on manageView.count) and
+            what it paid for is the Export button — the act a folder existed for and did not have.
+            Order is name → export → delete: the constructive act sits next to the thing it acts on,
+            and the destructive one stays at the far edge where it is hardest to hit by accident. */}
         <div style={sx('padding:12px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:8px')}>
           {manage.rows.map((pr) => (
             <div key={pr.id} style={sx('display:flex;align-items:center;gap:8px')}>
@@ -2371,18 +2388,9 @@ function ManageDialog({ vals }) {
               <button type="button" data-ix="press" data-focus="chrome" disabled={!pr.canExport} aria-label={pr.exportAria} title={pr.exportTitle} onClick={pr.onExport} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);padding:0;cursor:' + (pr.canExport ? 'pointer' : 'default'))}>
                 <IconExport />
               </button>
-        {/* The empty state is the one place a folder can be explained without the explanation
-            becoming permanent furniture — it is gone the moment there is a project to look at.
-            Worth the extra clause, because "what is a project FOR" is the question, and the answer
-            is now: it is the unit you export. */}
               <button type="button" data-ix="press" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);color:var(--on-surface);cursor:pointer')}>
                 <IconTrash />
               </button>
-        {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
-            as a whole. The count moved INSIDE the name field (see the note on manageView.count) and
-            what it paid for is the Export button — the act a folder existed for and did not have.
-            Order is name → export → delete: the constructive act sits next to the thing it acts on,
-            and the destructive one stays at the far edge where it is hardest to hit by accident. */}
             </div>
           ))}
         </div>

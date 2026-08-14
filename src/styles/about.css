@@ -1,0 +1,1594 @@
+/* Atmos Gallery — /about.
+
+   The route's own layer. doc.css is imported ahead of it and carries what every document route
+   shares: the surface, the reading line-height, the sticky masthead and the masked-reveal pair. Only
+   what this page decides for itself is below.
+
+   THE GRID, AND 100% WIDTH. Every section spans the viewport and lays its contents on the site's own
+   twelve columns — --grid-cols, --grid-gutter and --page-gutter from global.css, not a private set.
+   There is no container width on this page: `.about-grid` IS the container, and a block's measure is
+   how many columns it spans rather than a max-width it happens to have been given. That is the
+   difference between a page laid out ON a grid and one that merely sits inside a box.
+
+   Two placements do all the work. `.about-col` is the reading column — eight columns, starting at
+   column one, so every heading and every paragraph shares one left edge down the whole page.
+   `.about-figure--full` and the effect sections take all twelve. The opening is the single exception:
+   the same eight columns, placed at column three so it centres, because an opening addresses the
+   reader where a document is read from an edge.
+
+   IT IS DELIBERATELY THE MOST EDITORIAL SURFACE ON THE SITE. The tool is a working instrument and the
+   legal statements are one column of prose; this page is neither. Its rhythm alternates a wide
+   demonstration with a narrow measure, so the reader moves between looking and reading. Everything it
+   draws with is still the system's: the ten-step type scale, the tracking scale, the hairline, the
+   zero radius, the two action tiers. No colour on this page is anything but a token or a swatch
+   quoted from a real palette.
+
+   EVERY RULE TARGETING A <p> CARRIES THE .about-route PREFIX, and it is not decoration. The base rule
+   is `.about-route p` — (0,1,1) — and a bare modifier class is (0,1,0), so the base wins on every
+   classed paragraph and silently flattens the page's largest type to body size. Prefixing takes each
+   modifier to (0,2,0) and puts it back above the base. */
+/* TWO GAPS, NOT FIVE. There were four near-identical clamps doing the job of one — 40/7vh/80 on the
+   hero, 40/6vh/72 on a section, 40/7vh/80 on the grow block, and a bare 96px on the rail's fallback.
+   Eight pixels apart at their maxima is exactly the difference nobody can see and nobody can repeat,
+   which is the argument global.css already makes about the type scale and the button paddings.
+
+   So the page has one beat BETWEEN sections and one WITHIN them, and the ratio between them is the
+   hierarchy: --band-gap is a shade under 2× --block-gap at every viewport, which is the floor at
+   which grouping reads as grouping rather than as noise. Every other distance on this page is a
+   margin belonging to one element, not a rhythm. */
+.about-route{
+  --measure:38em;                     /* prose cap, for the places a column span is not the measure */
+  --band-gap:clamp(80px, 12vh, 148px);/* between sections */
+  /* DERIVED FROM THE BAND, not independently clamped against it. Two separate vh expressions had
+     the ratio as an emergent property of their coefficients — 12vh against 6.5vh is 1.85x wherever
+     neither clamps, and retuning either one cannot fix that without recomputing the other. Half the
+     band states the intent instead: the boundary between sections is always twice the boundary
+     within one, at every viewport, and the clamps only bound the extremes. */
+  --block-gap:clamp(40px, calc(var(--band-gap) * 0.5), 76px);/* between blocks inside one section */
+  --rail-card:clamp(280px, 26vw, 420px);
+}
+
+/* ---------------------------------------------------------------- the grid */
+
+.about-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap:var(--grid-gutter);
+  width:100%;
+  padding-inline:var(--page-gutter);
+}
+/* The reading column. EIGHT of twelve, anchored to column one so nothing in the argument drifts.
+   Six was the safer measure and it read as timid on a page this wide: at eight the copy holds its own
+   against the full-width demonstrations either side of it, and the headings — which are set at
+   statement scale and were breaking three and four lines deep — get to be two. The measure caps at
+   --measure where the line would otherwise run past what is comfortable, so the column is a PLACE on
+   the grid and the measure is still a measure. */
+/* THE SPLIT — headline at one edge of the viewport, body at the other, and the body sitting BELOW it.
+
+   Not an indent. An indent carries the body in from the heading's edge and keeps them on one axis,
+   which reads as one block set slightly wrong; this puts the two on opposite edges of the page with
+   the full width between them, so the relationship is a span rather than a step. The reference
+   language does this everywhere — a heading or a label held at the margin, the prose landing across
+   the page from it.
+
+   The block takes all twelve columns rather than the eight it used to, because "the other side" has
+   to mean the other side of the VIEWPORT. Heading in columns 1–5, prose in 8–12, so four columns of
+   air separate them and each has its own hard edge.
+
+   And the prose starts a row down. Top-aligning them would make the two blocks read as a pair of
+   equals side by side; dropping the body to the second row puts the heading first in the eye and the
+   body under it, which is the reading order the copy actually has.
+
+   HOW THAT ROW IS RESERVED, and this is a correction. It used to be grid-row:2 on the first
+   paragraph only — which moved that one paragraph down and left row 1 of the right-hand column
+   empty, so the SECOND paragraph auto-placed into the hole above it. Measured in six of the seven
+   text sections: paragraph two sat above paragraph one, every time.
+
+   That scrambled two things at once. The prose was read out of authored order — in "From sampled
+   colours to purposeful roles" the reader met "Atmos translates the visual character…" before "A
+   useful palette is not simply a row of attractive swatches…", which is the conclusion before its
+   premise. And the masked reveal, which staggers in DOM order because DOM order is the reading
+   order, therefore started the lower paragraph first. The reveal was never out of sequence; the
+   layout was, and the reveal was faithfully reporting it.
+
+   An empty generated grid item holds row 1 of the right-hand column instead. Nothing can auto-place
+   into an occupied cell, so every paragraph flows into rows 2, 3, 4 in the order it is written, and
+   the count of paragraphs stops mattering. */
+.about-col{
+  grid-column:1 / -1;min-width:0;
+  display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));column-gap:var(--grid-gutter);
+}
+.about-col > *{grid-column:8 / -1;min-width:0}
+.about-col > h2,.about-col > h3{grid-column:1 / span 5}
+/* The reserved cell. Zero height, so row 1 is still exactly as tall as the heading in it. */
+.about-col::before{content:'';grid-column:8 / -1;grid-row:1;height:0;pointer-events:none}
+/* A section whose column holds only prose — the grow block — has no heading to sit across from, so
+   its copy keeps the right-hand edge and simply starts at the top, in row 1, and the reserved cell
+   would push it down for no reason. */
+.about-col:not(:has(> h2)):not(:has(> h3))::before{display:none}
+.about-figure--full{grid-column:1 / -1}
+
+/* SCOPED TO main, and the scope is the whole point. This was `.about-route p`, which is every <p>
+   inside the route — including the two in the SHARED site footer, which is a sibling of main rather
+   than part of the page. Measured against /terms, that gave the footer's origin and rights lines 25px
+   of height against 12 and made the whole footer 313px against 283: the same component, two sizes,
+   because a route's prose rule reached out of the prose. A shared component must not be restyled by
+   whichever page happens to be hosting it. */
+.about-route main p{margin:0 0 1.15em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
+.about-route main p:last-child{margin-bottom:0}
+/* THE COLUMN IS A PLACE, THE MEASURE IS A MEASURE, and they are not the same number. Eight of twelve
+   is ~920px at 1440, which at --fs-lead is a hundred characters — half again what a reader can track
+   back from. So the heading gets the whole column, where the extra width buys shorter, better-broken
+   lines at statement scale, and the body caps at --measure inside it. Both still start on column one,
+   which is the alignment the page is built on. */
+.about-route .about-col > p{max-width:var(--measure)}
+/* .about-lead HAS NO TYPE OF ITS OWN, by request. It used to override all three of the paragraph's
+   type properties — --fs-subtitle instead of --fs-lead, 1.45 instead of 1.65, --track-title instead
+   of --track-body — which made the opening paragraph of a section a size above the paragraphs it
+   sits with. Now it inherits .about-route p exactly, so a lead is a paragraph.
+   The measure follows for free: --measure is 38em, so it was 760px at 20px and is 570px at 15px
+   without a second rule. The class is left on the four elements as a hook; nothing styles it. */
+.about-route strong{font-weight:500}
+
+/* The label voice — the app's own uppercase chrome label at --fs-label on flat tracking. Nothing
+   here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
+   consumers until they were removed from the page; the list is what is left. */
+.about-route .about-figure__label,.about-route .about-rail__meta,
+.about-route .about-role__name,.about-route .pills__label,
+.about-route .pills__inner-label,.about-route .about-stack__ref{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  line-height:1.2;
+  /* FULL INK, so the figure's NAME outranks the terms inside it without a second scale step. The
+     lens label, its dt terms and its unit were all 10px, all uppercase, all --on-surface-muted —
+     three roles rendering byte-identically, so nothing said which one named the figure. The scale
+     has no room between --fs-label and --fs-detail to separate them by size, and a 1px step would
+     not read anyway. Brightness does it: the parent is the ink, the children stay muted. */
+  color:var(--on-surface);
+}
+
+/* ------------------------------------------------------------- the divider
+
+   One primitive, drawn rather than present: a hairline whose scaleX is driven by --rule, defaulting
+   to 1 so no-JS and reduced motion simply have the line. aboutDividers.js takes it to 0 and back on
+   scroll. The section rules below use the same mechanic through the reveal engine, so every line on
+   this page arrives the same way. */
+.about-divider{
+  display:block;width:100%;height:1px;--rule:1;
+  background:var(--line-strong);
+  transform:scaleX(var(--rule));transform-origin:0 50%;
+}
+
+/* ---------------------------------------------------------------- hero */
+
+.about-hero{
+  position:relative;--rule:1;
+  padding-block:clamp(48px,8vh,96px) var(--band-gap);
+  row-gap:var(--block-gap);
+}
+.about-hero::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:var(--line-strong);
+  transform:scaleX(var(--rule));transform-origin:0 50%;
+}
+/* CENTRED ON EIGHT OF TWELVE — the same span the reading column takes, placed at column three so it
+   centres on the page rather than starting from the edge. That pairing is the point: the opening and
+   the argument occupy the same amount of the grid, so the page has one measure that is simply
+   addressed from the middle at the top and from the left thereafter.
+
+   It spanned all twelve for a while, which let the h1 run to 104px and its own max-width do the
+   centring. Wider is not automatically stronger: with nothing beside it the headline had no width to
+   be measured against, so it read as floating rather than as placed. Eight columns give it an edge to
+   sit inside — and the four columns of air either side are what make it read as centred at all. */
+.about-hero__inner{grid-column:3 / span 8;text-align:center;display:flex;flex-direction:column;align-items:center}
+/* NO max-width, and that is the whole point of putting the opening on eight columns.
+
+   Both of these carried a `ch` cap — 13ch on the headline, 24ch on the line under it — and a cap in
+   ch is a second measure competing with the first. At 92px, 13ch is 598px inside a 920px column, so
+   the headline broke early and sat with 322px of unused column either side of it: widening the
+   container did nothing, because the container was never what was deciding. The column is the
+   measure now, text-wrap:balance decides where the lines fall inside it, and the type is back at the
+   size it was before the column work touched it. */
+/* ONE LINE, and the numbers are measured rather than guessed. "Colour starts with a feeling" renders
+   at 10.6px of width for every 1px of type in this face at this tracking, so the size that fills an
+   eight-column box is exactly that box divided by 10.6. The column is 66.67vw − 40px, which makes the
+   fitting size 6.28vw − 4px, and 86px is where it stops growing — at 1440 that is 912px of headline
+   in 920px of column, eight pixels of slack.
+   The clamp's floor is what lets it wrap on a phone, where one line is not on offer and two is right.
+   text-wrap:balance therefore stays: it does nothing on the single line and evens the pair below. */
+.about-hero h1{
+  margin:0;
+  font-size:clamp(34px, calc(6.28vw - 4px), 86px);font-weight:500;line-height:1.04;
+  letter-spacing:var(--track-display);text-wrap:balance;
+}
+/* THE THESIS LINE — the sentence the product turns on, and the page's second-largest type.
+
+   IT HAS TO OUTRANK AN h2, and for a while it did not: at 34px it was set smaller than the 42px
+   section headings below it, so the page's own thesis was visually subordinate to every heading that
+   followed. Reduced ink is what keeps it quiet, not reduced size — it reads as the headline's thought
+   continuing rather than as a heading of its own because it is lighter, not because it is smaller. */
+.about-route .about-hero__lead{
+  /* Held well under --block-gap so the gap down to the image still reads as the bigger
+     boundary: at 4vh against a 6.5vh block gap it was 1.63x, which is not a hierarchy. */
+  margin:clamp(22px,3vh,38px) 0 0;
+  font-size:20px;font-weight:500;line-height:1.35;letter-spacing:var(--track-body);
+  color:color-mix(in srgb,var(--on-surface) 58%,transparent);
+  text-wrap:balance;
+}
+/* The opening image, centred under the opening headline — the plate the scroll then grows into the
+   full-width frame below. This is the one element on the page whose size is also an animation's
+   starting keyframe, so it is changed only when it has to be.
+
+   IT HAD TO BE. justify-self:center makes a grid item shrink-wrap its content, and .about-plate--sm
+   is width:100% of that item — so the plate had no width of its own and took whatever the figure's
+   widest child gave it. That child was the figcaption. With the caption removed the figure collapsed
+   to two pixels by three and the opening image was simply not there before scroll.
+   Filling its four columns is what the grid placement above already says; the caption was only ever
+   holding the box open by accident. */
+.about-hero__ref{grid-column:5 / span 4;margin:0;justify-self:stretch}
+.about-hero__orb-row{grid-column:1 / -1;display:flex;justify-content:center}
+.about-hero__orb{margin:0;text-align:center;width:clamp(150px,16vw,200px)}
+/* SQUARE, because the orb is a sphere and aboutOrbs sizes it from min(width, height). The slot had
+   a width and no height at all, so that min was zero and the radius fell to its 8px floor — the orb
+   has been rendering as a sixteen-pixel dot. The figcaption above it was giving the FIGURE height,
+   which is why nothing looked obviously broken until the caption came out and the row collapsed to
+   nothing. An aspect ratio states the height the slot always needed. */
+.about-hero__orb .about-orb{width:100%;max-width:none;margin:0;aspect-ratio:1}
+
+/* ------------------------------------------------------- the reference plate
+
+   Two frames and one photograph. The small one is in the hero, the large one a section below, and
+   aboutFlip.js moves the photograph between them as you scroll. Both are drawn as plates whether or
+   not that happens: --surface-raised with a hairline, so the empty destination reads as a frame
+   waiting rather than a hole — which is what it is for most of the scroll and all of a no-JS render.
+   Zero radius, per the system: the only curves on this site are transient motion shape. */
+.about-plate{position:relative;background:var(--surface-raised);border:1px solid var(--line-strong)}
+/* ONCE THE FLIP IS RUNNING, THE FRAMES ARE NOT THERE. The plates are drawn — raised surface, hairline
+   — so that a destination with nothing in it yet is a frame rather than a hole. That is the right
+   answer for a page where the photograph never moves, and the wrong one for this page: the reader
+   spends most of the scroll looking at an empty bordered panel sitting in the middle of the argument,
+   and a bordered panel is a hierarchy element. It reads as a thing, and it is a waypoint.
+   So when the effect is live both plates drop to the page's own background with no edge at all, and
+   the only thing you see is the photograph travelling. aboutFlip.js sets [data-flip-live] on the root
+   when it builds and clears it on teardown, which is the same signal the rail and the stream already
+   use — so no-JS, no-GSAP, a failed Flip and reduced motion all keep the drawn frame they need. */
+[data-flip-live] .about-plate{background:var(--surface);border-color:transparent}
+/* ONE RATIO AT BOTH WAYPOINTS, and it is the resource's own 56.25% padding-top written as a ratio.
+
+   mwg's `.scaling-video__before` sets padding-top:56.25% inside BOTH the small box and the big one,
+   so the two waypoints are the same shape and Flip.fit has only a size and a position to interpolate.
+   Ours were 3/4 in the hero and 3/2 below it. Flip.fit fits the target's box to the destination's box,
+   so a shape difference is interpolated too: measured through the flight, the photograph's ratio ran
+   0.750 → 1.007 → 1.207 → 1.369 → 1.502. It started portrait, passed through square and landed
+   landscape, and because the image is object-fit:cover the crop moved the whole way — the leaf slid
+   around inside its own frame while the frame changed shape under it. That is not the resource's
+   animation; the resource's animation is a photograph getting bigger.
+
+   16/9 is 56.25% expressed the way the rest of this stylesheet expresses ratios. */
+.about-plate--sm{width:100%;aspect-ratio:16/9}
+.about-plate--lg{grid-column:1 / -1;width:100%;aspect-ratio:16/9}
+.about-plate__wrap{position:absolute;inset:0}
+/* z-index is what makes the effect visible at all: both plates are position:relative with no z-index
+   of their own, so paint order is DOM order and the destination — later in the document — draws
+   straight over the photograph arriving inside it. 3 clears both plates and stays under the orb
+   canvas (5) and the masthead (20). */
+.about-plate__target{position:absolute;inset:0;z-index:3;overflow:hidden;will-change:transform,width,height}
+.about-plate__img{display:block;width:100%;height:100%;object-fit:cover}
+/* The house image treatment: an inset ring rather than a border, so the outline cannot shift the
+   picture inside a box whose size is being animated. */
+.about-plate__target::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 10%,transparent);
+}
+
+.about-grow{padding-block:0 var(--band-gap);row-gap:var(--block-gap)}
+
+/* ---------------------------------------------------------------- sections */
+
+.about-sec{position:relative;--rule:1;padding-block:var(--band-gap);row-gap:var(--block-gap)}
+/* Full bleed, like the app's header border: the rule is chrome, so it runs edge to edge rather than
+   stopping at the reading column. */
+.about-sec::before,.about-stack::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:var(--line-strong);
+  transform:scaleX(var(--rule));transform-origin:0 50%;
+}
+.about-route h2{
+  margin:0 0 .7em;
+  font-size:clamp(22px,2.6vw,34px);font-weight:500;line-height:1.14;
+  letter-spacing:var(--track-statement);text-wrap:balance;
+}
+.about-route h3{
+  margin:0;
+  font-size:var(--fs-subtitle);font-weight:500;line-height:1.25;letter-spacing:var(--track-title);
+}
+
+/* ---------------------------------------------------------------- figures */
+
+.about-figure{margin:0}
+/* The ink, not the muted tint — see the note on the label voice above for why. This rule is the one
+   that decides it: the shared rule sets the colour but this one is later and more specific, so the
+   figure's name was being pulled back to the same tint as the terms inside it. */
+.about-route .about-figure__label{margin:0 0 14px;color:var(--on-surface)}
+.about-route .about-figure figcaption,.about-route .about-figure__note{
+  margin:18px 0 0;max-width:var(--measure);
+  font-size:var(--fs-body);line-height:1.65;letter-spacing:var(--track-body);
+  color:var(--on-surface-muted);text-wrap:pretty;
+}
+.about-figure .about-divider{margin-top:22px}
+/* A figure that pairs a photograph with a readout: five columns of image, six of side, one of air. */
+.about-figure--split{grid-column:1 / -1;display:grid;grid-template-columns:5fr 6fr;column-gap:var(--grid-gutter)}
+.about-figure__media,.about-figure__side{min-width:0}
+.about-figure__side{display:flex;flex-direction:column;gap:20px}
+
+/* the weight bar — one row, five real shares of a photograph, at full page width */
+.about-weights{display:flex;width:100%;height:clamp(64px,8vw,110px);border:1px solid var(--line-strong)}
+.about-weights__part{display:block;height:100%}
+.about-weights__key{display:flex;flex-wrap:wrap;gap:8px 24px;margin:14px 0 0;padding:0;list-style:none}
+.about-weights__key li{display:flex;align-items:center;gap:8px}
+.about-key__chip{width:10px;height:10px;flex:none;border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent)}
+/* The OKLCH readout sits between the hex and the share: the three coordinates the page spends its
+   whole length arguing are the real description of a colour, printed beside the notation everyone
+   already uses. Muted, because it is the annotation and the hex is the name. */
+.about-key__ok{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.about-key__hex,.about-key__pct{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-variant-numeric:tabular-nums;
+}
+.about-key__pct{color:var(--on-surface-muted)}
+
+/* a masked photograph that moves against its frame — the parallax resource's own background pattern */
+.about-shot{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--surface-raised)}
+.about-shot__inner{position:absolute;left:0;right:0;top:-12%;height:124%;will-change:transform}
+.about-shot__inner img{display:block;width:100%;height:100%;object-fit:cover}
+.about-shot::after{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 10%,transparent);
+}
+
+/* ------------------------------------------------------------- the spectrum plot
+
+   Hue across, lightness up, chroma as diameter — the three dimensions the copy names, drawn as the
+   three dimensions of the figure. aboutSpectrum.js positions the dots from the OKLCH coordinates in
+   the markup; everything here is what the plot looks like before and after it does.
+
+   The band under the field IS the hue axis: a genuine OKLCH sweep at fixed lightness and chroma, so
+   the axis a dot is measured against is the thing it is measured against. Thirteen stops every 30°,
+   which is dense enough that the eye reads a continuum rather than a set of steps. */
+.about-spectrum{position:relative;width:100%}
+.about-spectrum__field{
+  position:relative;width:100%;aspect-ratio:16/7;
+  border:1px solid var(--line);
+  border-bottom:none;
+}
+.about-spectrum__band{
+  order:2;width:100%;height:clamp(10px,1.2vw,16px);
+  background:linear-gradient(90deg,
+    oklch(0.68 0.16 0), oklch(0.68 0.16 30), oklch(0.68 0.16 60), oklch(0.68 0.16 90),
+    oklch(0.68 0.16 120), oklch(0.68 0.16 150), oklch(0.68 0.16 180), oklch(0.68 0.16 210),
+    oklch(0.68 0.16 240), oklch(0.68 0.16 270), oklch(0.68 0.16 300), oklch(0.68 0.16 330),
+    oklch(0.68 0.16 360));
+}
+.about-spectrum{display:flex;flex-direction:column}
+.about-spectrum__field{order:1}
+/* A dot is a circle, which is the one place this system draws one: it is a plotted point, not a
+   surface. The ring keeps a near-black dot visible against a dark field without tinting it. */
+.about-spectrum__dot{
+  position:absolute;top:0;left:0;
+  width:26px;height:26px;border-radius:50%;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--on-surface) 22%,transparent);
+}
+/* Before the script runs — and for good — the dots are an even row along the floor of the field.
+   That is the palette strip the section is arguing against, which makes it the right resting state. */
+.about-spectrum:not([data-spectrum-live]) .about-spectrum__field{
+  display:flex;align-items:flex-end;justify-content:space-around;padding:0 0 18px;
+}
+.about-spectrum:not([data-spectrum-live]) .about-spectrum__dot{position:relative}
+/* THE DOTS TEACH ON DEMAND. Each one carries its own three numbers, revealed on hover and on focus —
+   the reading is available for any colour the reader is curious about without printing fifteen figures
+   onto the plot at rest. A real <button>, so the whole plot is reachable by keyboard and every dot
+   announces its own measurement; the readout is decoration on top of an accessible name. */
+.about-spectrum__dot{border:none;padding:0;cursor:help;-webkit-appearance:none;appearance:none}
+.about-spectrum__read{
+  position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%, 4px);
+  opacity:0;pointer-events:none;
+  padding:6px 9px;white-space:nowrap;
+  background:var(--surface);border:1px solid var(--line-strong);color:var(--on-surface);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-variant-numeric:tabular-nums;
+  transition:opacity var(--dur-state) var(--ease-standard),transform var(--dur-state) var(--ease-standard);
+}
+/* :focus AS WELL AS :focus-visible, and on a touch screen it is the only one of the three that fires.
+   The rule was hover plus focus-visible, which between them cover a mouse and a keyboard and nothing
+   else. A phone has no hover, and browsers deliberately withhold :focus-visible from a tap — verified
+   here on an emulated touch context (maxTouchPoints 5): after a tap the dot IS the activeElement and
+   :focus-visible still does not match, so the readout stayed at opacity 0. Which meant the three
+   numbers each dot exists to give up were unreachable on a phone by any gesture at all.
+   :focus-visible keeps its own line below because the RING is still keyboard-only — a tap should
+   reveal the reading without also drawing a focus ring nobody asked for. */
+.about-spectrum__dot:hover .about-spectrum__read,
+.about-spectrum__dot:focus .about-spectrum__read,
+.about-spectrum__dot:focus-visible .about-spectrum__read{opacity:1;transform:translate(-50%, 0)}
+.about-spectrum__dot:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
+/* IT WRAPS ON A PHONE, because a centred tooltip is only as safe as its half-width. Set on one line
+   the readout is ~180px, so a dot 30px inside the field's left edge put its left edge 20px into the
+   page margin. The dots are placed from JS and keep moving through the scrub, so a computed clamp
+   would have to track the tween; letting the line break instead halves the overhang for free and a
+   three-line tooltip is a perfectly ordinary tooltip. */
+@media screen and (max-width:620px){
+  .about-spectrum__read{white-space:normal;max-width:118px;line-height:1.45;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){ .about-spectrum__read{transition:none} }
+
+.about-route .about-spectrum__axis{
+  position:absolute;margin:0;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);white-space:nowrap;
+}
+.about-spectrum__axis--x{bottom:8px;right:10px}
+.about-spectrum__axis--y{top:10px;left:10px}
+.about-spectrum:not([data-spectrum-live]) .about-spectrum__axis{display:none}
+
+/* ------------------------------------------------------------- the interval rail
+
+   Five swatches and four gaps, and the gaps are the subject. aboutIntervals.js grows each one to the
+   perceptual distance it represents; at rest they are equal, which is the convention the figure
+   exists to replace. The readouts live inside the gaps so the number and the distance are the same
+   object. */
+/* THE INTERVALS, drawn as a dimension drawing rather than as a row of colours.
+
+   The section's claim is that a palette's character is in the distances between its colours, and the
+   figure's job is to make one distance visibly bigger than another. It was failing at the first
+   hurdle: Shale is achromatic — #0D0D11, #1D2025, #44464B — and the gaps between its swatches were
+   the page's own #141413, so the second swatch sat within four values of the empty space beside it.
+   A reader could not tell which bands were the palette and which were the measurement, and a row of
+   grey blocks with numbers floating in some of them is not a diagram of anything.
+
+   Three things fix it, and none of them is a colour change:
+
+     · THE SWATCH IS BOUNDED and hangs its own hex underneath, so it is unmistakably an object and
+       there is nothing left in it to go looking for. Half of "is this interactive?" is "is something
+       hidden here?", and printing the value answers it.
+     · THE GAP CARRIES A DIMENSION LINE — a rule with a tick at each end, the notation every technical
+       drawing uses for "this distance". It reads as a measurement, and measurements are not controls.
+     · THE STEP LEADS. The perceptual distance is set at body size on the line; the three deltas that
+       compose it sit under it at label size. Before, all three were equal-weight 9px and the number
+       the figure is actually about was not visibly the answer to anything.
+
+   The deltas are NOT uppercased, and that is a correction rather than a preference: the rule that
+   used to set them ran text-transform:uppercase over the whole readout, which turned Δh into ΔH —
+   and lowercase h is the OKLCH convention for hue, against upper-case L and C. The figure was
+   printing a notation that does not exist. */
+.about-intervals{
+  display:flex;align-items:stretch;width:100%;
+  height:clamp(120px,15vw,190px);
+  /* Room beneath for the hanging hex labels — they sit outside the rail so they never need to solve
+     contrast against five different grounds. */
+  margin-bottom:26px;
+}
+.about-intervals__swatch{
+  position:relative;flex:0 0 clamp(48px,6vw,90px);display:block;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 22%,transparent);
+}
+.about-route .about-intervals__hex{
+  position:absolute;top:100%;left:0;right:0;margin-top:7px;text-align:center;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  line-height:1;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.about-intervals__gap{
+  flex:1 1 0;min-width:0;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.about-route .about-intervals__read{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  width:100%;min-width:0;padding:0 6px;margin:0;text-align:center;
+}
+.about-route .about-intervals__step{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);line-height:1;letter-spacing:var(--track-flat);
+  color:var(--on-surface);font-variant-numeric:tabular-nums;
+}
+/* The rule and its two end ticks, drawn as one background so the gap needs no extra elements and
+   the ticks stay pinned to the ends however wide the scrub makes it. */
+.about-intervals__dim{
+  width:100%;height:9px;flex:none;min-width:0;
+  background:
+    linear-gradient(var(--line-strong),var(--line-strong)) 0 4px/100% 1px no-repeat,
+    linear-gradient(var(--line-strong),var(--line-strong)) 0 0/1px 9px no-repeat,
+    linear-gradient(var(--line-strong),var(--line-strong)) 100% 0/1px 9px no-repeat;
+}
+/* SPELLED OUT, not signed. These were ΔL / ΔC / Δh — correct notation and, at nine pixels on a dark
+   ground, three small triangles that read as a rendering fault rather than as "the change in". The
+   words cost four characters each and the figure stops needing to be decoded. */
+.about-route .about-intervals__deltas{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);line-height:1.6;letter-spacing:var(--track-flat);
+  text-transform:none;color:var(--on-surface-muted);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+
+/* THE DRAWING TURNS NINETY DEGREES, and 620 is measured rather than chosen.
+
+   A readout is 72px wide at this size and its column carries 12px of padding, so an interval needs
+   84px to hold one. The five swatches are 48px each at their clamp floor, so the figure needs
+   5 × 48 + 4 × 84 = 576px of content box, which is a 624px viewport once the page gutters are off.
+   Measured at 645 the gaps are 88px and nothing spills; measured at 375 they are 22px and every
+   readout spilled 16 to 19px over the swatch on EACH side — hex values and delta stacks printed
+   across the five colours the figure exists to be about.
+
+   Stacked, the same drawing reads the same way: colour, interval, colour. The gap is still the
+   interval, it is simply measured down the page instead of across it, and each one gets the whole
+   measure. The hex stays OUTSIDE its swatch for the reason the base rule gives — it must never have
+   to solve contrast against five different grounds — it just moves from under the block to beside it. */
+@media screen and (max-width:620px){
+  /* min-height rather than height, and that distinction is what keeps the gaps proportional.
+     aboutIntervals.js animates flex-grow per gap, from an even 1 to a value scaled by that gap's own
+     OKLab step — which is the entire figure. flex-grow only does anything when the container has free
+     space to hand out, and a column container at height:auto has none, so `flex:0 0 auto` here would
+     have made every interval the same size and quietly falsified the caption above it. A definite
+     min-height gives the column surplus to distribute; if the readouts ever outgrow it the container
+     falls back to content height rather than overflowing into the note below. */
+  .about-intervals{
+    flex-direction:column;height:auto;
+    min-height:clamp(560px,86vh,760px);
+    margin-bottom:0;
+  }
+  /* A row now, and only part of the width, so there is page ground to the right to set the hex on. */
+  .about-intervals__swatch{flex:0 0 52px;width:62%}
+  .about-route .about-intervals__hex{
+    top:50%;translate:0 -50%;left:calc(100% + 12px);right:auto;margin-top:0;text-align:left;
+  }
+  /* Grows by its step, never shrinks below its own readout. */
+  .about-intervals__gap{flex:1 0 auto;align-items:stretch;justify-content:flex-start;padding:14px 0}
+  .about-route .about-intervals__read{
+    flex-direction:row;align-items:center;gap:14px;width:auto;padding:0;text-align:left;
+  }
+  /* The dimension rule stands up with the drawing, and it STRETCHES: the stem spans the whole gap, so
+     the line the reader sees is the interval rather than a fixed tick standing next to it. */
+  .about-intervals__dim{
+    width:9px;height:auto;align-self:stretch;min-height:34px;
+    background:
+      linear-gradient(var(--line-strong),var(--line-strong)) 4px 0/1px 100% no-repeat,
+      linear-gradient(var(--line-strong),var(--line-strong)) 0 0/9px 1px no-repeat,
+      linear-gradient(var(--line-strong),var(--line-strong)) 0 100%/9px 1px no-repeat;
+  }
+}
+
+/* THE SOURCE, shown beside the palette that came out of it. Every other palette on this page arrives
+   with its photograph; this one was the exception, which left the reader being told a set of hexes
+   fails without ever seeing what they were read from. The note beside it carries the reason. */
+.about-split__ref{
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap:var(--grid-gutter);align-items:center;margin-bottom:var(--block-gap);
+}
+.about-split__shot{grid-column:1 / span 4;position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--surface-raised)}
+.about-split__shot img{width:100%;height:100%;object-fit:cover;display:block}
+.about-route .about-split__note{grid-column:6 / -1;margin:0;max-width:var(--measure)}
+@media (max-width:900px){
+  .about-split__shot{grid-column:1 / -1}
+  .about-route .about-split__note{grid-column:1 / -1;margin-top:18px}
+}
+
+
+/* ===== THE TWO LENSES, THE THREE AXES AND THE THRESHOLDS
+   Four figures that carry the page's only genuinely technical material, and the brief for all of them
+   was the same: stay editorial. This is a story about colour that happens to be measured, not a
+   dashboard. So they are built from the vocabulary already on the page — the label voice, the
+   hairline, the swatch, the generous band gap — and none of them introduces a chart, a badge, a
+   traffic light or a second colour language.
+
+   The narrative sentence is always visible first and the measurement sits under it, which is the
+   progressive disclosure the brief asks for without hiding anything behind an interaction. */
+
+/* One colour against two colours, which is the whole distinction drawn rather than described. */
+.about-lenses{
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap:var(--grid-gutter);row-gap:var(--block-gap);
+}
+/* THE HIERARCHY WAS FLAT, and measured it was not a hierarchy at all: label 10px, reading 13px, note
+   12px. Three tiers within three pixels of each other, so the eye had nothing to land on and the
+   figure read as a block of small print with a swatch stuck on top. The reading IS the payload here —
+   three coordinates on one side, one ratio on the other — so it takes the numeral treatment the stack
+   cards already use, and the note steps properly down beneath it. */
+.about-lens{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px)}
+.about-lens__art{display:flex;gap:clamp(12px,2vw,28px);height:clamp(96px,12vw,168px)}
+
+/* THE COLOUR, PLAIN. These were briefly WebGL orb slots — a lit particle sphere per colour, with this
+   rule painting a disc underneath as the no-WebGL floor. The spheres are gone and the swatch is the
+   swatch again: square, because zero radius is the system's own rule and a circle here was only ever
+   the orb's silhouette, and at full strength, because there is no longer anything drawing over it.
+
+   The hairline is the page's own swatch idiom — .about-intervals__swatch and .about-axis__step both
+   carry it — and it earns its place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
+   so without an edge the darker of the two lenses would be a colour the reader cannot locate. */
+.about-lens__body{
+  flex:0 0 clamp(96px,12vw,168px);aspect-ratio:1;display:block;
+  background:var(--lens-swatch,var(--surface-raised));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
+}
+
+/* The numerals, set as the figure's own subject. dl rather than three lines in one <p>: each of these
+   is a term and a value, and a screen reader should not have to infer that from a line break. */
+.about-route .about-lens__read{
+  margin:0;display:flex;flex-direction:column;gap:4px;
+}
+.about-route .about-lens__read > div{display:flex;align-items:baseline;gap:12px}
+.about-route .about-lens__read dt{
+  flex:0 0 auto;min-width:6.5em;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);
+}
+.about-route .about-lens__read dd{
+  margin:0;font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:clamp(22px,2.6vw,34px);line-height:1.1;letter-spacing:var(--track-statement);
+  color:var(--on-surface);font-variant-numeric:tabular-nums;
+}
+/* One number, so it gets to be the biggest thing in the figure. The unit rides at label size beside
+   it rather than at the same weight, because "5.56" is the measurement and "to 1" is its notation. */
+/* THE SAME SIZE AS THE OTHER LENS'S NUMBERS, because they are peers rather than tiers. This was
+   clamp(38px,5.4vw,72px) on the reasoning that one number should get to be the biggest thing in the
+   figure — but the figure holds TWO lenses side by side, and the other one's readings are the same
+   kind of thing: the measurement this lens exists to give. Rendered, that put 5.56 at 53px beside
+   0.551 at 25px, a 2.1x gap between siblings, which reads as two different levels of importance
+   rather than two ways of reading one colour. Equal size, equal standing. */
+.about-route .about-lens__ratio{
+  margin:0;font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:clamp(22px,2.6vw,34px);line-height:1.1;letter-spacing:var(--track-statement);
+  color:var(--on-surface);font-variant-numeric:tabular-nums;
+}
+.about-route .about-lens__ratio span{
+  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);margin-inline-start:.6em;
+}
+.about-route .about-lens__note{margin:0;max-width:34ch;color:var(--on-surface-muted);font-size:var(--fs-detail);line-height:1.55}
+@media (max-width:900px){ .about-lens{grid-column:1 / -1} }
+
+
+/* Each ramp holds two coordinates still and moves the third, so the axis being described is the only
+   thing changing in it. Every step came out of the app's own gamutMap. */
+.about-axes{
+  grid-column:1 / -1;
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap:var(--grid-gutter);row-gap:var(--band-gap);
+}
+.about-axis{grid-column:span 4;min-width:0;display:flex;flex-direction:column;gap:14px}
+.about-axis__ramp{display:flex;width:100%;height:clamp(44px,5vw,68px)}
+.about-axis__step{
+  flex:1 1 0;min-width:0;position:relative;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
+}
+/* The scale marks hang below rather than sitting on the colour, so no step has to solve contrast
+   against its own swatch and the row reads as one continuous ramp. */
+.about-route .about-axis__step > span{
+  position:absolute;top:100%;left:0;right:0;margin-top:6px;text-align:center;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);line-height:1;
+  color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
+}
+/* Twelve hue marks in the space of six will collide, so only every third is labelled. */
+.about-axis__step--hue:not(:nth-child(3n+1)) > span{display:none}
+.about-route .about-axis__note{margin:22px 0 0;color:var(--on-surface-muted);font-size:var(--fs-detail);line-height:1.55}
+@media (max-width:900px){ .about-axis{grid-column:1 / -1} }
+
+/* The thresholds. A list, not a scorecard. */
+.about-thresholds{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.about-thresholds li{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;
+  gap:clamp(12px,2vw,28px);padding:14px 0;border-bottom:1px solid var(--line);
+}
+.about-route .about-thresholds__role{font-size:var(--fs-body);letter-spacing:var(--track-body);color:var(--on-surface)}
+.about-route .about-thresholds__val{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);letter-spacing:var(--track-flat);
+  color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+@media (max-width:600px){ .about-thresholds li{grid-template-columns:minmax(0,1fr)} }
+
+
+/* ===== THE TAKEOVER — Osmo Supply's Sticky Title Scroll Effect.
+   The resource's own structure: a tall wrapper, a sticky container one viewport high, and the
+   headings stacked on each other so only one is ever on screen. Its 350vh for three statements is
+   kept, because the scroll distance IS the pacing — shortening it would turn three delivered
+   statements back into three that flick past.
+
+   Dressed as this site rather than as the demo. No gradient ground, because the page has one ground
+   and a takeover that changes it would read as a different site. Type at the page's own statement
+   scale, which is the size the closing statement already uses, so the two full-bleed moments on this
+   page agree with each other.
+
+   [ATMOS] The stacking waits for data-sticky-live. In the resource, .is--stacked is hidden in CSS and
+   revealed from JS, so a reader with no JavaScript gets the first statement and loses two. Here the
+   stack only forms once aboutStickyTitle.js has confirmed it can animate; before that the three are
+   three ordinary paragraphs down the page, which is the floor every other effect here keeps. */
+.about-takeover{
+  position:relative;width:100%;
+  /* Three statements, and the resource's own ratio for three. */
+  min-height:350vh;
+  padding-inline:var(--page-gutter);
+}
+.about-takeover__container{
+  position:sticky;top:0;
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100vh;
+}
+/* EIGHT COLUMNS, not the resource's 60em. Its max-width is in root ems while the type is set in its
+   own, so the two are unrelated — and at this page's statement size that measure put a 150-character
+   statement on seven lines, which is a paragraph in big type rather than a statement. Eight of the
+   page's own columns, and the size stepped down from the closing statement's 58px, so each of the
+   three lands in three or four lines. */
+.about-takeover__inner{
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  width:100%;max-width:calc((100% - 11 * var(--grid-gutter)) / 12 * 8 + 7 * var(--grid-gutter));
+  margin-inline:auto;text-align:center;
+}
+.about-route .about-takeover__el{
+  margin:0;max-width:none;
+  /* The statement size, like every other statement. What makes these bigger in effect is that each
+     one has a whole screen to itself, which is a different lever from type scale. */
+  font-size:var(--fs-statement);font-weight:500;line-height:1.12;
+  letter-spacing:var(--track-statement);text-wrap:balance;
+  color:var(--on-surface);
+}
+/* Only once the effect is running does the stack form. See [ATMOS 2] in aboutStickyTitle.js. */
+[data-sticky-live] .about-takeover__el.is--stacked{visibility:hidden;position:absolute;inset:0}
+/* THE INK IS THE SECTION'S, once the takeover is live. aboutStickyTitle.js scrubs a ground colour and
+   an ink colour onto the wrap across the same scroll range the statements run on, so the three beats
+   each arrive in a palette of their own instead of three screens of the same near-black. Inheriting is
+   what lets one animated `color` on the wrap reach all three statements without the module needing to
+   know how many there are. Outside the live state this rule does not apply and the statements keep
+   --on-surface, which is the no-JS and reduced-motion floor. */
+.about-route [data-sticky-live] .about-takeover__el{color:inherit}
+/* Characters are inline-block so a transform can be tweened on each; the word wrapper keeps line
+   breaking where the browser would have put it. */
+.about-takeover__el [data-st-word]{display:inline-block}
+.about-takeover__el [data-st-char]{display:inline-block;will-change:opacity}
+
+/* Without the effect the wrapper has no reason to be three viewports tall, and the three statements
+   simply read down the page in the section's own rhythm. */
+.about-takeover:not([data-sticky-live]){min-height:0;padding-block:var(--band-gap)}
+.about-takeover:not([data-sticky-live]) .about-takeover__container{position:static;height:auto;display:block}
+.about-takeover:not([data-sticky-live]) .about-takeover__inner{gap:var(--block-gap);max-width:none;text-align:left}
+
+@media (prefers-reduced-motion: reduce){
+  .about-takeover{min-height:0;padding-block:var(--band-gap)}
+  .about-takeover__container{position:static;height:auto;display:block}
+  .about-takeover__inner{gap:var(--block-gap);max-width:none;text-align:left}
+  .about-takeover__el.is--stacked{visibility:visible;position:static}
+}
+
+/* ------------------------------------------------------------- the pair matrix
+
+   All ten pairs, ranked, with the verdict carried by fill weight rather than hue — the app's own
+   --status-* progression, where more capability reads as more presence. The system is monochrome by
+   design and the one page arguing about colour is the last place to introduce a red/green vocabulary. */
+.about-matrix{
+  margin:0;padding:0;list-style:none;
+  border-top:1px solid var(--line);
+}
+.about-matrix li{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;
+  gap:clamp(12px,2vw,28px);
+  padding:11px 0;border-bottom:1px solid var(--line);
+}
+.about-matrix__pair{display:flex;gap:4px}
+.about-matrix__pair .about-key__chip{width:22px;height:14px}
+.about-route .about-matrix__val{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat);
+  justify-self:start;
+}
+/* Three outcomes, three weights, and no hue carrying the verdict — the page argues that colour must
+   never be the only cue, so the classification is spelled out in words and the fill is only there to
+   rank them. */
+.about-matrix li.is--text .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 20%,transparent);color:var(--on-surface)}
+.about-matrix li.is--large .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 10%,transparent);color:var(--on-surface)}
+.about-matrix li.is--none .about-matrix__use{background:none;color:var(--on-surface-muted)}
+.about-route .about-matrix__use{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  padding:4px 8px;white-space:nowrap;
+}
+.about-matrix .is--text .about-matrix__use{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
+.about-matrix .is--large .about-matrix__use{background:var(--status-limited-surface);color:var(--status-limited-ink);border:1px solid var(--status-limited-line)}
+.about-matrix .is--graphic .about-matrix__use{background:var(--status-none-surface);color:var(--status-none-ink);border:1px solid var(--status-none-line)}
+
+/* ------------------------------------------------------------- the role grid
+
+   Six cells, two of the twelve columns each, so the grid the page is laid on is the grid the cells
+   sit in. Real gaps and real borders rather than a 1px grid gap with the container showing through:
+   every cell is its own parallax trigger, and a cell that moves cannot also be the thing hiding the
+   container it moves over — the "rules" would open into bands the moment they travelled. */
+/* The note that explains the doubled swatch. It belongs to the grid above it rather than to the
+   pills below, so it sits in the body column and keeps the section's reading measure. */
+.about-route .about-roles__after{grid-column:1 / -1;margin:var(--block-gap) 0 0;max-width:var(--measure)}
+.about-roles{
+  grid-column:1 / -1;
+  display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));
+  /* 8px by request. NOTE the trade, because the grid verification will now report it: the gutter was
+     --grid-gutter, which is what made six cells across twelve columns land exactly on column lines
+     (each cell two columns wide, its gap the page's own gutter). At 8px the cells divide the width
+     evenly but their edges no longer coincide with the page grid. Six swatches read as one object
+     this way, which is the argument for it — it is a deliberate exception, not drift. */
+  gap:8px;
+}
+.about-role{
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  /* 8px by request, flat. It was clamp(16px, 1.6vw, 24px) — 16 up to a 1000px viewport, then scaling
+     to 24 by 1500. Halving only the floor would have left the padding at 13.6px on an 850px screen
+     and untouched at 24px on a wide one, so the number asked for would not have appeared at any width
+     anyone was looking at. A flat value is the only reading of "16 to 8" that is 8 everywhere. */
+  padding:8px;
+  background:var(--surface);border:1px solid var(--line);
+}
+.about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px}
+.about-route .about-role__name{color:var(--on-surface)}
+.about-role__hex,.about-role__note{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
+}
+
+/* -------------------------------------------------------- the interface preview
+
+   A working surface drawn in the assigned roles, not a picture of one. The six roles arrive as custom
+   properties on the block, so every colour below is the assignment itself and cannot drift from the
+   grid above it. Everything structural — the hairline, the zero radius, the label voice — is still
+   the system's. */
+.about-ui{
+  height:100%;
+  padding:clamp(22px,3vw,44px);
+  background:var(--r-bg);
+  display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.4vw,30px);
+}
+.about-ui--compact{height:auto;padding:clamp(18px,2.2vw,28px);border:1px solid var(--line-strong)}
+.about-ui__bar{display:flex;align-items:center;gap:14px}
+.about-ui__dot{width:10px;height:10px;flex:none;background:var(--r-accent)}
+.about-ui__rule{flex:1;height:1px;background:color-mix(in srgb,var(--r-chrome, var(--r-text)) 30%,transparent)}
+.about-route .about-ui__tag{
+  flex:none;margin:0;color:var(--r-chrome, var(--r-text));
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-variant-numeric:tabular-nums;
+}
+/* CENTRED IN THE FRAME, and inside the splitter that is the whole design. The two layers are the
+   same card on two grounds, and the seam falls wherever the reader puts it — so a left-aligned card
+   means the text only ever exists on one side of the split and you compare two empty rectangles. A
+   centred card puts the sentence across the seam: the same words, in the same colour, half of them on
+   the ground that fails and half on the ground that passes, at the same moment. That is the argument
+   the section is making, and it is only visible if the type straddles the cut. */
+.about-ui__card{padding:clamp(18px,2.4vw,32px);background:var(--r-surface);width:100%;max-width:46ch;margin-inline:auto}
+.about-route .about-ui__title{
+  margin:0 0 10px;color:var(--r-chrome, var(--r-text));
+  font-size:var(--fs-subtitle);font-weight:500;line-height:1.2;letter-spacing:var(--track-title);
+}
+/* THE SPECIMEN IS SET LARGE, and that is a WCAG decision rather than a typographic one.
+   This figure exists to show a pair that misses the body-copy threshold. Rendered AT body size, the
+   figure would itself be shipping text below 4.5:1 — a page arguing for accessible colour failing on
+   its own example. Set at --fs-title it is large text by WCAG's definition (24px), which is held to
+   3:1, and 3.96 clears that comfortably. The number the reader is being shown is still short of 4.5,
+   which is the whole lesson, and it is now short of it legibly. */
+.about-route .about-ui__body{
+  margin:0 0 clamp(18px,2.4vw,26px);max-width:26ch;color:var(--r-text);
+  font-size:var(--fs-title);line-height:1.3;letter-spacing:var(--track-title);
+}
+.about-route .about-ui--compact .about-ui__body{
+  max-width:36ch;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);
+}
+.about-route .about-ui__actions{display:flex;align-items:center;gap:18px;margin:0}
+/* --r-chrome is the figure's OWN voice: the tag, the rule, the two readouts. It exists so that the
+   parts of the preview that are furniture are never the pair being tested — the specimen line is the
+   thing under measurement, and everything around it has to be plainly legible or the figure is
+   arguing against itself. Falls back to --r-text, so the palettes that need no such split are
+   untouched. */
+.about-ui__btn{
+  display:inline-flex;align-items:center;padding:var(--btn-pad-md);
+  background:var(--r-primary);color:var(--r-chrome, var(--r-text));
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-chrome, var(--r-text)) 30%,transparent);
+  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
+}
+.about-ui__link{
+  color:var(--r-accent);
+  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
+}
+
+/* --------------------------------------------------- the before/after splitter
+
+   The Osmo resource's structure, on this system's terms: zero radius instead of 2rem, the ink
+   hairline instead of a white bar, and a handle that is a real slider rather than a bare div. Both
+   layers hold live interface previews rather than images — the resource allows any element, and it
+   means the "after" side is the browser actually drawing those hexes. */
+/* 2/1 rather than the resource's 3/2. What is inside is a wide interface, not a photograph, and at
+   16/9 across the full page the card floated in half a screen of empty ground. */
+.about-split{
+  position:relative;width:100%;aspect-ratio:5/2;overflow:hidden;
+  border:1px solid var(--line-strong);
+  touch-action:pan-y;   /* the handle owns horizontal drags; the page keeps vertical scroll */
+}
+.splitter-content{z-index:0;width:100%;height:100%;position:absolute;inset:0}
+.splitter-content.is--after{-webkit-clip-path:inset(0 0 0 42%);clip-path:inset(0 0 0 42%)}
+/* The bar is WHITE, which is the resource's own choice and is right for a reason worth stating: this
+   control sits over content it knows nothing about — here two dark palettes, tomorrow whatever is
+   being compared — so it cannot take a theme token and expect to be visible. White plus a hairline
+   shadow reads on any ground. It is the one element on this page not drawn from the palette, because
+   it is not part of the picture; it is the instrument measuring it. */
+.about-split__handle{
+  z-index:2;cursor:ew-resize;
+  background:#fff;box-shadow:0 0 0 1px rgb(0 0 0 / .18);
+  display:flex;align-items:center;justify-content:center;
+  width:2px;height:100%;position:absolute;top:0;bottom:0;left:42%;
+}
+.about-split__grip{
+  flex:none;display:flex;align-items:center;justify-content:center;
+  width:2.75em;height:2.75em;
+  background:#fff;color:#1a1a1a;box-shadow:0 2px 14px rgb(0 0 0 / .28);
+  /* THE ONE CURVE, and it is the resource's own: a drag handle is a physical affordance and the
+     roundness is what says "take hold of this". Everything else on this page is square. */
+  border-radius:100em;
+  transition:transform var(--dur-state) var(--ease-standard);
+}
+.about-split__icon{width:1.2em;display:block}
+@media (hover:hover){ .about-split__handle:hover .about-split__grip{transform:scale(1.12)} }
+.about-split[data-splitter-dragging] .about-split__grip{transform:scale(1.06)}
+.about-split__handle:focus-visible{outline:none}
+.about-split__handle:focus-visible .about-split__grip{outline:3px solid var(--on-surface);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){ .about-split__grip{transition:none} }
+
+/* ------------------------------------------------------------ contrast readout
+
+   Three states, none carried by colour: PASSES is filled, LARGE TEXT ONLY outlined, FAILS a ghost on
+   muted ink — the app's own --status-* progression, where weight descends with capability. The system
+   is monochrome by design and putting a red/green vocabulary on the one page that argues about colour
+   would be the worst place on the site to start. */
+.about-checks{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+.about-checks li{
+  display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;
+  padding:12px 0;border-bottom:1px solid var(--line);
+}
+.about-route .about-checks__use{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  color:var(--on-surface-muted);white-space:nowrap;
+}
+.about-checks__pair{display:flex;align-items:center;gap:10px;min-width:0;font-size:var(--fs-body);letter-spacing:var(--track-body)}
+.about-checks__val{font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat)}
+.about-checks__verdict{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  padding:4px 8px;white-space:nowrap;
+}
+.about-checks .is--pass .about-checks__verdict{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
+.about-checks .is--part .about-checks__verdict{background:var(--status-limited-surface);color:var(--status-limited-ink);border:1px solid var(--status-limited-line)}
+.about-checks .is--fail .about-checks__verdict{background:var(--status-none-surface);color:var(--status-none-ink);border:1px solid var(--status-none-line)}
+
+/* ------------------------------------------------------------ the statements
+
+   The two blocks whose characters resolve as you scroll (aboutHighlight.js). Set larger than a
+   heading and lighter than one: it is a sentence you read, not a section you find. The characters
+   carry their own opacity, so nothing here may set one — an opacity on the block would multiply
+   against every char and flatten the effect it exists for. */
+/* ONE SIZE FOR EVERY STATEMENT, declared once and reached for by all four of them.
+
+   A statement is a role on this page, not a decoration: it is the beat where the page stops
+   explaining and simply says something. There were three sizes doing that job — measured at 1024px,
+   the closing statement and the end line at 43px, the takeover's three at 36px, and the quiet variant
+   at 33px. Three sizes for one role is not a hierarchy, it is the absence of one: a reader cannot use
+   size to tell what kind of thing they are looking at when the same kind of thing has three sizes.
+   The variants keep their real differences — the quiet one is quieter by COLOUR, the takeover one is
+   bigger in effect by having a whole screen to itself — and none of them differs by scale. */
+.about-route{--fs-statement:clamp(28px,4.2vw,58px)}
+.about-route .about-statement{
+  grid-column:2 / span 10;
+  margin:0 0 clamp(48px,7vh,88px);
+  font-size:var(--fs-statement);font-weight:500;line-height:1.08;
+  letter-spacing:var(--track-statement);text-wrap:balance;
+}
+
+/* ------------------------------------------------- run-up into a pinned section
+
+   A PINNED SECTION MAY NOT START THE FRAME AFTER A PARAGRAPH. Measured before this rule: the stack's
+   last card ended, 108px of section padding and 352px of heading and prose went by, and the rail took
+   the scroll — 459px, half a screen, between one effect capturing the scroll and the next one doing
+   it. That is the whole of what "the sections conflict" means: the reader never gets back control
+   long enough to notice they had it.
+
+   So every block that immediately precedes a scroll-driven section is followed by a full band-gap of
+   nothing, on top of whatever margin it already had. It is deliberately the between-sections beat
+   rather than the within-section one, because crossing from reading into an effect is a bigger
+   boundary than crossing between two paragraphs. */
+.about-sec--gallery > .about-grid,
+.about-sec--belief > .about-grid{margin-bottom:var(--band-gap)}
+/* And a settle on the way out, so the next heading is not the first thing after the travel stops. */
+.about-rail,.about-stream{margin-bottom:var(--band-gap)}
+/* DOUBLE on the way IN to both, because these are the two boundaries where one effect releases the
+   scroll and another takes it with only a heading and a little prose between: the stack releases into
+   the gallery, the rail releases into the belief. Everywhere else a pinned section is preceded by a
+   whole argument. */
+.about-sec--gallery,.about-sec--belief{padding-top:calc(var(--band-gap) * 2)}
+
+/* SplitText's own two rules, restated: words hold together so lines still break between them,
+   characters are their own boxes so each can be tweened. */
+[data-hl-word]{display:inline-block}
+[data-hl-char]{display:inline-block}
+
+/* ------------------------------------------------------------- the card stack
+
+   Five slides, each a viewport tall; the card inside pins while it tilts back and fades, so the next
+   arrives over something receding. The perspective is on the wrapper and the transform on the card —
+   that split is the effect, not a detail. */
+/* THE HANDOFF NEEDS SOMETHING TO HAND OFF TO.
+
+   Each card recedes while the NEXT card scrolls up over it, and the incoming card is opaque — that is
+   what wipes the receding one off the screen. The last card has no successor card. What arrives over
+   it is an ordinary section, and a section paints no background of its own, so for the whole second
+   half of the third pin the reader had the Chroma card and "From sampled colours to purposeful roles"
+   on screen together: two headlines, two bodies, one behind the other. MEASURED at 1048x998 — at
+   scroll 6600 the card was still at 0.907 opacity with the next heading already 546px up the
+   viewport, and it was still at 0.106 two hundred pixels later.
+
+   The fade was not the bug. It runs 0.55 → 0.8 of the pin, which is late only because it was written
+   for a card being covered by another card. Give the receiving section the page's own background and
+   it becomes a fourth card as far as the effect is concerned: it wipes the third one exactly the way
+   the third wiped the second, and the fade goes back to being the insurance it was meant to be.
+
+   Invisible everywhere else — it is the colour the page is already painted. */
+.about-stack + .about-sec{background:var(--surface)}
+
+/* HALF OF THE SOURCE'S ISOLATION, and the half that does work.
+
+   mwg_031 sets `padding: 100vh 0; overflow: hidden`. The overflow is kept: it is the guard that stops
+   a card receding in 3D from painting outside its own section, and it does NOT clip the pin — a plain
+   overflow value creates no containing block for a position:fixed descendant, which is verified on
+   this page rather than assumed.
+
+   The 100vh padding is not kept, and reporting it as "the stack is blank" is exactly right. The
+   source's demo page has nothing on it but the effect, so a screen of ground at each end is the only
+   way to give the sequence somewhere to begin and end. Here it bought nothing and cost everything:
+   measured, one full screen of nothing between the previous section and this one's own heading, and
+   another full screen between the last card and the next section. Two of the section's 5.2 screens
+   were empty, in the middle of a page already described as long, and the reader who stopped in either
+   of them saw a blank viewport with no way to tell whether anything had failed.
+   The sections either side already isolate this one. The band rhythm is the page's own answer to
+   "how much air does a full-bleed pinned sequence need", and it is the same figure the gallery and
+   the stream use. */
+.about-stack{position:relative;--rule:1;padding-block:calc(var(--band-gap) * 2);overflow:hidden}
+.about-stack__set{margin-top:var(--band-gap)}
+/* THE FLOOR IS THREE READABLE CARDS, and it was not.
+
+   The card is position:absolute, and its containing block is ScrollTrigger's own pin-spacer —
+   an element that only exists once the pin is built. Without JS there is no spacer, so the chain
+   falls through the wrap (static), the slide (static) and the set (static) to .about-stack, which
+   is position:relative. All three cards then resolve against the SAME box and overlay the whole
+   section: a reader without JavaScript saw the last card and two hidden underneath it.
+
+   Every other effect on this page guards exactly this with a `-live` attribute — data-rail-live,
+   data-stream-live, data-pills-live, data-sticky-live, data-intervals-live, data-spectrum-live.
+   The stack was the only one without one, and the only one whose floor was broken.
+
+   So the base rules below are the FLOOR: three ordinary blocks down the page, each as tall as its
+   own content. aboutStack.js sets data-stack-live on a slide once it has confirmed GSAP,
+   ScrollTrigger and a willingness to animate, and only then does the card become the absolutely
+   positioned, stacked, pinned thing the effect needs. */
+.about-stack__slide{height:auto;min-height:78vh}
+/* The source's slide: a full viewport, carrying the depth cue that makes a receding card read as a
+   card rather than as a shrinking rectangle. Ours had dropped the shadow entirely. */
+[data-stack-live].about-stack__slide{
+  height:100vh;min-height:0;
+  box-shadow:3px 3px 30px rgb(0 0 0 / .14);
+}
+.about-stack__wrap{width:100%;height:100%;perspective:250vw}
+.about-stack__card{
+  position:relative;min-height:78vh;
+  transform-style:preserve-3d;transform-origin:50% 10%;
+  background:var(--r-bg);color:var(--r-text);
+  display:flex;flex-direction:column;justify-content:space-between;
+  /* INLINE PADDING IS THE PAGE MARGIN, so a full-bleed card's contents stand on the page's own
+     column line one rather than on a second grid of the card's own. It was clamp(24,4vw,72) on all
+     four sides — 57.6px at 1440 — which put every numeral and title 33px right of the line that every
+     heading outside the card starts on. A panel may bleed; the type inside it still belongs to the
+     page. The block padding stays generous: vertical rhythm is the card's business, horizontal
+     position is the grid's. */
+  padding:clamp(24px,4vw,72px) var(--page-gutter);
+}
+[data-stack-live] .about-stack__card{position:absolute;inset:0;min-height:0}
+.about-stack__top{display:flex;justify-content:space-between;align-items:flex-start}
+/* Each card carries a different palette, so each card has to say WHICH. Set in the page's label
+   voice, in the card's TEXT colour rather than its mark colour: the mark is sized for the numeral,
+   which is display type held to 3 to 1, and this label is ten pixels. Measured at 3.74 to 1 against
+   Cut Limestone's ground before the swap, which is short of the 4.5 that small text needs. */
+.about-route .about-stack__ref{margin:0;color:var(--r-text)}
+/* Full strength, for the reason spelled out on .about-stack__d below: a tint on a palette colour is
+   a contrast cut, and at --fs-label it is the smallest text on the card. */
+/* THE NUMERAL AT DISPLAY SIZE — the same top of the scale the page's h1 takes.
+
+   It spent a version at copy size, which made it an index: a small tabular figure sitting beside the
+   text like a footnote marker. At display size it is the opposite thing — the card's first mark, read
+   before the word under it, which is what the card-stack references do with their numbers and what a
+   full-screen card wants. The clamp shares the h1's slope and ceiling so the two are literally one
+   step of the scale rather than two that happen to look similar. */
+.about-route .about-stack__n{color:var(--r-mark, var(--r-text));
+  margin:0;
+  /* The SAME expression as the hero h1 (see .about-hero h1) rather than a near-copy of it. It was
+     clamp(40px, 6.28vw, 86px) against the h1's clamp(34px, calc(6.28vw - 4px), 86px) — identical at
+     the cap and four pixels LARGER at every width below it, which put the card numerals above the
+     page's own title in the hierarchy. Measured 53px against the h1's 49px. */
+  font-size:clamp(34px, calc(6.28vw - 4px), 86px);font-weight:500;line-height:1;
+  letter-spacing:var(--track-display);
+  font-variant-numeric:tabular-nums;text-transform:none;
+}
+/* NO MEASURE ON THE WRAPPER, and this is the bug that put one word on each line of the titles.
+   `ch` resolves against the element's OWN font-size, and this wrapper has none of its own — it
+   inherits the card's, which is the 16px body default. So `max-width:24ch` was 192px, and the 76px
+   title inside it had 192px to wrap in: two or three characters a line. The cap looked like a
+   sensible measure and was one, for a font-size nothing here is set in.
+   A measure belongs to the text it measures. Each child now caps in its own em, where 1ch is a
+   character of the size actually being read. */
+.about-stack__bottom{display:flex;flex-direction:column;gap:clamp(16px,2vw,28px)}
+/* THE PALETTE'S DEPTH, on the card that is made of it. Each card is now a ground taken from a real
+   palette rather than a near-black, which shows one colour; the strip shows the other four it came
+   with, so the card states its own range instead of asserting it. Five equal bands, the page's own
+   hairline between them and the ground. */
+.about-stack__strip{display:flex;width:100%;max-width:clamp(220px,26vw,420px);height:clamp(28px,3.2vw,44px)}
+/* A hairline in the card's OWN text colour, not the page's. Each ground is one of the five colours in
+   its strip, so without a boundary that band vanishes into the card and a palette of five reads as
+   four — which is precisely the miscount the strip is there to prevent. */
+.about-stack__strip > span{flex:1 1 0;min-width:0;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-text) 22%,transparent)}
+.about-route .about-stack__t{
+  margin:0;max-width:18ch;
+  font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.06;letter-spacing:var(--track-statement);
+  text-wrap:balance;
+}
+/* NO OPACITY. It was .72, and on a card whose two colours are a real palette rather than a token
+   that is not a tint, it is a contrast cut: composited, it took four of the five cards' descriptions
+   to 1.51–4.13 against their own grounds, below what body copy needs. Card 03's pair is 4.51 at full
+   strength, so ANY reduction breaks it — there is no safe value, only no value.
+   The hierarchy it was buying is still there, carried by size and tracking, which cost no contrast. */
+.about-route .about-stack__d{
+  margin:0;max-width:52ch;
+  font-size:var(--fs-lead);line-height:1.55;letter-spacing:var(--track-body);
+}
+
+/* ---------------------------------------------------------------- the rail
+
+   The gallery, pinned: the section holds while the row travels its own overflow. Cards are a fixed
+   width so the travel is a function of how many there are.
+
+   THE PAD IS THE SOURCE'S 120vw, and it is load-bearing rather than decorative. It is the same
+   number as the card triggers' 'left 120%' / 'right -20%' offsets in aboutRail.js, written in CSS:
+   at pin start the first card's left edge sits at exactly 120vw, and at pin end the trailing pad
+   closes flush with the right edge and the last card has passed 20vw off the left. Every card gets
+   the identical window, and the row enters and leaves on empty screen. An earlier pass halved this
+   to 60vw without halving the offsets, which decoupled the two and left the last card parked by the
+   right edge, 239px short of ever crossing the middle. */
+.about-rail{
+  position:relative;width:100%;height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  overflow:hidden;
+}
+.about-rail__track{
+  display:flex;width:max-content;gap:var(--grid-gutter);
+  padding-inline:120vw;
+  will-change:transform;
+}
+/* The source widens the pad on narrow screens, where a viewport is a smaller absolute distance. */
+@media (max-width:900px){
+  .about-rail__track{padding-inline:140vw}
+}
+.about-rail__card{
+  position:relative;flex:none;
+  width:var(--rail-card);aspect-ratio:3/4;
+  overflow:hidden;background:var(--surface-raised);
+  border:1px solid var(--line-strong);
+}
+.about-rail__card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.about-rail__content{
+  position:relative;z-index:1;height:100%;
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:clamp(14px,1.2vw,22px);
+  /* The cards are photographs and the type sits on them, so the type brings its own ground rather
+     than hoping the picture underneath is dark enough — a scrim that is a gradient, not a flat wash,
+     so the middle of the image stays the image. */
+  /* The top stop is HELD to 12% rather than fading from 0. The meta line sits about 5% down, where a
+     gradient that starts fading at 0 has already dropped to ~47% — measured, that put white 10px
+     text over the lightest card (poppy) at 4.19:1, under AA. Holding the wash flat until the text
+     has cleared costs the picture nothing: the fade still finishes in the same place. */
+  background:linear-gradient(to bottom, color-mix(in srgb,#000 62%,transparent) 0%, color-mix(in srgb,#000 62%,transparent) 12%, transparent 38%, transparent 52%, color-mix(in srgb,#000 72%,transparent) 100%);
+  color:#fff;
+}
+.about-route .about-rail__meta{display:flex;justify-content:space-between;gap:12px;margin:0;color:#fff}
+.about-rail__content h3{color:#fff}
+.about-rail__strip{display:flex;height:16px;margin-top:12px;border:1px solid color-mix(in srgb,#fff 40%,transparent)}
+.about-rail__strip span{display:block;flex:1}
+/* No effect — no pin, no travel — so the rail becomes an ordinary horizontal scroller rather than a
+   row clipped at the viewport edge. A pinned section that cannot animate must not be one you cannot
+   read. `[data-rail-live]` is set by the script only when it has actually built. */
+.about-rail:not([data-rail-live]){height:auto;overflow-x:auto;overflow-y:hidden;padding-block:var(--band-gap) 24px}
+.about-rail:not([data-rail-live]) .about-rail__track{padding-inline:var(--page-gutter)}
+
+/* --------------------------------------------------------------- the stream
+
+   Eight frames blooming out of the centre, one after another, driven by the section's own scroll.
+   The stage is a viewport tall and the statement sits over it. Without the script only the first
+   frame has a src, so what is left is one photograph — which is why that one is written into the
+   markup rather than filled in by JS. */
+.about-stream{
+  position:relative;width:100%;height:100vh;overflow:hidden;
+  /* The page's own twelve columns, so the statement over the stage can be placed by line rather than
+     centred on a measure. The stage itself is position:absolute and is unaffected by the tracks. */
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap:var(--grid-gutter);padding-inline:var(--page-gutter);
+  align-content:center;
+  background:var(--surface-raised);
+}
+.about-stream__stage{position:absolute;inset:0;z-index:0}
+.about-stream__frame{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;will-change:transform;
+}
+/* Only the frames the script is driving start collapsed; the standalone first frame must not, or the
+   no-JS floor is an empty box. */
+.about-stream[data-stream-live] .about-stream__frame{transform:scale(0,0)}
+
+/* THE SCRIM, and it is not decoration — it is the only thing that makes the closing line readable.
+
+   The statement is white over eight photographs that change as you scroll, so its contrast is
+   whatever happens to be underneath at the moment you read it. Sampled at the statement's own
+   position, that ran from 11.56:1 on the ember portrait down to 1.33:1 on the radish, with the
+   courtyard and the court also under the 3:1 a line this size needs — three of eight unreadable, and
+   which one you get depends on where you stopped.
+
+   A text-shadow cannot fix that. A 40px blur at 55% is a halo: it darkens a soft field AROUND the
+   glyphs and leaves the glyph edges sitting on the picture, so it buys perhaps half a stop where the
+   deficit was a factor of three. This is a flat wash over the whole stage instead, under the text and
+   over every frame, which sets a floor no photograph can drop below: 54% black takes the worst case
+   (radish, luminance .74) to 4.6:1 and leaves the darkest images essentially as they were, because
+   they had contrast to spare. The pictures still read — that is what 46% is for.
+
+   IT HAS TO SIT ABOVE THE WHOLE STAGE, not inside it. This was `.about-stream__stage::after` at
+   z-index 1 for a while, which looked right and covered two frames out of eight: aboutStream.js
+   assigns each frame its own z-index 0…7 as it builds the sequence, so everything from the third
+   frame on painted straight over a scrim that was sitting at 1 among them. The maths said the text
+   was safe and the screen said otherwise — the bright frames were arriving unscrimmed.
+   On .about-stream instead, it is a sibling of the stage rather than a child of it. The stage is
+   position:absolute with z-index:0, which makes it a stacking context, so all eight frame z-indexes
+   are sealed inside it and one scrim at z-index 1 covers the lot. The statement stays at 2. */
+.about-stream::after{
+  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:rgb(0 0 0 / .54);
+}
+/* ON THE GRID, not on a ch measure. This sat in a flex container centred on max-width:22ch, which
+   put its edges 57px inside the nearest column lines — the only type on the page that was not placed
+   by line. The stream is a twelve-column grid now like every other section, and the statement takes
+   columns three through ten: symmetric about the page's centre, so it still reads as centred over a
+   bloom that radiates from the middle, and its edges are column edges. */
+/* TWO CLASSES IN THE SELECTOR, and that is the fix rather than a flourish. This element carries
+   both `about-statement` and `about-statement--over`, and the base statement is re-placed to
+   `1 / -1` inside the 1100px query further down this file. At one class each the two rules are the
+   same specificity (0,2,0) and the later one simply won, so below 1100px the closing statement
+   silently lost its eight-column placement and ran the full grid at 46px. Measured at 850px, its
+   computed grid-column was `1 / -1`. Naming both classes takes this to (0,3,0), so the placement
+   now holds wherever it is not deliberately released — and it IS released once, at 820, in the
+   same (0,3,0) form and alongside every other release. See the note there for why. */
+.about-route .about-statement.about-statement--over{
+  position:relative;z-index:2;grid-column:3 / span 8;
+  margin:0;max-width:none;text-align:center;
+  color:#fff;
+}
+
+/* ---------------------------------------------------------------- the close */
+
+.about-end{padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
+.about-end__inner{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;text-align:center}
+.about-end .about-divider{margin-bottom:clamp(40px,6vh,72px)}
+.about-route .about-end__line{
+  margin:0;max-width:18ch;
+  font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.08;
+  letter-spacing:var(--track-statement);text-wrap:balance;
+}
+.about-route .about-end__act{margin:clamp(30px,4.5vh,48px) 0 0}
+/* THE 404's BUTTON, by request. This was the app's primary tier — filled with the ink, the surface as
+   its label, uppercase at --fs-label. It is the glass control from notfound.css now: a 7% tint of the
+   ink under an 18px backdrop blur, a hairline at 15%, sentence case at 14/500. Every value below is
+   .nf-cta's, so the two pages that sit outside the tool present their one action identically.
+
+   An anchor rather than a button because it is a real address — AboutPage intercepts the plain
+   left-click and turns it into the wiped swap, and every other way of following it still works.
+   .doc-route prefix, because doc.css sets `.doc-route a{color:inherit}` at (0,1,1) and a bare
+   .about-cta is (0,1,0), so the blanket link rule would otherwise decide this control's ink.
+
+   NOTE THE TRADE: .nf-cta stands 36px, where this stood 46. Both clear WCAG 2.5.8's 24px minimum and
+   36 is under the 44 that touch wants, so this is a smaller target than it was. It is the 404's own
+   figure, kept because matching the button was the ask. */
+.doc-route .about-cta{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:36px;padding:0 16px;
+  background:color-mix(in srgb,var(--on-surface) 7%,transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent);
+  color:var(--on-surface);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:14px;font-weight:500;
+  letter-spacing:var(--track-title);white-space:nowrap;line-height:1;
+  text-decoration:none;
+  /* Tint only, no press geometry — the same interaction contract [data-ix] carries in the app. */
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover);
+}
+.doc-route .about-cta:hover{
+  background:color-mix(in srgb,var(--on-surface) 16%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 38%,transparent);
+}
+.doc-route .about-cta:active{
+  background:color-mix(in srgb,var(--on-surface) 24%,transparent);
+  border-color:color-mix(in srgb,var(--on-surface) 48%,transparent);
+}
+
+/* ---------------------------------------------------------------- responsive
+
+   Breakpoints come from where the content stops fitting, not from device presets. 1100 is where six
+   role cells across twelve columns lose their labels' measure and the split figure's two panes get
+   narrower than their own type. 820 is where the reading column stops being a column — below it the
+   grid is one track and everything spans it. The gutter is --page-gutter at every width: it is the
+   site's grid, not a breakpoint's. */
+@media screen and (max-width:1100px){
+  /* The opening widens as the page narrows, which is the opposite of the usual direction and is
+     correct here: a centred block needs proportionally MORE of the grid as there is less of it, or
+     the air either side stops reading as margin and starts reading as a column it failed to fill. */
+  .about-hero__inner{grid-column:2 / span 10}
+  .about-hero__ref{grid-column:4 / span 6}
+  .about-roles{grid-template-columns:repeat(3, minmax(0, 1fr))}
+  .about-figure--split{grid-template-columns:minmax(0,1fr);row-gap:32px}
+  .about-route .about-statement{grid-column:1 / -1}
+}
+@media screen and (max-width:820px){
+  /* BOTH gaps come down together. Dropping only --band-gap left the two within 1.3× of each other at
+     this width, which is under the ratio at which a gap between sections still reads as a boundary
+     rather than as more of the same rhythm — the whole point of having two. */
+  /* THE SCALE LOSES ITS LAST STEP HERE, deliberately. --fs-nano is 8px and is described in global.css
+     as "the smallest thing drawn" — which it is, and on a desktop swatch it is a technical readout you
+     lean in for. On a phone held at arm's length it is not a size, it is a texture. Measured at 375px,
+     fourteen nodes were sitting at 8px and every one of them was an annotation on a figure: the axis
+     tick marks, the contrast matrix's use labels, the interval hexes and their delta stacks. All nine
+     rules that reach for this token are figure annotations, so the token moves rather than the rules,
+     and it moves to the step above it rather than to a number invented here. */
+  .about-route{--band-gap:clamp(56px,9vh,96px);--block-gap:clamp(30px,5vh,50px);--fs-nano:var(--fs-label)}
+  .about-col,.about-hero__inner,.about-hero__ref{grid-column:1 / -1}
+  /* The split collapses with the columns. Two edges need width between them to read as two edges;
+     inside 327px there is none, so the heading and the body share one column and stack in order.
+     Specific enough to beat the base rules — .about-col > h2 is (0,2,0) and a bare `> *` is not. */
+  .about-col > *,.about-col > h2,.about-col > h3{grid-column:1 / -1}
+  /* One column, so there is no second column to reserve a cell in. */
+  .about-col::before{display:none}
+  .about-hero__ref{justify-self:stretch}
+  /* 240px is the resource's own 15em, and without it there is no animation here at all. The small
+     plate was capped at 340px — wider than the 327px column it sits in at this width, so the cap
+     never bit and the hero plate came out exactly as wide as the destination plate below it.
+     Measured: both waypoints 325×182, growth factor 1.00. The photograph travelled down the page
+     without changing size, which is the one thing this effect is for.
+     mwg bounds its small box at 20em on desktop and 15em below 767 for exactly this reason: the
+     destination is a share of the viewport, so the origin has to be an absolute size or the two
+     converge as the screen narrows. */
+  .about-plate--sm{max-width:240px;margin-inline:auto}
+  /* NO ratio override for the destination plate here. It used to take 4/3 at this width, which put
+     the two waypoints back out of shape with each other and reintroduced the morph the base rule
+     exists to remove. The resource keeps 56.25% at every width — its only narrow-screen rule is the
+     small box's width, which is the line above. */
+  .about-roles{grid-template-columns:repeat(2, minmax(0, 1fr))}
+  .about-split{aspect-ratio:4/5}
+  .about-checks li{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
+  .about-checks__verdict{grid-column:2}
+  .about-route .about-ui__actions{flex-wrap:wrap}
+  /* THE STACK IS NOT RELEASED HERE, and the two rules that used to be are gone.
+
+     They read `[data-stack-live].about-stack__slide{height:auto}` and
+     `[data-stack-live] .about-stack__card{position:relative;inset:auto}` — that is, they undid the
+     live layout while aboutStack.js went on building three pins underneath. The mechanic depends on
+     slides overlapping by exactly the pin: with height:auto each slide grew to contain its own pin
+     spacer (measured 1445px at 375x812 — 812 of pin plus 633 of card), so slides stopped overlapping,
+     nothing arrived over the receding card, and the handoff could not occur. The section cost 5.81
+     screens on a phone to deliver an effect that was not happening.
+
+     The source has no such override. Its only narrow-screen rule is `@media (max-aspect-ratio:1/1)`,
+     which changes padding and stacking INSIDE the card and never touches its positioning — see the
+     block further down this file. */
+  /* THE CLOSING STATEMENT IS RELEASED WITH EVERYTHING ELSE, and it needs its own line here because
+     raising it to (0,3,0) above also lifted it out of reach of the base statement's release at 1100.
+     Eight of twelve tracks is a fair measure while the tracks are wide; at this width they are not.
+     Measured at 375: the content box is 327px, eleven gutters take 264px of it, so a track is 5.25px
+     and eight tracks plus seven gutters is 210px — a 28px statement was setting seven characters to
+     the line. Two classes here as well, or the rule it releases outranks it and nothing changes. */
+  .about-route .about-statement.about-statement--over{grid-column:1 / -1}
+}
+/* NO narrow-screen rule for the stack, and that is the source's structure honoured rather than its
+   letter copied. mwg_031's only such rule is `@media (max-aspect-ratio:1/1)`, which switches the card
+   to justify-content:initial and stacks its bottom row — it exists because the source's card holds a
+   10.5vw numeral beside a 25vw image and genuinely overflows a tall viewport. Ours does not: measured
+   at 375x812 the card's content ends 517px ABOVE the card's floor. Porting the rule anyway packed
+   everything to the top and left that 517px as dead space. What the source's rule does is make the
+   content fit; here space-between already does, so the card keeps it at every aspect. */
+@media screen and (max-width:560px){
+  .about-roles{grid-template-columns:minmax(0,1fr)}
+}
+
+/* Reduced motion is handled where the motion is — every effect module returns an inert controller, so
+   nothing is armed and nothing is inserted. What is left is this stylesheet, which animates nothing
+   on its own: --rule defaults to 1, the stream's frames keep their natural scale, and the rail falls
+   back to a horizontal scroller through the :not([data-rail-live]) rule above. */
+
+/* ===== THE SIX ROLES, ONE AT A TIME — Osmo Supply's Expanding Feature Pills.
+   The swatch grid above states the roles; this explains them on demand. Six paragraphs printed at
+   once is a wall of text, and the page has already argued that a palette is a set of decisions rather
+   than a list — so the decisions are offered one at a time, each with a photograph beside it whose
+   own character is the argument for that role.
+
+   The mechanic is the resource's (one open at a time, the box tweened on width and height with
+   back.out(2), the visual synced by index, a cover when nothing is open). The dress is the house's:
+   zero radius, hairline borders on --line, the label ladder, and every transition on the DUR/EASE
+   tokens so nothing here appears instantly. */
+.about-figure--pills{margin-top:var(--block-gap)}
+
+.pills{
+  /* Read by aboutPills.js — the width the open pill tweens to. Bounded by the measure rather than by
+     the column: at the full seven columns the pill would be twice as wide as the line length its own
+     body copy is set to, and the reader would be looking at a box two-thirds empty. `min()` keeps it
+     honest on narrow screens, where the column is the smaller of the two. */
+  --content-item-expanded:min(100%, 30rem);
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));column-gap:var(--grid-gutter);
+  align-items:start;row-gap:var(--grid-gutter)
+}
+.pills__list-wrap{grid-column:1 / span 7;min-width:0}
+/* A COLUMN, not a wrapped cloud. The resource lays its pills out as a wrapping row, which reads as a
+   tag cloud — and these six are not tags, they are the same six roles the grid above lists in order.
+   Stacked, they keep that order and the stack ends up roughly as tall as the photograph beside it
+   instead of a third of it. The mechanic is untouched: one open at a time, expanding in place.
+
+   Collapsed, all six share one width — the widest label's, measured by aboutPills.js. See [ATMOS 7]
+   there for why: six controls at six widths read as six inconsistent things rather than one set. */
+.pills__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+
+/* ===== THE FLOOR IS SIX STATIC BLOCKS.
+   Everything below this line describes the page WITHOUT JavaScript: each role is a heading and a
+   paragraph, all six readable at once, the button hidden because a button with no handler is a dead
+   control. aboutPills.js sets data-pills-live and the disclosure takes over — the same `-live`
+   contract every other effect on this page uses, for the same reason: the page has to say what it
+   means before the motion arrives, not because of it. */
+.pills__item{
+  position:relative;flex:0 0 auto;width:100%;max-width:100%;
+  background:var(--surface-raised);border:1px solid var(--line)
+}
+/* No overflow:hidden here, and that is the fix rather than an omission: the button's border box
+   coincides with the item's, so a ring drawn at the house's 3px offset fell entirely outside the
+   item and was clipped away — a keyboard user tabbing the pills saw nothing move. The content is
+   clipped by .pills__mask, which is where the clipping was always doing its work.
+
+   THE BOX MOTION LIVES HERE. Length from --dur-fold, the disclosure's own; curve from
+   --ease-standard rather than --ease-fold, and that pairing is deliberate.
+
+   --ease-fold is the right IDEA for a disclosure — global.css introduces it with "a disclosure and a
+   moving selection share one motion character" — and it is the wrong curve for this particular box.
+   Sampled, it has travelled 12.6% of the way at a quarter of its duration: on a marker sliding forty
+   pixels behind a toggle that reads as anticipation, and on a pill crossing three hundred and fifty
+   it reads as lag. The resource's own back.out(2) was at 85.9% by the same moment, which is why it
+   felt immediate — and it got there by overshooting to 1.125 and springing back, a bounce nothing
+   else on this site has.
+
+   --ease-standard is 76.5% at that quarter and never exceeds 1. Same decelerating character as the
+   resource's ease, none of the overshoot. See [ATMOS 10] and [ATMOS 13] in aboutPills.js. */
+[data-pills-live] .pills__item{
+  width:auto;
+  transition:width var(--dur-fold) var(--ease-standard),height var(--dur-fold) var(--ease-standard)
+}
+/* No transition of its own: the box is GSAP's, and a CSS transition on width/height would fight the
+   tween for the same two properties. Colour is CSS's and is declared where it changes. */
+.pills__item[data-active="true"]{background:var(--surface-white);border-color:var(--on-surface)}
+
+/* display:none is the FLOOR, not an afterthought — a button with no script behind it is a dead
+   control, and the six paragraphs it would otherwise hide are the section's actual content. It only
+   becomes a control once aboutPills.js says so.
+
+   NO transition and NO hover of its own. The markup carries data-ix="press", which is the tier for
+   chrome with no background of its own, and an inline transition on a data-ix control REPLACES the
+   contract rather than adding to it. Hover, press, the (hover:hover) gate that stops a tap latching
+   the hover state on a phone, and the reduced-motion floor all arrive from global.css. */
+.pills__button{
+  /* space-between, now that all six pills are one width: the labels start on one line and the plus
+     marks end on another. Packed left they sat wherever their own word ended, which put six marks at
+     six positions inside six identical boxes — the raggedness the shared width was there to remove,
+     moved four millimetres to the right. */
+  display:none;align-items:center;justify-content:space-between;gap:12px;width:100%;
+  padding:var(--btn-pad-lg);margin:0;border:0;background:none;cursor:pointer;text-align:left;
+  color:var(--on-surface);font:inherit
+}
+[data-pills-live] .pills__button{display:flex}
+.pills__item[data-active="true"] .pills__button{opacity:0;pointer-events:none}
+
+/* Size, case and tracking come from the label-voice rule at the top of this file — the same one
+   that sets .about-role__name, which is the SAME six words forty pixels further up. Only the
+   wrapping behaviour is local. */
+.pills__label{white-space:nowrap}
+/* The plus is drawn rather than typed so it can rotate into an implied minus as the pill opens —
+   the same two-bar mark the rest of the site uses for a toggle. */
+.pills__plus{position:relative;width:9px;height:9px;flex:0 0 auto;opacity:.5}
+.pills__plus::before,.pills__plus::after{
+  content:'';position:absolute;inset:50% 0 auto;height:1px;background:currentColor;
+  transform:translateY(-50%);transition:transform var(--dur-state) var(--ease-standard)
+}
+.pills__plus::after{transform:translateY(-50%) rotate(90deg)}
+.pills__item[data-active="true"] .pills__plus::after{transform:translateY(-50%) rotate(180deg)}
+
+.pills__content{transition:opacity var(--dur-state) var(--ease-standard)}
+[data-pills-live] .pills__content{position:absolute;inset:0;opacity:0;pointer-events:none}
+[data-pills-live] .pills__item[data-active="true"] .pills__content{opacity:1;pointer-events:auto}
+.pills__mask{width:100%;height:100%;overflow:hidden}
+.pills__inner{padding:var(--btn-pad-lg);display:flex;flex-direction:column;gap:10px}
+.pills__inner-label{color:var(--on-surface-muted)}
+/* --fs-body, the step every other card body on this page is set in (.about-ui__body,
+   .about-stack__body) — which also keeps it a step below the section's own paragraphs at --fs-lead,
+   so the pill reads as the detail and the section keeps the argument. No max-width: the pill's
+   expanded width IS the measure, and two caps competing is how one of them ends up unused. */
+.about-route .pills__body{margin:0;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);color:var(--on-surface)}
+
+/* Four columns at 3:4 — the native ratio of every photograph in the set, so none of them is cropped
+   to fit a box that was chosen before the images were. */
+.pills__visual{
+  grid-column:9 / -1;position:relative;min-width:0;aspect-ratio:3 / 4;overflow:hidden;
+  background:var(--surface-raised);border:1px solid var(--line)
+}
+/* The panels are stacked over a cover that never moves, and they arrive by CLIP rather than by fade
+   — Osmo Supply's Sticky Features transition, see [ATMOS 12] in aboutPills.js. The closed value is
+   the resting state and the no-JS floor: with no script the cover is simply the picture. z-index
+   rather than DOM order puts the cover underneath, so the markup can keep the resource's order. */
+.pills__visual-item,.pills__cover{position:absolute;inset:0}
+.pills__visual-item{z-index:1;clip-path:inset(50%)}
+.pills__cover{z-index:0}
+.pills__visual-item img,.pills__cover img{width:100%;height:100%;object-fit:cover;display:block}
+.pills__visual-item[data-active="true"]{clip-path:inset(0%)}
+
+.pills__close{
+  position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;padding:0;
+  border:1px solid var(--line);background:var(--surface);cursor:pointer;
+  opacity:0;pointer-events:none;
+  transition:opacity var(--dur-state) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover)
+}
+/* The one control here that cannot take data-ix: the press tier replaces background outright, and
+   this button's opaque plate is what keeps an ink glyph legible over a photograph. So it states the
+   contract's own 16/24 spectrum by hand, over its plate rather than instead of it — including the
+   (hover:hover) gate, so a tap on a phone does not leave it latched. */
+@media (hover:hover){
+  .pills__close:hover{background:color-mix(in srgb,var(--on-surface) 16%,var(--surface))}
+}
+.pills__close:active{background:color-mix(in srgb,var(--on-surface) 24%,var(--surface))}
+.pills__close::before,.pills__close::after{
+  content:'';position:absolute;left:50%;top:50%;width:11px;height:1px;background:var(--on-surface)
+}
+.pills__close::before{transform:translate(-50%,-50%) rotate(45deg)}
+.pills__close::after{transform:translate(-50%,-50%) rotate(-45deg)}
+[data-feature-pills-active="true"] .pills__close{opacity:1;pointer-events:auto}
+
+/* Under 900px the visual stops earning its quarter of the row: it would leave the pills too narrow
+   to hold a sentence. Both take the full width, stacked — and the visual stays SECOND, where it is
+   in the document. Ordering it above the pills would have put the close button, which lives inside
+   it, ahead of the six controls in the tab order while sitting below them on screen. */
+@media (max-width:900px){
+  .pills__list-wrap{grid-column:1 / -1}
+  .pills__visual{grid-column:1 / -1;aspect-ratio:16 / 10}
+}
+
+/* The three transitions this component still owns are the ones the contract does not cover: the
+   content crossfade inside a pill, the plus mark turning, and the photograph swapping. Under a
+   reduced-motion preference they resolve instantly, which is what the global [data-ix] block does
+   one file up. The GSAP box tween has its own floor inside aboutPills.js. */
+@media (prefers-reduced-motion: reduce){
+  [data-pills-live] .pills__item,
+  .pills__content,.pills__plus::before,.pills__plus::after,
+  .pills__close{transition:none}
+}

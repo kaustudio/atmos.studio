@@ -1,11 +1,16 @@
-/* Writes dist/privacy.html and dist/terms.html after `vite build`.
+/* Writes dist/about.html, dist/privacy.html and dist/terms.html after `vite build`.
 
-   THE FLOOR IS VISIBLE TEXT — the same rule legalReveal.js is built around, one level up. Privacy and
-   terms are React routes now, and a route is nothing without JavaScript. For most of this app that is
+   THE FLOOR IS VISIBLE TEXT — the same rule pageReveal.js is built around, one level up. The document
+   routes are React routes, and a route is nothing without JavaScript. For most of this app that is
    an honest trade: the tool genuinely cannot work without a script. A privacy statement can. It is
    the page a regulator opens, the page a crawler that does not execute JS is most likely to want, and
    the page whose whole purpose is to be readable by someone who does not trust us. Shipping it as an
    empty <div id="root"> would have been the one real regression in this restructure.
+
+   /about earns the same treatment for a different reason: it is the page that says what this product
+   is and why, it carries the palettes, weights, role assignments and contrast figures that make that
+   case, and public/llms.txt exists precisely because agent crawlers do not run scripts. A marketing
+   page that is empty to everything except a browser is a marketing page nobody reads.
 
    So each legal route is written out as a whole document: the built shell, with that route's metadata
    in the head and its copy already inside #root. No JavaScript, no bundle, no hydration needed to
@@ -31,7 +36,27 @@ const ORIGIN = 'https://atmos.gallery';
    strings per route, and the prerendered head is checked against the route table by the smoke test
    below rather than by trust. */
 const ROUTES = {
+  about: {
+    src: 'src/about/about.html',
+    // The route wrapper's second class — see AppView's document-route branch and src/styles/doc.css.
+    scope: 'about-route',
+    title: 'About | Atmos Gallery',
+    description: "Why Atmos Gallery reads an image's atmosphere rather than extracting its most common pixels, and how a palette becomes a working, accessible colour system.",
+    ld: {
+      '@context': 'https://schema.org',
+      '@type': 'AboutPage',
+      name: 'About | Atmos Gallery',
+      url: ORIGIN + '/about',
+      description: "Atmos Gallery reads a colour palette from an image's light and atmosphere rather than its literal pixels, assigns the result semantic roles, and checks the system it makes.",
+      inLanguage: 'en',
+      publisher: { '@type': 'Organization', name: 'KauStudio ApS', vatID: 'DK39161443', email: 'hello@kau.studio' },
+      isPartOf: { '@type': 'WebSite', name: 'Atmos Gallery', url: ORIGIN + '/' },
+      about: { '@type': 'WebApplication', name: 'Atmos Gallery', url: ORIGIN + '/' },
+    },
+  },
   privacy: {
+    src: 'src/legal/privacy.html',
+    scope: 'legal-route',
     title: 'Privacy | Atmos Gallery',
     description: 'How Atmos Gallery handles your images, palettes and data: images are read on your device, palettes stay in your own browser, and the site sets no cookies at all.',
     ld: {
@@ -59,6 +84,8 @@ const ROUTES = {
     },
   },
   terms: {
+    src: 'src/legal/terms.html',
+    scope: 'legal-route',
     title: 'Terms | Atmos Gallery',
     description: 'What Atmos Gallery does, what stays yours, and what it does not promise. A free browser tool from KauStudio ApS.',
     ld: {
@@ -75,14 +102,16 @@ const ROUTES = {
   },
 };
 
-// The masthead and footer LegalPage renders around the fragment. Restated here because they are
-// React components on the client and this script has no renderer — and because they are the two
-// pieces of chrome a no-JS reader needs most: a way back to the site, and the trader identification
-// the E-Commerce Directive asks for. The theme switch is deliberately absent; it does nothing
-// without a script, and a dead control is worse than no control.
+// The masthead and footer a document route renders around its fragment. Restated here because they
+// are React components on the client (DocHead in chrome.jsx, SiteFooter in AppView) and this script
+// has no renderer — and because they are the two pieces of chrome a no-JS reader needs most: a way
+// back to the site, and the trader identification the E-Commerce Directive asks for. The theme
+// switch is deliberately absent; it does nothing without a script, and a dead control is worse than
+// no control. KEEP IN STEP with those two components: this is the one duplication in the build, and
+// the class names are what doc.css and site-foot.css style.
 const head = () => `
-<div class="legal-head">
-  <span class="legal-head__mark"><a href="/" aria-label="Atmos Gallery"><span class="mark" role="img" aria-label="Atmos Gallery"></span></a></span>
+<div class="doc-head">
+  <span class="doc-head__mark"><a href="/" aria-label="Atmos Gallery"><span class="mark" role="img" aria-label="Atmos Gallery"></span></a></span>
 </div>`;
 
 const foot = (route) => `
@@ -92,7 +121,8 @@ const foot = (route) => `
   </div>
   <div class="site-foot__meta">
     <p class="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
-    <nav class="site-foot__nav" aria-label="Legal">
+    <nav class="site-foot__nav" aria-label="Site">
+      <a href="/about"${route === 'about' ? ' aria-current="page"' : ''}>About</a>
       <a href="/privacy"${route === 'privacy' ? ' aria-current="page"' : ''}>Privacy Policy</a>
       <a href="/terms"${route === 'terms' ? ' aria-current="page"' : ''}>Terms and Conditions</a>
     </nav>
@@ -108,7 +138,10 @@ function swapTag(html, pattern, replacement, what, route) {
 const shell = readFileSync(resolve(ROOT, 'dist/index.html'), 'utf8');
 
 for (const [route, meta] of Object.entries(ROUTES)) {
-  const body = readFileSync(resolve(ROOT, `src/legal/${route}.html`), 'utf8');
+  // Named per route rather than derived from it: /about's fragment does not live under src/legal,
+  // and a path built by string concatenation is how the next document ends up in the wrong folder to
+  // satisfy this loop.
+  const body = readFileSync(resolve(ROOT, meta.src), 'utf8');
   const url = `${ORIGIN}/${route}`;
   let html = shell;
 
@@ -152,7 +185,9 @@ for (const [route, meta] of Object.entries(ROUTES)) {
   html = swapTag(
     html,
     /<div id="root"><\/div>/,
-    `<div id="root"><div data-app="1" class="legal-route">${head()}\n${body}\n${foot(route)}\n</div></div>`,
+    // <main> wraps the fragment here exactly as it does on the client (LegalPage / AboutPage), so the
+    // no-JS document carries the same landmark the rendered one does.
+    `<div id="root"><div data-app="1" class="doc-route ${meta.scope}">${head()}\n<main>${body}</main>\n${foot(route)}\n</div></div>`,
     '<div id="root">',
     route
   );

@@ -5,6 +5,10 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://atmos.gallery/about</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://atmos.gallery/privacy</loc>
     <priority>0.3</priority>
   </url>

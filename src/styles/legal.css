@@ -12,73 +12,33 @@
    on the same element and the winner would have depended on source order. There is one theme now, the
    app's, and the legal routes carry the same toggle for it (see LegalPage).
 
-   What remains below is only what the tool has no opinion about: the page grid these documents are
-   set on, and the Osmo Supply TOC resource's layout. Class names and every data-* attribute in that
-   part are the resource's own and are load-bearing (legalToc.js targets them); only the *values* are
-   restated in this project's tokens — plus the two states the resource's own CSS leaves to the
+   THE MASTHEAD WENT THE SAME WAY, one document later. .legal-route's base rules, the sticky bar and
+   the masked-reveal pair are now src/styles/doc.css, because /about is a document too and wearing the
+   same chrome — a page importing "legal.css" for its header is how a filename stops describing what
+   it holds. doc.css is imported ahead of this file by both pages.
+
+   What remains below is only what these two statements decide for themselves: the article grid they
+   are set on, and the Osmo Supply TOC resource's layout. Class names and every data-* attribute in
+   that part are the resource's own and are load-bearing (legalToc.js targets them); only the *values*
+   are restated in this project's tokens — plus the two states the resource's own CSS leaves to the
    implementer, [data-toc-status="active"] and [data-toc-depth]. */
 
-/* The article's own measurements. The page gutters these sit on — --chrome-gutter and --page-gutter
-   — are NOT here: they describe the whole site's grid rather than this layout, three documents read
-   them (the tool, these routes and 404.html), and so they live in global.css with the rest of the
-   system.
+/* The article's own measurements. The page gutters these sit on — --page-gutter — is NOT here: it
+   describes the whole site's grid rather than this layout, four documents read it (the tool, these
+   routes, /about and 404.html), and so it lives in global.css with the rest of the system.
 
    --toc-col is the sidebar track. The hero's copy and the article share the second track, so the
    left edge of the title and the left edge of the body are the same line down the whole page, and
    the table of contents sits in a column of its own rather than in stolen margin.
 
-   These three are the only custom properties this file defines. Everything else it reads —
-   --surface, --on-surface, the --track-* scale, the gutters — comes from global.css, which is
-   imported before it and now themes both the tool and these routes off the same :root[data-theme]. */
-:root{
+   SCOPED to .legal-route, not on :root, and that is a correction rather than tidying. About defines a
+   --measure of its own — a different one, because its headline is set at display scale and reads on a
+   wider column — and two files declaring the same custom property on :root means the later import
+   wins for BOTH pages. Neither document should be able to retune the other by load order. */
+.legal-route{
   --toc-col:13.75em;
   --grid-gap:4em;
   --measure:40em;      /* prose measure — the one thing that must NOT be full width */
-}
-
-/* Scoped to the legal routes rather than left on bare `body`. global.css already sets the document's
-   background, colour and family for the tool; restating them unscoped would mean this file's copy won
-   on every screen of the app purely by being imported second. The line-height IS particular to these
-   documents — 1.6 is a reading measure, not the tool's UI rhythm — so it belongs here, on them. */
-.legal-route{
-  background:var(--surface);
-  color:var(--on-surface);
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
-.legal-route *{box-sizing:border-box}
-.legal-route a{color:inherit}
-
-/* ---------------------------------------------------------------- masthead */
-
-/* Restates the app's chrome bar: 64px tall, full width, hairline underneath, and the mark centred in
-   it. In the app the mark is position:fixed at left:50% (see logoStyle in AppView) so it can fly over
-   the landing; here the bar is sticky and the mark sits inside it, which lands in the same place
-   optically but can never overlap the prose of a document that scrolls. 165×26 is the app's own
-   measurement, not a new one.
-
-   Three tracks, not a centred flex row: the theme switch now stands in the left one, exactly where
-   the app's header keeps it, and the mark has to stay on the page's centre line regardless of how
-   wide that switch's label happens to be. `1fr auto 1fr` centres the middle track on the bar itself,
-   so LIGHT and DARK — different widths — cannot shift the wordmark between renders. The empty third
-   track is what pays for that; it is doing real work. */
-.legal-head{
-  position:sticky;top:0;z-index:20;
-  display:grid;
-  grid-template-columns:1fr auto 1fr;
-  align-items:center;
-  height:64px;
-  padding:0 var(--page-gutter);
-  background:var(--surface);
-  border-bottom:1px solid var(--line-strong);
-}
-.legal-head__mark{grid-column:2;display:flex}
-.legal-head__theme{grid-column:1;justify-self:start}
-.mark{
-  display:block;width:165px;height:26px;background:var(--on-surface);
-  -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
-  mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
 }
 
 /* The hero carries the hierarchy: an eyebrow label, a statement-scale title, and a one-line
@@ -232,16 +192,8 @@
   scroll-margin-top:88px;
 }
 
-/* Masked reveal, matching the app's landing idiom: an overflow-hidden block with the text sliding
-   up inside it. The padding/negative-margin pair is not decorative — headings run at line-height
-   1.15, and without descender room overflow:hidden shears the tails off 'y', 'p' and 'g'
-   ("Your palettes are stored only in your browser" clips twice). The negative margin gives the
-   space back so nothing below moves.
-
-   Both classes are inert by default. legalReveal.js only ever adds them once it has confirmed
-   GSAP is present and motion is wanted, so the no-JS and reduced-motion state is plain text. */
-.reveal-mask{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
-.reveal-line{display:block}
+/* .reveal-mask / .reveal-line moved to doc.css with the rest of the shared document chrome — the
+   About page's sections rise out of the same masks, applied by the same pageReveal.js. */
 
 .toc-article p{margin:0 0 1.25em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
 .toc-article strong{font-weight:500}

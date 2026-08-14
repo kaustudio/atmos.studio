@@ -77,3 +77,26 @@ export function ThemeSwitch({ vals }) {
     />
   );
 }
+
+/* THE DOCUMENT MASTHEAD — /about, /privacy, /terms.
+   The mark is a link home rather than the app's fixed [data-logo] button: these routes are read by
+   people who arrived from a search result as often as from the tool, and on a document that scrolls
+   the mark has to sit in a bar rather than fly over the content. The theme switch stands in the same
+   corner it does in the app.
+
+   It lived in LegalPage until About needed the same bar. Duplicating it would have been eleven lines
+   of JSX and a second set of class names for one object — which is the shape every drift on this site
+   has started as. Styles are in doc.css beside the route's own base rules; scripts/prerender.mjs
+   restates this markup for the no-JS floor and has to be kept in step with it. */
+export function DocHead({ vals }) {
+  return (
+    <div className="doc-head">
+      <span className="doc-head__theme"><ThemeSwitch vals={vals} /></span>
+      <span className="doc-head__mark">
+        <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery">
+          <span className="mark" role="img" aria-label="Atmos Gallery"></span>
+        </a>
+      </span>
+    </div>
+  );
+}

@@ -1,5 +1,21 @@
-/* Atmos Gallery — scroll reveals for the legal routes (privacy, terms).
+import { splitLines } from './maskLines.js';
+
+/* Atmos Gallery — scroll reveals for the document routes (about, privacy, terms).
    Kept out of legalToc.js on purpose: that file is a third-party resource and stays as delivered.
+
+   IT TAKES ITS STRUCTURE FROM THE CALLER, which is the one thing that changed when About arrived.
+   This file used to resolve `.legal-hero` and `[data-toc-content]` itself and derive its groups by
+   walking that container's flat children for h2/h3 — correct for a legal statement, which really is
+   one column of headings and paragraphs, and useless for a page built out of sections with images and
+   grids in them. So the two questions it cannot answer for every document — where the hero is, and
+   what counts as a section — are now inputs, and everything below them is unchanged: the line
+   splitting, the claim register, the per-element deadlines, the catch-up sweep and the failsafes are
+   the same code serving both pages. articleGroups() at the bottom is the legal walk, exported so
+   LegalPage still expresses its structure in one line.
+
+   The alternative was a second reveal engine for About, and the ~350 lines below are exactly the part
+   that took a long time to get right. Two copies of them is how the second page ends up subtly
+   different from the first for reasons nobody can find.
 
    Two effects, both borrowed from the app rather than invented here:
      · masked reveal — an overflow-hidden block with the text sliding up inside it, the same
@@ -55,16 +71,28 @@ function inertController() {
   return { play: function () { }, destroy: function () { } };
 }
 
-export function initLegalReveal(root, options) {
+/* root      — the mounted route's element. Only used for isConnected checks; nothing is queried off
+                it, because the caller has already done the querying.
+   options.motion    — the app's own { duration, stagger, ease }. See the note above.
+   options.hero      — the block above the fold, or null. Its own hairline is drawn with it.
+   options.heroParts — the elements inside it that arrive, in the order they should arrive.
+   options.groups    — [{ heading, blocks, rule }]. One entry per section: `heading` leads the
+                       cascade and may be null, `blocks` follow it on the same stagger, and `rule` is
+                       whichever element carries the --rule hairline for that section (the heading
+                       itself on a legal document, the section on About, null for no rule). */
+export function initPageReveal(root, options) {
   var g = window.gsap;
+  var opts = options || {};
   // The app's own reveal tokens, so these pages cannot drift from the landing and the dropzone.
-  var MOTION = (options && options.motion) || FALLBACK;
+  var MOTION = opts.motion || FALLBACK;
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   if (!g || reduce || !root) return inertController();
 
-  var article = root.querySelector('[data-toc-content]');
-  var hero = root.querySelector('.legal-hero');
-  if (!article) return inertController();
+  var hero = opts.hero || null;
+  var groups = (opts.groups || []).filter(function (grp) {
+    return grp && (grp.heading || (grp.blocks && grp.blocks.length));
+  });
+  if (!hero && !groups.length) return inertController();
 
   var pending = [];        // everything not yet visually resolved, for the failsafe to sweep
   var started = new Set();      // text reveals already handed to GSAP — guards against a second one
@@ -102,131 +130,9 @@ export function initLegalReveal(root, options) {
     return true;
   }
 
-  /* ---------------------------------------------------------------- line splitting
-
-     One mask per VISUAL line, which is the whole difference between this reading as the same gesture
-     as the headings and reading as something else.
-
-     Every masked element used to get exactly one mask wrapped around all of its contents. On a
-     single-line heading that is a true mask reveal. On the hero's three-line summary it was a slab:
-     three lines travelling together inside one three-line window, arriving as a block rather than as
-     lines. And body copy got no mask at all — it faded. So the page had three different vocabularies
-     for what should have been one.
-
-     THE BROWSER DECIDES WHERE THE LINES ARE. Every word becomes an inline span, the layout engine
-     breaks them exactly where it would have broken the original text, and the spans are then grouped
-     by the offsetTop they actually landed on. Counting characters or guessing at a measure would be
-     wrong at the first different viewport, font size or webfont swap.
-
-     INLINE MARKUP SURVIVES because the regrouping is done with a Range: extractContents() splits any
-     partially covered <strong>, <code> or <a> and reproduces it on both sides of the break, which is
-     precisely what a line break running through a bold phrase needs. The ranges are applied last to
-     first so that the surgery never invalidates a range that has not been used yet.
-
-     AND IT IS TEMPORARY. restore() puts the original markup back verbatim the moment the reveal
-     finishes, so a paragraph spends all but ~0.9s of its life as ordinary reflowing text: nothing to
-     re-measure when the window is resized, no split spans in the accessibility tree, and selection
-     and copy behave exactly as they did before anything was animated. It is also why splitting is
-     done at reveal time rather than at arm time — 28 paragraphs' worth of word spans should not sit
-     in the document waiting to be scrolled to. */
-
-  function wrapWords(node) {
-    [].slice.call(node.childNodes).forEach(function (n) {
-      if (n.nodeType === 3) {
-        if (!n.textContent.trim()) return;
-        var frag = document.createDocumentFragment();
-        n.textContent.split(/(\s+)/).forEach(function (part) {
-          if (!part) return;
-          if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
-          var s = document.createElement('span');
-          s.setAttribute('data-w', '');
-          s.textContent = part;
-          frag.appendChild(s);
-        });
-        n.parentNode.replaceChild(frag, n);
-      } else if (n.nodeType === 1 && n.tagName !== 'BR') {
-        wrapWords(n);
-      }
-    });
-  }
-
-  /* → { lines: [.reveal-line…], restore } or null when there is nothing to split.
-
-     THE BOX MUST NOT MOVE. Turning a paragraph's inline content into a stack of block-level line
-     masks is a layout change, and three separate things made the rebuilt block taller than the text
-     it replaced — visibly so, with copy pushed out of its container:
-
-       · <br> survives BETWEEN the masks. Inline content sitting between two block boxes generates
-         its own anonymous line box, so the six-line address grew by five whole lines (+126px).
-       · An inline element with its own box metrics — <code> here — reports a different offsetTop
-         from the words either side of it, so a 1px grouping tolerance read one visual line as two.
-         A two-line paragraph became four masks (+99px).
-       · The mask's padding-bottom/negative-margin pair, which exists to stop descenders being
-         clipped, does not cancel on the LAST mask: its negative bottom margin collapses out through
-         the parent instead of pulling the parent's floor up (+2-3px on every block).
-
-     Each is fixed at its cause below, and then the element's measured height is pinned for the life
-     of the split as a backstop — so any future inline construction that shifts the internal layout
-     still cannot resize the box the reader sees. */
-  function splitLines(el) {
-    if (!el || !el.isConnected) return null;
-    var original = el.innerHTML;
-    var prevHeight = el.style.height;
-    try {
-      var box = el.getBoundingClientRect().height;
-      // Half a line: comfortably more than any inline element's vertical jitter, comfortably less
-      // than the gap to the next line.
-      var tol = Math.max(4, (parseFloat(getComputedStyle(el).lineHeight) || 16) * 0.5);
-
-      wrapWords(el);
-      var words = [].slice.call(el.querySelectorAll('[data-w]'));
-      if (!words.length) { el.innerHTML = original; return null; }
-
-      // Group by line box. Read every offsetTop before touching the DOM, so this costs one layout.
-      var groups = [], cur = null, top = null;
-      words.forEach(function (w) {
-        var t = w.offsetTop;
-        if (top === null || Math.abs(t - top) > tol) { cur = []; groups.push(cur); top = t; }
-        cur.push(w);
-      });
-
-      var lines = [];
-      for (var i = groups.length - 1; i >= 0; i--) {
-        var grp = groups[i];
-        var range = document.createRange();
-        range.setStartBefore(grp[0]);
-        range.setEndAfter(grp[grp.length - 1]);
-        var contents = range.extractContents();
-        var maskEl = document.createElement('span');
-        maskEl.className = 'reveal-mask';
-        var lineEl = document.createElement('span');
-        lineEl.className = 'reveal-line';
-        lineEl.appendChild(contents);
-        maskEl.appendChild(lineEl);
-        range.insertNode(maskEl);
-        lines.unshift(lineEl);
-      }
-      if (!lines.length) { el.innerHTML = original; return null; }
-
-      // The line breaks are now the masks themselves; every <br> left over is a blank line. They
-      // live on in `original`, so restore() puts the address back exactly as authored.
-      [].slice.call(el.querySelectorAll('br')).forEach(function (br) { br.parentNode.removeChild(br); });
-
-      el.style.height = box + 'px';
-      return {
-        lines: lines,
-        restore: function () {
-          if (!el.isConnected) return;
-          el.innerHTML = original;
-          el.style.height = prevHeight;
-        },
-      };
-    } catch (e) {
-      // Legal copy must never be left half-rebuilt by a failed effect.
-      try { el.innerHTML = original; el.style.height = prevHeight; } catch (e2) { }
-      return null;
-    }
-  }
+  /* LINE SPLITTING is in maskLines.js — it was lifted out of this file, unchanged, when the About
+     page's feature pills needed the same masks for their disclosure. One copy, two callers; see the
+     header there for how the lines are found and why the split is temporary. */
 
   // Elements currently split, so rescue() and destroy() can put their markup back.
   var splits = new Map();
@@ -333,28 +239,26 @@ export function initLegalReveal(root, options) {
 
   var heroEls = [];
   if (hero) {
-    heroEls = ['.legal-hero__label', 'h1', '.legal-hero__sub', '.legal-hero__meta']
-      .map(function (s) { return arm(hero.querySelector(s)); })
-      .filter(Boolean);
+    heroEls = (opts.heroParts || []).filter(Boolean).map(arm).filter(Boolean);
 
     g.set(hero, { '--rule': 0 });
     pending.push(hero);
   }
 
-  // ------------------------------------------------------- article (scroll-triggered)
+  // ------------------------------------------------------- sections (scroll-triggered)
 
   var ST = window.ScrollTrigger;
 
   // Factored out so a ScrollTrigger callback and the catch-up pass below can both invoke it. Without
   // that split, anything ScrollTrigger declines to announce would only ever be recoverable by the
   // snap-to-visible failsafe — correct, but not animated.
-  function drawRule(h) {
-    if (!claim(h, 'rule')) return;
-    g.to(h, {
+  function drawRule(el) {
+    if (!claim(el, 'rule')) return;
+    g.to(el, {
       '--rule': 1,
       duration: 0.8,
       ease: MOTION.ease,
-      onComplete: function () { h.style.removeProperty('--rule'); drop(h); }
+      onComplete: function () { el.style.removeProperty('--rule'); drop(el); }
     });
   }
 
@@ -367,31 +271,17 @@ export function initLegalReveal(root, options) {
      the order was really the order the thresholds were crossed — scroll quickly and body copy could
      announce itself alongside the heading it belongs to.
 
-     So a section is now one trigger and one cascade: the rule draws, then the heading and every line
-     of its body copy rise out of their masks on one continuous stagger. The delay is the composition,
+     So a section is one trigger and one cascade: the rule draws, then the heading and every line of
+     its body copy rise out of their masks on one continuous stagger. The delay is the composition,
      not the scroll position, which is what makes it read as deliberate at any scroll speed.
 
-     Grouping is by document order: a heading opens a group and everything up to the next heading
-     belongs to it. h3s open their own, so a subsection cascades on its own beat rather than being
-     swept along by the h2 above it. */
-  var groups = [];
-  var cur = null;
-  [].slice.call(article.children).forEach(function (el) {
-    var tag = el.tagName;
-    if (tag === 'H2' || tag === 'H3') { cur = { heading: el, blocks: [] }; groups.push(cur); return; }
-    if (tag !== 'P' && tag !== 'UL' && tag !== 'BLOCKQUOTE') return;
-    if (!cur) { cur = { heading: null, blocks: [] }; groups.push(cur); }
-    cur.blocks.push(el);
-  });
-
+     WHAT a section is comes from the caller — see articleGroups() for the legal documents' answer and
+     AboutPage for the other one. */
   groups.forEach(function (grp) {
-    var h = grp.heading;
-    if (h) arm(h);
-    // The first h2's rule is display:none, so there is nothing to draw there.
-    var hasRule = h && h.tagName === 'H2' && h !== article.querySelector('h2');
-    if (hasRule) { g.set(h, { '--rule': 0 }); pending.push(h); }
+    if (grp.heading) arm(grp.heading);
+    if (grp.rule) { g.set(grp.rule, { '--rule': 0 }); pending.push(grp.rule); }
+    grp.blocks = (grp.blocks || []).filter(Boolean);
     grp.blocks.forEach(arm);
-    grp.hasRule = hasRule;
   });
 
   /* One section, one cascade. The heading and every line of its body copy go into a SINGLE
@@ -403,7 +293,7 @@ export function initLegalReveal(root, options) {
      No offsets. The heading leads because it is first in the array, which is the only ordering the
      landing uses either. */
   function runGroup(grp) {
-    if (grp.hasRule) drawRule(grp.heading);
+    if (grp.rule) drawRule(grp.rule);
     revealMasked((grp.heading ? [grp.heading] : []).concat(grp.blocks));
   }
 
@@ -495,9 +385,9 @@ export function initLegalReveal(root, options) {
   // Wrapping changed the DOM; let the TOC's own triggers re-measure against it.
   ST.refresh();
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { if (article.isConnected) { ST.refresh(); catchUp(); } });
+    document.fonts.ready.then(function () { if (root.isConnected) { ST.refresh(); catchUp(); } });
   }
-  var onLoad = function () { if (article.isConnected) { ST.refresh(); catchUp(); } };
+  var onLoad = function () { if (root.isConnected) { ST.refresh(); catchUp(); } };
   window.addEventListener('load', onLoad);
 
   // ---------------------------------------------------------------- failsafe
@@ -637,4 +527,30 @@ export function initLegalReveal(root, options) {
     },
     destroy: destroy,
   };
+}
+
+/* THE LEGAL DOCUMENTS' OWN SECTIONS, by document order: a heading opens a group and everything up to
+   the next heading belongs to it. h3s open their own, so a subsection cascades on its own beat rather
+   than being swept along by the h2 above it.
+
+   Lifted out of the engine when About arrived and left exactly as it was, including the one rule that
+   is really a fact about legal.css: the FIRST h2's hairline is display:none there, so that group is
+   the one with nothing to draw. */
+export function articleGroups(contentEl) {
+  if (!contentEl) return [];
+  var first = contentEl.querySelector('h2');
+  var groups = [];
+  var cur = null;
+  [].slice.call(contentEl.children).forEach(function (el) {
+    var tag = el.tagName;
+    if (tag === 'H2' || tag === 'H3') {
+      cur = { heading: el, blocks: [], rule: (tag === 'H2' && el !== first) ? el : null };
+      groups.push(cur);
+      return;
+    }
+    if (tag !== 'P' && tag !== 'UL' && tag !== 'BLOCKQUOTE') return;
+    if (!cur) { cur = { heading: null, blocks: [], rule: null }; groups.push(cur); }
+    cur.blocks.push(el);
+  });
+  return groups;
 }

@@ -1,7 +1,7 @@
-// Curved-wipe transitions between the landing and the tool (both directions) and between the three
+// Curved-wipe transitions between the landing and the tool (both directions) and between the four
 // routes, with rAF-stall pumps and watchdogs so a throttled frame can never strand the covering
 // layer or lock the app.
-import { routeFor, pathFor, isLegal, applyHead } from '../routes.js';
+import { routeFor, pathFor, isDoc, applyHead } from '../routes.js';
 
 export const wipeMethods = {
   _resetIntroState(afterCb) {
@@ -263,7 +263,7 @@ export const wipeMethods = {
     this._wipeArmStallPump(g);
   },
 
-  /* ===== route swap: /, /privacy, /terms =====
+  /* ===== route swap: /, /about, /privacy, /terms =====
 
      Privacy and terms were their own documents until this method existed, and the wipe between them
      was cut in half — cover here, set location, and have the arriving document paint its own cover
@@ -310,13 +310,14 @@ export const wipeMethods = {
     // Reduced motion, or no GSAP to drive a timeline with: swap outright. The destination still
     // arrives correctly, it simply arrives without the gesture — which is what reduced motion asks
     // for, and the only honest fallback when there is nothing to animate with.
-    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => this._playLegalReveal()); return; }
+    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => this._playPageReveal()); return; }
 
     this._wipeRunning = true;
-    // Tells LegalPage to ARM its reveals and wait rather than play them on mount. Without it the
-    // hero cascade runs behind an opaque panel and the cover lifts on copy that has already
-    // finished arriving — the page appears to be simply there, which is the fault this whole
-    // change exists to fix.
+    // Tells the arriving document route to ARM its reveals and wait rather than play them on mount.
+    // Without it the hero cascade runs behind an opaque panel and the cover lifts on copy that has
+    // already finished arriving — the page appears to be simply there, which is the fault this whole
+    // change exists to fix. About takes it on exactly the same terms the two statements do, which is
+    // what makes /about ↔ /privacy read as one gesture rather than as two products.
     this._arrivingByWipe = true;
 
     const panel = layer.querySelector('[data-wipe-panel]');
@@ -347,13 +348,13 @@ export const wipeMethods = {
         // The tool's own arrival, when it is the destination: its copy rises out of its masks
         // exactly as it does under the loader and after Get Started, rather than the whole page
         // block sliding up as one slab. instant=true is the starved-rAF path — be there, plainly.
-        if (!isLegal(next)) {
+        if (!isDoc(next)) {
           if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }
           this._dropRevealed = false;
           this._dropLinesArm();
           this._listRowsArm();
         } else if (instant) {
-          this._playLegalReveal();
+          this._playPageReveal();
         }
       });
     };
@@ -380,7 +381,7 @@ export const wipeMethods = {
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
       this._arrivingByWipe = false;
-      if (!swapped) doSwap(true); else this._playLegalReveal();
+      if (!swapped) doSwap(true); else this._playPageReveal();
     }, 4000);
     this._wipeTl = tl;
 
@@ -399,7 +400,7 @@ export const wipeMethods = {
     // The destination's own copy rises just behind the panel's trailing edge — the same offset the
     // loader's fold and Get Started both use, so all three arrivals share one rhythm.
     tl.call(() => {
-      if (isLegal(next)) this._playLegalReveal();
+      if (isDoc(next)) this._playPageReveal();
       else { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }
     }, null, '<+0.15');
     // built paused: wake the clock first, then pin the playhead to 0.
@@ -408,8 +409,9 @@ export const wipeMethods = {
     this._wipeArmStallPump(g);
   },
 
-  // LegalPage hands its reveal controller up on mount and takes it back on unmount, so the timeline
-  // above has something to release without reaching into the component.
-  registerLegalReveal(controller) { this._legalReveal = controller; },
-  _playLegalReveal() { const c = this._legalReveal; if (c) { try { c.play(); } catch (e) { } } },
+  // A document route hands its reveal controller up on mount and takes it back on unmount, so the
+  // timeline above has something to release without reaching into the component. Both LegalPage and
+  // AboutPage use it; there is only ever one of them mounted, so one slot is enough.
+  registerPageReveal(controller) { this._pageReveal = controller; },
+  _playPageReveal() { const c = this._pageReveal; if (c) { try { c.play(); } catch (e) { } } },
 };

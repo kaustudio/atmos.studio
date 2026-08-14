@@ -1,0 +1,86 @@
+/* Atmos Gallery — the chrome every DOCUMENT route wears: about, privacy, terms.
+
+   These three are pages you read rather than the tool you use, and they share exactly two things:
+   the surface they are set on, and the bar at the top of it. Both used to live in legal.css, which
+   was fine while the two statements were the only documents on the site. About is a document too,
+   and a page importing "legal.css" for its masthead is how a name stops describing what it holds —
+   the same drift the legal routes' own notes keep arguing against.
+
+   What is NOT here: anything a particular document decides. legal.css keeps the statements' article
+   grid and the table of contents; about.css keeps the About page's sections. This file is only the
+   two things all three agree on, so there is nothing in it either of them would want to override.
+
+   It reads global.css's tokens and defines none of its own — global.css is imported ahead of it by
+   main.tsx and is the single source for the palette, the type faces and the dark theme. */
+
+/* Scoped, never on bare `body`. global.css already sets the document's background, colour and family
+   for the tool; restating them unscoped would mean this file's copy winning on every screen of the
+   app purely by being imported second. The line-height IS particular to documents — 1.6 is a reading
+   measure, not the tool's UI rhythm — so it belongs here, on them. */
+.doc-route{
+  background:var(--surface);
+  color:var(--on-surface);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.doc-route *{box-sizing:border-box}
+.doc-route a{color:inherit}
+
+/* ---------------------------------------------------------------- masthead */
+
+/* Restates the app's chrome bar: 64px tall, full width, hairline underneath, and the mark centred in
+   it. In the app the mark is position:fixed at left:50% (see logoStyle in AppView) so it can fly over
+   the landing; here the bar is sticky and the mark sits inside it, which lands in the same place
+   optically but can never overlap the prose of a document that scrolls. 165×26 is the app's own
+   measurement, not a new one.
+
+   Three tracks, not a centred flex row: the theme switch stands in the left one, exactly where the
+   app's header keeps it, and the mark has to stay on the page's centre line regardless of how wide
+   that switch's label happens to be. `1fr auto 1fr` centres the middle track on the bar itself, so
+   LIGHT and DARK — different widths — cannot shift the wordmark between renders. The empty third
+   track is what pays for that; it is doing real work. */
+.doc-head{
+  position:sticky;top:0;z-index:20;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  height:64px;
+  padding:0 var(--page-gutter);
+  background:var(--surface);
+  border-bottom:1px solid var(--line-strong);
+}
+.doc-head__mark{grid-column:2;display:flex}
+.doc-head__theme{grid-column:1;justify-self:start}
+.mark{
+  display:block;width:165px;height:26px;background:var(--on-surface);
+  -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
+  mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
+}
+
+/* The one width where 165px of wordmark and a theme switch do not both fit. At 375px the switch ends
+   at 107 and the mark starts at 107 — zero clearance, the two touching, and the mark pushed 2.5px off
+   the page's centre line by the squeeze. It was never visible before because the desktop gate blanked
+   these routes below 720px (see global.css); with that fixed, this is the first width they are
+   actually read at. The mark comes down rather than the switch losing its label: the label is what
+   makes the control legible, and the wordmark is artwork that reads perfectly well smaller. */
+@media screen and (max-width:560px){
+  .doc-head{column-gap:12px}
+  .mark{width:126px;height:20px}
+}
+
+/* ------------------------------------------------------------ masked reveal
+
+   The primitive every document's arrival is built on, shared for the same reason the masthead is:
+   pageReveal.js applies these two classes on ALL of them, so a copy per stylesheet would be two
+   descriptions of one mechanic.
+
+   An overflow-hidden block with the text sliding up inside it, matching the app's landing idiom. The
+   padding/negative-margin pair is not decorative — headings run at line-height 1.15, and without
+   descender room overflow:hidden shears the tails off 'y', 'p' and 'g'. The negative margin gives the
+   space back so nothing below moves.
+
+   Both classes are inert by default. pageReveal.js only ever adds them once it has confirmed GSAP is
+   present and motion is wanted, so the no-JS and reduced-motion state is plain text. */
+.reveal-mask{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
+.reveal-line{display:block}

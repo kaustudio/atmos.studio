@@ -1,4 +1,4 @@
-/* Atmos Gallery — the three routes this document serves.
+/* Atmos Gallery — the four routes this document serves.
 
    Privacy and terms used to be their own documents in /public, and the wipe between them was cut in
    half and handed across the boundary through sessionStorage. That handoff is gone: the cover, the
@@ -15,6 +15,7 @@
    particle type, so it stays a document of its own; a link from it navigates plainly. */
 
 export const APP = 'app';
+export const ABOUT = 'about';
 export const PRIVACY = 'privacy';
 export const TERMS = 'terms';
 
@@ -24,12 +25,14 @@ export const LEGAL_ROUTES = [PRIVACY, TERMS];
 // already decided the address is ours, and rendering the tool beats rendering nothing.
 export function routeFor(pathname) {
   var p = String(pathname || '/').replace(/\/+$/, '') || '/';
+  if (p === '/about' || p === '/about.html') return ABOUT;
   if (p === '/privacy' || p === '/privacy.html') return PRIVACY;
   if (p === '/terms' || p === '/terms.html') return TERMS;
   return APP;
 }
 
 export function pathFor(route) {
+  if (route === ABOUT) return '/about';
   if (route === PRIVACY) return '/privacy';
   if (route === TERMS) return '/terms';
   return '/';
@@ -39,12 +42,30 @@ export function isLegal(route) {
   return route === PRIVACY || route === TERMS;
 }
 
+/* THE DOCUMENT ROUTES — about, privacy, terms — as opposed to the tool at /.
+   Three separate places were asking `isLegal` when what they actually meant was "is this a page you
+   READ rather than the thing you use": the early return in AppView (the tool must not sit in the DOM
+   behind a document), the loader and landing skips in PaletteApp (there is no tool on these routes to
+   introduce), and the entry-theme decision (a reader arriving from a search result gets their own
+   appearance, not the tool's enforced light). About is all three of those and none of it is legal, so
+   the question has its own name now. isLegal survives for what is genuinely particular to the two
+   statements — which HTML fragment LegalPage injects. */
+export function isDoc(route) {
+  return route === ABOUT || route === PRIVACY || route === TERMS;
+}
+
 /* Per-route <head>. A single document serving three addresses has to rewrite its own metadata, and
    these are the tags that actually differ per route — title, canonical, the og: pair a share card
    reads, and the description. The JSON-LD block is NOT here: each route's structured data is a
    different @type with a different shape, so it is written as a whole block rather than patched
    field by field (see applyHead). */
 export const HEAD = {
+  [ABOUT]: {
+    title: 'About | Atmos Gallery',
+    path: '/about',
+    description: "Why Atmos Gallery reads an image's atmosphere rather than extracting its most common pixels, and how a palette becomes a working, accessible colour system.",
+    ogType: 'article',
+  },
   [APP]: {
     title: 'Atmos Gallery',
     path: '/',

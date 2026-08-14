@@ -20,7 +20,7 @@ import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { refineMethods } from './methods/refine.js';
 import { renderValsMethods } from './renderVals.js';
-import { routeFor, pathFor, isLegal, applyHead, APP } from './routes.js';
+import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
 
 export default class PaletteApp extends React.Component {
@@ -146,9 +146,9 @@ export default class PaletteApp extends React.Component {
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, exportSemantic: false, notice: null,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
-    // A legal route arrives past them for a different reason: there is no tool on it to introduce.
-    landingDismissed: (this._shared || isLegal(this._entryRoute)) ? true : this._landingDismissed(),
-    showLoader: (this._shared || isLegal(this._entryRoute)) ? false : this._loaderPending(),
+    // A document route arrives past them for a different reason: there is no tool on it to introduce.
+    landingDismissed: (this._shared || isDoc(this._entryRoute)) ? true : this._landingDismissed(),
+    showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
     page: 0,
     // List sort. 'time' desc is the archive's own default — newest first, what the feed already
     // meant before there was anything to sort BY. Deliberately not persisted: page size is a
@@ -198,13 +198,14 @@ export default class PaletteApp extends React.Component {
      Light is the tool's product default and stays that way: the app forces light at mount regardless
      of the OS, because the palette work it exists for is judged against a light surface.
 
-     A legal route is not that. Someone arriving at /privacy from a search result at night has no
-     relationship with the tool's defaults and every reason to expect their own — these are documents
-     to read, not a surface to work on, and they followed the OS faithfully for as long as they were
-     their own files. So the entry route decides, once. From then on the switch in the masthead is
-     the only thing that moves it, on either route, and the two never disagree inside a session. */
+     A document route is not that. Someone arriving at /privacy or /about from a search result at
+     night has no relationship with the tool's defaults and every reason to expect their own — these
+     are documents to read, not a surface to work on, and they followed the OS faithfully for as long
+     as they were their own files. So the entry route decides, once. From then on the switch in the
+     masthead is the only thing that moves it, on any route, and they never disagree inside a
+     session. */
   _entryTheme() {
-    if (!isLegal(this._entryRoute)) return 'light';
+    if (!isDoc(this._entryRoute)) return 'light';
     try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
   }
 
@@ -312,12 +313,12 @@ export default class PaletteApp extends React.Component {
       }
       if (e.key === 'Escape') {
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
-        if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
         // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
         // dismiss the surface that is actually in front. The palette export can never coexist with
         // either of the two below it, so nothing else changes order by this.
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
+        if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
         if (typeof this.state.refineRemoveIdx === 'number') { e.preventDefault(); this.refineCancelRemove(); return; }
         if (this.state.refineResetArmed) { e.preventDefault(); this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }); return; }
