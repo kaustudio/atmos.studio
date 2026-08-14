@@ -36,7 +36,10 @@
        data-splitter="wrap" | "after" | "handle" — the before/after comparison
        data-stack-slide / -wrap / -content      — the falling card stack
        data-rail / -track / -card               — the pinned horizontal gallery
-       data-stream / -frame / -src              — the image sequence -->
+       data-stream / -frame / -src              — the image sequence
+       data-section-dock-*                      — the anchor dock at the foot of the viewport
+       data-dock-group / -group-toggle / -sub   — one of its four groups, its head, its sections
+       data-section-dock-hide="n"               — a block the dock gets out of the way for -->
 
 <header class="about-hero about-grid" data-about-hero>
   <!-- CENTRED, and the only block on the page that is. An opening is an address to the reader; the
@@ -848,7 +851,11 @@
      Here it has structure to hold it: the divider opens the block, the belief states the position,
      the statement turns it into an offer and the button acts on it. Four parts, one centred column,
      one idea — which is also what stops the close being a bare button under a photograph. -->
-<section class="about-end about-grid" data-sec>
+<!-- data-section-dock-hide: the anchor dock gets out of the way here. This is the page's only button,
+     centred in its own column, and a pill floating over it would be the one place on /about where
+     navigation competes with the thing being offered. The number is the percentage of the viewport
+     from the bottom at which this block counts as arrived — see the dock's own note on hide zones. -->
+<section class="about-end about-grid" data-sec data-section-dock-hide="22">
   <div class="about-end__inner">
     <div class="about-divider" data-divider aria-hidden="true"></div>
     <p class="about-end__line" data-reveal>Start with an image.<br />Leave with a colour system.</p>
@@ -858,3 +865,137 @@
     <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-ix="cta" data-focus="chrome">Create from an image</a></p>
   </div>
 </section>
+
+<!-- THE SECTION ANCHOR DOCK — Osmo Supply, adapted; the mechanic and every contract below are the
+     resource's, and src/app/methods/aboutDock.js records each departure from it.
+
+     LAST IN THE DOCUMENT ON PURPOSE. Live it is fixed to the foot of the viewport, so where it sits
+     in the markup is invisible; with no JavaScript it is exactly what it reads as here — a nav at the
+     end of a long document listing its fourteen sections, which is worth having on its own. That is
+     also why the collapsing and the fixed positioning live behind [data-dock-live] (about.css), an
+     attribute only the script sets. Nothing on this page is hidden by CSS that JS has to come back
+     and reveal.
+
+     OUTSIDE [data-sec]. Every reveal group on this page is a marked section, and a nav that got
+     itself masked and held at opacity 0 waiting for a scroll trigger would be a nav that is missing
+     for the first screen of every section it belongs to.
+
+     THE LABELS ARE SHORT, and deliberately not the h2s. "Some images already contain the required
+     relationships" is a good heading and an impossible row in a pill at the foot of the screen; the
+     dock names the same section in four words. The number is the tie between them, which is what the
+     numbering was added for.
+
+     THEY ARE SENTENCE CASE, which is how the document spells its own headings. The dock names the
+     page's sections, so it spells them the way the page does: one capital at the front, and after
+     that a capital only where the word is a name — Atmos, OKLCH, WCAG. Title case was tried here and
+     is wrong; it made fourteen labels that no h2 on the page matches.
+
+     The four group heads are spelled the same way and now RENDER the same way. They briefly took the
+     system's uppercase label voice; it read as shouting at the foot of the screen, so the transform
+     is gone and about.css records what had to change with it — the tracking and the size were both
+     settings that only made sense under capitals.
+
+     data-ix="cell" ON ALL EIGHTEEN CONTROLS. The row tint, its curve and its duration arrive from
+     the interaction contract in global.css rather than from this component, which is what makes a
+     dock row and a list row in the tool the same object. about.css therefore declares no transition
+     of its own on these — an inline transition REPLACES the contract rather than joining it.
+
+     data-focus="value" RATHER THAN "chrome", on every control in here. The pill carries
+     overflow:hidden — it has to, or the list spills out of its rounded box through the whole morph —
+     and an outline drawn 3px outside a clipped box is a focus ring that is simply not there.
+     [data-focus="value"] is the house's inset ring (global.css) and survives the clip. Omitting the
+     attribute is not an option: the global :focus{outline:none} reset means no attribute is no ring. -->
+<nav data-section-dock-init aria-label="Sections of this page" class="section-dock">
+  <div data-section-dock-pill class="section-dock__pill">
+    <!-- The glass pane, as a plain block rather than chrome.jsx's <GlassEffect />, because this file
+         is HTML. Same seven layers, same class names, same stylesheet — see .glass-effect in
+         global.css. It is first so the controls paint above it, and takes border-radius:inherit so
+         it follows the pill through the morph. -->
+    <div class="glass-effect" aria-hidden="true">
+      <div class="glass-effect__fill"></div>
+      <div class="glass-effect__fill-burn"></div>
+      <div class="glass-effect__highlight-soft"></div>
+      <div class="glass-effect__highlight-strong"></div>
+      <div class="glass-effect__edge-light"></div>
+      <div class="glass-effect__edge-dark"></div>
+      <div class="glass-effect__inner-glow"></div>
+    </div>
+
+    <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="section-dock-list" data-focus="value" class="section-dock__toggle">
+      <span data-section-dock-label-wrap class="section-dock__label-wrap">
+        <!-- One span, holding the starting section. The script clones this as the template for every
+             label change and fills it from the active link, so the structure here is what carries. -->
+        <span class="section-dock__label">
+          <span class="section-dock__link-num">1.1</span>
+          <span>Instinct to system</span>
+        </span>
+      </span>
+      <!-- The affordance, instead of a standing "on this page" label: a caret pointing the way the
+           list opens. It says the pill expands without spending a permanent line of copy saying so. -->
+      <span class="section-dock__caret" aria-hidden="true"></span>
+    </button>
+
+    <div data-section-dock-list id="section-dock-list" class="section-dock__list">
+      <!-- Before the items and below them in z-index, so it sits behind the links rather than over
+           them. The script positions it on the active link and animates it between them. -->
+      <div data-section-dock-indicator class="section-dock__indicator"></div>
+      <ul class="section-dock__items">
+
+        <li data-dock-group class="section-dock__group">
+          <button type="button" data-dock-group-toggle aria-expanded="true" aria-controls="section-dock-g1" data-ix="cell" data-focus="value" class="section-dock__group-head">
+            <span class="section-dock__link-num">1</span>
+            <span>Foundations</span>
+            <span class="section-dock__chev" aria-hidden="true"></span>
+          </button>
+          <ul id="section-dock-g1" data-dock-sub class="section-dock__sub">
+            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Instinct to system</span></a></li>
+            <li><a data-section-dock-link href="#how-atmos-reads-colour" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.2</span><span>How Atmos reads colour</span></a></li>
+            <li><a data-section-dock-link href="#reading-oklch" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.3</span><span>Reading OKLCH</span></a></li>
+            <li><a data-section-dock-link href="#reading-wcag-contrast" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.4</span><span>Reading WCAG contrast</span></a></li>
+          </ul>
+        </li>
+
+        <li data-dock-group class="section-dock__group">
+          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g2" data-ix="cell" data-focus="value" class="section-dock__group-head">
+            <span class="section-dock__link-num">2</span>
+            <span>The image</span>
+            <span class="section-dock__chev" aria-hidden="true"></span>
+          </button>
+          <ul id="section-dock-g2" data-dock-sub class="section-dock__sub">
+            <li><a data-section-dock-link href="#more-than-common-colours" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.1</span><span>More than common colours</span></a></li>
+            <li><a data-section-dock-link href="#shape-of-a-palette" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.2</span><span>The shape of a palette</span></a></li>
+            <li><a data-section-dock-link href="#one-model-three-ways" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.3</span><span>One model, three ways</span></a></li>
+          </ul>
+        </li>
+
+        <li data-dock-group class="section-dock__group">
+          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g3" data-ix="cell" data-focus="value" class="section-dock__group-head">
+            <span class="section-dock__link-num">3</span>
+            <span>The system</span>
+            <span class="section-dock__chev" aria-hidden="true"></span>
+          </button>
+          <ul id="section-dock-g3" data-dock-sub class="section-dock__sub">
+            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Colours to roles</span></a></li>
+            <li><a data-section-dock-link href="#contrast-creates-hierarchy" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.2</span><span>Contrast creates hierarchy</span></a></li>
+            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Images that already work</span></a></li>
+            <li><a data-section-dock-link href="#the-intervals-matter" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.4</span><span>The intervals matter</span></a></li>
+            <li><a data-section-dock-link href="#refine-without-losing" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.5</span><span>Refining without loss</span></a></li>
+          </ul>
+        </li>
+
+        <li data-dock-group class="section-dock__group">
+          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g4" data-ix="cell" data-focus="value" class="section-dock__group-head">
+            <span class="section-dock__link-num">4</span>
+            <span>In practice</span>
+            <span class="section-dock__chev" aria-hidden="true"></span>
+          </button>
+          <ul id="section-dock-g4" data-dock-sub class="section-dock__sub">
+            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Eight images, eight systems</span></a></li>
+            <li><a data-section-dock-link href="#one-image-complete-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.2</span><span>One complete system</span></a></li>
+          </ul>
+        </li>
+
+      </ul>
+    </div>
+  </div>
+</nav>

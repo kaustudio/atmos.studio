@@ -25,6 +25,7 @@
      aboutPills      the six roles, explained one at a time, each with a photograph of its own
      aboutCascade    the sets that had no entrance — role cells, pills, matrix rows, weight key
      aboutOptical    display type nudged so its INK lands on the column line, not its box
+     aboutDock       the fourteen sections as a pill at the foot of the screen, four groups deep
 
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
    all of them are torn down together. None is load-bearing for reading the page. */
@@ -45,6 +46,7 @@ import { initFeaturePills } from './methods/aboutPills.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
+import { initSectionDock } from './methods/aboutDock.js';
 import aboutHtml from '../about/about.html?raw';
 import '../styles/doc.css';
 import '../styles/about.css';
@@ -116,6 +118,12 @@ export default class AboutPage extends React.Component {
     this._killSticky = initStickyTitle(root);
     this._killCascade = initCascade(root, vals.maskMotion);
     this._killOptical = initOptical(root);
+    /* LAST, and for the same reason the pins go first: the dock holds a ScrollTrigger against every
+       one of the fourteen sections plus one spanning the whole run, so it wants a document whose
+       height has stopped moving. `lenis` is the app's instance rather than a global — an in-page jump
+       that bypassed it would move the document out from under the smooth scroller, which is the
+       reason legalToc takes the same argument. */
+    this._killDock = initSectionDock(root, { lenis: vals.lenis });
 
     /* The one thing the shared engine does not do for us: this page creates ScrollTriggers from
        eleven modules at mount, and mount here is before the local Neue Montreal .otf has loaded.
@@ -148,7 +156,7 @@ export default class AboutPage extends React.Component {
      are the last to let go. Killing a pin first would reflow the page underneath modules that are
      still holding measurements of it. */
   _teardown() {
-    ['_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killSpectrum', '_killSplitter', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
+    ['_killDock', '_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killSpectrum', '_killSplitter', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
       '_killStream', '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });

@@ -1625,3 +1625,296 @@
   .pills__content,.pills__plus::before,.pills__plus::after,
   .pills__close{transition:none}
 }
+
+/* ==============================================================================================
+   SECTION ANCHOR DOCK — Osmo Supply, adapted. The mechanic, the class names and the attribute
+   contract are the resource's; src/app/methods/aboutDock.js carries the full list of departures.
+   This file owns three things the resource does not have to think about: a state for readers with
+   no JavaScript, colour and type that come from the system rather than from the resource's own
+   palette, and the box motion — which lives here rather than in GSAP for the reasons aboutPills.js
+   sets out at [ATMOS 10] and which are repeated verbatim in this component.
+
+   WHAT THE SYSTEM CHANGED, against the resource as shipped:
+
+     SQUARE. The resource is built out of radii — a 1.5em pill, 100em rows, a 100em lozenge. Every
+     surface on this site is square and global.css says so in as many words where .glass-effect
+     declines the reference's own 4px. A rounded dock is not a small deviation here; it is the one
+     element on /about that would announce it came from somewhere else.
+
+     THE TYPE IS ON THE SCALE. The resource sizes everything in em off one arbitrary root. Rows take
+     --fs-detail, which the scale defines as "menu items, notes, secondary copy" — this is a menu.
+     The numbers take --fs-micro ("counts, eyebrows, row meta"). Group heads take the uppercase label
+     voice, --fs-label at --track-label, which is what this system uses to name a group of things.
+
+     THE PADDING IS ON THE SCALE. --btn-pad-md for the collapsed face, --btn-pad-sm for the rows:
+     "dense chrome: chips, counts, in-row controls".
+
+     THE ROWS ARE [data-ix="cell"]. The tint, its curve and its duration all arrive from the
+     interaction contract in global.css. They are NOT restated here — an inline transition replaces
+     the contract rather than joining it, so a control carrying both ends up with whichever
+     declaration wins and no way to reason about which.
+   ============================================================================================== */
+
+.section-dock{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-detail);
+  color:var(--on-surface);
+}
+
+/* ---- THE FLOOR: no JavaScript, no [data-dock-live] ------------------------------------------
+   A nav at the end of the document listing every section under its group heading. In flow, nothing
+   fixed, nothing collapsed and nothing hidden — see the note in about.html on why the markup is
+   arranged so this is what falls out rather than something JS has to come back and reveal. */
+.section-dock{
+  display:block;
+  width:100%;
+  margin-block:var(--band-gap) 0;
+  padding-inline:var(--page-gutter);
+}
+/* The pill's face repeats the first row and means nothing standing still, so in flow it is not
+   drawn. The indicator and the glass pane are both apparatus of the live control. */
+.section-dock__toggle,
+.section-dock__indicator,
+.section-dock .glass-effect,
+.section-dock__chev{display:none}
+.section-dock__items,.section-dock__sub{margin:0;padding:0;list-style:none}
+
+/* ---- THE LIVE DOCK -------------------------------------------------------------------------- */
+[data-dock-live].section-dock{
+  z-index:100;
+  width:fit-content;
+  margin:0 auto;
+  padding:0;
+  position:fixed;
+  bottom:var(--page-gutter);
+  left:0;
+  right:0;
+}
+
+/* THE PILL IS THE GLASS. Square, per the system. overflow is load-bearing: the list is laid out at
+   full size from the first frame and would spill out of the box through the whole morph without it.
+   It is also why every control in here takes the inset focus ring — see about.html.
+
+   THE BOX MOTION IS A CSS TRANSITION ON THE HOUSE TOKENS, not a GSAP tween, which is the argument
+   aboutPills.js [ATMOS 10] makes at length for the same resource family and the same kind of box:
+     · --ease-fold at --dur-fold is THE disclosure motion here, and global.css says a disclosure and
+       a moving selection share one motion character. This component is both at once.
+     · the token stays the single source — no JS mirror of four bezier numbers to drift from it
+     · a CSS transition is interruptible mid-flight, which is what a control a reader can hover in
+       and out of six times in a row actually needs; a tween restarts from wherever it was killed
+   The resource's own back.out(1.4) overshoots its final width and springs back. Nothing in this
+   system does that: --ease-fold, --ease-standard and --ease-entrance are all monotonic. */
+[data-dock-live] .section-dock__pill{
+  position:relative;
+  overflow:hidden;
+  transition:width var(--dur-fold) var(--ease-fold),height var(--dur-fold) var(--ease-fold);
+  box-shadow:0 1px 2px color-mix(in srgb,var(--on-surface) 8%,transparent),
+             0 8px 24px color-mix(in srgb,var(--on-surface) 12%,transparent);
+}
+/* Not `[data-dock-live] .section-dock .glass-effect` — that asks for a .section-dock INSIDE the
+   element carrying the attribute, and the attribute is on the nav itself, so it matched nothing and
+   the pane stayed display:none. The pill was left with no fill at all: a box-shadow around a hole,
+   with the paragraph behind it reading straight through the rows. A surface reads from its fill. */
+[data-dock-live] .glass-effect{display:block}
+/* The pane is absolute and first, so in-flow siblings would paint under it. One z-index lifts them
+   out — the same rule .glass-bar makes in global.css, restated for this host.
+
+   z-index ONLY, where .glass-bar's version also states position:relative. That extra declaration is
+   free on a bar whose children are all in flow and is not free here: `> *:not(.glass-effect)` is
+   three compound selectors and outspecifies the plain `.section-dock__list` rule below, so the list
+   was handed position:relative, fell back into flow, and the collapsed pill stood 356px tall with
+   the whole list stacked inside it instead of 45px. Each child states its own position instead —
+   both are positioned, which is all z-index needs. */
+[data-dock-live] .section-dock__pill > *:not(.glass-effect){z-index:1}
+[data-dock-live] .section-dock__toggle{position:relative}
+
+[data-dock-live] .section-dock__toggle{
+  display:flex;align-items:center;gap:10px;
+  white-space:nowrap;
+  appearance:none;
+  background-color:transparent;
+  border:none;
+  color:inherit;
+  font:inherit;
+  padding:var(--btn-pad-md);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.section-dock__label-wrap{
+  height:calc(var(--fs-detail) * 1.5);
+  display:block;
+  position:relative;
+  overflow:hidden;
+}
+.section-dock__label{line-height:1.5;display:block}
+
+/* The caret, pointing the way the list opens. Turns rather than swaps, which is the argument
+   [data-refine-chev] and [data-sort-chevron] both make in global.css. */
+.section-dock__caret{
+  flex:none;width:5px;height:5px;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  opacity:.45;
+  transform:translateY(-1px) rotate(-135deg);
+  transition:opacity var(--dur-fast) var(--ease-standard);
+}
+[data-dock-live] .section-dock__toggle:hover .section-dock__caret{opacity:.8}
+
+[data-dock-live] .section-dock__list{
+  opacity:0;
+  visibility:hidden;
+  width:max-content;
+  padding:6px;
+  position:absolute;
+  top:0;
+  left:0;
+}
+
+/* THE INDICATOR IS THE INK, and it is the travelling selection marker --ease-fold is named for —
+   global.css folded --ease-pill (the marker behind every segmented toggle) into it precisely so
+   this motion and a disclosure share one curve. The resource paints #161c33 on #e9ecf6, which is
+   its own palette; here the block is --on-surface and the row above it flips to --surface, so the
+   active row reads as inverted type in both modes and needs no light/dark rule of its own. */
+[data-dock-live] .section-dock__indicator{
+  display:block;
+  z-index:1;
+  pointer-events:none;
+  background-color:var(--on-surface);
+  position:absolute;
+  top:0;left:0;
+  transition:transform var(--dur-fold) var(--ease-fold),
+             width var(--dur-fold) var(--ease-fold),
+             height var(--dur-fold) var(--ease-fold),
+             opacity var(--dur-state) var(--ease-standard);
+}
+
+/* ---- ROWS ------------------------------------------------------------------------------------ */
+.section-dock__link-num{
+  color:var(--on-surface-muted);
+  margin-right:8px;
+  font-size:var(--fs-micro);
+  line-height:1;
+  letter-spacing:var(--track-flat);
+  font-variant-numeric:tabular-nums;
+  display:inline-block;
+  position:relative;
+  bottom:.5px;
+}
+
+/* NO transition declared here, and none on the group head below. Both carry data-ix="cell", so the
+   tint, its curve and its duration are the interaction contract's — restating any of them here
+   would replace the contract rather than extend it. */
+.section-dock__link{
+  z-index:2;
+  white-space:nowrap;
+  color:inherit;
+  padding:var(--btn-pad-sm);
+  text-decoration:none;
+  display:block;
+  position:relative;
+}
+[data-section-dock-link][data-active]{color:var(--surface)}
+[data-section-dock-link][data-active] .section-dock__link-num{color:color-mix(in srgb,var(--surface) 68%,transparent)}
+/* The active row already reads as inverted against the marker; a hover tint on top of it would be
+   the contract's cell tint fighting the marker underneath for the same pixels. */
+[data-dock-live] [data-section-dock-link][data-active]{background-color:transparent!important}
+
+/* ---- GROUPS ---------------------------------------------------------------------------------- */
+/* The group head is a button, not a link: one that navigated would leave the ten sections outside
+   the current group reachable only by scrolling to them first. See [ATMOS 1] in aboutDock.js.
+
+   IT IS NOT UPPERCASE, and that decides the other two type properties with it. The uppercase label
+   voice was tried here — --fs-label at --track-label, which is how this system names a group of
+   things elsewhere — and the group heads read as SHOUTED rather than as headings. Removing the
+   transform alone would have left two settings behind that only make sense under it:
+
+     · --track-label is defined in global.css as "uppercase mono labels". A tenth of an em between
+       sentence-case letters is not a label voice, it is loose type. --track-flat is the system's
+       own way of saying flat, and is what the numbers in here already take.
+     · --fs-label is 10px, which works for a group name only while capitals are carrying it. Set in
+       sentence case at 10px above 12px rows, the parent would be the smallest thing in its own
+       group — a hierarchy upside down. It takes --fs-detail now, the same step as the rows it
+       heads, and the distinction is carried by the chevron, the single-digit number and the colour. */
+.section-dock__group-head{
+  display:flex;align-items:center;gap:0;width:100%;
+  appearance:none;background:none;border:none;
+  font-family:inherit;
+  font-size:var(--fs-detail);
+  letter-spacing:var(--track-flat);
+  color:var(--on-surface-muted);
+  text-align:left;white-space:nowrap;
+  padding:var(--btn-pad-sm);
+  cursor:pointer;
+  position:relative;z-index:2;
+  -webkit-tap-highlight-color:transparent;
+}
+[data-dock-live] .section-dock__group[data-open] > .section-dock__group-head{color:var(--on-surface)}
+/* No size override on the group's number. It existed to stop a 9px figure being lost beside a 10px
+   uppercase label; the head is --fs-detail now, so the number sits against it exactly as "3.1" sits
+   against a row — one treatment for every number in the dock. */
+/* The label must not run into the chevron on the widest group name. margin-left:auto puts the whole
+   slack between them, so this only matters when there is none. */
+.section-dock__group-head > span:not(.section-dock__chev):not(.section-dock__link-num){padding-right:20px}
+
+/* The chevron turns; it does not swap. Down while the group is shut, up while it is open.
+   The gap to the label is margin, not padding. Padding on a content-box element sits INSIDE the
+   border box, so border-bottom drew across the content plus the padding — a 5px tick became a 28px
+   diagonal slash leaning out of the top of every group head. */
+[data-dock-live] .section-dock__chev{
+  display:block;
+  flex:none;margin-left:auto;
+  width:5px;height:5px;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  opacity:.6;
+  /* Lifted a pixel: a square rotated 45° hangs below the optical centre of a row of text, because
+     the corner that reads as the point is the bottom one. */
+  transform:translateY(-1.5px) rotate(45deg);
+  transition:transform var(--dur-state) var(--ease-fold);
+}
+[data-dock-live] .section-dock__group[data-open] .section-dock__chev{transform:translateY(.5px) rotate(-135deg)}
+
+/* The height is written in px by the script — the resolved content height or zero — and overflow is
+   what makes that a collapse rather than a pile of rows sitting on the group below. px rather than
+   `auto` because auto is not a value a transition can interpolate toward, and this fold answers to
+   the same token as the pill it lives in. */
+[data-dock-live] .section-dock__sub{
+  overflow:hidden;
+  transition:height var(--dur-fold) var(--ease-fold);
+}
+[data-dock-live] .section-dock__group + .section-dock__group{margin-top:2px}
+
+/* ---- INSTANT --------------------------------------------------------------------------------- */
+/* Placement that is not a state CHANGE: first paint, a resize, a font landing, or a group being set
+   while the dock is shut and nobody can see it. Without this the indicator would slide in from the
+   corner on load and every rows-rewrap would animate to its new size. */
+[data-dock-instant] .section-dock__pill,
+[data-dock-instant] .section-dock__indicator,
+[data-dock-instant] .section-dock__sub,
+[data-dock-instant] .section-dock__chev{transition:none!important}
+
+/* ---- HIDDEN ---------------------------------------------------------------------------------- */
+/* The attribute is the styling hook the resource documents; the move itself is GSAP's, so this only
+   takes the control out of the tab order and out of the pointer's way once it has gone. */
+[data-dock-live][data-hidden]{pointer-events:none}
+
+/* ---- NARROW ---------------------------------------------------------------------------------- */
+/* The rows are the longest thing in here and the pill is centred, so what gives is the row padding
+   rather than the layout — the type is already at --fs-detail and the scale has nothing sensible
+   below it for a menu. */
+@media screen and (max-width:560px){
+  [data-dock-live].section-dock{bottom:16px}
+  [data-dock-live] .section-dock__toggle{padding:var(--btn-pad-sm)}
+}
+
+/* ---- REDUCED MOTION -------------------------------------------------------------------------- */
+/* The box, the marker, the fold and the two turns are all this file's own now, so they are this
+   file's to floor. The blanket rule at the top of global.css already flattens transitions to
+   .001ms; this states none so nothing is left mid-interpolation. What GSAP still drives — the label
+   swap and the dock's arrival — is floored inside aboutDock.js, which under this preference also
+   drops the arrival travel entirely rather than making it instant: a fixed surface blinking into
+   existence is "surfaces arrive, never appear" failing at the top of the screen. See [ATMOS 7]. */
+@media (prefers-reduced-motion: reduce){
+  .section-dock__pill,.section-dock__indicator,.section-dock__sub,
+  .section-dock__caret,.section-dock__chev{transition:none}
+}
