@@ -798,7 +798,7 @@ export default function AppView({ vals }) {
       <main aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
 
         {vals.isUpload && (<>
-          <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Upload a reference image. Drop an image here, or activate to browse your files." style={vals.dropStyle}>
+          <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Choose image. Drop an image here, or activate to browse your files." style={vals.dropStyle}>
             <div style={sx('position:relative;width:38px;height:38px')} aria-hidden="true">
               <div style={sx('position:absolute;left:0;top:0;width:26px;height:26px;border:1px solid var(--on-surface-muted)')}></div>
               <div style={sx('position:absolute;right:0;bottom:0;width:26px;height:26px;border:1px solid var(--on-surface);background:var(--surface)')}></div>
@@ -808,10 +808,21 @@ export default function AppView({ vals }) {
                 overflow:hidden mask; the spacing lives on the MASK, never on the span, or the
                 translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
-              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>Drop a reference image</div></div>
-              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>We read its light and atmosphere — not its literal pixels.</div></div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>Start here</div></div>
+              {/* The lead breaks after "atmosphere" — and the break is a SECOND MASK, not a <br>.
+                  One mask holding two lines is a slab: both halves ride up together while the title
+                  and the CTA each arrive on their own, which is the one gesture maskLines.js was
+                  written to stop. Two masks, and the second half arrives on the same stagger as
+                  everything else. No margin on the second one — the halves are a single sentence, so
+                  line-height alone sets the distance, exactly as a <br> would have. */}
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>Choose an image that captures the atmosphere</div></div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your colour system to carry.</div></div>
             </div>
-            <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat); text-transform: capitalize; color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Browse files</span></span>
+            {/* Sentence case, as authored — no capitalize here. The transform this line used to carry
+                is the same one that made "Every project and Unfiled" read "Every Project And Unfiled"
+                in the library menu above: it capitalizes every word, so "Choose image" would come out
+                "Choose Image". */}
+            <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" style={sx('display:block;font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat); color: var(--on-surface); border-bottom: 1px solid var(--on-surface); padding-bottom: 3px')}>Choose image</span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
           {/* The interpretation note that used to sit here — "a small downscaled thumbnail is sent to
