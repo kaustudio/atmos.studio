@@ -5,6 +5,31 @@
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* NATIVE CONTROLS ARRIVE ROUNDED, and this system has no radius anywhere.
+
+   `appearance:auto` is the default on every button and text field, and what that means is engine
+   business: Chromium drops the native chrome the moment an author sets a background, so a control
+   measures 0px there and looks square. WebKit does not — it keeps the platform push-button, radius
+   and all, and Safari on both macOS and iOS therefore drew rounded corners on controls whose CSS
+   says nothing about a radius. Measured on this build: 74 buttons on the landing alone sitting at
+   `appearance:auto`, the section dock's toggle and its four group heads among them.
+
+   It has been fixed one control at a time until now — the refine slider states it at [data-refine-
+   slider], the spectrum dot at .about-spectrum__dot, the dock's own two — which is why it kept
+   coming back somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
+   the system's, not each component's, and the comp's own note further down this file ("this system
+   has no radius anywhere") is the thing being enforced.
+
+   SCOPED TO WHAT IS ACTUALLY IN THE DOCUMENT rather than to every control that exists. `appearance:
+   none` erases a checkbox and a radio outright and takes the arrow off a select; there are none of
+   any of the three in this app — the full inventory is 109 type="button", 5 text, 3 file and one
+   range — and if one is ever added it should make its own decision rather than inherit this one.
+   The range is listed because it is the one control whose radius lives on UA pseudo-elements; the
+   rules that repaint it are unchanged and still carry their own border-radius:0. */
+button,
+input[type="text"],
+input[type="file"],
+input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0}
 body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 @keyframes hue{0%{background:#1a1a1a}18%{background:#c87d3c}36%{background:#7d8d91}54%{background:#9a5128}72%{background:#828f92}90%{background:#cdbfd2}100%{background:#1a1a1a}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
