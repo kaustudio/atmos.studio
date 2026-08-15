@@ -70,6 +70,25 @@ function aboutGroups(root) {
   }));
 }
 
+/* HOISTED, AND THE WHOLE PAGE DEPENDS ON IT.
+
+   React 19's setProp writes dangerouslySetInnerHTML UNCONDITIONALLY whenever updateProperties sees
+   the prop change, and updateProperties compares the prop by OBJECT IDENTITY rather than by the
+   html string inside it. Written inline in render(), `{ __html: aboutHtml }` is a new object on
+   every render of this component even though the string never changes — so every re-render blew
+   away and rebuilt all 86KB of this page's DOM.
+
+   That is silent and total. <main> itself survives, so nothing looks wrong; but every child node is
+   replaced, and the sixteen modules below hold references to the old ones. Nothing is torn down and
+   nothing is rebuilt: measured after one theme toggle, all 76 ScrollTriggers were still registered
+   against detached elements, every -live contract attribute was gone, and the document was 8152px
+   shorter because the three pins' spacers had vanished with them. The page still reads; not one
+   scroll effect on it will ever fire again until a reload.
+
+   The theme switch in DocHead is the re-render a reader will actually hit — it is two clicks from
+   the top of this page. One stable object is the whole fix. */
+const ABOUT_HTML = { __html: aboutHtml };
+
 export default class AboutPage extends React.Component {
   rootRef = React.createRef();
 
@@ -191,7 +210,7 @@ export default class AboutPage extends React.Component {
             nothing to jump to and the masthead sat outside any landmark. It is also what makes a skip
             link unnecessary here: one 64px bar with two controls is not the repeated navigation that
             rule exists for, and landmark navigation already gets past it. */}
-        <main ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={{ __html: aboutHtml }} />
+        <main ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={ABOUT_HTML} />
       </>
     );
   }

@@ -386,6 +386,16 @@
    onto the plot at rest. A real <button>, so the whole plot is reachable by keyboard and every dot
    announces its own measurement; the readout is decoration on top of an accessible name. */
 .about-spectrum__dot{border:none;padding:0;cursor:help;-webkit-appearance:none;appearance:none}
+/* THE TARGET IS NOT THE MARK. aboutSpectrum.js sizes each dot from its chroma against the field's
+   own width, so on a phone the least chromatic swatch is drawn at 12px — which is the right SIZE
+   for a mark carrying almost no chroma and no size at all for a control. This is the one place on
+   the page where a thing you tap is scaled by data rather than by the hand reaching for it, so the
+   hit area is stated separately and never falls under 32px. Transparent and centred, so it changes
+   what the button catches and nothing about what the figure draws. */
+.about-spectrum__dot::after{
+  content:'';position:absolute;left:50%;top:50%;
+  width:max(100%,32px);height:max(100%,32px);transform:translate(-50%,-50%);
+}
 .about-spectrum__read{
   position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%, 4px);
   opacity:0;pointer-events:none;
@@ -415,6 +425,13 @@
    three-line tooltip is a perfectly ordinary tooltip. */
 @media screen and (max-width:620px){
   .about-spectrum__read{white-space:normal;max-width:118px;line-height:1.45;text-align:center}
+  /* THE FIELD GETS ITS HEIGHT BACK. 16/7 is a landscape figure and it is the right shape beside a
+     column of copy; at 327px it is a 143px letterbox, and once `pad` is taken off both ends the
+     lightness axis — the palette's widest true range, 0.366 to 0.945 — had 108px to say it in.
+     4/3 gives that axis 203px, which is what separates five dots whose hues are 66° apart into five
+     dots. The hue axis is unchanged: it is the band underneath, and the band is the full circle at
+     every width. */
+  .about-spectrum__field{aspect-ratio:4/3}
 }
 @media (prefers-reduced-motion:reduce){ .about-spectrum__read{transition:none} }
 
@@ -1123,6 +1140,36 @@
   padding:clamp(24px,4vw,72px) var(--page-gutter);
 }
 [data-stack-live] .about-stack__card{position:absolute;inset:0;min-height:0}
+/* [ATMOS] SPACE-BETWEEN IS AN INSTRUCTION ABOUT A LANDSCAPE CARD, and the pinned card is not one
+   on a phone.
+
+   The note further down this file records measuring the card at 375x812 and finding its content
+   "ends 517px ABOVE the card's floor", then concluding space-between already handles it. It does
+   not: space-between does not remove that slack, it DISTRIBUTES it — all of it into one gap, in the
+   middle, where nothing is. Measured live at 375x812 with the pin built: a 34px header, a 252–276px
+   payload, and 382px, 454px and 478px of flat colour between them on the three cards. Between 47 and
+   59 per cent of a full-screen panel is a hole, and on a card whose whole job is to BE a palette,
+   the hole is what the reader is looking at.
+
+   Centred with a stated gap instead, and the gap is the whole of the fix. The card cannot get any
+   shorter — it is inset:0 of a 100vh slide and has to stay full-bleed, because the handoff works by
+   the incoming card covering the receding one and any inset would show page ground through the seam
+   (aboutStack.js records measuring exactly that failure). So the slack cannot be removed; it can
+   only be put somewhere. Between two elements it is a hole. Around a composition it is margin.
+   Measured after: no gap inside the card over 57px, and ~220px of the card's own palette above and
+   below a block that now reads as one thing.
+
+   Splitting it — header pinned top, payload centred under it — was tried first and halved the hole
+   rather than closing it: 250px still stood between the numeral and the title, which is the gap the
+   complaint was about. The numeral leads the title on this card either way; it does not have to be
+   against the ceiling to do that.
+
+   Gated on the ASPECT rather than a width, which is the source's own gate for the rules it changes
+   inside this card: the fault is a card taller than it is wide, and a narrow desktop window has it
+   just as much as a phone does. */
+@media (max-aspect-ratio:1/1){
+  [data-stack-live] .about-stack__card{justify-content:center;gap:clamp(32px,7vh,72px)}
+}
 .about-stack__top{display:flex;justify-content:space-between;align-items:flex-start}
 /* Each card carries a different palette, so each card has to say WHICH. Set in the page's label
    voice, in the card's TEXT colour rather than its mark colour: the mark is sized for the numeral,
@@ -1393,7 +1440,26 @@
      tick marks, the contrast matrix's use labels, the interval hexes and their delta stacks. All nine
      rules that reach for this token are figure annotations, so the token moves rather than the rules,
      and it moves to the step above it rather than to a number invented here. */
-  .about-route{--band-gap:clamp(56px,9vh,96px);--block-gap:clamp(30px,5vh,50px)}
+  /* AND BOTH COME DOWN AGAIN, for the reason the ratio note above already contains: these are
+     fractions of the VIEWPORT HEIGHT, and a phone's viewport is as tall as a laptop's while holding
+     a fifth of the content across. 9vh was 73px at 812, so every one of the sixteen boundaries on
+     this page cost 146px — 18% of the screen, between blocks that are themselves only a paragraph
+     wide. Measured over the whole route, 2336px of the 28874 was section gap.
+     7vh and 4vh are 57px and 32px, which is 114px a boundary, and they hold the ratio at 1.75 —
+     inside the same "a shade under 2×" band the note above is protecting. */
+  .about-route{--band-gap:clamp(48px,7vh,80px);--block-gap:clamp(26px,4vh,44px)}
+  /* THE DOUBLE BAND IS A WIDE-SCREEN INSTRUMENT, and it does not transfer.
+
+     .about-stack and the two --gallery/--belief sections take 2× --band-gap to isolate a full-bleed
+     pinned sequence from the reading either side of it — which is right when a pinned section is a
+     band across a page you can see the rest of. On a phone it is the entire screen: the isolation
+     the doubling buys is already total, and all the second band adds is more of the same nothing.
+     Measured before this rule, four boundaries came to 219px against an 812px viewport — 27% of the
+     screen blank, and visibly more than the 146px every other boundary on the page was spending,
+     so the page's own rhythm broke exactly where it was trying hardest. One band here, like
+     everywhere else. */
+  .about-stack{padding-block:var(--band-gap)}
+  .about-sec--gallery,.about-sec--belief{padding-top:var(--band-gap)}
   .about-col,.about-hero__inner,.about-hero__ref{grid-column:1 / -1}
   /* The split collapses with the columns. Two edges need width between them to read as two edges;
      inside 327px there is none, so the heading and the body share one column and stack in order.
@@ -1417,6 +1483,32 @@
      small box's width, which is the line above. */
   .about-roles{grid-template-columns:repeat(2, minmax(0, 1fr))}
   .about-split{aspect-ratio:4/5}
+  /* THE TWO LAYERS HAVE TO BE THE SAME BOX, and below this width they had stopped being one.
+
+     A clip-based comparison only reads if the seam cuts one card in two. Both .splitter-content
+     layers are inset:0 and identical — but the CARD inside each is sized by its own text, and the
+     two sentences differ by the word "Not". At 327px that word is a fourth line: measured, the
+     before card came out top 160 / height 269 and the after card top 176 / height 238. Centred in
+     their panes, the two then sat 16px apart with 31px between their heights, so the seam had the
+     before card's title on one side and the middle of the after card's body on the other, printed
+     over each other. Two cards, not one card on two grounds.
+
+     Top-aligned and stretched, the geometry is identical whatever the line counts do: the bar takes
+     its own height on both sides, the card takes everything left on both sides, and the title and
+     the body's first line start at the same y. The extra line the failing side carries is then the
+     only difference across the cut — which is the comparison the figure exists to make. No line
+     count is assumed anywhere, so this cannot drift back at some width nobody measured. */
+  .about-split .about-ui{justify-content:flex-start}
+  .about-split .about-ui__card{flex:1 1 auto;display:flex;flex-direction:column}
+  /* And the SPECIMEN absorbs the difference, so the readouts under it do not.
+     The one thing that legitimately differs between the two layers is the sentence — "Not suitable
+     for body text" against "Suitable for body text" — which is a line longer on the failing side.
+     Left to sit at its natural height that line pushed the whole action row down with it, so LIGHT-
+     NESS 0.496 and CHROMA 0.098 straddled the seam 31px apart and the reader compared two numbers
+     that were not on the same line. Growing the body instead parks the readouts on the card's floor
+     on both sides: title, first line and readouts all align, and the extra line lands in the slack
+     where it costs nothing. */
+  .about-split .about-ui__body{flex:1 1 auto}
   .about-checks li{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
   .about-checks__verdict{grid-column:2}
   .about-route .about-ui__actions{flex-wrap:wrap}
@@ -1475,6 +1567,11 @@
      body copy is set to, and the reader would be looking at a box two-thirds empty. `min()` keeps it
      honest on narrow screens, where the column is the smaller of the two. */
   --content-item-expanded:min(100%, 30rem);
+  /* The collapsed width's floor, read by the same file at the same moment. Empty here on purpose:
+     beside the photograph the pills are a column seven tracks wide and the widest label is the right
+     width for all six — sized by their own content, which is what [ATMOS 7] argues for. The rule at
+     the foot of this component fills it in for the one layout where that stops being true. */
+  --content-item-collapsed:;
   display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));column-gap:var(--grid-gutter);
   align-items:start;row-gap:var(--grid-gutter)
 }
@@ -1614,6 +1711,20 @@
 @media (max-width:900px){
   .pills__list-wrap{grid-column:1 / -1}
   .pills__visual{grid-column:1 / -1;aspect-ratio:16 / 10}
+  /* AND ONCE THE LIST IS THE WHOLE COLUMN, A PILL IS A ROW.
+
+     [ATMOS 7] sizes all six to the widest label so the set has an edge instead of a stagger, which
+     is right while the column is seven tracks of twelve and the photograph holds the rest. Here the
+     photograph has moved below and the list owns the full width — so the widest label decides the
+     width of a column it no longer shares. Measured at 375px: six 123px controls in a 327px column,
+     204px of empty gutter down the right of all of them, and a plus mark stranded two-thirds of the
+     way from the edge it is supposed to sit against.
+
+     Full width also makes the disclosure honest: --content-item-expanded already resolves to 100%
+     at this width, so opening now changes only the HEIGHT. The box grows downward the way every
+     other disclosure on this site does, instead of shooting sideways to fill space that was always
+     there. */
+  .pills{--content-item-collapsed:100%}
 }
 
 /* The three transitions this component still owns are the ones the contract does not cover: the

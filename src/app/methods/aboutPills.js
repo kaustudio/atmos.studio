@@ -200,11 +200,42 @@ export function initFeaturePills(root, motion) {
 
        All six are cleared before any is measured: a pill measured while its neighbours still carry
        last pass's uniform width would be measuring the answer rather than the question. */
+    /* [ATMOS 14] AND A FLOOR UNDER THAT WIDTH, declared in CSS beside the expanded one.
+
+       The widest label is the right width for the set while the list shares its row with the
+       photograph. Under 900px the photograph moves below and the list takes the full column, and
+       then the widest label is deciding the width of a column it no longer shares: measured at
+       375px, six 123px controls in 327px, with 204px of dead gutter beside every one of them.
+
+       Which layout is in force is a CSS question, so CSS answers it. --content-item-collapsed is the
+       same contract as --content-item-expanded — read off the wrap at the same moment, resolved by
+       the browser rather than by a breakpoint restated here — and it is empty at every width where
+       the measured width is the right one, so the rule above is untouched wherever it was correct.
+
+       Resolved against a real pill rather than parsed: the value is a CSS length like any other and
+       may be a percentage, a min(), or anything else the stylesheet reaches for. Written with the
+       transition suppressed for the reason [ATMOS 11] records — a width written while the box is
+       travelling reads back as the width it is travelling FROM. */
+    const resolveCollapsedFloor = () => {
+      const decl = getComputedStyle(wrap).getPropertyValue('--content-item-collapsed').trim();
+      if (!decl) return 0;
+      const probe = items[0];
+      const prevT = probe.style.transition, prevW = probe.style.width;
+      probe.style.transition = 'none';
+      probe.style.width = decl;
+      void probe.offsetWidth;
+      const px = Math.ceil(probe.getBoundingClientRect().width);
+      probe.style.width = prevW || '';
+      void probe.offsetWidth;
+      probe.style.transition = prevT || '';
+      return isFinite(px) && px > 0 ? px : 0;
+    };
+
     const captureCollapsedWidths = () => {
       const prev = items.map((item) => item.style.width);
       items.forEach((item) => { item.style.width = ''; });
       const natural = items.map((item) => Math.ceil(item.getBoundingClientRect().width));
-      const uniform = Math.max.apply(null, natural);
+      const uniform = Math.max(Math.max.apply(null, natural), resolveCollapsedFloor());
       items.forEach((item, i) => {
         collapsedWidthPx.set(item, uniform);
         // The open pill keeps the width it is holding; the rest take the shared one.

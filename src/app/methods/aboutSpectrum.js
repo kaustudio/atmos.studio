@@ -55,8 +55,32 @@ export function initSpectrum(root) {
   // Chroma → diameter. Scaled against the plot's own widest swatch rather than an absolute maximum,
   // so a low-chroma palette still reads as having a range instead of collapsing to five identical
   // specks. MIN is what keeps the near-grey visible at all: it is a colour, not an absence.
-  const MIN = 26, MAX = 86;
   const maxC = Math.max.apply(null, points.map((p) => p.C)) || 1;
+
+  /* THE MARK IS A SHARE OF THE FIELD, and 26 and 86 were a share of one particular field.
+
+     Those two numbers are right at the width they were chosen on — 2.11% and 6.99% of the 1230px
+     plot a desktop draws. Held as absolutes they do not survive the phone: at 375px the field is
+     327px, so the same marks become 8% and 26% of it, and `pad` — which is half the largest mark —
+     ate 98px of the 327, leaving 229px of usable axis.
+
+     What that did to the reading is the point. The axis is the whole hue circle and this palette
+     occupies 66° of it, which is the figure's own argument; across 229px that is 42px of spread,
+     carrying five dots up to 86px wide. Measured: the five sat between x=68 and x=110 as a single
+     blob, and the rightmost mark's edge reached x=132 of 327 — 60% of the plot permanently empty.
+     The marks were larger than the data they were plotting.
+
+     Read off the field instead, the desktop numbers come out unchanged to the pixel and a 327px
+     plot draws 12–30px marks in 285px of usable axis: the same 66° now spans 52px, and five circles
+     with 118px of lightness between them read as five. The cluster is still a cluster — the palette
+     really is that narrow in hue, and flattering it by rescaling the axis would be the one lie this
+     figure cannot tell. MAX floors at 30 and MIN at 12 so the smallest swatch stays a colour rather
+     than a speck; .about-spectrum__dot carries the tap target separately, since a 12px button is
+     under any thumb. */
+  const marks = (width) => {
+    const max = Math.max(30, Math.round(width * 0.0699));
+    return { MIN: Math.max(12, Math.round(max * 0.302)), MAX: max };
+  };
 
   let tl = null;
 
@@ -66,6 +90,7 @@ export function initSpectrum(root) {
     const box = field.getBoundingClientRect();
     if (!box.width || !box.height) return;
 
+    const { MIN, MAX } = marks(box.width);
     // Inset so a dot at hue 0 or lightness 1 is drawn inside the field rather than half outside it.
     const pad = MAX / 2 + 6;
     const w = Math.max(box.width - pad * 2, 1);
