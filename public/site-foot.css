@@ -131,10 +131,52 @@
    the rest of this stylesheet changes with width. */
 @media screen and (max-width:700px){
   .site-foot__brand{padding:24px 0 12px}
+  /* STRETCH, not start. The three blocks still READ left — nothing here centres text — but each one
+     now spans the column rather than shrinking to its own longest word, which is what lets the rules
+     below run the full width of the footer instead of stopping wherever "About" happens to end.
+     row-gap goes to 0 because the space either side of a rule is now that rule's own padding: a grid
+     gap plus a border would put 12px above the line and 12px+12px below it. */
   .site-foot__meta{
     grid-template-columns:minmax(0,1fr);
-    justify-items:start;row-gap:12px;
+    justify-items:stretch;row-gap:0;
     padding:24px 0 24px;
   }
-  .site-foot__nav{justify-content:flex-start;flex-wrap:wrap}
-  .site-foot__rights{justify-self:start}
+  /* A COLUMN, not a wrapping row. flex-wrap answered the crushing but not the shape: three labels of
+     very different lengths — About, Privacy Policy, Terms and Conditions — wrap wherever the width
+     happens to run out, so at 375px the row broke after the second and the footer ended on a ragged
+     two-then-one arrangement that reads as a line that ran out of room rather than as a list of three
+     places to go. Stacked, they are a list, they share one left edge with the origin line and the
+     rights line above and below them, and the arrangement no longer depends on how long a label is.
+
+     row-gap is 10 rather than the row's 16: the extenders on these links reach 6px above and below
+     each 12px line ([ATMOS] on .site-foot__meta a), so 16px of gap between stacked items would put
+     28px between two adjacent 24px targets and open the list out into something much taller than the
+     two single lines it sits between. At 10 the targets sit flush without overlapping. */
+  .site-foot__nav{flex-direction:column;align-items:flex-start;justify-content:flex-start;row-gap:10px}
+  /* THE THREE BLOCKS BECOME THREE BANDS. Stacked, the origin line, the three links and the rights
+     line were one undifferentiated run of 12px type — three separate statements reading as one
+     paragraph that happened to break oddly. A rule between them is the same hairline the footer
+     already draws above the wordmark and above this row, so the mobile footer is four bands down one
+     line rather than two bands and a list: it states the structure the desktop row states with
+     columns.
+
+     --line-strong, and drawn as a border-top on the block BELOW each boundary rather than a
+     border-bottom on the one above: that way the rule belongs to the thing it introduces, and a block
+     that is ever removed takes its own rule with it instead of leaving a line under nothing.
+
+     14px above and below each rule, against the 10px between the stacked links. The rule has to
+     separate more strongly than the items it separates, or the list reads as four items rather than
+     three under a heading.
+
+     BOTH SELECTORS ARE SCOPED, and that is specificity rather than tidiness. `.site-foot__meta p`
+     zeroes the margin on every paragraph in this row at (0,1,1), and .site-foot__rights IS a
+     paragraph — so at (0,1,0) this rule won the border and lost the margin, and the lower rule came
+     out drawn flush across the bottom of "Terms and Conditions" while the upper one, on a <nav> that
+     the p rule cannot reach, sat correctly 14px clear. One boundary right and one wrong, from one
+     missing class. Naming .site-foot__meta takes both to (0,2,0). */
+  .site-foot__meta .site-foot__nav,
+  .site-foot__meta .site-foot__rights{
+    border-top:1px solid var(--line-strong);
+    margin-top:14px;padding-top:14px;
+  }
+  .site-foot__rights{justify-self:stretch}

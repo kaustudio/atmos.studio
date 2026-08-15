@@ -439,6 +439,35 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-quiet-press:color-mix(in srgb,var(--on-surface) 24%,transparent);
   color-scheme:light;
 }
+
+/* ===== THE GRID, ON A PHONE — 4 columns, 16px margin, 16px gutter.
+
+   The twelve-column figure above is one grid at one size, and 24px of margin either side of a 375px
+   screen spends 13% of it on air before a word is set. Four columns is the count a phone layout
+   actually resolves to — everything on /about is already released to `1 / -1` or to its own
+   two-or-three-track rule by 900px, so twelve tracks below that were twelve names for one column —
+   and 16/16 is the margin and gutter that go with it.
+
+   720px, and it is the site's existing phone boundary rather than a new one: it is the width the
+   desktop gate further down this file uses to take the tool out of the document entirely. Below it
+   the only things laid out on this grid are the three documents and the footer, which is exactly the
+   set this figure is for.
+
+   NOTHING NUMERIC SURVIVES DOWN HERE, which is what makes changing the count safe. Every explicit
+   span on the route — the reading column and its headings, the two lens cells, the three axes, the
+   split figure's shot and note, the pills list and its visual, the hero's inner and its plate, and
+   both statements — is released to `1 / -1` at 900 or 820. Checked one by one; the last two to fall
+   are .about-statement at 1100 and .about-statement--over at 820. Anything added later that places
+   itself by number has to release itself by 820 as well, or it will span tracks that no longer
+   exist. */
+@media screen and (max-width:720px){
+  :root{
+    --page-gutter:16px;
+    --grid-cols:4;
+    --grid-gutter:16px;
+  }
+}
+
 :root[data-theme="dark"]{
   --img-outline:rgb(255 255 255 / .10);
   --surface:#141413;
