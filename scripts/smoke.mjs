@@ -27,7 +27,8 @@ const glCanvases = await page.$$eval('[data-orb-gl]', (els) => els.length);
 console.log('webgl orb canvases:', glCanvases);
 
 // Get started → wipe → tool
-await page.click('button[aria-label="Get started"]');
+// [data-glass-cta], not the aria-label: the label is copy and moved once already (see wipe.js).
+await page.click('button[data-glass-cta]');
 await page.waitForTimeout(1500);
 await page.screenshot({ path: shots + '/03-wipe.png' });
 await page.waitForTimeout(2500);

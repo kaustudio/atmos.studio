@@ -55,8 +55,15 @@ export const wipeMethods = {
       if (g) { const q = (s) => layer.querySelector(s); try { g.set([q('[data-wipe-panel]'), q('[data-wipe-cap-top]'), q('[data-wipe-cap-bottom]'), q('[data-wipe-word]')].filter(Boolean), { clearProps: 'transform' }); } catch (e) { } }
     }
     this._resetIntroState(() => {
-      // L1: focus follows the action — retry until the conditional render has remounted the CTA
-      let tries = 0; const grab = () => { const cta = document.querySelector('button[aria-label="Get started"]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0);
+      // L1: focus follows the action — retry until the conditional render has remounted the CTA.
+      // Found by [data-glass-cta], NOT by its aria-label. The label was the selector until the
+      // landing's action was brought onto .glass-cta and its accessible name had to start with the
+      // visible one (WCAG 2.5.3, `Get started` → `Get Started`) — at which point this querySelector
+      // silently matched nothing and the focus handoff after every return to the landing just
+      // stopped, with no error. A data attribute is a contract; a human-readable string is copy,
+      // and copy is meant to be editable without breaking behaviour. orbit.js already reads this
+      // same attribute as a geometry mark.
+      let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0);
     });
   },
   // rAF-stall recovery: if the GSAP ticker is asleep/throttled, the wipe timeline freezes and the
@@ -145,7 +152,7 @@ export const wipeMethods = {
     // arm the statement lines the moment the landing mounts behind the cover — same reason as the
     // loader: the panel must never uncover text already sitting at its final position
     const doSwap = () => { if (swapped) return; swapped = true; this._resetIntroState(() => { try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { } this._landingTextArm(g); }); };
-    const focusCta = () => { let tries = 0; const grab = () => { const cta = document.querySelector('button[aria-label="Get started"]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0); };
+    const focusCta = () => { let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0); };
     const tl = g.timeline({ paused: true, onComplete: () => { if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; } layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null; g.set([panel, capT, capB, word], { clearProps: 'transform' }); this._wipeRunning = false; this._wipeTl = null; focusCta(); } });
     this._wipeWatchdog = setTimeout(() => {
       this._wipeWatchdog = null;

@@ -85,28 +85,37 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    wrapper AppView puts on that route; .doc-route (privacy, terms) deliberately keeps the app's
    voice, since the only control on those two is the masthead's own.
 
-   The opening screen is an ADDRESS TO THE READER before any work has started — one statement and
-   one or two actions, centred, with none of the apparatus the uppercase voice sits beside in the
-   tool. Nobody has a palette yet, so there is nothing for a control to be reading out.
+   THE OPENING SCREEN IS NO LONGER EXCEPTED. It was, on the argument that it is an address to the
+   reader before any work has started rather than apparatus — which is still true of the screen and
+   was never true of the two acts sitting on it. They are controls, and on a phone they were the
+   only ones on the site speaking a different case from the buttons the same journey reaches two
+   taps later: `Try an example` and `Save for desktop`, then SEE ALL EXAMPLES and BACK TO START on
+   the surface that button opens. One journey, one voice. The screen's own words — the statement and
+   the sentence under it — are prose and are untouched by any of this; it is only the buttons that
+   changed, and they now take .glass-cta below, which states the case itself.
 
    Acronyms are unaffected either way: text-transform cannot reach into a string, so "3D", "AA" and
    "CSS" are whatever the source typed. */
 [data-ix]{text-transform:uppercase!important}
-.about-route [data-ix],
-[data-landing] [data-ix]{text-transform:none!important}
-/* button-006 is outside the [data-ix] contract — it carries its own tiers — so an exception has to
-   be restated for it. Only ONE of the two routes gets it.
+.about-route [data-ix]{text-transform:none!important}
+/* CONTENT INSIDE A CONTROL KEEPS ITS OWN CASE, and this is the cost of stating the voice on the
+   ancestor instead of on the label. text-transform inherits, so a rule that means "this control
+   speaks in caps" reaches every descendant of it — including the ones holding something the app
+   did not write. The phone's example rows are a button (data-ix="press") wrapping a palette's NAME,
+   so `Scorched Clear Morning` was being read out as SCORCHED CLEAR MORNING while the desktop
+   library — whose rows are data-feed and carry no tier — showed the same object in its own case.
+   Two cases for one name, decided by which surface you happened to be standing on.
 
-   The opening screen's actions are button-006 and stay in the reading voice with everything else on
-   that screen.
+   A name is not a label. It is the output of the reading, the one string on the row the tool
+   invented rather than shipped, and the only thing on that row that could ever have been a
+   different length or a different case. This opts it out where it sits rather than moving the name
+   out of the button, because the button IS the row — the whole 64px strip is the target, which is
+   what a thumb needs.
 
-   /about does NOT, and the difference is what the control belongs to. The exception above is for
-   the page's own controls — the dock and the closing action, which sit in the document. The theme
-   switch is not the page's; it is the masthead's, the same bar on every route, and it was the one
-   element on the site that changed voice depending on which route it happened to be drawn over.
-   Chrome that reads DARK in the tool and Dark on /about is not two decisions, it is one decision
-   applied inconsistently. */
-[data-landing] .button-006{text-transform:none}
+   !important, matching the rule it is excepting: the declaration above is !important, so nothing
+   without it can win. Anything else the app renders inside a control and did not author itself — a
+   project's name, a filename — takes this attribute for the same reason. */
+[data-ix] [data-case="own"]{text-transform:none!important}
 [data-ix]:disabled{opacity:.42;cursor:default}
 /* press — ALL chrome that responds to a press: bordered or not. Was two tiers, "solid" and
    "press", with identical hover (16%) and active (24% + 1px) — the only difference was that solid
@@ -242,6 +251,13 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --fs-statement:2rem;        /* 32 — landing statement, the name on a phone */
   --fs-title:1.5rem;          /* 24 — section headings: Library, empty states */
   --fs-subtitle:1.25rem;      /* 20 — dialog and panel titles */
+  /* 14 — the call to action on the screens that are not the tool, and the ONE step that is here
+     because three controls were already setting it by hand rather than because the ladder needed
+     another rung. `.doc-route .about-cta`, `.nf-cta` and the landing's Get Started all wrote a
+     literal 14px; that is the definition of a decision nobody could repeat, which is exactly what
+     the note above says a scale is for. It is named for the job, so the CTA family moves together
+     and the neighbours on either side keep their own jobs — 15 is a paragraph lead, 13 is body. */
+  --fs-cta:0.875rem;          /* 14 — the glass call to action (gate, example page, landing, /about) */
   --fs-lead:0.9375rem;        /* 15 — lead paragraphs, the "Best for" line */
   --fs-body:0.8125rem;        /* 13 — body copy and the reading */
   --fs-detail:0.75rem;        /* 12 — menu items, notes, secondary copy */
@@ -526,6 +542,167 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 @keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
 @keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){ [data-logo],[data-wipe-word]{animation:none!important} }
+/* ===== .glass-cta — THE ACTION ON A SCREEN THAT IS NOT THE TOOL ================================
+
+   ONE CONTROL, STATED ONCE. This figure already existed three times, hand-copied: `glassCta` in
+   renderVals.js (the landing's Get Started), `.nf-cta` in notfound.css (the 404's one action) and
+   `.doc-route .about-cta` (the closing action on /about). Same geometry, same glass, three different
+   edge progressions — 15 → 38 → 48 on the 404, 50 → 62 → 72 on the landing, 36 → 62 → 82 on /about —
+   because each was copied from whichever was in front of the author that day.
+
+   THE EDGE TAKES --action-line, WHICH IS THE ONLY ONE OF THE FOUR FIGURES WITH NUMBERS BEHIND IT.
+   WCAG 1.4.11 asks 3:1 of a control's visual boundary. /about's comment claims its 36% clears that;
+   measured on the rendered pair it does not — 36% of the ink over the light surface is 2.2:1, and it
+   only passes in dark (3.16:1), which is how a figure checked in one theme survives review. The 404's
+   15% is 1.51:1 in both. The token three lines up from here is the one that was actually measured on
+   both surfaces in both themes — 3.25 / 3.31 light, 4.91 / 4.71 dark — so this control takes it
+   rather than a fourth private mix, and re-tuning it re-tunes every control at once. /about and the
+   404 are left as they are: both are outside the front page this change was scoped to, and the 404
+   cannot reach this file anyway. Their comments now say they have drifted.
+
+   THE PAIR SEPARATES ON THE FILL, NOT THE EDGE. Both tiers take the same edge progression, because a
+   boundary's job is to say "this is a control" and that sentence is the same on both of them.
+
+   NO data-ix, DELIBERATELY. The tiers at the top of this file own the interaction contract for
+   controls that do not declare one, and this control declares its own transition and its own three
+   states. A control cannot do both: an element carrying data-ix and its own `transition` replaces
+   the contract's property list with the shorter one, and every property the short list omits then
+   changes between two frames. Same reason .about-cta gave up data-ix="cta".
+
+   GLASS IS FILL-DEFINED, so emphasis is too. [data-emph="primary"] exists for where two of these
+   share a surface and cannot be the same object twice — the app's filled primary tier (the ink as
+   the surface, the surface as the label) is the TOOL's voice, and the whole argument for this
+   control is that these screens are not the tool. So it separates on the one property glass actually
+   has: the fill. Over the light surface that is 201 against 230, a step visible in greyscale, at any
+   zoom, without reading the labels — which is what the two-tier note further up this file asks
+   emphasis to survive. Ink stays --on-surface either way: 10.52:1 filled, 13.89:1 quiet.
+
+   ONLY THE GATE'S ACT CARRIES IT TODAY, and it is now alone on that screen. Worth knowing if it is
+   ever revisited: /about and the 404 present their single action on the QUIET fill, so the gate is
+   the one lone action on the site standing at 20%. That is deliberate for now — it is the act the
+   whole screen exists to offer — but the argument the tier was written for is a pair, and there
+   isn't one here any more.
+
+   HOVER IS GATED on (hover:hover), like every [data-ix] tier: a tap on a touchscreen latches :hover
+   until something else is tapped, and this control's busiest instance lives on the one surface that
+   is only ever reached by touch. Touch falls through to :active, which is the state a tap has.
+
+   NO PRESS GEOMETRY. The tint is the whole feedback, per the contract at the top of this file. */
+.glass-cta{
+  display:inline-flex;align-items:center;justify-content:center;
+  /* THE PADDING IS THE BOX. This carried `min-height:36px;padding:0 16px` — the height set by a
+     floor and the label floated in the middle of it, which is why the phone surfaces each had to
+     restate a taller floor of their own to get a thumb-sized control. 12/16 states the control as a
+     label with air around it, so one declaration decides the size everywhere and the three overrides
+     that used to sit below this rule are gone. Height falls out at 40px: 14px of label on
+     line-height:1, 24 of padding, 2 of edge. */
+  padding:12px 16px;
+  background:color-mix(in srgb,var(--on-surface) 7%,transparent);
+  /* -WEBKIT FIRST, STANDARD LAST, and the order is load-bearing rather than stylistic. Written
+     the other way round the minifier treats the later -webkit- as the winner and drops the
+     unprefixed property from the bundle entirely: `npx vite build` on 18.08.26 emitted three
+     -webkit-backdrop-filter and only ONE backdrop-filter, the one .glass-effect declares in
+     this order down at the bottom of this file. Chrome keeps the -webkit- alias so it never
+     showed; Firefox implements only the standard property, so both of these controls shipped
+     with no blur at all there — glass with nothing behind it, which is a flat tint. Verified
+     by grepping dist/assets/global-*.css, not by reading the source. */
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border:1px solid var(--action-line);
+  border-radius:0;
+  color:var(--on-surface);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  /* 14 at Medium, which is the figure the other two members of this family were already setting by
+     hand — the scale now names it rather than each control repeating it. Medium is 500, and 500 is
+     the weight the second of the two loaded faces actually is: NeueMontreal-Medium.woff2. Asking for
+     anything between 400 and 500 would have the browser synthesise it off the Regular face. */
+  font-size:var(--fs-cta);font-weight:500;line-height:1;
+  /* CAPITALIZED, not uppercase — and the case is written into the LABELS, with no transform doing
+     it. This is the one place in the system where that is the right way round.
+
+     text-transform:capitalize was the obvious move and it is wrong here, on this codebase's own
+     evidence: it capitalises EVERY word, so the authored labels reach the screen as `Try An Example`
+     and `Save For Desktop`. That exact fault has been fixed here once already — the transform came
+     off the dropzone's link in ff42660 because it had been rendering `Every project and Unfiled` as
+     `Every Project And Unfiled` in the library menu. Title case is a rule about which words are
+     principal, and CSS cannot know which those are. So the sources carry it and this declares none.
+
+     Everywhere else the [data-ix] rule is right to own the case, because there the case is a VOICE
+     applied to a whole tier and any label dropped into it should speak it. Here it is six specific
+     phrases on one journey, and getting `an`, `for`, `to` and `All` right is editing, not styling.
+
+     --track-title, the figure the rest of this family carries. The flat tracking this had was there
+     to stop caps crowding, and there are no caps left to crowd. */
+  letter-spacing:var(--track-title);text-transform:none;
+  white-space:nowrap;text-decoration:none;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover);
+}
+.glass-cta[data-emph="primary"]{
+  background:color-mix(in srgb,var(--on-surface) 20%,transparent);
+}
+@media (hover:hover){
+  .glass-cta:hover:not(:disabled){
+    background:color-mix(in srgb,var(--on-surface) 12%,transparent);
+    border-color:var(--action-line-hover);
+  }
+  .glass-cta[data-emph="primary"]:hover:not(:disabled){
+    background:color-mix(in srgb,var(--on-surface) 26%,transparent);
+  }
+}
+.glass-cta:active:not(:disabled){
+  background:color-mix(in srgb,var(--on-surface) 18%,transparent);
+  border-color:var(--action-line-press);
+}
+.glass-cta[data-emph="primary"]:active:not(:disabled){
+  background:color-mix(in srgb,var(--on-surface) 32%,transparent);
+}
+@media (prefers-reduced-motion:reduce){ .glass-cta{transition:none} }
+/* 36px is the figure /about and /404 present their one action at, and it is a POINTER figure — both
+   of those are read on a desktop as often as not. The gate is the one surface on this site that is
+   only ever reached by a thumb, and 36 is under the 44 touch wants (WCAG 2.5.8 asks 24, which both
+   clear; 44 is the comfortable target, not the legal one). The pair stands 46 there, which is what
+   it already stood before it became glass — the height was never the thing that was wrong with it. */
+/* THE PHONE'S HEIGHT OVERRIDE IS GONE — these three surfaces used to raise the control to 46px
+   because the base was a 36px floor built for a pointer. The 12px padding above sizes it at 40 on
+   every surface, so there is nothing left to override.
+
+   STATE THE TRADE RATHER THAN BURY IT: 40 is 6px shorter than these stood, and it is under the 44
+   that touch wants. It clears WCAG 2.5.8's 24px AA target with room, and it is taller than the 36
+   that /about and the 404 present their action at — but this is the one journey on the site reached
+   only by thumb, so it is the one place the difference between 40 and 44 is felt. Raising it is one
+   declaration if it reads short in the hand. */
+/* A PAIR SHARES THE ROW; A LONE ACT IS SIZED BY ITS LABEL. One rule for both, and :not(:only-child)
+   is what states the difference rather than each surface deciding for itself.
+
+   Two controls sharing a row have a gutter to reach and a proportion to hold between them, so they
+   grow — `flex:1 1 auto` grows each from its OWN width rather than from a shared basis, which lands
+   the outer edges on the 16px margin while the labels still decide which of the two is wider. A
+   shared basis would give two identical blocks, and two identical blocks is an emphasis claim on
+   both at once.
+
+   One control has no sibling to be measured against and no proportion to hold, so growing just makes
+   it a 343px slab under copy it is meant to sit beneath. It takes its label plus .glass-cta's 16px
+   either side, centred.
+
+   Written as a selector rather than as a flag on each row because the count is a FACT about the
+   markup, not a decision to be repeated: the palette view's foot holds two acts, or one when you
+   reached it from the list and `See All Examples` would send you where you just were. The same row
+   is both, and neither branch has to remember to say which. */
+/* CENTRED, on all three of them. The gate's act was centred inline while the two feet below started
+   at the margin, so the same control sat in a different place depending on which screen of one
+   journey you were on — and on the palette view it sat left under a name, a chip row and a sentence
+   that are all set from the same left edge, which reads as a fourth line of the block rather than as
+   the way on. Stated here rather than inline three times: it is one decision about what an action
+   row on a phone looks like.
+
+   Harmless if a second act ever returns — a pair takes flex:1 1 auto below and fills the row, so
+   there is nothing left for justify-content to distribute. */
+[data-gate-actions],
+[data-cta-row]{justify-content:center}
+[data-gate-actions] .glass-cta:not(:only-child),
+[data-cta-row] .glass-cta:not(:only-child){flex:1 1 auto}
+
 /* ===== button-006 (masked text-swap CTA), remapped to system tokens ===== */
 .button-006{
   --button-006-border-radius:0;
@@ -551,11 +728,20 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
      uppercase label voice, prose stays in sentence case. Sources are written in natural case and
      this transform does the styling, so the policy can flip again without rewriting a string —
-     which is exactly what the two exceptions below do, and why they cost one selector each rather
-     than a pass over every label. See the [data-ix] block near the top of this file for the same
-     rule stated for every other control, and for the argument the two routes are excepted on. */
+     which is exactly what the /about exception does, and why it costs one selector rather than a
+     pass over every label. See the [data-ix] block near the top of this file for the same rule
+     stated for every other control, and for the argument that route is excepted on. The opening
+     screen's exception is gone: its actions are .glass-cta now and speak in caps with the rest. */
   font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  /* -WEBKIT FIRST, STANDARD LAST, and the order is load-bearing rather than stylistic. Written
+     the other way round the minifier treats the later -webkit- as the winner and drops the
+     unprefixed property from the bundle entirely: `npx vite build` on 18.08.26 emitted three
+     -webkit-backdrop-filter and only ONE backdrop-filter, the one .glass-effect declares in
+     this order down at the bottom of this file. Chrome keeps the -webkit- alias so it never
+     showed; Firefox implements only the standard property, so both of these controls shipped
+     with no blur at all there — glass with nothing behind it, which is a flat tint. Verified
+     by grepping dist/assets/global-*.css, not by reading the source. */
+  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
 }
 /* NO PRESS GEOMETRY, here or anywhere (08.26). This carried scale:0.955 0.925 on :active — a

@@ -224,12 +224,16 @@ body{display:flex;flex-direction:column}
    there is no leading left over to stand in for it. */
 .nf-actions{margin:24px 0 0}
 
-/* The landing's Get Started button, restated. Not an approximation of it: every figure below is
-   copied from `glassCta` in src/app/renderVals.js — 36px tall, 0/16px padding, Neue Montreal 500 at
-   14px on --track-title, squared, and a *glass* fill rather than an inverted one (7% of the ink over
-   whatever is behind it, with the 18px backdrop blur), edged at 15%. Hover and press ride the
-   system's 16% → 24% tint spectrum with the edge going 38% → 48%, which is the same progression
-   button-006 and every [data-ix] control use.
+/* The landing's Get Started button, restated. It was copied from `glassCta` in renderVals.js, which
+   no longer exists: the three hand-copied versions of this control (here, the landing, and /about's
+   closing action) are `.glass-cta` in src/styles/global.css now. THIS FILE IS THE ONE THAT CANNOT
+   SHARE IT — 404.html is a standalone document that never loads global.css — so the copy below stays,
+   and it is now the only one. Two figures below have DRIFTED from the shared rule and are wrong here:
+   the edge is 15% at rest where the shared control uses 36% (WCAG 1.4.11 asks 3:1 of a control's
+   boundary and 15% measures 1.51:1 — this button is invisible as a control until you point at it),
+   and the label is 14px sentence case on --track-title where the shared one is --fs-body uppercase on
+   --track-flat. Fixing them here is a change to the 404's appearance, so it is left for whoever owns
+   that page; this note is the record that it is a divergence rather than a decision.
 
    The two easing curves are global.css's --ease-button-hover and --ease-standard, written out because
    this page doesn't load that file. If they are ever retuned there, they are wrong here.

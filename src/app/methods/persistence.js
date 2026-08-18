@@ -684,6 +684,35 @@ export const persistenceMethods = {
       });
     });
   },
+  /* THE MARK GOES HOME, from either phone surface, in one step.
+
+     NOT showIntroAgain(), which is what the mark calls in the tool. That routine is written for a
+     landing that is NOT on screen — it kills the orb field and re-inits it on the next tick, because
+     on a desktop the landing was unmounted and has to be rebuilt. On a phone the landing is always
+     mounted, sitting `covered` under these two surfaces precisely so the formation is never torn
+     down and rebuilt with a visible hole in it while its textures upload. Calling the desktop
+     routine here would reintroduce exactly the fault that design exists to prevent.
+
+     NOT closeExampleOnPhone() either, which goes UP one level and is right for a control that says
+     "back". The mark is not a back button; it is the way home from anywhere, so it clears both
+     flags and lands on the gate whichever surface it was pressed from.
+
+     The exit still plays. Every trip between these surfaces pairs an exit with an entrance, and a
+     surface that is deleted rather than left is the jump this file has already fixed twice — so
+     whichever one is on top leaves the way it would have left anyway. `current` is deliberately
+     untouched: the gate's next press continues from the example you last looked at, which is the
+     cursor openExampleById is careful to keep in step. */
+  returnToGateOnPhone() {
+    if (this._shareClosing || this._listClosing) return;
+    const land = () => this.setState({ exampleView: false, exampleList: false, announce: 'Returned to the start screen.' });
+    if (this.state.exampleView) {
+      this._shareClosing = true;
+      this._shareOut(() => { this._shareClosing = false; land(); });
+    } else if (this.state.exampleList) {
+      this._listClosing = true;
+      this._listOut(() => { this._listClosing = false; land(); });
+    } else { land(); }
+  },
   /* Called from two places, and it has to mean the same thing in both: SHOW me the list. From the
      gate that is one state flip. From an open palette it is a level change, so the palette has to
      leave first — setting the flag alone armed the list UNDER a surface that stayed on top, which

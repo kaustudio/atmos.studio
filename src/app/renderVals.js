@@ -1680,11 +1680,24 @@ export const renderValsMethods = {
     if (this._mobileShare()) {
       const p = s.current;
       const totW = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
+      // Composed once. analysePalette walks every swatch and paletteMetrics walks every PAIR of
+      // them, so asking twice to fill a value and its own emptiness flag is the whole analysis run
+      // twice for one boolean.
+      const msUse = composeUse(analysePalette(p.swatches), this.paletteMetrics(p).aaState);
       mobileShare = {
         name: p.name,
         descriptors: p.descriptors || [],
         rationale: p.rationale || '',
         hasRationale: !!(p.rationale || '').trim(),
+        /* WHAT IT IS FOR, the second half of the desktop's reading. The result stage sets these two
+           lines together — the reading says what the palette IS, this says what it is good FOR — and
+           the phone was carrying only the first, so the same palette described itself one way here
+           and made a recommendation there. composeUse() is the same composer the desktop calls with
+           the same two inputs, so the two surfaces cannot drift: it is composed from the analysis
+           rather than authored, and it takes aaState so a palette with no usable text pairing is
+           never recommended for type. paletteMetrics() is the same verdict the AA badge shows. */
+        useLine: msUse,
+        hasUseLine: !!msUse.trim(),
         rows: p.swatches.map((b, i) => {
           const key = 'ms-' + i;
           const HX = b.hex.toUpperCase();
@@ -1696,7 +1709,12 @@ export const renderValsMethods = {
             onCopy: () => this.copy(HX, key, 'Copied ' + HX),
             style: {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
-              width: '100%', minHeight: '62px', padding: '0 18px', margin: 0, textAlign: 'left',
+              // var(--page-gutter), not the literal 18px this carried. Everything else on this
+              // surface — the name, the descriptor chips, the rationale, the two actions in the
+              // foot — is inset by the gutter, so the hex and its percentage were the only edge on
+              // the page standing 2px off the column every other line is read against. Two pixels
+              // is invisible as a measurement and legible as a wobble, which is the worst of both.
+              width: '100%', minHeight: '62px', padding: '0 var(--page-gutter)', margin: 0, textAlign: 'left',
               background: b.hex, color: on, border: 'none', cursor: 'pointer',
               fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
             },
@@ -1707,13 +1725,15 @@ export const renderValsMethods = {
         // Only the example can be left — a shared link has nowhere to go back TO, and a control
         // that appears for one arrival and not the other is why the two flags are separate.
         canLeave: !!s.exampleView,
-        onLeave: () => this.closeExampleOnPhone(),
         // THE PICTURE THE PALETTE CAME FROM. dispUrl resolves a seeded example's key against the
         // bundled EXAMPLE_SRC map and returns '' for anything else, so no stored or shared string
         // can ever reach this src — the same invariant the desktop reference image rides.
         image: this.dispUrl(p), hasImage: this.hasImg(p),
         onSeeAll: () => this.openExampleList(),
-        inList: !!s.exampleList,
+        // `inList` and `onLeave` are gone with the foot's second act (see the note in
+        // MobileShareView). inList existed only to relabel that button and to hide `See All
+        // Examples`; onLeave was closeExampleOnPhone(), which the masthead's own mark reaches
+        // through returnToIntro(). The list surface below still has its own ml.onLeave.
         // Nothing under an example. The line explaining that this ships with the app was telling
         // someone who had just pressed "Try an example" what they had pressed. A shared link is a
         // different arrival — that reader did not choose this surface and has no way off it, so it
@@ -1768,8 +1788,9 @@ export const renderValsMethods = {
       // archive to show, and both are meaningless on a screen wide enough to run the tool.
       gateHasExample: (s.feed || []).length > 0,
       gateExample: () => this.openExampleOnPhone(),
-      gateCopyLink: () => this.copySiteLink(),
-      gateLinkCopied: s.copied === 'gate-link',
+      // gateCopyLink / gateLinkCopied went with the `Save for Desktop` button (see the tombstone in
+      // AppView's gate). copySiteLink() and the 'gate-link' copy key are still in persistence.js.
+
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,
@@ -1784,21 +1805,12 @@ export const renderValsMethods = {
       orbitSlots: this._landingUp() ? this._ringSlots() : [],
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
-      // glass-CTA variant (landing-scoped component builder) — squared glass, token-mixed, theme-correct
-      glassCta: {
-        display: 'inline-flex', alignItems: 'center', height: '36px', padding: '0 16px', borderRadius: '0',
-        background: 'color-mix(in srgb, var(--on-surface) 7%, transparent)',
-        backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)',
-        border: '1px solid var(--action-line)',
-        color: 'var(--on-surface)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500,
-        letterSpacing: 'var(--track-title)', whiteSpace: 'nowrap', cursor: 'pointer',
-        // Same press contract as the [data-ix] tiers in global.css: tint only, no geometry.
-        transition: 'background-color var(--dur-chrome) var(--ease-button-hover), border-color var(--dur-chrome) var(--ease-button-hover)',
-      },
-      // Whole border string, not borderColor. The base sets the `border` shorthand, and React
-      // warns (and can drop the value) when a rerender mixes the shorthand with one of its parts.
-      glassCtaHover: { background: 'color-mix(in srgb, var(--on-surface) 16%, transparent)', border: '1px solid var(--action-line-hover)' },
-      glassCtaActive: { background: 'color-mix(in srgb, var(--on-surface) 24%, transparent)', border: '1px solid var(--action-line-press)' },
+      // glassCta / glassCtaHover / glassCtaActive lived here: 14 declarations and two hover-state
+      // objects describing a control that CSS can state once. They are `.glass-cta` in global.css
+      // now, shared with the gate's two acts and measured against the same figure /about's closing
+      // action uses. notfound.css's .nf-cta names this block as the thing it was copied from — it
+      // is a standalone document that never loads global.css, so it still carries its own copy;
+      // the pointer in that file now reads .glass-cta.
       // shared micro-interaction handlers (one signature across the whole UI). The m* quartet that
       // sat here went with the dead GSAP press system — see the tombstone in methods/motion.js.
       dimEnter: (e) => this.dimEnter(e), dimLeave: (e) => this.dimLeave(e),
@@ -2096,6 +2108,9 @@ export const renderValsMethods = {
       backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('archive'); },
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
+      // The phone's own way home for the brand mark — see returnToGateOnPhone in persistence.js for
+      // why the two surfaces cannot share the tool's routine.
+      returnToGate: () => this.returnToGateOnPhone(),
       // on phones the wordmark rides at the top exactly as it does on desktop, and stays decorative:
       // there is no tool behind the small-screen surface to hand a "back to the start" button to
       showLogoButton: !!s.landingDismissed && !s.narrow,
@@ -2347,7 +2362,8 @@ export const renderValsMethods = {
       assignLabel: 'Add to Project',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
-      // Same rule as glassCtaHover: swap the whole shorthand, never one of its parts.
+      // React drops a value when a rerender mixes the `border` shorthand with one of its parts,
+      // so a hover state that touches the border swaps the WHOLE shorthand, never borderColor alone.
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast

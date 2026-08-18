@@ -336,7 +336,12 @@ function MobileExampleList({ ml }) {
               </span>
             </span>
             <span style={sx('flex:1;min-width:0;display:flex;flex-direction:column;gap:4px')}>
-              <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>
+              {/* data-case="own": this row is a control (data-ix="press") and the uppercase label
+                  voice inherits into everything inside it, including this — the palette's NAME, which
+                  the reading invented and the app did not write. The desktop library shows the same
+                  string in its own case because those rows carry no tier, so the one object read two
+                  ways depending on the screen. See the [data-ix] casing block in global.css. */}
+              <span data-case="own" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.traits.join(' · ')}</span>
             </span>
             <span aria-hidden="true" style={sx('flex:none;display:inline-flex;color:var(--on-surface-muted);transform:rotate(-90deg)')}><IconChevron size={12} /></span>
@@ -345,8 +350,12 @@ function MobileExampleList({ ml }) {
         ))}
       </ul>
 
-      <div style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
-        <button type="button" data-ix="press" data-focus="chrome" onClick={ml.onLeave} aria-label="Return to the start screen" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Back to start</button>
+      {/* Same hook as the palette view's foot below, holding one act instead of two — which is the
+          whole reason the rule that sizes them is written against :not(:only-child). This button
+          was width:100% and is now sized by its label, matching the gate's lone act rather than
+          spanning a column it has no sibling to share. */}
+      <div data-cta-row="1" style={sx('flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:24px var(--page-gutter) 34px')}>
+        <button type="button" className="glass-cta" data-focus="chrome" onClick={ml.onLeave} aria-label="Back to Start: return to the start screen">Back to Start</button>
       </div>
     </div>
   );
@@ -389,8 +398,27 @@ function MobileShareView({ ms }) {
             ))}
           </div>
         )}
-        {ms.hasRationale && (
-          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:16px 0 0;text-wrap:pretty")}>{ms.rationale}</p>
+        {/* WHAT THE PALETTE IS FOR — not what it is. This slot held the reading ("Warm oranges
+            sitting at mid weight, held to a single note"), which describes the palette; it holds
+            composeUse()'s line now, which tells you what to do with it. That is the desktop result
+            stage's own direction: the reading moved out of the leading slot there for exactly this
+            reason, and the phone had been left carrying the half that was demoted.
+
+            It reads: Best for <ground>, <register> <medium>. <capability>. The last clause is the
+            honest half — a palette with no usable text pairing says so rather than being recommended
+            for type — and it comes from aaState, the same verdict the AA badge shows, so the line
+            and the badge can never disagree.
+
+            --fs-lead in full ink, up from the --fs-body muted the reading had: it is the only
+            description on this surface now, so it leads rather than annotates. The desktop sets it
+            flush right against a second column; there is no second column on a phone, and
+            right-aligned type in a 343px measure reads as a mistake, so it runs with the block.
+
+            THE READING IS NOT DELETED, only unused here — it is still on the palette object and
+            still on the desktop stage under this line. ms.rationale / ms.hasRationale are still in
+            the view model, so putting it back under this one is a paragraph. */}
+        {ms.hasUseLine && (
+          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:16px 0 0;text-wrap:pretty")}>{ms.useLine}</p>
         )}
       </div>
 
@@ -412,17 +440,21 @@ function MobileShareView({ ms }) {
         {ms.footLine && (
           <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         )}
-        {/* A way back, for the arrival that has one. Full width and 48px tall because this is the
-            one control on a surface built for a thumb. */}
+        {/* ONE WAY ON, AND IT IS NOT A WAY BACK. This held two acts — `See All Examples` and a
+            `Back to Start` / `Back to Examples` that changed label depending on how you arrived.
+            The back half is gone: the fixed Atmos mark at the top of this surface IS the way to the
+            start, it is on every phone screen, and returnToIntro() behind it already clears
+            exampleView, exampleList and current — so the foot was spending a control restating a
+            gesture the masthead offers everywhere. Two ways to do one thing is how they drift.
+
+            `See All Examples` no longer hides when you arrived FROM the list. It was hidden there on
+            the argument that it would send you where you just were — true while a Back button was
+            standing next to it, and the wrong instinct once it is the only act: going back up to the
+            list is exactly what someone at the bottom of an example wants, and it is the same
+            destination whichever way they came in. One act, one label, one destination, always. */}
         {ms.canLeave && (
-          <div style={sx('display:flex;flex-direction:column;gap:9px;margin-top:18px')}>
-            {/* Sideways before backwards: seeing another example is the likelier next move, and
-                putting it first means the way OUT is not also the only way ON. Hidden while the
-                list is already the level below, where it would send you where you just were. */}
-            {!ms.inList && (
-              <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See all example palettes" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>See all examples</button>
-            )}
-            <button type="button" data-ix="press" data-focus="chrome" onClick={ms.onLeave} aria-label={ms.inList ? 'Back to the example list' : 'Close the example and return to the start screen'} style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;-webkit-tap-highlight-color:transparent')}>{ms.inList ? 'Back to Examples' : 'Back to Start'}</button>
+          <div data-cta-row="1" style={sx('display:flex;flex-wrap:wrap;gap:12px;margin-top:18px')}>
+            <button type="button" className="glass-cta" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See All Examples: every example palette">See All Examples</button>
           </div>
         )}
       </div>
@@ -577,13 +609,33 @@ function LandingStage({ vals, covered }) {
                     arriving from a link with a sentence and no next move. Two acts that are honest
                     on a phone: see what the tool makes, or keep the address for the machine that can
                     run it. pointer-events restored — the block above it is decorative and inert. */}
-                <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-direction:column;align-items:stretch;gap:9px;width:100%;max-width:240px;align-self:center;margin-top:26px;pointer-events:auto')}>
+                {/* ONE ACT, HUGGING ITS LABEL. This was a stacked column of two 240px buttons, then
+                    a row of two that grew to span the margins; it is a single control now, sized by
+                    its own words plus .glass-cta's 16px either side. A lone action stretched across
+                    the column would be a 343px slab under two lines of centred copy — the width
+                    reading as importance the act does not have, since it is the only one on offer.
+
+                    The flex/gap/wrap declarations stay: they cost nothing with one child, and they
+                    are what makes a second act a one-line change rather than a rebuild. The element
+                    itself stays too — orbit.js measures [data-gate-actions] as one of the marks the
+                    ring formation has to clear, so it has to be here whether or not it holds two. */}
+                <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;align-self:center;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
-                    <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.gateExample} aria-label="Open an example palette, read only" style={sx('display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;background:var(--on-surface);border:1px solid var(--on-surface);color:var(--surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);cursor:pointer;-webkit-tap-highlight-color:transparent')}>Try an example</button>
+                    <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" onClick={vals.gateExample} aria-label="Try an Example: open an example palette, read only">Try an Example</button>
                   )}
-                  <button type="button" data-ix="press" data-focus="chrome" onClick={vals.gateCopyLink} aria-label="Copy the link to Atmos Gallery so you can open it on a desktop" style={sx('display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-height:46px;background:none;border:1px solid var(--action-line);color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);cursor:pointer;-webkit-tap-highlight-color:transparent')}>
-                    {vals.gateLinkCopied ? (<><IconCheck />Link copied</>) : 'Save for desktop'}
-                  </button>
+                  {/* `Save for Desktop` stood here — the quiet second act that copied the site's
+                      address to the clipboard so the reader could open it on a machine that can run
+                      the tool. Removed by request. Its handler is renderVals' gateCopyLink →
+                      copySiteLink() in methods/persistence.js, which is now uncalled; the copy key
+                      it wrote was 'gate-link'. Left in place rather than deleted, because bringing
+                      the act back is then a button rather than a feature.
+
+                      WHAT THIS COSTS, so it is a decision and not a surprise: the gate's one action
+                      is now behind `gateHasExample`, which is `feed.length > 0`. An empty feed —
+                      localStorage refused, or the seed failing — leaves the phone a statement, a
+                      sentence and no next move at all, which is the dead end the two acts were
+                      introduced to close. The examples are seeded on first run, so this is the
+                      storage-blocked case rather than the common one. */}
                 </div>
               </div>
             ) : (
@@ -593,7 +645,13 @@ function LandingStage({ vals, covered }) {
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds.</span></span>
                 </h1>
                 <div style={sx('margin-top:36px;pointer-events:auto')}>
-                  <HBtn type="button" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get started" style={vals.glassCta} styleHover={vals.glassCtaHover} styleActive={vals.glassCtaActive}>Get Started</HBtn>
+                  {/* Was an HBtn carrying glassCta/glassCtaHover/glassCtaActive — three style objects
+                      and two pieces of React state to express a hover and a press that CSS already
+                      owns for every other control on the site. It is .glass-cta now, so the front
+                      page's three actions are one object in one place. data-glass-cta stays: orbit.js
+                      reads it as a geometry mark the ring formation has to clear (see [ATMOS] there),
+                      and that has nothing to do with how the button looks. */}
+                  <button type="button" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get Started">Get Started</button>
                 </div>
               </div>
             )}
@@ -649,7 +707,11 @@ export default function AppView({ vals }) {
       <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} covered />}
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        {/* A BUTTON HERE, not the decorative mark. On the gate the mark is an image — there is
+            nowhere for it to lead — but on the two surfaces above the gate it is the way home, the
+            same job it does in the tool. It is also why the foot below carries no `Back to Start`:
+            one gesture, in the one place it sits on every screen. */}
+        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
         <Analytics />
         <SpeedInsights />
@@ -662,8 +724,9 @@ export default function AppView({ vals }) {
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} covered />}
         {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
-            gradient under a difference blend. Opening an example must not change the brand. */}
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+            gradient under a difference blend. Opening an example must not change the brand — but it
+            does change what the mark DOES: decorative on the gate, the way home from here. */}
+        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
         <Analytics />
