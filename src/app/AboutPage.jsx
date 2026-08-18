@@ -30,7 +30,7 @@
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
    all of them are torn down together. None is load-bearing for reading the page. */
 import React from 'react';
-import { DocHead } from './chrome.jsx';
+import { DocHead, docLinkHandler } from './chrome.jsx';
 import { initPageReveal } from './methods/pageReveal.js';
 import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
@@ -183,22 +183,9 @@ export default class AboutPage extends React.Component {
     if (this.props.vals.registerPageReveal) this.props.vals.registerPageReveal(null);
   }
 
-  /* The page's single action is an <a href="/"> inside injected markup, so React's own onClick never
-     reaches it — the anchor is not a React element. One delegated listener gives it the same
-     treatment every other in-document link on the site gets: a plain left-click becomes the wiped
-     swap, and a modified click, a middle-click, a new tab or a reader with no JS follows the real
-     address. The guards are renderVals.navigate's, restated because the target is resolved by
-     closest() here rather than being the listener's own currentTarget. */
-  _onClick = (e) => {
-    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
-    if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
-    let url;
-    try { url = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
-    if (url.origin !== location.origin) return;
-    e.preventDefault();
-    this.props.vals.navigateTo(url.pathname);
-  };
+  /* The page's own action — an <a href="/"> inside injected markup — routed by the listener the two
+     legal statements now share. See docLinkHandler in chrome.jsx for why it lives there. */
+  _onClick = (e) => docLinkHandler(this.props.vals)(e);
 
   render() {
     const vals = this.props.vals;
@@ -210,7 +197,11 @@ export default class AboutPage extends React.Component {
             nothing to jump to and the masthead sat outside any landmark. It is also what makes a skip
             link unnecessary here: one 64px bar with two controls is not the repeated navigation that
             rule exists for, and landmark navigation already gets past it. */}
-        <main ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={ABOUT_HTML} />
+        {/* data-holds-fixed: this <main> is an ancestor of the section dock and of the three
+            ScrollTrigger pins, all of which resolve to position:fixed. The wipe's drift must
+            therefore dim it without transforming it, or every one of them re-resolves against a
+            31,820px containing block and leaves the screen. See _routeDrifters in wipe.js. */}
+        <main data-holds-fixed="" ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={ABOUT_HTML} />
       </>
     );
   }

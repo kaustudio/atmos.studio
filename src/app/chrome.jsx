@@ -105,6 +105,40 @@ export function ThemeSwitch({ vals }) {
   );
 }
 
+/* IN-BODY LINKS, for the three routes whose copy is injected HTML.
+
+   These pages set their markup with dangerouslySetInnerHTML, so their anchors are not React elements
+   and renderVals.navigate — an onClick handler with a currentTarget contract — can never reach them.
+   One delegated listener on the route's <main> gives every one of them the treatment a link in JSX
+   already gets: a plain left-click becomes the wiped swap, and a modified click, a middle-click, a
+   new tab, a crawler or a reader with no JS follows the real address.
+
+   It lives here rather than on a page because it was written for About and the two legal statements
+   were left without it — so `Privacy` inside the terms document, and the three links back the other
+   way, full-reloaded the site: no cover, no brand beat, GSAP and both .otf faces fetched again. Two
+   navigation models depending on which document you happened to be standing in. One listener, three
+   routes, one model.
+
+   The guards are navigate()'s, restated because the anchor is resolved with closest() here rather
+   than being the listener's own currentTarget. Anything inside the page that owns its own click —
+   the section dock's in-page jumps, the legal TOC's — stops propagation, which is what the
+   defaultPrevented check and their own stopPropagation together protect. */
+export function docLinkHandler(vals) {
+  return (e) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
+    let url;
+    try { url = new URL(a.getAttribute('href'), location.href); } catch (err) { return; }
+    if (url.origin !== location.origin) return;
+    // An in-page anchor is not a route change. Left alone it would resolve to this same pathname and
+    // be swallowed by navigateTo's own no-op guard, taking the jump with it.
+    if (url.pathname === location.pathname && url.hash) return;
+    e.preventDefault();
+    vals.navigateTo(url.pathname);
+  };
+}
+
 /* THE DOCUMENT MASTHEAD — /about, /privacy, /terms.
    The mark is a link home rather than the app's fixed [data-logo] button: these routes are read by
    people who arrived from a search result as often as from the tool, and on a document that scrolls

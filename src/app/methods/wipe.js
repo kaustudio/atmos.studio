@@ -1,7 +1,7 @@
 // Curved-wipe transitions between the landing and the tool (both directions) and between the four
 // routes, with rAF-stall pumps and watchdogs so a throttled frame can never strand the covering
 // layer or lock the app.
-import { routeFor, pathFor, isDoc, applyHead } from '../routes.js';
+import { routeFor, pathFor, isDoc, applyHead, routeName } from '../routes.js';
 
 export const wipeMethods = {
   _resetIntroState(afterCb) {
@@ -132,7 +132,14 @@ export const wipeMethods = {
     const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; document.querySelectorAll('[data-app],[data-landing]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); };
     this._wipeClearGuards = clearGuards;
     try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 }); g.set(word, { yPercent: 120 });
+    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
+    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
+    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
+    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
+    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
+    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
+    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
+    g.set(word, { y: 0, yPercent: 120 });
     const parts = [document.querySelector('header'), document.querySelector('main')].filter(Boolean);
     let swapped = false;
     // arm the statement lines the moment the landing mounts behind the cover — same reason as the
@@ -200,7 +207,14 @@ export const wipeMethods = {
     this._wipeClearGuards = clearGuards;
     // L1: park focus on the transition layer so it isn't stranded on an unmounting control
     try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 }); g.set(word, { yPercent: 120 });
+    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
+    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
+    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
+    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
+    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
+    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
+    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
+    g.set(word, { y: 0, yPercent: 120 });
     // behind-the-cover swap: kill orbit + flip to the tool while fully hidden, then rise the app in
     let swapped = false;
     const clearParts = () => { try { g.set([document.querySelector('header'), document.querySelector('main')].filter(Boolean), { clearProps: 'transform,opacity' }); } catch (e) { } };
@@ -275,14 +289,34 @@ export const wipeMethods = {
 
      The choreography is returnToIntro's, beat for beat, because it is the same gesture and should
      not read as a second one. What differs is only what happens behind the cover. */
-  _routeDrifters(layer) {
-    // The cover's SIBLINGS — never an ancestor. A transform or an opacity below 1 makes an element
-    // the containing block for its position:fixed descendants, and the cover is one: move something
-    // it lives inside and `inset:0` starts resolving against a document-tall box, so the panel
-    // travels the height of the page instead of one screen and lands off-screen. Siblings are the
-    // page; the layer is what hides it.
-    const host = (layer && layer.parentNode) || document.body;
-    return [].filter.call(host.children, (el) => el !== layer && el.tagName !== 'SCRIPT');
+  /* WHAT DRIFTS BEHIND THE COVER, in two groups, because a transform is not safe on every one of them.
+
+     NEVER [data-app] ITSELF, always its children. A transform makes an element the containing block
+     for its position:fixed descendants, so moving the app root would re-resolve `inset:0` on the
+     cover — and on every drawer, the brand mark and the landing stage — against a document-tall box.
+     That is the fault this function has always existed to avoid; it used to express it as "the cover's
+     siblings", which stopped being the same set the moment the cover moved out to PaletteApp.
+
+     The SAME hazard applies one level down, and About is where it finally bit. Its <main> is an
+     ancestor of the section dock (position:fixed) and of three ScrollTrigger pins, which pin as fixed
+     on a body scroller. Tweening y on it re-resolved all four against a 31,820px box: measured at
+     scrollY 6000, the dock went from 951px to 27,367px and the pinned rail from 0 to -25,881px — the
+     section a reader was looking at left the screen a full 0.8s before the cover arrived to hide it.
+
+     So a content root that owns viewport-anchored children declares `data-holds-fixed` and takes the
+     dim WITHOUT the shift. Opacity is safe — measured, the dock does not move under opacity:.5 alone,
+     because only the transform establishes the containing block — so the two groups still dim on one
+     clock and the gesture reads the same. Everything with nothing fixed underneath it keeps the full
+     6vh of parallax, which is every element on the tool and both legal documents. */
+  _routeDrifters() {
+    const app = document.querySelector('[data-app]');
+    const shift = [], dim = [];
+    if (!app) return { shift: shift, dim: dim, all: [] };
+    [].forEach.call(app.children, (el) => {
+      if (el.tagName === 'SCRIPT') return;
+      (el.hasAttribute('data-holds-fixed') ? dim : shift).push(el);
+    });
+    return { shift: shift, dim: dim, all: shift.concat(dim) };
   },
 
   navigateTo(path, options) {
@@ -304,13 +338,43 @@ export const wipeMethods = {
       // A new document starts at the top. Lenis owns the scroll while it is running, so ask it
       // rather than going around it and leaving its internal position stale.
       try { if (this._lenis) this._lenis.scrollTo(0, { immediate: true }); else window.scrollTo(0, 0); } catch (e) { }
-      this.setState({ route: next, announce: '' }, afterCb || function () { });
+      // The live region NAMES the destination. It used to be cleared here, which meant a route
+      // change said nothing at all: no reload, no focus move of its own, and a <title> swap that
+      // screen readers do not reliably announce. The page is the only thing that changed, so the
+      // page is what gets said.
+      this.setState({ route: next, announce: routeName(next) + ' page.' }, afterCb || function () { });
+    };
+
+    /* WHERE FOCUS LANDS. Nowhere, until now: the cover takes focus while the swap happens (so it is
+       never stranded on a control that is unmounting), and nothing ever handed it on — so every route
+       change dropped the keyboard to <body> and the next Tab started again from the top of the
+       document. Both of the other wipes already close this loop, getStarted through focusChrome and
+       returnToIntro through focusCta; this one simply never did.
+
+       The destination's <main> is the right target rather than its first control: these are pages you
+       arrive at, not dialogs, and it puts a screen reader at the top of the new content with the
+       landmark named. tabindex -1 makes it programmatically focusable without joining the tab order.
+       Retried on the same 60ms cadence as the other two, because the element belongs to a route that
+       has only just been rendered. */
+    const focusDestination = () => {
+      let tries = 0;
+      const grab = () => {
+        const app = document.querySelector('[data-app]');
+        const target = (app && app.querySelector('main')) || app;
+        if (target) {
+          try { target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); } catch (e) { }
+          if (document.activeElement === target) return;
+        }
+        if (++tries < 12) setTimeout(grab, 60);
+      };
+      setTimeout(grab, 0);
     };
 
     // Reduced motion, or no GSAP to drive a timeline with: swap outright. The destination still
     // arrives correctly, it simply arrives without the gesture — which is what reduced motion asks
-    // for, and the only honest fallback when there is nothing to animate with.
-    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => this._playPageReveal()); return; }
+    // for, and the only honest fallback when there is nothing to animate with. Focus still moves:
+    // asking for less motion is not asking to be left on <body>.
+    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => { this._playPageReveal(); focusDestination(); }); return; }
 
     this._wipeRunning = true;
     // Tells the arriving document route to ARM its reveals and wait rather than play them on mount.
@@ -337,14 +401,21 @@ export const wipeMethods = {
     // L1: park focus on the transition layer so it isn't stranded on a control that is unmounting.
     try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
 
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 }); g.set(word, { yPercent: 120 });
-    const parts = this._routeDrifters(layer);
+    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
+    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
+    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
+    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
+    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
+    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
+    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
+    g.set(word, { y: 0, yPercent: 120 });
+    const parts = this._routeDrifters();
 
     let swapped = false;
     const doSwap = (instant) => {
       if (swapped) return; swapped = true;
       commit(() => {
-        try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }
+        try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }
         // The tool's own arrival, when it is the destination: its copy rises out of its masks
         // exactly as it does under the loader and after Get Started, rather than the whole page
         // block sliding up as one slab. instant=true is the starved-rAF path — be there, plainly.
@@ -365,6 +436,7 @@ export const wipeMethods = {
       clearGuards(); this._wipeClearGuards = null;
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       this._wipeRunning = false; this._wipeTl = null; this._arrivingByWipe = false;
+      focusDestination();
     };
 
     const tl = g.timeline({ paused: true, onComplete: finish });
@@ -379,16 +451,19 @@ export const wipeMethods = {
       layer.style.display = 'none';
       clearGuards(); this._wipeClearGuards = null;
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
-      try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
+      try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
       this._arrivingByWipe = false;
       if (!swapped) doSwap(true); else this._playPageReveal();
+      focusDestination();   // a killed timeline must not strand focus on the cover either
     }, 4000);
     this._wipeTl = tl;
 
     // 1 — COVER: panel rises over the page; the page drifts up slightly for depth
     tl.to(panel, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);
     tl.to(capT, { scaleY: 1, duration: 0.8, ease: this.EASE.entrance }, 0);
-    if (parts.length) tl.to(parts, { y: '-6vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
+    // The page drifts up and dims; a root that owns fixed children only dims — see _routeDrifters.
+    if (parts.shift.length) tl.to(parts.shift, { y: '-6vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
+    if (parts.dim.length) tl.to(parts.dim, { opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
     // 2 — BRAND beat
     tl.to(word, { yPercent: 0, duration: 0.55, ease: this.EASE.entrance }, 0.6);
     tl.call(doSwap, null, 1.0);       // 3 — swap the route behind the cover

@@ -38,6 +38,18 @@ export function pathFor(route) {
   return '/';
 }
 
+/* THE PAGE'S NAME, spoken. A client-side route change is invisible to assistive technology: the
+   document does not reload, focus does not move on its own, and a <title> swap is not reliably
+   announced. So the app says where it has arrived, through the live region it already renders, and
+   this is the one place those four names are written down. Short, because it is read out in full
+   every time somebody navigates. */
+export function routeName(route) {
+  if (route === ABOUT) return 'About';
+  if (route === PRIVACY) return 'Privacy';
+  if (route === TERMS) return 'Terms';
+  return 'Palette generator';
+}
+
 export function isLegal(route) {
   return route === PRIVACY || route === TERMS;
 }

@@ -18,7 +18,7 @@
    no JavaScript, and any crawler that does not run it, gets exactly these bytes. See
    scripts/prerender.mjs. */
 import React from 'react';
-import { DocHead } from './chrome.jsx';
+import { DocHead, docLinkHandler } from './chrome.jsx';
 import { PRIVACY } from './routes.js';
 import { initTableOfContents } from './methods/legalToc.js';
 import { initPageReveal, articleGroups } from './methods/pageReveal.js';
@@ -82,6 +82,11 @@ export default class LegalPage extends React.Component {
     if (this.props.vals.registerPageReveal) this.props.vals.registerPageReveal(null);
   }
 
+  /* Both statements link to each other in their own prose and footers, and those anchors are injected
+     HTML rather than React elements — so without this they full-reloaded the document. Same listener
+     About uses; see docLinkHandler in chrome.jsx. */
+  _onClick = (e) => docLinkHandler(this.props.vals)(e);
+
   render() {
     const vals = this.props.vals;
     const route = vals.route;
@@ -95,7 +100,7 @@ export default class LegalPage extends React.Component {
             <main> rather than a div, for the reason spelled out in AboutPage: the tool has a main
             landmark and these documents had none, so landmark navigation had nothing to skip the
             masthead with on the pages most likely to be read with a screen reader. */}
-        <main key={route} ref={this.rootRef} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
+        <main key={route} ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
       </>
     );
   }

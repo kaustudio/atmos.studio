@@ -2,7 +2,7 @@
 // The design comp was authored against a React-compatible component API, so the logic ports
 // near-verbatim; it is organised here as a class core plus prototype method groups.
 import React from 'react';
-import AppView from './AppView.jsx';
+import AppView, { WipeLayer } from './AppView.jsx';
 import * as C from '../lib/color.js';
 import * as X from '../lib/exporters.js';
 import * as I from '../lib/interpret.js';
@@ -494,8 +494,28 @@ export default class PaletteApp extends React.Component {
     if (this._czDetach) { try { this._czDetach(); } catch (e) { } this._czDetach = null; this._czInit = false; }
   }
 
+  /* THE COVER IS RENDERED HERE, OUTSIDE THE ROUTE, and that placement is the whole fix.
+
+     AppView returns four different trees from four early returns — the two phone surfaces, the
+     document routes and the tool — and React reconciles their unkeyed children BY INDEX. The wipe
+     layer used to be one of those children, at index 2 of the document branch and index 6 of the
+     tool's, so every navigation across that boundary unmounted the very element the running timeline
+     was animating and mounted an untouched, display:none replacement. Measured: the cover vanished in
+     one frame at the swap and never came back, so the wordmark's exit and the panel's lift — the
+     entire second half of the gesture — played on detached nodes. Doc-to-doc was unaffected, which is
+     exactly why it read as an inconsistency rather than as a broken transition.
+
+     Rendered as a sibling of [data-app] it is outside every branch, so its identity survives any route
+     change. Two things follow from that and both are wanted: the two phone surfaces, which never
+     rendered a layer at all, now have one; and the inert guard the wipe puts on [data-app] no longer
+     covers the cover itself, so parking focus on it during the transition finally works. */
   render() {
-    return <AppView vals={this.renderVals()} />;
+    return (
+      <>
+        <AppView vals={this.renderVals()} />
+        <WipeLayer />
+      </>
+    );
   }
 }
 
