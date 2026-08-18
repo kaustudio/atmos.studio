@@ -2179,8 +2179,11 @@ export const renderValsMethods = {
         // No widths here any more: the header sits on --row-grid, the same template the rows use,
         // so each label is sized by the track it lands in. Each right-aligns over the values it
         // sorts. 'aa' shares its track with the ⓘ that explains the badge.
-        { key: 'aa', label: 'AA Pairs' },
-        { key: 'contrast', label: 'Max Contrast' },
+        // Sentence case, like every other control: these were Title Case while a transform was
+        // uppercasing them and the source case never showed. "AA" stays capital because it is the
+        // WCAG level, not a word.
+        { key: 'aa', label: 'AA pairs' },
+        { key: 'contrast', label: 'Max contrast' },
         // "Date" named the type of the value, not the event. Created, because that is what the
         // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
         // touches it — _commitRefine rewrites swatches and roles and leaves the stamp alone. So

@@ -859,10 +859,23 @@
   <div class="about-end__inner">
     <div class="about-divider" data-divider aria-hidden="true"></div>
     <p class="about-end__line" data-reveal>Start with an image.<br />Leave with a colour system.</p>
-    <!-- data-ix="cta" and data-focus="chrome" are not decoration: the first hands this control the
-         app's interaction contract from global.css, and without the second the global
-         `:focus{outline:none}` reset leaves the page's only action with no focus ring at all. -->
-    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-ix="cta" data-focus="chrome">Create your Colour System</a></p>
+    <!-- NO data-ix, AND THAT IS THE FIX RATHER THAN AN OMISSION. This carried data-ix="cta" on the
+         reasoning that the attribute hands the control the app's interaction contract. It hands it
+         the FILLED tier, which assumes the control's ink is already inverted — every other
+         data-ix="cta" on the site states color:var(--surface) beside it. This one is the quiet glass
+         control: ink is --on-surface and the fill is a 7% tint. So the tier's hover, which is
+         !important, slammed the fill to 84% of the ink while the ink stayed put — black on black in
+         light, white on white in dark, on the page's only action.
+
+         .about-cta declares its own transition and its own three states, which is the other half of
+         the same rule: an inline transition REPLACES the contract rather than joining it, so a
+         control that has one must not also claim a tier. about.css owns the states here, and the
+         readability argument written above them — the fill barely moves and the border carries the
+         change — is the thing the tier was overwriting.
+
+         data-focus="chrome" stays and is still load-bearing: the global `:focus{outline:none}` reset
+         leaves the page's only action with no focus ring at all without it. -->
+    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-focus="chrome">Create your Colour System</a></p>
   </div>
 </section>
 
@@ -885,15 +898,19 @@
      dock names the same section in four words. The number is the tie between them, which is what the
      numbering was added for.
 
-     THEY ARE SENTENCE CASE, which is how the document spells its own headings. The dock names the
-     page's sections, so it spells them the way the page does: one capital at the front, and after
-     that a capital only where the word is a name — Atmos, OKLCH, WCAG. Title case was tried here and
-     is wrong; it made fourteen labels that no h2 on the page matches.
+     THEY ARE TITLE CASE, and the four group heads with them. The dock is a control, not a passage
+     of the document: these are the names of destinations, sitting in a list you scan rather than a
+     sentence you read, and title case is what separates a name from a phrase at that size. The h2s
+     they point at stay sentence case, because those ARE the document.
 
-     The four group heads are spelled the same way and now RENDER the same way. They briefly took the
-     system's uppercase label voice; it read as shouting at the foot of the screen, so the transform
-     is gone and about.css records what had to change with it — the tracking and the size were both
-     settings that only made sense under capitals.
+     Short words stay down — "Instinct to System", "The Shape of a Palette", "Colours to Roles" —
+     and the acronyms are left exactly as the page spells them: OKLCH and WCAG are the names of a
+     colour space and a standard, so they are capital in any casing this dock is ever set in.
+
+     NOT uppercase. The group heads briefly took the system's uppercase label voice and it read as
+     shouting at the foot of the screen; about.css records what had to change when the transform
+     came off, since the tracking and the size were both settings that only made sense under
+     capitals. Title case is the middle setting, and it is the one this dock keeps.
 
      data-ix="cell" ON ALL EIGHTEEN CONTROLS. The row tint, its curve and its duration arrive from
      the interaction contract in global.css rather than from this component, which is what makes a
@@ -927,7 +944,7 @@
              label change and fills it from the active link, so the structure here is what carries. -->
         <span class="section-dock__label">
           <span class="section-dock__link-num">1.1</span>
-          <span>Instinct to system</span>
+          <span>Instinct to System</span>
         </span>
       </span>
       <!-- The affordance, instead of a standing "on this page" label: a caret pointing the way the
@@ -948,50 +965,50 @@
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g1" data-dock-sub class="section-dock__sub">
-            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Instinct to system</span></a></li>
-            <li><a data-section-dock-link href="#how-atmos-reads-colour" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.2</span><span>How Atmos reads colour</span></a></li>
+            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Instinct to System</span></a></li>
+            <li><a data-section-dock-link href="#how-atmos-reads-colour" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.2</span><span>How Atmos Reads Colour</span></a></li>
             <li><a data-section-dock-link href="#reading-oklch" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.3</span><span>Reading OKLCH</span></a></li>
-            <li><a data-section-dock-link href="#reading-wcag-contrast" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.4</span><span>Reading WCAG contrast</span></a></li>
+            <li><a data-section-dock-link href="#reading-wcag-contrast" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.4</span><span>Reading WCAG Contrast</span></a></li>
           </ul>
         </li>
 
         <li data-dock-group class="section-dock__group">
           <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g2" data-ix="cell" data-focus="value" class="section-dock__group-head">
             <span class="section-dock__link-num">2</span>
-            <span>The image</span>
+            <span>The Image</span>
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g2" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#more-than-common-colours" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.1</span><span>More than common colours</span></a></li>
-            <li><a data-section-dock-link href="#shape-of-a-palette" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.2</span><span>The shape of a palette</span></a></li>
-            <li><a data-section-dock-link href="#one-model-three-ways" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.3</span><span>One model, three ways</span></a></li>
+            <li><a data-section-dock-link href="#more-than-common-colours" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.1</span><span>More Than Common Colours</span></a></li>
+            <li><a data-section-dock-link href="#shape-of-a-palette" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.2</span><span>The Shape of a Palette</span></a></li>
+            <li><a data-section-dock-link href="#one-model-three-ways" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.3</span><span>One Model, Three Ways</span></a></li>
           </ul>
         </li>
 
         <li data-dock-group class="section-dock__group">
           <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g3" data-ix="cell" data-focus="value" class="section-dock__group-head">
             <span class="section-dock__link-num">3</span>
-            <span>The system</span>
+            <span>The System</span>
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g3" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Colours to roles</span></a></li>
-            <li><a data-section-dock-link href="#contrast-creates-hierarchy" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.2</span><span>Contrast creates hierarchy</span></a></li>
-            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Images that already work</span></a></li>
-            <li><a data-section-dock-link href="#the-intervals-matter" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.4</span><span>The intervals matter</span></a></li>
-            <li><a data-section-dock-link href="#refine-without-losing" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.5</span><span>Refining without loss</span></a></li>
+            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Colours to Roles</span></a></li>
+            <li><a data-section-dock-link href="#contrast-creates-hierarchy" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.2</span><span>Contrast Creates Hierarchy</span></a></li>
+            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Images That Already Work</span></a></li>
+            <li><a data-section-dock-link href="#the-intervals-matter" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.4</span><span>The Intervals Matter</span></a></li>
+            <li><a data-section-dock-link href="#refine-without-losing" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.5</span><span>Refining Without Loss</span></a></li>
           </ul>
         </li>
 
         <li data-dock-group class="section-dock__group">
           <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g4" data-ix="cell" data-focus="value" class="section-dock__group-head">
             <span class="section-dock__link-num">4</span>
-            <span>In practice</span>
+            <span>In Practice</span>
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g4" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Eight images, eight systems</span></a></li>
-            <li><a data-section-dock-link href="#one-image-complete-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.2</span><span>One complete system</span></a></li>
+            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Eight Images, Eight Systems</span></a></li>
+            <li><a data-section-dock-link href="#one-image-complete-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.2</span><span>One Complete System</span></a></li>
           </ul>
         </li>
 

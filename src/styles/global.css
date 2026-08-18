@@ -66,6 +66,47 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    between two frames is the same fault as one that snaps: every state this contract can enter has
    to be reachable by a transition, or the contract is only describing some of itself. */
 [data-ix]{transition:background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard)}
+/* ===== CONTROLS SPEAK THE UPPERCASE LABEL VOICE, /about EXCEPTED =====
+   The app's chrome is uppercase — the header bar, the library's segments and sort heads, the trait
+   chips, the menus, the palette's own row of actions. It sits beside apparatus that is uppercase
+   for the same reason (HEX, RGB, DOMINANT HUE, MAX CONTRAST), and the tool reads as one surface.
+
+   STATED ON [data-ix] RATHER THAN PER CONTROL. Roughly forty controls used to declare
+   text-transform in an inline sx() style, which is forty places for the forty-first to be
+   forgotten. The attribute that already means "this is a control" is the right place to say how a
+   control speaks, and this contract reaches for !important on every hover and press tier for the
+   same reason a blanket rule needs it here: an inline declaration beats any selector.
+
+   TWO PLACES ARE NOT THE TOOL, and both are excepted.
+
+   /about is a document. It is read rather than operated, its controls sit inside running prose and
+   a section dock rather than in a toolbar, and the uppercase voice read as shouting in that
+   setting — which is the argument the dock's own group heads settled first. .about-route is the
+   wrapper AppView puts on that route; .doc-route (privacy, terms) deliberately keeps the app's
+   voice, since the only control on those two is the masthead's own.
+
+   The opening screen is an ADDRESS TO THE READER before any work has started — one statement and
+   one or two actions, centred, with none of the apparatus the uppercase voice sits beside in the
+   tool. Nobody has a palette yet, so there is nothing for a control to be reading out.
+
+   Acronyms are unaffected either way: text-transform cannot reach into a string, so "3D", "AA" and
+   "CSS" are whatever the source typed. */
+[data-ix]{text-transform:uppercase!important}
+.about-route [data-ix],
+[data-landing] [data-ix]{text-transform:none!important}
+/* button-006 is outside the [data-ix] contract — it carries its own tiers — so an exception has to
+   be restated for it. Only ONE of the two routes gets it.
+
+   The opening screen's actions are button-006 and stay in the reading voice with everything else on
+   that screen.
+
+   /about does NOT, and the difference is what the control belongs to. The exception above is for
+   the page's own controls — the dock and the closing action, which sit in the document. The theme
+   switch is not the page's; it is the masthead's, the same bar on every route, and it was the one
+   element on the site that changed voice depending on which route it happened to be drawn over.
+   Chrome that reads DARK in the tool and Dark on /about is not two decisions, it is one decision
+   applied inconsistently. */
+[data-landing] .button-006{text-transform:none}
 [data-ix]:disabled{opacity:.42;cursor:default}
 /* press — ALL chrome that responds to a press: bordered or not. Was two tiers, "solid" and
    "press", with identical hover (16%) and active (24% + 1px) — the only difference was that solid
@@ -509,7 +550,10 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   border-radius:var(--button-006-border-radius);
   /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
      uppercase label voice, prose stays in sentence case. Sources are written in natural case and
-     this transform does the styling, so the policy can flip again without rewriting a string. */
+     this transform does the styling, so the policy can flip again without rewriting a string —
+     which is exactly what the two exceptions below do, and why they cost one selector each rather
+     than a pass over every label. See the [data-ix] block near the top of this file for the same
+     rule stated for every other control, and for the argument the two routes are excepted on. */
   font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-tap-highlight-color:transparent;isolation:isolate;
