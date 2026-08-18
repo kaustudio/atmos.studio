@@ -61,6 +61,46 @@ const FALLBACK = { duration: 0.62, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' };
    a 120ms throttle, and the composition the cascade exists to impose was won or lost by a race. */
 const ENTER = 0.88;
 
+/* A CSS TIME IS NOT A NUMBER, and parseFloat is not a parser for one.
+
+   This line used to read `parseFloat(getPropertyValue('--dur-stagger'))`, and in development it was
+   right: the stylesheet says `--dur-stagger:.05s`, getPropertyValue hands back the string it was
+   authored with, and parseFloat gives 0.05. The production bundle is minified, and a CSS minifier
+   rewrites `.05s` as `50ms` because it is two characters shorter and means the same thing to CSS.
+   parseFloat drops the unit. The stagger became FIFTY SECONDS.
+
+   Which is exactly, and only, what the reader was seeing. Every cascade set showed its first child
+   and nothing else: the second arrived fifty seconds later, the third at a hundred, the tenth row of
+   the contrast matrix seven and a half minutes in. The reported list — 1.2 without its WCAG lens,
+   1.3 without chroma or hue, 1.4 without large text or meaningful graphics, 2.1 without the reading
+   under the swatch, 3.1 with only Background, 3.2 without its rows — is that arithmetic, figure by
+   figure, and it is identical in Safari and Chrome on every viewport because it is arithmetic and
+   not a browser. It never once appeared in the dev server, which is the only place it was tested.
+
+   So: parse the unit. `s` and `ms` are the only two CSS accepts, a bare number is treated as seconds
+   because that is what GSAP means by one, and anything unparseable falls back rather than poisoning
+   a timeline. */
+function cssSeconds(name, fallback) {
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    if (!raw) return fallback;
+    const n = parseFloat(raw);
+    if (!isFinite(n) || n <= 0) return fallback;
+    return /ms$/i.test(raw) ? n / 1000 : n;
+  } catch (e) { return fallback; }
+}
+
+/* AND A CEILING OVER THE ANSWER, because the failure above was not that the number was wrong — it
+   was that a wrong number could strand a whole figure indefinitely and still look like a working
+   page. A beat between siblings in one set is a tenth of a second at the outside; anything larger is
+   a mistake somewhere upstream, and this file should degrade to "arrives slightly oddly" rather than
+   to "never arrives". */
+const MAX_STAGGER = 0.2;
+// The longest a set may sit half-arrived before the rescue below stops waiting for it. Comfortably
+// past an honest run of the longest set on the page (ten matrix rows) and nowhere near a reader's
+// patience.
+const MAX_RESCUE_MS = 4000;
+
 export function initCascade(root, motion) {
   const gsap = window.gsap;
   const ScrollTrigger = window.ScrollTrigger;
@@ -73,11 +113,7 @@ export function initCascade(root, motion) {
 
   const MOTION = motion || FALLBACK;
   // The beat between siblings, read from the stylesheet so it cannot drift from the token.
-  let stagger = 0.05;
-  try {
-    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-stagger'));
-    if (isFinite(v) && v > 0) stagger = v;
-  } catch (e) { }
+  const stagger = Math.min(cssSeconds('--dur-stagger', 0.05), MAX_STAGGER);
 
   const triggers = [];
   const timers = [];
@@ -126,12 +162,19 @@ export function initCascade(root, motion) {
            owns. y:0 rather than clearProps:'transform': the six role cells are ALSO parallax
            triggers, and aboutParallax animates the trigger itself on yPercent when it finds no inner
            target, so clearing the whole transform here would drop a cell back to its unscrolled
-           position mid scroll. Two systems, two properties. */
+           position mid scroll. Two systems, two properties.
+
+           CAPPED, and the cap is the lesson from the stagger bug rather than a spare precaution. The
+           delay is derived from the run's own length, so when the stagger came back a thousand times
+           too large this timer scaled with it: ten matrix rows put the rescue eight and a half
+           minutes out, and the one mechanism that existed to notice the figure was empty waited
+           longer than any reader would. A rescue whose deadline is computed from the thing it is
+           rescuing has to be bounded, or it inherits that thing's failure. */
         timers.push(setTimeout(() => {
           if (!unit.host.isConnected || tw.progress() >= 1) return;
           try { tw.kill(); } catch (e) { }
           try { gsap.set(targets, { autoAlpha: 1, y: 0 }); } catch (e) { }
-        }, (MOTION.duration + stagger * targets.length) * 1000 + 900));
+        }, Math.min((MOTION.duration + stagger * targets.length) * 1000 + 900, MAX_RESCUE_MS)));
       };
 
       units.push(unit);
