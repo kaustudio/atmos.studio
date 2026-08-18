@@ -23,6 +23,35 @@ import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
 
+/* ===== WHAT COUNTS AS A PHONE ===============================================================
+   THE GATE WAS KEYED TO WIDTH ALONE, and a phone has two orientations. `(max-width:720px)` is true
+   of every phone held upright and false of every one turned sideways: an iPhone 13 mini is 812
+   points across in landscape, a 15 Pro Max is 932. So rotating the device walked straight past the
+   gate into the full desktop tool — the library table, the universe, the reel, the drawers and the
+   refine dialog — in about 390 points of HEIGHT. The gate's own copy says reading an image means
+   weighing colours, roles and contrast side by side, and that needs room; room is two dimensions,
+   and only one of them was ever being asked about. This is the leak the allow-list comment in
+   global.css warns a new surface will cause, arriving through the axis nobody checked.
+
+   THE SECOND CLAUSE IS DELIBERATELY NARROW. `(pointer:coarse) and (max-height:600px)` adds phones
+   in landscape and NOTHING else:
+     · phone landscape — coarse, 375-430 tall           → gated (the fix)
+     · phone portrait  — already caught by max-width    → gated, unchanged
+     · tablet either way — coarse but 820-1180 tall     → NOT gated, unchanged
+     · laptop, any window size — pointer:fine           → NOT gated, unchanged
+   `pointer` is the PRIMARY pointer, so a touchscreen laptop with a trackpad reports fine and keeps
+   the tool. 600 sits clear of both edges: the tallest phone landscape is 430, the shortest tablet
+   is 820. Height alone would have gated a desktop window someone had merely dragged short, which is
+   a different question and not one the reader asked us.
+
+   ONE STRING, TWO CONSUMERS, AND THEY MUST NOT DRIFT. global.css hides the tool with the matching
+   `@media` and this decides the STATE — which surface mounts, how the ring formation is sized, what
+   the fx budget is. When those two disagree the failure is silent in the worst way: the surface
+   mounts, measures, animates and takes taps while a display:none is painted over it. That has
+   happened here once already (see data-mobile-list in the gate's own note). Change one, change the
+   other, in the same commit. */
+export const PHONE_MQ = '(max-width:720px), (pointer:coarse) and (max-height:600px)';
+
 export default class PaletteApp extends React.Component {
   static defaultProps = { proportional: true, swatchCount: 5 };
 
@@ -154,7 +183,7 @@ export default class PaletteApp extends React.Component {
     // meant before there was anything to sort BY. Deliberately not persisted: page size is a
     // standing preference, an ordering is a question you are asking of the list right now.
     sortKey: 'time', sortDir: 'desc',
-    narrow: (function () { try { return !!(window.matchMedia && window.matchMedia('(max-width:720px)').matches); } catch (e) { return false; } })(),
+    narrow: (function () { try { return !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); } catch (e) { return false; } })(),
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
 
@@ -362,7 +391,7 @@ export default class PaletteApp extends React.Component {
     // budget and hero measurement all differ there, and those are build-time decisions. Crossing the
     // breakpoint rebuilds the formation rather than leaving desktop-sized decisions in place.
     try {
-      this._mq = window.matchMedia('(max-width:720px)');
+      this._mq = window.matchMedia(PHONE_MQ);
       // The one teardown that stays: a breakpoint crossing rebuilds the formation because it is
       // SIZED for the viewport class (see the ring count in _rings), which no amount of parking
       // fixes. Rebuilt only if the stage is lit — crossing into narrow with an example open would

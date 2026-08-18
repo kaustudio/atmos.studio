@@ -505,10 +505,12 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    two-or-three-track rule by 900px, so twelve tracks below that were twelve names for one column —
    and 16/16 is the margin and gutter that go with it.
 
-   720px, and it is the site's existing phone boundary rather than a new one: it is the width the
-   desktop gate further down this file uses to take the tool out of the document entirely. Below it
-   the only things laid out on this grid are the three documents and the footer, which is exactly the
-   set this figure is for.
+   720px, and it WAS the site's existing phone boundary — the width the desktop gate further down this
+   file used to take the tool out of the document entirely. The gate has since grown a second clause
+   for the phone turned sideways, so the two figures are no longer the same one: see the rule
+   directly below this block for which half of it follows the device and which stays with the width.
+   Below 720 the only things laid out on this grid are the three documents and the footer, which is
+   exactly the set this figure is for.
 
    NOTHING NUMERIC SURVIVES DOWN HERE, which is what makes changing the count safe. Every explicit
    span on the route — the reading column and its headings, the two lens cells, the three axes, the
@@ -523,6 +525,21 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
     --grid-cols:4;
     --grid-gutter:16px;
   }
+}
+/* THE MARGIN IS A DEVICE QUESTION; THE COLUMN COUNT IS A WIDTH ONE, and the two only looked like one
+   rule while the gate was keyed to width alone.
+
+   A phone turned sideways is 812-932 points across, so it never matched the block above and the
+   three phone surfaces — the gate, the example list, the palette view, all of which set their own
+   padding from --page-gutter — drew a 24px margin in landscape and a 16px one in portrait. The same
+   list, the same rows, two margins, decided by which way the reader was holding the device.
+
+   ONLY --page-gutter follows the phone here. The four-column figure above is argued from width and
+   the argument does not survive the rotation: 24px either side of a 375px screen is 13% of it spent
+   on air, which is what makes four columns right there; the same 24px on an 844px screen is 5.7%,
+   and twelve columns fit. So the grid keeps its own boundary and the margin gets the device's. */
+@media screen and (pointer:coarse) and (max-height:600px){
+  :root{ --page-gutter:16px }
 }
 
 :root[data-theme="dark"]{
@@ -1051,7 +1068,19 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    Naming .doc-route rather than adding three more :not()s, because the answer is not "these
    particular children are allowed" but "this whole route is not the tool". /about arrives under the
    same class and needs no further entry. */
-@media (max-width:720px){
+/* THE SECOND CLAUSE IS THE PHONE TURNED SIDEWAYS. This was `(max-width:720px)` alone, which is true
+   of every phone held upright and false of every one turned over: 812 points across on a 13 mini,
+   932 on a 15 Pro Max. Rotating the device walked past this rule into the whole tool with 390 points
+   of height to run it in — the leak the note above warns about, through the axis it never checked.
+   (pointer:coarse) and (max-height:600px) adds phones in landscape and nothing else: a tablet is
+   820-1180 tall either way, and a laptop reports pointer:fine whatever size its window is.
+
+   THIS SELECTOR AND PaletteApp's PHONE_MQ ARE ONE DECISION WRITTEN TWICE, because a media query
+   cannot be shared between a stylesheet and matchMedia without a build step. They must not drift:
+   this rule paints display:none while that constant decides which surface mounts, and when they
+   disagree a surface mounts, measures, animates and takes taps underneath a rule hiding it — with
+   nothing in the console to say so. Change one, change the other, in the same commit. */
+@media (max-width:720px),(pointer:coarse) and (max-height:600px){
   [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-load-wrap]){display:none!important}
 }
 
