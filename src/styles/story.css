@@ -408,7 +408,16 @@
 .story-horizontal[data-horizontal-live]{
   overflow:hidden;
   scroll-snap-type:none;
-  min-height:100svh;
+  /* THE BAND IS SIZED BY ITS CARDS, NOT BY THE VIEWPORT, and that follows from going two up.
+
+     100svh was right while a card filled the screen. Two to a row halves their width and with it their
+     height — 253px in an 812px box — so the same rule now centres a short row inside a tall empty
+     frame: 294px of nothing above the cards and as much below, in the approach AND in the pinned
+     state. Reported as people thinking the site had ended, and the vertical half of that is this.
+
+     Sized to the row plus a band on each side instead. The clamp keeps it from collapsing onto the
+     cards on a short screen and from re-inflating on a tall one. */
+  min-height:clamp(340px,56svh,520px);
   align-items:center;
   /* THE LEAD IN AND THE LEAD OUT, AND THIS IS mwg_001's OWN NUMBER.
 
@@ -446,8 +455,35 @@
    Margins on the first and last panel put the same distance in the same place without touching the
    wrap's own box: the wrap stays exactly one viewport wide, its overflow:hidden clips the row that
    now genuinely overflows it, and rowWidth() adds these two figures back (see [ATMOS 8]). */
-.story-horizontal[data-horizontal-live] .story-hpanel:first-child{ margin-inline-start:140vw }
-.story-horizontal[data-horizontal-live] .story-hpanel:last-child{ margin-inline-end:140vw }
+/* 110vw IN AND 120vw OUT, NOT THE SOURCE'S SYMMETRIC 140, because the two ends do different jobs.
+
+   mwg_001 holds its row a screen and a half off each edge because its row IS the section: a full
+   screen with a `Scroll` prompt in the middle and nothing else, so an empty frame reads as an
+   invitation. Here the row follows a heading and a sentence, and an empty frame after a sentence
+   reads as the end of the document. Measured at 140: 1070px — 1.32 screens — between the lead
+   leaving the viewport and the first card appearing. Reported as people thinking the site had ended,
+   which is exactly what a screen and a third of nothing after a paragraph means.
+
+   Most of that screen and a third was vertical rather than horizontal, and the band's own height fixed
+   it (see min-height above). What is left to the pad is the horizontal wait, and 110vw is the smallest
+   lead in that still keeps the row OUTSIDE the frame at rest: the first card sits at 412 on a 375
+   screen, so it is genuinely off-stage and genuinely arrives, but only 37px of travel brings it in
+   rather than 150. Paired with the pin now engaging centre to centre, the heading is still on screen
+   when the first card enters.
+
+   THE EXIT IS NOT THE ENTRANCE. A short lead out does not shorten a wait, it parks cards in front of
+   the closing statement — measured at 60vw, the row stopped with the last card's right edge at 147,
+   still in frame as 3.2 arrived, which is the fault [ATMOS 6] exists to prevent. 120vw is what carries
+   it past the left edge, and it is also what the drift's `end:'right -20%'` needs: the last card's
+   right reaches exactly -20vw there, so its counter-move completes instead of being clamped.
+
+   THE DRIFT'S TRIGGER MOVES WITH THE LEAD IN. mwg_001's `padding: 0 120vw` and its `start:'left 120%'`
+   are one decision written in two places: the pad exists so the first card's own drift range can begin
+   at zero rather than being clamped, and a lead in shorter than the trigger's start reintroduces
+   exactly the flat, inert first card that [ATMOS 6] and [ATMOS 9] were about. So those two scale
+   together — 110vw here, `left 110%` in horizontalScroll.js — and neither may be edited alone. */
+.story-horizontal[data-horizontal-live] .story-hpanel:first-child{ margin-inline-start:110vw }
+.story-horizontal[data-horizontal-live] .story-hpanel:last-child{ margin-inline-end:120vw }
 .story-hpanel{
   flex:none;
   width:var(--rail-card);

@@ -146,7 +146,20 @@ export function initHorizontalScroll(root) {
             ease: 'none',
             scrollTrigger: {
               trigger: wrap,
-              start: 'top top',
+              /* 'center center', NOT 'top top', and it is the band's height that decides this.
+
+                 The source pins at the top because its row IS a full screen — pinning a 100svh box at
+                 the top centres it by definition. This band is sized to its cards now (see story.css),
+                 so pinning its TOP to the viewport's top parks a 455px row in the upper half and
+                 leaves a screen's worth of nothing under it, which is the same white space the shorter
+                 band was meant to remove, moved from above the cards to below them.
+
+                 Centre to centre holds it in the middle of the screen instead, so what empty space
+                 remains is split evenly and reads as a gallery band rather than as the end of the
+                 document. It also engages EARLIER — the element's centre reaches the viewport's centre
+                 before its top reaches the top — so the row starts travelling while the heading is
+                 still in frame, which is the rest of the same complaint. */
+              start: 'center center',
               end: () => '+=' + (rowWidth() - viewportW()),
               scrub: true,
               pin: true,
@@ -189,7 +202,8 @@ export function initHorizontalScroll(root) {
                 scrollTrigger: {
                   trigger: card,
                   containerAnimation: tween,
-                  start: 'left 120%',
+                  // Paired with the 110vw lead in (story.css). Neither may be edited alone.
+                  start: 'left 110%',
                   end: 'right -20%',
                   scrub: true,
                 },
