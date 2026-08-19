@@ -98,6 +98,25 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    "CSS" are whatever the source typed. */
 [data-ix]{text-transform:uppercase!important}
 .about-route [data-ix]{text-transform:none!important}
+/* THE SECTION DOCK IS EXEMPT ON EVERY ROUTE, and the argument is the one the paragraph above
+   already makes, applied to the place it names.
+
+   That note gives the reason /about opts out: its controls "sit inside running prose and a section
+   dock rather than in a toolbar, and the uppercase voice read as shouting in that setting — which is
+   the argument the dock's own group heads settled first". The dock is named there because the dock
+   is where the argument came from. It just never reached the dock on the routes that are not
+   .about-route, so the same component shouted on one surface and spoke on the other.
+
+   It is a table of contents. Its rows are the names of chapters, and a chapter name is a title —
+   `Character and Contrast`, `The Whole Picture`, `Where It Lives`. Those strings are authored with
+   the capitals they should have, so `none` prints what was typed. NOT `capitalize`, which would
+   force a capital onto every word and give `Character And Contrast`; the conjunction is lowercase on
+   purpose and only the source knows that.
+
+   Scoped to the dock rather than removed from [data-ix], because the contract is right everywhere
+   else: the segmented controls, the actions and the cells are apparatus and go on speaking in caps.
+   This is the one control on the site that is a list of titles. */
+.section-dock [data-ix]{text-transform:none!important}
 /* CONTENT INSIDE A CONTROL KEEPS ITS OWN CASE, and this is the cost of stating the voice on the
    ancestor instead of on the label. text-transform inherits, so a rule that means "this control
    speaks in caps" reaches every descendant of it — including the ones holding something the app

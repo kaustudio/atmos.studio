@@ -422,7 +422,7 @@ function MobileStory({ st }) {
             <div className="glass-effect__edge-dark"></div>
             <div className="glass-effect__inner-glow"></div>
           </div>
-          <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="story-dock-list" data-focus="value" className="section-dock__toggle">
+          <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="story-dock-list" data-ix="cell" data-focus="value" className="section-dock__toggle">
             <span data-section-dock-label-wrap className="section-dock__label-wrap">
               <span className="section-dock__label">
                 <span className="section-dock__link-num">1.1</span>
