@@ -97,15 +97,29 @@ export function initHeroExit(root) {
      among themselves inside the new context. Set once here rather than per frame, and cleared with
      everything else.
 
-     IT RECEDES RATHER THAN LEAVING. The copy runs to 0 because a paragraph half-faded is a paragraph
-     still asking to be read; a field of colour at 0.55 is atmosphere, which is the one thing on this
-     screen allowed to still be there when the chapter arrives over it. The chapters paint their own
-     surface and sit a layer above, so what this really controls is the last screen of the hero, and
-     on that screen the words should finish before the air does. */
+     IT LEAVES COMPLETELY, and 0.55 was wrong for two reasons that only showed up on a real phone.
+
+     The argument for holding it at 0.55 was that a field of colour is atmosphere and may still be
+     there when the chapter arrives over it. That reasoning assumed the chapter covers it, and the
+     chapters do paint their own opaque surface — so after the hero the field is never legitimately
+     seen at all. 0.55 bought nothing visible and cost two real things.
+
+     IT LEAKED. `[data-landing]` is position:fixed and the sections are not, so "covered" holds only
+     while the sections span what the reader can see. Pinch zoom out on a phone and the visual
+     viewport grows past the layout viewport: the sections stop reaching the edges, and a half opaque
+     blurred orb field appears beside the article for the whole length of the page. Reported from a
+     device, and reproducible at any zoom below 1.
+
+     AND IT COST A FRAME. A blurred, half opaque, full screen layer stays composited for every frame
+     of every chapter, on the device least able to afford it, to be invisible.
+
+     autoAlpha rather than opacity, so the end of the run is visibility:hidden and not merely
+     transparent — nothing to paint, nothing to leak, and GSAP reverses both on the way back up so
+     scrolling to the top restores the field exactly. */
   const field = document.querySelector('[data-orbit]');
   if (field) {
     field.style.zIndex = '30';
-    tl.to(field, { opacity: 0.55, ease: 'none', duration: 0.92 }, 0);
+    tl.to(field, { autoAlpha: 0, ease: 'none', duration: 0.92 }, 0);
     tl.to(field, { filter: 'blur(8px)', ease: 'none', duration: 1 }, 0);
   }
 
@@ -115,6 +129,6 @@ export function initHeroExit(root) {
     try { if (trigger) trigger.kill(); } catch (e) { }
     try { tl.kill(); } catch (e) { }
     try { gsap.set(inner, { clearProps: 'opacity,filter' }); } catch (e) { }
-    try { if (field) gsap.set(field, { clearProps: 'opacity,filter,zIndex' }); } catch (e) { }
+    try { if (field) gsap.set(field, { clearProps: 'opacity,visibility,filter,zIndex' }); } catch (e) { }
   };
 }
