@@ -5,6 +5,33 @@ import { withoutRetired } from '../../lib/taxonomy.js';
 import { shareUrl } from '../../lib/share.js';
 import { buildMasks } from '../../lib/masks.js';
 
+/* THE SEEDED EXAMPLES ARE THE APP'S CONTENT, NOT THE READER'S, and until now the store could not
+   tell the difference.
+
+   `hydrateFeed` returns the stored feed whenever there is one — "stored feed wins (even if empty),
+   never re-seed over it" — which is exactly right for a palette someone made and exactly wrong for
+   the eight the app ships. The example table changed, and every returning visitor went on being
+   served the old one out of their own localStorage: Last Night, Poured Concrete, Powder and Ink and
+   Ember, months after they stopped existing in the source. A first-time visitor and a returning one
+   were looking at different products, and nothing in the app could ever correct it, because the
+   condition it branches on is "is anything stored" rather than "is what is stored still current".
+
+   SEED_VERSION is that missing question. It is written into the payload beside the schema version and
+   read back on every load; when it moves, the stored examples are replaced by the current table and
+   everything the reader actually made is kept exactly where it was.
+
+   It is NOT the schema version. That one describes the SHAPE of a record and moves when a field is
+   added or its meaning changes — a stored payload at the wrong schema cannot be read at all. This
+   describes the CONTENT of the eight seeds and moves when the table is edited; a payload at the wrong
+   seed version is perfectly readable, it is just out of date. Conflating them would mean either
+   re-seeding on every unrelated schema bump or, worse, quietly not re-seeding on a table change,
+   which is the bug being fixed.
+
+   BUMP THIS WHENEVER makeSeed's TABLE CHANGES — a name, a hash, a swatch, an added or removed
+   example. That is the whole contract, and it is the one thing a future edit to pipeline.js has to
+   remember. */
+const SEED_VERSION = 2;
+
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
   // now; a backend/account store can replace makeStore() later without touching call sites.
@@ -66,7 +93,11 @@ export const persistenceMethods = {
     const ids = new Set(projects.map((p) => p.id));
     // A membership naming a project that no longer exists is dropped, not left to point at nothing.
     feed.forEach((p, i) => { feed[i] = this.withProjects(p, this.palProjects(p).filter((x) => ids.has(x))); });
-    return { feed, projects, seeded: !!migrated.seeded };
+    /* Here rather than in hydrateFeed, because this is the one door every load comes through — boot
+       AND the cross-tab merge in _onStorage. A tab that reconciled and a tab that did not would
+       otherwise disagree about which eight examples exist and then sync that disagreement. */
+    const stale = (typeof migrated.seedVersion === 'number' ? migrated.seedVersion : 1) !== SEED_VERSION;
+    return { feed: stale ? this._reseed(feed) : feed, projects, seeded: !!migrated.seeded, reseeded: stale };
   },
   // Read + migrate + validate stored feed. Corrupt/newer/partial → null (caller seeds instead of crashing).
   loadPersisted() {
@@ -194,9 +225,31 @@ export const persistenceMethods = {
     }
     return out;   // may be empty (user deleted everything) — that is a valid persisted state, not a re-seed trigger
   },
+  /* Replace the seeded examples, keep everything the reader made.
+
+     `example === true` is the whole test, and it is reliable because nothing else sets it: seedObj
+     writes it and the generate, share and import paths do not. A palette someone made from one of
+     these photographs is still their palette and does not carry the flag.
+
+     ORDER IS THE FEED'S OWN. New palettes are prepended (`feed: [pal, ...st.feed]`), so a first load
+     is the seeds alone and every later one is user work on top. Rebuilding as user-work-then-seeds
+     restores exactly that shape rather than inventing a new one, and the library, the reel and the
+     phone's chooser all read feed order.
+
+     Nothing else has to be repaired. Memberships point from a palette to a project, never the other
+     way, so dropping an example orphans nothing; `current` is null on boot unless a share link set
+     it; and _storyCase falls through to the first example when the id it held is gone. */
+  _reseed(feed) {
+    const mine = feed.filter((p) => p.example !== true);
+    const seeds = this.makeSeed();
+    const taken = new Set(mine.map((p) => p.id));
+    return mine.concat(seeds.filter((p) => !taken.has(p.id)));
+  },
   hydrateFeed() {
     const parsed = this.loadPersisted();
-    if (parsed) { return parsed.feed; }            // stored feed wins (even if empty) — never re-seed over it
+    // Stored feed still wins for everything the reader made; only the seeded examples were replaced
+    // above, and that replacement is written back on mount so the next load reads it as current.
+    if (parsed) { if (parsed.reseeded) this._needSeedPersist = true; return parsed.feed; }
     this._needSeedPersist = true;                  // first-ever load: seed + mark seeded on mount
     return this.makeSeed();
   },
@@ -1058,7 +1111,7 @@ export const persistenceMethods = {
   closeManage() { const back = this._manageBack; this._dialogOut('[data-manage-dialog]', () => this.setState({ manageProjects: false, announce: 'Manage projects closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
   // Debounced save (immediate for delete/undo so a fast reload can't lose them).
   persist(opts) {
-    const write = () => this.writePayload({ version: 1, seeded: true, feed: this.state.feed, projects: this.state.projects });
+    const write = () => this.writePayload({ version: 1, seedVersion: SEED_VERSION, seeded: true, feed: this.state.feed, projects: this.state.projects });
     clearTimeout(this._saveT); this._saveT = null;
     if (opts && opts.immediate) { write(); }
     else { this._saveT = setTimeout(write, 400); }
