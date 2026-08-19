@@ -374,7 +374,7 @@
        whose character argues for that role. Every data-feature-pills-* attribute is the resource's
        contract and is load-bearing — see aboutPills.js. -->
   <figure class="about-figure about-figure--full about-figure--pills">
-    <div data-feature-pills-init data-feature-pills-active="false" class="pills" aria-label="The six semantic roles">
+    <div data-feature-pills-init data-feature-pills-active="false" data-cascade="self" class="pills" aria-label="The six semantic roles">
       <div class="pills__list-wrap">
         <ul role="list" class="pills__list" data-cascade>
           <li data-feature-pills-item data-active="false" class="pills__item">
@@ -524,7 +524,7 @@
   </div>
 
   <figure class="about-figure about-figure--split">
-    <div class="about-figure__media">
+    <div class="about-figure__media" data-cascade="self">
       <div class="about-shot" data-parallax="trigger" data-parallax-start="-7" data-parallax-end="7" data-parallax-disable="mobileLandscape">
         <div class="about-shot__inner" data-parallax="target">
           <img src="/assets/examples/profile-sky.webp" alt="A profile in silhouette against a clear evening sky." />
@@ -616,7 +616,7 @@
       </div>
       <p class="about-split__note">The source image holds every sampled colour between OKLCH lightness 0.50 and 0.85. It creates a beautiful sky, but leaves the palette without a colour dark enough to carry body text against its lighter surfaces. None of the original ten pairs reaches 4.5 to 1.</p>
     </div>
-    <div class="about-split" data-splitter-initial="42" data-splitter="wrap">
+    <div class="about-split" data-cascade="self" data-splitter-initial="42" data-splitter="wrap">
       <div class="splitter-content">
         <!-- A PICTURE OF A SYSTEM, not a system. role="img" is what makes that true for a screen
              reader, and it is doing two jobs: the text inside this layer is deliberately illegible

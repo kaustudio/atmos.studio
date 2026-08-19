@@ -123,6 +123,30 @@ export function initHeroExit(root) {
     tl.to(field, { filter: 'blur(8px)', ease: 'none', duration: 1 }, 0);
   }
 
+  /* [ATMOS 6] THE WORDMARK GOES AS SOON AS THE READER MOVES.
+
+     It is position:fixed at z-155 with mix-blend-mode:difference and nothing clears a band for it, so
+     every chapter scrolls underneath it. Measured across the story at 21 scroll positions, it printed
+     over live content at 5 of them — section headings, the OKLCH readouts, a chapter's lead. The blend
+     mode keeps it LEGIBLE over anything, which is why it never looked broken; it does nothing for the
+     sentence underneath, which had a wordmark through it.
+
+     It belongs to the opening screen. That is the one place it is the subject rather than an overlay:
+     the hero is the brand's own address, and the eight chapters after it are a document with a dock of
+     its own for orientation. So it leaves with the screen it belongs to.
+
+     0.25 AGAINST THE OTHERS' 0.92, and the short duration is the whole point. The copy and the field
+     dissolve across the hero's full tail because the reader is doing the dissolving and should watch
+     it. The wordmark is not being dissolved, it is getting out of the way — 0.25 of the range is about
+     200px, which is the first flick of a thumb. Anything longer and it is still half printed over the
+     first chapter, which is the state being fixed.
+
+     autoAlpha, so it ends hidden rather than transparent: a fixed layer at opacity 0 still takes the
+     tap that belongs to the chapter under it, and this one is a button. Scrubbed like everything else
+     here, so scrolling back to the top brings it with the hero it left with. */
+  const mark = document.querySelector('[data-logo]');
+  if (mark) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
+
   const trigger = tl.scrollTrigger;
 
   return function destroy() {
@@ -130,5 +154,6 @@ export function initHeroExit(root) {
     try { tl.kill(); } catch (e) { }
     try { gsap.set(inner, { clearProps: 'opacity,filter' }); } catch (e) { }
     try { if (field) gsap.set(field, { clearProps: 'opacity,visibility,filter,zIndex' }); } catch (e) { }
+    try { if (mark) gsap.set(mark, { clearProps: 'opacity,visibility' }); } catch (e) { }
   };
 }

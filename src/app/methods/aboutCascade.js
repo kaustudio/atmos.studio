@@ -124,8 +124,28 @@ export function initCascade(root, motion) {
   const units = [];
 
   sets.forEach((set) => {
-    const kids = [].slice.call(set.children).filter((el) => el.nodeType === 1);
-    if (kids.length < 2) return;
+    /* `data-cascade="self"` PARKS THE BLOCK, NOT ITS CHILDREN, and it exists for the sets this module
+       could not otherwise touch.
+
+       Audited on /about, eight graphic blocks had no entrance at all and sat fully drawn while the
+       copy around them rose out of masks. Four take the ordinary form below. The other three cannot:
+       `.pills` is an accordion whose buttons and panels aboutPills.js holds references to, `.about-split`
+       has its two faces and its handle positioned by aboutSplitter.js, and `.about-figure__media` wraps
+       a single `.about-shot` that aboutParallax.js drives. Parking the CHILDREN of any of those means
+       writing autoAlpha and y onto elements another module owns and is mid-way through positioning.
+
+       `data-reveal` is not the alternative either: it routes through pageReveal's revealMasked, which
+       calls splitLines, which calls wrapWords and rewrites innerHTML. On an accordion that discards
+       the very nodes its own script is holding.
+
+       So the block arrives as one box. Everything else here is unchanged — the same trigger, the same
+       catch-up sweep, the same reduced-motion floor — because the only thing that differs is what the
+       unit IS. A set of six swatches is six things arriving in sequence; a splitter is one thing. */
+    const asSelf = set.getAttribute('data-cascade') === 'self';
+    const kids = asSelf
+      ? [set]
+      : [].slice.call(set.children).filter((el) => el.nodeType === 1);
+    if (!asSelf && kids.length < 2) return;
 
     /* 12px, and it is small on purpose. These are not entering from off-screen — they are already in
        their own layout, and the travel is only there to give the fade a direction. A larger rise on a
@@ -139,7 +159,10 @@ export function initCascade(root, motion) {
        frame. Measured at build — these sets are type and swatches, so their height does not depend on
        an image that has yet to load, and the ones that DO change with the viewport change because the
        viewport changed, which is a reload-shaped event on the device this matters on. */
-    const perChild = set.getBoundingClientRect().height > window.innerHeight * 0.9;
+    // A self unit is one box by definition, so the tall-set split below does not apply to it: there
+    // is nothing to stagger, and splitting a single target into "one group of one" is the same tween
+    // with more bookkeeping.
+    const perChild = !asSelf && set.getBoundingClientRect().height > window.innerHeight * 0.9;
     const groups = perChild ? kids.map((k) => [k]) : [kids];
 
     groups.forEach((targets) => {

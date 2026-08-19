@@ -1,6 +1,8 @@
 # 007 — The phone gets a product, not a refusal
 
-**Commit:** against `58b67bb`
+**Commit:** landed across `3791395`, `0687cea`, `32f910d`, `26bf981`
+**Revised:** after the surface was rebuilt on /about's components. The chapter table, the
+verification and the open list below describe what SHIPPED, not the first architecture.
 **Severity:** HIGH · **Category:** Product / Mobile
 **Depends on:** none
 **Risk:** medium — a new phone surface, a new stylesheet, a new ScrollTrigger module. Desktop untouched by construction.
@@ -28,18 +30,48 @@ their roles → read the atmosphere → explore more → continue on desktop.`
 
 The desktop sentence is not deleted. It is chapter 8, where it is an invitation rather than a refusal.
 
-| # | Chapter | What it shows | Where the data comes from |
+| Shown as | Section | What it shows | Where the data comes from |
 |---|---|---|---|
-| 1 | `prologue` | The orb formation, the brand statement | the existing landing stage, showing through |
-| 2 | `image` | The case photograph, settling | `dispUrl(p)` → bundled `EXAMPLE_SRC` |
-| 3 | `structure` | Five fields at their real shares | `swatch.weight`, `swatchGrow`'s 6% visual floor |
-| 4 | `where` | Where each colour lives in the frame | `src/lib/masks.js`, computed at runtime |
-| 5 | `relationships` | Weight / Role / Contrast | `analysePalette`, `semanticRoles`, `paletteMetrics` |
-| 6 | `interpretation` | The reading, and what it is for | `p.rationale`, `composeUse()` |
-| 7 | `gallery` | The other seven cases | `_examples()` |
-| 8 | `handoff` | The desktop invitation | `shareUrl(p)` + `navigator.share` |
+| — | `story-hero` | The orb formation and the brand statement, sticky, dissolving in place | the landing stage, showing through |
+| 1.1 | `story-image` | The case photograph, whole | `dispUrl(p)` → bundled `EXAMPLE_SRC` |
+| 1.2 | `story-structure` | Five fields at their real shares, then the key as a tally | `swatch.weight` |
+| 1.3 | `story-where` | Where each colour lives in the frame | `src/lib/masks.js`, computed at runtime |
+| 2.1 | `story-relationships` | Character / Role / Contrast, on one segmented control | `analysePalette`, `semanticRoles`, `paletteMetrics` |
+| 2.2 | `story-interpretation` | The reading, and what it is for | `p.rationale`, `composeUse()` |
+| 3.1 | `story-gallery` | The other seven cases, as a pinned horizontal row | `_examples()` |
+| 3.2 | `story-handoff` | The desktop invitation, as a full-screen takeover | `handoffLine` |
 
-Chapters 1–6 are `min-height:100svh`, one message each. 7 and 8 are content-driven, per the brief.
+The numbers are the reader's, and they are the dock's: `.about-sec__num` was removed from every
+heading, so the numbering lives in the anchor dock where it is navigational rather than printed twice.
+
+## The surface is /about's components, not its own
+
+This is the single largest departure from the first draft, which built bespoke markup and a bespoke
+`methods/story.js`. Both are gone. The story is assembled from the components `/about` already ships
+— `.about-sec`, `.about-grid`, `.about-col`, `.about-figure`, `.about-weights`, `.about-role`,
+`.about-checks`, `.about-rail`, `.section-dock` — and driven by that page's own modules, each of
+which takes a root: `initPageReveal`, `initCascade`, `initHighlightText`, `initStickyTitle`,
+`initSectionDock`. `about.css` is already in this route's bundle, and where a rule was route-scoped
+its scope was widened to name this surface rather than being copied.
+
+Four resources were ported for what /about had no equivalent of, each with its departures recorded
+in its own header:
+
+| Module | Resource | Departures |
+|---|---|---|
+| `horizontalScroll.js` | Osmo Horizontal Scrolling Sections + mwg_001's card drift | `[ATMOS 5-10]` — halved drift ranges, layout-measured travel, the 140vw lead in, `documentElement` as the viewport |
+| `layeredSlider.js` | Osmo Layered Image Slider | `[ATMOS 1-4]` — the vendored ease instead of CustomEase, and the picture commits as well as the title |
+| `toggleSwitch.js` | Osmo Toggle Switch | `[ATMOS 1-3]` — React owns the selection, the module owns the pill and the arrow keys |
+| `heroExit.js` | this surface's own | the hero dissolves in place, and takes the field and the wordmark with it |
+
+## The picker cycle
+
+The close offers another palette. Choosing one re-tells all eight chapters about a different
+photograph and lands the reader back at the top, and it plays the site's own curved wipe to say so —
+`_wipeCover` in `methods/wipe.js`, extracted out of `navigateTo` so a route change is no longer the
+only thing that can raise the cover. The hero names the chosen palette from that point on, because a
+new document that opens with the same sentence gives the reader nothing to confirm their choice
+landed.
 
 ## The four decisions worth arguing
 
@@ -141,35 +173,55 @@ their boxes, re-solves the formation under a scrolling reader. Opacity changes n
 
 ## Verified
 
-Dev server, 375×812 and 1280×800, Chromium.
+Dev server at 375x812, Chromium. Document 8179px: hero 1624 (sticky, two screens of travel),
+1.1 246, 1.2 480, 1.3 873, 2.1 465, 2.2 246, 3.1 3027 (a 1991px pin inside it), 3.2 1624.
+Nineteen ScrollTriggers, exactly one pin, `documentElement.scrollWidth` 375 — no sideways scroll.
 
-- All eight chapters mount; document 5748px; six at 812, gallery 477, handoff 400.
-- `[data-story-live]` and `[data-story-at]` set; masked reveals run; scene scrubs in and out.
-- Chapter 3 states 49 / 36 / 10 / 4 / 1% — the palette's own weights.
-- Chapter 4: 4 of 5 swatches offered on Dry Season, the 0.8% one correctly refused; selecting
-  `#D5CDBF` lights the tulip's lit petals and mutes the rest.
-- Chapter 5 reads Dominant / Mid / Warm / Saturated from the live composers.
-- The allow-list survives minification — all six `:not()`s present in `dist/assets/global-*.css`.
-- **Desktop at 1280×800 is unchanged**: no story surface, landing not inert, `Get Started` present,
-  orb field running, headline still "Colour read from light and atmosphere. In seconds."
+- Every section reveals as it is reached; none stranded invisible after a wiped case change.
+- The rail enters from outside the viewport (first panel at +525 on a 375 screen, zero panels on
+  screen) and leaves completely (last panel at -153, zero on screen).
+- Two palette cards to a screen, so the row is a comparison rather than a carousel.
+- 1.2's key: all five readouts on one left edge, all five shares on one right edge, nothing clipped.
+- The wordmark overlaps live content at **0 of 21** scroll positions, down from 5.
+- The orb field ends the hero at opacity 0 AND `visibility:hidden`, so it neither leaks under pinch
+  zoom nor composites for the rest of the page.
+- `/about` unchanged by every shared-component edit: its weights key still `display:flex`, chip
+  10x10, share 9px/400/start.
+- Zero console errors across a full picker cycle, a `/about` round trip, and three repeat cycles
+  (one pin and 19 triggers each time — no accumulation).
 
-Two robustness defects were found and fixed during verification, both real rather than environmental:
+Defects found and fixed during the build, each recorded at its site:
 
-- `buildStoryMasks` latched `_maskBuilding` forever if `decode()` never settled (it does not settle
-  while the document is hidden), so chapter 4 would silently offer no regions for the rest of the
-  visit. Now has a 4s backstop, and compares the case **by id** rather than by object identity across
-  the async boundary.
-- The story armed only from `requestAnimationFrame`, which a document that mounts hidden is never
-  handed. Now paired with a timer, and `_syncStory` asks "is the module running on *this* element"
-  (via `[data-story-live]`) rather than trusting a stored handle — the previous version latched on
-  its own first bail, because `initStory` returns the same inert `noop` for every transient failure.
+- The takeover heading carried `data-sec-head` as well as `data-sticky-title`, so pageReveal split it
+  into lines over a module that had split it into characters. One engine per element now.
+- `_syncStory` re-entered and built a second set of modules over the same DOM.
+- Arming the page reveal behind the cover broke arrival at `/`, because `navigateTo` released the
+  desktop tool's reveals rather than the story's. Released from `_wipeCover` now, on every path.
+- The rail measured its travel from `scrollWidth`, which is not constant while its own contents are
+  being transformed — 1880 at rest, 1838 in flight, against a true 1841. A refresh mid-travel moved
+  the row 223px.
+- The 140vw lead in was on the wrap, which is `width:100%` under border-box, so it forced the used
+  width to 1050 and overflowed the page. On the first and last panel now.
+- `window.innerWidth` and the CSS viewport disagree under a scaled presentation; both axes read
+  `documentElement`.
 
 ## Still open
 
-- **Not tested on a physical phone.** iOS Safari's URL-bar behaviour is the reason for the `svh`/`lvh`
-  choice and is the one thing a desktop Chromium cannot confirm.
-- **No automated coverage.** `scripts/smoke.mjs` drives a single 1440×900 viewport and is currently
+- **The rail settles once by ~57px.** The first `ScrollTrigger.refresh()` that lands while the rail
+  is pinned shifts `pin.start` by exactly -57 and moves the row with it; every refresh after it is 0,
+  and a resize is 0. Down from 223px on *every* refresh, but not gone. Ruled out by measurement: the
+  arrival tween (persists with it neutralised), post-build layout change (a deferred refresh after
+  the full module build changes nothing), and margin collapsing between the grid above and the wrap's
+  own negative block margin (removing both changes nothing). It is ScrollTrigger measuring a pinned
+  trigger differently from an un-pinned one, with no DOM difference between the two states.
+- **Not tested on a physical phone.** The `svh`/`lvh` choice exists for iOS URL-bar behaviour and a
+  desktop Chromium cannot confirm it. Two device reports have already corrected this surface — the
+  zoom leak and the wordmark overlap — which is the argument for getting it onto real hardware.
+- **Hyphens in generated copy.** `even-tempered`, `matter-of-fact`, `mid-toned` live in
+  `src/lib/reading.js`, the palette-reading vocabulary shared with the desktop tool. They are
+  compound adjectives rather than dashes, so they were left alone; the standing "no hyphens" rule was
+  given for this surface's own copy.
+- **No automated coverage.** `scripts/smoke.mjs` drives a single 1440x900 viewport and is currently
   unrunnable as written (hardcoded Linux Chromium path).
-- **`DECISIONS.md` has no phone entry at all** — verified by grep. The entire phone decision record
-  lives in block comments and commit messages, which is the failure mode that file exists to prevent.
-  This plan is the first written record; a dated entry should follow.
+- **`DECISIONS.md` has no phone entry.** The phone decision record lives in block comments, this plan
+  and commit messages, which is the failure mode that file exists to prevent.
