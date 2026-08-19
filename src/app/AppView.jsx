@@ -6,6 +6,10 @@ import { sx } from '../lib/sx.js';
 import { B006, B006Text, GlassEffect, TextSwap, ThemeSwitch } from './chrome.jsx';
 import LegalPage from './LegalPage.jsx';
 import AboutPage from './AboutPage.jsx';
+// The phone story's own layer. Imported here rather than by a route component because this surface
+// is one of AppView's early-return branches, not a route — and it is scoped entirely under
+// [data-mobile-story], so nothing it holds can reach a viewport that never mounts that surface.
+import '../styles/story.css';
 import { isDoc, isLegal, pathFor } from './routes.js';
 // PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
 // any in-app action. Behavioural instrumentation is a separate decision with its own copy
@@ -58,7 +62,23 @@ const MARK_MASK = "url('/assets/atmos-gallery-logo-black.svg') left center/conta
 // It is fixed rather than a child of the header (it also flies over the landing), so the shared
 // centre has to be restated here; anything else reads as the logo sitting low in the row.
 const logoStyle = {
-  ...sx('position:fixed;top:18.5px;left:50%;transform:translateX(-50%);width:165px;height:26px;z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
+  /* CENTRED WITHOUT A TRANSFORM, and that is a bug fix rather than a preference.
+
+     It was `left:50%` plus `transform:translateX(-50%)`, which centres correctly until something
+     clears the transform — and something does. The wipe drifts every child of [data-app] for depth
+     and finishes with `clearProps:'transform,opacity'`, which does not restore a transform, it
+     REMOVES the declaration. The wordmark is a direct child of [data-app], so the half-width pull
+     that was centring it was deleted by the first transition and never came back: measured at
+     left:188 in a 375px viewport, its centre 83px right of the screen's, which is exactly half its
+     own 165px width.
+
+     Auto margins in a fixed inset need no transform at all, so there is nothing for clearProps to
+     take. The drift can still animate y, and clearing it afterwards now removes only what the drift
+     itself wrote.
+
+     The size is a pair of tokens so the phone can step it down without !important overriding an
+     inline style, and so the two numbers stay in one place. */
+  ...sx('position:fixed;top:18.5px;left:0;right:0;margin-inline:auto;width:var(--logo-w);height:var(--logo-h);z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
   WebkitMask: LOGO_MASK, mask: LOGO_MASK,
 };
 
@@ -361,6 +381,564 @@ function MobileExampleList({ ml }) {
   );
 }
 
+/* THE PHONE'S STORY. Eight chapters that read one photograph, standing where the desktop gate used
+   to — see src/styles/story.css for the layout argument.
+
+   IT IS /about's PAGE, AT ONE COLUMN. Not a surface that resembles it: the same section element, the
+   same grid, the same reading column, the same figures, the same anchor dock, and — the part that
+   matters most and was hardest to see — the same MOTION MODULES. initPageReveal, initCascade,
+   initDividers and initSectionDock are all root-scoped, so they run over this markup exactly as they
+   run over /about's. There is no second reveal engine and no second set of tokens to drift.
+
+   NO PHOTOGRAPH BEHIND THE WORDS. The first pass hung a fixed image behind the whole surface with a
+   gradient scrim over it, and copy on top. Three things were wrong with that and only the first was
+   obvious: the type's contrast depended on which part of which photograph happened to sit behind it,
+   so it was a different answer per case and per scroll position; a fixed image cannot be themed, so
+   the surface had one appearance while the rest of the site had two; and it is not what this site
+   does — /about has no full-bleed photograph behind body copy anywhere in its fourteen sections. The
+   pictures are FIGURES now. They sit in the reading flow, framed, labelled, on the surface colour,
+   and the surface colour is a token — so light and dark both work by construction rather than by a
+   second set of rules.
+
+   THE MASKS ARE THE ONE PLACE TWO IMAGES STILL STACK, and there they are the subject: chapter 3 shows
+   the same photograph twice, one muted and one full-strength through a colour's mask, which is the
+   whole point of that chapter rather than a background treatment. */
+function MobileStory({ st }) {
+  const lit = !!st.litMask;
+  return (
+    <div data-mobile-story="1" className="doc-route">
+
+      {/* THE ANCHOR DOCK, /about's own — same markup, same module, same glass pane. It is the one
+          affordance a scrolling story of this length was missing: seven chapters is more than a
+          reader can hold, and the dock says both where you are and what is left. */}
+      <nav data-section-dock-init aria-label="Chapters of this story" className="section-dock">
+        <div data-section-dock-pill className="section-dock__pill">
+          <div className="glass-effect" aria-hidden="true">
+            <div className="glass-effect__fill"></div>
+            <div className="glass-effect__fill-burn"></div>
+            <div className="glass-effect__highlight-soft"></div>
+            <div className="glass-effect__highlight-strong"></div>
+            <div className="glass-effect__edge-light"></div>
+            <div className="glass-effect__edge-dark"></div>
+            <div className="glass-effect__inner-glow"></div>
+          </div>
+          <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="story-dock-list" data-focus="value" className="section-dock__toggle">
+            <span data-section-dock-label-wrap className="section-dock__label-wrap">
+              <span className="section-dock__label">
+                <span className="section-dock__link-num">1.1</span>
+                <span>The Whole Picture</span>
+              </span>
+            </span>
+            <span className="section-dock__caret" aria-hidden="true"></span>
+          </button>
+          <div data-section-dock-list id="story-dock-list" className="section-dock__list">
+            <div data-section-dock-indicator className="section-dock__indicator"></div>
+            <ul className="section-dock__items">
+              <li data-dock-group className="section-dock__group">
+                <button type="button" data-dock-group-toggle aria-expanded="true" aria-controls="story-dock-g1" data-ix="cell" data-focus="value" className="section-dock__group-head">
+                  <span className="section-dock__link-num">1</span><span>The Image</span>
+                  <span className="section-dock__chev" aria-hidden="true"></span>
+                </button>
+                <ul id="story-dock-g1" data-dock-sub className="section-dock__sub">
+                  <li><a data-active data-section-dock-link href="#story-image" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.1</span><span>The Whole Picture</span></a></li>
+                  <li><a data-section-dock-link href="#story-structure" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.2</span><span>The Structure</span></a></li>
+                  <li><a data-section-dock-link href="#story-where" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.3</span><span>Where It Lives</span></a></li>
+                </ul>
+              </li>
+              <li data-dock-group className="section-dock__group">
+                <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="story-dock-g2" data-ix="cell" data-focus="value" className="section-dock__group-head">
+                  <span className="section-dock__link-num">2</span><span>The Reading</span>
+                  <span className="section-dock__chev" aria-hidden="true"></span>
+                </button>
+                <ul id="story-dock-g2" data-dock-sub className="section-dock__sub">
+                  <li><a data-section-dock-link href="#story-relationships" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.1</span><span>Character and Contrast</span></a></li>
+                  <li><a data-section-dock-link href="#story-interpretation" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.2</span><span>What It Says</span></a></li>
+                </ul>
+              </li>
+              <li data-dock-group className="section-dock__group">
+                <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="story-dock-g3" data-ix="cell" data-focus="value" className="section-dock__group-head">
+                  <span className="section-dock__link-num">3</span><span>Onward</span>
+                  <span className="section-dock__chev" aria-hidden="true"></span>
+                </button>
+                <ul id="story-dock-g3" data-dock-sub className="section-dock__sub">
+                  <li><a data-section-dock-link href="#story-gallery" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.1</span><span>Other Atmospheres</span></a></li>
+                  <li><a data-section-dock-link href="#story-handoff" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.2</span><span>Your Own Image</span></a></li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      {/* KEYED ON THE CASE, and this is the fix for a bug that only appears when the story re-tells
+          itself about a different image.
+
+          pageReveal hands every [data-reveal] block to splitLines(), and the highlight hands its
+          statement to splitChars() — both rewrite the element's children into per-line and per-char
+          spans. React does not know that happened. So when the case changed, the palette data updated
+          everywhere it was plain DOM (the weight bar, the key, the role cells) and every SPLIT
+          sentence kept the old case's words: "Atmos reads Dry Season from a photograph" sitting above
+          Scorched Clear Morning's colours. Measured exactly that way before this line.
+
+          Keying <main> on the case id makes React discard the whole subtree and build it fresh, so
+          the split spans go with it and the new text arrives unsplit. _syncStory then rebuilds the
+          modules against the new DOM — it is already keyed on the same id, so the two stay in step.
+
+          A case change is a rare, deliberate act that also returns the reader to 1.1, so remounting
+          costs nothing anyone can perceive; the alternative is asking every dynamic sentence to
+          survive being rewritten by a module that does not know React exists. */}
+      <main key={st.caseId}>
+      {/* ===== data-reveal IS FOR TEXT, AND NEVER FOR A BLOCK HOLDING A CONTROL =====
+
+          pageReveal hands every [data-reveal] block to splitLines(), which rebuilds it: each word
+          becomes an inline span, the browser is asked where the lines fell, and the words are
+          regrouped into .reveal-mask/.reveal-line pairs with Ranges. It is a DOM rewrite, and it
+          replaces the nodes inside the block for as long as the reveal is in flight.
+
+          On /about that costs nothing — that route's markup is a static HTML string injected with
+          dangerouslySetInnerHTML, so nothing React owns is inside it. (Its one control-bearing
+          block, .about-end__act, is exactly that case.) Here the markup IS React's, and a replaced
+          node loses the props React attached to it. Measured on this surface: while the handoff's
+          reveal was running, the `Explore Another Palette` button had no __reactProps at all and its
+          onClick simply did not exist — it looked and hit-tested like a working button and answered
+          nothing. It came back the moment the reveal finished and restored the original nodes, which
+          is what made it look intermittent rather than broken.
+
+          So three blocks lost the attribute: 1.3's figure (the swatch picks), 2.1's figure (the
+          segmented group) and 3.2's actions. They are visible from the start now, which is the floor
+          this surface is built on anyway — the section's own rule and heading still animate, and
+          nothing that can be pressed is ever mid-rewrite when a thumb lands on it. */}
+        {/* THE PROLOGUE. The one screen with no section rule and no number: it is the arrival, and
+            /about's hero carries neither either. The orb formation shows through from the landing
+            stage below — the only place on this surface where something sits behind the words, and
+            it is the brand's own field rather than a photograph. */}
+        <header className="story-hero about-grid" data-story-hero>
+          <div className="story-hero__inner" data-story-hero-inner>
+            <h1 data-story-hero-line>{st.heroTitle}</h1>
+            <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
+            <div className="story-hero__act">
+              <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
+                aria-label="See how Atmos reads it: begin the story">See How Atmos Reads It</button>
+            </div>
+          </div>
+        </header>
+
+        {/* 1.1 — THE CASE, IN WORDS. NO PICTURE HERE, and its absence is the point.
+
+            This chapter carried a full-width figure of the case photograph, and 1.3 carries the same
+            photograph again at the same size two screens later. One image, twice, is not emphasis —
+            it is the reader being shown the thing they were just shown, and it made the story feel
+            like it was padding.
+
+            So the picture arrives ONCE, in 1.3, where it has work to do: a colour's region cut out of
+            its own frame. Here the case is introduced the way a reading is introduced — by name, and
+            by what it is a photograph OF — which is also what lets 1.3's reveal land rather than
+            repeat. The page is ~450px shorter for it. */}
+        <section id="story-image" data-story-ch="image" data-sec data-rule className="about-sec about-grid">
+          <div className="about-col">
+            <h2 data-sec-head>Start with the whole image</h2>
+            <p data-reveal>Atmos reads {st.name} from a photograph. Every colour it returns is a measurement of that frame, not a guess at what would go with it.</p>
+            <p data-reveal>{st.descriptors && st.descriptors.length ? st.descriptors.join(' · ') : ''}</p>
+          </div>
+        </section>
+
+        {/* 1.2 — THE STRUCTURE, as /about's weight figure: a bar of true shares, numbers in the key. */}
+        <section id="story-structure" data-story-ch="structure" data-sec data-rule className="about-sec about-grid">
+          <div className="about-col">
+            <h2 data-sec-head>A palette is more than a list of colours</h2>
+            <p data-reveal>Each colour holds a share of the frame. These are the real proportions.</p>
+          </div>
+          <figure className="about-figure about-figure--full" data-cascade>
+            <div className="about-weights" role="img" aria-label={st.weightsAria}>
+              {st.swatches.map((r) => (
+                <span key={r.key} className="about-weights__part" style={{ width: r.share + '%', background: r.hex }}></span>
+              ))}
+            </div>
+            {/* THE KEY UNDER-FILLED, IT NEVER OVERFLOWED — and that is why no markup changes here.
+
+                about.css:352 lays these five rows out as a flex wrap with a 24px column gap, which is
+                right at /about's 1032px and only there. At 375px the figure is 343px and two rows
+                would need 375, so the wrap drops to one row per line and each row uses 179 of the 343
+                available. Five rows, 164px of dead air each. The four fields have always fitted one
+                line with room to spare; nothing had to be cut or stacked to make them fit.
+
+                So the fields keep their classes, their order and their mapping, identical to /about's,
+                and the whole repair is scoped rules in story.css turning a wrapped list into the
+                full-width tally this surface already uses at 2.1.
+
+                role="list" is a separate, pre-existing repair: list-style:none drops list semantics in
+                Safari, on both surfaces. */}
+            <ol className="about-weights__key" role="list">
+              {st.swatches.map((r) => (
+                <li key={r.key}>
+                  <span className="about-key__chip" style={{ background: r.hex }}></span>
+                  <span className="about-key__hex">{r.hex}</span>
+                  <span className="about-key__ok">{r.ok}</span>
+                  <span className="about-key__pct">{r.pct}</span>
+                </li>
+              ))}
+            </ol>
+          </figure>
+        </section>
+
+        {/* 1.3 — WHERE THE COLOUR LIVES. The two stacked photographs live HERE, inside a bounded
+            figure, because here they are the subject — a colour's region cut out of its own picture. */}
+        <section id="story-where" data-story-ch="where" data-sec data-rule className="about-sec about-grid">
+          <div className="about-col">
+            <h2 data-sec-head>See where each colour comes from</h2>
+            <p data-reveal>
+              {st.anyRegion
+                ? 'Tap a colour to find it in the photograph.'
+                : 'These colours are spread too finely to locate. The reading below still holds.'}
+            </p>
+          </div>
+          {st.hasImage && (
+            <figure className="about-figure about-figure--full">
+              <div className="story-mask">
+                <img className="story-mask__base" src={st.image} alt="" decoding="async" style={{ opacity: lit ? 0 : 1 }} />
+                <img className="story-mask__dim" src={st.image} alt="" decoding="async" style={{ opacity: lit ? 1 : 0 }} />
+                <img className="story-mask__lit" src={st.image} alt="" decoding="async"
+                  style={lit ? { opacity: 1, WebkitMaskImage: 'url(' + st.litMask + ')', maskImage: 'url(' + st.litMask + ')' } : { opacity: 0 }} />
+              </div>
+              <ul className="about-roles" data-story-picks="1" data-cascade aria-label="The palette's colours">
+                {/* A SWATCH WITH NO REGION IS NOT A DISABLED BUTTON, IT IS A CELL. `[data-ix]:disabled`
+                    sets opacity:.42, which repaints the swatch — the one element whose whole job is to
+                    be an exact colour — and takes its note to roughly 2.5:1 at 10px. /about's rule for
+                    a cell carrying real palette colour is "NO OPACITY… that is not a tint", and it
+                    ships this component as a plain div. So do we, where there is nothing to press. */}
+                {st.swatches.map((r) => (
+                  <li key={r.key}>
+                    {r.hasRegion ? (
+                      <button type="button" className="about-role" data-story-pick="1" data-ix="cell" data-focus="value"
+                        aria-pressed={r.selected} aria-label={r.aria} onClick={r.onPick}>
+                        <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
+                        <span className="about-role__hex">{r.hex}</span>
+                        <span className="about-role__note">{r.pct + ' of the frame'}</span>
+                      </button>
+                    ) : (
+                      <div className="about-role" data-story-pick="1">
+                        <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
+                        <span className="about-role__hex">{r.hex}</span>
+                        <span className="about-role__note">{r.pct + ', spread too finely to locate'}</span>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </figure>
+          )}
+        </section>
+
+        {/* 2.1 — CHARACTER, ROLE AND CONTRAST. Three /about figures behind one segmented group. */}
+        <section id="story-relationships" data-story-ch="relationships" data-sec data-rule className="about-sec about-grid">
+          <div className="about-col">
+            <h2 data-sec-head>Character, role and contrast</h2>
+            <p data-reveal>Three readings of the same five colours, measured the same way the desktop measures them.</p>
+          </div>
+          <div className="about-figure about-figure--full">
+            {/* A segmented group carrying aria-pressed, not a tablist: there is no tab primitive in
+                this codebase, and a control that announces itself as tabs without answering an arrow
+                key is worse than one that never claimed to. */}
+            {/* Osmo Supply's Toggle Switch — its markup, its attributes, its background pill. The
+                module (methods/toggleSwitch.js) moves the pill and owns the arrow keys; React owns
+                which reading is selected, because that also decides which panel renders. See
+                [ATMOS 2] there for why the two do not fight.
+
+                A group of pressed buttons rather than a tablist: there is no tab primitive in this
+                codebase, and a control announcing itself as tabs without answering an arrow key
+                would be worse than one that never claimed to — this one does answer them. */}
+            <div data-toggle-init className="toggle-switch" role="group" aria-label="Which reading to show">
+              <div aria-hidden="true" className="toggle-switch__bg"></div>
+              {st.segs.map((t) => (
+                <button key={t.key} type="button" data-toggle-btn className="toggle-switch__btn"
+                  {...(t.selected ? { 'data-toggle-active': '' } : {})}
+                  aria-pressed={t.selected} aria-label={t.aria} onClick={t.onPick}>
+                  <span>{t.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {st.tab === 'weight' && (
+              <figure className="about-figure" data-story-panel="1">
+{/* NO LABEL. It said "Character", one line under a segmented control whose pressed segment
+                    already says Character — the panel is the answer to the toggle, so naming it again
+                    is the control's own word printed twice with nothing between them. The same went
+                    for the Roles panel below. The contrast panel keeps its line because that one is
+                    not the tab's name: it is the reading. */}
+                {/* A DESCRIPTION LIST, AND THE ANSWER LEADS.
+
+                    This was `.about-thresholds`, which was the wrong borrowing twice over. First the
+                    mechanical half: both of that component's type rules are scoped to `.about-route`
+                    and were never widened to this surface, so the term and its value rendered
+                    byte-identically — 16px, weight 400, full ink, no tracking, one above the other.
+                    Nothing said which was the question and which was the answer.
+
+                    Then the half that mattered more. /about's thresholds read "Body text → 4.5 to 1
+                    or higher": the TERM is the subject and the value is a number qualifying it, so
+                    that component puts the term in ink and mutes the value. This content is the other
+                    way round. "Dominance → Dominant" is a measurement OF this palette; the band is
+                    what the reading found, and the dimension is apparatus. Borrowing /about's
+                    emphasis would have shouted the label and whispered the finding.
+
+                    So the answer takes the ink and the size, the dimension takes the label voice this
+                    site already uses for apparatus, and the pair becomes a real dt/dd — a term and
+                    its description, which is what it always was. Two up, so five facts read as a
+                    block rather than a 462px column. */}
+                <dl className="story-facts" data-cascade>
+                  {st.bands.map((b) => (
+                    <div key={b.key} className="story-facts__row">
+                      <dt>{b.label}</dt>
+                      <dd>{b.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </figure>
+            )}
+
+            {st.tab === 'role' && (
+              <figure className="about-figure" data-story-panel="1">
+{/* No role="img"/aria-label on the cells: that makes the subtree presentational, so the
+                    name, the hex and the share — all real text — would be dropped from the tree and
+                    replaced by one string. About ships this cell bare. */}
+                <div className="about-roles" data-cascade>
+                  {st.roleCells.map((c) => (
+                    <div key={c.key} className="about-role">
+                      <span className="about-role__swatch" style={{ background: c.swatch }} aria-hidden="true"></span>
+                      <span className="about-role__name">{c.name}</span>
+                      <span className="about-role__hex">{c.hex}</span>
+                      <span className="about-role__note">{c.note}</span>
+                    </div>
+                  ))}
+                </div>
+              </figure>
+            )}
+
+            {st.tab === 'contrast' && (
+              <figure className="about-figure" data-story-panel="1">
+                {/* THE FINDING, NOT THE TAB. This read "Contrast: Mixed", which is the segment's own
+                    word plus a verdict that cannot stand without it — drop the prefix and "Mixed" is
+                    not a sentence. aaCount says the same thing and says it whole, so the line survives
+                    the other two by carrying something the toggle does not already say. It is also
+                    the only place the overall verdict appears: the list below is per pair. */}
+                <p className="about-figure__label">{st.aaCount}</p>
+                {/* `.about-checks` — About's narrow-column form of the pair row, right here twice over:
+                    it fits one phone column, and its `__pair` slot holds the pair's NAME as text beside
+                    the chips. The matrix form left "which two colours" to two unlabelled swatches,
+                    which is the one thing this page may not do — state something in colour alone. */}
+                <ul className="about-checks" data-cascade>
+                  {st.pairs.map((pr) => (
+                    <li key={pr.key} className={pr.cls}>
+                      <span className="about-checks__pair">
+                        <span className="about-key__chip" style={{ background: pr.a }} aria-hidden="true"></span>
+                        <span className="about-key__chip" style={{ background: pr.b }} aria-hidden="true"></span>
+                        {pr.pair}
+                      </span>
+                      <span className="about-checks__val">{pr.val}</span>
+                      <span className="about-checks__verdict">{pr.use}</span>
+                    </li>
+                  ))}
+                </ul>
+              </figure>
+            )}
+          </div>
+        </section>
+
+        {/* 2.2 — THE READING. */}
+        <section id="story-interpretation" data-story-ch="interpretation" data-sec data-rule className="about-sec about-grid">
+          <div className="about-col">
+            <h2 data-sec-head>Atmos turns colour into a reading</h2>
+            {/* HIGHLIGHT TEXT ON SCROLL — Osmo Supply's resource, already ported and already on this
+                site (methods/aboutHighlight.js). The reading resolves character by character as it
+                comes up, which is the one place on this surface where that mechanic says something
+                true rather than decorative: the sentence is the product's OUTPUT, composed from the
+                analysis, and watching it resolve is watching the reading arrive. Same attribute
+                contract /about uses on its own closing statement. */}
+            {st.rationale && (
+              <p className="about-statement" data-highlight-text
+                data-highlight-scroll-start="top 86%" data-highlight-scroll-end="center 52%"
+                data-highlight-stagger="0.05">{st.rationale}</p>
+            )}
+            {st.useLine && <p data-reveal>{st.useLine}</p>}
+          </div>
+        </section>
+
+        {/* 3.1 — MORE ATMOSPHERES, AND THE ONE PLACE THE PAGE TURNS SIDEWAYS.
+
+            Osmo Supply's Horizontal Scrolling Sections (methods/horizontalScroll.js). Seven cases
+            read as seven full screens of vertical scroll in a story that was already long; pinned and
+            translated they are one screen that moves sideways under the thumb — the same content, a
+            fraction of the column, and the one moment in the story where the page does something the
+            reader did not expect.
+
+            It earns the surprise rather than spending it: a gallery is the one section here that is a
+            SET rather than an argument, and a set laid across is a set you compare. The chapters
+            either side stay vertical, so this reads as a turn rather than as a gimmick.
+
+            No `data-horizontal-scroll-disable`: the resource's opt-outs exist to spare small screens
+            a desktop effect, and this surface IS the small screen — disabling it here would disable
+            it everywhere. The wrapper sits outside `.about-grid`, because a pinned element inside a
+            grid track is pinned to the track rather than to the viewport. */}
+        <section id="story-gallery" data-story-ch="gallery" data-sec data-rule className="about-sec about-sec--gallery">
+          <div className="about-grid">
+            <div className="about-col">
+              <h2 data-sec-head>Different images, different structures</h2>
+              <p data-reveal>Read another image, and watch the same process return a different system.</p>
+            </div>
+          </div>
+
+          <div className="story-horizontal" data-horizontal-scroll-wrap>
+            {st.cases.map((c) => (
+              <div key={c.key} className="story-hpanel" data-horizontal-scroll-panel>
+                <button type="button" className="about-rail__card" data-story-case="1" data-ix="press" data-focus="value"
+                  onClick={c.onOpen} aria-label={c.aria}>
+                  {c.hasImage && <img src={c.image} alt="" loading="lazy" decoding="async" />}
+                  <span className="about-rail__content">
+                    <span className="about-rail__meta"><span>{c.note}</span></span>
+                    <span>
+                      {/* data-case="own": the palette's NAME is a string the reading invented, and
+                          the uppercase control voice would otherwise inherit into it. */}
+                      <span className="about-rail__name" data-case="own">{c.name}</span>
+                      <span className="about-rail__strip" aria-hidden="true">
+                        {c.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
+                      </span>
+                    </span>
+                  </span>
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3.2 — THE CLOSE, AS A TAKEOVER.
+
+            Osmo Supply's Sticky Title Scroll Effect (methods/aboutStickyTitle.js, already ported —
+            its SplitText call is hand-rolled here because that plugin is not among the five vendored
+            on this site). The resource's attributes are kept exactly: [data-sticky-title="wrap"] on
+            the section, [data-sticky-title="heading"] on the statement.
+
+            ONE HEADING, NOT THREE. The resource stacks two or three and fades between them; the
+            module's own loop fades out every heading except the last, so a single heading resolves
+            and then simply holds — which is what a closing statement wants. The scrub is the point:
+            the question assembles itself as the reader arrives at it rather than being there already.
+
+            NO data-sticky-arc. That attribute is /about's colour arc, six palettes the ground travels
+            through behind three statements. Six grounds behind one sentence would be noise, so this
+            wrap opts out and keeps the surface colour.
+
+            The wrapper is taller than the sticky container on purpose — that difference IS the scrub
+            distance, and with them equal the effect has nowhere to run. */}
+        <section id="story-handoff" data-story-ch="handoff" data-sec data-rule
+          data-sticky-title="wrap" className="story-cta">
+          <div className="story-cta__container">
+            <div className="story-cta__inner">{/* NO data-sec-head, AND THAT IS THE WHOLE BUG.
+
+                This heading carried it, so TWO engines owned the same element. pageReveal groups
+                every [data-sec-head] and hands it to splitLines(), which rewrites innerHTML into
+                per-line masks; the sticky title had already split the same heading into per-character
+                spans and hung a scrubbed timeline off them. The line split replaced those spans, so
+                the timeline was left animating nodes that were no longer in the document — and the
+                floor this module sets at split time (autoAlpha 0) stayed on the survivors. Result:
+                the whole statement invisible, with a scrub sitting at progress 1 and no tween on a
+                single character.
+
+                It also explains the earlier symptom that looked like flicker rather than absence.
+                One engine or the other, never both. The takeover owns this heading. */}
+              <h2 data-sticky-title="heading" className="story-cta__title">Ready to read your own image?</h2>
+              <p className="story-cta__lead">{st.handoffLine}</p>
+              <div className="story-actions">
+                <button type="button" className="glass-cta" data-focus="chrome"
+                  onClick={st.onAnother} aria-label="Explore another palette: open the example palettes">Explore Another Palette</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* ===== THE IMAGE CHOOSER — Osmo Supply's Layered Image Slider =====
+
+          Opened by the close's one act. The resource's structure and every one of its data-
+          attributes are kept: backgrounds that crossfade, a centred strip of titles, the small
+          masked frame at the bottom, the counter, the autoplay bar and the two nav buttons. The
+          module (methods/layeredSlider.js) supplies the swipe through Observer.
+
+          THE TITLES ARE THE PALETTE NAMES, and the two image sets are the same photograph twice: the
+          resource pairs a full-bleed background with a different image in the mask frame, which is a
+          campaign device. Here both are the case, because the reader is choosing between eight real
+          palettes and showing them two unrelated pictures per choice would be decoration standing
+          where information belongs.
+
+          It COVERS the story rather than replacing it, so the eight chapters behind it keep their
+          scroll position and their built masks while the reader looks — and inert + aria-hidden go
+          on the story underneath, because nothing behind a full-screen surface should be reachable. */}
+      {st.pickerOpen && (
+        <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an image to read">
+          <section data-layered-slider-init data-layered-slider-autoplay="0" className="layered-slider">
+            <div className="layered-slider__container">
+              <div className="layered-slider__bg-collection">
+                <div className="layered-slider__bg-list">
+                  {st.picker.cases.map((c) => (
+                    <div key={c.key} data-layered-slider-bg className="layered-slider__bg-item">
+                      {c.hasImage && <img src={c.image} alt="" className="layered-slider__bg-img" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="layered-slider__bg-dark"></div>
+
+              <div className="layered-slider__text-collection">
+                <div className="layered-slider__text-list">
+                  {st.picker.cases.map((c) => (
+                    <div key={c.key} data-layered-slider-title className="layered-slider__text-item">
+                      {/* A button, not the resource's <a>: this commits a choice rather than
+                          navigating, so it must not be a link that goes nowhere. data-case="own"
+                          because the palette's name is a string the reading invented. */}
+                      <button type="button" className="layered-slider__text-title" data-focus="chrome"
+                        data-case="own" aria-label={'Read ' + c.name}>{c.name}</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div data-layered-slider-mask className="layered-slider__mask-collection">
+                <div className="layered-slider__mask-list">
+                  {st.picker.cases.map((c) => (
+                    <div key={c.key} data-layered-slider-mask-item className="layered-slider__mask-item">
+                      {c.hasImage && <img src={c.image} draggable="false" alt="" className="layered-slider__mask-img" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="layered-slider__overlay">
+                <div className="layered-slider__overlay-top">
+                  <span data-layered-slider-current className="layered-slider__span">01</span>
+                  <div className="layered-slider__progress">
+                    <div data-layered-slider-fill className="layered-slider__progress-inner"></div>
+                  </div>
+                  <span data-layered-slider-total className="layered-slider__span">05</span>
+                </div>
+                <div className="layered-slider__overlay-btm">
+                  <div className="layered-slider__nav">
+                    <button type="button" data-layered-slider-prev data-focus="chrome"
+                      className="layered-slider__nav-button" aria-label="Previous image">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+                    </button>
+                    <button type="button" data-layered-slider-next data-focus="chrome"
+                      className="layered-slider__nav-button" aria-label="Next image">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MobileShareView({ ms }) {
   return (
     /* 100dvh, contained overscroll and the Lenis exemption, for the reasons spelled out on the list
@@ -548,13 +1126,33 @@ function SiteFooter({ route, onNavigate }) {
    `covered` is passed by those two paths: aria-hidden and inert together, so nothing under a
    full-screen surface is readable, focusable or tabbable — which is the whole reason the early
    returns existed. The tool is still left out of the tree entirely; only this stage stays. */
-function LandingStage({ vals, covered }) {
+/* `quiet` is the story's own state, and it is deliberately NOT `covered`.
+
+   `covered` says "an opaque surface is over this": it applies inert + aria-hidden, and its callers
+   also fall out of _landingLit(), which parks the orbit ticker. That is right for the example list
+   and the share view and wrong for the story, whose first chapter is transparent so that the orb
+   formation showing through IS the prologue's visual — the field has to stay lit and turning.
+
+   What the story does need is for the GATE'S COPY to stop existing. It is the same screen: the
+   heading, the sentence and `Try an Example` would otherwise sit behind chapter 1's own words, two
+   headlines deep, and the button would still take a Tab and a tap from behind an opaque chapter
+   further down. So `quiet` hides the block and hands the whole landing inert + aria-hidden, while
+   _landingLit() — which does not know about the story — keeps the formation running.
+
+   HIDDEN BY OPACITY, NEVER BY DISPLAY OR A TRANSFORM. `o.reachWatch` is a ResizeObserver on
+   `[data-landing] h1, [data-landing] p, [data-glass-cta]`, and _heroReach() measures those marks plus
+   [data-gate-actions] to solve every ring radius. Removing them, or changing any of their boxes,
+   re-fires the observer and re-solves the formation underneath a reader who is scrolling. Opacity
+   changes no box, so the rings stay exactly where they were solved — around a block that is still
+   there, still the same size, and no longer visible. Which is also the right geometry: chapter 1's
+   copy sits in the same centred column the gate's did. */
+function LandingStage({ vals, covered, quiet }) {
   return (
         /* height:100dvh for the same reason the two phone surfaces carry it: this block is centred
            in its own box, and a box that runs to the LARGE viewport's bottom centres the gate copy
            below the middle of what the reader can actually see — and pushes the ring formation,
            which is solved around that centre, off with it. */
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...(covered ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* scatter field (decorative) — one global light (upper-left); everything baked or static */}
           <div data-orbit-bloom="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}></div>
           <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none')}>
@@ -574,7 +1172,7 @@ function LandingStage({ vals, covered }) {
           <div data-orbit-grain="1" aria-hidden="true" style={sx('position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:soft-light;opacity:0.045;background-repeat:repeat')}></div>
           {/* brand content (above the field) — horizontal padding only: any vertical padding would
               bias the block off the viewport centre the rings clear for it */}
-          <div style={sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 var(--page-gutter)')}>
+          <div style={{ ...sx('position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;pointer-events:none;padding:0 var(--page-gutter)'), ...(quiet ? { opacity: 0 } : null) }}>
             {vals.narrow ? (
               /* small screen: the honest gate copy, sized to fit inside the ring the engine builds
                  around it (_heroReach measures this block, so a narrower column = a tighter ring).
@@ -713,6 +1311,31 @@ export default function AppView({ vals }) {
             one gesture, in the one place it sits on every screen. */}
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
+  /* THE STORY, and it is the one phone branch that does NOT cover the landing.
+
+     The example list and the share view pass `covered`, which sets inert + aria-hidden and — through
+     _landingLit() — parks the orbit ticker, because those two surfaces are opaque and nothing behind
+     them can be seen. The story's first chapter is transparent BY DESIGN: the orb formation showing
+     through it is the prologue's visual, so the stage has to stay lit, readable and ticking. Passing
+     `covered` here would leave chapter 1 as an empty screen over a frozen field.
+
+     LandingStage still sits at index 1, exactly as it does in every other branch. That position is
+     load-bearing — React reconciles unkeyed children by index, and only the same DOM keeps the canvas
+     initOrbit appended to it imperatively. */
+  if (vals.showMobileStory) {
+    return (
+      <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        {vals.showLanding && <LandingStage vals={vals} quiet />}
+        {/* Decorative here, as it is on the gate: the story IS the start screen, so there is nowhere
+            for the mark to lead. It becomes a button on the two surfaces above this one. */}
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <MobileStory st={vals.mobileStory} />
         <Analytics />
         <SpeedInsights />
       </div>

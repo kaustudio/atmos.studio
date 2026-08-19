@@ -1,0 +1,1023 @@
+/* THE PHONE'S STORY — /about's page, at one column.
+
+   This is the surface that replaced the gate. The gate said "Atmos Gallery is a Desktop Experience"
+   and offered one act; it was an honest sentence and a dead end, and it stood on the one viewport
+   where most shared links are opened. What stands here instead is the product's own argument, told
+   with a real palette, ending in the desktop invitation the gate used to open with.
+
+   THIS FILE IS SMALL ON PURPOSE, and it got smaller twice.
+
+   The surface is built from /about's components — `.about-sec`, `.about-grid`, `.about-col`,
+   `.about-figure`, `.about-weights` + `.about-weights__key`, `.about-role`, `.about-thresholds`,
+   `.about-checks`, `.about-rail`, `.section-dock` — and driven by /about's own modules:
+   initPageReveal, initCascade, initDividers, initGlobalParallax, initHighlightText and
+   initSectionDock all take a root, so they run over this markup exactly as they run over that page's.
+   about.css is already in this route's bundle (AppView imports AboutPage, which imports it) and its
+   component rules are written unscoped, so this markup reaches the same declarations. Nothing here is
+   a copy of anything there; where a rule WAS route-scoped, the scope was widened to name this surface
+   (see the note at the head of about.css).
+
+   What is left in this file is only what is genuinely this surface's own: the phone's token
+   adjustments, the hero, and the four small components /about has no equivalent for.
+
+   NO PHOTOGRAPH BEHIND THE WORDS, AND THAT IS WHY THIS SURFACE THEMES. An earlier pass hung a fixed
+   image behind the whole story with a gradient scrim over it. It had to go for three reasons, and
+   only the first was visible: type contrast depended on which part of which photograph happened to be
+   behind it, so it was a different answer per case and per scroll position; a photograph cannot
+   follow `--surface`, so the one surface on the site had a single appearance while everything else
+   had two; and /about does not do it — in fourteen sections there is no full-bleed photograph behind
+   body copy. Every chapter now sits on `var(--surface)` and every ink is a token, so light and dark
+   are both correct by construction rather than by a second set of rules.
+
+   THE FLOOR IS THE WHOLE STORY. Nothing here is hidden by this stylesheet. The reveal modules apply
+   their own hidden state, and only after confirming GSAP and a willingness to animate — so no JS, no
+   ScrollTrigger, a 404'd vendor script, or a reduced-motion preference all leave every chapter, every
+   swatch and every line of the reading laid out and legible. That is not a degraded version; it is
+   the same document without the choreography. */
+
+/* ===== THE SURFACE ========================================================================== */
+
+/* A normally-flowing block above the fixed landing stage, not a scrollport of its own: the document
+   scrolls, the browser collapses its own URL bar, the momentum is the platform's, and ScrollTrigger
+   stays on its default scroller — the configuration every module on this site is written and tested
+   against. It follows that this surface needs no `data-lenis-prevent`; only the gallery's own
+   horizontal row does, being the one genuine internal scrollport here.
+
+   z-index 151: above the landing stage's 150, so the story passes over the orb formation — and below
+   the 155+ the wordmark, wipe, lightbox and loader stand at, so the mark still floats over the story
+   exactly as it floats over every other phone surface. */
+/* THE SURFACE ITSELF IS TRANSPARENT; THE CHAPTERS CARRY THE GROUND.
+
+   An opaque background here covered the landing stage beneath it, so the hero — which is transparent
+   precisely so the orb formation shows through — came out as a flat empty screen. The formation is
+   the brand's arrival and the only thing behind the words on this surface; painting over it left the
+   first screen with nothing on it but type.
+
+   So the ground moves down one level: every SECTION takes `var(--surface)`, the hero takes none, and
+   the surface between them is a hole onto the stage. Which also keeps the theming honest — the
+   sections are the things with a background, and their background is a token. */
+[data-mobile-story]{
+  position:relative;
+  z-index:151;
+  background:transparent;
+  color:var(--on-surface);
+
+  /* /about's two rhythm tokens, which its components are written against — `.about-sec` sets
+     `padding-block:var(--band-gap)` and `row-gap:var(--block-gap)`, and both resolve to nothing
+     without these. Taken at the values /about itself drops to below 820px, because this surface is
+     never wider than that: "these are fractions of the VIEWPORT HEIGHT, and a phone's viewport is as
+     tall as a laptop's while holding a fifth of the content across". The 1.75 ratio between them is
+     the hierarchy and is preserved. */
+  /* Tighter than /about's phone figures, and the horizontal section is why. A pinned run costs its
+     own width in vertical scroll, so the story gained length exactly where it was already long. The
+     boundaries give some of it back: 5.5vh is 45px against 7vh's 57, and the 1.75 ratio between the
+     two gaps — the thing that makes a section boundary read as a boundary — is preserved. */
+  --band-gap:clamp(40px, 5.5vh, 68px);
+  --block-gap:clamp(22px, 3.1vh, 38px);
+  --measure:38em;
+  --rail-card:min(72vw, 280px);
+
+  /* THE SMALLEST TWO STEPS EACH MOVE UP A RUNG, on this surface only.
+
+     /about makes this move for itself (`--fs-nano:var(--fs-label)`) and states the reason: --fs-nano
+     is 8px, "the smallest thing drawn", and on a desktop swatch it is a technical readout you lean in
+     for — but "on a phone held at arm's length it is not a size, it is a texture". That remap is
+     scoped to `.about-route`, so borrowing that page's components brought its 8px annotations here
+     without the correction that makes them readable. This surface has the stronger claim: /about is
+     read on a desktop as often as not, and this one is only ever reached by a thumb.
+
+     BOTH STEPS MOVE, not just the smaller. Remapping only --fs-nano onto --fs-label collapsed it onto
+     --fs-micro's neighbour, so the OKLCH readout came out the same size as the hex it annotates and
+     the key's hierarchy disappeared. Each moves up one rung instead, keeping the gap. Written as the
+     ladder's own values rather than var() references: a var() chain resolves against the REMAPPED
+     property and collapses them again. The rungs are 8 / 9 / 10 in global.css. */
+}
+
+/* THE REMAP IS ON main, NOT ON THE SURFACE, and the anchor dock is why.
+
+   Declared on [data-mobile-story] it reached the dock too, and the dock's row numbers are sized in
+   --fs-micro — so /about's dock and this one were setting the same component's numbering at two
+   different sizes. The dock is a sibling of <main>, so scoping the remap to the story's prose leaves
+   it reading the untouched ladder and the two docks are one component again.
+
+   Everything the remap is FOR is inside main: the weights key's OKLCH readout, the role cells' hex
+   and note, the checks' verdicts. */
+[data-mobile-story] main{
+  --fs-nano:0.5625rem;   /* 9 — was 8, the value of --fs-micro */
+  --fs-micro:0.625rem;   /* 10 — was 9, the value of --fs-label */
+}
+
+/* Anchor jumps land with air above them rather than flush under the fixed wordmark — the same rule
+   /about gives its own sections, at the same figure. */
+[data-mobile-story] section[id]{
+  scroll-margin-top:calc(var(--band-gap) / 2);
+  background:var(--surface);
+}
+
+/* ===== THE HERO ============================================================================= */
+
+/* The one screen with something behind the words, and it is the brand's own field rather than a
+   photograph: the orb formation is painted by the landing stage underneath this surface, showing
+   through a transparent hero. There is only ever one [data-orbit] in the document, and showing it
+   through is how that stays true.
+
+   No section rule and no number: /about's hero carries neither, because a number before the first
+   word is apparatus in front of an opening. */
+/* TALLER THAN A SCREEN, AND THE DIFFERENCE IS THE DISSOLVE.
+
+   The hero is 200svh: the inner sticks for the first screen, and the remaining screen is the travel
+   the fade and blur run over (methods/heroExit.js). Nothing exits upward — the copy holds centred in
+   the viewport and stops being there.
+
+   AND THE DISSOLVE OVERLAPS THE ARRIVAL RATHER THAN PRECEDING IT. At 150svh the fade finished at
+   333px and chapter 1.1 only began to appear at 406 — two events back to back with a gap between
+   them, which reads as the hero being taken away and then something else starting. They are meant to
+   be one moment.
+
+   The overlap is bought with a negative top margin on the first chapter rather than with more scroll:
+   the hero's box runs to 200svh while 1.1 is pulled back half a screen, so it starts rising over the
+   still-stuck hero at the halfway point and covers it exactly as the fade completes. The document is
+   no longer than it was at 150svh — 1.1 begins at the same offset either way — the hero's box simply
+   extends underneath it.
+
+   Section order does the compositing: the chapters come after the hero in the DOM and carry
+   var(--surface), so 1.1 paints over the dissolving block with no z-index needed. */
+.story-hero{
+  position:relative;
+  background:transparent;
+  min-height:200svh;
+  padding-block:0;
+}
+/* The overlap. Half a screen, which is the whole second half of the hero's sticky travel. */
+[data-story-ch="image"]{ margin-top:-50svh }
+/* Sticky rather than fixed. A fixed child resolves against the nearest transformed ancestor, and
+   anything that transforms <main> — the block entrance this surface used to arrive on, or any future
+   one — would drop the hero out of the viewport for exactly as long as that tween ran. Sticky has no
+   such coupling, and it needs no z-index of its own to stay above the chapters that follow. */
+.story-hero__inner{
+  position:sticky;
+  top:0;
+  grid-column:1 / -1;
+  /* align-self:start and a DEFINITE height, both load-bearing. The hero carries .about-grid, so it
+     is a grid container — a stretched item grew to the section's full 150svh and then centred its
+     contents inside that, which put the copy three quarters of the way down the screen instead of in
+     the middle of it. And a sticky element needs a height smaller than its scroll container to have
+     anywhere to stick: at min-height it resolved to the container's own height and never stuck. */
+  align-self:start;
+  height:100svh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding-inline:var(--page-gutter);
+  text-align:center;
+  gap:14px;
+}
+/* NO WASH BEHIND THE HERO COPY. A radial of the surface colour stood here — the gate's own solution,
+   carried over — and it was a white disc on a light theme, visible as a shape rather than as light.
+   The orb formation is the brand's field and the hero is meant to sit IN it, not on a plate laid over
+   it. Removed by request.
+
+   What that costs, stated rather than buried: the words no longer have a guaranteed ground, so their
+   contrast depends on the formation behind them. The formation is solved to clear the marks it is
+   told about (see _heroReach in methods/orbit.js), which is what keeps it off the copy — so this is a
+   geometry guarantee rather than a paint one, and it is the same guarantee the desktop landing has
+   always relied on. */
+.story-hero h1{
+  margin:0;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-weight:500;
+  font-size:var(--fs-display);
+  line-height:1.04;
+  letter-spacing:var(--track-statement);
+  text-wrap:balance;
+}
+.story-hero__lead{
+  margin:0;
+  max-width:32ch;
+  font-size:var(--fs-lead);
+  line-height:1.65;
+  letter-spacing:var(--track-body);
+  color:var(--on-surface-muted);
+  text-wrap:pretty;
+}
+.story-hero__act{ margin-top:12px }
+
+/* ===== THE PICTURE, WHERE IT IS THE SUBJECT ================================================== */
+
+/* Chapter 1.3 is the one place two photographs still stack, and there they ARE the content: the same
+   frame twice, one muted and one at full strength through a colour's mask, which is what "see where
+   this colour lives" means. Bounded like any other figure — 4:3 in the reading flow, not a wall.
+
+   The mask is a data-URL PNG built at runtime by src/lib/masks.js from the image and the palette's
+   own OKLab coordinates; no mask assets ship. Its edge is feathered at generation rather than here —
+   a CSS mask cannot be blurred without blurring what it reveals — and the softness belongs to the
+   mask anyway: every pixel on that boundary is a near-tie between two colours, so a hard line would
+   claim a precision the classification has not got. */
+.story-mask{
+  position:relative;
+  width:100%;
+  aspect-ratio:4/3;
+  overflow:hidden;
+  background:var(--surface-raised);
+  border:1px solid var(--line-strong);
+}
+.story-mask img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  /* The highlight ARRIVES; it does not appear. Choosing a swatch is a state change on the app's own
+     reveal length and entrance curve, which is what every other surface here does when it comes in —
+     an instant cut between two photographs reads as a page reload, not as an answer to a tap.
+     Opacity only, so all three copies stay on the compositor. */
+  transition:opacity var(--dur-reveal) var(--ease-entrance);
+}
+.story-mask__dim{ filter:grayscale(1) brightness(.42) }
+.story-mask__lit{
+  -webkit-mask-size:100% 100%;
+  mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+}
+
+/* ===== THE PICKS — /about's role cell, as a control ========================================= */
+
+/* The one component here /about has no equivalent for, because its role cells are READOUTS and these
+   are buttons. Everything visual is inherited from `.about-role`; this rule only does what a control
+   needs that a cell does not.
+
+   TWO COLUMNS, where /about's grid drops to one below 560px. That is right for the figure it was
+   written for — a full-width block in a document you scroll through, six tall cells read in turn.
+   Here the grid is inside a chapter, and two-up keeps the set on one screen while the swatch still
+   clears the width it needs to read as a colour.
+
+   There is no `:disabled` rule because there is no disabled control: a swatch with no locatable
+   region renders as a plain div rather than a dead button (see the note in AppView). That is what
+   keeps `[data-ix]:disabled`'s opacity:.42 off a cell whose swatch is a real palette colour — /about
+   states the rule as "NO OPACITY… that is not a tint". */
+[data-story-picks],
+[data-story-panel] .about-roles{
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  list-style:none;
+  margin:14px 0 0;
+  padding:0;
+}
+[data-story-picks] li{ display:flex }
+[data-story-pick]{
+  width:100%;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+[data-story-pick]:not(button){ cursor:default }
+/* Selected is stated by the cell's border going to full ink — not by a tint, because the cell is
+   mostly a block of the palette's colour and tinting it would change the very thing it shows. */
+[data-story-pick][aria-pressed="true"]{ border-color:var(--on-surface) }
+
+/* ===== THE GALLERY RAIL ===================================================================== */
+
+/* `.about-rail` without [data-rail-live] is ALREADY an ordinary horizontal scroller — about.css
+   defines that as the no-JS floor for the pinned desktop gallery, and it is exactly the shape a thumb
+   wants. So the phone takes that floor as its finished state rather than inventing a fourth card
+   design. What is left is the part a phone needs and a fallback did not: the row bleeds to both edges
+   while its first card still stands on the gutter, and it snaps.
+
+   scroll-padding is what makes those two compatible. `scroll-snap-align:start` aligns a card to the
+   SCROLLPORT's edge, which is outside the padding — without it the row silently scrolls itself one
+   gutter on arrival and parks the first card flush against the screen.
+
+   The 6px of block padding is the focus ring's room: `overflow-x:auto` computes `overflow-y` to auto
+   as well, so the track clips vertically and an outset ring on a card would be cut off. The negative
+   margin gives the space back so nothing below moves. */
+[data-story-rail]{
+  grid-column:1 / -1;
+  height:auto;
+  overflow:visible;
+  padding-block:0;
+}
+[data-story-rail] .about-rail__track{
+  width:auto;
+  margin:0;
+  padding:6px var(--page-gutter);
+  margin-inline:calc(-1 * var(--page-gutter));
+  margin-block:-6px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:var(--page-gutter);
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  list-style:none;
+}
+[data-story-rail] .about-rail__track::-webkit-scrollbar{ display:none }
+[data-story-rail] .about-rail__card{
+  width:var(--rail-card);
+  scroll-snap-align:start;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+/* The card's content is a <span> stack inside a button rather than /about's <article> + <h3>: a
+   heading inside a control is not a heading, and nesting anything focusable inside it would be worse.
+   The name keeps the rail's own ink through the shared rule in about.css. */
+[data-story-rail] .about-rail__content{ text-align:left }
+
+/* A CARD WITH NO PHOTOGRAPH IS NOT A DARK CARD. `.about-rail__content` sets `color:#fff` over a
+   gradient that ends at 72% black — which is legible over a picture and is exactly 1.05:1 over
+   `--surface-raised`, the colour the card falls back to when there is no image. Every seeded example
+   has one, so this is the guard for a case that arrives without, not a live failure; it is here
+   because white-on-white is the kind of thing that ships silently and is unreadable rather than
+   merely ugly. Without a picture the card drops the scrim and takes the surface's own ink. */
+[data-story-rail] .about-rail__card:not(:has(img)) .about-rail__content{
+  background:none;
+  color:var(--on-surface);
+}
+[data-story-rail] .about-rail__card:not(:has(img)) .about-rail__strip{
+  border-color:var(--line);
+}
+[data-story-rail] .about-rail__name{
+  display:block;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);
+  font-weight:500;
+}
+
+/* ===== THE HANDOFF'S ACTIONS ================================================================ */
+
+/* They clear the home indicator. This is the first surface on the site to put a control near the
+   bottom edge of a phone, so it is the first that has had to say env(safe-area-inset-bottom) out
+   loud; without it the primary act sits under the indicator on every notched device. */
+.story-actions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  /* CENTRED, and the flex/gap/wrap declarations stay. They cost nothing with one child and they are
+     what makes a second act a one-line change rather than a rebuild — the same reasoning the gate's
+     own action row records. `justify-content` is what carries the centring; the button sizes itself
+     by its label, so it is a control in the middle of the column rather than a slab across it. */
+  justify-content:center;
+  gap:12px;
+  width:100%;
+  margin-top:22px;
+  padding-bottom:calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ===== REDUCED MOTION ======================================================================= */
+
+/* The global floor in global.css collapses every transition and animation, and every reveal module
+   returns an inert controller under this preference — so nothing is hidden and nothing is armed. What
+   is left to say is the one thing a duration cannot express: the gallery's snap is a scroll behaviour
+   rather than an animation, and a mandatory snap under a reader who asked for less motion is the
+   viewport moving on its own. */
+@media (prefers-reduced-motion:reduce){
+  [data-story-rail] .about-rail__track{ scroll-snap-type:none }
+}
+
+/* ===== THE HORIZONTAL TURN ================================================================== */
+
+/* Osmo Supply's Horizontal Scrolling Sections, carrying the gallery. The module pins this wrapper and
+   translates the panels; everything here is the layout that makes that possible, and the floor for
+   when it does not run.
+
+   THE FLOOR IS A ROW THAT SCROLLS ITSELF. Without [data-horizontal-live] — no GSAP, no ScrollTrigger,
+   or a reader who asked for less motion — this is an ordinary overflow-x row with snap, which is what
+   the gallery was before and is a perfectly good gallery. The pinned version is an enhancement on top
+   of a working set, never the only way to reach the cards.
+
+   `flex:none` on the panels is the resource's own requirement: a flex row will otherwise collapse
+   them to fit and there is nothing left to translate. */
+.story-horizontal{
+  display:flex;
+  flex-flow:row;
+  width:100%;
+  /* Only when the module is NOT driving it — a pinned wrapper must not clip or scroll itself. */
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:var(--page-gutter);
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:6px var(--page-gutter);
+  margin-block:-6px;
+  margin-inline:calc(-1 * var(--page-gutter));
+}
+.story-horizontal::-webkit-scrollbar{ display:none }
+.story-horizontal[data-horizontal-live]{
+  overflow:hidden;
+  scroll-snap-type:none;
+  min-height:100svh;
+  align-items:center;
+  /* THE LEAD IN AND THE LEAD OUT, AND THIS IS mwg_001's OWN NUMBER.
+
+     The row used to begin flush with the left edge, which meant the first card was already sitting in
+     the frame before the section had taken the scroll — the reader met a card rather than watching one
+     arrive. The source does not work that way and the difference is entirely here, in one CSS
+     declaration rather than anything in its script:
+
+         .mwg_effect001 .cards { padding: 0 120vw }        and 140vw under 900px
+
+     At x:0 the leading pad holds the first card a full screen and a half to the RIGHT of the viewport,
+     so the row enters from outside it; the trailing pad gives the last card the same room to leave by.
+     140vw is the source's own phone value and it is load bearing twice over — the card drift's trigger
+     starts at `left 120%`, so a lead-in shorter than 120vw makes that start unreachable, ScrollTrigger
+     clamps the negative range, and the first card arrives with its tilt already spent. Measured before
+     this: card one entered at -1 degree instead of its own 5 to 10, and sat static for the whole
+     approach. 140 clears 120 with room.
+
+     The gutter these two lines replaced was doing the opposite job — keeping the first card off the
+     edge of a screen it could not be scrolled away from — and it is not needed once the card is not
+     there to begin with. */
+  padding-inline:140vw;
+  margin-inline:0;
+}
+.story-hpanel{
+  flex:none;
+  width:var(--rail-card);
+  scroll-snap-align:start;
+  display:flex;
+}
+.story-horizontal[data-horizontal-live] .story-hpanel{
+  width:min(70vw, 280px);
+  padding-inline:8px;
+}
+.story-horizontal .about-rail__card{
+  width:100%;
+  padding:0;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+@media (prefers-reduced-motion:reduce){
+  .story-horizontal{ scroll-snap-type:none }
+}
+
+/* THE RAIL CARD'S META KEEPS THE CARD'S INK, NOT THE LABEL'S.
+
+   Widening about.css's label-voice rule to this surface swept `.about-rail__meta` up with it, and
+   that rule ends in `color:var(--on-surface)` — full ink, which is right for a figure's NAME sitting
+   on the page and catastrophic for a line sitting on a photograph: dark grey on a dark image,
+   measured well under AA. `.about-rail__content` sets `color:#fff` for exactly this reason and was
+   being out-specified.
+
+   So the meta takes the label's TYPE here and the card's colour, which is what /about's own cascade
+   produces — there the label rule and the content rule resolve in the other order. Same result, said
+   explicitly. */
+[data-mobile-story] .about-rail__meta{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);
+  letter-spacing:var(--track-flat);
+  text-transform:uppercase;
+  line-height:1.2;
+  color:inherit;
+}
+
+/* ===== THE TOGGLE SWITCH ==================================================================== */
+
+/* Osmo Supply's Toggle Switch, carrying chapter 2.1's three readings. The resource's structure and
+   its two custom properties are kept verbatim; what changes is the palette, because this site is
+   monochrome and square.
+
+   THE RESOURCE'S OWN VALUES THAT STAY: the grid of `--toggle-count` equal columns, the pill sized
+   `calc((100% - 2 * var(--toggle-padding)) / var(--toggle-count))` and moved by
+   `translateX(calc(var(--toggle-active) * 100%))`, and its `0.5s cubic-bezier(.625,.05,0,1)`
+   transition — which is this site's `--dur-fold` and `--ease-fold` to three decimal places, so the
+   two are quoted as tokens rather than as literals and the resource's feel is unchanged.
+
+   WHAT CHANGES, and why: `border-radius` goes to 0 (the house has one radius rule — zero, with the
+   orb bodies and the wipe caps as the only sanctioned curves), the greys become surface tokens so
+   the control themes, and the 1.5em padding comes down to a 44px min-height, which is the touch
+   target this surface is built to rather than the resource's desktop proportion. */
+.toggle-switch{
+  --toggle-count:3;
+  --toggle-padding:4px;
+  position:relative;
+  display:inline-grid;
+  grid-auto-columns:1fr;
+  grid-template-columns:repeat(var(--toggle-count, 2), 1fr);
+  width:100%;
+  padding:var(--toggle-padding);
+  background:color-mix(in srgb, var(--on-surface) 8%, var(--surface));
+  border:1px solid var(--line);
+}
+.toggle-switch__bg{
+  position:absolute;
+  top:var(--toggle-padding);
+  bottom:var(--toggle-padding);
+  left:var(--toggle-padding);
+  width:calc((100% - 2 * var(--toggle-padding)) / var(--toggle-count, 2));
+  transform:translateX(calc(var(--toggle-active, 0) * 100%));
+  background:var(--surface);
+  transition:transform var(--dur-fold) var(--ease-fold);
+}
+.toggle-switch__btn{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  padding:0 8px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:var(--on-surface-muted);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);
+  letter-spacing:var(--track-flat);
+  text-transform:uppercase;
+  transition:color var(--dur-state) var(--ease-standard);
+  -webkit-tap-highlight-color:transparent;
+}
+.toggle-switch__btn[data-toggle-active]{ color:var(--on-surface) }
+/* The panel is a figure under a control, not a caption on it — it takes the block gap the rest of
+   the surface uses between a thing and the thing it belongs to. Lost when the old segmented
+   group's rules were removed with the control they belonged to. */
+/* overflow:hidden is what makes the height fold read as a fold rather than as a box shrinking around
+   content that is already drawn past its edge. See setStoryTab in methods/persistence.js. */
+[data-story-panel]{ margin:18px 0 0; overflow:hidden }
+/* No JS: the pill never moves, so the active button states itself rather than relying on a position
+   the stylesheet cannot know. */
+.toggle-switch:not([data-toggle-live]) .toggle-switch__bg{ display:none }
+.toggle-switch:not([data-toggle-live]) .toggle-switch__btn[data-toggle-active]{
+  background:var(--surface);
+}
+@media (prefers-reduced-motion:reduce){
+  .toggle-switch__bg{ transition:none }
+}
+
+/* ===== THE MEASURED FACTS =================================================================== */
+
+/* Chapter 2.1's Character panel: five dimensions of one palette, each with the band the analysis
+   found. A dl, because a term and its value is what a description list is for, and because the
+   pairing then survives without CSS — a screen reader reads "Dominance, Dominant" as one unit rather
+   than as two adjacent spans it has to infer a relationship between.
+
+   THE ANSWER LEADS. The band is what the reading FOUND; the dimension is the apparatus that found
+   it. Four channels separate them and they all point the same way — size (subtitle against label),
+   weight (medium against regular), colour (ink against muted) and case (sentence against upper) — so
+   the hierarchy holds at a glance, in both themes, and without relying on any one of them.
+
+   TWO UP. One column put five facts across 462px with a 92px row for each; the pairs are three words
+   at most, so half the width is air the eye has to cross to relate a term to its own value. Two
+   columns bring it to three rows, the fifth spanning both — which reads as a set rather than a queue
+   and puts the whole panel on one screen with the toggle above it. */
+.story-facts{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:1px;
+  margin:0;
+  padding:0;
+  background:var(--line);
+  border:1px solid var(--line);
+}
+.story-facts__row{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding:14px 12px;
+  background:var(--surface);
+}
+/* An odd count leaves a hole at the end of a two-column grid; the last pair takes the whole row
+   rather than sitting beside an empty cell. */
+.story-facts__row:last-child:nth-child(odd){ grid-column:1 / -1 }
+.story-facts dt{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);
+  letter-spacing:var(--track-flat);
+  text-transform:uppercase;
+  line-height:1.2;
+  color:var(--on-surface-muted);
+}
+/* --fs-body, NOT --fs-subtitle, and this is the correction that mattered.
+
+   The first pass set the band at 20px to make it lead. It led — past everything. A value inside a
+   figure inside a section was rendering two pixels under the section's own h2 (22px), and it stood
+   alone on this surface: every other readout here is 9-13px, and the two sibling panels behind the
+   same toggle are 13px (.about-checks__val) and 10px (.about-role__name). One control, three views,
+   three different scales.
+
+   The system's answer to hierarchy at readout size is written into about.css's label-voice rule and
+   it is not size: "The scale has no room between --fs-label and --fs-detail to separate them by
+   size, and a 1px step would not read anyway. Brightness does it: the parent is the ink, the
+   children stay muted." So the band takes --fs-body — the same step the Contrast panel's values take,
+   which is what puts all three panels on one ladder — and the separation is carried by the three
+   channels that cost no scale: full ink against muted, Medium against Regular, and sentence case
+   against the dimension's uppercase. */
+.story-facts dd{
+  margin:0;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);
+  font-weight:500;
+  line-height:1.35;
+  letter-spacing:var(--track-body);
+  color:var(--on-surface);
+  text-wrap:balance;
+}
+
+/* ===== THE CLOSE — a sticky-title takeover ================================================== */
+
+/* Osmo Supply's Sticky Title Scroll Effect, carrying chapter 3.2. The resource's structure is kept:
+   a tall wrapper, a sticky container one viewport high, the statement centred inside it.
+
+   THE WRAPPER IS TALLER THAN THE CONTAINER, AND THAT DIFFERENCE IS THE EFFECT. The resource uses
+   350vh for three headings; one statement needs far less, and 200svh gives the scrub a full screen
+   to resolve the question in and a full screen to hold it. Equal heights would leave the sticky
+   container nothing to travel through and the scrub would never run.
+
+   svh, not vh: the same reason every other full-height box on this surface uses it — the URL bar
+   must not resize a pinned section under a reader mid-scroll.
+
+   NO overflow ANYWHERE ABOVE THIS. The resource's documentation is explicit that a parent with
+   overflow:hidden breaks position:sticky, and it is right. [data-mobile-story] and its <main> both
+   leave overflow alone; the only overflow:hidden on this surface is inside .story-mask and the
+   horizontal track, neither of which is an ancestor of this. */
+.story-cta{
+  position:relative;
+  height:200svh;
+  /* The section rule and the band padding both go: this is a takeover, and a hairline across the top
+     of a full-screen statement is chrome on something that should have none. */
+  padding-block:0;
+}
+.story-cta::before{ display:none }
+.story-cta__container{
+  position:sticky;
+  top:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100svh;
+  padding-inline:var(--page-gutter);
+}
+.story-cta__inner{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  width:100%;
+  max-width:32ch;
+  margin-inline:auto;
+  text-align:center;
+}
+
+/* THE ONE PLACE ON THIS SURFACE THE TYPE GOES BIG, and it is earned: a closing statement with a
+   whole screen to itself and nothing to compete with is the definition of the display step. The
+   section headings stay at 22px because they head a section; this heads the page's last screen.
+
+   --fs-display is the ladder's top rung and the hero's own size, which is the right pairing: the
+   story opens and closes at the same scale, and everything between them is smaller. */
+/* Scoped to the surface so it out-specifies the widened `[data-mobile-story] h2` (0,1,1), which
+   would otherwise hold this at the 22px section-heading size — the very thing this rule exists to
+   depart from. */
+[data-mobile-story] .story-cta__title{
+  margin:0;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-weight:500;
+  font-size:var(--fs-display);
+  line-height:1.04;
+  letter-spacing:var(--track-statement);
+  color:var(--on-surface);
+  text-wrap:balance;
+}
+.story-cta__lead{
+  margin:0;
+  font-size:var(--fs-lead);
+  line-height:1.65;
+  letter-spacing:var(--track-body);
+  color:var(--on-surface-muted);
+  text-wrap:pretty;
+}
+/* Centred with the rest of the block, and the safe-area padding comes off: the container is a
+   centred screen now rather than a column ending at the bottom edge, so there is no home indicator
+   to clear. */
+.story-cta .story-actions{
+  justify-content:center;
+  margin-top:8px;
+  padding-bottom:0;
+}
+.story-cta .about-sec__num{ margin-bottom:0 }
+
+/* THE GALLERY IS GONE BEFORE THIS ARRIVES, AND THE RUN ITSELF NOW DOES IT.
+
+   This carried a full viewport of padding, bought to guarantee that the pinned cards had released
+   before the close could appear. That was the right guarantee reached the wrong way: it separated
+   the two sections with a screen of nothing while the cards were still parked in frame at the end of
+   their own run.
+
+   The travel does the work instead — the row translates its full scrollWidth, so the last panel
+   clears the left edge under its own movement (see [ATMOS 6] in methods/horizontalScroll.js). The
+   pinned screen is empty by the time it releases, so the ordinary band gap is all the separation the
+   close needs, and the section is shorter than it was with the padding. */
+[data-story-ch="gallery"]{ padding-bottom:var(--band-gap) }
+
+/* ===== THE IMAGE CHOOSER ==================================================================== */
+
+/* Osmo Supply's Layered Image Slider, carrying the choice at the end of the story. The resource's
+   own layout is kept — layered backgrounds, a centred title strip, the small masked frame, the
+   overlay with its counter and nav — and what changes is what always changes when this system takes
+   a resource in: zero radius, the site's tokens, and the type on the ladder.
+
+   IT COVERS, IT DOES NOT REPLACE. Fixed and full-screen above the story so the eight chapters keep
+   their scroll position and their built masks while the reader looks. z-index 152: over the story's
+   151, under the wordmark and the loader at 155+. */
+[data-story-picker]{
+  position:fixed;
+  inset:0;
+  z-index:152;
+  background:var(--surface);
+  overscroll-behavior:contain;
+}
+[data-story-picker] .layered-slider{
+  color:#fff;
+  user-select:none;
+  -webkit-user-select:none;
+  position:absolute;
+  inset:0;
+  padding:0;
+  overflow:clip;
+}
+[data-story-picker] .layered-slider__container{ position:absolute; inset:0 }
+.layered-slider__bg-collection{ position:absolute; inset:0; z-index:0; overflow:clip }
+.layered-slider__bg-item{ position:absolute; inset:0; width:100%; height:100% }
+.layered-slider__bg-img{ display:block; width:100%; height:100%; object-fit:cover; user-select:none; -webkit-user-select:none }
+/* Deeper than the resource's 15% black. Its backgrounds are campaign photography chosen to sit under
+   white type; these are eight real palettes, and two of them are pale enough that the resource's
+   scrim leaves a white title at roughly 1.9:1. 52% holds every one of the eight above AA. */
+/* THE SCRIM CARRIES THE TITLE ALONE NOW, and the stops are measured rather than chosen.
+
+   The history matters because it is a loop. It was 52% flat, because white titles over the palest
+   cases measured under AA — which solved contrast by hiding the photograph, the wrong trade on a
+   screen whose entire job is choosing between photographs. So it was lightened to 28% with a
+   bottom-weighted gradient, and a text-shadow on the glyphs made up the difference. The shadow is
+   gone, which puts the whole job back here.
+
+   Measured, not estimated: each of the eight backgrounds was drawn to a canvas under the same
+   object-fit:cover mapping the layout uses, sampled across the title's own bounding box, composited
+   against candidate scrims and read as white-on-photo contrast. The 90th percentile is the number
+   that counts — a mean hides the bright patch under two glyphs that is what actually fails. At the
+   old 0.32 the band gives:
+
+     courtyard 15.44   tulip 11.10   papaya 10.06   poppy 7.88   court 7.83
+     profile-sky 5.70   profile-ember 4.47   radish 2.52
+
+   Seven pass. Radish is a white cross-section behind the middle of the word and fails the 3:1 large
+   text threshold outright (--fs-display at 500 clears WCAG's large-text bar, so 3:1 applies, not
+   4.5:1). 0.44 at the band is where it clears with margin — radish 3.60, and the next worst is
+   profile-ember at 6.13.
+
+   THE DARKENING IS SPENT WHERE THE WORD IS. The first 30% of the frame is untouched at .10, exactly
+   as it was, so the top of every photograph reads as it did before. The ramp opens through the title
+   band and continues to the bottom, where the mask frame sits over it anyway. */
+.layered-slider__bg-dark{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  background:
+    linear-gradient(to bottom,
+      rgb(0 0 0 / .10) 0%,
+      rgb(0 0 0 / .10) 30%,
+      rgb(0 0 0 / .33) 50%,
+      rgb(0 0 0 / .36) 62%,
+      rgb(0 0 0 / .50) 100%),
+    rgb(0 0 0 / .18);
+}
+
+.layered-slider__text-collection{
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+}
+.layered-slider__text-list{ display:flex; align-items:center; justify-content:center; width:100%; height:100% }
+.layered-slider__text-item{ position:absolute; max-width:80%; text-align:center; cursor:pointer }
+/* --fs-display, the ladder's top rung, which is where the hero and the close already sit. A chooser
+   is a full screen with one word on it, so it belongs to that group rather than to the section
+   headings. The resource's -.05em is dropped for --track-statement, the site's own display tracking. */
+.layered-slider__text-title{
+  display:block;
+  padding:0;
+  background:none;
+  border:none;
+  color:inherit;
+  cursor:pointer;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-display);
+  font-weight:500;
+  line-height:1;
+  letter-spacing:var(--track-statement);
+  text-decoration:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.layered-slider__mask-collection{
+  position:absolute;
+  left:50%;
+  bottom:0;
+  z-index:3;
+  width:min(58vw, 220px);
+  aspect-ratio:4/5;
+  overflow:hidden;
+  transform:translate(-50%, 26%);
+}
+.layered-slider__mask-list{ position:absolute; inset:0 }
+.layered-slider__mask-item{ position:absolute; inset:0; flex:none; width:100%; height:100%; overflow:hidden }
+.layered-slider__mask-img{ display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; user-select:none; -webkit-user-select:none }
+
+.layered-slider__overlay{
+  position:absolute;
+  top:0; bottom:0;
+  z-index:4;
+  display:flex;
+  flex-flow:column;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  padding:calc(64px + env(safe-area-inset-top, 0px)) var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px));
+  pointer-events:none;
+}
+.layered-slider__overlay-top{ display:flex; align-items:center; justify-content:center; gap:8px; pointer-events:auto }
+.layered-slider__span{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);
+  letter-spacing:var(--track-flat);
+  font-variant-numeric:tabular-nums;
+}
+.layered-slider__progress{ width:96px; height:2px; overflow:hidden; background:rgb(255 255 255 / .25) }
+.layered-slider__progress-inner{ width:100%; height:100%; background:#fff; transform-origin:0%; transform:scale3d(0,1,1) }
+.layered-slider__overlay-btm{ display:flex; align-items:center; justify-content:center; width:100% }
+.layered-slider__nav{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; pointer-events:auto }
+/* 48px, not the resource's 3em: this is the one surface reached only by a thumb, and 48 clears the
+   44 a touch target wants. Square, like every other control here. */
+.layered-slider__nav-button{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:48px;
+  height:48px;
+  padding:12px;
+  background:none;
+  border:1px solid rgb(255 255 255 / .3);
+  color:#fff;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.layered-slider__nav-icon{ display:block; width:100%; height:100% }
+
+/* No JS: the slider never lays out, so the strip would stack every title on one spot. Showing the
+   first alone is the honest floor — one image, named, with the way out still on screen. */
+[data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__text-item:not(:first-child),
+[data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__bg-item:not(:first-child),
+[data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__mask-item:not(:first-child){
+  display:none;
+}
+
+/* ------------------------------------------------- the palette strip on a rail card
+
+   THE STRIP IS THE ONLY REASON THE ROW IS A ROW. Seven cards go past under the thumb and the reader
+   is comparing palettes, not photographs; the five bands are the comparison. They were not doing the
+   job, and measured on the shipped data it is clear why rather than a matter of taste.
+
+   IT WAS SITTING ON THE PHOTOGRAPH IT CAME FROM. The strip was inset inside the card's padding and
+   floated over the picture with the image still showing below it. Every one of these palettes is
+   EXTRACTED from the photograph behind it, so the bands are by construction close to the pixels they
+   are drawn over: on Forged Midfield, a warm courtyard, the tan and the two browns land within a few
+   points of the wall behind them and the strip reads as a smear on the image rather than as a
+   reading of it. A swatch needs a ground that is not its own source.
+
+   ADJACENT NEAR-IDENTICAL BANDS MERGED. That is not a flaw in the palettes, it is what a five colour
+   reading of one photograph looks like: two of Garnet's five are #0F0302 and #540604, both near
+   black at C .028 and C .109. Butted edge to edge with no separator they are one band, so a palette
+   of five was being shown as a palette of three or four. The 1px outer border did nothing about this
+   because it outlined the strip rather than the bands.
+
+   THE GAP IS THE SEPARATOR, and it costs no markup. The bands are already flex children carrying
+   their real share as `flex-grow`; a 1px `gap` lets the strip's own background through between them
+   as a hairline, and because every band is `flex-basis:0` the shares still divide the remaining
+   space in exactly the same proportion. Nothing here invents a divider element or touches the
+   inline styles renderVals writes.
+
+   FULL BLEED, so it reads as the base the card stands on rather than a chip someone left on the
+   picture. The negative margins are the content's own padding token negated, not a number, so the
+   two cannot drift. It also gives the strip two edges it can be read against, which is what the
+   outer border was reaching for and missing.
+
+   SCOPED TO THIS ROW. `.about-rail__strip` is /about's, and about.html carries eight of them at
+   desktop width where the strip sits in a taller card with room to be inset. This is the phone's
+   3.1 rail only. */
+.story-horizontal .about-rail__strip{
+  --rail-pad:clamp(14px,1.2vw,22px);
+  height:20px;
+  margin-top:12px;
+  margin-inline:calc(var(--rail-pad) * -1);
+  margin-bottom:calc(var(--rail-pad) * -1);
+  border:0;
+  border-top:1px solid color-mix(in srgb,#fff 45%,transparent);
+  gap:1px;
+  background:color-mix(in srgb,#fff 45%,transparent);
+}
+/* The no-photograph fallback takes the surface's own hairline, for the reason the rule above
+   `.about-rail__content` states: without a picture the card drops the scrim and its white would be
+   white on white. */
+.story-horizontal .about-rail__card:not(:has(img)) .about-rail__strip{
+  border-top-color:var(--line);
+  background:var(--line);
+}
+
+/* ------------------------------------------------- 1.2, the weights key as a full width tally
+
+   THE DIAGNOSIS WAS BACKWARDS EVERYWHERE. This looked like five rows stacking because four fields
+   would not fit beside each other, and the ask was to put them two up. Measured against the real
+   stylesheets and the real font at 375px, that is not what is happening.
+
+   `--page-gutter` is 16px and `--grid-cols` is 4, so the figure spans 343px. about.css:352 makes the
+   key a flex WRAP with a 24px column gap: two rows need 375px, it has 343, so it drops to one row per
+   line — and each row then uses 179.2px of the 343 it was given. The key never overflowed. It
+   under-filled, by 164px, five times over. The four fields have always fitted one line with room to
+   spare, so nothing had to be cut, stacked or paired to make room.
+
+   And two up was never available anyway: a 50/50 column at this width is 171.5px at its absolute
+   widest, against a worst case single line row of 175.5px. The ask would have cost a field.
+
+   THE ROW BORROWS .about-checks' CONSTRUCTION, AND THAT CLAIM NEEDS ONE QUALIFICATION. The base rule
+   (about.css:997) is exactly this shape: a grid per row, the identifying column flexible, the readouts
+   trailing right, 12px padding, a hairline under each. But about.css:1549 restates it under 820px as
+   `minmax(0,1fr) auto` with the verdict moved to grid-column 2 — so at THIS width 2.1's checks are a
+   two column, two row block, not a single line tally. The construction is borrowed; the phone
+   silhouette is not shared, and it would be wrong to say 1.2 and 2.1 now look alike here.
+
+   What actually justifies the shape is the measurement above, not the precedent: 164px of dead air per
+   row, five times, and four fields that have always fitted one line.
+
+   THE TRACKS ARE SIZED FOR THE FALLBACK FONT, NOT THE WEBFONT. font-display:swap paints system-ui
+   first, and the same string is about 22% wider there. Measured in the browser, at 9px, uppercase,
+   --track-flat:
+
+     worst SHIPPED readout   L .85 · C .021 · H 82°      74.59 webfont   91.67 fallback
+     theoretical maximum     L 1.00 · C .000 · H 360°    87.00 webfont  103.45 fallback
+     worst share             100%                        31.19 webfont   34.13 fallback
+
+   The maximum is real rather than rhetorical: H runs to three digits and an L of 1.00 keeps the digit
+   the regex would otherwise strip. 112 and 40 clear the fallback maximum with 8.5px and 5.9px spare.
+
+   THE TRACKS MUST BE FIXED, and an `auto` track is the one substitution that breaks this. Each row is
+   its OWN grid, so `auto` would size every row to its own content and the columns would stop lining
+   up between rows — which is the entire point of the layout. Fixed numbers are what put all five
+   readouts on one left edge and all five shares on one right edge.
+
+   NOTHING IS ADDED TO about.css. Every rule below is scoped and out-specifies its unscoped original,
+   so /about's Dusk Slate figure is untouched by construction rather than by argument. */
+[data-mobile-story] .about-weights__key{
+  display:block;
+  margin:14px 0 0;
+  border-top:1px solid var(--line);
+}
+/* --line, not --line-strong: the proportional bar 14px above owns the strong edge, and two equal
+   weights that close together read as one accident rather than two decisions. */
+[data-mobile-story] .about-weights__key li{
+  display:grid;
+  grid-template-columns:10px minmax(0, 1fr) 112px 40px;
+  align-items:center;
+  gap:0 16px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+}
+/* DESCENDANT QUALIFIED, WHICH IS THE POINT. `.about-key__chip` is read by four components across two
+   documents: /about's contrast matrix takes it at 22x14, /about's checks list and THIS surface's own
+   2.1 pair list both take it at 10x10. Qualifying under .about-weights__key reaches the five chips in
+   this one figure and nothing else anywhere.
+
+   Portrait rather than square, at the row's cap height, so the five of them make a colour column down
+   the left to scan against the magnitude column down the right. Deliberately SEPARATED by the row
+   padding: a continuous equal-height colour spine directly under a bar of proportional widths would
+   be a second chart contradicting the first. */
+[data-mobile-story] .about-weights__key .about-key__chip{
+  width:10px;
+  height:14px;
+  align-self:center;
+}
+[data-mobile-story] .about-weights__key .about-key__hex,
+[data-mobile-story] .about-weights__key .about-key__ok{
+  line-height:1.2;
+}
+/* THE SHARE IS THE CHAPTER'S ARGUMENT, so it takes the answer's voice — the same step .story-facts dd
+   takes for a found value and .about-checks__val takes for a measurement. Both siblings land on 13px,
+   which is why this does, and why it goes no further: this file already recorded making and reversing
+   a 20px readout here because it led past everything.
+
+   text-align:right does the real work. All five right edges land on one x, so the units align. That
+   comes from the alignment and NOT from the inherited font-variant-numeric:tabular-nums, which is
+   inert here: Neue Montreal ships no tnum table, and 111% and 000% measure 29.39px and 30.34px with
+   the property on or off. Nothing on this surface may lean on tabular metrics. */
+[data-mobile-story] .about-weights__key .about-key__pct{
+  font-size:var(--fs-body);
+  font-weight:500;
+  line-height:1.1;
+  color:var(--on-surface);
+  text-align:right;
+}

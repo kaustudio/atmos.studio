@@ -644,6 +644,22 @@ export const motionMethods = {
     this._maskCopyIn(root);
     this._settleGuard('list', [root].concat(rows), rows.length);
   },
+  /* THE STORY'S OWN ENTRANCE, REMOVED — and the reason is worth keeping.
+
+     It existed because chooseStoryCase called _shareIn(), which was a silent no-op: _shareIn resolves
+     `[data-mobile-share]`, the read-only palette surface, which is not mounted while the story is. It
+     returned at the guard, nothing animated, and the new case replaced the old one between two frames
+     — the "page transition doesn't trigger" that was reported. _storyIn was the answer: <main> rose
+     and faded in as one block.
+
+     The picker cycle now arrives under the site's curved wipe instead (see _wipeCover), and the story
+     comes out of its own page reveal as the panel lifts — heading by heading, block by block, the
+     same module /about arrives on. Playing both would be two entrances for one arrival, and the block
+     slide is the weaker of them by this file's own argument: wipe.js calls it "the whole page block
+     sliding up as one slab" where the copy should be rising out of its masks.
+
+     Anything that needs a story entrance should arm this._storyReveal and release it through
+     _playStoryReveal, which is what the wiped path does. */
   _listOut(cb) { this._exitTween('[data-mobile-list]', cb); },
   // Out is shorter than in and travels the other way, per the house rule that an exit is softer
   // than an entrance. It outlives the state change: React would unmount the surface on the flag,

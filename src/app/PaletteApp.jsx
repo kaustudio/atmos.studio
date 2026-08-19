@@ -22,6 +22,21 @@ import { refineMethods } from './methods/refine.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
+/* THE STORY'S MOTION IS /about's MOTION — the same modules, not a second set.
+   src/app/methods/story.js is gone with the surface it drove. Every one of these takes a root, so
+   running them over the story's markup is the same code path /about takes, which is the only way two
+   surfaces cannot drift. */
+import { initPageReveal } from './methods/pageReveal.js';
+import { initDividers } from './methods/aboutDividers.js';
+import { initGlobalParallax } from './methods/aboutParallax.js';
+import { initHighlightText } from './methods/aboutHighlight.js';
+import { initSectionDock } from './methods/aboutDock.js';
+import { initHorizontalScroll } from './methods/horizontalScroll.js';
+import { initToggleSwitch } from './methods/toggleSwitch.js';
+import { initStickyTitle } from './methods/aboutStickyTitle.js';
+import { initLayeredSlider } from './methods/layeredSlider.js';
+import { initHeroExit } from './methods/heroExit.js';
+import { initCascade } from './methods/aboutCascade.js';
 
 /* ===== WHAT COUNTS AS A PHONE ===============================================================
    THE GATE WAS KEYED TO WIDTH ALONE, and a phone has two orientations. `(max-width:720px)` is true
@@ -169,6 +184,16 @@ export default class PaletteApp extends React.Component {
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
     assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
+    /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
+       start screen there, exactly as the gate was — and is turned off only by opening an example or
+       arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
+       is the way in, and a reader who comes back has come back to the way in.
+       storySwatch is chapter 4's selection (null = the picture whole, which is how it opens).
+       storyMasks is the built mask set, carrying the id of the case it was built from so a stale
+       set can never be painted over a different photograph. */
+    storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyMasks: null,
+    // The image chooser, which covers the story rather than replacing it (see chooseStoryCase).
+    storyPicker: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
@@ -253,6 +278,23 @@ export default class PaletteApp extends React.Component {
   // archive", which is false of the example and would put a save prompt on a palette already saved.
   _mobileShare() { return !!(this.state.narrow && (this.state.sharedView || this.state.exampleView) && this.state.current); }
   _mobileList() { return !!(this.state.narrow && this.state.exampleList && !this._mobileShare()); }
+  /* THE STORY IS THE PHONE'S GROUND FLOOR, so it answers last: the example list and the share view
+     both stand above it and must win. It also needs a case to tell — with no examples in the feed
+     there is nothing to read, and the phone falls through to the gate exactly as it stands today.
+     That is the same `feed.length > 0` guard `gateHasExample` already applies to the gate's one act,
+     and it keeps the storage-blocked case no worse than it is now rather than turning it into eight
+     blank chapters. */
+  _mobileStory() { return !!(this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare() && !this._mobileList()); }
+  /* THE CASE THE STORY TELLS. Dry Season by default — the brief names it, and it is the clearest of
+     the eight: one subject, a ground in two lights, and a 4.5% swatch that turns out to be the
+     flower. Falls back to whatever the feed's first example is, so a reordered seed table cannot
+     leave this null while examples exist. */
+  _storyCase() {
+    const ex = this._examples();
+    if (!ex.length) return null;
+    const id = this.state.storyCaseId;
+    return (id && ex.find((p) => p.id === id)) || ex.find((p) => p.exampleKey === 'tulip') || ex[0];
+  }
   /* TWO QUESTIONS, and conflating them is what cost the orbs. _landingUp is "is the stage in the
      document" — it gates building the formation and rendering its slots, and the phone surfaces do
      not change the answer, because they cover the stage rather than replacing it. _landingLit is "can
@@ -341,6 +383,11 @@ export default class PaletteApp extends React.Component {
         e.preventDefault(); this.refineUndo(); return;
       }
       if (e.key === 'Escape') {
+        /* The image chooser, above everything else it can coexist with. Its visible dismiss control
+           was removed by request, so Escape is the only way out that does not commit a choice — which
+           makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
+           opens centred on the case already being read, so choosing that one is a no-op exit. */
+        if (this.state.storyPicker) { e.preventDefault(); this.closeStoryPicker(); return; }
         if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
         // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
         // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
@@ -405,11 +452,34 @@ export default class PaletteApp extends React.Component {
     // internally until gsap is ready)
     this._prevLandLit = this._landingLit();
     if (this._prevLandLit) { requestAnimationFrame(() => this.initOrbit()); }
+    /* THE STORY. Its masks are built off the render path (see buildStoryMasks) and its choreography
+       is armed after the first paint, because every trigger it creates is measured against chapters
+       that have to be in the document first. `_alive` guards the async mask build — image decode
+       can settle after the reader has left. */
+    this._alive = true;
+    // Masks off the render path; the choreography after the first paint, because every trigger it
+    // creates is measured against chapters that have to be laid out first. _syncStory is idempotent
+    // and self-healing (see its note), so componentDidUpdate carries it from here.
+    this.buildStoryMasks();
+    /* rAF AND a timer. The frame callback is the right moment — the chapters are laid out and the
+       fonts are usually in — but a document that mounts hidden (a background tab, a preview pane
+       that is not on screen) is never handed one, and the surface would then arrive unarmed and stay
+       that way until something else happened to re-render it. The timer is the same backstop shape
+       the reveal sweeps use, and _syncStory is idempotent, so whichever arrives first wins and the
+       second is four property reads. */
+    requestAnimationFrame(() => this._syncStory());
+    this._storyT = setTimeout(() => this._syncStory(), 400);
   }
 
   componentDidUpdate() {
     const s = this.state;
     this._updateProjPill();
+    /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
+       on screen and torn down when anything covers it, so its triggers can never be left measuring
+       chapters that are no longer in the document — the failure aboutStack records, where one
+       surviving pin refreshes every trigger on the next surface against a detached element. */
+    this._syncStory();
+    this._syncPicker();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
@@ -492,7 +562,207 @@ export default class PaletteApp extends React.Component {
     }
   }
 
+  /* One place decides whether the story module is up, so it can never be armed twice or left behind.
+     Rebuilt rather than refreshed when the CASE changes: the chapters' contents change wholesale, so
+     every start and end has to be re-measured, and a fresh module is cheaper to reason about than a
+     partial invalidation. */
+  /* KEYED ON THE ROOT ELEMENT, NOT ON A FLAG, and that distinction is the whole reason this is
+     written out rather than being three lines.
+
+     The obvious version — remember the case id, skip if it has not changed — latches on its own
+     first failure. initStory returns the SAME inert `noop` for every bail (no GSAP yet, no
+     ScrollTrigger, reduced motion, no chapters in the document), and a noop stored in `_killStory`
+     is indistinguishable from a live teardown: the guard sees a truthy function, decides the module
+     is already up, and never tries again for the life of the surface. Every one of those bails is
+     transient except the reduced-motion one, and the transient ones are exactly what a vendor script
+     still loading looks like.
+
+     So the question asked here is "is the module actually running on THIS element", which the module
+     answers itself with [data-story-live] — the same attribute the stylesheet keys its live layout
+     off, so there is one fact rather than two that can disagree. A bail leaves the attribute absent,
+     the next update re-enters, and the surface heals as soon as its dependencies arrive. Under
+     reduced motion it re-enters forever and returns noop forever, which costs four property reads on
+     a render that was happening anyway and is the correct behaviour: the floor is the full story. */
+  /* The chooser is built and torn down on its own, not with the scroll modules: it is a covering
+     surface that comes and goes many times over one story, and rebuilding six ScrollTriggers each
+     time it opened would be the churn that broke the toggle. EASE.fold is handed in because it IS
+     the resource's 'osmo' curve — see [ATMOS 1] in the module. */
+  _syncPicker() {
+    const want = !!(this.state.storyPicker && this._mobileStory());
+    const root = want ? document.querySelector('[data-story-picker]') : null;
+    if (root && this._pickerRoot === root) return;
+    if (this._killPicker) { try { this._killPicker(); } catch (e) { } this._killPicker = null; }
+    this._pickerRoot = null;
+    if (!root) return;
+    this._pickerRoot = root;
+    this._killPicker = initLayeredSlider(root, {
+      ease: this.EASE ? this.EASE.fold : 'power2.out',
+      onChoose: (i) => { try { this.renderVals().mobileStory.picker.onChoose(i); } catch (e) { } },
+    });
+    // Open on the case the story is already telling, so the strip does not start somewhere else.
+    try {
+      const inst = root.querySelector('[data-layered-slider-init]')._layeredSlider;
+      const at = this.renderVals().mobileStory.picker.active;
+      if (inst && at > 0) inst.goToIndex(at);
+    } catch (e) { }
+  }
+
+  _syncStory() {
+    /* RE-ENTRANCY GUARD, and it is the fix for duplicated modules rather than a precaution.
+
+       The early-return below asks whether `data-story-live` is on the root, and that attribute is
+       written on the LAST line of this method. Everything before it can re-enter: initPageReveal is
+       played here, the reveal and the mask build both commit state, and any commit runs
+       componentDidUpdate, which calls this method again — before the first pass has claimed the root.
+       The second pass then built a complete second set of modules over the same DOM.
+
+       Measured on the close: three ScrollTriggers on one wrap, two of them with identical ranges,
+       two scrubbed timelines fighting over the same characters. Because the sticky title reveals with
+       `from()`, the second timeline recorded whatever the first had already set as the value to
+       ARRIVE at — so characters that happened to be mid-fade became characters that fade to
+       invisible and stay there. That is the missing letters.
+
+       A flag rather than a deferral: the work is synchronous and idempotent once it completes, so the
+       honest thing is to refuse the nested call outright rather than schedule a second one. */
+    if (this._syncingStory) return;
+    const want = this._mobileStory();
+    const root = want ? document.querySelector('[data-mobile-story]') : null;
+    /* THE KEY IS THE CASE, AND ONLY THE CASE.
+
+       It briefly also carried the active tab and whether the masks had landed. That was written to
+       fix the cascade, which parked sets at init and registered a trigger per set — so a set that
+       ARRIVED later was parked by nobody and revealed by nobody. Rebuilding on every content change
+       was the blunt answer to it.
+
+       The cascade is gone (its sets already sat inside blocks pageReveal reveals, so it was a second
+       layer of choreography that could and did strand content invisible). Nothing left here parks
+       anything that changes: pageReveal handles headings and [data-reveal] text, neither of which
+       moves when a tab is pressed or a mask arrives.
+
+       And the rebuild had a real cost that only showed on screen. Pressing a segment tore down and
+       rebuilt all six modules — including pageReveal, which re-splits its blocks — so the buttons
+       were replaced underneath the finger. The first press worked and the second landed on a node
+       that no longer existed, which is exactly "it is not possible to switch between the three".
+       Rebuild on a genuine case change; leave the surface alone for a tab. */
+    const key = want ? (this._storyCase() || {}).id : null;
+    if (root && this._storyRoot === root && this._storyKey === key && root.hasAttribute('data-story-live')) return;
+    this._killStory();
+    if (!root) return;
+    this._storyRoot = root; this._storyKey = key;
+
+    // maskMotion's own definition (renderVals), built here rather than read off a render's output so
+    // this does not depend on when the last render happened. One scale, quoted twice, never invented.
+    const motion = {
+      duration: this.DUR ? this.DUR.reveal : 0.62,
+      stagger: 0.09,
+      ease: this.EASE ? this.EASE.entrance : 'power3.out',
+    };
+
+    /* ORDER, for the reason AboutPage states it: anything that measures the document must do so after
+       whatever changes its height. Nothing here pins, so the only real dependency is that the dock
+       goes LAST — it holds a trigger against every section plus one spanning the run, so it wants a
+       document that has stopped moving. */
+    const groups = [].slice.call(root.querySelectorAll('[data-sec]')).map((sec) => ({
+      heading: sec.querySelector('[data-sec-head]'),
+      blocks: [].slice.call(sec.querySelectorAll('[data-reveal]')),
+      rule: sec.hasAttribute('data-rule') ? sec : null,
+    }));
+    const hero = root.querySelector('[data-story-hero]');
+    this._syncingStory = true;
+    try {
+    this._storyKills = [];
+    /* THE PIN GOES FIRST. It is the only thing on this surface that changes the document's height —
+       ScrollTrigger inserts a spacer the length of the horizontal travel — so anything built before
+       it would have measured a page that is about to be a different one. Same reason AboutPage builds
+       its three pins ahead of everything else. */
+    this._storyKills.push(initHorizontalScroll(root));
+    this._storyReveal = initPageReveal(root, {
+      motion,
+      hero,
+      heroParts: hero ? [].slice.call(hero.querySelectorAll('[data-story-hero-line]')) : [],
+      groups,
+    });
+    this._storyKills.push(() => { try { this._storyReveal.destroy(); } catch (e) { } });
+    this._storyKills.push(initHeroExit(root));
+    this._storyKills.push(initStickyTitle(root));
+    this._storyKills.push(initGlobalParallax(root));
+    this._storyKills.push(initHighlightText(root));
+    this._storyKills.push(initDividers(root, { motion }));
+    /* The toggle needs no scroll and no GSAP, so it is built independently of the scroll modules.
+
+       onSelect IS wired, and leaving it out was a bug worth recording: React's own onClick on each
+       button commits the selection for a pointer, so clicking worked and the reasoning "the module
+       has already moved the pill by the time it fires" looked complete. The ARROW KEYS do not
+       synthesise a click — the resource calls setActive and focuses directly — so the pill and the
+       focus moved while the panel stayed on whatever had last been clicked. A control that answers
+       the keyboard visually and not actually is worse than one that ignores it.
+
+       Index → id through the same order the view model renders, so the two cannot disagree. */
+    const TABS = ['weight', 'role', 'contrast'];
+    this._storyKills.push(initToggleSwitch(root, {
+      onSelect: (i) => { const id = TABS[i]; if (id) this.setStoryTab(id); },
+    }));
+    /* THE SETS ARRIVE, rather than being fully drawn while their own text is still revealing.
+       initCascade is the module the house already owns for this — its header states the defect
+       verbatim — and it was removed here, not designed out: its sets were being stranded by
+       _syncStory re-entering and rebuilding over its parked children. That re-entrancy is guarded
+       now, and the module commits no React state of its own, so it cannot re-enter. Same call
+       AboutPage makes, with the motion object already built above. */
+    this._storyKills.push(initCascade(root, motion));
+    this._storyKills.push(initSectionDock(root, { lenis: this._lenis }));
+
+    /* The reveal is ARMED, not played — the contract AboutPage and LegalPage both describe. The note
+       that used to sit here said the split existed "so a future wiped arrival can hold it behind the
+       cover", and that arrival now exists: choosing another palette re-tells the whole story about a
+       different photograph, and it comes in under the site's own curved wipe.
+
+       So the question is which arrival this is. Under the cover the copy must NOT play — a reveal
+       that runs behind an opaque panel is finished by the time the panel lifts, and the page appears
+       to have simply been there, which is the exact fault the wipe was built to fix. _wipeCover's
+       reveal() releases it as the panel's trailing edge clears. Every other way onto this surface has
+       no cover to wait for, so it plays now. */
+    if (this._arrivingByWipe) this._storyArmed = true;
+    else try { this._storyReveal.play(); } catch (e) { }
+
+    // The same refresh AboutPage runs for the same reason: these triggers are created before the
+    // local Neue Montreal faces land, against a document that is about to get taller.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => {
+        if (!root.isConnected || !window.ScrollTrigger) return;
+        try { window.ScrollTrigger.refresh(); } catch (e) { }
+      });
+    }
+    try { root.setAttribute('data-story-live', '1'); } catch (e) { }
+    } finally { this._syncingStory = false; }
+  }
+
+  // The armed half of the above. Held on the instance rather than passed through the wipe, because
+  // the module that gets armed is built by componentDidUpdate — after the caller that started the
+  // cover has already returned.
+  _playStoryReveal() {
+    if (!this._storyArmed) return;
+    this._storyArmed = false;
+    try { if (this._storyReveal) this._storyReveal.play(); } catch (e) { }
+  }
+
+  // Torn down in reverse of the order they were built.
+  _killStory() {
+    if (this._storyKills) {
+      this._storyKills.slice().reverse().forEach((k) => { if (typeof k === 'function') { try { k(); } catch (e) { } } });
+      this._storyKills = null;
+    }
+    this._storyReveal = null;
+    this._storyArmed = false;
+    if (this._storyRoot) { try { this._storyRoot.removeAttribute('data-story-live'); } catch (e) { } }
+    this._storyRoot = null; this._storyKey = null;
+  }
+
   componentWillUnmount() {
+    this._alive = false;
+    if (this._killPicker) { try { this._killPicker(); } catch (e) { } this._killPicker = null; }
+    if (this._storyT) { clearTimeout(this._storyT); this._storyT = null; }
+    if (this._maskT) { clearTimeout(this._maskT); this._maskT = null; }
+    this._killStory();
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }

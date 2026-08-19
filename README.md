@@ -18,7 +18,19 @@ npm run build      # production build → dist/
 npm run preview
 ```
 
-Desktop-only by design (≤720px shows a calm desktop-gate).
+The **tool** is desktop-only by design. A phone gets a different product instead of a refusal: an
+eight-chapter scroll story that reads one of the seeded examples — the image, its five colours at
+their real proportions, where each one lives in the frame, what they do together, the written
+reading — and ends by offering the desktop, having first shown what the desktop is for. The gate's
+old sentence is now that closing invitation rather than the opening statement.
+
+What counts as a phone is `PHONE_MQ` in `src/app/PaletteApp.jsx` — `(max-width:720px)` **or**
+`(pointer:coarse) and (max-height:600px)`, the second clause catching a phone turned sideways. The
+same query is written again as an `@media` in `src/styles/global.css`; the two are one decision in
+two places and must be changed together. Four phone surfaces exist: the story, the example list, the
+read-only shared palette, and the original gate (still the fallback when no examples are available).
+Each is named in that stylesheet's allow-list, and a new one that is not named mounts invisibly under
+a `display:none`.
 
 ## What's inside
 

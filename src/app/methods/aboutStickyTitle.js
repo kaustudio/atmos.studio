@@ -162,8 +162,43 @@ export function initStickyTitle(root) {
   const tinted = [];
 
   wraps.forEach((wrap) => {
+    /* [ATMOS 8] IDEMPOTENT. A wrap that is already live is skipped rather than given a second
+       timeline. The module used to assume one init per element, which held while /about was the only
+       consumer and stopped holding the moment a React surface could re-enter its own build. Two
+       scrubbed timelines over one set of characters is not twice the effect — the second's `from()`
+       records the first's current values as its destination, so characters stop arriving at all. */
+    /* [ATMOS 11] ...BUT "ALREADY LIVE" HAS TO BE CHECKED, NOT TRUSTED.
+
+       The attribute above was set by a run that may since have been dismantled from outside. That is
+       not hypothetical: the phone story's takeover heading briefly carried `data-sec-head` as well,
+       so pageReveal claimed it as a section heading and ran splitLines() over it — rewriting the very
+       innerHTML this module had just split into characters. The timeline was left animating nodes
+       that were no longer in the document, the replacements kept the autoAlpha:0 floor set at split
+       time, and this guard then refused every chance to repair it. A scrub sitting at progress 1 with
+       an invisible statement and not one tween on a single character.
+
+       The markup is fixed and one engine owns that heading now. This stays anyway, because a guard
+       whose failure mode is a permanently blank headline is not worth the double-timeline it prevents.
+       Liveness is a question about the DOM — is the anchor character still in this wrap, and does
+       anything still animate it — so it is asked of the DOM rather than of an attribute that only
+       records an intention. A wrap that fails is torn down and rebuilt from scratch. */
+    if (wrap.hasAttribute('data-sticky-live')) {
+      const anchor = wrap._stickyAnchor;
+      if (anchor && wrap.contains(anchor) && gsap.getTweensOf(anchor).length) return;
+      try { const t = wrap._stickyTl; if (t) { if (t.scrollTrigger) t.scrollTrigger.kill(); t.kill(); } } catch (e) { }
+      wrap._stickyTl = null;
+      wrap._stickyAnchor = null;
+      wrap.removeAttribute('data-sticky-live');
+    }
+
     const headings = [].slice.call(wrap.querySelectorAll('[data-sticky-title="heading"]'));
-    if (headings.length < 2) return;
+    /* [ATMOS 7] ONE HEADING IS A VALID TAKEOVER, and requiring two was this port's addition rather
+       than the resource's. The source has no minimum: its loop fades out every heading EXCEPT the
+       last, so a lone heading resolves on the scrub and then holds, which is exactly what a single
+       closing statement wants. The guard was written when /about — which stacks three — was the only
+       consumer, and it silently refused the phone story's close. `< 1` is the honest floor: nothing
+       to reveal is nothing to do. */
+    if (headings.length < 1) return;
 
     // [ATMOS 2] The stacking is CSS's, but only from here on.
     wrap.setAttribute('data-sticky-live', '1');
@@ -187,6 +222,22 @@ export function initStickyTitle(root) {
       const split = splitChars(heading);
       if (!split) return;
       splits.push(split);
+
+      /* [ATMOS 10] THE FLOOR IS SET ON THE ELEMENTS, NOT INSIDE THE TIMELINE.
+
+         A `set` at master position 0 was not enough, and the reason is worth writing down. The reveal
+         is one STAGGERED tween: at time zero only its first target has begun, and GSAP leaves the
+         rest at whatever the DOM already holds rather than at the from-value. Measured across the
+         master at progress 0 / 0.25 / 0.5: 23 of 24 visible, then 12, then 23 again — characters
+         blinking out as their own stagger slot opened and fading back in, which is what "missing
+         letters" looked like.
+
+         Parking the characters directly, once, at split time gives the tween a floor that does not
+         depend on when each target's slot opens. The masterTl.set below still stands: that one is
+         what restores the floor when the reader scrubs back up. */
+      gsap.set(split.chars, { autoAlpha: 0 });
+      // See [ATMOS 11]: what a later init asks the DOM about.
+      if (index === 0) { wrap._stickyAnchor = split.chars[0]; wrap._stickyTl = masterTl; }
 
       /* THE HEADING STAYS HIDDEN UNTIL ITS TURN, and visibility is what does it. The resource reveals
          every heading up front and lets the character tweens carry the sequence, which holds when the
@@ -230,6 +281,25 @@ export function initStickyTitle(root) {
         });
       }
 
+      /* [ATMOS 9] EVERY HEADING IS PARKED AT MASTER TIME ZERO, INCLUDING THE FIRST.
+
+         Only headings after the first used to get this, and the omission is invisible on a page with
+         three of them because statement one is the one you are looking at when the takeover starts.
+         It is very visible with one.
+
+         `fromTo(..., immediateRender: true)` applies its from-state at CONSTRUCTION, but a STAGGERED
+         tween rendered at time zero has only started its first target — the rest have not begun, so
+         they sit at their natural value. Measured on the story's close at progress 0: one character
+         hidden and twenty-three visible. Scrubbing forward then snapped each one out as its own
+         stagger slot opened and faded it back, so the statement appeared to lose letters as the
+         reader arrived at it. That is the reported fault exactly.
+
+         The set is the same one the other headings already carry, hoisted so it runs for all of
+         them; against the resource's `from()` it would have recorded 0 as the destination, which is
+         why the note below says it is only safe because the reveal is a fromTo with both ends
+         named. */
+      masterTl.set(split.chars, { autoAlpha: 0 }, 0);
+
       if (index === 0) {
         masterTl.add(headingTl);
       } else {
@@ -246,13 +316,30 @@ export function initStickyTitle(root) {
         // immediateRender:false, or the set fires at construction and reveals the statement before the
         // timeline has ever run — which on a deep link straight into this section is the first paint.
         headingTl.set(heading, { visibility: 'visible', immediateRender: false }, 0);
-        masterTl.set(split.chars, { autoAlpha: 0 }, 0);
         masterTl.add(headingTl, '-=' + overlapOffset);
       }
     });
 
     if (masterTl.scrollTrigger) triggers.push(masterTl.scrollTrigger);
     triggers.push({ kill: () => { try { masterTl.kill(); } catch (e) { } } });
+
+    /* [ATMOS 6] THE COLOUR ARC IS OPT-IN, AND THE GUARD BELONGS ABOVE THE TIMELINE.
+
+       The arc is /about's own addition, not the resource's: six extracted palettes the ground and
+       the ink travel through, because three full screens of the same near-black is three screens a
+       reader cannot tell apart on a page whose whole argument is that a palette is an atmosphere.
+       That reasoning is the takeover's, not the mechanic's — the phone story uses this module for a
+       single closing statement on the surface colour, where six changes of ground behind one
+       sentence would be noise. /about carries `data-sticky-arc` and is unchanged.
+
+       IT RETURNS BEFORE colourTl IS BUILT, and the first version of this guard did not. Placed a few
+       lines lower it still created the timeline and its ScrollTrigger, then returned before the
+       `triggers.push` that would have registered them for teardown — so every wrap without the
+       attribute got a second scrubbed trigger over the same range that did nothing, was never killed,
+       and accumulated one more on every rebuild. Measured on the story's close: two triggers on one
+       wrap, and characters that stopped arriving because a second timeline was recording the first's
+       mid-flight values. A guard that runs after the thing it is guarding is not a guard. */
+    if (!wrap.hasAttribute('data-sticky-arc')) return;
 
     /* [ATMOS 5] The colour runs on its OWN scrubbed timeline over the same range, deliberately beside
        the resource's timeline rather than inside it. The master's length is decided by the heading

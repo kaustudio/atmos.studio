@@ -2,7 +2,7 @@
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
-import { ROLE_IDS, ROLE_LABEL } from '../lib/exporters.js';
+import { ROLE_IDS, ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
 import { gamutMap } from '../lib/color.js';
 
@@ -39,6 +39,13 @@ const A11Y_LABEL = {
   limited: 'Limited Text',
   none: 'Accent Only',
 };
+/* The analysis's band names reach the phone story as VALUES in a two-column readout — Dominant,
+   Mid, Saturated — where every other value in the column is already a name. analysePalette returns
+   them lower case because every one of its own consumers puts them mid-sentence (see the rationale
+   composer), so this is the one place that has to raise the first letter, and it does it here rather
+   than with a text-transform: capitalize for the reason A11Y_LABEL states above — and for the
+   sharper one global.css records, that capitalize shouts at EVERY word in the string. */
+const CAPS = (v) => (typeof v === 'string' && v) ? v.charAt(0).toUpperCase() + v.slice(1) : '';
 // THE DEFINITION, one layer down. These names are answers rather than measurements, so unlike the
 // band labels they do not define themselves — and that debt has to be paid somewhere reachable
 // rather than left for the reader. It is paid three times over, on demand every time: the panel's
@@ -1672,6 +1679,255 @@ export const renderValsMethods = {
       };
     }
 
+    /* ===== THE PHONE'S STORY — eight chapters that read one photograph =====================
+       What stands where the desktop gate used to. The gate stated a limitation and offered one act;
+       this states the product's argument with a real palette and offers the desktop at the end of
+       it, once there is something to go there for.
+
+       EVERY FIGURE HERE IS THE DESKTOP'S OWN. analysePalette, semanticRoles, paletteMetrics and
+       composeUse are the same four composers the result stage and the library call, with the same
+       inputs — so the phone and the desktop cannot describe one palette two ways. That is the rule
+       the mobileShare block below already states, applied to four more readings.
+
+       Composed ONCE and reused across the chapters. analysePalette walks every swatch and
+       paletteMetrics walks every PAIR; asking again per chapter would run the whole analysis six
+       times for one screen. */
+    let mobileStory = null;
+    if (this._mobileStory()) {
+      const p = this._storyCase();
+      const an = analysePalette(p.swatches);
+      const met = this.paletteMetrics(p);
+      const totW = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
+      const roles = semanticRoles(p, p.roles);
+      const masks = (s.storyMasks && s.storyMasks.caseId === p.id) ? s.storyMasks : null;
+
+      /* THE BAR CARRIES TRUE SHARES, and it can because the numbers are not inside it.
+
+         An earlier pass put each colour's hex and percentage INSIDE its band, which forced a floor
+         under the band heights — a 0.8% swatch is six pixels and cannot hold a label — and a floored
+         picture beside an unfloored number is a figure disagreeing with its own caption.
+
+         /about had already solved this and the fix is to adopt its solution rather than tune ours:
+         `.about-weights` is a bar of TRUE widths and `.about-weights__key` is a list underneath
+         carrying the chip, the hex, the coordinates and the share (about.css:317-335, about.html's
+         Dusk Slate figure). The bar then only has to show proportion, which it can do honestly at
+         1.9%, and every number gets a line of its own at a readable size. swatchGrow's 0.06 floor is
+         no longer reached for here at all. */
+      const okl = (b) => {
+        // The same polar conversion reading.js does internally, printed the way /about prints it.
+        const C = Math.sqrt(b.a * b.a + b.b * b.b);
+        let H = Math.atan2(b.b, b.a) * (180 / Math.PI);
+        if (H < 0) H += 360;
+        return 'L ' + b.L.toFixed(2).replace(/^0/, '') + ' · C ' + C.toFixed(3).replace(/^0/, '') + ' · H ' + Math.round(H) + '°';
+      };
+
+      const swatchRows = p.swatches.map((b, i) => {
+        const HX = b.hex.toUpperCase();
+        const pct = Math.round((b.weight / totW) * 100);
+        // A swatch is only offered as a REGION where the mask is trustworthy — see MIN_COVERAGE and
+        // MAX_DRIFT in src/lib/masks.js. Two swatches that are the same colour twice classify
+        // arbitrarily between themselves, and a control that lights up the wrong seventh of the
+        // frame is worse than one that is not there.
+        const mask = masks ? masks.urls[i] : null;
+        return {
+          key: 'st-' + i, sid: i, hex: HX, pct: pct + '%', pctNum: pct,
+          // The bar's own width — the real share, to one decimal, exactly as /about's figure states
+          // it. Rounded to a whole number in `pct` for the key, because that is the figure the rest
+          // of the app quotes.
+          share: ((b.weight / totW) * 100).toFixed(1),
+          ok: okl(b),
+          hasRegion: !!mask, mask,
+          selected: s.storySwatch === i,
+          onPick: () => this.pickStorySwatch(i),
+          // Never colour alone: the accessible name carries the hex, the share and whether this one
+          // can be located in the picture at all.
+          aria: HX + ', ' + pct + ' percent of the palette'
+            + (mask ? '. Show where this colour appears in the photograph' : '. Too little of the frame to locate'),
+        };
+      });
+
+      const selected = (typeof s.storySwatch === 'number') ? swatchRows[s.storySwatch] : null;
+
+      mobileStory = {
+        caseId: p.id,
+        name: p.name,
+        /* THE HERO NAMES THE PALETTE ONCE THE READER HAS CHOSEN ONE.
+
+           Picking from the chooser re-tells all eight chapters about a different photograph and lands
+           the reader back at the top. Every visible sign that anything happened was in the copy far
+           below the fold: the same headline, the same lead, the same button, over an orb field that
+           does not change either. The reader who has just chosen Garnet arrives at a screen that says
+           "Every image has an atmosphere" and cannot tell their choice registered.
+
+           So the opening statement holds while nothing has been chosen, and becomes the palette's own
+           name the moment something has. storyCaseId is null until chooseStoryCase or setStoryCase
+           writes it, which is exactly the "has chosen" test and needs no second flag: the default case
+           resolves through _storyCase's tulip fallback without ever setting it.
+
+           It stays named afterwards rather than reverting on the next scroll, because the name is now
+           what the page is about. The lead below it is unchanged on purpose: it says what Atmos does
+           with an image, which is as true of the second palette as the first, and swapping both lines
+           would leave the reader nothing recognisable to land on. */
+        heroTitle: s.storyCaseId ? p.name : 'Every image has an atmosphere',
+        image: this.dispUrl(p), hasImage: this.hasImg(p),
+        descriptors: p.descriptors || [],
+        rationale: p.rationale || '',
+        useLine: composeUse(an, met.aaState),
+        swatches: swatchRows,
+        /* The bar is one role="img", so it needs one sentence describing the whole figure — /about's
+           weight bar carries exactly this ("Dusk Slate by area: darkest green 44.1 per cent, …").
+           Without it a screen reader meets five unlabelled spans. */
+        weightsAria: p.name + ' by area: ' + swatchRows.map((r) => r.hex + ' ' + r.pct).join(', ') + '.',
+        // The lit half of chapter 4. Null until a swatch is chosen, which is also the state the
+        // chapter opens in — the picture is whole before it is taken apart.
+        litMask: selected && selected.mask ? selected.mask : null,
+        litHex: selected ? selected.hex : '',
+        litPct: selected ? selected.pct : '',
+        anyRegion: swatchRows.some((r) => r.hasRegion),
+
+        /* CHAPTER 5 — three readings, one palette. Segmented buttons carrying aria-pressed, not a
+           tablist: there is no tab primitive in this codebase and a control that announces itself
+           as tabs without answering an arrow key is worse than one that never claimed to. */
+        tab: s.storyTab || 'weight',
+        segs: [
+          { id: 'weight', label: 'Character' },
+          { id: 'role', label: 'Role' },
+          { id: 'contrast', label: 'Contrast' },
+        ].map((t) => ({
+          ...t, key: t.id, selected: (s.storyTab || 'weight') === t.id,
+          onPick: () => this.setStoryTab(t.id),
+          aria: t.label + (((s.storyTab || 'weight') === t.id) ? ', shown' : ', show this reading'),
+          // No inline fill: the toggle switch draws its own moving pill, and the active button's
+          // colour is [data-toggle-active]'s. See methods/toggleSwitch.js.
+        })),
+        /* THE THREE PANELS ARE THREE /about FIGURES, not three lists invented here.
+
+           Role is `.about-roles` — the grid of `.about-role` cells, each a swatch over its name, its
+           hex and a note (about.css:824-847). Contrast is `.about-matrix` — the ranked pair list
+           whose verdict is carried by FILL WEIGHT and by a WORD, never by hue, which is the rule that
+           page argues at its own length (about.css:778-812). Weight is the same matrix shape holding
+           the analysis bands. All three were hand-rolled label/value rows before this pass. */
+        roleCells: roles.map((r) => {
+          const sw = p.swatches.find((x) => x.hex.toUpperCase() === r.hex.toUpperCase());
+          const share = sw ? Math.round((sw.weight / totW) * 100) : null;
+          return {
+            key: r.role, name: ROLE_LABEL[r.role], hex: r.hex.toUpperCase(), swatch: r.hex,
+            // The note /about's own role cells carry: what share of the frame this colour holds.
+            note: share === null ? '' : share + '% of the frame',
+            aria: ROLE_LABEL[r.role] + ', ' + r.hex.toUpperCase() + (share === null ? '' : ', ' + share + ' percent of the frame'),
+          };
+        }),
+        /* The strongest pairs, ranked, classified in WORDS as well as by fill — the matrix figure's
+           own rule: "no hue carrying the verdict… the classification is spelled out in words and the
+           fill is only there to rank them". Six rather than all ten: ten rows is the desktop figure's
+           density, and this is one screen of a story on a phone. */
+        pairs: (() => {
+          const out = [];
+          for (let i = 0; i < p.swatches.length; i++) {
+            for (let j = i + 1; j < p.swatches.length; j++) {
+              const ratio = this.contrastRatio(p.swatches[i].hex, p.swatches[j].hex);
+              out.push({
+                key: i + '-' + j, a: p.swatches[i].hex, b: p.swatches[j].hex, ratio,
+                val: ratio.toFixed(1) + ' to 1',
+                // .about-checks' own three states, not .about-matrix's — see the note on the panel.
+                cls: ratio >= 4.5 ? 'is--pass' : ratio >= 3 ? 'is--part' : 'is--fail',
+                use: ratio >= 4.5 ? 'Body text at AA' : ratio >= 3 ? 'Large text at AA' : 'Graphic only',
+                // NAMED, not left to two colour chips. The chips are decoration beside this.
+                pair: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase(),
+                aria: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase() + ', '
+                  + ratio.toFixed(1) + ' to 1, ' + (ratio >= 4.5 ? 'usable for body text' : ratio >= 3 ? 'usable for large text' : 'graphic use only'),
+              });
+            }
+          }
+          return out.sort((x, y) => y.ratio - x.ratio).slice(0, 6);
+        })(),
+        bands: [
+          { key: 'dom', label: 'Dominance', value: CAPS(an.dominance.band) },
+          { key: 'light', label: 'Lightness', value: CAPS(an.lightness.band) },
+          { key: 'temp', label: 'Temperature', value: met.temp },
+          { key: 'chroma', label: 'Chroma', value: CAPS(an.chroma.band) },
+          { key: 'hue', label: 'Hue spread', value: CAPS(an.hue.band) },
+        ],
+        // A11Y_LABEL, not A11Y_TITLE: the caption wants the NAME (Text-Ready); A11Y_TITLE is that
+        // name plus its definition, which is a tooltip's job and a full line of type here.
+        aaLabel: A11Y_LABEL[met.aaState],
+        aaCount: met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5:1',
+
+        /* CHAPTER 7 — the other cases, as a swipeable row. The same records the library shows and
+           the example list shows; a third way of describing a palette would be a third thing to
+           keep true. */
+        /* ALL SEVEN, and every one of them appears exactly once in the whole story.
+
+           This was capped at five to buy back the horizontal run's scroll cost, and that was the
+           wrong economy: the archive holds eight examples, the story reads one of them, and capping
+           the gallery meant two photographs the product owns were never shown at all while the case
+           being read appeared twice. Dropping 1.1's duplicate figure pays for the two extra panels
+           and then some — the count goes up, the page gets shorter, and the imagery stops repeating.
+
+           Eight distinct photographs across the surface: one in 1.3, doing the mask work, and seven
+           here. No image is used twice. */
+        cases: this._examples().filter((x) => x.id !== p.id).map((x) => {
+          const t = x.swatches.reduce((a, b) => a + (b.weight || 0), 0) || 1;
+          return {
+            key: x.id, name: x.name,
+            note: (x.descriptors || []).slice(0, 2).join(' · '),
+            image: this.dispUrl(x), hasImage: this.hasImg(x),
+            strip: x.swatches.map((b, i) => ({ key: i, style: { flex: String((b.weight || 0) / t), background: b.hex } })),
+            onOpen: () => this.setStoryCase(x.id),
+            aria: 'Read ' + x.name + '. ' + (x.descriptors || []).slice(0, 2).join(', '),
+          };
+        }),
+
+        /* CHAPTER 8 — the handoff, and it is a real one. shareUrl() encodes THIS palette in the
+           fragment, so the desktop that receives it opens on the case the reader was just looking
+           at — which is what makes "send to desktop" an accurate description rather than the
+           overpromise the brief calls out. copySiteLink()'s 'gate-link' key copied the site root
+           and said the same words; this replaces it rather than reviving it. */
+        /* THE PICKER. Every example including the one being read, because this is a chooser rather
+           than an "others" list — a reader who opens it and changes their mind should find the case
+           they are already in, not discover it is the one option missing. `active` seeds the slider
+           on it so the strip opens centred on where the story already is. */
+        pickerOpen: !!s.storyPicker,
+        picker: {
+          active: Math.max(0, this._examples().findIndex((x) => x.id === p.id)),
+          cases: this._examples().map((x) => ({
+            key: x.id, id: x.id, name: x.name,
+            image: this.dispUrl(x), hasImage: this.hasImg(x),
+            note: (x.descriptors || []).slice(0, 2).join(' · '),
+          })),
+          onChoose: (i) => { const ex = this._examples()[i]; if (ex) this.chooseStoryCase(ex.id); },
+          onClose: () => this.closeStoryPicker(),
+        },
+        onBegin: () => this.beginStory(),
+        onSend: () => this.sendStoryToDesktop(),
+        sent: s.copied === 'story-send',
+        // Opens the chooser rather than jumping to a read-only palette: the story is the product,
+        // so 'another palette' means the same story told about a different image.
+        onAnother: () => this.openStoryPicker(),
+        // The gate's own sentence, kept word for word and moved to the end. It was true when it
+        // opened the surface and it is still true here; what changed is that the reader has now
+        // seen what the room is for.
+        /* THE QUESTION IS ANSWERED WITH THE PAYOFF, not with the refusal it replaced.
+
+           This line was the gate's own sentence, moved here word for word — "Reading an image means
+           weighing colours, roles and contrast side by side. That needs room." Moving it was the
+           whole point of the restructure, and keeping it verbatim undid that: the heading asks
+           "Ready to read your own image?" and the body answered with the same limitation the gate
+           used to open with, one screen after the reader has been shown the thing working.
+
+           The constraint is still true and is still stated — it is the second sentence now, and it
+           reads as the reason the desktop is worth the trip rather than as the reason this screen
+           cannot help.
+
+           REWRITTEN AGAIN when `Send to Desktop` was removed. The line had opened "Send this palette
+           across and it opens exactly where you left it", which was accurate only while a control
+           existed to do the sending. Copy that describes a button the screen no longer has is worse
+           than copy that never claimed it, so the invitation is now the plain one: open Atmos on a
+           desktop, with an image of your own. */
+        handoffLine: 'Open Atmos on a desktop and drop in an image of your own. Weighing colours, roles and contrast side by side is work that wants a wider screen.',
+      };
+    }
+
     // ===== mobile read-only share view =====
     // Deliberately NOT a responsive port of the result stage: a separate, minimal surface that shows
     // the palette, hands over the hex values, and says plainly where to go to make one. Read-only by
@@ -1784,6 +2040,7 @@ export const renderValsMethods = {
     return {
       showMobileShare: !!mobileShare, mobileShare,
       showMobileList: !!mobileList, mobileList,
+      showMobileStory: !!mobileStory, mobileStory,
       // THE GATE'S TWO ACTS. Offered only where they are true: the example needs a palette in the
       // archive to show, and both are meaningless on a screen wide enough to run the tool.
       gateHasExample: (s.feed || []).length > 0,

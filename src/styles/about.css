@@ -48,6 +48,30 @@
   --rail-card:clamp(280px, 26vw, 420px);
 }
 
+/* ===== FIVE RULES IN THIS FILE NAME A SECOND SURFACE, and it is deliberate.
+
+   The heading and prose rules (`h2`, `h3`, `main p`, `.about-col > p`, `strong`) and five component
+   rules (`.about-sec__num`, `.about-figure__label`, `.about-role__name`, `.about-matrix__val`,
+   `.about-matrix__use`) were scoped to `.about-route` alone.
+
+   THE HEADING RULES ARE THE ONES THAT BIT. Without them a story section's <h2> fell through to the
+   user agent's default — bold, at 1.5em — and this site ships two weights, Regular and Medium. There
+   is no bold file, so every chapter heading was being synthesised by the browser: faux-bold, wrong
+   size, wrong tracking, and wrong in a way that looks like a font-loading bug rather than a missing
+   rule. The phone story
+   (src/styles/story.css, [data-mobile-story]) is built from this file's components — the weight bar
+   and its key, the role cells, the pair matrix, the rail card — because a product with two
+   vocabularies for one kind of content reads as assembled rather than designed.
+
+   Those components are already reachable from that surface: everything else here is written
+   unscoped, and about.css is in the app route's bundle because AppView imports AboutPage. Only these
+   five carried a route in their selector, so each names the story surface too rather than having its
+   declarations copied into a second file. Copying them would have been the shorter diff and the
+   start of the drift this note exists to prevent.
+
+   Anything added here that a phone surface should also get has to be scoped the same way, or it
+   silently applies on /about and nowhere else. */
+
 /* ---------------------------------------------------------------- the grid */
 
 .about-grid{
@@ -114,28 +138,34 @@
    of height against 12 and made the whole footer 313px against 283: the same component, two sizes,
    because a route's prose rule reached out of the prose. A shared component must not be restyled by
    whichever page happens to be hosting it. */
-.about-route main p{margin:0 0 1.15em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
-.about-route main p:last-child{margin-bottom:0}
+.about-route main p,
+[data-mobile-story] main p{margin:0 0 1.15em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
+.about-route main p:last-child,
+[data-mobile-story] main p:last-child{margin-bottom:0}
 /* THE COLUMN IS A PLACE, THE MEASURE IS A MEASURE, and they are not the same number. Eight of twelve
    is ~920px at 1440, which at --fs-lead is a hundred characters — half again what a reader can track
    back from. So the heading gets the whole column, where the extra width buys shorter, better-broken
    lines at statement scale, and the body caps at --measure inside it. Both still start on column one,
    which is the alignment the page is built on. */
-.about-route .about-col > p{max-width:var(--measure)}
+.about-route .about-col > p,
+[data-mobile-story] .about-col > p{max-width:var(--measure)}
 /* .about-lead HAS NO TYPE OF ITS OWN, by request. It used to override all three of the paragraph's
    type properties — --fs-subtitle instead of --fs-lead, 1.45 instead of 1.65, --track-title instead
    of --track-body — which made the opening paragraph of a section a size above the paragraphs it
    sits with. Now it inherits .about-route p exactly, so a lead is a paragraph.
    The measure follows for free: --measure is 38em, so it was 760px at 20px and is 570px at 15px
    without a second rule. The class is left on the four elements as a hook; nothing styles it. */
-.about-route strong{font-weight:500}
+.about-route strong,
+[data-mobile-story] strong{font-weight:500}
 
 /* The label voice — the app's own uppercase chrome label at --fs-label on flat tracking. Nothing
    here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
    consumers until they were removed from the page; the list is what is left. */
 .about-route .about-figure__label,.about-route .about-rail__meta,
 .about-route .about-role__name,.about-route .pills__label,
-.about-route .pills__inner-label,.about-route .about-stack__ref{
+.about-route .pills__inner-label,.about-route .about-stack__ref,
+[data-mobile-story] .about-figure__label,
+[data-mobile-story] .about-role__name{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   line-height:1.2;
@@ -285,12 +315,14 @@
   background:var(--line-strong);
   transform:scaleX(var(--rule));transform-origin:0 50%;
 }
-.about-route h2{
+.about-route h2,
+[data-mobile-story] h2{
   margin:0 0 .7em;
   font-size:clamp(22px,2.6vw,34px);font-weight:500;line-height:1.14;
   letter-spacing:var(--track-statement);text-wrap:balance;
 }
-.about-route h3{
+.about-route h3,
+[data-mobile-story] h3{
   margin:0;
   font-size:var(--fs-subtitle);font-weight:500;line-height:1.25;letter-spacing:var(--track-title);
 }
@@ -301,7 +333,8 @@
 /* The ink, not the muted tint — see the note on the label voice above for why. This rule is the one
    that decides it: the shared rule sets the colour but this one is later and more specific, so the
    figure's name was being pulled back to the same tint as the terms inside it. */
-.about-route .about-figure__label{margin:0 0 14px;color:var(--on-surface)}
+.about-route .about-figure__label,
+[data-mobile-story] .about-figure__label{margin:0 0 14px;color:var(--on-surface)}
 .about-route .about-figure figcaption,.about-route .about-figure__note{
   margin:18px 0 0;max-width:var(--measure);
   font-size:var(--fs-body);line-height:1.65;letter-spacing:var(--track-body);
@@ -791,7 +824,8 @@
 }
 .about-matrix__pair{display:flex;gap:4px}
 .about-matrix__pair .about-key__chip{width:22px;height:14px}
-.about-route .about-matrix__val{
+.about-route .about-matrix__val,
+[data-mobile-story] .about-matrix__val{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat);
   justify-self:start;
@@ -802,7 +836,8 @@
 .about-matrix li.is--text .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 20%,transparent);color:var(--on-surface)}
 .about-matrix li.is--large .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 10%,transparent);color:var(--on-surface)}
 .about-matrix li.is--none .about-matrix__use{background:none;color:var(--on-surface-muted)}
-.about-route .about-matrix__use{
+.about-route .about-matrix__use,
+[data-mobile-story] .about-matrix__use{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
   padding:4px 8px;white-space:nowrap;
@@ -840,7 +875,8 @@
   background:var(--surface);border:1px solid var(--line);
 }
 .about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px}
-.about-route .about-role__name{color:var(--on-surface)}
+.about-route .about-role__name,
+[data-mobile-story] .about-role__name{color:var(--on-surface)}
 .about-role__hex,.about-role__note{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
@@ -1006,7 +1042,8 @@
    it reads as apparatus rather than as part of the sentence. Tabular figures so the column of them
    down the page lines up. Both tokens flip with the theme, so this needs no light/dark rule of its
    own. */
-.about-route .about-sec__num{
+.about-route .about-sec__num,
+[data-mobile-story] .about-sec__num{
   display:block;margin-bottom:.55em;
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-detail);font-weight:400;line-height:1;
@@ -1275,7 +1312,7 @@
   color:#fff;
 }
 .about-route .about-rail__meta{display:flex;justify-content:space-between;gap:12px;margin:0;color:#fff}
-.about-rail__content h3{color:#fff}
+.about-rail__content h3,.about-rail__name{color:#fff}
 .about-rail__strip{display:flex;height:16px;margin-top:12px;border:1px solid color-mix(in srgb,#fff 40%,transparent)}
 .about-rail__strip span{display:block;flex:1}
 /* No effect — no pin, no travel — so the rail becomes an ordinary horizontal scroller rather than a

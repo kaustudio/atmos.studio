@@ -202,6 +202,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    The JS scale was built for reveals and overlays and has nothing between .24 and .62; crushing the
    chrome durations into that gap would retime the whole interaction contract to no purpose. */
 :root{
+  /* The wordmark's drawn size. Stepped down a tenth on the phone — see the PHONE_MQ block. */
+  --logo-w:165px;
+  --logo-h:26px;
   --dur-micro:.12s;         /* press, thumb nudge, the smallest state change */
   --dur-fast:.18s;          /* chevrons, row affordances, slider thumb, focus ring */
   --dur-state:.24s;         /* a control changing what it says it is */
@@ -1052,6 +1055,14 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    Any future phone surface has to be named here too — that is the cost of an allow-list, and it is
    the right cost, because the alternative is the tool leaking onto a screen that cannot run it.
 
+   data-mobile-story is the fourth, and it is the one that is not read-only — but it is not the tool
+   either. It is the product's argument told with a seeded example: eight chapters that read one
+   photograph, ending in the desktop invitation this gate used to open with. It needs no room to work
+   in because there is no work to do on it; nothing on that surface uploads, extracts, refines or
+   saves. It is also the only one of the four that does NOT cover the landing — its first chapter is
+   transparent so the orb formation shows through — which is why it is a sibling above the stage
+   rather than a panel over it. See src/styles/story.css.
+
    data-load-wrap is exempt for the same reason data-logo is: it is the ARRIVAL, not the tool. The
    gate is a real destination on a phone, so it gets the same logo-reveal opening the desktop landing
    gets — without this exemption the loader still mounts and still runs its whole timeline, just
@@ -1081,7 +1092,39 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    disagree a surface mounts, measures, animates and takes taps underneath a rule hiding it — with
    nothing in the console to say so. Change one, change the other, in the same commit. */
 @media (max-width:720px),(pointer:coarse) and (max-height:600px){
-  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-load-wrap]){display:none!important}
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]){display:none!important}
+  /* The wordmark steps down a tenth on the phone. 165x26 is drawn for a desktop chrome bar with a
+     toolbar either side of it; alone at the top of a 375px screen it is 44% of the width, and it is
+     the one element on this surface the reader never needs to act on. Both numbers move together
+     because the mask is a fixed-ratio SVG and stretching one axis would distort the glyphs.
+
+     Tokens rather than a rule on [data-logo], because the size is written in an inline style
+     (logoStyle in AppView) — overriding that from CSS would take !important, and an !important on a
+     dimension is how a later change gets silently ignored. A custom property set here is READ by the
+     inline style, so the cascade still decides and nothing has to shout. */
+  :root{ --logo-w:148.5px; --logo-h:23.4px }
+
+  /* BODY COPY TRACKS TIGHTER ON THE PHONE, AND IT IS WRITTEN IN em BECAUSE THE LADDER IS.
+
+     The ask was "-0.5px". A raw px in a letter-spacing is the one unit this system does not use, and
+     for a reason worth restating: letter-spacing in px does not scale with the type it is spacing, so
+     the same declaration is a whisper on a headline and a crush on a caption. Every tracking token
+     here is em for that reason. So the figure is converted rather than pasted.
+
+     --fs-lead is 0.9375rem = 15px, which is body copy's own size on this surface and the one the
+     token is named for: -0.5 / 15 = -0.0333em. At --fs-body (13px), the same token lands at -0.43px,
+     which is the correct behaviour rather than a rounding error — a smaller size wants proportionally
+     less tightening, and that proportionality is exactly what an em buys.
+
+     ONLY --track-body MOVES. It is used at fifteen call sites across three stylesheets and every one
+     of them is prose: paragraphs, leads, list items, the checks pair, the pills body. The display and
+     title tokens are untouched, so the hero stays at its -0.02em; and --track-flat stays at 0, which
+     is deliberate — at 9px a -0.5px shift is -0.056em, and small uppercase readouts need zero or
+     positive tracking to stay legible.
+
+     Set on :root inside the phone query, so /about and the legal documents read the same on a phone
+     as the story does. Mobile, globally, is what this is. */
+  :root{ --track-body:-0.0333em }
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders

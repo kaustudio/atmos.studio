@@ -22,8 +22,13 @@ The reported button jump is a symptom of the same gap: every press is a 1px `tra
 | 004 | [Migrate every duration literal](004-migrate-duration-literals.md) | **DONE** | 001, 002 | medium — sites listed |
 | 005 | [Converge the duplicate easing curves](005-converge-ease-tokens.md) | **DONE** | 001 | low |
 | 006 | [Make reduced motion live](006-live-reduced-motion.md) | **DONE** | — | low |
+| 007 | [The phone gets a product, not a refusal](007-mobile-product-story.md) | **DONE** | — | medium |
 
 All six landed in the order 001 → 002 → 003 → 004 → 005 → 006, against `76b510f`.
+
+**007 is not part of that audit.** The six above are one motion/duration refactor; 007 is a product
+change — it replaces the phone's desktop gate with an eight-chapter scroll story — and is filed here
+because this is where the project writes plans down, not because it shares their scope.
 
 ## 002 was superseded: a press does not move the control
 

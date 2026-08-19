@@ -352,6 +352,92 @@ export const wipeMethods = {
       this.setState({ route: next, announce: routeName(next) + ' page.' }, afterCb || function () { });
     };
 
+    // The cover is _wipeCover's; only these four decisions are the route's. The comments that used to
+    // sit inline with them are kept at their new call sites.
+    this._wipeCover({
+      commit,
+      // The tool's own arrival, when it is the destination: its copy rises out of its masks exactly
+      // as it does under the loader and after Get Started, rather than the whole page block sliding
+      // up as one slab. instant=true is the starved-rAF path — be there, plainly.
+      arm: (instant) => {
+        if (!isDoc(next)) {
+          if (instant) { this._dropLinesReveal(window.gsap); this._listRowsReveal(); return; }
+          this._dropRevealed = false;
+          this._dropLinesArm();
+          this._listRowsArm();
+        } else if (instant) {
+          this._playPageReveal();
+        }
+      },
+      // The destination's own copy rises just behind the panel's trailing edge — the same offset the
+      // loader's fold and Get Started both use, so all three arrivals share one rhythm.
+      reveal: () => {
+        if (isDoc(next)) this._playPageReveal();
+        else { this._dropLinesReveal(window.gsap); this._listRowsReveal({ delay: 0.12 }); }
+      },
+      reduced: () => this._playPageReveal(),
+    });
+  },
+
+  /* THE COVER, WITHOUT THE ROUTE.
+
+     This used to be the back half of navigateTo, reachable only by changing this.state.route. That
+     was fine while a route change was the only thing in the product big enough to deserve it — and it
+     stopped being true when the phone story gained a cycle of its own: the takeover offers another
+     palette, a picker takes the choice, and the story restarts from 1.1 telling the same eight
+     chapters about a different photograph. That is a new document by every measure a reader has. It
+     was arriving on a local crossfade, so the one gesture this site uses to say "you are somewhere
+     else now" was missing from the one place on the phone where it is most true.
+
+     The alternative was a second timeline shaped like this one, which is how two transitions that are
+     nearly the same become two transitions that are visibly different six months later. The file
+     already made this argument once: "Shared rather than copied: the exits were consolidated into
+     _exitTween." So the mechanism moves here whole — the panel, the caps, the brand beat, the drift,
+     the inert guard, the focus hand-off, the 4s watchdog and the stall pump — and the caller supplies
+     only the three things that are genuinely its own:
+
+       commit(afterCb)  swap the content while the panel covers the screen
+       arm(instant)     park the destination's reveals, called inside commit's callback
+       reveal()         release them, called as the panel's trailing edge clears
+       reduced()        what arrival means when there is no animation to arrive with
+
+     navigateTo passes its isDoc branching through these and is otherwise unchanged, so /about and
+     /privacy swap on exactly the timeline they did before. */
+  _wipeCover(opts) {
+    const g = window.gsap;
+    const layer = document.querySelector('[data-wipe]');
+    const commit = opts.commit;
+    const arm = opts.arm || function () { };
+    const reveal = opts.reveal || function () { };
+    const reduced = opts.reduced || function () { };
+    /* THE ARMED STORY IS RELEASED HERE, NOT BY EACH CALLER, and that is a bug fix.
+
+       _syncStory holds the phone story's page reveal instead of playing it whenever a cover is up, so
+       the copy does not finish arriving behind an opaque panel. Whoever raised the cover has to let it
+       go. chooseStoryCase does. navigateTo did NOT: its reveal branches on isDoc(next), and the phone
+       story lives at '/', which is the tool's route — so it released _dropLinesReveal and
+       _listRowsReveal, the desktop tool's own arrivals, and the story stayed armed for good. Measured
+       after navigating /about -> /: all seven section headings and every [data-reveal] block sitting
+       at inline opacity 0 with no tween, the whole page invisible below the hero.
+
+       Releasing it from here rather than fixing that one branch is the same call [ATMOS 11] makes in
+       aboutStickyTitle: a contract every caller must remember is one a caller will eventually forget,
+       and the failure mode is a blank page. _playStoryReveal is a no-op unless something is actually
+       armed, so calling it on every path costs nothing and cannot double-play. */
+    const release = () => {
+      try { reveal(); } catch (e) { }
+      try { this._playStoryReveal(); } catch (e) { }
+    };
+    /* WHERE FOCUS LANDS, when the destination is not a page. The default below is right for a route:
+       the new document's <main>, named and at the top. It is wrong for a surface that arrives as a
+       DIALOG — the picker is rendered inside [data-app], so focusing [data-app] main would put the
+       keyboard on the story the dialog is covering, which is aria-hidden and inert underneath it.
+       A caller that knows better returns its own element. */
+    const pickTarget = opts.focusTarget || function () {
+      const app = document.querySelector('[data-app]');
+      return (app && app.querySelector('main')) || app;
+    };
+
     /* WHERE FOCUS LANDS. Nowhere, until now: the cover takes focus while the swap happens (so it is
        never stranded on a control that is unmounting), and nothing ever handed it on — so every route
        change dropped the keyboard to <body> and the next Tab started again from the top of the
@@ -361,13 +447,12 @@ export const wipeMethods = {
        The destination's <main> is the right target rather than its first control: these are pages you
        arrive at, not dialogs, and it puts a screen reader at the top of the new content with the
        landmark named. tabindex -1 makes it programmatically focusable without joining the tab order.
-       Retried on the same 60ms cadence as the other two, because the element belongs to a route that
-       has only just been rendered. */
+       Retried on the same 60ms cadence as the element belongs to a route that has only just been
+       rendered. */
     const focusDestination = () => {
       let tries = 0;
       const grab = () => {
-        const app = document.querySelector('[data-app]');
-        const target = (app && app.querySelector('main')) || app;
+        const target = pickTarget();
         if (target) {
           try { target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); } catch (e) { }
           if (document.activeElement === target) return;
@@ -381,7 +466,7 @@ export const wipeMethods = {
     // arrives correctly, it simply arrives without the gesture — which is what reduced motion asks
     // for, and the only honest fallback when there is nothing to animate with. Focus still moves:
     // asking for less motion is not asking to be left on <body>.
-    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => { this._playPageReveal(); focusDestination(); }); return; }
+    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => { reduced(); try { this._playStoryReveal(); } catch (e) { } focusDestination(); }); return; }
 
     this._wipeRunning = true;
     // Tells the arriving document route to ARM its reveals and wait rather than play them on mount.
@@ -423,17 +508,7 @@ export const wipeMethods = {
       if (swapped) return; swapped = true;
       commit(() => {
         try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }
-        // The tool's own arrival, when it is the destination: its copy rises out of its masks
-        // exactly as it does under the loader and after Get Started, rather than the whole page
-        // block sliding up as one slab. instant=true is the starved-rAF path — be there, plainly.
-        if (!isDoc(next)) {
-          if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }
-          this._dropRevealed = false;
-          this._dropLinesArm();
-          this._listRowsArm();
-        } else if (instant) {
-          this._playPageReveal();
-        }
+        arm(instant);
       });
     };
 
@@ -443,6 +518,10 @@ export const wipeMethods = {
       clearGuards(); this._wipeClearGuards = null;
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       this._wipeRunning = false; this._wipeTl = null; this._arrivingByWipe = false;
+      // Belt and braces. release() runs as the panel lifts, but _syncStory can arm AFTER that if a
+      // late commit rebuilds the surface while the flag is still up. This is the last moment the flag
+      // is true, so it is the last chance to notice. Idempotent, as above.
+      try { this._playStoryReveal(); } catch (e) { }
       focusDestination();
     };
 
@@ -460,7 +539,10 @@ export const wipeMethods = {
       try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
       try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
       this._arrivingByWipe = false;
-      if (!swapped) doSwap(true); else this._playPageReveal();
+      // Through the caller's own reveal, not _playPageReveal directly: on the tool route that call
+      // released a document controller belonging to a page that is no longer mounted, so the arriving
+      // copy stayed parked. reveal() is what each caller already says its arrival means.
+      if (!swapped) doSwap(true); else release();
       focusDestination();   // a killed timeline must not strand focus on the cover either
     }, 4000);
     this._wipeTl = tl;
@@ -481,10 +563,7 @@ export const wipeMethods = {
     tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
     // The destination's own copy rises just behind the panel's trailing edge — the same offset the
     // loader's fold and Get Started both use, so all three arrivals share one rhythm.
-    tl.call(() => {
-      if (isDoc(next)) this._playPageReveal();
-      else { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }
-    }, null, '<+0.15');
+    tl.call(release, null, '<+0.15');
     // built paused: wake the clock first, then pin the playhead to 0.
     try { g.ticker.wake(); } catch (e) { }
     tl.play(0);

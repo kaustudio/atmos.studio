@@ -2,6 +2,8 @@
 // migration + validation, cross-tab sync, projects CRUD, and the portable project file.
 import { ROLE_IDS } from '../../lib/exporters.js';
 import { withoutRetired } from '../../lib/taxonomy.js';
+import { shareUrl } from '../../lib/share.js';
+import { buildMasks } from '../../lib/masks.js';
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
@@ -684,6 +686,297 @@ export const persistenceMethods = {
       });
     });
   },
+  /* ===== THE PHONE'S STORY ==================================================================
+
+     Four acts and a build step. None of them touches the orb formation: the story covers nothing,
+     so the stage below it is never killed, never re-inited, and never parked — which is the whole
+     reason chapter 1 can be transparent.
+
+     THE MASKS ARE BUILT ONCE PER CASE, OFF THE RENDER PATH. buildMasks decodes the case image and
+     classifies it against the palette's own OKLab coordinates (src/lib/masks.js) — measured at
+     15-34ms across the eight examples, which is cheap but is emphatically not something to do inside
+     a render or a scroll handler. So it runs from here, writes state once, and every later render
+     reads the result. The case id travels WITH the masks: a set built for one photograph must never
+     be painted over another, and comparing ids is how that is guaranteed rather than hoped for. */
+  buildStoryMasks() {
+    const p = this._storyCase();
+    if (!p || !this.hasImg(p)) return;
+    if (this.state.storyMasks && this.state.storyMasks.caseId === p.id) return;
+    if (this._maskBuilding === p.id) return;      // one build in flight per case
+    this._maskBuilding = p.id;
+    const src = this.dispUrl(p);
+    if (!src) { this._maskBuilding = null; return; }
+    const img = new Image();
+    // decode() rather than onload: onload fires before the pixels are necessarily decodable, and
+    // drawImage on a not-yet-decoded frame is the classic source of an all-transparent read.
+    img.src = src;
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      this._maskBuilding = null;
+      // BY ID, NEVER BY OBJECT IDENTITY. This callback crosses an async boundary, and any reload of
+      // the feed — a cross-tab sync, a restore, a re-validation on read — rebuilds every palette
+      // record, so the object captured when the decode started is not the object the story is
+      // showing by the time it finishes, even when it is the same palette. An id survives that;
+      // a reference does not.
+      const now = this._storyCase();
+      if (!this._alive || !now || now.id !== p.id) return;
+      const built = buildMasks(img, now.swatches);
+      // A null build is a real state, not a failure to report: the chapter shows the photograph
+      // whole and offers no regions. Stored either way so it is not retried on every render.
+      this.setState({ storyMasks: { caseId: now.id, urls: (built && built.urls) || now.swatches.map(() => null) } });
+    };
+    if (img.decode) { img.decode().then(done, done); } else { img.onload = done; img.onerror = done; }
+    /* AND A BACKSTOP, because a decode that never settles latches `_maskBuilding` forever and every
+       later call returns at the guard above — chapter 4 would then offer no regions for the rest of
+       the visit, silently, with the image plainly on screen. `decode()` does not settle at all while
+       the document is hidden in some browsers, which is exactly the case a retry has to survive.
+       A timer rather than rAF, for the reason pageReveal states about its own rescues: a stalled or
+       backgrounded document is precisely where rAF stops being delivered. */
+    if (this._maskT) clearTimeout(this._maskT);
+    this._maskT = setTimeout(() => {
+      if (settled) return;
+      this._maskBuilding = null;                 // let a later call try again
+      if (img.complete && img.naturalWidth) done();
+    }, 4000);
+  },
+
+  /* Chapter 4's selection. A second press on the chosen swatch clears it — the picture goes back to
+     whole — because the only other way out of the state would be a control that says "show all",
+     and a toggle the finger already knows is better than a fourth button. */
+  pickStorySwatch(i) {
+    const row = (this.state.storyMasks && this.state.storyMasks.urls[i]) ? i : null;
+    if (row === null) return;                     // no region: the control is disabled anyway
+    const next = this.state.storySwatch === i ? null : i;
+    const p = this._storyCase();
+    const sw = p && p.swatches[i];
+    const hex = sw ? sw.hex.toUpperCase() : '';
+    this.setState({
+      storySwatch: next,
+      announce: next === null ? 'Showing the whole photograph.' : 'Showing where ' + hex + ' appears in the photograph.',
+    });
+  },
+
+  /* THREE READINGS, ONE GESTURE. The panel is replaced wholesale by React, so without this the swap
+     is two frames: the old answer is deleted and the new one is simply there, at a different height.
+     Measured across the three, the height swings 267px (231 / 498 / 484), so the content below it
+     jumped by most of a screen — which is the part that reads as static rather than the absence of a
+     fade. A surface that is deleted rather than left is the jump this codebase has already fixed
+     twice on the phone.
+
+     TWO MOVES, BOTH ON THE APP'S OWN TOKENS. The container folds from its old height to its new one
+     on DUR.fold / EASE.fold — deliberately the same pair the toggle's pill is travelling on, so the
+     pill and the panel are one gesture rather than two things that happen to move at once; initMotion
+     already argues that a disclosure and a moving selection share one motion character. The rows then
+     arrive on the app's reveal length and entrance curve, staggered by DUR.stagger, which is the list
+     cascade every other set on this site arrives with.
+
+     `clearProps:'height'` because the fold's end state is auto, not a number: leaving a measured
+     height on the element would freeze the panel at whatever the viewport was when it was pressed.
+
+     Guarded on _reduce and on gsap: with either missing the swap is instant, which is the floor the
+     whole surface is built on and is what a reader who asked for less motion should get. */
+  setStoryTab(id) {
+    if (this.state.storyTab === id) return;
+    const panel = document.querySelector('[data-story-panel]');
+    const from = panel ? panel.getBoundingClientRect().height : 0;
+    // The panel's rows are replaced wholesale, and a screen reader that was sitting in the old one
+    // gets no other signal that the answer changed — so the change is spoken.
+    this.setState({ storyTab: id, announce: id === 'role' ? 'Showing the roles this palette would take.' : id === 'contrast' ? 'Showing the contrast this palette can carry.' : "Showing the palette's character." }, () => {
+      const next = document.querySelector('[data-story-panel]');
+      if (!next || this._reduce || !window.gsap || !from) return;
+      const g = window.gsap;
+      const to = next.getBoundingClientRect().height;
+      if (Math.abs(to - from) > 1) {
+        g.fromTo(next, { height: from }, {
+          height: to, duration: this.DUR.fold, ease: this.EASE.fold,
+          overwrite: 'auto', clearProps: 'height',
+        });
+      }
+      const rows = next.querySelectorAll('.story-facts__row, .about-role, .about-checks li');
+      if (rows.length) {
+        g.fromTo(rows, { autoAlpha: 0, y: 10 }, {
+          autoAlpha: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance,
+          stagger: this.DUR.stagger, overwrite: 'auto',
+          // The floor, restated: an interrupted run must not leave a row parked invisible.
+          onInterrupt: () => { try { g.set(rows, { autoAlpha: 1, y: 0 }); } catch (e) { } },
+        });
+      }
+    });
+  },
+
+  /* Chapter 7 — swapping the case the story is told with. The swatch selection has to go with it:
+     an index into the old palette's masks is meaningless against the new one, and leaving it would
+     paint the previous photograph's region over this one for exactly one frame. */
+  setStoryCase(id) {
+    if (!id || id === (this._storyCase() || {}).id) return;
+    const p = this._examples().find((x) => x.id === id);
+    if (!p) return;
+    this.setState({ storyCaseId: id, storySwatch: null, storyMasks: null, announce: 'Now reading ' + p.name + '.' }, () => {
+      this.buildStoryMasks();
+      // Back to the chapter that introduces a picture, not to the top: the reader chose a case, so
+      // the answer to that press is the new photograph, not the prologue they have already read.
+      this.scrollStoryTo('[data-story-ch="image"]');
+    });
+  },
+
+  /* THE ENTRY ACT, and the jump home for a case swap. Through Lenis when it is there, natively when
+     it is not — `_lenis` is armed asynchronously with up to 40 retries and is never created at all
+     under reduced motion, so a call site that assumes it exists is a control that does nothing on
+     the two occasions it matters most. Same guard aboutDock uses for its anchors. */
+  scrollStoryTo(sel) {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    if (this._lenis && this._lenis.scrollTo) { try { this._lenis.scrollTo(el, { offset: 0 }); return; } catch (e) { } }
+    try { el.scrollIntoView({ behavior: this._reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+  },
+  beginStory() { this.scrollStoryTo('[data-story-ch="image"]'); },
+
+  /* THE HANDOFF, and it is a real one.
+
+     `Save for Desktop` copied the site's ROOT — the reader arrived on a desktop and had to find the
+     palette again, which is the overpromise the brief calls out. shareUrl() seals THIS palette into
+     the fragment, so the machine that opens it opens on the case the reader was just reading.
+
+     navigator.share where it exists, because on a phone the share sheet is how a link gets to
+     another device — AirDrop, Messages, the reader's own mail — and a clipboard cannot cross
+     machines. The clipboard is the fallback, not the plan. Both paths end in the same confirmation:
+     the label swaps and the live region says what happened, which is the house pattern and needs no
+     notice element (there is none mounted on this branch). */
+  sendStoryToDesktop() {
+    const p = this._storyCase();
+    if (!p) return;
+    const url = shareUrl(p);
+    if (!url) { this.setState({ announce: 'This palette can\u2019t be shared.' }); return; }
+    const after = () => { this.setState({ copied: 'story-send' }); if (this._copyT) clearTimeout(this._copyT); this._copyT = setTimeout(() => this.setState({ copied: null }), 1500); };
+    if (navigator.share) {
+      navigator.share({ title: 'Atmos Gallery \u2014 ' + p.name, text: 'Open ' + p.name + ' on a desktop to read a palette from your own image.', url })
+        .then(() => { this.setState({ announce: 'Shared. Open it on a desktop to read your own image.' }); after(); },
+          // A dismissed share sheet is not an error and must not be reported as one; the reader
+          // decided not to send it, which is a complete outcome.
+          () => { });
+      return;
+    }
+    this.copy(url, 'story-send', 'Link copied. Open it on a desktop to read your own image.');
+  },
+
+  /* ===== CHOOSING THE STORY'S IMAGE =========================================================
+
+     `Explore Another Palette` used to open the read-only share view, which was a different product:
+     a palette on a page, with the story left behind. What the reader is being offered at the end of
+     a story is ANOTHER STORY, so the act opens a chooser and the whole surface re-tells itself about
+     whatever comes back. Same structure, same eight chapters, same components; a different image and
+     therefore different numbers, roles, contrast, reading and masks — all of which already flow from
+     _storyCase(), so choosing is one state field.
+
+     THE LEVEL CHANGE IS STAGED, which is this codebase's rule for the phone rather than a preference:
+     "Every surface change on the phone must be staged: an exit paired with an entrance... A setState
+     between two frames is a defect here." The picker leaves through the shared _exitTween before the
+     story re-enters, and the story lands at 1.1 rather than wherever the reader happened to be
+     standing when they opened it — a new case read from the middle of the old case's scroll position
+     is a story starting in the third act. */
+  /* BOTH DIRECTIONS RUN THE SITE'S OWN TRANSITION, and that is the correction.
+
+     The cycle used to leave through a local crossfade: the picker faded in, faded out, and the story
+     re-entered on a block slide. Every other place in this product where the whole screen becomes a
+     different document — the tool to /about, /about to /privacy, the intro to the tool — plays the
+     curved wipe with the wordmark. The one on the phone was the odd one out, and it is the one that
+     changes the most: a chooser takes the entire viewport, and the story that comes back is eight
+     chapters about a different photograph. If any swap on this site is a page transition, it is this.
+
+     So both directions call _wipeCover — the same panel, caps, brand beat, drift, inert guard, focus
+     hand-off and watchdog navigateTo uses. See its header for why the mechanism moved rather than
+     being copied. */
+  openStoryPicker() {
+    if (!this._examples().length) return;
+    if (this._wipeRunning) return;
+    this._wipeCover({
+      commit: (after) => this.setState({
+        storyPicker: true,
+        announce: 'Choose an image. Swipe or use the arrows, then pick the one in the middle.',
+      }, after),
+      /* The slider builds in componentDidUpdate, behind the panel, which is strictly better than it
+         was: it used to assemble eight slides, measure its own strip and lay out its titles in front
+         of the reader. Nothing to arm and nothing to release — the picker IS the arrival. */
+      focusTarget: () => document.querySelector('[data-story-picker]'),
+    });
+  },
+  /* DISMISSING IS NOT ARRIVING. Escape or the close control puts the reader back exactly where they
+     were standing, on the story that is still mounted behind the picker with its scroll position and
+     its masks intact. Nothing became a different document, so nothing earns the wipe — spending the
+     full brand gesture on "I changed my mind" would say a change happened that did not.
+
+     It still leaves rather than vanishing, which is the house rule for every covering surface on the
+     phone: an exit paired with an entrance, never a setState between two frames. */
+  closeStoryPicker() {
+    if (!this.state.storyPicker) return;
+    if (this._pickerClosing) return;
+    this._pickerClosing = true;
+    this._exitTween('[data-story-picker]', () => {
+      this._pickerClosing = false;
+      this.setState({ storyPicker: false, announce: 'Closed the image chooser.' });
+    });
+  },
+  chooseStoryCase(id) {
+    const ex = this._examples().find((x) => x.id === id);
+    if (!ex) return;
+    if (this._pickerClosing || this._wipeRunning) return;
+    this._pickerClosing = true;
+
+    this._wipeCover({
+      commit: (after) => {
+        this._pickerClosing = false;
+        /* The case first, then the picker, in ONE commit: closing the picker in its own setState
+           would paint one frame of the OLD story behind the gap the picker left. Behind the cover
+           that is no longer visible either way, and it stays one commit regardless — a second render
+           of a surface this size is worth avoiding on a phone whether or not anyone can see it. */
+        this.setState({
+          storyPicker: false,
+          storyCaseId: id,
+          storySwatch: null,
+          storyMasks: null,
+          announce: 'Now reading ' + ex.name + '. Starting again from the top.',
+        }, () => {
+          this.buildStoryMasks();
+
+          /* THE TOP, AND NOTHING SHORT OF IT.
+
+             This scrolled to 1.1 and landed imprecisely, because the order was wrong rather than the
+             target. componentDidUpdate rebuilds the scroll modules against the remounted <main> — and
+             one of them PINS, which inserts a spacer and changes the document's height. Scrolling to
+             an element's offset before that settles anchors against a page that is about to be a
+             different one, so the reader ended up part-way into a chapter.
+
+             Position 0 is the one target immune to it: it is the same number before and after any
+             reflow. It is also the right one — a story being re-told about a different image starts
+             at its own beginning, not one chapter in.
+
+             Through Lenis rather than around it, for the reason navigateTo records at its own commit:
+             Lenis owns the scroll while it is running, and going around it leaves its internal
+             position stale so the next gesture jumps. Then a refresh, so every trigger re-measures
+             against the page the reader is actually on before anything reads a position again.
+
+             All of it now happens under the panel, which is what the cover is FOR: the pin's spacer
+             landing, the height changing, every trigger re-measuring and the scroll snapping to zero
+             were all things the reader used to watch happen. */
+          try {
+            if (this._lenis) this._lenis.scrollTo(0, { immediate: true });
+            else window.scrollTo(0, 0);
+          } catch (e) { try { window.scrollTo(0, 0); } catch (_) { } }
+          try { if (window.ScrollTrigger) window.ScrollTrigger.refresh(); } catch (e) { }
+
+          after();
+        });
+      },
+      /* Nothing to arm here that _syncStory has not already armed. It reads _arrivingByWipe, which
+         _wipeCover set before commit ran, and holds its page reveal rather than playing it. */
+      reveal: () => this._playStoryReveal(),
+      // No cover to wait behind: the story arrives on its own reveal, immediately.
+      reduced: () => this._playStoryReveal(),
+    });
+  },
+
   /* THE MARK GOES HOME, from either phone surface, in one step.
 
      NOT showIntroAgain(), which is what the mark calls in the tool. That routine is written for a
