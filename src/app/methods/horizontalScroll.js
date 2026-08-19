@@ -132,8 +132,13 @@ export function initHorizontalScroll(root) {
             const gap = parseFloat(cs.columnGap) || 0;
             const padL = parseFloat(cs.paddingLeft) || 0;
             const padR = parseFloat(cs.paddingRight) || 0;
+            // offsetWidth excludes margins, and the lead in and lead out are margins on the first
+            // and last panel (see story.css) — so they are added back explicitly here.
+            const firstEl = panels[0], lastEl = panels[panels.length - 1];
+            const leadIn = firstEl ? (parseFloat(getComputedStyle(firstEl).marginInlineStart) || 0) : 0;
+            const leadOut = lastEl ? (parseFloat(getComputedStyle(lastEl).marginInlineEnd) || 0) : 0;
             return panels.reduce((sum, p) => sum + p.offsetWidth, 0)
-              + gap * Math.max(0, panels.length - 1) + padL + padR;
+              + gap * Math.max(0, panels.length - 1) + padL + padR + leadIn + leadOut;
           };
 
           const tween = gsap.to(panels, {

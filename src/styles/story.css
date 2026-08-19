@@ -430,17 +430,42 @@
      The gutter these two lines replaced was doing the opposite job — keeping the first card off the
      edge of a screen it could not be scrolled away from — and it is not needed once the card is not
      there to begin with. */
-  padding-inline:140vw;
+  padding-inline:0;
   margin-inline:0;
 }
+/* ON THE PANELS, NOT THE WRAP, and that distinction is a real bug rather than a preference.
+
+   The source puts `padding: 0 120vw` on its own row because there the row is a separate element from
+   the pinned container. Here the wrap IS both, and it carries `width:100%` under border-box — so
+   140vw of inline padding does not sit inside a 375px box, it forces the used width out to 1050 and
+   the wrap overflows the page it is supposed to sit in. `overflow:hidden` does not save it: that
+   clips the CONTENTS, while the element's own border box still takes part in layout and drags the
+   document's scroll width with it. It reads as fine in a preview whose window happens to be wider
+   than the viewport it is emulating, and it is a sideways-scrolling page on the phone this is for.
+
+   Margins on the first and last panel put the same distance in the same place without touching the
+   wrap's own box: the wrap stays exactly one viewport wide, its overflow:hidden clips the row that
+   now genuinely overflows it, and rowWidth() adds these two figures back (see [ATMOS 8]). */
+.story-horizontal[data-horizontal-live] .story-hpanel:first-child{ margin-inline-start:140vw }
+.story-horizontal[data-horizontal-live] .story-hpanel:last-child{ margin-inline-end:140vw }
 .story-hpanel{
   flex:none;
   width:var(--rail-card);
   scroll-snap-align:start;
   display:flex;
 }
+/* TWO CARDS TO A SCREEN, which is what makes the row a COMPARISON.
+
+   It was min(70vw, 280px): one card filling the screen with the edge of the next just showing. That
+   is a carousel, and a carousel shows you one thing at a time. This section's whole argument is that
+   the same process returns a different system for a different photograph, and an argument about
+   difference needs two of them in the frame at once.
+
+   Exactly 50vw, so two panels fill the viewport and no third is half in. The 8px inline padding stays
+   inside that half, so the visible card is 50vw minus 16 and the gutter between two cards is the
+   16 their paddings make together. */
 .story-horizontal[data-horizontal-live] .story-hpanel{
-  width:min(70vw, 280px);
+  width:50vw;
   padding-inline:8px;
 }
 .story-horizontal .about-rail__card{

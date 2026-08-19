@@ -2053,6 +2053,60 @@
 @media screen and (max-width:560px){
   [data-dock-live].section-dock{bottom:16px}
   [data-dock-live] .section-dock__toggle{padding:var(--btn-pad-sm)}
+
+  /* ---- 2.1, THE WEIGHTS KEY, AS A FULL WIDTH TALLY ------------------------------------------
+     Two faults, and neither is the one it looks like.
+
+     IT UNDER FILLS, IT DOES NOT OVERFLOW. The key is a flex WRAP with a 24px column gap, which is
+     right at this page's desktop width and only there. Measured at 375: the figure is 343px, the
+     widest row 183px, and two rows need 390 — so the wrap drops to one row per line and each row
+     leaves 160px of dead air. Five rows, five times over. The four fields have always fitted one
+     line with room to spare; nothing needed cutting or stacking.
+
+     THE HIERARCHY IS INVERTED. `.about-route` raises --fs-nano to 10px so this page's nine figure
+     annotations are not set at a size nobody leans in for, and --fs-micro stays at 9. The key is the
+     one place those two meet: the OKLCH readout takes nano and the HEX takes micro, so the
+     annotation renders larger than the name it annotates, and the share, which is what the chapter
+     is arguing, is the quietest thing in the row at 9px muted. Below, the answer leads at 13/500 in
+     full ink, the hex names it at 10, and the readout annotates at 9 muted. Same order the phone
+     story's own key takes.
+
+     Tracks are cut for the FALLBACK font, not the webfont: font-display:swap paints system-ui first,
+     where the OKLCH measures 113.30px against Neue Montreal's 96.66, and the share 45.02 against
+     41.17. 120 and 48 clear the fallback. They must be FIXED rather than auto — each row is its own
+     grid, so auto would size per row and the columns would stop lining up, which is the whole point. */
+  .about-weights__key{display:block;margin:14px 0 0;border-top:1px solid var(--line)}
+  .about-weights__key li{
+    display:grid;grid-template-columns:10px minmax(0,1fr) 120px 48px;
+    align-items:center;gap:0 16px;padding:12px 0;border-bottom:1px solid var(--line);
+  }
+  .about-weights__key .about-key__hex{font-size:var(--fs-label)}
+  .about-weights__key .about-key__ok{font-size:var(--fs-micro)}
+  .about-weights__key .about-key__pct{
+    font-size:var(--fs-body);font-weight:500;color:var(--on-surface);text-align:right;
+  }
+
+  /* ---- 1.2, THE LENS PUTS ITS READOUT BESIDE THE COLOUR ------------------------------------
+     The swatch is a 96px square and the lens is 343 wide, so 247px sat empty to its right while the
+     three coordinates it exists to explain were stacked underneath it. The figure was tall and said
+     little: a colour, a lot of nothing, then its numbers somewhere else.
+
+     Beside it instead, in the space that was already there. A coordinate belongs next to the colour
+     it measures, and the swatch reads as the subject rather than as a block the page happens to
+     start with. The label and the note keep the full width because they frame the pair rather than
+     belonging to either half. Grid rather than the flex column above, because this is the one width
+     where the two halves are a row. */
+  .about-lens{
+    display:grid;
+    grid-template-columns:clamp(84px,26vw,120px) minmax(0,1fr);
+    align-items:start;
+    column-gap:clamp(14px,4vw,22px);
+  }
+  .about-lens > .about-figure__label,
+  .about-route .about-lens__note{grid-column:1 / -1}
+  .about-lens__art{grid-column:1;height:clamp(84px,26vw,120px)}
+  .about-route .about-lens__read,
+  .about-route .about-lens__ratio{grid-column:2;margin:0}
 }
 
 /* ---- REDUCED MOTION -------------------------------------------------------------------------- */
