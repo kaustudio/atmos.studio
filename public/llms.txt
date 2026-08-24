@@ -12,8 +12,8 @@ something only a browser can discover.
 ## What it does
 
 - Extracts a colour palette from an image by clustering its pixels in OKLab, on the visitor's own
-  machine. The image is read into a canvas and discarded; in the public build the code that could
-  send an image is not part of the bundle at all.
+  machine. The image is read into a canvas and discarded, and the full-size image never leaves the
+  machine — see the one stated exception below.
 - Names and describes the palette's mood from a fixed descriptive vocabulary (see the taxonomy in
   the repository), across six dimensions: temperature, lightness, chroma, contrast, hue spread and
   dominance.
@@ -41,6 +41,10 @@ something only a browser can discover.
 ## Pages
 
 - [Atmos Gallery](https://atmos.gallery/): the tool itself.
+- [About](https://atmos.gallery/about): the long-form argument — why an image's atmosphere is read
+  rather than its most common pixels, how OKLCH and WCAG contrast are used, and how a sampled
+  palette is turned into a working colour system with semantic roles. Prerendered in full, so it is
+  readable without executing JavaScript.
 - [Privacy](https://atmos.gallery/privacy): what is collected, the legal basis, processors and
   transfers, retention, and your rights.
 - [Terms](https://atmos.gallery/terms): what the tool does, what stays yours, and what it does

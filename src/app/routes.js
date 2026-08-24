@@ -71,29 +71,42 @@ export function isDoc(route) {
    reads, and the description. The JSON-LD block is NOT here: each route's structured data is a
    different @type with a different shape, so it is written as a whole block rather than patched
    field by field (see applyHead). */
+
+/* ONE SHAPE FOR ALL FOUR: brand, then the category the page is in. "About |", "Privacy |" and
+   "Terms |" led here once — three strings nobody types, on the three pages a search engine is most
+   likely to show next to the homepage. Titles and descriptions are keyword-led rather than
+   restatements of each page's own opening line; the openings still open the pages.
+
+   TWO COPIES OF EVERY STRING, and they have to agree:
+     - index.html carries the [APP] pair as served bytes, and applyHead rewrites them at mount — so a
+       homepage title edited only there survives a few hundred milliseconds before this table
+       overwrites it, in exactly the DOM a rendering crawler indexes.
+     - scripts/prerender.mjs carries the other three, written into dist/about.html, dist/privacy.html
+       and dist/terms.html for readers and crawlers with no JavaScript.
+   Nothing enforces either agreement, so an edit here is an edit in two files. */
 export const HEAD = {
   [ABOUT]: {
-    title: 'About | Atmos Gallery',
+    title: 'Atmos Gallery | How Images Become Colour Systems',
     path: '/about',
-    description: "Why Atmos Gallery reads an image's atmosphere rather than extracting its most common pixels, and how a palette becomes a working, accessible colour system.",
+    description: 'Atmos Gallery uses OKLCH to describe colours from an image, checks WCAG contrast across palette pairs and maps the palette to functional colour roles.',
     ogType: 'article',
   },
   [APP]: {
-    title: 'Atmos Gallery',
+    title: 'Atmos Gallery | Image Colour Palette Generator',
     path: '/',
-    description: "Colour read from light and atmosphere. Drop in an image and Atmos Gallery reads a palette from its mood, not just its dominant colours.",
+    description: 'Atmos Gallery reads a colour palette from an image, checks WCAG contrast for every pair and exports Figma variables, design tokens, CSS, Tailwind and ASE.',
     ogType: 'website',
   },
   [PRIVACY]: {
-    title: 'Privacy | Atmos Gallery',
+    title: 'Atmos Gallery | Privacy and Image Processing',
     path: '/privacy',
-    description: 'How Atmos Gallery handles your images, palettes and data: images are read on your device, palettes stay in your own browser, and the site sets no cookies at all.',
+    description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values only when you request palette naming.',
     ogType: 'article',
   },
   [TERMS]: {
-    title: 'Terms | Atmos Gallery',
+    title: 'Atmos Gallery | Terms of Use',
     path: '/terms',
-    description: 'What Atmos Gallery does, what stays yours, and what it does not promise. A free browser tool from KauStudio ApS.',
+    description: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of colour and contrast readings.',
     ogType: 'article',
   },
 };

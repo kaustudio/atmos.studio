@@ -33,19 +33,20 @@ const ORIGIN = 'https://atmos.gallery';
 
 /* Kept in step with src/app/routes.js HEAD by hand. A shared module would be tidier, but that file
    is bundled ESM importing browser globals and this is a build script — the duplication is four
-   strings per route, and the prerendered head is checked against the route table by the smoke test
-   below rather than by trust. */
+   strings per route. Nothing checks the agreement: smoke.mjs never reads the head, so a title
+   changed in one file and not the other ships a prerendered document that disagrees with the one
+   React renders over it, and only a crawler would ever see the difference. Edit both. */
 const ROUTES = {
   about: {
     src: 'src/about/about.html',
     // The route wrapper's second class — see AppView's document-route branch and src/styles/doc.css.
     scope: 'about-route',
-    title: 'About | Atmos Gallery',
-    description: "Why Atmos Gallery reads an image's atmosphere rather than extracting its most common pixels, and how a palette becomes a working, accessible colour system.",
+    title: 'Atmos Gallery | How Images Become Colour Systems',
+    description: 'Atmos Gallery uses OKLCH to describe colours from an image, checks WCAG contrast across palette pairs and maps the palette to functional colour roles.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
-      name: 'About | Atmos Gallery',
+      name: 'Atmos Gallery | How Images Become Colour Systems',
       url: ORIGIN + '/about',
       description: "Atmos Gallery reads a colour palette from an image's light and atmosphere rather than its literal pixels, assigns the result semantic roles, and checks the system it makes.",
       inLanguage: 'en',
@@ -57,12 +58,12 @@ const ROUTES = {
   privacy: {
     src: 'src/legal/privacy.html',
     scope: 'legal-route',
-    title: 'Privacy | Atmos Gallery',
-    description: 'How Atmos Gallery handles your images, palettes and data: images are read on your device, palettes stay in your own browser, and the site sets no cookies at all.',
+    title: 'Atmos Gallery | Privacy and Image Processing',
+    description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values only when you request palette naming.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'PrivacyPolicy',
-      name: 'Privacy | Atmos Gallery',
+      name: 'Atmos Gallery | Privacy and Image Processing',
       url: ORIGIN + '/privacy',
       description: 'How Atmos Gallery handles your images, palettes and data.',
       dateModified: '2026-07-27',
@@ -86,12 +87,12 @@ const ROUTES = {
   terms: {
     src: 'src/legal/terms.html',
     scope: 'legal-route',
-    title: 'Terms | Atmos Gallery',
-    description: 'What Atmos Gallery does, what stays yours, and what it does not promise. A free browser tool from KauStudio ApS.',
+    title: 'Atmos Gallery | Terms of Use',
+    description: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of colour and contrast readings.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
-      name: 'Terms | Atmos Gallery',
+      name: 'Atmos Gallery | Terms of Use',
       url: ORIGIN + '/terms',
       description: 'What Atmos Gallery does, what stays yours, and what it does not promise.',
       dateModified: '2026-07-27',
