@@ -19,9 +19,9 @@ export const wipeMethods = {
     // open a card → logo → Get Started.
     this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
     clearTimeout(this._closeGuard);
-    // the landing re-seeds per visit (_rng, _noiseURL, _envURL, _orbitURLs, _orbitPalettes are cleared
-    // in killOrbit). Tear down explicitly rather than relying on getStarted having done it: killOrbit is
-    // idempotent, and the reduced-motion path never assigns _orbit for initOrbit's guard to catch.
+    // the landing re-seeds per visit (the wheel's rotation, the baked OKLCH ramp and the floor's
+    // hexes are cleared in killOrbit). Tear down explicitly rather than relying on getStarted having
+    // done it: killOrbit is idempotent, and it is the only thing that releases the field's context.
     this.killOrbit();
     // the tool behind the landing returns to its default state — Get Started must always land on
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
@@ -36,7 +36,7 @@ export const wipeMethods = {
       backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, landingDismissed: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
       feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null, manageProjects: false,
-      refineOpen: false, refineSel: 0, restorePending: null,
+      restorePending: null,
       announce: 'Intro will show again.',
     }, () => {
       setTimeout(() => this.initOrbit(), 0);

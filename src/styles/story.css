@@ -43,13 +43,13 @@
    against. It follows that this surface needs no `data-lenis-prevent`; only the gallery's own
    horizontal row does, being the one genuine internal scrollport here.
 
-   z-index 151: above the landing stage's 150, so the story passes over the orb formation — and below
+   z-index 151: above the landing stage's 150, so the story passes over the colour field — and below
    the 155+ the wordmark, wipe, lightbox and loader stand at, so the mark still floats over the story
    exactly as it floats over every other phone surface. */
 /* THE SURFACE ITSELF IS TRANSPARENT; THE CHAPTERS CARRY THE GROUND.
 
    An opaque background here covered the landing stage beneath it, so the hero — which is transparent
-   precisely so the orb formation shows through — came out as a flat empty screen. The formation is
+   precisely so the colour field shows through — came out as a flat empty screen. The field is
    the brand's arrival and the only thing behind the words on this surface; painting over it left the
    first screen with nothing on it but type.
 
@@ -117,7 +117,7 @@
 /* ===== THE HERO ============================================================================= */
 
 /* The one screen with something behind the words, and it is the brand's own field rather than a
-   photograph: the orb formation is painted by the landing stage underneath this surface, showing
+   photograph: the colour field is drawn by the landing stage underneath this surface, showing
    through a transparent hero. There is only ever one [data-orbit] in the document, and showing it
    through is how that stays true.
 
@@ -175,11 +175,11 @@
 }
 /* NO WASH BEHIND THE HERO COPY. A radial of the surface colour stood here — the gate's own solution,
    carried over — and it was a white disc on a light theme, visible as a shape rather than as light.
-   The orb formation is the brand's field and the hero is meant to sit IN it, not on a plate laid over
-   it. Removed by request.
+   The colour field is the brand's own atmosphere and the hero is meant to sit IN it, not on a plate
+   laid over it. Removed by request.
 
    What that costs, stated rather than buried: the words no longer have a guaranteed ground, so their
-   contrast depends on the formation behind them. The formation is solved to clear the marks it is
+   contrast depends on the field behind them. The field's hole is solved to clear the marks it is
    told about (see _heroReach in methods/orbit.js), which is what keeps it off the copy — so this is a
    geometry guarantee rather than a paint one, and it is the same guarantee the desktop landing has
    always relied on. */
@@ -547,7 +547,7 @@
    two are quoted as tokens rather than as literals and the resource's feel is unchanged.
 
    WHAT CHANGES, and why: `border-radius` goes to 0 (the house has one radius rule — zero, with the
-   orb bodies and the wipe caps as the only sanctioned curves), the greys become surface tokens so
+   wipe caps as the only sanctioned curve now that the orb bodies are gone), the greys become surface tokens so
    the control themes, and the 1.5em padding comes down to a 44px min-height, which is the touch
    target this surface is built to rather than the resource's desktop proportion. */
 .toggle-switch{

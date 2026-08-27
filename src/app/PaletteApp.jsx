@@ -18,7 +18,6 @@ import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
-import { refineMethods } from './methods/refine.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
@@ -42,8 +41,8 @@ import { initCascade } from './methods/aboutCascade.js';
    THE GATE WAS KEYED TO WIDTH ALONE, and a phone has two orientations. `(max-width:720px)` is true
    of every phone held upright and false of every one turned sideways: an iPhone 13 mini is 812
    points across in landscape, a 15 Pro Max is 932. So rotating the device walked straight past the
-   gate into the full desktop tool — the library table, the universe, the reel, the drawers and the
-   refine dialog — in about 390 points of HEIGHT. The gate's own copy says reading an image means
+   gate into the full desktop tool — the library table, the universe, the reel and the drawers —
+   in about 390 points of HEIGHT. The gate's own copy says reading an image means
    weighing colours, roles and contrast side by side, and that needs room; room is two dimensions,
    and only one of them was ever being asked about. This is the leak the allow-list comment in
    global.css warns a new surface will cause, arriving through the axis nobody checked.
@@ -155,6 +154,11 @@ export default class PaletteApp extends React.Component {
     feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [], activeA11y: [],
     // the two MEASURED facets, beside contrast potential. Character traits stay in activeTags.
     activeLight: [], activeTemp: [],
+    /* The project rail's step buttons: whether the chips overflow at all, and which end the row is
+       standing at. Measured from the scroller by _syncProjSteps, never derived here — a chip row
+       overflows or does not depending on name lengths and window width, and the render knows
+       neither. Starts closed so the buttons cannot flash in before the first measurement. */
+    projStep: { can: false, start: true, end: true },
     // the tag facet: one disclosure control, closed by default; the query is typeahead state.
     // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
@@ -165,19 +169,8 @@ export default class PaletteApp extends React.Component {
     filterInfoOpen: false,
     // the Library heading's storage toggletip — opened and closed through the shared tip helpers
     storeInfoOpen: false,
-    // the Refine surface's one explanation of how roles are assigned
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
-    // Bumped by a refinement that changes the SHAPE of the swatch list (reorder, remove), so
-    // componentDidUpdate can tell an in-place edit from a re-render. See the FLIP branch there.
-    bandRev: 0,
-    // the Refine surface: open flag and the swatch currently being worked on
-    refineOpen: false, refineSel: 0,
-    // which of Refine's two secondary menus is open: 'role' | 'order' | null
-    // the inline role chooser, and the two-step arm on Reset palette
-    refineResetArmed: false, refineRemoveIdx: null,
-    // the full contrast matrix, on demand
-    refineAllPairs: false,
     // the result view's More: reveals the poetic reading and the traits past the first two
     // a validated backup file waiting to be added: {projects, palettes, counts}, null when closed.
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
@@ -216,36 +209,44 @@ export default class PaletteApp extends React.Component {
   MAX_BYTES = 20 * 1024 * 1024;
   ACCEPT = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif'];
 
-  // the one global light — every orb cue derives from it
-  get ORB_LIGHT() { return { x: 0.30, y: 0.28 }; }
-  // how many orbs may hold a WebGL context. Rings claim it whole, front first (see _initOrbGL); the
-  // rest ride the painted DOM floor. Kept under the browser's per-page live-context cap (~16).
-  // Small screens get the SAME budget: an orb's shading must not change with the screen it's on.
-  ORB_GL_MAX = 12;
-  // seconds for one full revolution of the ring set — ONE speed, shared by every ring (contract §3)
-  ORB_ROT_SECS = 105;
-  // the ring→ring gap as a multiple of the copy→ring gap: the rings should read as separate depths,
-  // not one thick band. Pushing the outer ring off the sides of the viewport is intended.
-  ORB_RING_GAP_MUL = 1.75;
-  // the smallest gap, as a fraction of the inner orb's DIAMETER — proportional so it reads the same
-  // whether the orbs are 55px (phone) or 96px (portrait tablet), where the width-derived gap
-  // collapses onto this floor. A flat pixel floor put tablets at 0.44 diameters and phones at 0.76.
-  ORB_MIN_GAP_MUL = 0.55;
-  // and the largest ring→ring gap, same units: g tracks the viewport width, so without a ceiling the
-  // rings drift apart into two unrelated arcs on big displays (3.2 diameters on a 16", 3.9 at 1080p).
-  ORB_RING_GAP_MAX = 2.2;
-  // The widest viewport the formation will SIZE ITSELF to. Past this the rings stop growing and the
-  // extra width becomes margin instead of gap.
-  // ORB_RING_GAP_MAX bounds the ring→ring interval but nothing bounded the copy→ring one, and that
-  // one is a third of the leftover half-viewport, so it grew without limit: 2.19 orb diameters at
-  // 1440, 2.66 at 1728, 3.62 at 2000, 5.05 at 1440p, 7.63 on a 3440 ultrawide — a 1049px hole
-  // between the copy and the first ring, with the slide-out then pushing every radius further out
-  // still. The formation was spanning the display and had nothing left to span it WITH.
+  // ---- THE LANDING FIELD. ORB_LIGHT, ORB_GL_MAX, ORB_RING_GAP_MUL, ORB_MIN_GAP_MUL and
+  // ORB_RING_GAP_MAX went with the ring formation: there is no orb to measure a gap against, no
+  // per-orb WebGL context to budget, and no room lamp in a volume. The two that survive are the two
+  // that were never about orbs — the tempo, and the widest display the stage will size itself to.
+
+  // Seconds for one full revolution of the field — the landing's tempo (contract §2). Unchanged
+  // from the ring set: how fast the formation turns is a property of the page, not of what is on it.
+  FIELD_ROT_SECS = 105;
+  // The share of the leftover half-span that becomes the gap between the copy and the gas, and the
+  // pixel bounds on it. The floor keeps the field off the words where the copy fills the viewport;
+  // the cap is why the hole never opens into a crater on a large display.
+  FIELD_GAP_FRAC = 0.25;
+  FIELD_GAP_MIN = 56;
+  FIELD_GAP_MAX = 150;
+  // How far past the viewport's half-diagonal the gas has finished. Above 1 so the disc runs off
+  // every edge instead of drawing a circular rim inside the page.
+  FIELD_RIM_MUL = 1.08;
+  // Narrow only: the ceiling on the clear radius, as a fraction of the SHORTER edge. A 375px gate
+  // leaves no radius that both clears the copy and stays on screen, so the hole is allowed to close
+  // in behind the wash that surface already carries. See _fieldGeom — desktop has no wash and no
+  // exception.
+  FIELD_NARROW_MUL = 0.34;
+  // The most elongated the hole may get. It follows the copy's own box — which on a landscape
+  // viewport is more than twice as wide as it is tall — and past this it stops reading as an ellipse
+  // around a block and starts reading as a slot cut through the picture.
+  FIELD_HOLE_ASPECT = 1.9;
+  // The widest viewport the field will SIZE ITSELF to — the gap only; the rim still follows the
+  // viewport (contract §4).
+  // Nothing bounded the copy→formation gap before this, and it is a share of the leftover
+  // half-viewport, so it grew without limit: measured in the ring set's own units it ran 2.19 orb
+  // diameters at 1440, 2.66 at 1728, 3.62 at 2000, 5.05 at 1440p and 7.63 on a 3440 ultrawide — a
+  // 1049px hole between the copy and the formation. Spanning the display is the right instinct only
+  // while there is enough formation to span it with.
   // 1728 is the 16" MacBook Pro's default logical width, chosen so that screen and everything below
-  // it is untouched to the pixel (the clamp is a no-op there). A 16" run at a scaled "More Space"
-  // resolution reports wider than this and is treated as a large display, which is correct — what
-  // matters is the CSS pixels the formation has to fill, not the diagonal.
-  ORB_SPAN_MAX = 1728;
+  // it is untouched (the clamp is a no-op there). A 16" run at a scaled "More Space" resolution
+  // reports wider than this and is treated as a large display, which is correct — what matters is
+  // the CSS pixels the stage has to fill, not the diagonal.
+  FIELD_SPAN_MAX = 1728;
 
   /* The theme this document opens in.
 
@@ -342,7 +343,7 @@ export default class PaletteApp extends React.Component {
     safe(() => initGridOverlay(), 'grid-overlay');
     safe(() => this.initMotion(), 'motion');   // EASE/DUR tokens must exist before the loader builds its timeline
     safe(() => this._initLenis(), 'lenis');
-    safe(() => requestAnimationFrame(() => this._updateProjPill()), 'projpill');
+    safe(() => requestAnimationFrame(() => { this._updateProjPill(); this._syncProjSteps(); }), 'projpill');
     safe(() => this._initLoader(), 'loader');
     // Light on the tool, the reader's own appearance on a legal route — see _entryTheme.
     const theme = this.state.theme;
@@ -376,12 +377,6 @@ export default class PaletteApp extends React.Component {
       loadSeq([cdn + 'gsap.min.js', cdn + 'Observer.min.js', cdn + 'Flip.min.js', cdn + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
-      // Undo inside Refine, on the shortcut every editor already trains people to reach for. Scoped
-      // to the open surface so it can never reach the archive's own delete-undo, which is a
-      // different act with a different lifetime.
-      if (this.state.refineOpen && (e.metaKey || e.ctrlKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
-        e.preventDefault(); this.refineUndo(); return;
-      }
       if (e.key === 'Escape') {
         /* The image chooser, above everything else it can coexist with. Its visible dismiss control
            was removed by request, so Escape is the only way out that does not commit a choice — which
@@ -396,12 +391,6 @@ export default class PaletteApp extends React.Component {
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
-        if (typeof this.state.refineRemoveIdx === 'number') { e.preventDefault(); this.refineCancelRemove(); return; }
-        if (this.state.refineResetArmed) { e.preventDefault(); this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }); return; }
-        if (this.state.refineAllPairs) { e.preventDefault(); this.closePairings(); return; }
-        // closeTip, not closeFold: this stopped being an inline height-fold when it became an
-        // anchored popover, so Escape was closing it on a different mechanic than it opened on.
-        if (this.state.refineOpen) { e.preventDefault(); this.closeRefine(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
         if (this.state.exampleView) { e.preventDefault(); this.closeExampleOnPhone(); return; }
@@ -474,6 +463,10 @@ export default class PaletteApp extends React.Component {
   componentDidUpdate() {
     const s = this.state;
     this._updateProjPill();
+    // Same commit as the pill, for the same reason: both are measurements of a row whose contents
+    // the render has just changed. _syncProjSteps sets state only when a boolean actually flips,
+    // so calling it from here cannot loop.
+    this._syncProjSteps();
     /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
        on screen and torn down when anything covers it, so its triggers can never be left measuring
        chapters that are no longer in the document — the failure aboutStack records, where one
@@ -484,7 +477,7 @@ export default class PaletteApp extends React.Component {
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
     const modal = !!(s.assignPalette || s.manageProjects || s.recognised || s.restorePending
-      || s.refineOpen || s.exportOpen || s.contrast || s.harmony);
+      || s.exportOpen || s.contrast || s.harmony);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
@@ -493,21 +486,29 @@ export default class PaletteApp extends React.Component {
       this._cxToggleKey = key;
     } else { this._cxToggleKey = null; }
     /* LANDING LIFECYCLE — park and resume, never tear down. The phone's example surfaces cover the
-       stage; its formation keeps every orb, every uploaded tile and its live WebGL context, and only
-       stops integrating its angles while nothing can see it. So the gate you come back to is the
+       stage; its field keeps its live WebGL context, its baked ramp and its noise volume, and only
+       stops advancing the shared angle while nothing can see it. So the gate you come back to is the
        gate you left, at the angle you left it, with no rebuild and therefore no stretch of empty
-       screen where the rings belong.
-       Tearing down here instead — the obvious move, and the wrong one — costs a full re-encode of
-       the tile textures and a fresh field upload on every return, all of it visible. */
+       screen where the field belongs.
+       Tearing down here instead — the obvious move, and the wrong one — costs a fresh gamut-mapped
+       ramp and a 1MB noise volume on every return, all of it visible. */
     const lit = this._landingLit();
     const prevLit = this._prevLandLit; this._prevLandLit = lit;
     if (lit !== prevLit && this._orbit) { if (lit) this.playOrbit(); else this.pauseOrbit(); }
-    /* orbit landing safety net: if gsap is already ready and the orbit isn't built, kick it. Gated on
+    /* Landing safety net: if gsap is already ready and the stage isn't built, kick it. Gated on
        LIT rather than up, so a shared link opened on a phone — which lands straight on the palette,
        with the stage mounted but covered — does not spend a slow connection's first seconds
-       uploading a particle field nobody is looking at. It builds if that reader ever reaches the
-       gate, and from then on it is only ever parked. */
-    if (lit && this._gsapReady && !this._orbit && !this._reduce) { this.initOrbit(); }
+       fetching three for a field nobody is looking at. It builds if that reader ever reaches the
+       gate, and from then on it is only ever parked.
+       No longer gated on motion. Reduced motion used to be denied the stage entirely because the
+       formation's POPULATION depended on which renderer could run; a volume has no population, so
+       what it now gets is the same field rendered once and left still (see the contract's §6). */
+    if (lit && this._gsapReady && !this._orbit) { this.initOrbit(); }
+    /* The theme reaches the landing: the logo returns here from anywhere, so the switch in the
+       masthead can be thrown with this stage alive behind whatever was covering it. Neither surface
+       is rebuilt — the ramp is theme-independent by design, and only the exposure moves. */
+    const themeNow = s.theme;
+    if (this._prevFieldTheme !== themeNow) { this._prevFieldTheme = themeNow; if (this._orbit) this.refreshOrbitTheme(); }
     // spatial grid lifecycle (independent of stage/current — runs on view toggle too)
     const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;
@@ -526,29 +527,14 @@ export default class PaletteApp extends React.Component {
     // list-view row activation: restore/establish the active (expanded) row after any re-render
     if (s.feedView === 'list' && s.feed.length > 0) { requestAnimationFrame(() => { if (this.state.feedView === 'list') this._syncListActive(); }); }
 
-    const prev = this._prev || { stage: 'upload', curId: null, bandRev: 0 };
+    const prev = this._prev || { stage: 'upload', curId: null };
     const curId = s.current && s.current.id;
-
-    // A refinement that reorders or removes a swatch changes neither the stage nor the palette id,
-    // so the guard below would swallow it and the bands would cut to their new layout. bandRev is
-    // the signal for exactly that case: the refine action captures the band rects, bumps the
-    // counter, and the FLIP plays from the old geometry to the new.
-    //
-    // Structural changes ONLY. A lightness or hue tweak leaves every band exactly where it was —
-    // there is nothing to FLIP, and running one per slider tick would be both pointless and
-    // visibly awful. Colour transitions are the band's own business.
-    if (s.bandRev !== prev.bandRev && s.stage === prev.stage && curId === prev.curId) {
-      this._prev = { stage: s.stage, curId, bandRev: s.bandRev };
-      const rects = this._refineRects; this._refineRects = null;
-      if (rects && window.gsap && !this._reduce && !document.hidden) { try { this.flipBandsFrom(rects); } catch (err) { } }
-      return;
-    }
 
     if (s.stage === prev.stage && curId === prev.curId) return;
     if (s.stage === 'processing' && prev.stage !== 'processing') this.startCanvas();
     if (s.stage !== 'processing' && prev.stage === 'processing') this.stopCanvas();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
-    this._prev = { stage: s.stage, curId: curId, bandRev: s.bandRev };
+    this._prev = { stage: s.stage, curId: curId };
     if (enteredResult) {
       const vis = window.gsap && !document.hidden;
       try {
@@ -831,6 +817,5 @@ Object.assign(
   loaderMethods,
   shareMethods,
   miscMethods,
-  refineMethods,
   renderValsMethods,
 );

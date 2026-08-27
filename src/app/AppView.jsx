@@ -218,8 +218,8 @@ function ValueRow({ v, showCaveat }) {
   );
 }
 
-// Each of these names a job, not a noun. "Contrast" and "Refine" named the subject the button is
-// about and left the user to supply the verb; in a row of six that is six subjects and no route.
+// Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
+// the user to supply the verb; in a row of six that is six subjects and no route.
 const contrastB006Label = (
   <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check contrast</B006Text></span>
 );
@@ -251,13 +251,6 @@ const copyB006Label = (done) => (
     </span>
     <span aria-hidden="true" style={{ fontSize: 'var(--fs-nano)', visibility: done ? 'hidden' : 'visible' }}>▾</span>
   </span>
-);
-// Refine carries no icon, deliberately. Every other glyph in this row stands for a NOUN the app
-// already draws elsewhere — a folder, a link, a contrast disc — whereas this one would have to
-// stand for an activity, and the sliders-and-dots marks that usually get drafted for that read as
-// "settings". The word is unambiguous and the row is short enough to carry it.
-const refineB006Label = (
-  <span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Refine palette</B006Text></span>
 );
 // One menu, both surfaces. The result bar and the archive's fullscreen detail draw the same row, so
 // they draw the same chooser from the same state — only one of the two is ever mounted, which is why
@@ -312,7 +305,7 @@ const shareB006Label = (copied) => (
    the trip back to here. */
 function MobileExampleList({ ml }) {
   return (
-    /* height:100dvh over the inset, per the rule the refine dialog already states: a fixed box on a
+    /* height:100dvh over the inset, per the rule every full-height dialog here states: a fixed box on a
        phone resolves bottom:0 against the LARGE viewport, so with the URL bar showing its last rows
        and the way back sit below the fold. overscroll-behavior:contain stops a flick past the end of
        the list from chaining into the document and dragging the browser chrome with it — the list is
@@ -509,7 +502,7 @@ function MobileStory({ st }) {
           this surface is built on anyway — the section's own rule and heading still animate, and
           nothing that can be pressed is ever mid-rewrite when a thumb lands on it. */}
         {/* THE PROLOGUE. The one screen with no section rule and no number: it is the arrival, and
-            /about's hero carries neither either. The orb formation shows through from the landing
+            /about's hero carries neither either. The landing's colour field shows through from the
             stage below — the only place on this surface where something sits behind the words, and
             it is the brand's own field rather than a photograph. */}
         <header className="story-hero about-grid" data-story-hero>
@@ -1113,15 +1106,15 @@ function SiteFooter({ route, onNavigate }) {
   );
 }
 
-/* THE LANDING STAGE — ring formation, brand copy, and on a phone the gate's two acts. Lifted out of
+/* THE LANDING STAGE — the colour field, brand copy, and on a phone the gate's two acts. Lifted out of
    AppView's main return because it is no longer that return's alone: the example list and the
    read-only palette render it too, underneath themselves.
 
-   They used to REPLACE it, and the orbs paid for it. The formation is a WebGL particle field over a
-   painted DOM floor, both built by initOrbit from freshly encoded tile textures — so a landing that
-   unmounts is a formation destroyed, and a landing that comes back is a formation rebuilt from
-   nothing, with a visible hole where the rings should be while it uploads. Covering it costs one
-   opaque panel and keeps every orb exactly where it was left.
+   They used to REPLACE it, and the formation paid for it. It is a raymarched WebGL volume over a
+   painted floor, both built by initOrbit from a freshly gamut-mapped ramp and a 1MB noise volume —
+   so a landing that unmounts is a field destroyed, and a landing that comes back is a field rebuilt
+   from nothing, with a visible hole where the gas should be while it uploads. Covering it costs one
+   opaque panel and keeps the field exactly where it was left.
 
    `covered` is passed by those two paths: aria-hidden and inert together, so nothing under a
    full-screen surface is readable, focusable or tabbable — which is the whole reason the early
@@ -1129,9 +1122,9 @@ function SiteFooter({ route, onNavigate }) {
 /* `quiet` is the story's own state, and it is deliberately NOT `covered`.
 
    `covered` says "an opaque surface is over this": it applies inert + aria-hidden, and its callers
-   also fall out of _landingLit(), which parks the orbit ticker. That is right for the example list
-   and the share view and wrong for the story, whose first chapter is transparent so that the orb
-   formation showing through IS the prologue's visual — the field has to stay lit and turning.
+   also fall out of _landingLit(), which parks the field's ticker. That is right for the example list
+   and the share view and wrong for the story, whose first chapter is transparent so that the field
+   showing through IS the prologue's visual — it has to stay lit and turning.
 
    What the story does need is for the GATE'S COPY to stop existing. It is the same screen: the
    heading, the sentence and `Try an Example` would otherwise sit behind chapter 1's own words, two
@@ -1141,9 +1134,9 @@ function SiteFooter({ route, onNavigate }) {
 
    HIDDEN BY OPACITY, NEVER BY DISPLAY OR A TRANSFORM. `o.reachWatch` is a ResizeObserver on
    `[data-landing] h1, [data-landing] p, [data-glass-cta]`, and _heroReach() measures those marks plus
-   [data-gate-actions] to solve every ring radius. Removing them, or changing any of their boxes,
-   re-fires the observer and re-solves the formation underneath a reader who is scrolling. Opacity
-   changes no box, so the rings stay exactly where they were solved — around a block that is still
+   [data-gate-actions] to solve the field's clear radius. Removing them, or changing any of their
+   boxes, re-fires the observer and re-solves the field underneath a reader who is scrolling. Opacity
+   changes no box, so the hole stays exactly where it was solved — around a block that is still
    there, still the same size, and no longer visible. Which is also the right geometry: chapter 1's
    copy sits in the same centred column the gate's did. */
 function LandingStage({ vals, covered, quiet }) {
@@ -1153,20 +1146,16 @@ function LandingStage({ vals, covered, quiet }) {
            below the middle of what the reader can actually see — and pushes the ring formation,
            which is solved around that centre, off with it. */
         <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
-          {/* scatter field (decorative) — one global light (upper-left); everything baked or static */}
+          {/* THE FIELD (decorative). Two elements and nothing else in the markup: the air, and the
+              stage the engine appends its canvas to. Where a hundred and sixteen orb tiles used to
+              be — each with a float wrapper, a clip and five shading layers — there is one painted
+              annulus, which is the floor rather than a second artwork (see methods/orbit.js).
+              Sizes and colours are ALL written imperatively: the field is solved against the copy's
+              measured box, and a box React does not know it changed is exactly the number that
+              would go stale. */}
           <div data-orbit-bloom="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}></div>
-          <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none')}>
-            <div data-orbit-list="1" style={sx('display:grid;place-items:center')}>
-              {vals.orbitSlots.map((slot) => (
-                <div key={slot} data-orbit-item="1" style={sx('position:relative;grid-area:1/1;display:flex;align-items:center;justify-content:center;width:max-content;height:max-content;will-change:transform')}>
-                  {/* Contract exception: the circular clip belongs to the depicted OBJECT (a 3D colour orb),
-                      never to chrome. Float wrapper: engine writes --fy, float tween writes --ph. */}
-                  <div data-orb-float="1" style={{ ...sx('position:relative;display:flex;align-items:center;justify-content:center'), transform: 'translateY(calc(var(--fy, 0px) * var(--ph, 0)))' }}>
-                    <div data-orbit-card={String(slot)} style={{ ...sx('position:relative;z-index:1;overflow:hidden;isolation:isolate;width:clamp(56px,6vw,104px);aspect-ratio:1;border-radius:50%;background-size:cover;background-position:center;background-color:var(--surface-raised)'), WebkitClipPath: 'circle(50% at 50% 50%)', clipPath: 'circle(50% at 50% 50%)' }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div data-orbit="1" aria-hidden="true" style={sx('position:absolute;inset:0;pointer-events:none')}>
+            <div data-orbit-floor="1" style={sx('position:absolute;inset:0;z-index:0;pointer-events:none')}></div>
           </div>
           <div aria-hidden="true" style={sx('position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(120% 100% at 50% 46%, transparent 58%, color-mix(in srgb, var(--on-surface) 8%, transparent) 100%)')}></div>
           <div data-orbit-grain="1" aria-hidden="true" style={sx('position:absolute;inset:0;z-index:4;pointer-events:none;mix-blend-mode:soft-light;opacity:0.045;background-repeat:repeat')}></div>
@@ -1185,7 +1174,7 @@ function LandingStage({ vals, covered, quiet }) {
                     about, but a phone is 375px wide and the gate now fills most of it — there is no
                     radius left that both clears the block and stays on screen, so on this one
                     viewport geometry cannot win. A soft radial of the surface colour sits behind the
-                    block instead: the orbs still pass through, they just pass through dimmer, and
+                    block instead: the gas still passes through, it just passes through dimmer, and
                     the words keep a ground to sit on. Which is the subject of the product anyway. */}
                 <span aria-hidden="true" style={sx('position:absolute;inset:-56px -40px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
                 <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
@@ -1247,7 +1236,7 @@ function LandingStage({ vals, covered, quiet }) {
                       and two pieces of React state to express a hover and a press that CSS already
                       owns for every other control on the site. It is .glass-cta now, so the front
                       page's three actions are one object in one place. data-glass-cta stays: orbit.js
-                      reads it as a geometry mark the ring formation has to clear (see [ATMOS] there),
+                      reads it as a geometry mark the field's hole has to clear (see the contract there),
                       and that has nothing to do with how the button looks. */}
                   <button type="button" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get Started">Get Started</button>
                 </div>
@@ -1266,7 +1255,7 @@ export default function AppView({ vals }) {
      sees is one continuous panel — but behind it the entire app, orbit stage and archive included,
      stops existing rather than lying dormant under a document. Nothing to tab into, nothing laid out
      off-screen, no WebGL context held open while somebody reads a privacy policy — which matters
-     more now than it did, because /about opens a context of its own for the orbs.
+     more now than it did, because /about opens a context of its own.
 
      [data-app] is kept on the wrapper deliberately. It is what the desktop gate, the wipe's inert
      guards and toggleTheme's crossfade all select on; a document route that dropped it would be a
@@ -1289,10 +1278,10 @@ export default function AppView({ vals }) {
      desktop app out of the DOM entirely on a viewport that cannot use it: nothing behind to tab
      into, no archive laid out off-screen.
 
-     THE LANDING IS THE EXCEPTION, and it is deliberate. It used to go with the tool, and the ring
+     THE LANDING IS THE EXCEPTION, and it is deliberate. It used to go with the tool, and the
      formation went with it — killed on the way in, rebuilt from scratch on the way back, with a
-     stretch of empty gate while the field re-encoded its tiles and re-uploaded. The orbs are the
-     brand; they do not blink out because somebody looked at a palette. So the stage stays mounted
+     stretch of empty gate while the field re-baked its ramp and re-uploaded its noise. The field is
+     the brand; it does not blink out because somebody looked at a palette. So the stage stays mounted
      and these surfaces cover it, inert and aria-hidden, which buys the same "nothing under here is
      reachable" the early return was protecting. Its motion is parked while it is covered — see the
      landing lifecycle in PaletteApp's componentDidUpdate — so nothing renders behind an opaque
@@ -1320,7 +1309,7 @@ export default function AppView({ vals }) {
 
      The example list and the share view pass `covered`, which sets inert + aria-hidden and — through
      _landingLit() — parks the orbit ticker, because those two surfaces are opaque and nothing behind
-     them can be seen. The story's first chapter is transparent BY DESIGN: the orb formation showing
+     them can be seen. The story's first chapter is transparent BY DESIGN: the colour field showing
      through it is the prologue's visual, so the stage has to stay lit, readable and ticking. Passing
      `covered` here would leave chapter 1 as an empty screen over a frozen field.
 
@@ -1462,7 +1451,7 @@ export default function AppView({ vals }) {
           {vals.canReset && (<>
             {/* "New generation" named the machinery. What the button makes is a palette, and the
                 rest of the app has spent five rounds learning to say so: the Library holds palettes,
-                Refine palette edits one, Add to project files one. */}
+                and Add to project files one. */}
             <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New palette</span>} />
             {vals.showProjectsBar && (<span aria-hidden="true" style={sx('width:1px;height:22px;flex:none;background:var(--line-strong)')}></span>)}
           </>)}
@@ -1585,7 +1574,7 @@ export default function AppView({ vals }) {
             </div>
             {/* Action row, ordered by what the user came to do. DOM order IS the visual order IS
                 the tab order, so a keyboard traveller meets the actions in the same sequence the
-                eye does. The hairline divides by CONSEQUENCE: ahead of it the two acts that leave
+                eye does. The hairline divides by CONSEQUENCE: ahead of it the act that leaves
                 something behind, behind it the four that only read this palette back to you. It is
                 the same row, in the same order, as the fullscreen detail's footer — one grammar,
                 two surfaces. (Share is here and not there: only this view holds a shareable URL.)
@@ -1597,17 +1586,16 @@ export default function AppView({ vals }) {
 
                 One 8px rhythm across the whole row, matching the archive header's bar. */}
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
-              {/* TIER 1 — and which act holds it depends on where the palette is in its life.
-                  A palette that has never been refined is not ready to export: its roles are the
-                  tool's guess, and the Export dialog has been saying "refine before shipping" to a
-                  user with nowhere to do it. So Refine leads until the palette carries a decision,
-                  and Export takes over once it does. Still exactly ONE filled control either way —
-                  the two never both light up, per the two-tier rule. */}
-              <B006 data-emphasis="primary" onClick={vals.openRefine} disabled={vals.refineDisabled} aria-haspopup="dialog" aria-label={vals.refineAria} label={refineB006Label} />
-              {/* filing changes the archive, so it stays on the committing side of the
-                  hairline. Disabled while the palette is only in the URL — a shared palette has no
-                  record to file until it is saved, and the strip above already offers that. */}
-              <B006 data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
+              {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
+                  gives: first in the sequence and available, organise then validate then output.
+                  It held the second tier here only because one creative act stood ahead of it, and
+                  that act is not in the row at the moment. Still exactly ONE filled control, per
+                  the two-tier rule.
+
+                  filing changes the archive, so it stays on the committing side of the hairline.
+                  Disabled while the palette is only in the URL — a shared palette has no record to
+                  file until it is saved, and the strip above already offers that. */}
+              <B006 data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
@@ -1770,7 +1758,6 @@ export default function AppView({ vals }) {
       <RecogniseDialog vals={vals} />
       <AssignDialog vals={vals} />
       <ManageDialog vals={vals} />
-      <RefineDialog vals={vals} />
       <RestoreDialog vals={vals} />
 
       {vals.hasToast && (
@@ -1876,18 +1863,62 @@ function FeedSection({ vals }) {
           project names grew, so the control moved every time the library did. Against a fixed frame
           it lands in the same place whatever the folders are called.
 
-          FOUR OF TWELVE, derived rather than guessed — see the max-width note in global.css. The
-          group takes as much of that frame as it needs and no more (flex 0 1 auto, never 1), so a
-          library with two short scopes is not a wide box mostly full of nothing; past four columns
-          the chips scroll inside it and the shadow cue in global.css finally has work to do. */}
-      <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;border:1px solid var(--action-line);flex:0 1 auto;min-width:0;overflow-x:auto')}>
-        <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
-        {vals.projectChips.map((ch) => (
-          /* The label is its own span so it can be the ONLY part that truncates. As a bare text
-             node beside the count there was nothing to put an ellipsis on, and a 46-character
-             project name simply became a 294px chip — one name eating the whole frame. */
-          <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}>{ch.label}</span><span style={ch.countStyle}>{ch.count}</span></button>
-        ))}
+          FOUR OF TWELVE, derived rather than guessed — see the max-width note in global.css, which
+          now caps the RAIL rather than the scroller inside it. The rail takes as much of that frame
+          as it needs and no more (flex 0 1 auto, never 1), so a library with two short scopes is not
+          a wide box mostly full of nothing; past four columns the chips scroll inside it, the fade
+          cue in global.css finally has work to do, and the step buttons below appear to work it. */}
+      {/* THE RAIL IS THE CONTROL; THE SCROLLER IS ONLY ITS WINDOW.
+
+          The border used to sit on the scrolling element itself, which made the cap and the clip
+          the same edge: chips ran under a fade and there they stopped, with no way to reach the
+          rest that did not involve a trackpad. A fade says THERE IS MORE and nothing says HOW, and
+          a mouse — no horizontal wheel, no two-finger swipe — had no answer at all.
+
+          So the border moved out to a rail, and the rail holds two things: the scroller, which
+          takes whatever width is left (flex:1 1 auto, min-width:0 so it may actually shrink), and a
+          pair of step buttons pinned to its trailing edge. One bordered object still, one hairline
+          inside it, and the chips end where they always did.
+
+          THE BUTTONS ARE REAL CONTROLS, not a decorative pointer affordance. They were built
+          aria-hidden and tabIndex={-1} on the argument that the keyboard already has this route —
+          every chip is a tab stop and _revealProjChip scrolls the focused one into view — so two
+          more tab stops were only length. That argument was wrong twice over. A <button> stays
+          focusable with tabindex="-1", so aria-hidden was sitting on focusable content; and the
+          global `:focus{outline:none}` reset means a control with no data-focus token has NO ring
+          at all, so anything that ever did focus one would have focused it invisibly.
+          Both faults have the same cure: label them, give them the chrome focus token, and let them
+          into the tab order. The cost is smaller than it looked — a disabled button is not tabbable,
+          so at the row's resting position there is exactly one extra stop, not two. */}
+      <div data-proj-rail="1" style={sx('display:inline-flex;align-items:stretch;border:1px solid var(--action-line);flex:0 1 auto;min-width:0')}>
+        <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;flex:1 1 auto;min-width:0;overflow-x:auto')}>
+          <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
+          {vals.projectChips.map((ch) => (
+            /* The label is its own span so it can be the ONLY part that truncates. As a bare text
+               node beside the count there was nothing to put an ellipsis on, and a 46-character
+               project name simply became a 294px chip — one name eating the whole frame. */
+            <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}>{ch.label}</span><span style={ch.countStyle}>{ch.count}</span></button>
+          ))}
+        </div>
+        {/* PRESENT ONLY WHEN THERE IS SOMEWHERE TO GO, which is the rule the rest of this band
+            already keeps — Clear filters is absent until something is applied, the pager is absent
+            at one page. A row of four scopes fits, and four scopes get no arrows.
+
+            Both arrows, though, the moment either can act: they are one control for one axis, and
+            an arrow that appears at the far end only once you have moved would be a control that
+            arrives after you needed it. The one that cannot act is disabled rather than removed —
+            same reading as the pager's Prev at page one, and the pair keeps its width so the chips
+            beside it never shift as you step. */}
+        {vals.projSteps.show && (
+          <div data-proj-steps="1" style={sx('display:flex;align-items:stretch;flex:none;border-inline-start:1px solid var(--action-line)')}>
+            {/* "Previous projects" / "Next projects" — the pager's own two words at the foot of this
+                same list, with this control's noun in place of "page". One vocabulary for one
+                relationship, and no left/right in it: the words survive a mirrored layout even
+                though the glyph rotations below do not. */}
+            <button type="button" data-proj-step="prev" data-ix="press" data-focus="chrome" disabled={vals.projSteps.prev.disabled} aria-label="Previous projects" onClick={vals.projSteps.prev.onClick} style={vals.projSteps.prev.style}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(90deg)')}><IconChevron size={12} /></span></button>
+            <button type="button" data-proj-step="next" data-ix="press" data-focus="chrome" disabled={vals.projSteps.next.disabled} aria-label="Next projects" onClick={vals.projSteps.next.onClick} style={vals.projSteps.next.style}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(-90deg)')}><IconChevron size={12} /></span></button>
+          </div>
+        )}
       </div>
       <button type="button" data-proj-manage="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" onClick={vals.onOpenManage} aria-label="Manage Projects: create, rename, or delete" style={vals.projManageStyle}><TextSwap>Manage Projects</TextSwap></button>
       {/* HOW the section is drawn, on the row with the controls that decide WHAT it holds. It sat
@@ -2372,16 +2403,20 @@ function ContrastDrawer({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex: none; background: none; border: 1px solid var(--action-line); padding: var(--btn-pad-md); font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface); cursor: pointer')}><TextSwap>Close</TextSwap></button>
         </header>
 
+        {/* data-cx-cell on the GROUPS, not on the five buttons. A segmented control is one object —
+            AA and AAA share an edge and read as a single switch — so staggering its halves would
+            animate the seam rather than the control. Three items arrive here: the level switch, the
+            size switch, and the filter. */}
         <div data-cx-sec="1" style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:18px var(--page-gutter) 0')}>
-          <div style={{ display: 'flex' }} role="group" aria-label="WCAG level">
+          <div data-cx-cell="lens" style={{ display: 'flex' }} role="group" aria-label="WCAG level">
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setAA} aria-pressed={contrast.aaPressed} style={contrast.aaStyle}><TextSwap>AA</TextSwap></button>
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setAAA} aria-pressed={contrast.aaaPressed} style={contrast.aaaStyle}><TextSwap>AAA</TextSwap></button>
           </div>
-          <div style={{ display: 'flex' }} role="group" aria-label="Text size">
+          <div data-cx-cell="size" style={{ display: 'flex' }} role="group" aria-label="Text size">
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal</TextSwap></button>
             <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large</TextSwap></button>
           </div>
-          <button type="button" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}><TextSwap>{contrast.passLabel}</TextSwap></button>
+          <button type="button" data-cx-cell="filter" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}><TextSwap>{contrast.passLabel}</TextSwap></button>
         </div>
 
         <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px var(--page-gutter) 0')}>
@@ -2397,13 +2432,17 @@ function ContrastDrawer({ vals }) {
                 {row.isHeader && (<>
                   <div style={sx('width:34px;flex:none')}></div>
                   {row.chips.map((c, ci) => (
-                    <div key={ci} style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
+                    <div key={ci} data-cx-cell={'chip-' + ci} style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
                       <span aria-hidden="true" style={c.style}></span>
                     </div>
                   ))}
                 </>)}
                 {row.isBody && (<>
-                  <div style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
+                  {/* The axis legend is part of the grid, not furniture standing behind it. Without
+                      a hook the chips sat at full strength while the ratios they label swept in
+                      under them — a matrix whose data arrives into an axis that was already there.
+                      They take the same beat as the cells, so the whole grid arrives as one object. */}
+                  <div data-cx-cell={'chip-r' + ri} style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
                     <span aria-hidden="true" style={row.chip.style}></span>
                   </div>
                   {row.cells.map((cell, ci) => (
@@ -2422,7 +2461,7 @@ function ContrastDrawer({ vals }) {
           <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
-              <div key={ti} style={t.style}>
+              <div key={ti} data-cx-cell={'on-' + ti} style={t.style}>
                 <span style={{ fontSize: 'var(--fs-label)' }}>{t.hex}</span>
                 <span style={sx('text-transform: uppercase; font-size:var(--fs-label)')}>{t.onLabel} · {t.ratio}:1</span>
               </div>
@@ -2435,7 +2474,7 @@ function ContrastDrawer({ vals }) {
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
           </div>
-          <div data-cx-sample="1" style={contrast.sampleStyle}>The quick brown fox jumps over the lazy dog</div>
+          <div data-cx-sample="1" data-cx-cell="sample" style={contrast.sampleStyle}>The quick brown fox jumps over the lazy dog</div>
         </div>
       </div>
     </div>
@@ -2488,14 +2527,13 @@ function DetailOverlay({ vals }) {
           </div>
           {/* The same row as the result view's, deliberately: same order, same division, same
               weights. A palette opened fullscreen from the archive must not re-teach the user a
-              different set of controls. The hairline divides by consequence — ahead of it the two
-              acts that leave something behind, behind it the ones that only read the palette back
+              different set of controls. The hairline divides by consequence — ahead of it the act
+              that leaves something behind, behind it the ones that only read the palette back
               to you, Contrast first because inspecting comes before copying. (No Share here: the
               overlay has no shareable URL, so the group behind the hairline is a trio, not four.) */}
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-            {/* Filing leads here. On the result view the filled tier belongs to Refine, the one
-                creative act in the row; this surface has no Refine, so it goes to the act that is
-                first in the same sequence and available — organise, then validate, then output. */}
+            {/* Filing leads here, as it does on the result view: the act that is first in the
+                sequence and available — organise, then validate, then output. */}
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-inline-start:8px;border-inline-start:1px solid var(--line-strong)')}>
               <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
@@ -2715,7 +2753,7 @@ function TagFilterDrawer({ vals }) {
         <div data-tg-sec="1" style={sx('padding:16px calc(var(--page-gutter) - 12px) 0')}>
           <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('position:relative;display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid transparent;padding:var(--btn-pad-lg);cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-align:left')}>
             <OvRule />
-            <span data-refine-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
+            <span data-disc-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
           </button>
         </div>
         {vals.charOpen && (<div data-facet-char="1">
@@ -2794,7 +2832,7 @@ function TagFilterDrawer({ vals }) {
               SELECTED trait, which stays listed whatever the cut is (see facetOptions). */}
           {vals.facetMore && (
             <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" aria-expanded={vals.facetAllOpen} aria-label={vals.facetMore.aria} onClick={vals.facetMore.onToggle} style={sx('align-self:flex-start;margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>
-              <span data-refine-chev="1" data-open={vals.facetAllOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.facetMore.label}
+              <span data-disc-chev="1" data-open={vals.facetAllOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.facetMore.label}
             </button>
           )}
           {/* Clear all is gone from here. It sat at the bottom of the longest list in the panel, so
@@ -2841,7 +2879,7 @@ function HarmonyDrawer({ vals }) {
         <div data-hx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div role="group" aria-label="Harmony model" style={sx('display:flex;flex-wrap:wrap;gap:6px')}>
             {harmony.models.map((m) => (
-              <button key={m.id} type="button" data-ix="seg" data-focus="chrome" aria-pressed={m.pressed} aria-label={m.aria} onClick={m.onPick} style={m.style}>{m.label}</button>
+              <button key={m.id} type="button" data-hx-cell="1" data-ix="seg" data-focus="chrome" aria-pressed={m.pressed} aria-label={m.aria} onClick={m.onPick} style={m.style}>{m.label}</button>
             ))}
           </div>
         </div>
@@ -2867,8 +2905,8 @@ function HarmonyDrawer({ vals }) {
             version of what a swatch already does and stays quiet beside it. Both act on the model
             currently shown, which is why the label names it. */}
         <div data-hx-sec="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}>Save as palette</button>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{harmony.copyAllLabel}</button>
+          <button type="button" data-hx-cell="1" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}>Save as palette</button>
+          <button type="button" data-hx-cell="1" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}>{harmony.copyAllLabel}</button>
         </div>
 
         {/* METHOD, ON DEMAND. It says something specific about THIS harmony — how many of these
@@ -2876,7 +2914,7 @@ function HarmonyDrawer({ vals }) {
         <div data-hx-sec="1" style={sx('padding:18px var(--page-gutter) 26px')}>
           <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={harmony.methodOpen} aria-label={harmony.methodAria} onClick={harmony.toggleMethod} style={sx('position:relative;display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid transparent;padding:var(--btn-pad-lg);cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-align:left')}>
             <OvRule />
-            <span data-refine-chev="1" data-open={harmony.methodOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{harmony.methodLabel}
+            <span data-disc-chev="1" data-open={harmony.methodOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{harmony.methodLabel}
           </button>
           {/* data-drawer-split on the lines: the disclosure's prose takes the same masked line
               reveal the drawer's own title takes, fired when it opens (see toggleFold's caller).
@@ -3107,424 +3145,6 @@ function ManageDialog({ vals }) {
               </button>
             </div>
           ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// THE PALETTE STRIP, READ-ONLY — the same view the editor opens with, for a layer that needs its
-// context without its controls. Same geometry as the interactive strip: one flex row on the shares
-// swatchGrow hands out, one chip layer over it on the same shares, chips on the same 8px inset. It
-// is not a second selection mechanism — the rows beneath it are the controls here, and two ways to
-// pick a swatch inside one modal layer is one too many — so it renders as spans and is hidden from
-// assistive tech, which reads the rows' own labels instead.
-// The band numbers only appear here: this is the surface whose rows cite swatches by number, so
-// the citation needs something to resolve against.
-const RefineStripRef = ({ swatches, roleChips }) => (
-  <div aria-hidden="true" style={sx('position:relative;width:100%;flex:none')}>
-    <div style={sx('position:relative;display:flex;gap:0;width:100%')}>
-      {/* No height override: the band's own 124px comes through, so this IS the editor's strip
-          rather than a squashed likeness of it. At 64px the chips, the number and the band's
-          padding were fighting for the same rows and everything clamped. */}
-      {swatches.map((b) => (
-        <span key={b.sid} style={{ ...b.style, cursor: 'default' }}></span>
-      ))}
-    </div>
-    <div style={sx('position:absolute;inset:0;display:flex;pointer-events:none')}>
-      {roleChips.map((cell) => (
-        <span key={cell.key} style={{ flexGrow: cell.grow, flexBasis: 0, minWidth: '92px', position: 'relative' }}>
-          <span style={{ ...sx('position:absolute;left:8px;top:8px'), ...cell.numStyle }}>{cell.num}</span>
-          <span style={sx('position:absolute;left:8px;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
-            {cell.chips.map((c) => (
-              <span key={c.id} style={{ ...c.style, cursor: 'default' }}>{c.label}</span>
-            ))}
-          </span>
-        </span>
-      ))}
-    </div>
-  </div>
-);
-
-// One half of a contrast pair in the Review pairings list: the swatch's colour, its role, and the
-// number the strip labels it by. The target half — the one a press on the row selects — carries
-// its number in full ink so the row states its destination rather than implying it.
-const PairHalf = ({ half, role }) => (
-  <span style={sx('display:inline-flex;align-items:center;gap:6px;min-width:0')}>
-    <span aria-hidden="true" style={half.style}></span>
-    <span style={sx('white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{role}</span>
-    <span aria-hidden="true" style={{ ...sx('font-family:Neue Montreal;font-size:var(--fs-micro);font-variant-numeric:tabular-nums;flex:none'), color: half.target ? 'var(--on-surface)' : 'var(--on-surface-muted)' }}>{half.num}</span>
-  </span>
-);
-
-// ============================== REFINE ==============================
-// The step between reading a palette and shipping it. A surface of its own, on the same dialog
-// family as the others — backdrop, aria-modal, shared focus trap, shared transition — because the
-// result view is a screen people mostly READ, and permanent editing chrome there would tax every
-// visit to pay for an occasional one.
-//
-// Read left to right: the palette, then the swatch you picked, then what it is FOR. Roles are the
-// point of the surface, so they get the column; the colour sliders sit under them because adjusting
-// a colour is what you do once you know what job it has to do.
-//
-// Every swatch shows the roles it answers, in words, on the swatch itself. That is the whole
-// picture the Export dialog has been asking for since it started telling people to refine.
-// ============================== REFINE ==============================
-// ONE DECISION FIRST, and the screen is built around it: choose a swatch, then adjust it. The
-// strip is the only thing that selects; everything under it is that swatch's properties.
-//
-// The first build broke exactly here. It had a strip AND a full-height Roles list, both large and
-// both selectable, plus a heading reciting role, position and hex at one weight — three ways to
-// identify one object, and therefore no obvious first move. Colour, order and deletion also shared
-// a row, which gave a destructive act the same standing as nudging lightness.
-//
-// So: role and position are menus, not columns; colour has the main area to itself; removal sits
-// apart behind a rule with its consequence written under it; history lives in the footer. The
-// vertical order IS the flow — select, adjust, optionally re-file or reorder, finish.
-function RefineDialog({ vals }) {
-  if (!vals.hasRefine) return null;
-  const r = vals.refine;
-  const quiet = 'background:none;border:1px solid var(--action-line);padding:8px 12px;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
-  // THE LADDER, and every step is a token. Seven structural levels shared one 9px muted style —
-  // the modal's own label and all six section titles — which is why the body could not be scanned:
-  // nothing marked where one task ended and the next began. Two levels now do what one was doing.
-  //   --fs-title    24  the palette              h1
-  //   --fs-subtitle 20  the swatch               h2
-  //   --fs-body     13  a section's answer
-  //   --fs-label    10  a section's NAME         h3, full ink — the scan line
-  //   --fs-micro     9  modal chrome, sub-labels muted
-  // Tracking is var(--track-flat) throughout: the design's single flat-tracking source, 0px.
-  const eyebrow = 'font-family:Neue Montreal;font-weight:500;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)';
-  // A HEADLINE, NOT AN EYEBROW. 10px uppercase in full ink was still a micro-label: the same
-  // shape as the chrome above it, just darker, so a section still had to be read before it could
-  // be identified. --fs-lead in sentence case at weight 500 is a heading — it has a distinct size,
-  // a distinct case and a distinct rank from both the 13px answer beneath it and the 9px chrome.
-  const secTitle = "margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface)";
-  const footBtn = 'background:none;border:1px solid var(--action-line);padding:6px 10px;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);cursor:pointer;white-space:nowrap';
-  return (
-    <div style={sx('position:fixed;inset:0;z-index:127;display:flex;align-items:center;justify-content:center;padding:24px')}>
-      <div data-modal-backdrop="1" onClick={r.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      {/* A FIXED SHELL WITH ONE SCROLLPORT INSIDE IT.
-          The whole dialog used to be the scroller — max-height plus overflow-y — which meant the
-          header and the footer were inside the thing that scrolled. Measured: the header left the
-          top of the dialog by 111px on the way to the bottom, so Done, Undo and Reset all scrolled
-          out of reach exactly when a long edit needed them. Three rows now: header, body, footer.
-          Only the middle one moves.
-          The height is stated rather than capped. A max-height dialog is as tall as its content, so
-          the same surface was a different size for a 3-swatch palette and a 6-swatch one, and
-          whether it scrolled at all depended on the palette. A fixed shell means the instrument is
-          the same instrument every time. 100dvh (not vh) so the mobile URL bar cannot clip it.
-          620 → 760 → 960: the second column (edit | preview) needs the width or the specimen reads
-          as a swatch rather than as an interface. max-width keeps it inside the viewport. */}
-      <div data-refine-dialog="1" data-refine-shell="1" role="dialog" aria-modal="true" aria-label={'Refine ' + r.name} onKeyDown={r.trap} style={sx('position:relative;width:960px;max-width:100%;height:min(860px, calc(100dvh - 48px));background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden')}>
-
-        {/* PAIRING DETAIL — a layer over the canvas with its own scroll. Closing returns to an
-            editor that has not moved a pixel. */}
-        {r.a11y && r.a11y.allOpen && (
-          <div data-refine-pairs="1" role="dialog" aria-modal="true" aria-label="All text-role pairings" onKeyDown={r.trapPairings} style={sx('position:absolute;inset:0;z-index:5;background:var(--surface);display:flex;flex-direction:column')}>
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px var(--page-gutter) 12px;border-bottom:1px solid var(--line)')}>
-              <span style={sx('font-family:Neue Montreal;font-weight:500;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>{r.a11y.allLabel}</span>
-              <button type="button" data-ix="press" data-focus="chrome" onClick={r.a11y.closePairings} aria-label="Close pairings and return to the editor" style={sx(quiet)}><TextSwap>Close</TextSwap></button>
-            </div>
-            {/* THE PALETTE, ON THE SURFACE THAT GRADES IT. The list names roles and swatch numbers;
-                without the strip those were coordinates with no map, and the layer covers the
-                editor's own strip exactly when you need it most. */}
-            <div style={sx('padding:12px var(--page-gutter) 0')}>
-              <RefineStripRef swatches={r.swatches} roleChips={r.roleChips} />
-            </div>
-            {/* EVERY ROW LEADS BACK TO A SWATCH. The matrix used to be a read-only report: it told
-                you Primary on Background fails and stopped there, leaving the reader to work out
-                which of the two colours to go and change. Activating a row closes the drill-in and
-                selects the swatch carrying the offending role — ground first, because it is the
-                larger area and fixing it repairs every pair set on it. */}
-            <div data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;padding:4px var(--page-gutter) 18px')}>
-              {/* ONE ROW SHAPE, rendered as a button or a span. The two variants used to be two
-                  copies of the same five children, which is how they would eventually stop
-                  matching; the contents are written once here and the wrapper is the only branch. */}
-              {r.a11y.rows.map((row) => {
-                const body = (<>
-                  <span aria-hidden="true" style={row.chipStyle}>Aa</span>
-                  {/* The pair, as the two swatches it actually is: colour, role, and the number
-                      the strip labels that swatch by. The one a press would take you to is marked
-                      — see swatchRef in renderVals. */}
-                  <span style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>
-                    <PairHalf half={row.fgSwatch} role={row.fgRole} />
-                    <span style={sx('flex:none;color:var(--on-surface-muted)')}>on</span>
-                    <PairHalf half={row.bgSwatch} role={row.bgRole} />
-                  </span>
-                  <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{row.ratio}</span>
-                  <span style={row.levelStyle}>{row.level}</span>
-                </>);
-                return row.canRepair ? (
-                  <button key={row.key} type="button" data-ix="cell" data-focus="chrome" aria-label={row.aria} onClick={row.onRepair} style={sx('display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:10px 0;font:inherit;color:var(--on-surface);cursor:pointer')}>
-                    {body}
-                    <span aria-hidden="true" style={sx('flex:none;font-size:var(--fs-label);color:var(--on-surface-muted)')}>›</span>
-                  </button>
-                ) : (
-                  // Both halves of this pair are the swatch already selected, so there is nowhere to
-                  // send anyone: it stays a statement rather than a control that would do nothing.
-                  <span key={row.key} style={sx('display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)')}>
-                    {body}
-                    <span aria-hidden="true" style={sx('flex:none;width:8px')}></span>
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* THE PALETTE IS THE H1, and this is the correction the whole restructure turns on. The
-            surface has three levels of identity — the palette, the swatch, the role — and they were
-            ranked upside down: "Refine · Garnet" sat at label size in the corner while
-            "Swatch 1 · #726C59" was the largest type on screen. So the thing you were editing was
-            legible and the thing you were editing it INSIDE was nearly invisible.
-            The palette now holds the header at display size, level with Done, and the swatch is the
-            H2 in the body under the strip. No motion hook on the header itself — it rides the
-            panel's own fade; see _refineIn. */}
-        {/* The bottom padding is the header's OWN, not the first section's. The h1's bottom edge was the
-            scrollport's top edge, so scrolled content passed under the palette name with zero
-            clearance — at any scroll position but the top, a heading sat flush against another
-            heading. The strip's top padding drops to 6px so the resting gap stays 24px. */}
-        <header style={sx('display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:18px var(--page-gutter)')}>
-          <span style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
-            <span style={sx(eyebrow)}>Refine palette</span>
-            <h1 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.1;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:balance")}>{r.name}</h1>
-          </span>
-          {/* Done, not Save: every edit is already applied and already written. It is the ONE
-              filled control on this surface — completion has to out-rank Reset palette, which sits
-              at 9px in the footer and asks before it acts. */}
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={r.onClose} aria-label="Done, close refine" style={sx('flex:none;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}><TextSwap>Done</TextSwap></button>
-        </header>
-
-        {/* THE ONLY SCROLLPORT. min-height:0 is what makes it one: a grid row sized minmax(0,1fr)
-            still refuses to shrink below its content without it, and the body would push the footer
-            off the shell instead of scrolling. overscroll-behavior:contain stops a flick at either
-            end chaining into the page — belt to the Lenis brace, which is why data-lenis-prevent
-            moved here from the dialog: the wheel has to be intercepted on the thing that scrolls.
-            scrollbar-gutter keeps the column reserved so content does not shift by the scrollbar's
-            width when a palette happens to be short enough not to overflow.
-
-            data-lenis-prevent stays, and now does the OPPOSITE of exempting this surface: it holds
-            the stopped root instance off (a stopped Lenis swallows the wheel rather than ignoring
-            it) so the nested instance below can own the scroll. See _lenisNestOn in misc.js. */}
-        <div data-refine-body="1" data-lenis-prevent="1" onScroll={r.onBodyScroll} style={sx('min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable')}>
-        {/* THE MOVING ELEMENT. Lenis translates one content node inside its wrapper, and the
-            scrollport's own children are the sections — so this div exists to be that node. It
-            carries the column layout the scrollport used to hold itself. */}
-        <div data-refine-content="1" style={sx('display:flex;flex-direction:column')}>
-
-        {/* 1 · THE STRIP — which swatch, chosen inside the palette named above it. Pointer, arrow
-               keys, Home and End all land in refineSelect. A listbox rather than a row of toggle
-               buttons: this is "pick exactly one of five", which aria-pressed can only describe as
-               five independent on/off states, and aria-selected is not valid on a button role. */}
-        <div style={sx('position:relative;width:100%;padding:6px var(--page-gutter) 0')}>
-          <div style={sx('position:relative;width:100%')}>
-            <div role="listbox" aria-orientation="horizontal" aria-label="Palette swatches. Choose one to edit; use the arrow keys to move between them." onKeyDown={r.onKey} style={sx('position:relative;display:flex;gap:0;width:100%')}>
-              {r.swatches.map((b) => (
-                <button key={b.sid} type="button" role="option" data-refine-swatch="1" data-ring={b.ring} data-focus="swatch" tabIndex={b.tab} aria-selected={b.selected} aria-label={b.aria} title={b.title} onClick={b.onSelect} style={b.style}></button>
-              ))}
-              {/* Selection travels; keyboard focus is the ring on the button beneath. Two states,
-                  two treatments, deliberately not the same one — and the travelling one takes its
-                  ink from the swatch it lands on (see data-ring / _refinePill). */}
-              <span data-refine-pill="1" aria-hidden="true"></span>
-            </div>
-
-            {/* THE ROLE CHIPS, on their own layer over the strip.
-                They used to be spans inside the swatch buttons, which is where they read best and
-                where they could never be operated: a button cannot contain a button. Lifting them
-                out makes each one a control you can pick up, and keeps the listbox a listbox —
-                options with buttons inside them are not a listbox in any screen reader.
-                The layer is a second flex row with the same shares as the strip, so a chip sits on
-                its swatch by geometry rather than by measurement. pointer-events:none on the layer
-                so the swatch underneath stays clickable everywhere a chip is not. */}
-            <div role="group" aria-label="Palette roles. Drag a role onto a swatch to move it there, or focus one and use the arrow keys." style={sx('position:absolute;inset:0;display:flex;pointer-events:none;z-index:4')}>
-              {r.roleChips.map((cell) => (
-                <div key={cell.key} style={{ flexGrow: cell.grow, flexBasis: 0, minWidth: '92px', position: 'relative' }}>
-                  {/* 8px from the band's left edge and 8px from its bottom edge, measured on the
-                      TAG ITSELF — the scrim box, which is the thing with visible edges and so the
-                      thing the eye spaces. Not the glyph inside it (that has side bearings and a
-                      descender gap that no two axes share), and not the cluster minus the chip's
-                      own padding. Both numbers are asserted per band in the verification. */}
-                  <div style={sx('position:absolute;left:8px;right:8px;bottom:8px;display:flex;flex-direction:column;align-items:flex-start;gap:2px')}>
-                    {cell.chips.map((c) => (
-                      <button key={c.id} type="button" data-role-chip={c.id} data-pinned={c.pinned ? '1' : '0'} data-focus="swatch" aria-label={c.aria} onPointerDown={c.onDown} onKeyDown={c.onKey} style={c.style}>{c.label}</button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 2 · THE SWATCH — the H2, one level under the palette. The hex has come out of the
-               heading and joined the role and its status as metadata: it is a value the three
-               sliders already state three ways, and it was taking half of the largest line on the
-               surface. The source sits at the end of the row as context, deliberately quieter than
-               the editing controls: no border, because it is not one of them. */}
-        <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px var(--page-gutter) 0')}>
-          <div style={sx('min-width:0;display:flex;flex-direction:column;gap:5px')}>
-            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);line-height:1.15;letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums")}>{r.selTitle}</h2>
-            {/* The hex, on its own. It carried the swatch's roles and their origin until the strip
-                above was doing both jobs better — the roles are written on the colours themselves,
-                so repeating them here in grey text was the same map with the colour taken out. */}
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{r.selMeta}</span>
-          </div>
-          {r.hasSource && (
-            <button type="button" data-click-zoom="1" data-focus="chrome" aria-label={r.sourceAria} style={sx('flex:none;display:inline-flex;flex-direction:column;align-items:flex-end;gap:4px;background:none;border:none;padding:0;cursor:pointer;color:var(--on-surface-muted)')}>
-              <img src={r.sourceUrl} alt="" style={sx('width:54px;height:34px;object-fit:cover;display:block;border:1px solid var(--line)')} />
-              {/* Its own level, not the section titles'. Borderless 9px muted uppercase made a
-                  CONTROL indistinguishable from the labels naming the sections beside it. */}
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;white-space:nowrap;border-bottom:1px solid var(--action-line);padding-bottom:1px')}>View source</span>
-            </button>
-          )}
-        </div>
-
-        {/* 3 · ADJUST COLOUR — full width, and no longer sharing the row with the preview.
-               The two were a 60/40 split, which is a defensible arrangement right up until you ask
-               what the narrow half is FOR. The preview is not a caption on the sliders; it is the
-               surface the edit is judged on, and at 40% of the width its heading, its body line and
-               its two buttons all wrapped — so the object meant to answer "does this still work as
-               an interface?" was itself badly set. They follow each other down the page now. The
-               contrast card sitting below the fold is fine: the body scrolls. */}
-        <div style={sx('padding:32px var(--page-gutter) 0')}>
-          {/* The headline is ruled off from its content — every section title in this dialog now
-              carries the same --line underline, so the hierarchy is drawn, not implied. */}
-          <h3 style={sx(secTitle + ';padding-bottom:8px;border-bottom:1px solid var(--line)')}>Adjust colour</h3>
-          {/* EACH AXIS IS A CARD, not a floating row: the raised surface + quiet hairline the
-              app's other islands use (export rows, thumbnails), on an 8px rhythm throughout —
-              8 between cards, 8 inside them. The reference's contained parameter rows, spoken
-              in this system's squared, token-built accent. */}
-          <div style={sx('padding-top:8px;display:flex;flex-direction:column;gap:8px')}>
-            {r.sliders.map((sl) => (
-              <div key={sl.key} data-refine-axis="1" style={sx('display:flex;flex-direction:column;gap:8px;padding:8px;background:var(--surface-raised);border:1px solid var(--line)')}>
-                <span style={sx('display:flex;align-items:center;justify-content:space-between;gap:10px')}>
-                  <label htmlFor={'refine-' + sl.key} style={sx(eyebrow + ';font-weight:400')}>{sl.label}</label>
-                  {/* Value and unit are ONE control: the wrapper draws the boundary, the input is
-                      borderless inside it, and the unit sits within the same box. Text rather than
-                      number, so the decimal separator is the same for everyone.
-                      The bounds are stated on the input itself now, not only on the range twin —
-                      see the numeric contract in renderVals. */}
-                  <span data-refine-num="1">
-                    <input type="text" inputMode="decimal" value={sl.display} onChange={sl.onNumber} onBlur={sl.onNumberCommit} onKeyDown={sl.onNumberKey} role="spinbutton" aria-valuemin={sl.numMin} aria-valuemax={sl.numMax} aria-valuenow={sl.numNow} aria-valuetext={sl.valueText} aria-label={sl.label + ' of the selected swatch, exact value' + sl.rangeHint} />
-                    {/* ALWAYS RENDERED, even for chroma, whose unit is nothing — a chroma is a
-                        ratio. It was conditional, so chroma had no element at all and the fixed
-                        unit slot that aligns the other two simply did not exist on that row: the
-                        box matched but the digits still sat 13px off the shared edge. An empty
-                        slot is what keeps three rows in one column. */}
-                    <span aria-hidden="true">{sl.unit}</span>
-                  </span>
-                </span>
-                <input id={'refine-' + sl.key} data-refine-slider="1" type="range" min={sl.min} max={sl.max} step={sl.step} value={sl.value} onChange={sl.onInput} onPointerUp={sl.onCommit} onKeyUp={sl.onCommit} onBlur={sl.onCommit} aria-label={sl.label + ', swatch ' + (r.selIdx + 1) + ' ' + r.selHex} aria-valuetext={sl.valueText} style={{ '--refine-track': sl.track }} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 4 · LIVE PREVIEW — not "In use", which promises a usage report: how many components,
-               which ones. This surface does not know that and is not trying to; it is a specimen
-               you judge the edit against. The subject moved into the subheading, where a caption
-               under the specimen used to say the same thing as a fourth level of loose text.
-               Decorative in the accessibility tree — a picture of a mapping, with the mapping
-               itself on the group's accessible name. */}
-        {/* No "Testing swatch x as Background" line: the strip above already names the mapping on
-            the swatch itself, so the sentence restated what two visible labels were saying — the
-            fact stays on the group's accessible name, where it is not redundant. */}
-        <div data-refine-preview="1" role="group" aria-label={r.preview.aria} style={sx('display:flex;flex-direction:column;gap:12px;padding:32px var(--page-gutter) 0')}>
-          <h3 style={sx(secTitle + ';padding-bottom:8px;border-bottom:1px solid var(--line)')}>Live Preview</h3>
-          <div aria-hidden="true" style={r.preview.pageStyle}>
-            <div style={r.preview.frameStyle}>
-              <div style={r.preview.accentStyle}></div>
-              <div style={r.preview.cardStyle}>
-                <span style={r.preview.headingStyle}>Section heading</span>
-                <span style={r.preview.bodyStyle}>Body text set on the raised surface, at the size the contrast verdict below reports.</span>
-                <span style={sx('display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:2px')}>
-                  <span style={r.preview.btnStyle}>Primary</span>
-                  <span style={r.preview.altStyle}>Secondary</span>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 5 · TEXT CONTRAST — named for what it measures, and now built on the same skeleton as
-               Roles: one heading, one action, one status, one supporting fact. It was a bordered
-               card ending in a full-width navigation row while Roles began as a loose unboxed
-               section, so two neighbours doing the same kind of work looked like different kinds
-               of object. The card and the footer row are both gone.
-
-               THREE STATEMENTS OF ONE STATE became one. A PARTIAL badge, "1 of 8 meet AA" and a
-               REVIEW 7 FAILURES button all reported the same health, and the two controls were one
-               destination under two names. "Partial" was the weakest: a bucket where the failure
-               count is the quantity, and the quantity is the thing you can act on. */}
-        {r.a11y && (
-          <div data-refine-sec="1" role="group" aria-label={r.a11y.aria} style={sx('position:relative;margin:32px var(--page-gutter) 0;padding-top:24px;border-top:1px solid transparent')}>
-            <OvRule />
-            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--line)')}>
-              <h3 style={sx(secTitle)}>Text Contrast</h3>
-              <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-label={r.a11y.reviewAria} onClick={r.a11y.toggleAll} style={sx(quiet + ';flex:none')}>{r.a11y.reviewLabel}</button>
-            </div>
-            <div style={sx('padding-top:16px')}>
-              <span data-drawer-split="1" style={r.a11y.countStyle}>{r.a11y.count}</span>
-            </div>
-            {/* ONE ROW, FOUR FACTS, EACH SAID ONCE. This was a labelled sub-block over a two-line
-                stack: a "Current pairing" eyebrow, the role pair, the hex pair, the ratio and a
-                verdict reading "Normal text: Fails AA" beside a specimen whose own text reads
-                "Normal text". The hex pair is the chip's two colours, and the selected swatch's
-                hex already opens the metadata line at the top of the dialog. The chip is the
-                label: it is visibly the pair, drawn at the size the verdict grades. */}
-            <div style={sx('display:flex;align-items:center;gap:14px;padding-top:16px')}>
-              <span aria-hidden="true" style={r.a11y.sampleStyle}>{r.a11y.sampleText}</span>
-              <span style={sx('flex:1;min-width:0;font-family:Neue Montreal;font-size:var(--fs-detail);color:var(--on-surface)')}>{r.a11y.pairRoles}</span>
-              <span style={sx('flex:none;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums')}>{r.a11y.pairRatio}</span>
-              <span style={r.a11y.pairLevelStyle}>{r.a11y.pairLevel}</span>
-            </div>
-          </div>
-        )}
-
-        {/* ROLES had a section here and no longer does (03.08.26, Option A of the plan in
-            docs/refine-audit.md). It printed one line per role on the SELECTED swatch —
-            "Background · Derived" — which failed four ways at once: it restated what the strip
-            already says in colour and in position; it reported provenance before anyone had been
-            told what the role is FOR or whether it works; scoped to one swatch it showed 0-2 of
-            the palette's 6 roles under a heading promising all of them; and it carried no verbs,
-            because every act on a role happens on the strip. Its two live parts moved to where
-            they belong: the derived/pinned definition to the swatch's own metadata line, which is
-            the only place those words are now spoken, and Reset roles to the footer beside Reset
-            all refinements — both undo decisions, at two scopes, and they had been sitting 400px
-            apart. */}
-
-        {/* end of the scrollport — the footer below is a sibling, outside it */}
-        <div style={sx('height:var(--page-gutter);flex:none')}></div>
-        </div>
-        </div>
-
-        {/* 7 · RECOVER AND FINISH. Undo is compact and always here. Reset is tertiary and asks once
-               — it discards every refinement, which Undo would take many presses to equal.
-               PERSISTENT. It was the last row of the scrolling content, so the two controls that
-               undo a mistake left the screen precisely as you made more of them. */}
-        <div data-refine-foot="1" style={sx('position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px var(--page-gutter);border-top:1px solid transparent;background:var(--surface-raised)')}>
-          <OvRule />
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canUndo} onClick={r.onUndo} aria-label={r.undoAria} style={sx(footBtn + ';display:inline-flex;align-items:center;gap:7px;opacity:' + (r.canUndo ? '1' : '.35'))}>
-            Undo<span aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>{r.undoKeys}</span>
-          </button>
-          {r.resetArmed && (
-            <span style={sx("flex:1;min-width:160px;font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.4;color:var(--on-surface);text-wrap:pretty")}>This discards every refinement.</span>
-          )}
-          {r.resetArmed && (
-            <button type="button" data-ix="press" data-focus="chrome" onClick={r.onResetCancel} aria-label="Cancel the reset" style={sx(footBtn)}>Cancel</button>
-          )}
-          {/* An explicit spacer rather than an auto margin on whichever button happens to be last:
-              the reset cluster can be one button or two, and the armed state inserts a sentence
-              that supplies its own flex:1. One rule for where the right-hand group starts. */}
-          {!r.resetArmed && <span aria-hidden="true" style={sx('flex:1')}></span>}
-          {/* Reset roles, relocated from the deleted Roles section. It belongs beside Reset all
-              refinements because they are the same act at two scopes — one undoes where the roles
-              sit, the other undoes everything — and they were 400px apart. Shown only when there
-              is a placement to undo. */}
-          {r.anyPinned && !r.resetArmed && (
-            <button type="button" data-ix="press" data-focus="chrome" aria-label={r.resetRolesAria} onClick={r.onResetRoles} style={sx(footBtn)}>Reset roles</button>
-          )}
-          <button type="button" data-ix="press" data-focus="chrome" disabled={!r.canReset} onClick={r.onReset} aria-label={r.resetAria} style={sx((r.resetArmed ? footBtn.replace('border:1px solid var(--action-line)', 'border:1px solid var(--on-surface)') : footBtn) + ';opacity:' + (r.canReset ? '1' : '.35'))}>{r.resetLabel}</button>
         </div>
       </div>
     </div>

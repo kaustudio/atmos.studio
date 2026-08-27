@@ -10,7 +10,7 @@
    chrome.jsx); the app's own header holds actions you reach for mid-task and must not move.
 
    NO GSAP, ON PURPOSE. Two states, no sequencing, nothing measured — which is what a transition is
-   for, and the same argument [data-refine-chev] makes for turning rather than swapping. This file
+   for, and the same argument [data-disc-chev] makes for turning rather than swapping. This file
    only toggles an attribute; doc.css owns the move and rides --dur-chrome / --ease-standard so the
    bar leaves on the same clock as every other piece of chrome.
 

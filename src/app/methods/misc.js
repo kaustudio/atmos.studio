@@ -21,41 +21,6 @@ export const miscMethods = {
   _lenisStop() { if (this._lenis) { try { this._lenis.stop(); } catch (e) { } } },
   _lenisStart() { if (this._lenis) { try { this._lenis.start(); } catch (e) { } } },
 
-  // ===== A NESTED LENIS, for a dialog that owns a scrollport of its own =====
-  // The contract above says internal scrollers carry data-lenis-prevent and fall back to native
-  // scroll. That is the right default for a short drawer and the wrong one for the refine editor,
-  // which is a full page of content: scrolling it felt like a different website from the one it
-  // opened out of. So that surface gets its own instance instead of an exemption.
-  //
-  // data-lenis-prevent STAYS on the wrapper and is load-bearing twice over. The ROOT instance is
-  // stopped while the dialog is open, and a stopped Lenis does not ignore the wheel — it calls
-  // preventDefault and swallows it (verified in the vendored source), so without the attribute
-  // nothing inside the dialog would scroll at all. The NESTED instance is unaffected by the same
-  // attribute because Lenis slices its own rootElement off the composed path before testing it —
-  // an element cannot prevent the instance it is the root of.
-  //
-  // One clock, as above: the GSAP ticker drives this too, never a second rAF loop.
-  _lenisNestOn(sel) {
-    if (this._reduce || this._nestLenis) return;
-    const g = window.gsap;
-    const wrap = document.querySelector(sel);
-    // Lenis needs the single element that MOVES inside the wrapper; the scrollport's own children
-    // are the sections, so the markup provides one content div for exactly this reason.
-    const content = wrap && wrap.firstElementChild;
-    if (!window.Lenis || !g || !wrap || !content) return;
-    try { this._nestLenis = new window.Lenis({ wrapper: wrap, content }); } catch (e) { return; }
-    this._nestRaf = (time) => { try { this._nestLenis.raf(time * 1000); } catch (e) { } };
-    g.ticker.add(this._nestRaf);
-  },
-  // Torn down on close rather than left parked: it holds wheel/touch listeners on a node React is
-  // about to unmount, and a second open would otherwise stack a new instance on top of a dead one.
-  _lenisNestOff() {
-    const g = window.gsap;
-    if (this._nestRaf && g) { try { g.ticker.remove(this._nestRaf); } catch (e) { } }
-    if (this._nestLenis) { try { this._nestLenis.destroy(); } catch (e) { } }
-    this._nestLenis = null; this._nestRaf = null;
-  },
-
   /* THE CONTAINER CARRIES THE SELECTION, so a scope past the edge is not something you have to go
      and find afterwards. Picking a chip that sits half under the fade used to leave it there: the
      list re-scoped, the pill moved to a chip you could not fully see, and the only way to confirm
@@ -101,7 +66,7 @@ export const miscMethods = {
       const cur = el || grp.querySelector('[data-proj-chip][aria-pressed="true"]');
       if (!cur || !grp.contains(cur)) return;
       const max = grp.scrollWidth - grp.clientWidth;
-      if (max <= 0) return;                        // everything fits: there is no "along" to move
+      if (max <= 0) { this._syncProjSteps(); return; }   // everything fits: there is no "along" to move
       // Clear of the 36px cover gradient, so the chosen chip never settles under the fade that
       // means "there is more" — and wide enough past it to show the edge of its neighbour.
       const PEEK = 44;
@@ -112,12 +77,18 @@ export const miscMethods = {
       let target;
       if (left - PEEK < from) target = left - PEEK;                    // it lies back the way we came
       else if (left + width + PEEK > from + view) target = left + width + PEEK - view;
-      else return;                                                     // comfortably in view already
+      // Sync before each of these exits, not only on the tween. The browser's own scroll-into-view
+      // has usually already moved the row by the time this runs — that is the case the "comfortably
+      // in view" branch describes — so an early return here is a row that MOVED and told nobody.
+      else { this._syncProjSteps(); return; }                          // comfortably in view already
       target = Math.max(0, Math.min(target, max));
-      if (Math.abs(target - from) < 1) return;
+      if (Math.abs(target - from) < 1) { this._syncProjSteps(); return; }
       const g = window.gsap;
-      if (this._reduce || !g) { grp.scrollLeft = target; return; }
-      g.to(grp, { duration: this.DUR.fold, ease: this.EASE.fold, scrollTo: { x: target }, overwrite: 'auto' });
+      // The step buttons are told about this too. Selecting a project moves the row, so the arrows'
+      // ends move with it, and leaving that to the scroll event would make the two agree only as
+      // often as the document happens to paint. See _syncProjSteps.
+      if (this._reduce || !g) { grp.scrollLeft = target; this._syncProjSteps(); return; }
+      g.to(grp, { duration: this.DUR.fold, ease: this.EASE.fold, scrollTo: { x: target }, overwrite: 'auto', onUpdate: () => this._syncProjSteps() });
     } catch (e) { }
   },
 
@@ -139,6 +110,146 @@ export const miscMethods = {
         pill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
         pill.style.opacity = '1';
       });
+    } catch (e) { }
+  },
+
+  /* ===================== THE PROJECT RAIL'S STEP BUTTONS =====================
+
+     WHAT THE SCROLLER OWES A MOUSE. The chips have scrolled since the cap arrived, and every route
+     to the hidden ones assumed hardware: a trackpad's two-finger swipe, or a wheel that tilts. A
+     plain mouse has neither, so on that machine the fade at the end was a locked door with a sign
+     on it. These two buttons are that door's handle, and nothing more — see the JSX for why they
+     are out of the tab order.
+
+     THE STEP LANDS ON A CHIP EDGE, NEVER MID-WORD. Paging by a viewport-width would leave whatever
+     happened to be there cut in half, which is the exact complaint the fade was already answering.
+     So the target is measured from the chips: going forward, the first chip whose trailing edge is
+     past the window is brought to the leading edge; going back, the last chip that has fallen off
+     the leading edge is brought to the trailing one. Either way a whole chip arrives, and the row
+     always breaks between names rather than through one.
+
+     PAD is the scroller's own 2px inset — the target is content-space, and the leading edge of the
+     window sits 2px inside it. Without it every forward step lands 2px short and clips a hairline
+     off the chip it just delivered. */
+  _projGroup() { return document.querySelector('[data-proj-rail] [data-proj-group]'); },
+  stepProjects(dir) {
+    try {
+      const grp = this._projGroup(); if (!grp) return;
+      const PAD = 2;
+      const view = grp.clientWidth, from = grp.scrollLeft, max = grp.scrollWidth - view;
+      if (max <= 0) return;
+      const chips = [...grp.querySelectorAll('[data-proj-chip]')];
+      let target;
+      if (dir > 0) {
+        const c = chips.find((el) => el.offsetLeft + el.offsetWidth > from + view + 1);
+        target = c ? c.offsetLeft - PAD : max;
+      } else {
+        const c = [...chips].reverse().find((el) => el.offsetLeft < from - 1);
+        target = c ? c.offsetLeft + c.offsetWidth + PAD - view : 0;
+      }
+      target = Math.max(0, Math.min(target, max));
+      if (Math.abs(target - from) < 1) return;
+      /* A BUTTON THAT DISABLES ITSELF MUST HAND ITS FOCUS ON. Landing on a limit disables the arrow
+         that was just pressed, and a focused control going native-disabled drops focus to <body> —
+         so stepping to the end of the row with the keyboard would silently lose your place in the
+         page. The other arrow is live by construction whenever this one dies (a rail that can step
+         at all can always step back), so the pair keeps the focus between them.
+         Gated on the app's own input-modality flag, and that gate is the whole reason this is safe:
+         a programmatic focus() resolves :focus-visible to true in Chrome — the finding the project
+         chips are already written around — so doing this after a MOUSE press would answer a click
+         with a keyboard ring. Keyboard presses only; a pointer press leaves focus where it is. */
+      if (this._kbdInput && (target <= 0 || target >= max - 1)) {
+        try {
+          const other = document.querySelector('[data-proj-step="' + (dir > 0 ? 'prev' : 'next') + '"]');
+          if (other && !other.disabled && document.activeElement === document.querySelector('[data-proj-step="' + (dir > 0 ? 'next' : 'prev') + '"]')) other.focus();
+        } catch (_) { }
+      }
+      const g = window.gsap;
+      // DUR.fold on EASE.fold — the pill's curve and _revealProjChip's curve. Three things move
+      // this row and they must all move the same way, or stepping and selecting would feel like
+      // two different controls acting on one strip.
+      if (this._reduce || !g) { grp.scrollLeft = target; this._syncProjSteps(); return; }
+      // onUpdate as well as the scroll listener, and not as a belt-and-braces habit: a tween writes
+      // scrollLeft directly, and a scroll event is dispatched from the rendering pipeline, so the
+      // arrows would track the row only as fast as the document happens to be painting. Reading the
+      // state from the thing doing the moving is the version that cannot lag behind it.
+      g.to(grp, { duration: this.DUR.fold, ease: this.EASE.fold, scrollTo: { x: target }, overwrite: 'auto', onUpdate: () => this._syncProjSteps() });
+    } catch (e) { }
+  },
+
+  /* WHETHER THE BUTTONS EXIST, AND WHICH OF THEM CAN ACT — read from the DOM, held in state.
+
+     It has to be measured rather than derived: whether four chips overflow depends on how long the
+     project names are and how wide the window is, neither of which the render knows. So the scroller
+     is asked directly, on every commit (componentDidUpdate), on its own scroll, and on any resize
+     of it — the ResizeObserver is what covers a window drag and a renamed project alike.
+
+     setState only on a CHANGE. A scroll listener that set state every frame would re-render the
+     whole library section sixty times a second for two booleans that flip twice a step.
+
+     AND THE PAIR ARRIVES, IT DOES NOT APPEAR. can flipping is a mount and an unmount, and a bare
+     React conditional would have snapped 61px of control into and out of the rail — the one state
+     change in this contract with no transition behind it, which is the fault the [data-ix] note in
+     global.css names for opacity. It folds instead, on the axis it occupies: width and opacity on
+     EASE.fold at the disclosure's own two durations, which is _foldIn/_foldOut turned on its side.
+     overflow is set for the length of the tween only, so a focus ring at rest is never clipped.
+
+     The sync is deaf while a fold runs. Tweening the pair's width resizes the scroller beside it,
+     the ResizeObserver answers every frame of that, and the measurements it would take mid-fold
+     describe a box that is still moving. */
+  _projStepsIn(done) {
+    const g = window.gsap; const el = document.querySelector('[data-proj-steps]');
+    if (this._reduce || !g || !el) { done(); return; }
+    g.killTweensOf(el);
+    const w = el.scrollWidth;
+    if (w <= 0) { done(); return; }
+    g.fromTo(el, { width: 0, opacity: 0, overflow: 'hidden' },
+      { width: w, opacity: 1, duration: this.DUR.reveal * 0.62, ease: this.EASE.fold, clearProps: 'width,opacity,overflow', onComplete: done });
+  },
+  _projStepsOut(done) {
+    const g = window.gsap; const el = document.querySelector('[data-proj-steps]');
+    if (this._reduce || !g || !el) { done(); return; }
+    // The pair is about to leave the document; if it is holding focus, hand that back to the row it
+    // was steering rather than letting it fall to <body>.
+    try { if (el.contains(document.activeElement)) { const grp = this._projGroup(); const cur = grp && grp.querySelector('[data-proj-chip][aria-pressed="true"]'); if (cur) cur.focus(); } } catch (_) { }
+    g.killTweensOf(el);
+    g.to(el, { width: 0, opacity: 0, overflow: 'hidden', duration: this.DUR.reveal * 0.45, ease: this.EASE.fold, onComplete: done });
+  },
+  _syncProjSteps() {
+    try {
+      if (this._projStepsBusy) return;
+      const grp = this._projGroup();
+      if (!grp) { if (this.state.projStep.can) this.setState({ projStep: { can: false, start: true, end: true } }); return; }
+      if (!grp._stepWired) {
+        grp._stepWired = true;
+        grp.addEventListener('scroll', () => this._syncProjSteps(), { passive: true });
+        if (window.ResizeObserver) {
+          if (this._projStepRO) this._projStepRO.disconnect();
+          this._projStepRO = new ResizeObserver(() => this._syncProjSteps());
+          this._projStepRO.observe(grp);
+        }
+      }
+      const max = grp.scrollWidth - grp.clientWidth;
+      // A pixel of tolerance at each end: a scroller at its limit routinely reports a fractional
+      // remainder (device pixel ratios, sub-pixel chip widths), and without it the trailing arrow
+      // would stay live at the end of the row and do nothing when pressed.
+      const next = { can: max > 1, start: grp.scrollLeft <= 1, end: grp.scrollLeft >= max - 1 };
+      const cur = this.state.projStep;
+      if (cur.can === next.can && cur.start === next.start && cur.end === next.end) return;
+      // Leaving: the tween has to outlive the state change, or React unmounts the pair before it has
+      // anywhere to play — the same ordering every exit in this app is built around.
+      if (cur.can && !next.can) {
+        this._projStepsBusy = true;
+        this._projStepsOut(() => { this._projStepsBusy = false; this.setState({ projStep: next }); });
+        return;
+      }
+      // Arriving: commit first so there is an element to fold open, then fold it.
+      if (!cur.can && next.can) {
+        this._projStepsBusy = true;
+        this.setState({ projStep: next }, () => this._projStepsIn(() => { this._projStepsBusy = false; }));
+        return;
+      }
+      this.setState({ projStep: next });
     } catch (e) { }
   },
 

@@ -16,8 +16,8 @@ export function primitiveEntries(pal, slug) {
   });
 }
 
-// THE ROLE VOCABULARY — one definition, read by the exporters, the persistence validator and the
-// Refine surface. Order is the order they are offered in and exported in: the two ground tones,
+// THE ROLE VOCABULARY — one definition, read by the exporters and the persistence validator.
+// Order is the order they are offered in and exported in: the two ground tones,
 // then the two that carry meaning, then the accent, then the ink.
 //
 // These replaced an earlier internal set (surface / surface-raised / on-surface / on-surface-muted

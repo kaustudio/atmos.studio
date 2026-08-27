@@ -2,9 +2,8 @@
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
-import { ROLE_IDS, ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
+import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
-import { gamutMap } from '../lib/color.js';
 
 const MONO = 'Neue Montreal';
 
@@ -187,9 +186,10 @@ export const renderValsMethods = {
       const n = s.current.swatches.length;
       const totW = s.current.swatches.reduce((a, x) => a + x.weight, 0) || 1;
       const bands = s.current.swatches.map((b, i) => {
-        // Keyed by sid, not by position: once a refinement can reorder or remove a swatch, an
+        // Keyed by sid, not by position: the moment anything can reorder or remove a swatch, an
         // index key makes React reuse the wrong band node and makes a "✓ Copied" flag land on a
-        // colour the user never clicked. sid follows the swatch.
+        // colour the user never clicked. sid follows the swatch, and stored palettes already carry
+        // orders no index can be trusted to describe.
         const sid = typeof b.sid === 'number' ? b.sid : i;
         const on = this.onColor(b.hex);
         const fmt = this.swatchFormats(b.hex);
@@ -576,8 +576,8 @@ export const renderValsMethods = {
         // The per-swatch SELECTION this band used to model is gone. It had no call site anywhere in
         // the view: overlaySelect was never invoked, so `sel` was permanently false, and the
         // "Current" tag, the selected ring and the corner select button were unreachable UI
-        // pretending to be a feature. Round 2 builds a real selection model on the Refine surface,
-        // and leaving a dead one next to it is how the next person ends up wiring the wrong one.
+        // pretending to be a feature, and leaving a dead one in place is how the next person ends
+        // up wiring the wrong one.
         return {
           sid: typeof b.sid === 'number' ? b.sid : i,
           groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
@@ -1082,575 +1082,6 @@ export const renderValsMethods = {
       };
     }
 
-    // ===== the Refine surface =====
-    // ONE DECISION FIRST: pick a swatch. Everything below the strip is that swatch's properties,
-    // and nothing else on the surface competes to identify it.
-    //
-    // The first build had three systems doing that job — a strip, a full-height Roles list, and a
-    // heading that recited role, position and hex at one weight — so there was no single source of
-    // truth for the selection and no obvious first move. The Roles list is a menu now, position is
-    // a menu, and the heading leads with the one word that matters.
-    let refineView = null;
-    if (s.refineOpen && s.current) {
-      const p = s.current;
-      const list = p.swatches;
-      const N = list.length;
-      const selIdx = Math.max(0, Math.min(s.refineSel || 0, N - 1));
-      const sel = list[selIdx];
-      const selC = Math.sqrt(sel.a * sel.a + sel.b * sel.b);
-      let selH = Math.atan2(sel.b, sel.a) * 180 / Math.PI; if (selH < 0) selH += 360;
-      const selHr = selH * Math.PI / 180;
-      const resolved = this.semanticRoles(p, p.roles);
-      const roleAt = {};
-      resolved.forEach((r) => { (roleAt[r.index] = roleAt[r.index] || []).push(r.role); });
-      const assigned = p.roles || {};
-      const selRoles = (roleAt[selIdx] || []).map((r) => ROLE_LABEL[r]);
-      const curMet = this.paletteMetrics(p);
-      // ===== THE CONTEXT PREVIEW =====
-      // The half of the 2026-07-28 decision that was deferred: "the interactive context preview
-      // stayed out of scope; roles are built as the backbone it will plug into later." This is the
-      // plug-in, and semanticRoles is the backbone — no new model, no second source of truth.
-      //
-      // WHAT IT IS FOR. Refine could edit a value and report a ratio, but it could not show what the
-      // edit DID: dragging chroma moved a number, and whether the palette still worked as an
-      // interface was left to the imagination. This is the smallest specimen that answers it — a
-      // ground, a raised surface on it, text at the size the verdict below is about, and the two
-      // chromatic roles as the things you would actually build. It repaints from `resolved`, so it
-      // is in the same render pass as the swatch, the ratio and the AA status: one transaction, and
-      // the last visible value always matches the palette state.
-      //
-      // The SELECTED swatch's roles are marked rather than the specimen being redrawn per selection.
-      // A preview that changed shape with the selection would stop being a stable object to judge
-      // against; marking says "this is where the colour in your hand is doing its work", which is
-      // the question, without moving anything.
-      const roleHex = {};
-      resolved.forEach((r) => { roleHex[r.role] = r.hex; });
-      const selRoleIds = (roleAt[selIdx] || []);
-      const ctxMark = (role) => selRoleIds.indexOf(role) >= 0;
-      const ctxRoles = ['background', 'surface', 'text', 'primary', 'secondary', 'accent'];
-      const preview = {
-        // Every role's colour, and which of them the selected swatch is currently answering — so a
-        // swatch that carries two roles lights up in two places at once.
-        hex: roleHex,
-        marked: ctxRoles.filter(ctxMark).map((r) => ROLE_LABEL[r]),
-        // No visible subject line any more (03.08.26, user direction): "Testing swatch 1 as
-        // Background" restated what the strip's own role chips already say on the colour itself.
-        // The mapping survives in the aria below, where it is the ONLY statement rather than a
-        // second one. Watch-item: the old line's other variant — "carries no role, so it does not
-        // appear here" — was genuine information, and a sighted user now infers it from the
-        // preview simply not changing; if that proves too quiet, restore it for that case alone.
-        // Named in the accessible layer, because the specimen itself is decorative: a screen-reader
-        // user gets the mapping as a sentence rather than a picture they cannot see.
-        aria: 'Interface preview using the assigned roles: '
-          + ctxRoles.map((r) => ROLE_LABEL[r] + ' ' + roleHex[r]).join(', ')
-          + (selRoleIds.length ? '. The selected swatch is ' + selRoleIds.map((r) => ROLE_LABEL[r]).join(' and ') + '.' : '. The selected swatch carries no role, so it does not appear here.'),
-        // THE COLOURS FILL THE CONTAINER. The specimen was a 520px card centred in a 910px field,
-        // which meant the two roles under judgement — Surface and Background — were shown as a
-        // medium rectangle floating in a large one, and Accent was a 4px line. You cannot tell
-        // whether a colour works from a sample that size. Every role now holds real area: the page
-        // is the full width and 320px tall, the card spans it, and the accent is a band you can
-        // actually read a hue off.
-        pageStyle: { background: roleHex.background, border: '1px solid var(--line)', padding: '28px', minHeight: '320px', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-        // The card takes the width; the BODY COPY keeps its measure inside it (see bodyStyle). A
-        // capped card was capping the colour to keep the text readable — two different problems
-        // solved with one cap, and the colour lost.
-        frameStyle: { width: '100%', display: 'flex', flexDirection: 'column', gap: '0' },
-        cardStyle: { background: roleHex.surface, padding: '30px 32px', display: 'flex', flexDirection: 'column', gap: '16px' },
-        // Both still NORMAL text under WCAG — the threshold is 24px, and 20px is under it — so the
-        // 4.5:1 verdict below the specimen keeps describing exactly what is drawn here. They were
-        // 12px and 10px: honest, and too small to judge a colour pairing by.
-        headingStyle: { fontFamily: mono, fontSize: 'var(--fs-subtitle)', fontWeight: 500, color: roleHex.text, lineHeight: 1.2, letterSpacing: 'var(--track-flat)' },
-        bodyStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', color: roleHex.text, lineHeight: 1.55, opacity: 0.92, maxWidth: '62ch', textWrap: 'pretty' },
-        btnStyle: { display: 'inline-flex', alignItems: 'center', background: roleHex.primary, color: this.onColor(roleHex.primary), fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '11px 18px', border: 'none' },
-        altStyle: { display: 'inline-flex', alignItems: 'center', background: 'transparent', color: roleHex.secondary, border: '1px solid ' + roleHex.secondary, fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: '10px 17px' },
-        accentStyle: { width: '100%', height: '10px', background: roleHex.accent },
-      };
-      refineView = {
-        name: p.name,
-        preview,
-        selIdx, selHex: sel.hex.toUpperCase(),
-        // SWATCH-FIRST, and this is an object-model decision rather than a typographic one.
-        //
-        // The heading led with the role for a while, which quietly said the user was editing a
-        // token — a fixed slot in a design system. But this tool reads palettes off photographs and
-        // lets you reorder and remove them, and none of that is true of a token: a required slot
-        // cannot be deleted. Two models were being presented as one, which is what made Remove and
-        // Position feel like they did not belong.
-        //
-        // So the object is the SWATCH. It leads. The role is an assignment made TO it, stated as
-        // metadata directly under it, and changed from the structure section below.
-        // Swatch and value, and nothing else. The role was restated here as well as in Palette
-        // structure — the same fact in two places, only one of which could act on it.
-        // THREE LEVELS, IN ORDER. The palette is the H1 in the header, the swatch is the H2 here,
-        // and the hex, the role and its status are metadata under it. The hex used to be half of
-        // the largest heading on the surface — a value the sliders restate three ways, set at the
-        // size that should have been carrying the name of the palette being worked on.
-        selTitle: 'Swatch ' + (selIdx + 1),
-        // THE HEX, AND NOTHING ELSE. This line used to append the swatch's roles and how they got
-        // there ("· Background · chosen for you"), which restated the strip directly above it —
-        // the roles are already written on the colours, in position — and then explained a
-        // distinction nobody had asked about. A metadata line under a heading called "Swatch 2"
-        // only owes you the one fact the strip cannot show: the value.
-        selMeta: sel.hex.toUpperCase(),
-        selCount: (selIdx + 1) + ' of ' + N,
-        total: N,
-        // Named, not decorative: a labelled control that opens the reference at size, through the
-        // lightbox the result view already uses. A bare thumbnail beside a heading reads as
-        // ornament, and the question it answers — am I correcting the extraction or leaving it? —
-        // deserves to be asked out loud.
-        hasSource: this.hasImg(p), sourceUrl: this.dispUrl(p),
-        sourceAria: 'View the reference image this palette was read from, at full size',
-        // VALIDATE — a live work surface, and specifically about CONTRAST. It was called
-        // "Accessibility impact", which promises far more than it measures: this evaluates text
-        // contrast, not focus order, not motion, not language. Naming the actual metric is the
-        // difference between a measurement and a claim.
-        //
-        // The count is the whole status. A "Partial coverage" badge sat beside it for a revision,
-        // restating in a word what the fraction already said exactly.
-        a11y: (() => {
-          const rc = this.roleContrast(p, selIdx);
-          if (!rc) return null;
-          const f = rc.focus;
-          // WHICH SWATCH REPAIRS THIS PAIR. A failing pairing is a fact about two roles; the fix is
-          // to change one of the colours those roles sit on, and until now the panel stated the
-          // fact and left the reader to work out where to go. Ground first: it is the larger area
-          // and the one whose change fixes every pair set on it, so it is the better first move.
-          // One swatch, drawn the way the strip draws it: the colour, and the number that names it
-          // there. `target` marks the half a press would take you to, so the row says where it
-          // goes rather than only what it measures.
-          const swatchRef = (role, hex, rep) => {
-            const r = resolved.find((q) => q.role === role);
-            const idx = r ? r.index : -1;
-            return {
-              num: idx >= 0 ? String(idx + 1) : '–',
-              target: !!(rep && rep.role === role),
-              style: { width: '18px', height: '18px', flex: 'none', background: hex, border: '1px solid var(--line)' },
-            };
-          };
-          const repairIdx = (x) => {
-            const bg = resolved.find((r) => r.role === x.bg), fg = resolved.find((r) => r.role === x.fg);
-            const g = bg ? bg.index : -1, t = fg ? fg.index : -1;
-            // If the ground IS the swatch in hand, offering to select it again is a no-op — send
-            // the user to the other half of the pair, which is the move still available.
-            if (g >= 0 && g !== selIdx) return { index: g, role: x.bg };
-            if (t >= 0 && t !== selIdx) return { index: t, role: x.fg };
-            return null;
-          };
-          return {
-            // THE HEALTH OF THE WHOLE PALETTE LEADS, and this is a reversal worth naming. The card
-            // used to open with the selected pairing at 7.2:1 and AAA beside it, with coverage as a
-            // muted line underneath — so a palette where six of eight combinations FAIL presented
-            // itself, at a glance, as a success. The one pair the user happens to be standing on is
-            // not the state of the palette.
-            //
-            // Stated with its denominator named. "1 / 8 meet AA" leaves the 8 unexplained — it is
-            // the four content roles on the two ground roles, not every pair in the palette — and a
-            // bare fraction beside a specimen reads as a score.
-            // THE PROBLEM COUNT, NOT THE PASS COUNT — and it is the section's only status line.
-            // Three things used to state the same health at once: a PARTIAL badge, "1 of 8 meet
-            // AA", and a REVIEW 7 FAILURES button carrying the number a third time. "Partial" is
-            // the weakest of them: it is a bucket, where the failure count is the actual quantity
-            // and the thing you can act on. The badge is gone and the count leads with what is
-            // wrong, because that is what the next move is about.
-            count: rc.passed === rc.total
-              ? 'All ' + rc.total + ' text-role pairings meet AA'
-              : (rc.total - rc.passed) + ' of ' + rc.total + ' text-role pairings fail AA',
-            countStyle: { fontFamily: mono, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums' },
-            failures: rc.total - rc.passed,
-            hasFailures: rc.passed < rc.total,
-            pairRoles: ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg],
-            pairRatio: f.ratio.toFixed(1) + ':1',
-            // "Normal text: Fails AA" beside a specimen whose own text reads "Normal text" said the
-            // subject twice. The chip carries the size; the badge carries the verdict. The hex pair
-            // that sat under the role names went with it — it is the chip's two colours, and the
-            // selected swatch's hex is already the first thing in the metadata line at the top.
-            pairLevel: f.aaa ? 'AAA' : f.aa ? 'AA' : 'Fails AA',
-            pairLevelStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, padding: '2px 6px', background: f.aa ? 'var(--status-flexible-surface)' : 'var(--status-none-surface)', color: f.aa ? 'var(--status-flexible-ink)' : 'var(--status-none-ink)', border: '1px solid ' + (f.aa ? 'var(--status-flexible-line)' : 'var(--status-none-line)') },
-            // Normal text, drawn at normal-text size. It was --fs-title, which is LARGE text under
-            // WCAG and graded at 3:1 — the specimen was showing one size while the badge beside it
-            // reported the verdict for another.
-            sampleStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '76px', height: '58px', flex: 'none', background: f.bgHex, color: f.fgHex, fontFamily: mono, fontSize: 'var(--fs-detail)', lineHeight: 1.3, textAlign: 'center', padding: '0 6px' },
-            sampleText: 'Normal text',
-            // Depth on demand: the full matrix is available, and stays out of the way until asked.
-            // A DRILL-IN, not an accordion. Expanding inside the card pushed Palette structure
-            // down the page whenever anyone looked at the detail — the layout shift an editor
-            // cannot afford, because the canvas has to hold still while you work.
-            allOpen: !!s.refineAllPairs,
-            // ONE ACTION, ONE DESTINATION. "Review 7 failures" in the header and "View all 8
-            // pairings" in a full-width footer row were two labels on one navigation, and the
-            // second of them was the largest control in the card. The header action is the only
-            // one now; the drill-in is titled for what it contains, and orders failures first.
-            reviewLabel: 'Review pairings',
-            reviewAria: 'Review all ' + rc.total + ' text-role pairings, failures first',
-            allLabel: 'All ' + rc.total + ' pairings',
-            toggleAll: () => this.openPairings(),
-            closePairings: () => this.closePairings(),
-            // FAILURES FIRST, and within them the near misses first. The list was ordered by ratio
-            // descending, which put every passing pair above every failing one — the rows you can
-            // do nothing about above the rows that are the reason you opened the list.
-            // Ordering the failures by ratio DESCENDING is the second half of the same argument: the
-            // pair closest to 4.5 is the one a small nudge fixes, so the cheapest win is at the top
-            // rather than buried under the hopeless cases.
-            rows: rc.pairs.slice().sort((a, b) => (a.aa - b.aa) || (b.ratio - a.ratio)).map((x) => {
-              const rep = repairIdx(x);
-              return {
-                key: x.fg + '-' + x.bg,
-                roles: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg],
-                // WHICH COLOURS, AND WHICH SWATCHES. The row named two ROLES and showed one Aa
-                // specimen — enough to grade the pair, not enough to know what you are about to
-                // change. Activating a row selects a swatch, so the row now shows the two swatches
-                // it is made of: the colour itself, and the number the strip labels it by. The
-                // repair target is the one the press lands on, so it is marked rather than left
-                // for the reader to infer from the ordering rule.
-                fgRole: ROLE_LABEL[x.fg], bgRole: ROLE_LABEL[x.bg],
-                fgSwatch: swatchRef(x.fg, x.fgHex, rep),
-                bgSwatch: swatchRef(x.bg, x.bgHex, rep),
-                ratio: x.ratio.toFixed(1) + ':1',
-                level: x.aaa ? 'AAA' : x.aa ? 'AA' : 'Fails',
-                pass: x.aa,
-                // EVERY ROW IS A ROUTE BACK, not only the failing ones — a passing pair is still a
-                // pair you might want to look at, and a list where some rows are operable and some
-                // are inert teaches nothing about which is which until you have clicked both.
-                canRepair: !!rep,
-                aria: ROLE_LABEL[x.fg] + ' on ' + ROLE_LABEL[x.bg] + ', ' + x.ratio.toFixed(1) + ' to 1, '
-                  + (x.aaa ? 'AAA' : x.aa ? 'meets AA' : 'fails AA')
-                  + (rep ? '. Select ' + ROLE_LABEL[rep.role] + ', swatch ' + (rep.index + 1) + ', to change it' : ''),
-                // Closing first, then selecting: the drill-in covers the strip and the sliders, so
-                // selecting underneath it would move a marker nobody can see and land focus on a
-                // hidden control.
-                onRepair: rep ? () => { this.refineSelect(rep.index); this.closePairings(true); } : null,
-                chipStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '26px', height: '18px', flex: 'none', background: x.bgHex, color: x.fgHex, fontFamily: mono, fontSize: 'var(--fs-label)', lineHeight: 1 },
-                levelStyle: { fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: x.aa ? 'var(--on-surface)' : 'var(--on-surface-muted)', whiteSpace: 'nowrap' },
-              };
-            }),
-            // ONE STRING, TWO RENDERINGS. This said "1 of 8 meet AA" while the line beside it said
-            // "7 of 8 fail AA" — the same measurement, two different numbers, one of them heard
-            // only by screen-reader users. The spoken name is built from the visible count now.
-            aria: (rc.passed === rc.total
-              ? 'All ' + rc.total + ' text-role pairings meet AA'
-              : (rc.total - rc.passed) + ' of ' + rc.total + ' text-role pairings fail AA')
-              + '. ' + ROLE_LABEL[f.fg] + ' on ' + ROLE_LABEL[f.bg] + ', ' + f.ratio.toFixed(1) + ' to 1, ' + (f.aaa ? 'AAA' : f.aa ? 'AA' : 'fails AA') + ' for normal text.',
-          };
-        })(),
-        onKey: (e) => this.refineKey(e),
-        // PADDING: 0, AND IT IS A CORRECTNESS FIX, NOT TIDYING. The 9px here was left from when the
-        // role labels lived INSIDE this button; the button has been empty since they moved to the
-        // overlay, so the padding drew nothing — but it silently broke the strip's alignment.
-        // box-sizing is border-box globally, so `flex-basis: 0` on a padded item cannot resolve
-        // below its own padding: these bands entered the flex algorithm with an 18px base while the
-        // chip layer's cells — same flex-grow, no padding — entered with 0. Two different bases,
-        // two different distributions of the free space. Measured on Garnet, the chip cells landed
-        // 11.6px, 13.2px, 7.1px and 0.7px right of the bands they are supposed to cover, so a tag
-        // asked for 8px from its band's left edge sat at 19.6px on Accent while its bottom stayed a
-        // true 8px. THAT is what four rounds of "move the tags left" were pointing at; the inset
-        // was never the thing that was wrong, which is why adjusting it never fixed it.
-        // The mirrored-geometry trick is sound — it just requires the two rows to be the same kind
-        // of flex item. They are now, and the strip keeps its proportional fill (grid's
-        // minmax(92px, Nfr) was tried and does not reproduce flex-grow's distribution).
-        swatches: list.map((b, i) => {
-          const on = this.onColor(b.hex);
-          const isSel = i === selIdx;
-          const names = (roleAt[i] || []).map((r) => ROLE_LABEL[r]);
-          return {
-            sid: typeof b.sid === 'number' ? b.sid : i,
-            // THE SELECTION RING'S INK, chosen per swatch. A fixed dark outline vanishes on a dark
-            // swatch, which is exactly where selection matters most. onColor is already the house
-            // rule for this — whichever of black and white has the greater contrast against the
-            // fill — and its crossover sits at the 0.179 relative-luminance threshold, so there is
-            // no second constant here to drift out of step with the rest of the app.
-            ring: on,
-            hex: b.hex, index: i, selected: isSel,
-            // The chip overlay is a second flex row laid over this one, so it needs the same share
-            // each band takes. Mirroring the geometry is what puts a chip on its swatch without a
-            // measuring pass — and it stays right through a reorder, a resize and a removal.
-            grow: this.swatchGrow(b),
-            tab: isSel ? 0 : -1,
-            // ONE role name and a count, never a truncated one. A band's width is its share of the
-            // palette, which has nothing to do with how much text it has to carry, so "Primary ·
-            // Secondary" was first wrapped and then clipped to "PRIMARY · SECO…". A label that
-            // breaks because a colour happens to be narrow is a label that failed. The minimum
-            // width below fits the longest single role name at this size; the extras are a count,
-            // and the full list is in the heading, the tooltip and the accessible name.
-            // EVERY ROLE THE SWATCH ANSWERS, in words, on the swatch. It showed names[0] only —
-            // "Primary" on a band that is Primary AND Secondary — while the accessible name listed
-            // both, so the visual and spoken labels described different palettes. Two earlier fixes
-            // are still respected: nothing is truncated (the labels wrap onto their own lines rather
-            // than being clipped mid-word), and the count-suffix form "Primary +1" stays gone,
-            // because a count of assignments is bookkeeping rather than a label.
-            hasRoles: !!names.length,
-            aria: (names.length ? names.join(' and ') : 'No role') + '. Swatch ' + (i + 1) + ' of ' + N + ', ' + b.hex.toUpperCase() + '.',
-            title: (names.length ? names.join(' · ') + ' — ' : '') + b.hex.toUpperCase(),
-            onSelect: () => this.refineSelect(i),
-            // Selection targets ONLY. A ✕ lived here for a revision, which put an unlabelled
-            // destructive control inside the one element whose whole job is to be safe to click.
-            style: { position: 'relative', flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '92px', height: '124px', background: b.hex, border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: '2px', color: on, overflow: 'hidden' },
-          };
-        }),
-        // Colour is the main area and the only thing in it.
-        //
-        // THE NUMERIC CONTRACT. Each axis states its own bounds, step and unit, and the text field
-        // states them too rather than borrowing them from its range twin: min/max/step lived on the
-        // <input type=range> only, so the field beside it announced no bounds at all and clamped
-        // silently on commit. role=spinbutton with aria-valuemin/max/now is what makes the field a
-        // number with limits to assistive tech; the range hint puts the same limits in its name.
-        // The unit stays INSIDE the box (see [data-refine-num]) so value and unit are one control.
-        sliders: [
-          {
-            key: 'l', label: 'Lightness', min: 0, max: 1, step: 0.005, value: sel.L,
-            display: Math.round(sel.L * 100), unit: '%', numMin: 0, numMax: 100, numStep: 1,
-            numNow: Math.round(sel.L * 100), rangeHint: ', 0 to 100 percent',
-            valueText: Math.round(sel.L * 100) + ' percent',
-            track: rampTrack(9, (t) => gamutMap(t, selC * Math.cos(selHr), selC * Math.sin(selHr))),
-            onInput: (e) => this.refineAdjust(selIdx, 'l', parseFloat(e.target.value)),
-            onCommit: () => this._refineGestureEnd(),
-            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'l', Math.max(0, Math.min(100, v)) / 100); },
-            onNumberCommit: () => this._refineGestureEnd(),
-            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'l', 1, 0, 100, (v) => v / 100),
-          },
-          {
-            key: 'c', label: 'Chroma', min: 0, max: 0.33, step: 0.002, value: selC,
-            display: selC.toFixed(3), unit: '', numMin: 0, numMax: 0.33, numStep: 0.001,
-            numNow: Number(selC.toFixed(3)), rangeHint: ', 0 to 0.33',
-            valueText: selC.toFixed(3),
-            track: rampTrack(7, (t) => gamutMap(sel.L, t * 0.33 * Math.cos(selHr), t * 0.33 * Math.sin(selHr))),
-            onInput: (e) => this.refineAdjust(selIdx, 'c', parseFloat(e.target.value)),
-            onCommit: () => this._refineGestureEnd(),
-            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'c', Math.max(0, Math.min(0.33, v))); },
-            onNumberCommit: () => this._refineGestureEnd(),
-            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'c', 0.001, 0, 0.33, (v) => v),
-          },
-          {
-            // The hue track is a LEGEND for the axis, not a preview: drawn at the swatch's own
-            // lightness it goes black on a dark colour, which is a hue wheel with no hue in it.
-            key: 'h', label: 'Hue', min: 0, max: 360, step: 1, value: selH,
-            display: Math.round(selH), unit: '°', numMin: 0, numMax: 360, numStep: 1,
-            numNow: Math.round(selH), rangeHint: ', 0 to 360 degrees',
-            valueText: Math.round(selH) + ' degrees',
-            track: rampTrack(13, (t) => { const a = t * 2 * Math.PI, L = Math.min(0.74, Math.max(0.5, sel.L)), C = Math.max(selC, 0.11); return gamutMap(L, C * Math.cos(a), C * Math.sin(a)); }),
-            onInput: (e) => this.refineAdjust(selIdx, 'h', parseFloat(e.target.value)),
-            onNumberCommit: () => this._refineGestureEnd(),
-            onNumberKey: (e) => this._refineNumberKey(e, selIdx, 'h', 1, 0, 360, (v) => v),
-            onCommit: () => this._refineGestureEnd(),
-            onNumber: (e) => { const v = parseFloat(e.target.value); if (isFinite(v)) this.refineAdjust(selIdx, 'h', ((v % 360) + 360) % 360); },
-          },
-        ],
-        // ROLE — demoted from a column to a menu. It was consuming half the working area to restate
-        // what the strip's own labels already say, while reading as a second thing to navigate.
-        // ROLE — STATED, then changed. The menu here used to list all six roles with their swatch
-        // numbers, which turned a local act into a system inspector: to change one role you read
-        // the whole palette-to-role map. The current role is now a plain statement, and the chooser
-        // offers roles — naming a consequence only for the one role that would actually move.
-        //
-        // It opens INLINE, never as an overlay. The old dropdown covered the sliders, so choosing a
-        // role hid the colour it was being given to.
-        // ===== ROLES =====
-        // One section where there were three competing things: a "Usage" heading over a colour
-        // legend, a separate "Role: Surface" line restating what the legend already marked, and a
-        // trigger that renamed itself "Close" when open. Nothing said which was the parent.
-        //
-        // The legend is gone rather than relabelled. Its job — which colour holds which role — is
-        // the manager's first two columns, and the manager adds the assignment and the act; a
-        // legend that duplicates two of four columns is not a second representation, it is the same
-        // one with information removed. The unexplained dot went with it.
-        //
-        // "Usage" is not used as the heading. It would have to mean where this swatch is actually
-        // used — how many components, which ones — and the app has no such data. Naming the
-        // role map "Usage" was the heading promising a report the section cannot produce.
-        // The current state, in one line per role: what this swatch answers, and whether that was
-        // decided by the user or inferred. Each carried a sentence explaining its own status, which
-        // is a definition standing permanently on screen for a word it only has to define once —
-        // and this project has reversed that pattern twice already. The definitions moved to the
-        // toggletip on the heading, where they arrive when asked and cost nothing when not.
-        currentRoles: (roleAt[selIdx] || []).map((id) => ({
-          key: id, label: ROLE_LABEL[id],
-          status: typeof assigned[id] === 'number' ? 'Pinned' : 'Derived',
-        })),
-        noRoleNote: 'No role',
-        // The two words the rows and the summary both use, defined once, on demand. Same 16px box
-        // and click-catcher as the Library and AA tips: one mechanism for "explain this".
-        // rolesInfo / rolesInfoOpen / toggleRolesInfo are gone with the words they defined. The
-        // derived-vs-pinned distinction is no longer stated anywhere in the UI: a role's location
-        // is visible on the strip, and how it got there is not something the editor asks anyone to
-        // reason about. Reset roles (below) is the one control that still acts on it.
-        // THE LABEL DOES NOT CHANGE. It read "Assign roles" closed and "Close" open, which threw
-        // away the name of the function at the moment the panel was on screen to be understood —
-        // and "Assign" undersold a control that also pins and releases.
-        // THESE ARE NOT SWITCHES, and presenting them as switches is what made the control lie.
-        //
-        // A switch promises on/off. The checked state was read from `resolved` — the user's sparse
-        // map merged OVER the heuristic — while the press mutated `p.roles`, the user's map alone.
-        // For a role the heuristic already lands on this swatch those two disagree: the row read
-        // checked and offered "Remove Background from this swatch", and pressing it announced
-        // "Background assigned to swatch 1". The opposite of what it said. Pressing again removed
-        // the assignment, whereupon the heuristic derived it straight back to the same swatch — so
-        // two presses produced no visible change and two contradictory announcements.
-        //
-        // The underlying model is not a toggle at all: a palette must always export six roles, so
-        // every role is ALWAYS somewhere. You cannot remove Background; you can only say where it
-        // goes, or stop saying and let the heuristic decide. That is three states, not two, and
-        // refineSetRole was already written for exactly them — assign / pin / release. Only the
-        // presentation was wrong, so nothing below changes behaviour; it stops misdescribing it.
-        //
-        //   elsewhere   ->  give it to this swatch (and it leaves wherever it is)
-        //   here, derived   ->  pin it, so editing other swatches cannot re-derive it away
-        //   here, assigned  ->  release it back to the heuristic
-        // ROLE | CURRENT ASSIGNMENT | ACTION — three columns, because they are three different
-        // facts and the old one-line row was conflating them. The action names its DIRECTION and
-        // its consequence: "Give" said neither what moved nor where from.
-        //
-        //   Move here   the role is on another swatch and will leave it
-        //   Pin here    it already resolves here by inference; pinning makes that explicit
-        //   Unpin       it is pinned here; release it back to the heuristic
-        //
-        // "Assign here" is specified in the brief for the case where nothing is displaced. There is
-        // no such case: a palette must always export six roles, so every role always resolves
-        // somewhere and a transfer always takes it off something. Shipping the label would mean
-        // shipping a state the model cannot produce.
-        // THE CHIPS ARE THE CONTROL, and they live on the swatches rather than in a table below
-        // them. The table asked you to press a row on one surface to change a colour on another,
-        // with the strip scrolled out of sight by the time you got there — so the act had no
-        // visible result. And its three verbs included two, Pin and Unpin, that describe a state
-        // the interface never showed you entering. Dragging a role onto a swatch IS pinning it;
-        // there is nothing left to name.
-        roleChips: list.map((b, i) => ({
-          key: i,
-          grow: this.swatchGrow(b),
-          // The strip's own number for this band, in the chips' scrim so it reads on any colour.
-          // It is drawn only where the strip is shown for REFERENCE (the pairings layer), because
-          // that list cites swatches by number and a citation needs something to resolve against.
-          num: String(i + 1),
-          numStyle: {
-            display: 'inline-flex', alignItems: 'center', lineHeight: 1,
-            background: this.onColor(b.hex) === '#ffffff' ? 'rgba(0,0,0,.42)' : 'rgba(255,255,255,.58)',
-            padding: '4px', fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)',
-            color: this.onColor(b.hex), fontVariantNumeric: 'tabular-nums',
-          },
-          chips: (roleAt[i] || []).map((id) => ({
-            id, label: ROLE_LABEL[id], index: i,
-            pinned: typeof assigned[id] === 'number',
-            aria: ROLE_LABEL[id] + ', on swatch ' + (i + 1) + ' of ' + list.length
-              + '. Drag to another swatch, or use the arrow keys to move it.',
-            // A SCRIM UNDER THE LABEL, because the chips ARE the role map. The legend was removed
-            // on the argument that the map lives here, in words on the colours — which makes chip
-            // legibility content, not decoration, and bare onColor ink cannot guarantee it: white
-            // at the old 0.75 opacity measured 3.15:1 on this repo's own Accent red, and even at
-            // full alpha that pair only reaches ≈4:1 (03.08.26 audit, finding 2). The scrim is the
-            // ink's own opposite, so it deepens whatever swatch it sits on rather than greying it,
-            // and the pair now clears 4.5:1 on any colour a palette can produce. Opacity stays 1;
-            // the resting/hover distinction the 0.75 used to carry belongs to the border, which
-            // the hover/focus rules in global.css already drive to currentColor.
-            // Borderless, equal-padded (03.08.26, user direction). The scrim is the chip's whole
-            // body — no edge on any state, including pinned, whose cue now lives entirely in the
-            // meta line's "· Pinned" text. 4px padding on every side, so with the layer's 8px the
-            // label ink sits exactly 12px from the swatch's left edge and 12px from its bottom.
-            style: {
-              display: 'inline-flex', alignItems: 'center', alignSelf: 'flex-start',
-              background: this.onColor(b.hex) === '#ffffff' ? 'rgba(0,0,0,.42)' : 'rgba(255,255,255,.58)',
-              border: 0, padding: '4px', margin: 0,
-              fontFamily: mono, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)',
-              // line-height 1, not 1.25: the box's padding was symmetric but the LEADING was not
-              // visible — 1.25 on an 8px face puts ~2px of empty line box under the glyph, inside
-              // the padding, so the ink sat ~14px off the swatch's bottom edge against 12px off
-              // its left. At 1 the box hugs the glyphs and the two gaps are the same measurement.
-              textTransform: 'uppercase', lineHeight: 1, whiteSpace: 'nowrap',
-              color: this.onColor(b.hex), cursor: 'grab', touchAction: 'none',
-            },
-            onDown: (e) => this._roleDragStart(e, id, i),
-            onKey: (e) => this._roleChipKey(e, id, i),
-          })),
-        })),
-        // One control, shown only when there is something to undo. Six per-role "Unpin" buttons
-        // were six ways to reverse a decision the interface never showed you making.
-        anyPinned: Object.keys(assigned).length > 0,
-        resetRolesAria: 'Reset every role to be chosen automatically',
-        onResetRoles: () => this.refineResetRoles(),
-        // POSITION — direct, reversible, and therefore never behind a menu. Two visible controls
-        // that disable at the ends, so whether a move is possible is legible without opening
-        // anything. They were a Reorder dropdown for one revision, which added a click and hid the
-        // answer to "can this move?" behind it.
-        // A DISABLED CONTROL HAS TO SAY WHY. These were `disabled`, which takes them out of the tab
-        // order — so the one moment the reason matters, the reason cannot be reached. aria-disabled
-        // keeps them focusable and announced; the handler no-ops, and the accessible name carries
-        // the reason instead of a destination that does not exist.
-        canLeft: selIdx > 0, canRight: selIdx < N - 1,
-        leftAria: selIdx > 0
-          ? 'Move this swatch to position ' + selIdx + ' of ' + N
-          : 'Move left is unavailable: this swatch is already first in the palette',
-        rightAria: selIdx < N - 1
-          ? 'Move this swatch to position ' + (selIdx + 2) + ' of ' + N
-          : 'Move right is unavailable: this swatch is already last in the palette',
-        onLeft: () => { if (selIdx > 0) this.refineMove(selIdx, -1); },
-        onRight: () => { if (selIdx < N - 1) this.refineMove(selIdx, 1); },
-        posLabel: 'Position ' + (selIdx + 1) + ' of ' + N,
-        // REMOVAL — quiet by POSITION, never by ink. The system has two action tiers and killed a
-        // third for failing contrast on hover, so a destructive control cannot be made softer by
-        // going grey. It is separated instead: its own end of the row, behind a rule, with the
-        // consequence stated under it rather than hidden in a tooltip.
-        // REMOVAL: separated and low priority, no heading of its own.
-        canRemove: N > 3,
-        // Same rule as the move controls: when it cannot be done, the control says why rather than
-        // going quiet. Three is the floor because six roles over two swatches is not a palette a
-        // scaffold can be built from (see refine.js).
-        removeAria: N > 3
-          ? 'Remove swatch ' + (selIdx + 1) + ', ' + sel.hex.toUpperCase() + '. You will be asked to confirm.'
-          : 'Remove swatch is unavailable: a palette cannot go below three colours',
-        // The usage impact, stated before the act rather than inside the confirmation. The audit
-        // asks for how many roles depend on the swatch; this is that count, in words, at the point
-        // where someone is deciding whether to press.
-        removeImpact: (() => {
-          const rn = (roleAt[selIdx] || []).map((x) => ROLE_LABEL[x]);
-          if (N <= 3) return 'A palette keeps at least three colours, so this one cannot be removed.';
-          if (!rn.length) return 'This swatch carries no role. Removing it leaves ' + (N - 1) + ' colours.';
-          return rn.join(' and ') + (rn.length > 1 ? ' would move to other swatches.' : ' would move to another swatch.');
-        })(),
-        onRemoveArm: () => this.refineArmRemove(selIdx),
-        removeArmed: typeof s.refineRemoveIdx === 'number',
-        removeIdx: s.refineRemoveIdx,
-        removeTitle: typeof s.refineRemoveIdx === 'number'
-          ? 'Remove swatch ' + (s.refineRemoveIdx + 1) + ', ' + (list[s.refineRemoveIdx] ? list[s.refineRemoveIdx].hex.toUpperCase() : '') + '?'
-          : '',
-        removeLines: (() => {
-          const i = s.refineRemoveIdx;
-          if (typeof i !== 'number' || !list[i]) return [];
-          const rn = (roleAt[i] || []).map((x) => ROLE_LABEL[x]);
-          return [
-            rn.length ? rn.join(' and ') + (rn.length > 1 ? ' move to other swatches.' : ' moves to another swatch.') : 'This swatch carries no role.',
-            'Contrast is recalculated across the remaining ' + (N - 1) + ' colours.',
-          ];
-        })(),
-        onRemoveCancel: () => this.refineCancelRemove(),
-        onRemoveConfirm: () => this.refineConfirmRemove(),
-        canUndo: !!(this._refineUndo && this._refineUndo.length),
-        onUndo: () => this.refineUndo(),
-        undoAria: 'Undo the last refinement. Keyboard shortcut: ' + (this._isMac() ? 'Command Z' : 'Control Z'),
-        undoKeys: this._isMac() ? '⌘Z' : 'Ctrl Z',
-        // Reset throws away every refinement, so it asks once. Two-step in place rather than a
-        // dialog: a confirmation stacked on top of a modal is a lot of ceremony for an act that
-        // Undo can also reach.
-        canReset: !!(p.sourceSwatches || p.roles),
-        resetArmed: !!s.refineResetArmed,
-        // "Reset palette" reads as though it acts on the palette as an object — next to Remove
-        // swatch, plausibly as "start this palette again". It discards REFINEMENTS and returns to
-        // the colours read from the image, which is what the word now says, so the scope no longer
-        // needs a sentence under the button to be clear.
-        resetLabel: s.refineResetArmed ? 'Confirm Reset' : 'Reset All Refinements',
-        resetAria: s.refineResetArmed
-          ? 'Confirm: discard every refinement and return to the colours read from the image'
-          : 'Reset all refinements. Returns to the colours read from the image; you will be asked to confirm',
-        onReset: () => {
-          if (this.state.refineResetArmed) { this.setState({ refineResetArmed: false }); this.refineReset(); }
-          else this.setState({ refineResetArmed: true, announce: 'This will discard every refinement and return to the colours read from the image. Activate again to confirm.' });
-        },
-        onResetCancel: () => this.setState({ refineResetArmed: false, announce: 'Reset cancelled.' }),
-        onClose: () => this.closeRefine(),
-        // Measurement, not state: the two boundary rules are data attributes on the shell, so this
-        // never re-renders the dialog while somebody is scrolling it.
-        onBodyScroll: () => this._refineScrollEdges(),
-        trap: (e) => this.trapFocusIn('[data-refine-dialog]', e),
-        trapPairings: (e) => this.trapFocusIn('[data-refine-pairs]', e),
-      };
-    }
-
     // ===== restore-from-file confirmation =====
     // What the file holds and what would land, before anything lands. The counts come from state,
     // never re-derived from the file here: the payload was validated once at preview and parked on
@@ -1755,7 +1186,7 @@ export const renderValsMethods = {
 
            Picking from the chooser re-tells all eight chapters about a different photograph and lands
            the reader back at the top. Every visible sign that anything happened was in the copy far
-           below the fold: the same headline, the same lead, the same button, over an orb field that
+           below the fold: the same headline, the same lead, the same button, over a colour field that
            does not change either. The reader who has just chosen Garnet arrives at a screen that says
            "Every image has an atmosphere" and cannot tell their choice registered.
 
@@ -2052,14 +1483,11 @@ export const renderValsMethods = {
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,
       reset: () => this.doReset(),
-      // orbit landing (first-visit brand arrival)
+      // landing stage (first-visit brand arrival)
       // the landing surface doubles as the small-screen surface — on phones it is always up, with
       // the gate copy in place of the statement + CTA (the tool needs room a phone hasn't got)
       showLanding: this._landingUp(), narrow: s.narrow,
       showLoader: s.showLoader,
-      // ring population — one slot per orb across all rings (sum of the ring counts). Deterministic,
-      // and memoised so the array identity is stable across renders.
-      orbitSlots: this._landingUp() ? this._ringSlots() : [],
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
       // glassCta / glassCtaHover / glassCtaActive lived here: 14 declarations and two hover-state
@@ -2076,8 +1504,8 @@ export const renderValsMethods = {
       dropEnter: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
       // palette-level copy
-      // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of Refine
-      // and Export, which told the user the app has two copy features; it has one, and the format is
+      // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of
+      // Export, which told the user the app has two copy features; it has one, and the format is
       // a detail of it. The formats move into a menu on a single Copy control, and the confirmation
       // lands on that control rather than in a status line somewhere else on the page.
       copyMenuOpen: !!s.copyMenuOpen,
@@ -2122,6 +1550,21 @@ export const renderValsMethods = {
         fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase',
         display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap', flex: 'none',
         background: 'none', border: '1px solid var(--action-line)', color: 'var(--on-surface)', cursor: 'pointer',
+      },
+      /* THE STEP PAIR. No border of its own: the rail already draws one, and the hairline in the
+         JSX separates the pair from the chips — a second box inside the box would read as another
+         scope. Square by construction (a fixed 30px, not padding), because a chevron has no width
+         of its own to pad and two arrows of different widths beside each other look broken.
+
+         Disabled reads as the app's disabled reads — [data-ix]:disabled, the same rule every other
+         dead control in the tree answers to — rather than a number invented at the project rail.
+
+         data-ix="press" and NOTHING inline about transitions: the press contract is a CSS rule
+         keyed on that attribute, and any transition declared here would replace it wholesale. */
+      projSteps: {
+        show: !!s.projStep.can,
+        prev: { disabled: !!s.projStep.start, style: this.projStepStyle(!!s.projStep.start), onClick: () => this.stepProjects(-1) },
+        next: { disabled: !!s.projStep.end, style: this.projStepStyle(!!s.projStep.end), onClick: () => this.stepProjects(1) },
       },
       // The file pair (save / open) reads at the action row's SECONDARY emphasis — the same edge
       // and the same full-strength ink as every other unfilled control in the app. It used to take
@@ -2351,8 +1794,6 @@ export const renderValsMethods = {
       recogniseVariation: () => this.recogniseVariation(),
       trapRecognise: (e) => this.trapFocusIn('[data-recognise-dialog]', e),
       manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
-      refine: refineView, hasRefine: !!refineView,
-      openRefine: () => this.openRefine(),
       restore: restoreView, hasRestore: !!s.restorePending,
       closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
       trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),
@@ -2458,8 +1899,8 @@ export const renderValsMethods = {
         { key: 'contrast', label: 'Max contrast' },
         // "Date" named the type of the value, not the event. Created, because that is what the
         // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
-        // touches it — _commitRefine rewrites swatches and roles and leaves the stamp alone. So
-        // "Updated" would have been a plausible label for a column that never updates.
+        // touches it. So "Updated" would have been a plausible label for a column that never
+        // updates.
         { key: 'time', label: 'Created' },
       ].map((c) => {
         const active = s.sortKey === c.key;
@@ -2598,22 +2039,6 @@ export const renderValsMethods = {
       // header open, so there is one way to file a palette and it says the same thing every time.
       openAssignCurrent: () => { const p = this.state.current; if (p) this.openAssign(p); },
       assignDisabled: !filedCur,
-      // WHICH ACT LEADS. Refine is primary until the palette carries a role the user chose; after
-      // that Export is, because the decision the export was waiting for has been made. `roles` is
-      // the whole test — its absence is exactly "never refined", which is why refinement stores a
-      // sparse map rather than a flag.
-      //
-      // Disabled on a shared palette for the same reason filing is: it has no record in this
-      // browser to write a refinement to, and the strip above already offers to save it first.
-      // refinePrimary is gone. The bar used to hand the filled tier to Export once a palette carried
-      // roles, on the reasoning that an unrefined palette is not ready to ship. True, but it made the
-      // one creative act in the row change rank underneath the user: the button you pressed last time
-      // is drawn differently this time, in a row you are meant to learn once. Refine leads always.
-      // Export's own dialog still says what an unrefined export is worth.
-      refineDisabled: !filedCur,
-      refineAria: s.current && s.current.roles
-        ? 'Refine this palette: change roles, colours or order'
-        : 'Refine this palette: assign roles and adjust colours',
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to Project',

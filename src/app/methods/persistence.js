@@ -215,10 +215,13 @@ export const persistenceMethods = {
           : ((typeof p.projectId === 'string' && p.projectId) ? [p.projectId] : []),
         projectId: (typeof p.projectId === 'string' && p.projectId) ? p.projectId : null,
         swatches: sw,
-        // REFINEMENT. Both are optional and both are allow-listed here for the reason the comment
-        // above gives: a field this validator does not name is destroyed on the next reload, on
-        // every cross-tab sync, and on every backup restore, silently and with no error. These two
-        // carry a user's decisions, so losing them that way would be the worst possible failure.
+        // REFINEMENT. Nothing in the app writes these any more — the Refine surface is out while it
+        // is rebuilt — but palettes already in a library carry them, so they are read and preserved
+        // exactly as before. Both are optional and both are allow-listed here for the reason the
+        // comment above gives: a field this validator does not name is destroyed on the next
+        // reload, on every cross-tab sync, and on every backup restore, silently and with no error.
+        // These two carry a user's decisions, so losing them that way would be the worst possible
+        // failure — and dropping them now would make removing a surface a data migration.
         sourceSwatches: src.length ? src : null,
         roles: this._validateRoles(p.roles, sw.length),
       });
@@ -548,10 +551,15 @@ export const persistenceMethods = {
   // Every modal dialog's exit, on the utility-overlay band with the drawers — this is the shared
   // half of the "all five settle in the same time" contract, and it was the one place the number
   // was written twice (.2 for the backdrop, DUR.state for the panel) so the two never quite agreed.
-  // Every modal dialog's exit — Refine among them — on the overlays' own band and the one curve.
+  // Every modal dialog's exit, on the overlays' own band and the one curve.
   // DUR.overlayOut rather than DUR.overlay: a dismissal has already been decided, so nothing waits
   // on it and it can afford to be the slower of the two.
-  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0); },
+  // The modal half of the one exit contract — motion.js names this and _drawerOut together, so the
+  // two have to actually agree. Geometry leaves on EASE.overlayExit (from rest, quickest through
+  // the middle, gone) and the scrim fades on EASE.overlayFadeOut; both used to run the ARRIVAL curve,
+  // which put peak velocity on the first frame and then spent two thirds of the duration finishing
+  // a move nobody could still see.
+  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlayFadeOut }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlayExit, transformOrigin: 'center center' }, 0); },
   // ---- the toggletip's own beat ----------------------------------------------------------------
   // A dialog's arrival is an event; a toggletip's is a disclosure, so it moves less and moves
   // faster — DUR.state in, DUR.micro out, and 6px of travel against the dialog's 12, with no scale.

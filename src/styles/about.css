@@ -1897,7 +1897,7 @@
 .section-dock__label{line-height:1.5;display:block}
 
 /* The caret, pointing the way the list opens. Turns rather than swaps, which is the argument
-   [data-refine-chev] and [data-sort-chevron] both make in global.css. */
+   [data-disc-chev] and [data-sort-chevron] both make in global.css. */
 .section-dock__caret{
   flex:none;width:5px;height:5px;
   border-right:1.5px solid currentColor;

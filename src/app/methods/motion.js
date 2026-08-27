@@ -15,19 +15,47 @@ export const motionMethods = {
     // is the utility overlays' own curve: almost all of the travel is spent in the first fifth, so
     // the panel is effectively THERE immediately and the remaining time is a settle rather than a
     // journey. That is what lets these surfaces run at 0.4s and still feel prompt.
-    // `overlay` runs BOTH directions, stated on the properties both times. An overlay is asked to
-    // LAND — velocity → 0 at the end, in and out — and the two ways of getting there for free both
-    // fail: reversing the entrance mirrors the curve, so the panel accelerates off the screen, and
-    // easing the playhead instead composes this curve with each tween's own and produces a motion
-    // that belongs to no system. So the exit is written out (see _drawerOut and _dialogOut): same
-    // curve, its own duration, applied to the same properties the entrance moved.
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1) };
+    // `overlay` runs the ENTRANCE only. The exit is written out rather than derived (see _drawerOut
+    // and _dialogOut), because the two ways of getting one for free both fail: reversing the
+    // entrance mirrors the curve, so the panel accelerates off the screen, and easing the playhead
+    // instead composes this curve with each tween's own and produces a motion that belongs to no
+    // system. It used to be written out on `overlay` itself — same curve, its own duration — on the
+    // reasoning that an overlay is asked to LAND, velocity → 0, in and out.
+    //
+    // `overlayExit` is that reasoning corrected. A thing that LEAVES does not land; it goes. Asking
+    // an expo-out to perform an exit puts the entire curve backwards: peak velocity on the first
+    // frame (2631px/s, 5.3x the panel's own average) and then two thirds of the duration spent
+    // moving a panel nobody can see any more. It read exactly as it was built — a snap, then a long
+    // slow nothing.
+    //
+    // A symmetric in-out fixes both halves at once: from rest, peak in the middle at under half the
+    // old velocity, and gone at 86% of the tween instead of 40%. Mirrors --ease-overlay-exit.
+    // THE TWO FADE CURVES ARE NOT ONE CURVE RUN BOTH WAYS. `overlay` is an expo-out because a panel
+    // sliding in from an edge and a masked line rising into place are objects with momentum. Opacity
+    // has none, and on that curve a 440ms block fade was over in 136ms with 304ms of invisible tail
+    // left — a flash, not a fade. But the correction is direction-dependent, which one shared fade
+    // curve cannot express:
+    //
+    //   `overlayFadeIn`  front-loads DELIBERATELY. 90% at 44% of the duration, so an element is
+    //                    mostly present quickly and then settles over a long soft tail — which is
+    //                    what lets a tight stagger keep nine elements live at once and read as one
+    //                    continuous settle rather than as a countable sequence. It is a bezier fit
+    //                    (max deviation 0.007) to GSAP's power4.out, which is what the reference
+    //                    this was tuned against — wrk-timepieces.com's article list — fades its
+    //                    rows on: measured off the running site at 1000ms and a 50ms beat, matched
+    //                    to within 0.005 over fifteen samples.
+    //   `overlayFadeOut` is a sine-out: even rate, soft landing. Front-load a DISMISSAL and it
+    //                    snaps, which is the fault `overlayExit` exists to fix on the panel — there
+    //                    is no sense fixing it there and reintroducing it on the contents.
+    //
+    // Both mirror their --ease-overlay-fade-* twins in global.css, byte for byte.
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1), overlayFadeIn: this.cubicBezier(0.25, 0.94, 0.43, 1), overlayFadeOut: this.cubicBezier(0.39, 0.58, 0.57, 1), overlayExit: this.cubicBezier(0.37, 0, 0.63, 1) };
     // `overlay` is the UTILITY-OVERLAY band, and it is a deliberate exception to the reveal token
     // rather than a retune of it. `reveal` (620ms) is the app's arrival: a palette resolving out of
     // a photograph, bands wiping up in sequence, a stage taking the screen. That is the moment the
     // product is about, and it keeps its length.
     //
-    // Refine, Harmonies, Filter, the contrast checker and the export dialog are not that. They are
+    // Harmonies, Filter, the contrast checker and the export dialog are not that. They are
     // instruments you open, use and shut, often several times in a row, and at 620ms with a section
     // cascade on top the close was still finishing while the user had moved on — measured in the
     // July review, which found Harmony gone and Filter still on screen past 150ms and read the two
@@ -47,11 +75,36 @@ export const motionMethods = {
     //
     // `overlayStep` is the beat between those contents. It scales with the band (0.05 × 0.8) rather
     // than being a fixed number, so the sequence keeps its proportions if the duration moves again.
-    // `overlayOut` is LONGER than the entrance, which is the opposite of the usual rule. An arrival
-    // is answering a press and has to feel prompt; a dismissal has already been decided, so nothing
-    // is waiting on it and it can afford to be quiet. On this curve the panel is most of the way
-    // gone early and the last of it settles out slowly rather than snapping — which is what the
-    // extra length over the entrance is spent on, and why 1.0s reads as unhurried rather than slow.
+    // `overlayItem` (50ms) and `overlayBlock` (80ms) are MEASURED, not chosen. They are the two
+    // beats wrk-timepieces.com uses in its article list — 50ms between the rows of the table, 80ms
+    // between the column headers above them — read off the running site by observing GSAP's own
+    // style writes. They replace 64/128, which were derived from a ratio rather than from anything
+    // anyone had looked at.
+    //
+    // `overlayArrive` (1.0s) is the length those beats are tuned against, and it is the surprising
+    // half of the reference: a full second per element, with a 50ms beat. The two go together. On a
+    // front-loaded curve a long duration is not a slow one — the element is 90% there in 440ms —
+    // but the tail keeps it faintly moving for another half second, so a tight beat stacks nine
+    // elements in their tails at once. That is what a continuous settle is made of. A short
+    // duration with the same beat gives you a countable sequence; a long duration with a wide beat
+    // gives you a queue.
+    // `overlayBlock` is the beat between the panel's BLOCKS — its header, its controls, its matrix,
+    // its sample — as distinct from the beat between the cells inside one of them. It was the same
+    // number for a while, and one number could not do both jobs: at 0.08 the six blocks of the
+    // contrast drawer opened 0.4s apart end to end while each took 0.56s to uncover, so five of the
+    // six were always moving at once and the panel read as one wipe with a slight lean rather than
+    // as a sequence. 0.16 × the band (0.128) against a block's own 0.44s reveal puts each block a
+    // third of the way into its predecessor: far enough apart to be read in order, near enough that
+    // there is never a frame with nothing moving. The panel's total is unchanged — the length came
+    // out of each block's own duration and went into the gaps between them.
+    // `overlayOut` was 1.0s — LONGER than the entrance — and that number existed only to pay for
+    // the expo-out's tail: on that curve the panel was gone at 40% of the tween, so the remaining
+    // 600ms was the "unhurried" part, and it was unhurried in the sense that nothing was happening.
+    // Take the tail away and the length has nothing to buy. 0.62s on `overlayExit` puts 86% of the
+    // tween on screen, which is more visible dismissal in less time than 1.0s ever delivered.
+    // Still the same principle as before — an arrival answers a press and must feel prompt, a
+    // dismissal is already decided and can afford to be quiet — it is just no longer being paid for
+    // with time the viewer cannot see.
     // `fast` and `chrome` mirror --dur-fast / --dur-chrome in global.css, so the CSS interaction
     // contract and the GSAP tweens quote ONE scale rather than two that drift. No tween used either
     // value before this line was written, so their arrival cannot retime anything already running.
@@ -62,7 +115,7 @@ export const motionMethods = {
     // confirmation's val-mask keyframes and every hover swap on a button, sort header or footer
     // link. It was `confirm` at 0.38s while the confirmation was its only consumer; the hover swap
     // turned out to be the same motion, and 0.4 is where that stopped reading as snappy.
-    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 1, overlayStep: 0.04, reveal: 0.62, stagger: 0.05 };
+    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 0.62, overlayStep: 0.04, overlayItem: 0.05, overlayBlock: 0.08, overlayArrive: 1, reveal: 0.62, stagger: 0.05 };
   },
   /* mEnter / mLeave / mDown / mUp lived here — a GSAP hover-and-press system driven by a
      data-m-y / data-m-scale attribute protocol — and are gone (08.26). Nothing had ever bound them:
@@ -119,6 +172,22 @@ export const motionMethods = {
   // plus aria-pressed), no longer the loudest thing in the panel.
   toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
   pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1 }); },
+  // The project rail's step buttons, beside pageNavStyle because they are the same idea one row up:
+  // a direction you can go, or one you currently cannot. Square by construction — a fixed 30px
+  // rather than padding, because a chevron has no width of its own to pad — and borderless, since
+  // the rail draws the edge and a hairline in the JSX divides the pair from the chips.
+  //
+  // NO opacity HERE, deliberately, where pageNavStyle states its own. [data-ix]:disabled already
+  // says what a dead control looks like (.42, eased on the shared chrome transition), and an inline
+  // number would beat that rule rather than join it — the same trap the inline-transition note
+  // describes one file over.
+  projStepStyle(disabled) {
+    return {
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
+      width: '30px', padding: '0', background: 'transparent', border: '0',
+      color: 'var(--on-surface)', cursor: disabled ? 'default' : 'pointer',
+    };
+  },
   setPageSize(n) { try { localStorage.setItem('palette-generator/pagesize', '' + n); } catch (e) { } this._listCommit({ pageSize: n, page: 0, announce: n + ' palettes per page.' }); },
   setPage(p) { const total = this.scopedFeed(this.state.feed).length; const max = Math.max(0, Math.ceil(total / (this.state.pageSize || 12)) - 1); const np = Math.max(0, Math.min(p, max)); if (np === (this.state.page || 0)) return; this._listCommit({ page: np, announce: 'Page ' + (np + 1) + '.' }); },
 

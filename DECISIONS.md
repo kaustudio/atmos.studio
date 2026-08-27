@@ -6,6 +6,236 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-27 — The arrival curve, measured off wrk-timepieces.com
+
+The utility drawers' arrival was retuned against a named reference — the "Latest Innovations"
+article list on wrk-timepieces.com — rather than against an argument. The numbers below were read
+off the running site by observing GSAP's own inline style writes with a MutationObserver, not
+estimated from video.
+
+**What the reference actually does:**
+
+| element | property | from | duration | ease | beat |
+| --- | --- | --- | --- | --- | --- |
+| `.title` | y | +55px → 0 | 1000ms | expo.out | — |
+| column headers | y | −50px → 0 | 1000ms | expo.out | **80ms** |
+| `.row` × 13 | opacity only | 0 → 1 | 1000ms | **power4.out** | **50ms** |
+
+The fits are not approximate: power4.out matches the row opacity to within 0.005 across fifteen
+samples, and expo.out matches the header translate to within 0.008. Worth noting that the reference's
+header curve is `--ease-overlay` to within 0.036 — the curve this codebase already uses for objects
+that travel is the same call the reference made.
+
+**The surprising part is the pairing of a LONG duration with a TIGHT beat.** A full second per
+element at a 50ms stagger sounds slow and is the opposite: on a front-loaded curve the element is
+90% present in 440ms, and the remaining half-second of imperceptible tail is what lets a tight beat
+keep nine elements live at once. That overlap — 50ms against a 440ms visible window, a ratio of
+0.114 — is what reads as a continuous settle instead of a countable sequence. A short duration at
+the same beat gives you a sequence; a long duration at a wide beat gives you a queue. Our previous
+values (347ms items, 64ms beat, ratio 0.27) were the first of those.
+
+**So `overlayItem` (50ms), `overlayBlock` (80ms) and `overlayArrive` (1.0s) are measured values
+now, not derived ones.** They replace 64/128, which came from a ratio — "items read twice as quick
+as blocks" — that was tidy and had no evidence behind it.
+
+**The fade curve had to split by direction, which one shared token could not express.** A fade IN
+wants front-loading, for the reason above. A fade OUT wants the opposite: front-load a dismissal and
+it snaps, which is the exact fault `--ease-overlay-exit` was minted to fix on the panel a few hours
+earlier — there is no sense fixing it on the panel and reintroducing it on the contents.
+`--ease-overlay-fade-in` is a bezier fit to power4.out (max deviation 0.007);
+`--ease-overlay-fade-out` is the sine-out, unchanged.
+
+**One thing was NOT copied.** The reference translates its headers 50px on a masked reveal. This app
+already has that mechanic and it belongs to copy alone (`_maskLineReveal`) — putting it back on the
+boxes is what "the mask is still noticeable as a second animation" was about. Boxes fade, words
+mask. The reference agrees on the important half: its thirteen list rows carry **no transform at
+all**, pure opacity.
+
+**Structural difference worth recording.** In the reference only ONE level animates — the container
+sits at full strength and the rows fade, so a row's own curve is the only curve acting on it. Here a
+block has furniture with no per-item hook, so it cannot simply not fade, and a cell's opacity
+multiplies with its block's. The block's fade is therefore shortened to 0.55 of the arrival length:
+effectively out of the way by 240ms, so the item's own full-length curve carries everything the
+reader watches.
+
+Measured after: 28 of 29 contrast items live simultaneously at peak (was ~5), seven harmony model
+buttons at seven distinct opacities at every sample, perceived completion ~1.07s on harmony and
+~1.4s on contrast against timeline totals of 1.68s and 1.96s. The reference's own span is 1.6s.
+
+---
+
+## 2026-08-27 — An exit is not an arrival played backwards
+
+`--ease-overlay` is an expo-out, and it was running the exits as well as the entrances on the stated
+reasoning that "an overlay is asked to LAND — velocity → 0 at the end, in and out". That is true of
+an arrival and false of a dismissal, and running the curve forwards on something LEAVING inverts it
+completely.
+
+**Measured on the drawer panel: 240px of travel in the first 100ms, at 2631px/s — peak velocity on
+the first frame, 5.3× the panel's own average.** There is no ramp at all; an expo-out's entire
+character is spent in its opening. Then the tween ran another 600ms of its 1000ms moving a panel
+that had already left the screen at 398ms. A snap, followed by a long slow nothing. It reads exactly
+as it was built.
+
+**`--ease-overlay-exit` is `cubic-bezier(0.37, 0, 0.63, 1)` — a symmetric in-out.** From rest, peak
+in the middle, eased out. It was picked on numbers rather than feel: of the candidates, it has the
+lowest peak velocity (1.6× its own average, against 5.3×) while still reading as motion rather than
+as a constant slide. A pure accelerate — `--ease-exit`, the token that already exists — was the
+obvious alternative and was rejected: its peak is at 100%, so the panel would be at maximum speed as
+it left, which trades a snap at the start for one at the end.
+
+| | before | after |
+| --- | --- | --- |
+| px in first 100ms | 240 | **0** |
+| peak velocity | 2631px/s | **1300px/s** |
+| peak at | frame one | **440ms, mid-travel** |
+| total exit | 1221ms | **724ms** |
+
+**`overlayOut` drops 1.0s → 0.62s, because the 1.0 only ever existed to pay for the tail.** The
+token's own note said so: the panel was "most of the way gone early and the last of it settles out
+slowly, which is what the extra length over the entrance is spent on". Remove the tail and the
+length has nothing left to buy. 0.62s puts 86% of the tween on screen where 1.0s put 40% — more
+visible dismissal in less time.
+
+**The panel's hand-placed delay shrinks with it, 0.85 of the block spread down to 0.4.** That delay
+existed only because the old curve gave the panel no ramp: anything animating underneath a panel
+that left at full speed on frame one had to finish first or never be seen. The new curve ramps from
+rest — 31px of 500 in its first 100ms — so the lead-in is now intrinsic, and keeping the old delay
+on top would have stacked two of them and read as hesitation.
+
+**One coupling worth recording, because a shared token made it easy to miss.** The block fade-out's
+length was derived from `overlayOut`, so retuning the token silently cut the content cascade by 38%
+and would have undone the legibility work from the day before. Its fractions are restated against
+the shorter band (0.42 where they were 0.26) to hold the same absolute 0.26s block and 0.26s spread.
+
+**`_dialogOut` and `closeExport` come along.** `motion.js` names `_drawerOut` and `_dialogOut`
+together as one exit contract, and `closeExport` says in its own comment that it shares it — so
+leaving either on the arrival curve would have made both claims false.
+
+---
+
+## 2026-08-26 — Momentum for things that travel, even rate for things that fade
+
+Three complaints in a row about the utility drawers' arrival — too fast, indistinguishable from the
+masked line reveal, and "very lacking" on the lists. One cause, one omission, and one conflict.
+
+**Every arrival curve in the set was an expo-out, and opacity was never given one of its own.**
+`--ease-overlay` reaches 90% of its value at 31% of its duration. So a 440ms block fade was
+perceptually a **136ms pop with a 304ms invisible tail**, and the 128ms beat between blocks landed
+*after* the block before it had finished: an overlap ratio of 0.94, which is a strobe, not a
+cascade. The exit was worse — 260ms on that curve is 90% gone in 80ms. This is the third property
+to need the correction: `--ease-fold` was minted for height and `--ease-button-click` for press on
+exactly this argument, both of which are written down in `global.css`. Opacity was simply never
+looked at. `--ease-overlay-fade` (sine-out, 50% at a third, 90% at two thirds) is the answer, and
+the rule it encodes is the one the token set was missing.
+
+**The panel and the masked line keep `--ease-overlay`, and that is the point.** Front-loading is
+right for an object with momentum — a drawer sliding from its edge, a line rising into place. It is
+wrong for a property that has none. One curve per behaviour, not one curve per surface.
+
+**The blocks stopped translating.** A block carried `y: 10` on `--ease-overlay`; the masked line
+inside it rises `yPercent: 110 → 0` on `--ease-overlay`. Same curve, same axis, same moment, one
+nested in the other — two Y-translations composing in one box, which is why the mask stayed legible
+as a *second* animation no matter how the timings were tuned. Boxes carry opacity, the mask carries
+words, and now nothing else in the drawer moves in Y. Told apart by construction rather than by
+tuning.
+
+**A list without per-item hooks fades as a slab, and four of them had none.** "Text on each colour"
+(five rows), the harmony models (seven), the contrast control groups (three) and the adoption
+buttons (two) all switched on together inside a box that was itself switching on. The matrix had
+hooks and read correctly, which is exactly what made the rest look unfinished beside it. Hooks are
+markup, so this cannot be inferred — every block holding a list now declares its items. The beat is
+`overlayItem`, **half `overlayBlock`** rather than a third free number: items read twice as quick as
+the blocks holding them. It is capped against the block's own length, so five rows take the full
+64ms and read as a sequence while twenty matrix cells compress to 15ms and read as a sweep.
+
+**The hooks exposed a conflict that had never had a chance to bite.** `[data-ix]` — every button and
+segmented control — declares `transition: … opacity var(--dur-chrome) …`. A GSAP opacity tween on
+one of those is not animating the element, it is animating a target that CSS then eases toward over
+280ms: the control lags its own tween by a quarter-second and never hits the value the stagger asked
+for when it asked. It was invisible while the only hooked items were the matrix's plain divs, and
+appeared the moment seven harmony buttons were hooked. The arrival now takes the property outright
+(`transition: none` for the duration, restored by `clearProps`) and hands it back on landing. The
+contract is untouched; it just does not get to run against an animation already animating the same
+thing.
+
+Measured after, on the contrast drawer: **three blocks mid-fade at every sample** through the
+arrival (was one), five colour rows at five distinct opacities throughout their block, four blocks
+mid-fade on the exit, and zero translate on any block. Panel 1.26s → 1.38s.
+
+---
+
+## 2026-08-26 — The utility overlays arrive block by block, and only their copy is masked
+
+Two changes to one schedule (`_drawerIn` / `_drawerOut` in `src/app/methods/overlays.js`), covering
+the contrast checker, the colour harmonies drawer, the filter drawer and the export dialog.
+
+**The mask is for words now, and only for words.** Every box in these panels used to arrive through
+the clip-path wipe the result stage uses on its bands, on the stated grounds that "opacity is
+exposure" and a fade looks like a panel being developed rather than assembled. That argument is
+still right about colour and wrong about boxes: these panels *also* mask their copy line by line,
+so a block wiped up while the words inside it wiped up on their own clip — two reveals stacked in
+the same place, and the box's was the one with nothing to uncover. The blocks now fade up with a
+10px rise; `_maskLineReveal` is the surface's one piece of special handling and it belongs to copy.
+The bands and the fullscreen detail still wipe, and should.
+
+**Each block keeps its own clock.** The schedule was three flat tweens over three flat lists —
+sections on one stagger, cells on another, rules on a third — every one of them timed against the
+PANEL. So the contrast drawer's ten matrix cells began sweeping at a fixed 0.32 of the panel while
+the two blocks above them were still arriving, and the 80ms beat between blocks against a 560ms
+block reveal meant five of the six were always moving together. It read as one wipe with a lean, not
+as a sequence. Now `at[i]` is a block's moment and its rows, its drawn rules and its masked lines all
+hang off it: `overlayBlock` (128ms) between blocks against a 440ms block. **The total did not
+change** — 1.26s then, 1.26s now. The length came out of each block's own reveal and went into the
+gaps, which is the only way to buy a legible sequence without making the panel slower.
+
+**And it leaves in the order it arrived.** The exit was the panel and nothing else: six blocks
+introduced one at a time went as one slab, so the dismissal was a different gesture that happened to
+share a curve. Blocks now fade out top to bottom on a step compressed to a fixed window, so the
+sequence costs the same whatever the panel holds — the rule the panel's own tween has always obeyed,
+applied to the contents.
+
+**The panel waits ~0.22s before it moves, and that is not a delay.** On `EASE.overlay` the panel is
+roughly half gone in the first tenth of its tween, so a cascade running underneath a panel that left
+at t=0 plays correctly on a surface nobody can see. The blocks start fading on the frame of the
+press — that is where a dismissal's promptness actually lives — and the panel follows a beat later,
+which costs nothing because nothing is being read on the way out.
+
+**One number that was hiding.** `_drawRules` ran at 0.7 of the band while the boxes around it ran at
+0.55. Scheduled globally near the front that was invisible; hung off the *last* block it became the
+whole panel's tail — the harmony drawer finished assembling at 1.26s and then spent 0.2s with
+nothing moving except one hairline still creeping to its right-hand end. Rules take the block's own
+length.
+
+---
+
+## 2026-08-26 — Refine is withdrawn, and filing takes the filled tier
+
+The surface is not finished. It shipped a role editor, three OKLCH axes, reorder, remove, an
+in-session undo and a persisted reset, and the parts never settled into one instrument — so it is
+out of the build rather than left in front of people half-argued. `src/app/methods/refine.js`, the
+`RefineDialog` view, its slice of `renderVals` and its CSS are gone; git holds them.
+
+**The stored fields stay, and that is the point of doing it this way.** `sourceSwatches` and `roles`
+are still validated, still read, still written back on every save. A palette somebody already
+refined keeps its colours and its role map, and the semantic export still resolves the user's
+assignments over the heuristic. Removing a surface must not become a data migration: the validator
+destroys any field it does not name, so dropping them would have silently rewritten every refined
+palette in every library on the next reload.
+
+**The result row keeps exactly one filled control, and it is now Add to project.** Refine held the
+first tier as the one creative act in the row; with it gone the row would have had no leader at all,
+and a row of six equal outlines states no route. The fullscreen detail's footer already answered
+this exact question — it has never had a Refine, and it gives the tier to filing on the grounds that
+it is first in the sequence and available: organise, then validate, then output. The two rows now
+agree, which was always the contract between them.
+
+**What the export dialog says is unchanged.** "Refine before shipping" was never a pointer at a
+button — the semantic layer is a role-mapped starting point either way, and saying so is more true
+now, not less.
+
+---
+
 ## 2026-08-01 — Refine is a fixed shell with one scrollport, and it leads with the palette's health
 
 **Context:** the 01 August *Refine Swatch Modal* audit. It was written from a screenshot with no
@@ -1427,3 +1657,218 @@ the one remaining concept on demand.
 **Section headings are Title Case**, and `PORT` now wins in `vite.config.ts` — Vite does not read it
 on its own, so a harness that assigns a free port got 5173 every time and then could not reach the
 server it had just started.
+
+---
+
+## 2026-08-20 — The landing is a volume, not a formation
+
+**The orbs are gone, and so is everything that existed to draw them.** Three concentric rings, three
+renderers in descending order of what a browser would allow — a single-context particle cloud, a raw
+per-orb WebGL shader, a painted DOM stack of a hundred and sixteen elements carrying five shading
+layers each — plus the orb tile textures, the env map, the living-gradient blobs inside each tile,
+the per-orb vertical float, and the one room lamp every terminator, specular, rim and drop shadow
+answered to. In their place: one raymarched disc of gas with the brand copy sitting in its hole
+(`src/app/nebulaField.js`), over a painted floor that is one element.
+
+**What the formation was for survives; only the medium changed.** The landing's job is to put the
+product's subject on screen before a word of it is read — colour, arranged as a spectrum, turning,
+around the words. All four of those hold. The twelve OKLCH stations are still the palette and still
+the reason neighbouring colour is neighbouring hue; they are baked into a 256×32 ramp the shader
+reads instead of into twelve tile textures, and every pixel of that ramp goes through the same
+`gamutMap` every palette in the tool goes through. Hue is read off the screen angle, so the wheel
+stands still against the copy and revolves as one body while the gas swirls through it.
+
+**The hole is the contract.** `_heroReach()` measures the copy's marks and `_fieldGeom()` turns them
+into a clear radius, exactly as `_ringGeom` turned them into ring radii — and the shader is set up so
+one mid-plane unit is one clear radius on the screen, which makes "density is zero below world radius
+1" and "no gas within N pixels of the centre" the same statement. The guarantee holds at every
+viewport without a second solve and cannot drift. The desktop landing still has no wash behind its
+words and is not to be given one.
+
+**The hole is an ELLIPSE, and that is the one thing the ring set could not have taught us.** A ring
+is round, so the only number that ever mattered was the worst angle. Measured at 800×500 the copy is
+222px wide and 94px tall from the centre — a round hole clearing its corner opens to 241 and throws
+away the entire top and bottom of the viewport, which is exactly what the first build did: the gas
+came out as a 0.36-unit band with most of it off screen. The hole now follows the block's own shape,
+capped at `FIELD_HOLE_ASPECT` so it stays an ellipse around a block rather than a slot cut through
+the picture. Both radial profiles are fractions of the BAND rather than of the disc, for the same
+reason — fixed figures put the outer falloff inside the hole on a short viewport.
+
+**Rotation is rigid and the spiral does not wind up.** Differential rotation — inner faster — is what
+a real disc does and what the reference shader this grew out of does, and it is banned here. It winds
+without bound, so a landing left open for two minutes is a different picture from the one that
+arrived, and nobody can tell that was intended. The twist is a fixed function of radius added to the
+one shared angle; life comes from the noise field evolving in place, which has no geometry to
+destroy. `ORB_ROT_SECS` survives as `FIELD_ROT_SECS`, unchanged at 105: how fast the formation turns
+is the page's tempo, not a property of what is in it.
+
+**The noise is fetched, not computed.** Four octaves of tileable value noise are baked once into the
+RGBA channels of a 64³ volume texture, so an octave is a texture read and an FBM is one read and a
+dot product. Computing the same FBM from a hash is around forty ALU and eight dependent fetches per
+octave, per sample, per pixel — at this screen coverage the difference between holding 60fps on
+integrated graphics and not. The march is bounded analytically (the gas is a slab and the ray only
+falls, so entry and exit are two divisions), and the two regions that hold no gas — the copy's hole
+and beyond the rim — are discarded before a single sample, which is most of a widescreen viewport.
+
+**One shader serves both themes, because the volume both emits and absorbs.** What the theme moves is
+exposure, coverage and whether a Reinhard shoulder is applied at all: none on paper, where the gas is
+pigment suspended in the page and anything that lifts it toward white erases it, and half again the
+exposure with a shoulder on the dark surface, where the same integration reads as light. The output
+is premultiplied in ENCODED space rather than linear, because the page composites sRGB numbers.
+
+**The wordmark got a second clearing, and it needed one.** It is fixed at the top of the stage, well
+outside the hole, and its legibility mechanism is `mix-blend-mode: difference` — which works against a
+light page and fails against a mid-luminance backdrop, since |b − s| approaches b as b approaches a
+half, and a nebula on a dark surface spends most of its area right there. The field thins behind it
+over more than twice its own box, so it reads as thinner air rather than as a cut-out.
+
+**The painted floor is a still of the same picture, not a second artwork.** A conic gradient through
+the same twelve stations, masked to the same ellipse, aligned to the same angle — so the field
+arriving over it is a crossfade within one image rather than a swap between two. Which is also what
+makes the arrival honest: three is still a dynamic import that lands after the landing has painted,
+and what a visitor looks at until then is the picture, quieter. No WebGL 2 leaves it up permanently.
+A lost context fades it back.
+
+**Reduced motion is no longer denied the field.** It used to be, and the reason was population: the
+ring count was a function of which renderer could run, so a reader who asked for less motion had to
+be given the smaller formation the DOM floor was drawn around. A volume has no population. What
+reduced motion asks for is stillness, so it now gets the same picture, rendered once and never again
+— no ticker, and nothing to pause.
+
+**The cursor layer was built and then removed by request.** A local advection that parted the gas
+around the pointer and closed it behind, carrying pointer speed in its tangential term, plus a 16px
+global lean of the whole field. Both worked. Both are gone, along with their uniforms, the
+window-level `pointermove` listener and the accessor that exposed the pointer — nothing is left
+disabled behind a flag, so bringing an interaction back is a fresh design and a contract amendment
+rather than a switch. The landing has one thing to do with a pointer and it is the CTA.
+
+**`/vendor/orb-shader.js` is deleted, not orphaned.** It was a blocking script tag on every visit for
+a renderer that now has nothing to shade.
+
+### The second pass: making it look like something, rather than like a blur
+
+**The first build was ink in water, and the brief was the sky.** Three changes, and each one came out
+of a specific fault rather than out of taste.
+
+**The field is sampled in POLAR space now — angle, height, radius — not in x/z.** Noise in Cartesian
+coordinates is isotropic, so it comes back as blobs, and a rotating disc does not contain blobs:
+shear stretches everything in it into arcs. Sampling in the coordinates the thing actually turns in
+produces those arcs out of the geometry rather than out of a filter laid over it, and it costs one
+constraint — the number of repeats per turn must be a WHOLE number, since the volume tiles at 1 and
+an integer is what makes the seam at the back of the ring not exist.
+
+**The disc's mid-plane is warped, and the camera still is not tilted.** One side of the ring rides
+high and the opposite side low, so the near half is seen face-on and the far half nearly edge-on. A
+camera tilt would have read the same and moved the hole off the copy; warping the disc under a camera
+that stays on the axis keeps the guarantee exact. It is fixed in SCREEN space rather than carried
+round by `rot` — it stands in for the angle the thing is being looked at from, and a camera does not
+orbit its subject.
+
+**Three separate sampling faults printed as a woven crosshatch, and all three were mistaken for a
+look before they were found.** (1) The volume's finest octave was a 32-cell lattice baked into a
+64-voxel grid — two voxels per cell, so the interpolation it is supposed to have had nowhere to
+happen and what got baked was a checkerboard. Nothing finer than a quarter of the grid, ever; the
+fine detail is bought by sampling the volume at a higher frequency instead. (2) A single vertical
+noise scale cannot both give the layering that reads as depth and stay inside what a 32-step march
+can resolve. It is two fetches at two vertical scales now — a coarse pair that carries the layers and
+doubles as the domain warp, and a fine pair that is nearly flat vertically and carries the filaments
+in the two axes the ray crosses densely. (3) The domain warp was isotropic in a space that is not:
+full amplitude in angle and radius, a tenth of it in height. The march went 32 → 48 steps on top of
+all three, which is what took the last of the dither's own pattern out of the dense regions.
+
+**A `?tune` panel, in dev only.** lil-gui, wired to every figure in `LOOK` plus a button that prints
+the whole object as JSON to paste back into the file. Tuning a volumetric look by editing a constant
+and reloading is not tuning, it is guessing, and the reference this grew from carried the same panel.
+`import.meta.env.DEV` is a literal `false` in a production build, so the branch, the dynamic import
+and lil-gui itself all leave the bundle — verified against `dist`, where `attachTuner` compiles to an
+empty function and the string `lil-gui` does not appear. The `?tune` in the URL is the second gate,
+so an ordinary `npm run dev` gets the landing rather than a control panel over it.
+
+### The third pass: one mass, not many
+
+**Chasing definition had broken the field into separate wisps.** Compared against the reference side
+by side, the fault was obvious and it was not detail — the reference is one continuous body with a
+density gradient running through it, and what was on screen was a scatter of patches with clear air
+between them. A rotating mass does not have edges like that. Three terms were doing it, in this
+order of blame:
+
+**The threshold band was a switch, not a ramp.** `soften` was 0.16 — gas either present or absent
+across a sixth of the noise range. The reference runs its band across half of its own range for this
+exact reason. At 0.44 the density is a gradient the eye can follow from one side of the disc to the
+other, and that continuity is worth more than the extra crispness a tighter band buys.
+
+**The arm term was cutting rather than modulating.** `armDepth` 0.55 removed more than half the
+density between the arms, so the arms read as separate objects instead of as structure inside one.
+0.30.
+
+**And the colour was fragmenting it too, not just the density.** `toneNoise` at 0.5 put neighbouring
+patches of gas far enough apart on the tone ladder to read as two different materials. At 0.22 the
+wheel — which is a function of WHERE the gas is, not of what the noise is doing — stays the thing
+that decides colour, and the noise only shades it. The lower noise frequency (`arcs` 6 → 4,
+`radial` 0.95 → 0.55) and the softer warp are the same argument applied to scale: fewer, larger,
+more coherent features.
+
+**The dark theme needed its exposure re-solved after that.** A wider threshold band means a lower
+average density, which means less coverage, which on a dark surface means the page shows through and
+the gas goes pale. Exposure 1.6 → 1.5 with the shoulder pulled well back (0.5 → 0.35) and coverage
+lifted above one, so dense gas reaches full opacity rather than asymptotically approaching it.
+
+### The seam at the branch cut
+
+**A hard horizontal line ran left from the centre of the screen, and it was atan2's.** The branch cut
+lies along the negative x axis — in screen terms exactly that line — and crossing it the angle jumps
+by a full turn. Every consumer of the angle in the shader is invariant under that jump by
+construction: the arm term takes a whole number of cycles, the hue is read through `fract()` out of a
+texture that wraps, and the noise coordinate was scaled to a whole number of repeats per turn for
+this precise reason.
+
+**And then each fetch multiplied the whole coordinate by its own scale.** A jump of 4 repeats became
+2.48 tiles at 0.62 and 8.4 at 2.1 — a fetch landing half a tile away on one side of a line than the
+other draws that line. The tiling argument was right and the per-fetch scale silently broke it. The
+angle is carried in TURNS now and only the two axes that do not wrap get scaled: the coarse pair
+takes `arcs` repeats per turn and the fine pair four times that, an exact octave apart and both
+whole. Verified by driving the threshold band down to 0.04 and the density to 8, where any remaining
+discontinuity would be unmissable, in both themes.
+
+**The general rule this leaves behind:** anything in the shader that reads the angle and is not
+invariant under a full turn will draw that line. That is why `arms` is an integer too, and why the
+tuner's slider for it steps by one.
+
+### The ladder is a distance from the page, not a lightness
+
+**The spectrum was authored against white paper and then dragged onto a dark one.** The tonal ladder
+was five absolute OKLCH lightnesses — 0.86, 0.74, 0.62, 0.50, 0.34 — and half this site is a surface
+at L 0.19. Every rung of that ladder sits BELOW the dark page: gas at L 0.34 on a ground at 0.19 is
+mud with no light in it. The only way to see any of it was to push the exposure until the mid tones
+clipped toward white and the hue went with them, which is exactly what the dark theme's four
+override figures were doing — gain, coverage, a Reinhard shoulder and a shifted position in the
+ladder, all papering over a ramp pointing the wrong way.
+
+**So the ladder is authored as five DISTANCES and the surface decides the direction.** `--surface` is
+read from the live token — the same one `themeColor.js` reads, so there is no second copy to drift —
+converted to OKLab, and the rungs run away from it: down on paper, up on the dark. On light this
+reproduces the original five to four decimal places (0.9696 − 0.1096 is 0.86, and so on down), so
+nothing about that theme moved by a pixel. On dark the same five run 0.30 / 0.42 / 0.54 / 0.66 /
+0.82 — the same relationships, the same order, the same near end, now made of light instead of
+shadow.
+
+**Which is what makes the near end dissolve.** Rung 0 is the tone closest to the page in both themes
+and it is also where the chroma ramp cuts hardest, so the thinnest gas is nearly the page's lightness
+AND nearly its neutrality — it goes into the surface instead of lying on it as a film. Measured on
+the ramp's first row: `#bb678a` against a `#f5f5f3` page, `#a15072` against `#141413`. Rung 4 is the
+furthest in both, and it is the one carrying the picture.
+
+**All four per-theme exposure figures are gone, and that is the result rather than a tidy-up.** With
+the ladder symmetric about the page, the same exposure produces the same contrast against it either
+way. Verified as a true A/B — one visit, one wheel, one rotation, switched in place — and the two
+read as one artwork with the tones mirrored. `_fieldTheme()` and `setTheme()` are both deleted; the
+four figures live in `LOOK` once, where the rest of the look is.
+
+**The switch is now handled rather than accidentally survived.** A theme change rebuilds the ramp and
+uploads it into the existing texture — 32kB, one write, same dimensions, no teardown and no GPU
+churn, with the wheel's per-visit rotation untouched so the colour does not jump round the ring on
+the way. Today the only control that flips the theme lives in the tool and the way back kills the
+stage anyway, so this is belt and braces; that is an accident of where the switch happens to sit, and
+a landing that answers the theme only because something else tore it down first is one route change
+away from being wrong. `_surfaceLab()` is memoised on the theme, because `_ladder()` is called once
+per ramp column and an un-memoised `getComputedStyle` there is 256 forced style recalcs.

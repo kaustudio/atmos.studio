@@ -23,8 +23,22 @@ The reported button jump is a symptom of the same gap: every press is a 1px `tra
 | 005 | [Converge the duplicate easing curves](005-converge-ease-tokens.md) | **DONE** | 001 | low |
 | 006 | [Make reduced motion live](006-live-reduced-motion.md) | **DONE** | — | low |
 | 007 | [The phone gets a product, not a refusal](007-mobile-product-story.md) | **DONE** | — | medium |
+| 008 | [The overlay cascade gets a fade curve](008-overlay-fade-curve.md) | **DONE** | — | low |
 
 All six landed in the order 001 → 002 → 003 → 004 → 005 → 006, against `76b510f`.
+
+**008 is the same finding as 001–006, on a property they missed.** That audit's thesis was that
+easing was tokenised and duration was not. 008 says easing was tokenised *incompletely*: every
+arrival curve in the set is an expo-out, and the repo twice wrote down why an expo-out is wrong for
+a property with no momentum — `--ease-fold` was minted for height (`global.css:839`),
+`--ease-button-click` for press (`global.css:56`) — without ever applying it to **opacity**. So a
+440ms fade in the utility drawers was 90% done in 136ms, which is why a 1.26s cascade read as too
+fast and why the boxes could not be told apart from the masked line reveal running inside them.
+It mints one curve and states the rule the set was missing: momentum for things that travel, even
+rate for things that fade. Filed against `95e1569`, and landed with two additions the plan did not
+foresee — per-item hooks for every block that held a list, and the discovery that `[data-ix]`
+transitions `opacity` for 280ms, so a GSAP opacity tween on any control was fighting a damped
+follower. See the 08-26 entry in DECISIONS.md.
 
 **007 is not part of that audit.** The six above are one motion/duration refactor; 007 is a product
 change — it replaces the phone's desktop gate with an eight-chapter scroll story — and is filed here

@@ -104,9 +104,14 @@
          wherever it is used without knowing which page it is on. -->
     <link rel="stylesheet" href="/site-foot.css" />
 
-    <!-- Vendored motion + shader runtime (same builds the design was authored against).
+    <!-- Vendored motion runtime (same builds the design was authored against).
          The app code reads window.gsap / window.Observer / window.Flip / window.ScrollToPlugin /
-         window.ScrollTrigger / window.Lenis / window.OrbShader — script order matters.
+         window.ScrollTrigger / window.Lenis — script order matters.
+
+         /vendor/orb-shader.js used to close this list: the per-orb raw-WebGL renderer for the
+         landing's ring formation. The formation is a raymarched volume now (src/app/nebulaField.js,
+         loaded on demand with three) and there are no orbs left for it to shade, so it is gone
+         rather than left on the wire for every visitor to fetch and never call.
 
          ScrollTrigger is here rather than loaded with the legal routes on demand, which is the only
          one of these the tool itself never touches. Fetching it at the moment a route swap begins
@@ -119,7 +124,6 @@
     <script src="/vendor/ScrollToPlugin.min.js"></script>
     <script src="/vendor/ScrollTrigger.min.js"></script>
     <script src="/vendor/lenis.min.js"></script>
-    <script src="/vendor/orb-shader.js"></script>
   </head>
   <body>
     <div id="root"></div>

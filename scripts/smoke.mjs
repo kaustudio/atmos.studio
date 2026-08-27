@@ -17,14 +17,15 @@ await page.screenshot({ path: shots + '/01-loader.png' });
 
 // loader should complete and the landing appear
 await page.waitForSelector('[data-landing]', { timeout: 15000 });
-await page.waitForTimeout(4000); // let loader exit + orbit run
+await page.waitForTimeout(4000); // let loader exit + the field's chunk land and dissolve in
 await page.screenshot({ path: shots + '/02-landing.png' });
 
-// orbs painted?
-const orbBg = await page.$eval('[data-orbit-card="0"]', (el) => el.style.backgroundImage.slice(0, 30));
-console.log('orb bg:', orbBg || '(none)');
-const glCanvases = await page.$$eval('[data-orb-gl]', (els) => els.length);
-console.log('webgl orb canvases:', glCanvases);
+// the field: painted floor first, then the volume over it. Both are reported, because "floor still
+// at full opacity" is the signature of three failing to arrive rather than of a broken shader.
+const floor = await page.$eval('[data-orbit-floor]', (el) => el.style.backgroundImage.slice(0, 24) + ' @' + (el.style.opacity || '1'));
+console.log('field floor:', floor || '(none)');
+const fieldUp = await page.$$eval('[data-orbit-field]', (els) => els.map((el) => el.width + 'x' + el.height + ' @' + (el.style.opacity || '1')));
+console.log('field canvas:', fieldUp.length ? fieldUp.join() : '(none)');
 
 // Get started → wipe → tool
 // [data-glass-cta], not the aria-label: the label is copy and moved once already (see wipe.js).

@@ -34,11 +34,23 @@ a `display:none`.
 
 ## What's inside
 
-- **First-visit journey** — phase-machine page loader → ring landing (two concentric rings of colour
-  orbs, the back one half a step round so it sits in the front one's gaps, turning at one locked
-  shared speed around the centred hero; raw-WebGL shader on the front ring with a painted DOM floor
-  for no-WebGL / reduced-motion / context-loss) → curved-wipe handoff into the tool. The Atmos logo
-  returns you to the landing at any time.
+- **First-visit journey** — phase-machine page loader → the landing field (a raymarched volume of
+  colour turning around the centred hero, its hole solved from the copy's own measured box so the
+  words are never painted over; the hue wheel is the app's twelve OKLCH stations, baked through the
+  same `gamutMap` every palette in the tool goes through, and it revolves as one body while the gas
+  swirls through it). **The ramp is solved against the page**: its tonal ladder is authored as five
+  distances from the live `--surface` token rather than as absolute lightnesses, so it runs down into
+  shadow on paper and up into light on the dark theme — same relationships, same near end, and the
+  thinnest gas dissolves into whichever surface it is on rather than lying over it as a film. One
+  exposure serves both themes as a result → curved-wipe handoff into the tool. The Atmos logo returns you to the landing
+  at any time. Without WebGL 2 the same wheel is a painted annulus, in the same place, standing
+  still; reduced motion gets the field itself, rendered once and left still. Nothing on the stage
+  answers to the pointer. See the MOTION CONTRACT in `src/app/methods/orbit.js` — the concentric
+  rings of colour orbs it replaced are documented there as what was retired, and in `DECISIONS.md`.
+  **Tuning the field:** `npm run dev` and open `/?tune` for a lil-gui panel over every figure in the
+  shader's `LOOK` block, with a button that prints the tuned object as JSON to paste back into
+  `src/app/nebulaField.js`. Dev only — `import.meta.env.DEV` takes the panel, its dynamic import and
+  lil-gui itself out of the production bundle entirely.
 - **Core loop** — upload/drop → local OKLab k-means extraction (all colour work stays in the
   browser) → branded processing beat → result with weight-proportional bands and four copyable
   formats per swatch (HEX/RGB/HSL authoritative; CMYK labelled *approx*).
@@ -58,13 +70,10 @@ a `display:none`.
   merge is non-destructive and always was — dedupe by id, no clobbering — but that promise is now
   something the user can check rather than read about afterwards. Replace is deliberately not
   offered; see `DECISIONS.md`.
-- **Refine** — the step between reading a palette and shipping it, on a surface of its own: assign
-  the six roles (Background, Surface, Primary, Secondary, Accent, Text), adjust a swatch's
-  lightness, chroma or hue in OKLCH, reorder or remove. Non-destructive — `swatches` stays the
-  working set and the extraction moves aside into `sourceSwatches`, so every surface that draws a
-  palette follows the refinement and **Reset** returns to the colours read from the image. Undo is
-  in-session and multi-step; Reset is persisted and single. Roles flow into the semantic export
-  layer by name.
+- **Refine** — withdrawn while it is rebuilt; see `DECISIONS.md`. The six roles it edited are still
+  derived from lightness and chroma and still flow into the semantic export layer by name, and any
+  palette already refined keeps its colours and its role map — the store reads and preserves
+  `sourceSwatches` and `roles` exactly as before, there is just nothing writing them at the moment.
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
   variables, CSS custom properties, binary `.ase`), projects.
@@ -77,7 +86,7 @@ a `display:none`.
   Without JS, WebGL, the webfont, or with reduced motion asked for, the same 404 is simply set as
   type — the heading in the markup is the fallback either way.
 - **System** — light/dark themes (chrome only, never swatches), Neue Montreal, zero border-radius
-  (orb bodies and the wipe caps are the only sanctioned curves), token-driven GSAP motion with
+  (the wipe caps are the only sanctioned curve now that the orbs are gone), token-driven GSAP motion with
   full `prefers-reduced-motion` floors, versioned localStorage persistence with cross-tab sync
   and quota-pressure handling.
 
@@ -170,7 +179,7 @@ copy must change in the same commit**:
 ## Layout
 
 ```
-index.html              vendor script tags (gsap + plugins, lenis, orb shader, demo image)
+index.html              vendor script tags (gsap + plugins, lenis)
 404.html                the not-found page — the second Vite entry, built to dist/404.html
 public/vendor           vendored runtimes (exact builds the design was authored against)
 public/fonts            Neue Montreal (Regular/Medium)
@@ -178,11 +187,12 @@ public/assets           Atmos logo/wordmark SVGs
 public/legal.css        shared chrome for the standalone pages (privacy, terms, 404)
 public/notfound.css     the 404's own layer: display type + the particle canvas
 public/fit-width.js     Osmo Supply "Fit Text to Width", as delivered — sizes the 404 to the page
-src/notfound/*          the particle field, the type rasteriser, and the page's wiring
+src/app/nebulaField.js  the landing's volumetric colour field (raw shader over three; loaded on demand)
+src/notfound/*          the 404's particle field, the type rasteriser, and the page's wiring
 src/lib                 colour science, exporters, interpretation seam, sx() style parser
 src/app/PaletteApp.jsx  class core (state, lifecycle)
 src/app/methods/*       prototype method groups (pipeline, persistence, motion, overlays,
-                        universe, reel, orbit, wipe, loader, misc)
+                        universe, reel, orbit (the landing stage), wipe, loader, misc)
 src/app/renderVals.js   the view-model
 src/app/AppView.jsx     the JSX template
 api/interpret.ts        serverless proxy for live interpretation

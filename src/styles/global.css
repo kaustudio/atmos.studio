@@ -14,9 +14,9 @@ html,body{margin:0;padding:0}
    says nothing about a radius. Measured on this build: 74 buttons on the landing alone sitting at
    `appearance:auto`, the section dock's toggle and its four group heads among them.
 
-   It has been fixed one control at a time until now — the refine slider states it at [data-refine-
-   slider], the spectrum dot at .about-spectrum__dot, the dock's own two — which is why it kept
-   coming back somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
+   It has been fixed one control at a time until now — the spectrum dot states it at
+   .about-spectrum__dot, the dock's own two state it themselves — which is why it kept coming back
+   somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
    the system's, not each component's, and the comp's own note further down this file ("this system
    has no radius anywhere") is the thing being enforced.
 
@@ -203,7 +203,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --ease-button-focus:cubic-bezier(0.32,0.72,0,1);
   /* ONE curve, serving two motions that had each named it after themselves: this was --ease-pill
      over here (the sliding marker behind every segmented toggle) and EASE.fold in motion.js (the
-     disclosure folds in refine.js and persistence.js). Same bezier, two names, four consumers each
+     disclosure folds in persistence.js). Same bezier, two names, four consumers each
      — which is how the two eventually stop matching for real. `fold` is the name that carries both,
      and initMotion already argues for it: a disclosure and a moving selection share one motion
      character. */
@@ -211,6 +211,38 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* the utility-overlay curve — an expo-out with a longer tail than --ease-entrance. Mirrors
      EASE.overlay in methods/motion.js, which documents why it runs in BOTH directions. */
   --ease-overlay:cubic-bezier(0.19,1,0.22,1);
+  /* --ease-overlay moves an OBJECT: the drawer panel travelling in from its edge, a masked line
+     rising into place. Front-loading is right there — the thing is effectively arrived on the first
+     frame and the rest is a settle. (Measured against wrk-timepieces.com, whose column headers
+     translate in on an expo.out: --ease-overlay matches it to within 0.036 across the curve, so
+     this is the same call anyone tuning this kind of surface arrives at.)
+
+     THE TWO FADE CURVES ARE NOT ONE CURVE RUN BOTH WAYS, and that is the whole reason there are
+     two names here. A fade IN wants to be front-loaded: the element is mostly present quickly and
+     then settles over a long soft tail, which is what lets a tight stagger overlap many elements at
+     once without any of them looking late. A fade OUT wants the opposite — front-load a dismissal
+     and it snaps, which is the exact fault --ease-overlay-exit exists to fix on the panel.
+
+     --ease-overlay-fade-in is a cubic-bezier fit to GSAP's power4.out (max deviation 0.007). That
+     is not a guess: it is what wrk-timepieces.com's article rows fade on, measured off the running
+     site at 1000ms per row and a 50ms beat, and matched to within 0.005 across fifteen samples.
+     90% at 44% of the duration, so with a 50ms stagger roughly nine elements are live at any moment
+     — a continuous settle rather than a countable sequence.
+
+     --ease-overlay-fade-out is a sine-out: even rate, soft landing, nothing front-loaded. */
+  --ease-overlay-fade-in:cubic-bezier(0.25,0.94,0.43,1);
+  --ease-overlay-fade-out:cubic-bezier(0.39,0.58,0.57,1);
+  /* THE OVERLAY LEAVING. --ease-overlay is an expo-out, and an expo-out run on an EXIT is a
+     contradiction: the curve's whole shape is "arrive fast, settle slowly", so a panel using it to
+     leave starts at its maximum velocity on the first frame — a 500px drawer travelled 240px in the
+     first 100ms at 2631px/s, more than five times its own average — and then spent 600ms of a
+     1000ms tween moving the last few pixels of an already off-screen panel. Snap, then an invisible
+     creep. Nothing about that is a dismissal; it is an arrival played through a mirror.
+     0.37/0.63 is a symmetric in-out. It starts from REST (31px in the first 100ms, an eighth of
+     what it was), peaks in the MIDDLE at 1280px/s — under half the old peak, and 1.6x its own
+     average rather than 5.3x — and is 95% gone at 531ms of a 620ms tween, so almost none of the
+     length is spent where it cannot be seen. Quieter at both ends and shorter overall. */
+  --ease-overlay-exit:cubic-bezier(0.37,0,0.63,1);
 }
 /* ===== shared duration tokens (named; mirrored by the JS DUR map in methods/motion.js) =====
    Easing was tokenised in both languages and duration never was: a documented seven-value scale in
@@ -476,10 +508,32 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      invisible to the standard and nearly so to the eye. 50% is the first step that clears 3:1 on
      BOTH page surfaces in BOTH themes with margin (3.25 / 3.31 light, 4.91 / 4.71 dark).
      Hover and press climb from there, so the edge can only ever strengthen under the pointer;
-     they used to sit at 38%/48%, which is BELOW the new rest and would have inverted the feedback.
+     they used to sit at 38%/48%, which is BELOW the rest this once was and would have inverted the
+     feedback. REST IS THE LIGHTEST EDGE THAT STILL CLEARS THE FLOOR, and it is stated PER THEME.
+
+     It was 50 in both, and it read as heavier than the label it was drawn around — a control should
+     be found by its word first and its box second. What stops it going as light as the eye would
+     like is WCAG 1.4.11: 3:1 for the visual information that identifies a control. That rule binds
+     here rather than being arguable, because the fill this edge surrounds is --on-surface at 7%,
+     which measures 1.17:1 — invisible. The border IS the identification.
+
+     One percentage cannot be the lightest in both themes, because the ink and the surface differ:
+     the same 40% measures 2.47:1 on the light surface and 3.56:1 on the dark one. So each theme gets
+     the alpha that lands IT on the floor:
+
+       light   48% of #1a1a1a on #f5f5f3  →  3.07:1   (was 50% → 3.27)
+       dark    36% of #f3f3ef on #141413  →  3.07:1   (was 50% → 4.88)
+
+     Dark is where the weight actually was, and it drops by nearly a third. Light had almost nothing
+     to give: 50% was already only 3.27:1, so the edge there was never far from the floor and 48 is
+     the honest end of it. Going lighter is not a tuning question — at 3:1 the composited grey is
+     fixed, so the lightest compliant edge IS this one, whatever ink and alpha are used to reach it.
+
+     The ordering still holds in both: rest below hover below press, 48/36 → 62 → 72.
+
      Anything interactive takes these three. Static pills, badges and dividers keep the 15%
      hairline — the difference is now information: an edge this strong means you can press it. */
-  --action-line:color-mix(in srgb,var(--on-surface) 50%,transparent);
+  --action-line:color-mix(in srgb,var(--on-surface) 48%,transparent);
   --action-line-hover:color-mix(in srgb,var(--on-surface) 62%,transparent);
   --action-line-press:color-mix(in srgb,var(--on-surface) 72%,transparent);
   /* ===== action emphasis (two tiers) — what a control is FOR, not what it looks like.
@@ -573,6 +627,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --on-surface-muted:#a2a29a; /* ~6.4:1 on --surface (AA) */
   --line:#333331;
   --line-strong:#454542;
+  /* See the note at --action-line: one alpha cannot be the lightest in both themes. 36% lands the
+     dark edge on the same 3.07:1 the light one sits at, and is nearly a third lighter than the 50
+     both used to share. Hover and press are unchanged, so the edge still only strengthens. */
+  --action-line:color-mix(in srgb,var(--on-surface) 36%,transparent);
   color-scheme:dark;
 }
 html,body{background:var(--surface);transition:background var(--dur-chrome) var(--ease-standard)}
@@ -940,9 +998,15 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    page's own columns, and it re-derives itself if --grid-gutter ever moves.
 
    It lives here rather than inline because it is grid knowledge, and because it belongs beside the
-   cue below: the cap is what makes the group overflow, and the cue is what says so. The two are one
-   mechanism. Anything past four columns scrolls; see the note in AppView for why the ceiling is
+   cue below: the cap is what makes the scroller overflow, and the cue is what says so. The two are
+   one mechanism. Anything past four columns scrolls; see the note in AppView for why the ceiling is
    what keeps Manage Projects on the row and in one place.
+
+   THE CAP IS ON THE RAIL, NOT ON THE SCROLLER. The rail is the bordered control; inside it sit the
+   scrolling chips and the two step buttons that page along them. Capping the scroller instead would
+   put the buttons OUTSIDE the four columns, and the whole point of the ceiling is that the control
+   ends in the same place whatever the folders are called — so the ceiling has to be drawn around
+   everything the control contains, and the chips take what is left after the buttons.
 
    The 280px floor is not a second rule, it is a guard on this one. Four columns is a PROPORTION, so
    it shrinks with the window — and at the narrowest width the desktop gate still allows it came out
@@ -950,8 +1014,10 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    where four columns is already wider than the floor; below that the floor holds the scroller at a
    width you can still read two scopes in. It costs nothing: measured at 673px the whole band is
    still one row with 54px to spare, so the guard never pushes anything onto a second line. */
-[data-proj-group]{
+[data-proj-rail]{
   max-width:max(280px, calc((100% - 11 * var(--grid-gutter)) / 3 + 3 * var(--grid-gutter)));
+}
+[data-proj-group]{
   background:
     linear-gradient(var(--surface), var(--surface)) right center,
     linear-gradient(to right, transparent, color-mix(in srgb, var(--surface) 90%, transparent)) right center;
@@ -1077,8 +1143,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    data-mobile-story is the fourth, and it is the one that is not read-only — but it is not the tool
    either. It is the product's argument told with a seeded example: eight chapters that read one
    photograph, ending in the desktop invitation this gate used to open with. It needs no room to work
-   in because there is no work to do on it; nothing on that surface uploads, extracts, refines or
-   saves. It is also the only one of the four that does NOT cover the landing — its first chapter is
+   in because there is no work to do on it; nothing on that surface uploads, extracts or saves. It is also the only one of the four that does NOT cover the landing — its first chapter is
    transparent so the orb formation shows through — which is why it is a sibling above the stage
    rather than a panel over it. See src/styles/story.css.
 
@@ -1163,175 +1228,12 @@ html.lenis,html.lenis body{height:auto}
 .lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
 .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
 
-/* ===== REFINE — the axis sliders ===============================================================
-   A native <input type="range">, kept native so the keyboard, the AT tree and the OS all behave,
-   and repainted part by part because a native thumb arrives ROUNDED and this system has no radius
-   anywhere. Every rule below states border-radius:0 explicitly rather than relying on a reset —
-   the UA sheet sets it on the pseudo-element, so nothing else can reach it.
-
-   ONE CONTINUOUS CONTROL. The first version gave the thumb a 2px halo in the surface colour, which
-   cut the track into a left piece and a right piece and made each row read as three things: a
-   coloured block, a handle, another block. The halo is gone; the handle is a 4px line drawn INSIDE
-   a 16px transparent thumb, so the grab target stays a comfortable size while the mark on the
-   track stays hairline. It overhangs the track top and bottom, which is what makes it read as a
-   playhead crossing one track rather than a divider between two.
-
-   The track carries --refine-track, a live gradient set per slider from the SELECTED colour: the
-   lightness axis shows that colour's own ramp, chroma shows it draining to grey, hue shows the
-   circle. The control shows what it does before it is touched.
-
-   The track's edge is --line-strong, NOT the --action-line every other control here takes. That is
-   a deliberate departure from the 3:1 control-edge rule (DECISIONS, 2026-07-27): that rule exists
-   because on an unfilled button the border is the only thing saying "control rather than label",
-   and here it is not — the gradient and the handle say it far louder than an outline could. A 50%
-   edge around a full-bleed colour ramp reads as a frame drawn on top of the thing it contains. */
-[data-refine-slider]{ -webkit-appearance:none; appearance:none; display:block; width:100%; height:34px; background:transparent; cursor:ew-resize; margin:0; }
-[data-refine-slider]:focus{ outline:none; }
-
-[data-refine-slider]::-webkit-slider-runnable-track{ height:26px; margin-top:4px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
-/* 16px of hit area, 4px of ink: the line is centred in the thumb by the gradient, so the pointer
-   gets a target it can hold and the track keeps its continuity. */
-[data-refine-slider]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:34px; margin-top:-5px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform var(--dur-fast) var(--ease-standard); }
-[data-refine-slider]:hover::-webkit-slider-thumb{ transform:scaleX(1.35); }
-[data-refine-slider]:active::-webkit-slider-thumb{ transform:scaleX(1.7); }
-
-[data-refine-slider]::-moz-range-track{ height:26px; border:1px solid var(--line-strong); border-radius:0; background:var(--refine-track, transparent); }
-[data-refine-slider]::-moz-range-thumb{ width:16px; height:34px; border:none; border-radius:0; background:linear-gradient(90deg, transparent 6px, var(--on-surface) 6px, var(--on-surface) 9px, transparent 9px); transition:transform var(--dur-fast) var(--ease-standard); }
-[data-refine-slider]:hover::-moz-range-thumb{ transform:scaleX(1.35); }
-[data-refine-slider]:active::-moz-range-thumb{ transform:scaleX(1.7); }
-
-/* Keyboard focus only, from the same data-kbd latch the rest of the app's rings hang off, and
-   deliberately restrained: it has to be unmistakable without out-shouting the swatch being edited.
-   A ring on the track, not a second mark on the handle. */
-html[data-kbd] [data-refine-slider]:focus-visible::-webkit-slider-runnable-track{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-html[data-kbd] [data-refine-slider]:focus-visible::-moz-range-track{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-
-/* The numeric field. The unit lives INSIDE the boundary, so the value and its unit are one control
-   rather than a box with a letter loose beside it — the wrapper draws the border and the input is
-   borderless within it. Type is text, not number: a number input renders its decimal separator per
-   OS locale, so the same palette showed 0.028 to one person and 0,028 to another, and the spinner
-   arrows are useless at a step of 0.001. inputMode keeps the numeric keypad on touch. */
-/* ONE BOX, THREE AXES. The chip sized itself: a 44px input plus whatever the unit happened to
-   measure, which made Lightness 72px, Hue 66px and Chroma — whose unit is nothing at all, because a
-   chroma is a ratio — 60px. Three different right edges in a stack of three otherwise identical
-   rows, which is the one place stray edges are most visible.
-   Fixed inline-size fixes the box; the unit then needs its own fixed slot or the DIGITS go back to
-   sitting at three different places. So: the number right-aligns against a shared edge, and the
-   unit occupies a constant column after it whether it is '%', '°' or empty. Tabular figures were
-   already doing half this job — a stable column for the unit is the other half. */
-/* 56px, and the value CLUSTER right-aligns (03.08.26, user direction — supersedes the fixed unit
-   slot of the same morning). 72px was sized with slack the two-to-five-character values never
-   spend; at 56 the widest content ("0.028", "100 %") still fits with the 8px inset. Digits and
-   unit end together against the right padding — rows align on the cluster's edge, and chroma,
-   unitless, simply ends its digits there. */
-[data-refine-num]{ display:inline-flex; align-items:baseline; justify-content:flex-end; gap:3px; inline-size:58px; background:var(--surface-raised); border:1px solid var(--action-line); padding:3px 8px; }
-[data-refine-num] input{ flex:1; min-inline-size:0; background:none; border:none; padding:0; margin:0; font-family:'Neue Montreal'; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color:var(--on-surface); font-variant-numeric:tabular-nums; text-align:right; }
-[data-refine-num] input:focus{ outline:none; }
-html[data-kbd] [data-refine-num]:focus-within{ border-color:var(--on-surface); box-shadow:0 0 0 1px var(--on-surface); }
-/* The unit hugs the number instead of sitting in a fixed 13px slot at the far right. The slot
-   column-aligned the three digit groups, but chroma's unit is empty — so 0.030 ended 22px
-   short of the box edge while 53% and 93° reached it, and the one value with no unit read as
-   not right-aligned at all. The content's right edge is the thing to align. */
-/* Intrinsic width again: the box right-aligns the whole digits+unit cluster (see above), so the
-   slot no longer needs to fake a column — an empty chroma slot would only push its digits off the
-   shared edge the other rows end on. */
-[data-refine-num] span{ flex:none; padding-inline-start:2px; font-family:'Neue Montreal'; font-size:var(--fs-detail); color:var(--on-surface-muted); }
-
-/* The marker sits OUTSIDE the swatch, 4px clear of it, so it takes nothing off the colour it
-   frames and shifts no layout — it is positioned and sized by script, then inflated here by its
-   own negative inset. One hairline of ink over one hairline of surface, so it reads on a white
-   swatch and a black one without either being tinted.
-   It is SELECTION. Keyboard focus is the app's own ring on the button beneath, deliberately a
-   different thing in a different place: this one travels, that one appears where the caret is. */
-/* THE SELECTION MARKER, drawn INSIDE the swatch it has landed on and in ink chosen against that
-   swatch's own colour. It was a 1px ink outline at a -2px offset: on #726C59 that is a dark line on
-   a medium-dark fill, and on the palette's darkest swatch it disappeared into it — the one state
-   the strip has to make unmistakable, illegible on exactly the colours where it matters. An INSET
-   shadow rather than an outline so the ring sits on top of the fill, cannot be clipped by the
-   neighbour, and costs no layout: the marker is absolutely positioned and 3px changes nothing
-   about the swatch beneath it. The ink comes from _refinePill (see data-ring). */
-/* 4px of the swatch's own colour on every side, then a 2px stroke. outline-offset:-6px puts the
-   outline's INNER edge 6px in, and the 2px stroke is painted outward from there — so the ring
-   occupies 6px..4px and the gap is exactly 4px. Drawn inside the element's box, so it cannot be
-   clipped by the neighbouring swatch and costs no layout. */
-[data-refine-pill]{ position:absolute; top:0; left:0; width:0; height:0; opacity:0; pointer-events:none; z-index:3; box-sizing:border-box; outline:1px solid var(--refine-pill-ink, var(--on-surface)); outline-offset:-6px; }
-
-/* THE ROLE CHIPS. cursor:grab is the affordance — no standing sentence telling anyone they can
-   drag, the pointer says it on arrival. The hover/focus box is what makes a word on a colour read
-   as a control rather than as a caption; it is drawn in the swatch's own ink so it works on a
-   light band and a dark one alike (see onColor / the chip's own colour). */
-/* Borderless in every state (03.08.26, user direction) — the scrim is the whole body. Pinned vs
-   derived is carried by the meta line's own words ("· Pinned"), not by an edge; hover keeps only
-   the cursor and the keyboard keeps the data-focus ring, which is a shadow, not this border. */
-[data-role-chip]{ pointer-events:auto; transition:opacity var(--dur-micro) var(--ease-standard); }
-[data-role-chip]:hover,[data-role-chip]:focus-visible{ opacity:1 !important; }
-/* Under the hand: no transition on the transform — the drag is 1:1, and a curve between the pointer
-   and the thing it is carrying is the one place easing reads as lag. */
-[data-role-chip][data-dragging]{ cursor:grabbing; opacity:1 !important; z-index:6; transition:none; }
-/* The swatch the chip is over. Same inset geometry as the selection ring so the two never disagree
-   about where a swatch's edge is, drawn dashed so it cannot be mistaken for the selection itself. */
-[data-refine-swatch][data-drop]{ outline:1px dashed currentColor; outline-offset:-6px; }
-@media (prefers-reduced-motion: reduce){ [data-role-chip]{ transition:none } }
-
-/* The consequence line: what the last edit cost or bought. Transient by nature — it is rendered
-   only while there is something to report — so it arrives rather than blinking into place. */
-[data-refine-note]{ animation: refine-note var(--dur-chrome) var(--ease-entrance) both; }
-@keyframes refine-note { from { opacity:0; transform:translateY(4px) } to { opacity:1; transform:none } }
-@media (prefers-reduced-motion: reduce){
-  [data-refine-note]{ animation:none }
-  /* The thumb still thickens on hover and press — that cue is the affordance — it just
-     arrives without the 180ms transform tween. */
-  /* SEPARATE RULES, deliberately. A selector list mixing -webkit- and -moz- pseudo-elements is
-     invalid in both engines — each drops the whole rule on the selector it does not know. */
-  [data-refine-slider]::-webkit-slider-thumb{ transition:none }
-  [data-refine-slider]::-moz-range-thumb{ transition:none }
-}
-
-/* The two-column split that used to live here is gone: the specimen is not a caption on the
-   sliders, it is the surface the edit is judged on, so it takes the full content width and follows
-   the axes down the page. See the LIVE PREVIEW block in AppView. */
-/* The specimen is a picture of a live mapping, so it must not animate its colours: a transition
-   here would make the preview lag the slider, and a preview that disagrees with the value beside it
-   is worse than no preview. Direct manipulation is immediate — this is downstream of the hand. */
-[data-refine-preview] *{ transition:none !important; }
-
-/* THE SCROLL AFFORDANCE, and it is a rule rather than a gradient.
-   Content now passes UNDER a persistent header and footer, so the shell has to say where the
-   scrollport begins and ends — otherwise a heading half-cut by the header edge reads as a clipping
-   bug. One hairline at each boundary, shown only when there is actually something hidden on that
-   side, driven by data attributes the scroll handler sets (see _refineScrollEdges). A shadow was
-   tried and rejected: this app has no other soft edges, and one here would be the only place a
-   boundary is drawn in blur rather than in ink. */
-[data-refine-shell] > header{ position:relative; }
-[data-refine-shell] > header::after,
-[data-refine-foot]::before{
-  content:''; position:absolute; left:0; right:0; height:1px; background:var(--line-strong);
-  opacity:0; transition:opacity var(--dur-fast) var(--ease-standard); pointer-events:none;
-}
-[data-refine-shell] > header::after{ bottom:-1px; }
-[data-refine-foot]::before{ top:-1px; }
-[data-refine-shell][data-over-top="1"] > header::after,
-[data-refine-shell][data-over-bottom="1"] [data-refine-foot]::before{ opacity:1; }
-@media (prefers-reduced-motion:reduce){
-  [data-refine-shell] > header::after,[data-refine-foot]::before{ transition:none }
-}
-
-/* The role chooser unfolding in place. A disclosure inside a dialog, so it moves less and faster
-   than the dialog did: this is a fold opening, not a surface arriving. */
-
-
-/* Disclosures animate their HEIGHT, so they have to clip while they do; GSAP clears both the
-   height and the overflow afterwards, handing the box back to the layout.
-   The role chooser is NOT in this list any more: it is a popover with its own scroll now, and a
-   blanket overflow:hidden would clip the list it exists to let you scroll. */
-[data-refine-pairs],[data-refine-confirm]{ overflow:hidden; }
-/* Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no
-   measurement, which is exactly what a transition is for — on the system's own easing token. */
-[data-refine-chev]{ display:inline-block; transition:transform var(--dur-chrome) var(--ease-standard); }
-[data-refine-chev][data-open="1"]{ transform:rotate(90deg); }
-/* The per-swatch delete: present only for the swatch in hand, or under the pointer, so the strip
-   is not a row of five delete buttons. It fades and lifts rather than appearing. */
-
+/* ===== DISCLOSURE CHEVRONS ====================================================================
+   Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no
+   measurement, which is exactly what a transition is for — on the system's own easing token.
+   Worn by the character-traits fold, the facet list's More and the harmony method fold. */
+[data-disc-chev]{ display:inline-block; transition:transform var(--dur-chrome) var(--ease-standard); }
+[data-disc-chev][data-open="1"]{ transform:rotate(90deg); }
 /* ===== GLASS EFFECT (Osmo Supply — Glass Effect / Background) ==================================
    Ported verbatim. Every declaration below .glass-bar is the resource's own: the same seven layers,
    the same em-based box-shadows, the same blend modes and the same order. Nothing is retuned to

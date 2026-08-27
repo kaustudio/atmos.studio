@@ -182,16 +182,43 @@ export const overlayMethods = {
   // that happened; one function they all call is how it stops.
   //
   // SEQUENTIAL, AND SEAMLESS — which are two requirements pulling against each other, and the
-  // overlaps are where they meet. Nothing waits for the thing before it to finish: the sections
-  // start while the panel is still travelling (0.28 of the way through it), the cells start while
-  // the sections are still arriving, and the masked text runs underneath both. Read in order, with
-  // no seam between the stages, because there is no moment when only one of them is moving.
+  // overlaps are where they meet. Nothing waits for the thing before it to finish: the blocks start
+  // while the panel is still travelling (0.22 of the way through it), each block's cells start
+  // while the block itself is still coming up, and the masked line reveal on its copy runs
+  // underneath both. Read in order, with no seam between the stages, because there is no moment
+  // when only one of them is moving.
   //
-  // Everything is transform and opacity, and every element is in the DOM and semantic before any of
-  // it starts — motion never gates what a screen reader or a keyboard can reach.
+  // ONE CLOCK PER BLOCK, which is what this rewrite is. The schedule used to be three flat tweens
+  // over three flat lists — every section on one stagger, every cell on another, every rule on a
+  // third — and all three were timed against the PANEL rather than against each other. Two things
+  // followed from that, and both of them read as a panel that arrives all at once:
+  //
+  //   · the beat between blocks was `overlayStep * 2` (80ms) while a block took 560ms to uncover,
+  //     so five of the contrast drawer's six blocks were always moving together;
+  //   · the cells all began at a fixed 0.32 of the panel whatever block they were in, so the
+  //     matrix's rows were already sweeping while the two blocks above them were still arriving.
+  //
+  // Now `at[i]` is a block's own moment, and everything that belongs to that block — its rows, its
+  // drawn rules, and (in _revealDrawerText) its masked lines — hangs off it. The panel therefore
+  // reads strictly top to bottom whatever it happens to hold, and the gap is legible because a
+  // block's own reveal was shortened to pay for it: same total, more sequence.
+  //
+  // THE BLOCKS FADE; ONLY COPY IS MASKED. Every part of these panels used to arrive through the
+  // same clip-path wipe the result stage uses on its bands, on the argument that a mask says the
+  // content was always there and is being uncovered. Running it on the boxes AND on the words
+  // inside them turned out to be the problem: one mechanic doing two jobs at two scales, so a
+  // block's wipe and its own text's wipe read as two reveals stacked in the same place rather than
+  // as one sequence. The masked line reveal is now the surface's ONE piece of special handling and
+  // it belongs to copy alone — the boxes around it simply fade up, in order, underneath it.
+  //
+  // A fade, not an appearance: each block carries a 10px rise so it arrives rather than switches
+  // on, which is the difference the rest of the app's surfaces are held to.
+  //
+  // Every element is in the DOM and semantic before any of it starts, so motion never gates what a
+  // screen reader or a keyboard can reach.
   _drawerIn(tl, root, backdrop, secSel, cellSel) {
     const g = window.gsap;
-    const D = this.DUR.overlay, E = this.EASE.overlay;
+    const D = this.DUR.overlay, E = this.EASE.overlay, F = this.EASE.overlayFadeIn;
     if (this._reduce) {
       if (backdrop) tl.from(backdrop, { opacity: 0, duration: .12, ease: 'none' }, 0);
       tl.from(root, { opacity: 0, duration: .12, ease: 'none' }, 0);
@@ -199,25 +226,95 @@ export const overlayMethods = {
     }
     const secs = secSel ? [...root.querySelectorAll(secSel)] : [];
     const cells = cellSel ? [...root.querySelectorAll(cellSel)] : [];
-    if (backdrop) tl.from(backdrop, { opacity: 0, duration: D, ease: E }, 0);
+    if (backdrop) tl.from(backdrop, { opacity: 0, duration: D, ease: F }, 0);
     tl.from(root, { xPercent: 100, duration: D, ease: E }, 0);
-    // SECTIONS MASK AND MOVE. They translated only for a revision, on the reasoning that a section
-    // is a box and what arrives is the content in it — which was true of the ROWS and false of
-    // everything else the box holds. A group's eyebrow, the search field, the sort toggle and every
-    // drawer header sat at full opacity from the first frame, riding in on the panel while the rows
-    // beneath them wiped: half the panel arriving, half of it already there. Masking the section
-    // covers its own furniture as well as its children.
-    if (secs.length) {
-      tl.from(secs, { y: 14, duration: D * 0.8, ease: E, stagger: this.DUR.overlayStep * 2, clearProps: 'transform' }, D * 0.28);
-      this._maskIn(tl, secs, D * 0.28, D * 0.7, this.DUR.overlayStep * 2);
+    // The block schedule. `blockDur` is deliberately shorter than the 0.7 band it replaced: the
+    // time did not leave the panel, it moved out of each block's own reveal and into the gaps
+    // between blocks, which is the only way to buy a readable sequence without lengthening the
+    // arrival. The step is capped so that a drawer with a lot of blocks compresses rather than
+    // growing a tail — the contrast and harmony drawers hold six and are under the cap, but the
+    // schedule must not depend on that staying true.
+    // A block's own fade is deliberately SHORTER than its items'. A cell's opacity multiplies with
+    // its block's, and the reference this is tuned against does not have that problem — there, the
+    // container sits at full strength and only the rows fade, so a row's curve is the only curve
+    // acting on it. Here the block still has to cover its own furniture, so it cannot simply not
+    // fade; making it the quick ground instead means it is effectively out of the way by 240ms and
+    // the item's own full-length curve carries everything the reader actually watches.
+    const blockDur = this.DUR.overlayArrive * 0.55;
+    const itemDur = this.DUR.overlayArrive;
+    const step = secs.length > 1 ? Math.min(this.DUR.overlayBlock, (D * 0.9) / (secs.length - 1)) : 0;
+    const at = secs.map((_, i) => D * 0.22 + i * step);
+    // THE WHOLE BLOCK, not the rows in it. For a revision only the rows arrived, on the reasoning
+    // that a block is a box and what arrives is the content in it — which was true of the ROWS and
+    // false of everything else the box holds. A group's eyebrow, the search field, the sort toggle
+    // and every drawer header sat at full opacity from the first frame, riding in on the panel
+    // while the rows beneath them arrived: half the panel appearing, half of it already there.
+    // Fading the block covers its own furniture as well as its children.
+    //
+    // AND IT DOES NOT TRANSLATE. The block used to carry a 10px rise on EASE.overlay, which is the
+    // masked line reveal's own gesture at a smaller scale — same curve, same axis, same moment, one
+    // nested inside the other. Two Y-translations composing inside one box is what kept the mask
+    // legible as a SECOND animation instead of reading as the words arriving with their block. The
+    // boxes carry opacity only now; the mask is the only thing in the drawer that moves in Y, and
+    // it belongs to copy. One mechanic per role, told apart by construction rather than by tuning
+    // two timings against each other until they stop colliding.
+    secs.forEach((sec, i) => {
+      const t = at[i];
+      tl.from(sec, { opacity: 0, duration: blockDur, ease: F, clearProps: 'opacity' }, t);
+      // ITEMS ARRIVE ONE AT A TIME INSIDE THEIR BLOCK, and a block that holds a list has to say so
+      // in the markup — this reads the hooks, it cannot infer them. Every list that lacked one used
+      // to fade as a slab: five colour rows, seven harmony models and three control groups all
+      // switching on together inside a box that was itself switching on. The matrix had hooks and
+      // read correctly, which is exactly what made the others look unfinished beside it.
+      //
+      // A cell's opacity MULTIPLIES with its block's, so the two compose rather than compete: the
+      // block comes up as the ground and the rows resolve out of it in order, one sweep instead of
+      // two arrivals in the same box. Multiplication preserves the ordering, so the cascade is
+      // legible even while the block behind it is still arriving.
+      //
+      // ITEMS ARE QUICKER THAN THEIR BLOCK — 0.62 of its length — because the block is the ground
+      // and the marks on it should not take as long to land as the thing they land on.
+      //
+      // The beat is `overlayItem`, capped so the list cannot out-run the block holding it. That cap
+      // is what lets one number serve a five-row list and a ten-cell matrix: five rows take the
+      // full 64ms beat and read as a sequence, ten cells compress to 31ms and read as a sweep. A
+      // list long enough to need more room gets a faster beat instead of a longer block.
+      //
+      // AND THE ARRIVAL SUSPENDS THE INTERACTION CONTRACT WHILE IT OWNS THE PROPERTY. `[data-ix]`
+      // — every button, every segmented control — declares `transition: … opacity var(--dur-chrome)
+      // …` in global.css. A GSAP opacity tween on one of those is therefore not animating the
+      // element, it is animating a target that CSS then eases toward over 280ms: the control lags
+      // its own tween by a quarter of a second, never reaches the value the stagger asked for at
+      // the moment it asked, and the whole cascade goes soft exactly on the items that are
+      // controls. It did not bite while the only hooked items were plain divs — the matrix — which
+      // is why it could be introduced by adding hooks to seven harmony model buttons and read as
+      // "the fade got laggy" rather than as a conflict.
+      //
+      // So the tween takes the property outright and hands it back on landing: `transition: none`
+      // for the duration, restored by clearProps. The contract is untouched — it simply does not
+      // get to run against an animation that is already animating the same thing.
+      const own = cells.filter((c) => sec.contains(c));
+      if (own.length) {
+        const cellStep = own.length > 1 ? Math.min(this.DUR.overlayItem, (itemDur * 0.5) / (own.length - 1)) : 0;
+        tl.set(own, { transition: 'none' }, 0);
+        tl.from(own, { opacity: 0, duration: itemDur, ease: F, stagger: cellStep, clearProps: 'opacity,transition' }, t + this.DUR.overlayStep);
+      }
+      this._drawRules(tl, [...sec.querySelectorAll('[data-ov-rule]')], t + this.DUR.overlayStep);
+    });
+    // Anything the block pass did not claim keeps the panel-relative schedule it always had. Today
+    // that is nothing in these three drawers; it is here so a cell or a rule added outside a block
+    // still arrives with the panel rather than silently never animating at all.
+    const loose = cells.filter((c) => !secs.some((s) => s.contains(c)));
+    if (loose.length) {
+      tl.set(loose, { transition: 'none' }, 0);
+      tl.from(loose, { opacity: 0, duration: itemDur, ease: F, stagger: this.DUR.overlayItem, clearProps: 'opacity,transition' }, D * 0.32);
     }
-    // Cells MASK too, a beat behind their section rather than a third of the panel later. Two clips
-    // over one element intersect, so a cell is uncovered by whichever is currently the more
-    // restrictive; running them close together means the section's wipe hands off to the row's
-    // instead of holding it back, and what you see is one sweep passing across the rows rather than
-    // two reveals stacked.
-    if (cells.length) this._maskIn(tl, cells, D * 0.32, D * 0.7, this.DUR.overlayStep);
-    this._drawRules(tl, root, D * 0.4);
+    this._drawRules(tl, [...root.querySelectorAll('[data-ov-rule]')].filter((r) => !secs.some((s) => s.contains(r))), D * 0.4);
+    // Published for the two things that have to agree with this schedule but cannot be inside it:
+    // the masked line reveal (which runs outside the reversible timeline — see _revealDrawerText)
+    // and the exit (which has to leave in the same order it arrived — see _drawerOut). Keyed by the
+    // root node, so a plan left behind by one drawer can never be read by another.
+    this._blockPlan = { root, secs, at, blockDur };
     return tl;
   },
   // THE METHOD DISCLOSURE'S PROSE, arriving rather than being uncovered already written.
@@ -245,41 +342,47 @@ export const overlayMethods = {
       });
     });
   },
-  // THE ONE CONTENT REVEAL: a clip-path wipe from the bottom edge, which is this app's mask.
-  //
-  // It is the same mechanic three other surfaces already use — the result stage's bands, the detail
-  // overlay, Refine's swatch strip — so an overlay's contents arrive in the language its palettes
-  // arrive in. Nothing here fades: opacity is exposure, and a panel whose parts fade up looks like
-  // it is being developed rather than assembled. A mask says the content was always there and is
-  // being uncovered, which is what a staggered sequence is trying to say in the first place.
-  //
-  // `bleed` extends the mask past the bottom edge for boxes carrying a hairline at -1px (the drawn
-  // group rules sit outside the border box, and inset(0%) would clip them away mid-arrival).
-  _maskIn(tl, targets, at, dur, step, bleed) {
-    if (!targets || !targets.length) return;
-    const b = bleed ? -bleed + 'px' : '0';
-    tl.fromTo(targets,
-      { clipPath: 'inset(100% 0 ' + b + ' 0)' },
-      { clipPath: 'inset(0% 0 ' + b + ' 0)', duration: dur, ease: this.EASE.overlay, stagger: step, clearProps: 'clipPath' },
-      at);
-  },
+  /* _maskIn lived here — a clip-path wipe from the bottom edge, applied to every box in every
+     utility overlay, and it is gone. It was the result stage's band mechanic borrowed for the
+     drawers on the argument that a mask says the content was always there and is being uncovered,
+     where a fade looks like the panel is being developed rather than assembled.
+
+     What that argument missed is that these panels also mask their COPY, line by line, and the two
+     ran in the same place at the same time: a block wiping up while the words inside it wiped up
+     on their own clip. Two reveals stacked, not one sequence — and the box's wipe was the one with
+     nothing to say, because a box has no content of its own to uncover.
+
+     So the mask is now what it should always have been: the treatment for words, and only for
+     words (_maskLineReveal, driven from _revealDrawerText). The boxes fade up in order underneath
+     it, each with a 10px rise so it arrives rather than switches on. The bands and the detail
+     overlay still wipe, and should — they are uncovering colour, which is exactly the thing a mask
+     is for. */
   // THE GROUP DIVIDERS, DRAWING. Added to whichever timeline is arriving rather than fired beside
   // it, so they reverse with everything else on close and cannot drift out of step on open.
   //
   // Left to right on the same curve, which is the mechanic the result view's metadata rules already
-  // use — structure draws in this app. `at` puts them just after the sections they separate have
-  // started moving: a rule that lands before its content has arrived is a line around nothing, and
-  // one that lands after reads as an afterthought being ruled off.
+  // use — structure draws in this app. `at` puts a rule one step behind the block it belongs to: a
+  // rule that lands before its content has arrived is a line around nothing, and one that lands
+  // after reads as an afterthought being ruled off.
   //
   // Row hairlines are deliberately NOT here. A separator between two rows belongs to its row and
   // fades in with it; drawing it independently would make a list read as two things arriving.
-  _drawRules(tl, root, at) {
+  //
+  // It takes a LIST rather than a scope to search, because the rules of one block now draw with
+  // that block: a single query over the whole panel would put every rule on one moment again, which
+  // is the flat schedule this rewrite exists to remove.
+  //
+  // ON THE BLOCK'S OWN LENGTH (0.55 of the band, not 0.7). While every rule drew from one panel-
+  // relative moment near the front, a longer line than the boxes around it was invisible. Hung off
+  // the LAST block instead, those extra 120ms became the whole panel's tail: the harmony drawer
+  // finished assembling at 1.26s and then spent another 0.2s with nothing on screen moving except
+  // one hairline still creeping to its right-hand end.
+  _drawRules(tl, rules, at) {
     if (this._reduce) return;
-    const rules = [...root.querySelectorAll('[data-ov-rule]')];
-    if (!rules.length) return;
+    if (!rules || !rules.length) return;
     tl.from(rules, {
       scaleX: 0, transformOrigin: '0% 50%',
-      duration: this.DUR.overlay * 0.7, ease: this.EASE.overlay,
+      duration: this.DUR.overlay * 0.55, ease: this.EASE.overlay,
       stagger: this.DUR.overlayStep * 2, clearProps: 'transform',
     }, at);
   },
@@ -288,8 +391,8 @@ export const overlayMethods = {
   // An entrance is allowed a tail: its contents arrive in sequence, and the stagger is the sequence,
   // so a drawer with ten cells legitimately takes longer to assemble than one with three. A
   // DISMISSAL has no such excuse — nothing is being read on the way out — and reverse() on its own
-  // inherits the whole tail, which measured 427ms for Refine against 714ms for Harmony: the exact
-  // divergence the July review found, reintroduced by content length instead of by hand-written
+  // inherits the whole tail, which measured 427ms for a short panel against 714ms for Harmony: the
+  // exact divergence the July review found, reintroduced by content length instead of by hand-written
   // timelines.
   //
   // Scaling the reverse fixes it without giving up the reversal. The exit is still every stage of
@@ -300,7 +403,7 @@ export const overlayMethods = {
   // keeping.
   //
   //   reverse()            plays the entrance backwards at native rate. Two faults: the length
-  //                        follows the content (427ms for Refine against 714ms for Harmony — the
+  //                        follows the content (427ms for a short panel against 714ms for Harmony — the
   //                        review's own divergence, back through the side door) and the curve comes
   //                        out mirrored, so the panel accelerates as it leaves and is gone rather
   //                        than landed.
@@ -310,39 +413,110 @@ export const overlayMethods = {
   //                        in the next 200, then crept the last 16px over half a second. Nothing in
   //                        the motion system moves like that, because nothing in the motion system
   //                        is two eases deep.
-  //   this                 the exit states its own properties, its own duration and the one curve.
-  //                        cubic-bezier(.19,1,.22,1) over 1.2s: away quickly, landing slowly, the
-  //                        same shape as the arrival and legible as its counterpart.
+  //   this                 the exit states its own properties, its own duration and its own curve.
+  //                        EASE.overlayExit over 0.62s: from rest, quickest through the middle,
+  //                        gone. It was written on the ARRIVAL's curve at first — away quickly and
+  //                        landing slowly, on the reasoning that it should read as the arrival's
+  //                        counterpart — and that is the one thing an exit must not be. Played
+  //                        forwards, an expo-out puts peak velocity on frame one: the panel snapped
+  //                        away and then spent two thirds of its length creeping off-screen where
+  //                        nothing could be seen of it.
   //
   // The entrance timeline is killed rather than left to finish. It owns these same properties, and
   // two tweens arguing over one transform is how you get a panel that jitters on the way out. Its
   // clearProps never running is harmless: the drawer unmounts, so the node carrying the stale
   // inline styles is destroyed with it.
+  //
+  // AND IT LEAVES IN THE ORDER IT ARRIVED. The panel used to be the only thing that moved on the
+  // way out: six blocks that had been introduced one at a time went as one slab, so the dismissal
+  // was not the counterpart of the arrival, it was a different gesture that happened to use the
+  // same curve. Now each block fades out top to bottom on a step compressed to fit a fixed window,
+  // and the panel starts while the last of them is still going — one gesture, not a cascade
+  // followed by a slide.
+  //
+  // The blocks only fade — they never translate, in either direction. The panel is supplying all
+  // the travel a dismissal needs, and content settling downward inside a panel moving right is two
+  // directions at once for no reading.
+  //
+  // The block fades take EASE.overlayFadeOut, not EASE.overlay. On the expo-out a 260ms exit fade was
+  // 90% gone in 80ms, so six blocks did not cascade out, they strobed: a 52ms beat against an 80ms
+  // event. The panel keeps EASE.overlay, because the panel travels.
+  //
+  // WHY THE PANEL STILL LEADS WITH THE BLOCKS RATHER THAN WITH ITSELF. The blocks start fading on
+  // the frame of the press — that is where the promptness a dismissal owes you actually lives — and
+  // the panel's travel builds under them. It no longer has to be held back to be survivable: the
+  // old curve left at full speed immediately, so a cascade underneath it played on a surface nobody
+  // could see and the delay was the only fix. The exit curve ramps from rest now, so the lead is a
+  // small one and the two read as a single gesture rather than as a wait followed by a slide.
+  //
+  // Every block tween is `to`, never `fromTo`. Close during the arrival and a block is part-way
+  // faded up; `to` continues from wherever it actually is, where a stated start would snap it to
+  // fully opaque for a frame before taking it away again.
   _drawerOut(tl, root, backdrop, done) {
     const g = window.gsap;
     if (tl) tl.kill();
+    const plan = (this._blockPlan && this._blockPlan.root === root) ? this._blockPlan : null;
+    this._blockPlan = null;
     if (this._reduce || !g || !root) { if (done) done(); return; }
+    const O = this.DUR.overlayOut, X = this.EASE.overlayExit, F = this.EASE.overlayFadeOut;
+    const blocks = plan ? plan.secs.filter((el) => el.isConnected) : [];
     const t = g.timeline({ onComplete: done || null });
-    if (backdrop) t.to(backdrop, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0);
-    t.to(root, { xPercent: 100, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0);
+    // One length whatever the panel holds — the same rule the panel's own tween has always obeyed,
+    // now applied to the sequence inside it. The spread is bounded, so three blocks and ten blocks
+    // finish leaving at the same moment; the cap keeps a two-block drawer from opening a gap wide
+    // enough to read as two separate exits.
+    // These fractions are stated against the SHORTER band deliberately. The content cascade's own
+    // length was tuned for legibility — 0.26s per block, 0.26s of spread, an overlap of about a
+    // third — and it has no reason to change because the panel's travel got shorter. Retuning
+    // overlayOut from 1.0 to 0.62 without re-deriving them would have quietly cut the cascade by
+    // 38% and undone that, which is the kind of coupling a shared token makes easy to miss.
+    const outDur = O * 0.42;
+    const step = blocks.length > 1 ? Math.min(O * 0.145, (O * 0.42) / (blocks.length - 1)) : 0;
+    blocks.forEach((el, i) => { t.to(el, { opacity: 0, duration: outDur, ease: F }, i * step); });
+    // THE CURVE'S OWN RAMP REPLACES MOST OF THIS DELAY. The panel used to wait 0.85 of the block
+    // spread because EASE.overlay gave it no ramp at all — it left at full speed on its first frame,
+    // so anything happening underneath it had to finish first or not be seen. EASE.overlayExit
+    // starts from rest and covers 31px of 500 in its first 100ms, which IS the lead-in; holding the
+    // panel back by the old amount on top of that would stack two delays and read as hesitation.
+    // 0.4 of the spread keeps the contents in front of the panel without paying for it twice.
+    const panelAt = step * Math.max(0, blocks.length - 1) * 0.4;
+    if (backdrop) t.to(backdrop, { opacity: 0, duration: O, ease: F }, panelAt);
+    t.to(root, { xPercent: 100, duration: O, ease: X }, panelAt);
   },
   // The masked line reveal on a drawer's key text, at the drawer's own tempo. It runs OUTSIDE the
   // reversible timeline deliberately: it rewrites the element into per-line masks and restores the
   // plain text node when it lands, so by the time anyone can close the drawer the DOM is back to
-  // what reverse() expects to find. Started at 0.3 of the panel's travel, so the words are already
-  // rising as the panel settles rather than after it.
+  // what the exit expects to find.
+  //
+  // EACH LINE RISES WITH ITS OWN BLOCK. The words used to start at a fixed 0.3 of the panel and
+  // step on from there, which put the contrast drawer's summary line rising at 0.32s inside a block
+  // that did not begin to uncover until 0.43s — the one element on the surface whose job is to be
+  // read, arriving out of sequence with the box holding it. Reading the plan _drawerIn published
+  // means a line waits for its block, starts one step into it, and the two masks (the block's clip
+  // and the line's own) hand off rather than fight. The fallback is the old panel-relative
+  // schedule, which is what a surface with no blocks — the export dialog — still uses.
+  //
   // `opts.at` and `opts.duration` are fractions of the band, so a surface with a shorter arrival can
-  // pull its text in with it. Refine needs that: its sequence now ends around 0.9s, and text still
-  // rising at 1.12s is a tail hanging off a finished panel rather than part of one arrival.
+  // pull its text in with it: a panel whose sequence ends around 0.9s leaves text still rising at
+  // 1.12s as a tail hanging off a finished surface rather than part of one arrival. That is also
+  // why the default duration is 0.75 of the band and not all of it — a line that now waits for its
+  // block has less room left in front of it than one that started with the panel.
   _revealDrawerText(sel, opts) {
     if (this._reduce || !window.gsap) return;
     const root = document.querySelector(sel); if (!root) return;
     const o = opts || {};
     const D = this.DUR.overlay;
+    const plan = (this._blockPlan && this._blockPlan.root === root) ? this._blockPlan : null;
     const at = D * (typeof o.at === 'number' ? o.at : 0.3);
-    const dur = D * (typeof o.duration === 'number' ? o.duration : 1);
+    const dur = D * (typeof o.duration === 'number' ? o.duration : 0.75);
+    const nth = {};   // two splits inside ONE block still step past each other
     root.querySelectorAll('[data-drawer-split]').forEach((el, i) => {
-      try { this._maskLineReveal(el, at + i * this.DUR.overlayStep * 2, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
+      let delay = at + i * this.DUR.overlayStep * 2;
+      if (plan) {
+        const bi = plan.secs.findIndex((sec) => sec.contains(el));
+        if (bi >= 0) { nth[bi] = (nth[bi] || 0) + 1; delay = plan.at[bi] + this.DUR.overlayStep * (2 * nth[bi] - 1); }
+      }
+      try { this._maskLineReveal(el, delay, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
     });
   },
   // ONE reversible timeline — play forward on open, reverse() on close (symmetric by construction).
@@ -485,7 +659,7 @@ export const overlayMethods = {
       // assignment to one of its swatches, and none of those swatches is in here.
       // "a analogous" — the one model name in the set that starts with a vowel, and the article is
       // read aloud, so it is the kind of slip a screen-reader user hears every time.
-      announce: 'Saved ' + pal.name + ', ' + (/^[aeiou]/i.test(g.name) ? 'an ' : 'a ') + g.name.toLowerCase() + ' harmony of ' + s.harmony.hex + ', as a new palette. Roles are derived until you refine it.',
+      announce: 'Saved ' + pal.name + ', ' + (/^[aeiou]/i.test(g.name) ? 'an ' : 'a ') + g.name.toLowerCase() + ' harmony of ' + s.harmony.hex + ', as a new palette. Roles are derived from the colours.',
     }), () => {
       this.persist({ immediate: true });
       // keepAnnounce: the save is the only confirmation this act gets, and "Colour harmonies closed"
@@ -579,12 +753,14 @@ export const overlayMethods = {
     // transform on a sticky element makes it the containing block for its own offset, so it detaches
     // and scrolls away with the content. It takes the opacity half of the cascade only.
     this._drawerIn(tl, root, backdrop, '[data-tg-sec]:not(header)', '[data-tg-cell]');
-    // The header masks like everything else rather than fading, but it cannot TRANSLATE: it is
-    // position:sticky, and a transform on a sticky element makes it its own containing block, so it
-    // detaches and scrolls away with the content. The 2px bleed keeps its drawn bottom rule — which
-    // sits at -1px, outside the border box — from being clipped away while the mask is running.
+    // The header fades in with everything else, and takes ONLY the opacity half of the block
+    // schedule: it is position:sticky, and a transform on a sticky element makes it its own
+    // containing block, so it detaches and scrolls away with the content. Opacity has no such
+    // effect, which is the whole reason it can be excluded from the block pass above and still be
+    // handled in one line here. It leads the first block slightly, because a panel whose heading
+    // is the last thing to resolve reads backwards.
     const head = root.querySelector('header[data-tg-sec]');
-    if (head && !this._reduce) this._maskIn(tl, [head], this.DUR.overlay * 0.2, this.DUR.overlay * 0.8, 0, 2);
+    if (head && !this._reduce) tl.from(head, { opacity: 0, duration: this.DUR.overlayArrive * 0.55, ease: this.EASE.overlayFadeIn, clearProps: 'opacity' }, this.DUR.overlay * 0.16);
     this._tgTl = tl;
   },
   // SHOW ALL / SHOW FEWER on the character traits. Not toggleFold: that tweens the height of one
@@ -725,8 +901,8 @@ export const overlayMethods = {
     if (this._reduce) { if (backdrop) tl.from(backdrop, { opacity: 0, duration: .12, ease: 'none' }, 0); tl.from(root, { opacity: 0, duration: .12, ease: 'none' }, 0); this._exTl = tl; return; }
     if (backdrop) tl.from(backdrop, { opacity: 0, duration: D, ease: E }, 0);
     tl.from(root, { opacity: 0, y: 12, scale: 0.98, duration: D, ease: E, transformOrigin: 'center center' }, 0);
-    // The dialog itself still fades — it has no edge to slide from, so the fade IS its arrival. Its
-    // CONTENTS mask, like every other overlay's.
+    // The dialog itself fades — it has no edge to slide from, so the fade IS its arrival — and its
+    // contents fade in behind it on the shared block schedule, like every other overlay's.
     //
     // ON THE CELL SCHEDULE, not the section one. The format list is five leaf choices — the same
     // kind of thing as a drawer's rows — and it was being timed as though each were a section: the
@@ -735,16 +911,22 @@ export const overlayMethods = {
     // The list read slow for it, and it read slow in a way nothing else here does: five items on a
     // doubled step is 320ms of pure stagger, and the last one landed at ~1.24s.
     // Matching the cells exactly — D * 0.32 and one step — brings the last item in at ~0.98s and,
-    // more to the point, means the export list and every drawer row arrive on ONE beat.
-    this._maskIn(tl, items, D * 0.32, D * 0.7, this.DUR.overlayStep);
-    this._drawRules(tl, root, D * 0.4);
+    // more to the point, means the export list and every drawer row arrive on ONE beat. That is
+    // also why they fade rather than wipe: the beat is only shared if the mechanic is.
+    // transition:none for the duration — see the note in _drawerIn. These items are buttons, and a
+    // button's own opacity transition would damp every step of this stagger by 280ms.
+    tl.set(items, { transition: 'none' }, 0);
+    tl.from(items, { opacity: 0, duration: this.DUR.overlayArrive, ease: this.EASE.overlayFadeIn, stagger: this.DUR.overlayItem, clearProps: 'opacity,transition' }, D * 0.32);
+    this._drawRules(tl, [...root.querySelectorAll('[data-ov-rule]')], D * 0.4);
     this._exTl = tl;
   },
   closeExport(keepAnnounce) {
     this._exKeep = !!keepAnnounce;
     if (!this._exTl) { this._finishExportClose(this._exKeep); return; }
     // Same exit contract as the drawers, on the geometry it arrived with: it grows from its centre
-    // rather than sliding from an edge, so it leaves the same way.
+    // rather than sliding from an edge, so it leaves the same way. Which means the same curves too —
+    // overlayExit on the geometry, overlayFadeOut on the scrim — or the sentence above is a claim the
+    // code does not honour.
     (() => {
       const g = window.gsap, root = document.querySelector('[data-export-dialog]');
       const back = document.querySelector('[data-ex-backdrop]');
@@ -752,8 +934,8 @@ export const overlayMethods = {
       if (this._exTl) this._exTl.kill();
       if (this._reduce || !g || !root) { done(); return; }
       const t = g.timeline({ onComplete: done });
-      if (back) t.to(back, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0);
-      t.to(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0);
+      if (back) t.to(back, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlayFadeOut }, 0);
+      t.to(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlayExit, transformOrigin: 'center center' }, 0);
     })();
     clearTimeout(this._exGuard);
     this._exGuard = setTimeout(() => this._finishExportClose(this._exKeep), (this.DUR.overlayOut + 0.8) * 1000);
