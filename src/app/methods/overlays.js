@@ -218,7 +218,7 @@ export const overlayMethods = {
   // screen reader or a keyboard can reach.
   _drawerIn(tl, root, backdrop, secSel, cellSel) {
     const g = window.gsap;
-    const D = this.DUR.overlay, E = this.EASE.overlay, F = this.EASE.overlayFadeIn;
+    const D = this.DUR.overlay, E = this.EASE.overlay, F = E;
     if (this._reduce) {
       if (backdrop) tl.from(backdrop, { opacity: 0, duration: .12, ease: 'none' }, 0);
       tl.from(root, { opacity: 0, duration: .12, ease: 'none' }, 0);
@@ -293,11 +293,23 @@ export const overlayMethods = {
       // So the tween takes the property outright and hands it back on landing: `transition: none`
       // for the duration, restored by clearProps. The contract is untouched — it simply does not
       // get to run against an animation that is already animating the same thing.
+      // THE WIPE IS OPT-IN, AND THE DEFAULT IS A FADE. A horizontal reveal is right for a bare
+      // colour surface and wrong for everything that carries a word: it drags a hard edge across
+      // a label, which is a second reading of the same text the drawer already reveals properly,
+      // and on a control — the AA/AAA switch, the harmony models — it reads as the button being
+      // built rather than arriving. Text is masked VERTICALLY by _maskLineReveal and by nothing
+      // else; controls fade; only [data-ov-wipe] takes the horizontal mask.
       const own = cells.filter((c) => sec.contains(c));
       if (own.length) {
         const cellStep = own.length > 1 ? Math.min(this.DUR.overlayItem, (itemDur * 0.5) / (own.length - 1)) : 0;
         tl.set(own, { transition: 'none' }, 0);
-        tl.from(own, { opacity: 0, duration: itemDur, ease: F, stagger: cellStep, clearProps: 'opacity,transition' }, t + this.DUR.overlayStep);
+        // One clock for both treatments, so a block holding a mix still reads as one sweep: an
+        // element's offset is its position in the block's own order, whichever reveal it takes.
+        own.forEach((c, ci) => {
+          const at = t + this.DUR.overlayStep + ci * cellStep;
+          if (c.hasAttribute('data-ov-wipe')) this._wipeIn(tl, [c], at, itemDur, 0, F);
+          else tl.from(c, { opacity: 0, duration: itemDur, ease: F, clearProps: 'opacity,transition' }, at);
+        });
       }
       this._drawRules(tl, [...sec.querySelectorAll('[data-ov-rule]')], t + this.DUR.overlayStep);
     });
@@ -357,6 +369,44 @@ export const overlayMethods = {
      it, each with a 10px rise so it arrives rather than switches on. The bands and the detail
      overlay still wipe, and should — they are uncovering colour, which is exactly the thing a mask
      is for. */
+  // THE ITEM WIPE — a horizontal mask, and the axis is the whole argument.
+  //
+  // This surface now has exactly two reveal mechanics and they are told apart by DIRECTION rather
+  // than by kind. COPY is masked VERTICALLY: _maskLineReveal splits a paragraph into its rendered
+  // lines and slides each one up from 110% inside its own overflow box. ITEMS are masked
+  // HORIZONTALLY: a clip opens left to right across the row. Both are masks — which is what makes
+  // the panel feel like one system — but no element is ever doing the same gesture as the element
+  // inside it, which is what made the earlier version read as two animations stacked in one place.
+  //
+  // The earlier attempt failed on exactly that point. A clip-path wipe ran on every box in the
+  // panel AND on the words inside them, both upward, both on the same curve: a block wiping up
+  // while its own text wiped up. That was removed, and for a day items merely faded, which is
+  // legible but says nothing — a fade is what you use when you have not decided what the thing is.
+  // Changing the axis, rather than the mechanic, keeps the vocabulary and removes the collision.
+  //
+  // LEFT TO RIGHT, not right to left. 28k.studio — where this is ported from — pushes its content
+  // to +102% and slides it back, so its reveal sweeps from the right. That reads correctly there
+  // because the panel it lives in is full-bleed. Ours is a drawer that has just travelled in from
+  // the right edge; a row uncovering right-to-left would run against the panel that carried it.
+  // Opening from the left is the reading direction and the settling direction at once.
+  //
+  // A CLIP, NOT A WRAPPER. The reference gets its mask from an overflow box with a translating
+  // child, which is the better mechanic and is not available here: these items are React-managed
+  // interactive controls, and wrapping them at animation time means reconciliation, event handlers
+  // and focus all take a risk for a visual detail. A clip on the element itself needs no DOM at
+  // all. What it gives up is the content's own travel behind the mask edge — the reveal uncovers
+  // in place rather than sliding — and that is the one honest difference from the reference.
+  //
+  // Opacity rides underneath. It is what covers the case a clip cannot: an item whose box is
+  // wider than its ink still has to arrive, and a wipe across empty padding shows nothing.
+  _wipeIn(tl, targets, at, dur, step, ease) {
+    if (!targets || !targets.length) return;
+    tl.fromTo(targets,
+      { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0 },
+      { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, duration: dur, ease: ease || this.EASE.overlay,
+        stagger: step, clearProps: 'clipPath,opacity,transition' },
+      at);
+  },
   // THE GROUP DIVIDERS, DRAWING. Added to whichever timeline is arriving rather than fired beside
   // it, so they reverse with everything else on close and cannot drift out of step on open.
   //
@@ -458,7 +508,7 @@ export const overlayMethods = {
     const plan = (this._blockPlan && this._blockPlan.root === root) ? this._blockPlan : null;
     this._blockPlan = null;
     if (this._reduce || !g || !root) { if (done) done(); return; }
-    const O = this.DUR.overlayOut, X = this.EASE.overlayExit, F = this.EASE.overlayFadeOut;
+    const O = this.DUR.overlayOut, E = this.EASE.overlay, X = E, F = E;
     const blocks = plan ? plan.secs.filter((el) => el.isConnected) : [];
     const t = g.timeline({ onComplete: done || null });
     // One length whatever the panel holds — the same rule the panel's own tween has always obeyed,
@@ -544,6 +594,7 @@ export const overlayMethods = {
   _finishContrastClose() {
     if (this._cxDone) return; this._cxDone = true;
     clearTimeout(this._cxGuard);
+    this._blockPlan = null;   // see _finishHarmonyClose
     const back = this._contrastBack; this._cxTl = null;
     this.setState({ contrast: false, announce: 'Contrast checker closed.' }, () => {
       const el = (back && back.focus) ? back : this.contrastBtnRef.current; if (el && el.focus) try { el.focus(); } catch (e) { }
@@ -675,9 +726,17 @@ export const overlayMethods = {
     clearTimeout(this._hxGuard);
     this._hxGuard = setTimeout(() => this._finishHarmonyClose(), (this.DUR.overlayOut + 0.8) * 1000);
   },
+  // _blockPlan is cleared HERE as well as in _drawerOut, and the belt is not redundant with the
+  // braces. _drawerOut is the animated path; every route that skips it — the close guard firing,
+  // a close arriving with no timeline built, a teardown that races the rAF the open schedules its
+  // build in — leaves the plan holding the drawer's whole detached block list. Nothing can misread
+  // it (both consumers match on `plan.root === root` first), so this is retention rather than a
+  // correctness bug, which is exactly the kind that survives review. One line, and the last thing
+  // to touch the plan is always the thing that ends the drawer's life.
   _finishHarmonyClose() {
     if (this._hxDone) return; this._hxDone = true;
     clearTimeout(this._hxGuard);
+    this._blockPlan = null;
     const back = this._harmonyBack; this._hxTl = null;
     const patch = { harmony: null };
     if (!this._hxKeep) patch.announce = 'Colour harmonies closed.';
@@ -760,7 +819,7 @@ export const overlayMethods = {
     // handled in one line here. It leads the first block slightly, because a panel whose heading
     // is the last thing to resolve reads backwards.
     const head = root.querySelector('header[data-tg-sec]');
-    if (head && !this._reduce) tl.from(head, { opacity: 0, duration: this.DUR.overlayArrive * 0.55, ease: this.EASE.overlayFadeIn, clearProps: 'opacity' }, this.DUR.overlay * 0.16);
+    if (head && !this._reduce) tl.from(head, { opacity: 0, duration: this.DUR.overlayArrive * 0.55, ease: this.EASE.overlay, clearProps: 'opacity' }, this.DUR.overlay * 0.16);
     this._tgTl = tl;
   },
   // SHOW ALL / SHOW FEWER on the character traits. Not toggleFold: that tweens the height of one
@@ -794,6 +853,7 @@ export const overlayMethods = {
     this._facetOutsideFn = null;
   },
   _finishTagClose() {
+    this._blockPlan = null;   // see _finishHarmonyClose
     if (this._tgDone) return; this._tgDone = true;
     clearTimeout(this._tgGuard);
     this._unbindFacetOutside();   // belt and braces: every teardown path leaves the document clean
@@ -915,8 +975,10 @@ export const overlayMethods = {
     // also why they fade rather than wipe: the beat is only shared if the mechanic is.
     // transition:none for the duration — see the note in _drawerIn. These items are buttons, and a
     // button's own opacity transition would damp every step of this stagger by 280ms.
+    // Controls, so they fade — see the note in _drawerIn. Every item in this list is a button
+    // with a word on it, which is the exact case the horizontal wipe is wrong for.
     tl.set(items, { transition: 'none' }, 0);
-    tl.from(items, { opacity: 0, duration: this.DUR.overlayArrive, ease: this.EASE.overlayFadeIn, stagger: this.DUR.overlayItem, clearProps: 'opacity,transition' }, D * 0.32);
+    tl.from(items, { opacity: 0, duration: this.DUR.overlayArrive, ease: E, stagger: this.DUR.overlayItem, clearProps: 'opacity,transition' }, D * 0.32);
     this._drawRules(tl, [...root.querySelectorAll('[data-ov-rule]')], D * 0.4);
     this._exTl = tl;
   },
@@ -934,8 +996,8 @@ export const overlayMethods = {
       if (this._exTl) this._exTl.kill();
       if (this._reduce || !g || !root) { done(); return; }
       const t = g.timeline({ onComplete: done });
-      if (back) t.to(back, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlayFadeOut }, 0);
-      t.to(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlayExit, transformOrigin: 'center center' }, 0);
+      if (back) t.to(back, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0);
+      t.to(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0);
     })();
     clearTimeout(this._exGuard);
     this._exGuard = setTimeout(() => this._finishExportClose(this._exKeep), (this.DUR.overlayOut + 0.8) * 1000);

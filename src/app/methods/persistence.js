@@ -559,7 +559,7 @@ export const persistenceMethods = {
   // the middle, gone) and the scrim fades on EASE.overlayFadeOut; both used to run the ARRIVAL curve,
   // which put peak velocity on the first frame and then spent two thirds of the duration finishing
   // a move nobody could still see.
-  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlayFadeOut }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlayExit, transformOrigin: 'center center' }, 0); },
+  _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0); },
   // ---- the toggletip's own beat ----------------------------------------------------------------
   // A dialog's arrival is an event; a toggletip's is a disclosure, so it moves less and moves
   // faster — DUR.state in, DUR.micro out, and 6px of travel against the dialog's 12, with no scale.

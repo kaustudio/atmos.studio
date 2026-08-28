@@ -211,38 +211,19 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* the utility-overlay curve — an expo-out with a longer tail than --ease-entrance. Mirrors
      EASE.overlay in methods/motion.js, which documents why it runs in BOTH directions. */
   --ease-overlay:cubic-bezier(0.19,1,0.22,1);
-  /* --ease-overlay moves an OBJECT: the drawer panel travelling in from its edge, a masked line
-     rising into place. Front-loading is right there — the thing is effectively arrived on the first
-     frame and the rest is a settle. (Measured against wrk-timepieces.com, whose column headers
-     translate in on an expo.out: --ease-overlay matches it to within 0.036 across the curve, so
-     this is the same call anyone tuning this kind of surface arrives at.)
-
-     THE TWO FADE CURVES ARE NOT ONE CURVE RUN BOTH WAYS, and that is the whole reason there are
-     two names here. A fade IN wants to be front-loaded: the element is mostly present quickly and
-     then settles over a long soft tail, which is what lets a tight stagger overlap many elements at
-     once without any of them looking late. A fade OUT wants the opposite — front-load a dismissal
-     and it snaps, which is the exact fault --ease-overlay-exit exists to fix on the panel.
-
-     --ease-overlay-fade-in is a cubic-bezier fit to GSAP's power4.out (max deviation 0.007). That
-     is not a guess: it is what wrk-timepieces.com's article rows fade on, measured off the running
-     site at 1000ms per row and a 50ms beat, and matched to within 0.005 across fifteen samples.
-     90% at 44% of the duration, so with a 50ms stagger roughly nine elements are live at any moment
-     — a continuous settle rather than a countable sequence.
-
-     --ease-overlay-fade-out is a sine-out: even rate, soft landing, nothing front-loaded. */
-  --ease-overlay-fade-in:cubic-bezier(0.25,0.94,0.43,1);
-  --ease-overlay-fade-out:cubic-bezier(0.39,0.58,0.57,1);
-  /* THE OVERLAY LEAVING. --ease-overlay is an expo-out, and an expo-out run on an EXIT is a
-     contradiction: the curve's whole shape is "arrive fast, settle slowly", so a panel using it to
-     leave starts at its maximum velocity on the first frame — a 500px drawer travelled 240px in the
-     first 100ms at 2631px/s, more than five times its own average — and then spent 600ms of a
-     1000ms tween moving the last few pixels of an already off-screen panel. Snap, then an invisible
-     creep. Nothing about that is a dismissal; it is an arrival played through a mirror.
-     0.37/0.63 is a symmetric in-out. It starts from REST (31px in the first 100ms, an eighth of
-     what it was), peaks in the MIDDLE at 1280px/s — under half the old peak, and 1.6x its own
-     average rather than 5.3x — and is 95% gone at 531ms of a 620ms tween, so almost none of the
-     length is spent where it cannot be seen. Quieter at both ends and shorter overall. */
-  --ease-overlay-exit:cubic-bezier(0.37,0,0.63,1);
+  /* --ease-overlay runs the WHOLE overlay system — arrival and dismissal, panel and contents.
+     Three specialised curves lived here for a day (--ease-overlay-fade-in, a power4 fit for
+     arriving fades; --ease-overlay-fade-out, a sine-out for departing ones; --ease-overlay-exit, a
+     symmetric in-out for the panel leaving). Each was measured and each was defensible alone; the
+     three together were a system where nothing left the way anything else did.
+     The collapse is a port of 28k.studio, which publishes its easing as
+         --o6:cubic-bezier(.19,1,.22,1)  --o3:cubic-bezier(.215,.61,.355,1)  --o2:cubic-bezier(.25,.46,.45,.94)
+     and puts essentially every transform on --o6 — 1200ms for its panel, 800ms for its content,
+     700ms and 600ms elsewhere. --o6 IS this token, to the digit. The reference was never using a
+     curve we did not have; it was using one where we had grown three.
+     The trade is real and is stated in _drawerOut: the reference never runs this curve on a long
+     dismissal travel — its menu closes on `opacity 250ms var(--o2)`, a fade with no journey — so
+     its front-loading never has to carry 500px of panel. Ours does. */
 }
 /* ===== shared duration tokens (named; mirrored by the JS DUR map in methods/motion.js) =====
    Easing was tokenised in both languages and duration never was: a documented seven-value scale in

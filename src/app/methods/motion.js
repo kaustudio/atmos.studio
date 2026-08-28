@@ -30,26 +30,29 @@ export const motionMethods = {
     //
     // A symmetric in-out fixes both halves at once: from rest, peak in the middle at under half the
     // old velocity, and gone at 86% of the tween instead of 40%. Mirrors --ease-overlay-exit.
-    // THE TWO FADE CURVES ARE NOT ONE CURVE RUN BOTH WAYS. `overlay` is an expo-out because a panel
-    // sliding in from an edge and a masked line rising into place are objects with momentum. Opacity
-    // has none, and on that curve a 440ms block fade was over in 136ms with 304ms of invisible tail
-    // left — a flash, not a fade. But the correction is direction-dependent, which one shared fade
-    // curve cannot express:
+    // ONE CURVE FOR THE WHOLE OVERLAY SYSTEM — in, out, panel, contents — and it is
+    // cubic-bezier(.19, 1, .22, 1).
     //
-    //   `overlayFadeIn`  front-loads DELIBERATELY. 90% at 44% of the duration, so an element is
-    //                    mostly present quickly and then settles over a long soft tail — which is
-    //                    what lets a tight stagger keep nine elements live at once and read as one
-    //                    continuous settle rather than as a countable sequence. It is a bezier fit
-    //                    (max deviation 0.007) to GSAP's power4.out, which is what the reference
-    //                    this was tuned against — wrk-timepieces.com's article list — fades its
-    //                    rows on: measured off the running site at 1000ms and a 50ms beat, matched
-    //                    to within 0.005 over fifteen samples.
-    //   `overlayFadeOut` is a sine-out: even rate, soft landing. Front-load a DISMISSAL and it
-    //                    snaps, which is the fault `overlayExit` exists to fix on the panel — there
-    //                    is no sense fixing it there and reintroducing it on the contents.
+    // This replaces three specialised curves that lived here for about a day: a power4 fit for
+    // arriving fades, a sine-out for departing ones, and a symmetric in-out for the panel's exit.
+    // Each was argued from a real measurement and each was defensible on its own. Together they
+    // made a system in which no two things left the same way, which is the condition this file's
+    // own opening paragraph exists to prevent.
     //
-    // Both mirror their --ease-overlay-fade-* twins in global.css, byte for byte.
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1), overlayFadeIn: this.cubicBezier(0.25, 0.94, 0.43, 1), overlayFadeOut: this.cubicBezier(0.39, 0.58, 0.57, 1), overlayExit: this.cubicBezier(0.37, 0, 0.63, 1) };
+    // The collapse is a direct port. 28k.studio publishes its easing as a three-value scale —
+    //     --o6: cubic-bezier(.19,1,.22,1)      --o3: cubic-bezier(.215,.61,.355,1)
+    //     --o2: cubic-bezier(.25,.46,.45,.94)
+    // and runs essentially every transform on --o6: `transform 1200ms var(--o6)` for the panel,
+    // 800ms for the content, 700ms and 600ms elsewhere. --o6 is byte-identical to the curve this
+    // file already called `overlay`. The reference is not using a curve we lacked; it is using ONE
+    // curve where we had grown three.
+    //
+    // WHAT THE REFERENCE DOES NOT DO, and why one curve costs it nothing: it never runs this curve
+    // on a long dismissal travel. Its menu closes on `opacity 250ms var(--o2)` — a quick fade,
+    // no journey — so the front-loading that makes an expo-out wrong for a 500px slide never gets
+    // the chance to show. Ours does slide, so the trade is stated plainly in _drawerOut rather than
+    // hidden: peak velocity returns to the first frame. That is the accepted cost of one curve.
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1) };
     // `overlay` is the UTILITY-OVERLAY band, and it is a deliberate exception to the reveal token
     // rather than a retune of it. `reveal` (620ms) is the app's arrival: a palette resolving out of
     // a photograph, bands wiping up in sequence, a stage taking the screen. That is the moment the
@@ -552,14 +555,30 @@ export const motionMethods = {
   },
 
   // ===== result reveal =====
-  // Shared reveal: bands wipe up from the bottom edge, one after the next (settle-with-authority).
+  // Shared reveal: bands wipe LEFT TO RIGHT, one after the next (settle-with-authority).
+  //
+  // They wiped UP from the bottom edge for most of this app's life, and the axis changed so that
+  // one rule holds everywhere: A COLOUR SURFACE IS REVEALED HORIZONTALLY. The utility drawers
+  // arrived at that rule from the other end — their swatches and their matrix legend take the same
+  // horizontal mask (_wipeIn in overlays.js), while text takes the vertical line mask and controls
+  // fade. The result stage's bands are the largest colour surface in the product and were the one
+  // place still doing it the other way, which made the app's signature moment the exception to its
+  // own vocabulary rather than the statement of it.
+  //
+  // The LENGTH is untouched, and that is deliberate. `reveal` (620ms) and `stagger` (50ms) are the
+  // arrival band — the moment a palette resolves out of a photograph — and this file has argued at
+  // length that they keep their length whatever else moves. Only the direction changed.
+  //
+  // Still a clip, not a transform. A clip reveals the band in place, so the colour never travels
+  // and never lands anywhere except where the layout already put it; scaling or translating a
+  // full-bleed colour band moves an edge the reader is using to judge the colour beside it.
   animateBands() {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;
     const bands = root.querySelectorAll('[data-band]');
     if (this._reduce) { g.fromTo(bands, { opacity: 0 }, { opacity: 1, duration: .4, stagger: .03, ease: 'none', clearProps: 'opacity' }); return; }
-    g.set(bands, { clipPath: 'inset(100% 0 0 0)' });                                   // fully clipped, hidden
-    g.to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe up from the bottom edge
+    g.set(bands, { clipPath: 'inset(0% 100% 0% 0%)' });                                // fully clipped, hidden
+    g.to(bands, { clipPath: 'inset(0% 0% 0% 0%)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe out from the left edge
   },
   animateText(delay) {
     const g = window.gsap, root = this.resultRef.current;

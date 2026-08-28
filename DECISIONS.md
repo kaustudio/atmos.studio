@@ -6,6 +6,85 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-27 — Three reveals, told apart by what the thing IS
+
+The overlay surfaces now have three arrival mechanics, and which one an element gets is decided by
+what kind of thing it is rather than by where it sits:
+
+| kind | reveal | mechanic |
+| --- | --- | --- |
+| **text** | vertical mask | `_maskLineReveal` — split to rendered lines, each slides up from 110% |
+| **colour surface** | horizontal mask | `_wipeIn` — clip opens left to right, opt-in via `data-ov-wipe` |
+| **control** | fade | opacity, on the shared curve |
+
+**The axis is what separates the two masks, and that is the whole point.** An earlier attempt ran
+one clip-path wipe on every box in the panel AND on the words inside them, both upward, both on the
+same curve — a block wiping up while its own text wiped up, two reveals stacked in one place. It was
+removed, and for a day everything merely faded, which is legible and says nothing. Changing the
+AXIS rather than the mechanic keeps the vocabulary and removes the collision: no element is ever
+performing the same gesture as the element inside it.
+
+**The wipe is opt-in, and the test is whether the thing carries a word.** A horizontal reveal drags
+a hard edge across a label, which is a second and worse reading of text the drawer already reveals
+properly; on a control it reads as the button being built rather than arriving. So `data-ov-wipe`
+marks only colour surfaces — the contrast matrix's axis legend and the harmony swatches. Every other
+item fades: the AA/AAA and Passing Only switches, the harmony models, the Save/Copy actions, the
+export format list, the per-colour rows and the matrix's own ratio cells.
+
+**The export list stacks.** Its items are a `flex-direction: column`, so a staggered fade in DOM
+order reads as a vertical cascade — measured tops 414/459/504/549/594, fading 0.95/0.93/0.89/0.84/0.77.
+
+**And the result stage's bands changed axis.** They wiped UP from the bottom edge for most of this
+app's life. They are the largest colour surface in the product, so leaving them vertical made the
+signature moment the exception to the rule the rest of the app had just adopted. `animateBands` now
+opens left to right. **The length is untouched** — `reveal` (620ms) and `stagger` (50ms) are the
+arrival band and keep their values, as this file has argued throughout; only the direction moved.
+
+Not changed, and worth naming so the next pass does not assume otherwise: the fullscreen detail
+overlay's bands still arrive on `scaleY`, because that surface is reached from the grid and the
+universe rather than from the list, and its band geometry is doing a different job.
+
+---
+
+## 2026-08-27 — One curve for the whole overlay system, after 28k.studio
+
+The overlay system had grown three easing curves in a day — a power4 fit for arriving fades, a
+sine-out for departing ones, a symmetric in-out for the panel leaving — each measured, each
+defensible alone, and together a system in which no two things left the same way. They are collapsed
+back to one: `--ease-overlay`, `cubic-bezier(.19, 1, .22, 1)`.
+
+**The reference was not using a curve we lacked.** 28k.studio publishes its easing as a three-value
+scale in `:root` —
+
+    --o6: cubic-bezier(.19,1,.22,1)   --o3: cubic-bezier(.215,.61,.355,1)   --o2: cubic-bezier(.25,.46,.45,.94)
+
+— and puts essentially every transform on `--o6`: `transform 1200ms var(--o6)` for the panel, 800ms
+for the content, 700ms and 600ms elsewhere. **`--o6` is byte-identical to the curve this codebase
+already called `--ease-overlay`.** The lesson taken was not the curve; it was using ONE where we had
+grown three.
+
+**The trade is real and is stated rather than hidden.** The reference never runs this curve on a
+long dismissal travel — its menu closes on `opacity 250ms var(--o2)`, a quick fade with no journey —
+so the front-loading that makes an expo-out wrong for a 500px slide never gets the chance to show.
+Ours does slide. Measured on the contrast drawer's exit:
+
+| | in-out (previous) | one curve (now) |
+| --- | --- | --- |
+| peak velocity | 1300px/s | **4000px/s** |
+| peak at | 440ms, mid-travel | **140ms** |
+| panel gone at | ~600ms | 360ms of a 724ms tween |
+
+That is the snap returning, at three times the velocity, and it is accepted knowingly as the cost of
+one curve. If it reads badly the fix is not a fourth curve — it is to stop sliding the panel out at
+all and close the way the reference does.
+
+**The arrival is unharmed by the change,** because the cascade was never doing its work through the
+curve: 25 of 29 contrast items still live simultaneously at peak, and the colour rows still read as
+one gradient (0.74 / 0.61 / 0.43 / 0.19 / 0). The stagger carries the sequence; the curve only
+decides the shape of each element's own arrival.
+
+---
+
 ## 2026-08-27 — The arrival curve, measured off wrk-timepieces.com
 
 The utility drawers' arrival was retuned against a named reference — the "Latest Innovations"
