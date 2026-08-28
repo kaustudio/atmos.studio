@@ -375,12 +375,19 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      anchor dock is 36px shut and 263px open on /about; --radius-pill would be a true stadium at the
      first and a 132px lozenge at the second.
 
-     24px, RAISED FROM 18, AND ONLY THE OPEN PANEL MOVES. Worth stating plainly because it is not
-     obvious: 18 was already half the collapsed row, which is the ceiling — a corner cannot round a
-     36px box further than a stadium, and CSS scales overlapping radii down rather than overflowing.
-     So shut, this control looked identical at 18 and looks identical at 24; every pixel of the
-     change is in the 263px panel it opens into, which is the only state that had a corner left to
-     give. If the collapsed pill is ever wanted rounder it has to get shorter, not rounder.
+     20px, AND IT IS SOLVED FROM THE ROW RATHER THAN CHOSEN. This went 18 → 24 to open the panel's
+     corner up, and 24 was wrong for a reason a screenshot shows faster than a number: the padding
+     around the corner stopped being the padding down the sides. Two rounded boxes only hold an even
+     gap between them when the inner corner is the outer corner less that gap, and the inner corner
+     here is not free — the rows are stadiums, so the top row's corner IS half its own height. A
+     group head is 28px, so it curves at 14 whatever it is asked for, and the container has to answer
+     that: 14 + the 6px the list is inset by = 20. At 24 the container curved away from a row that
+     could not follow it and the gap opened up on the diagonal.
+
+     SHUT, NONE OF THIS IS VISIBLE. The collapsed pill is 36px and clamps to a stadium at anything
+     from 18 up, so it looked identical at 18, at 24 and at 20; every pixel of all of this is in the
+     panel it opens into. Re-solve it if the group head's height changes — that figure, not this one,
+     is what decides it.
 
      THE TWO SURFACES THAT DRAW THIS DOCK DO NOT AGREE ON THAT ROW, and the figure survives it by
      accident rather than by design, so it is written down: /about's collapsed pill is 36px and the
@@ -390,20 +397,22 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      /about's is literally 18. If the dock ever grows a third host, check its collapsed height rather
      than assuming this figure travels. */
   --radius-pill:999px;
-  --radius-dock:24px;
+  --radius-dock:20px;
   /* --radius-dock-row is the dock's INNER corner: the travelling active marker and the hover tint on
-     each row. It is not a taste figure either — it is --radius-dock minus the 6px the list is inset
-     by, which is the concentric rule, so it followed --radius-dock up from 12 to 18 rather than
-     being re-chosen. At 18 on a 33px row it lands past the stadium ceiling and clamps, which means
-     the rows are now fully round inside a rounded panel — a consequence of holding the concentric
-     rule at the larger corner, not a second decision. Two rounded boxes sharing a centre only look like one object
+     each row, and it says FULLY ROUND rather than naming a length. It was 12, then 18, both of them
+     --radius-dock minus the inset — and both were really asking for a stadium and getting one by
+     accident, because a row is shorter than twice either figure and CSS clamps. Saying
+     --radius-pill states the intent instead of a number that happens to exceed the ceiling: these
+     rows are pills, at 14 on a 28px group head and 16.5 on a 33px link, and they stay pills if a row
+     ever changes height. It is --radius-dock that is now derived from THEM, not the other way
+     round — see that token. Two rounded boxes sharing a centre only look like one object
      if the inner corner is the outer corner less the gap between them; equal radii read as the inner
      box bulging, and a square inner box inside a round outer one reads as the two being unrelated,
      which is what these rows did.
 
      Collapsed, the toggle fills the pill and needs nothing: it is clipped by the pill's own overflow.
      It is only open that the rows sit 6px in from that clip and have to state their own corner. */
-  --radius-dock-row:18px;
+  --radius-dock-row:var(--radius-pill);
   /* A third family takes no padding token at all: SQUARE icon buttons, sized by width/height and
      flex-centred, at 16 (a toggletip's "i"), 26 (an inline close) and 30 (a row action). Padding on
      those is meaningless — but it must still be written, because a <button> with none inherits the
