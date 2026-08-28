@@ -40,6 +40,34 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-focus="card"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 [data-focus="swatch"]:focus-visible{box-shadow:inset 0 0 0 4px #ffffff,inset 0 0 0 8px #1a1a1a}
 [data-focus="value"]:focus-visible{outline:none;box-shadow:inset 0 0 0 3px #ffffff,inset 0 0 0 6px #1a1a1a}
+/* THE SKIP LINK. Off-screen until it takes focus, first in the tab order on every route.
+
+   It is the one thing a keyboard reader had no substitute for here. The tool opens with 81 focusable
+   controls before the palette, and /about is a 31,482px document with seven chapters and a dock —
+   so "tab past the chrome" was a few dozen presses on one route and considerably worse on the other.
+   WCAG 2.4.1.
+
+   FIXED, AND ABOVE THE GATE. The landing is position:fixed at z-index 150 and covers the viewport
+   until it is dismissed, so a skip link painted under it would take focus and show nothing — the
+   failure being fixed, with an extra step. 400 clears the gate, the logo (155) and the wipe.
+
+   It moves rather than toggling display, because a display change cannot be eased and this surface
+   arrives like every other one. --dur-fast is the shortest arrival in the set: a keyboard reader is
+   waiting on it, so it is the floor rather than a chosen duration. Reduced motion collapses it to
+   nothing through the global rule above, which is correct — the link is still there, it just does
+   not travel. */
+.skip-link{
+  position:fixed;top:12px;left:12px;z-index:400;
+  padding:10px 16px;
+  background:var(--surface);color:var(--on-surface);
+  border:1px solid var(--action-line);
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-detail);line-height:1;
+  text-decoration:none;white-space:nowrap;
+  transform:translateY(calc(-100% - 24px));
+  transition:transform var(--dur-fast) var(--ease-entrance);
+}
+.skip-link:focus-visible{transform:translateY(0)}
+
 /* Text fields are the one place :focus-visible is not enough on its own: a browser matches it on a
    text input however you got there, because typing is expected — so clicking into the search field
    drew a 2px underline under a field that was already bordered, backgrounded and holding a caret.
@@ -1157,7 +1185,16 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    disagree a surface mounts, measures, animates and takes taps underneath a rule hiding it — with
    nothing in the console to say so. Change one, change the other, in the same commit. */
 @media (max-width:720px),(pointer:coarse) and (max-height:600px){
-  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]){display:none!important}
+  /* TWO CLASSES ON THE ALLOW-LIST, and they are the exceptions the list itself created. Everything
+     inside [data-app] that is not a named phone surface is painted out here, which is right for the
+     desktop tool — and was silently also true of two things that belong on every viewport:
+       · .skip-link — hidden by this rule it is display:none, and a display:none link is not
+         focusable, so the first Tab on a phone walked straight past it. It was present, correct and
+         unreachable, which is the worst of the three states.
+       · .site-foot — the phone story is the homepage on a phone, and it was the one surface on the
+         site with no link to About, Privacy or Terms. Measured: zero of all three.
+     Neither is a piece of the tool, so neither is what this rule is defending against. */
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not(.skip-link):not(.site-foot){display:none!important}
   /* The wordmark steps down a tenth on the phone. 165x26 is drawn for a desktop chrome bar with a
      toolbar either side of it; alone at the top of a 375px screen it is 44% of the width, and it is
      the one element on this surface the reader never needs to act on. Both numbers move together

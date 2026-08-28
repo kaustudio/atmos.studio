@@ -793,7 +793,16 @@
 /* Characters are inline-block so a transform can be tweened on each; the word wrapper keeps line
    breaking where the browser would have put it. */
 .about-takeover__el [data-st-word]{display:inline-block}
-.about-takeover__el [data-st-char]{display:inline-block;will-change:opacity}
+.about-takeover__el [data-st-char]{display:inline-block}
+/* PROMOTED ONLY WHILE THE SCRUB IS RUNNING. This carried an unconditional `will-change:opacity`,
+   and with the title split per character that is 308 elements each holding a compositor layer for
+   the entire life of the page — measured, on a document that is 31,482px tall and where the effect
+   occupies three viewports of it. will-change is a hint for a change that is ABOUT to happen; left
+   on permanently it is just a standing bill for GPU memory and layer-tree work on every frame,
+   including every frame of every OTHER section. The sticky trigger's onToggle now writes
+   data-st-active on the wrap, so the characters are promoted while they are being scrubbed and
+   nowhere else. */
+.about-takeover[data-st-active] .about-takeover__el [data-st-char]{will-change:opacity}
 
 /* Without the effect the wrapper has no reason to be three viewports tall, and the three statements
    simply read down the page in the section's own rhythm. */

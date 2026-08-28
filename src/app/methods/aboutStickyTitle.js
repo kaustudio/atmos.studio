@@ -211,6 +211,18 @@ export function initStickyTitle(root) {
         end: 'bottom bottom',
         scrub: true,
         invalidateOnRefresh: true,
+        /* THE CHARACTERS ARE PROMOTED ONLY WHILE THIS RANGE IS ACTIVE. The stylesheet hangs
+           `will-change:opacity` off data-st-active rather than off the character itself, because the
+           title splits into ~308 spans and an unconditional hint is 308 compositor layers held for
+           the whole life of a 31,482px document — paid on every frame of every other section too.
+           onToggle is the honest lifetime: it fires on the way in and on the way out, in both
+           scroll directions, so the layers exist exactly across the scrub that needs them. */
+        onToggle: (self) => {
+          try {
+            if (self.isActive) wrap.setAttribute('data-st-active', '1');
+            else wrap.removeAttribute('data-st-active');
+          } catch (e) { }
+        },
       },
     });
 
@@ -405,7 +417,7 @@ export function initStickyTitle(root) {
     triggers.length = 0;
     splits.forEach((s) => { try { gsap.killTweensOf(s.chars); } catch (e) { } try { s.restore(); } catch (e) { } });
     splits.length = 0;
-    live.forEach((w) => { try { w.removeAttribute('data-sticky-live'); } catch (e) { } });
+    live.forEach((w) => { try { w.removeAttribute('data-sticky-live'); w.removeAttribute('data-st-active'); } catch (e) { } });
     live.length = 0;
     // The ground and the ink are written inline by the scrub, so an unmount that left them behind
     // would hand the next route a section painted whatever colour the last scroll position was.

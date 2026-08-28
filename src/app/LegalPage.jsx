@@ -100,7 +100,7 @@ export default class LegalPage extends React.Component {
             <main> rather than a div, for the reason spelled out in AboutPage: the tool has a main
             landmark and these documents had none, so landmark navigation had nothing to skip the
             masthead with on the pages most likely to be read with a screen reader. */}
-        <main key={route} ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
+        <main id="main" key={route} ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
       </>
     );
   }

@@ -201,7 +201,7 @@ export default class AboutPage extends React.Component {
             ScrollTrigger pins, all of which resolve to position:fixed. The wipe's drift must
             therefore dim it without transforming it, or every one of them re-resolves against a
             31,820px containing block and leaves the screen. See _routeDrifters in wipe.js. */}
-        <main data-holds-fixed="" ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={ABOUT_HTML} />
+        <main id="main" data-holds-fixed="" ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={ABOUT_HTML} />
       </>
     );
   }

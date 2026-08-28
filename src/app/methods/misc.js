@@ -11,7 +11,14 @@ export const miscMethods = {
     const arm = () => {
       const g = window.gsap;
       if (!window.Lenis || !g) { if (++tries > 40) return; setTimeout(arm, 100); return; }
-      this._lenis = new window.Lenis({});
+      /* TUNED, NOT DEFAULTED. `new Lenis({})` takes lerp:0.1, and measured on this site that is a
+         wheel flick still creeping 840ms after the hand stopped — the last 300ms of it covering
+         three pixels. Scrolling is direct manipulation, and the house rule for direct manipulation
+         is that it answers immediately; the curve belongs on things the reader did not just push.
+         0.22 keeps enough smoothing for the scrubbed ScrollTriggers to interpolate cleanly and
+         removes the drift. Lenis normalises lerp against a 60fps clock internally, so this is one
+         number on every display rather than one that means different things at 60 and 120Hz. */
+      this._lenis = new window.Lenis({ lerp: 0.22 });
       this._lenisRaf = (time) => { try { this._lenis.raf(time * 1000); } catch (e) { } };
       g.ticker.add(this._lenisRaf);
       if (this.state.feedView === 'grid') this._lenis.stop();

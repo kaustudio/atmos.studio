@@ -4,8 +4,26 @@
 import React, { useState } from 'react';
 import { sx } from '../lib/sx.js';
 import { B006, B006Text, GlassEffect, TextSwap, ThemeSwitch } from './chrome.jsx';
-import LegalPage from './LegalPage.jsx';
-import AboutPage from './AboutPage.jsx';
+/* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
+
+   Imported statically, these dragged about.html (89KB, injected verbatim as a string), about.css,
+   privacy.html, terms.html, doc.css, legal.css and ~20 about* scroll modules into the single chunk
+   every visitor to the TOOL downloads, parses and compiles — to render a page most of them never
+   open. Splitting them is worth ~28KB gzipped off the homepage's critical path.
+
+   PREFETCHED, NOT LAZY, and the distinction is the one index.html already makes about ScrollTrigger:
+   a network request started at the moment a route swap begins lands inside the wipe, which is the
+   exact stall this architecture was restructured to remove. So the chunk is requested on mount,
+   in parallel with three.js and long before anyone can reach a link to it, and by the time a wipe
+   runs it is a cache hit. Suspense is the floor under that promise, never the plan — if it is ever
+   seen, the prefetch below has failed and the cover is still down over it. */
+const AboutPage = React.lazy(() => import('./AboutPage.jsx'));
+const LegalPage = React.lazy(() => import('./LegalPage.jsx'));
+if (typeof window !== 'undefined') {
+  const prefetchDocs = () => { import('./AboutPage.jsx'); import('./LegalPage.jsx'); };
+  if (document.readyState === 'complete') prefetchDocs();
+  else window.addEventListener('load', prefetchDocs, { once: true });
+}
 // The phone story's own layer. Imported here rather than by a route component because this surface
 // is one of AppView's early-return branches, not a route — and it is scoped entirely under
 // [data-mobile-story], so nothing it holds can reach a viewport that never mounts that surface.
@@ -480,7 +498,7 @@ function MobileStory({ st }) {
           A case change is a rare, deliberate act that also returns the reader to 1.1, so remounting
           costs nothing anyone can perceive; the alternative is asking every dynamic sentence to
           survive being rewritten by a module that does not know React exists. */}
-      <main key={st.caseId}>
+      <main key={st.caseId} id="main">
       {/* ===== data-reveal IS FOR TEXT, AND NEVER FOR A BLOCK HOLDING A CONTROL =====
 
           pageReveal hands every [data-reveal] block to splitLines(), which rebuilds it: each word
@@ -1066,6 +1084,18 @@ export function WipeLayer() {
   );
 }
 
+/* FIRST IN THE TAB ORDER, ON EVERY BRANCH. Rendered ahead of each return's live region rather than
+   once at the top, because this render is five separate returns — the tool, the three phone surfaces
+   and the document routes — and a landmark link that exists on only some of them is worse than none:
+   a keyboard reader learns it is there and then finds it missing on the page that needed it most.
+
+   Every branch's own <main> carries id="main", and exactly one branch renders at a time, so the one
+   id is never ambiguous. Styles are in global.css, with the reasoning for the z-index and the
+   transform. */
+function SkipLink() {
+  return <a className="skip-link" href="#main" data-focus="chrome">Skip to main content</a>;
+}
+
 /* The site footer, closing the tool and both legal routes — styles from /site-foot.css, which
    index.html links rather than the bundle importing it, because that file predates this being the
    only document that draws the footer at all. 404.html used to be the other one and no longer
@@ -1265,8 +1295,9 @@ export default function AppView({ vals }) {
     const legal = isLegal(vals.route);
     return (
       <div data-app="1" className={'doc-route ' + (legal ? 'legal-route' : 'about-route')} style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        {legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}
+        <React.Suspense fallback={null}>{legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}</React.Suspense>
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
         <Analytics />
         <SpeedInsights />
@@ -1292,6 +1323,7 @@ export default function AppView({ vals }) {
          over it is fixed and holds all the content, so the only thing that height ever produced was
          a strip of empty page to rubber-band into below the fold. */
       <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} covered />}
         {/* A BUTTON HERE, not the decorative mark. On the gate the mark is an image — there is
@@ -1319,12 +1351,21 @@ export default function AppView({ vals }) {
   if (vals.showMobileStory) {
     return (
       <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} quiet />}
         {/* Decorative here, as it is on the gate: the story IS the start screen, so there is nowhere
             for the mark to lead. It becomes a button on the two surfaces above this one. */}
         <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
         <MobileStory st={vals.mobileStory} />
+        {/* THE ONLY WAY OFF THIS PAGE ON A PHONE. The foot is rendered by the document routes and,
+            in the tool, by the upload stage — and the mobile story is neither, so the phone homepage
+            was the one surface on the site carrying no link to About, Privacy or Terms. Measured:
+            zero of all three, before and after the gate. That is a dead end for a reader and, for
+            the two statements specifically, a route that has to exist. MobileStory is itself a
+            .doc-route, and site-foot.css is scoped to nothing above .site-foot, so it lands here
+            styled exactly as it does on /about. */}
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
         <Analytics />
         <SpeedInsights />
       </div>
@@ -1333,6 +1374,7 @@ export default function AppView({ vals }) {
   if (vals.showMobileShare) {
     return (
       <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} covered />}
         {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
@@ -1349,7 +1391,8 @@ export default function AppView({ vals }) {
   return (
     <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
 
-      <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+      <SkipLink />
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
 
       {/* One surface, two copies. On a phone the landing IS the small-screen gate — same ring stage,
           same centred block, gate copy instead of the statement + CTA — so there is never a second
@@ -1487,7 +1530,7 @@ export default function AppView({ vals }) {
         </div>
       </header>
 
-      <main aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
+      <main id="main" aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
 
         {vals.isUpload && (<>
           <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Choose image. Drop an image here, or activate to browse your files." style={vals.dropStyle}>
@@ -2432,7 +2475,7 @@ function ContrastDrawer({ vals }) {
                 {row.isHeader && (<>
                   <div style={sx('width:34px;flex:none')}></div>
                   {row.chips.map((c, ci) => (
-                    <div key={ci} data-cx-cell={'chip-' + ci} style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
+                    <div key={ci} data-cx-cell={'chip-' + ci} data-ov-wipe="1" style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
                       <span aria-hidden="true" style={c.style}></span>
                     </div>
                   ))}
@@ -2441,8 +2484,15 @@ function ContrastDrawer({ vals }) {
                   {/* The axis legend is part of the grid, not furniture standing behind it. Without
                       a hook the chips sat at full strength while the ratios they label swept in
                       under them — a matrix whose data arrives into an axis that was already there.
-                      They take the same beat as the cells, so the whole grid arrives as one object. */}
-                  <div data-cx-cell={'chip-r' + ri} style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
+                      They take the same beat as the cells, so the whole grid arrives as one object.
+                      data-ov-wipe: the chips are a colour SURFACE, and the horizontal mask is what
+                      a surface arrives with — it draws across rather than materialising. The other
+                      wipe in this app is the harmony swatch, for the same reason. Everything else
+                      in either drawer is a control or a row with a sentence on it, and a wipe drags
+                      a hard edge across a word: a second, worse reading of text the drawer already
+                      reveals properly. Those fade, and their words take the vertical line mask,
+                      which stays the one treatment text gets anywhere on this surface. */}
+                  <div data-cx-cell={'chip-r' + ri} data-ov-wipe="1" style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
                     <span aria-hidden="true" style={row.chip.style}></span>
                   </div>
                   {row.cells.map((cell, ci) => (
@@ -2884,14 +2934,19 @@ function HarmonyDrawer({ vals }) {
           </div>
         </div>
 
-        {/* ONE HARMONY, AT SIZE. Each swatch names itself: the SOURCE colour is labelled in words
+        {/* data-ov-wipe on the swatches: they are colour SURFACES, and the horizontal mask is a
+            surface's reveal — the tile draws across rather than materialising. It is the one place
+            in either drawer besides the matrix legend where a wipe is right, because everything
+            else here is a control or a row with a sentence on it, and dragging a hard edge across a
+            word is a second, worse reading of text the drawer already reveals properly.
+            ONE HARMONY, AT SIZE. Each swatch names itself: the SOURCE colour is labelled in words
             rather than by a 5px square nobody has a legend for, and a colour whose chroma had to be
             reduced to fit sRGB says MAPPED on the colour it happened to, instead of being covered by
             one methodology sentence true of the whole set. */}
         <div data-hx-sec="1" data-hx-preview="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div style={sx('display:flex;gap:1px;width:100%')}>
             {harmony.cells.map((cell, ci) => (
-              <HBtn key={ci} type="button" data-hx-cell="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
+              <HBtn key={ci} type="button" data-hx-cell="1" data-ov-wipe="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
                 <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
                   {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
                 </span>

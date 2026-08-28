@@ -57,7 +57,7 @@
     <div class="about-plate about-plate--sm">
       <div data-flip-element="wrapper" class="about-plate__wrap">
         <div data-flip-element="target" class="about-plate__target">
-          <img class="about-plate__img" src="/assets/story/anthurium.webp" alt="A dark green anthurium leaf filling the frame, one small red bloom low and to the side." />
+          <img width="1000" height="1328" class="about-plate__img" src="/assets/story/anthurium.webp" alt="A dark green anthurium leaf filling the frame, one small red bloom low and to the side." />
         </div>
       </div>
     </div>
@@ -464,13 +464,13 @@
         </ul>
       </div>
       <div class="pills__visual">
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/runner.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/stone.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/pearls.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/pump.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/profile-pearl.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img src="/assets/story/padel.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-cover data-active="true" class="pills__cover"><img src="/assets/story/comb.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/runner.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="800" height="1062" src="/assets/story/stone.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1400" height="1859" src="/assets/story/pearls.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/pump.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1200" height="1593" src="/assets/story/profile-pearl.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/padel.webp" alt="" loading="lazy" decoding="async" /></div>
+        <div data-feature-pills-cover data-active="true" class="pills__cover"><img width="1500" height="1991" src="/assets/story/comb.webp" alt="" loading="lazy" decoding="async" /></div>
         <button data-feature-pills-close aria-hidden="true" tabindex="-1" aria-label="Close" data-focus="chrome" class="pills__close"></button>
       </div>
     </div>
@@ -527,7 +527,7 @@
     <div class="about-figure__media" data-cascade="self">
       <div class="about-shot" data-parallax="trigger" data-parallax-start="-7" data-parallax-end="7" data-parallax-disable="mobileLandscape">
         <div class="about-shot__inner" data-parallax="target">
-          <img src="/assets/examples/profile-sky.webp" alt="A profile in silhouette against a clear evening sky." />
+          <img fetchpriority="low" width="900" height="1195" src="/assets/examples/profile-sky.webp" alt="A profile in silhouette against a clear evening sky." decoding="async" />
         </div>
       </div>
     </div>
@@ -612,7 +612,7 @@
   <figure class="about-figure about-figure--full">
     <div class="about-split__ref">
       <div class="about-split__shot" data-parallax="trigger" data-parallax-start="-6" data-parallax-end="6" data-parallax-disable="mobileLandscape">
-        <div data-parallax="target"><img src="/assets/story/dusk.webp" alt="A wide dusk sky graded from grey-blue at the top through amber to a dark rust band at the horizon." /></div>
+        <div data-parallax="target"><img fetchpriority="low" width="1500" height="1130" src="/assets/story/dusk.webp" alt="A wide dusk sky graded from grey-blue at the top through amber to a dark rust band at the horizon." decoding="async" /></div>
       </div>
       <p class="about-split__note">The source image holds every sampled colour between OKLCH lightness 0.50 and 0.85. It creates a beautiful sky, but leaves the palette without a colour dark enough to carry body text against its lighter surfaces. None of the original ten pairs reaches 4.5 to 1.</p>
     </div>
@@ -676,11 +676,26 @@
     </div>
   </div>
 
+  <!-- EAGER, BUT LAST IN THE QUEUE. Every card here is below the fold, and none of them may be
+       loading="lazy": the track is moved with a transform, so a card scrolled into view horizontally
+       is not what the browser's lazy heuristic is watching for, and a card that arrives blank at the
+       moment it is scrolled to is worse than one that costs a little bandwidth. fetchpriority="low"
+       keeps the guarantee and drops the competition — the images still load unconditionally, they
+       simply stop bidding against the document, the stylesheet and the fonts for the first pass.
+       decoding="async" is the matching half: it keeps the decode of a 1500px asset off the main
+       thread at the moment it lands. Same treatment on the two parallax figures above, for the same
+       reason. Intrinsic width/height are declared on all of them — the CSS sizes these to their
+       container (object-fit:cover), so the attributes never change what is drawn; they give the
+       browser the aspect ratio before the bytes arrive.
+       The seven src-less [data-stream-frame] images further down deliberately carry NO dimensions:
+       aboutStream cycles eight sources of differing ratio through them, and they are absolutely
+       positioned and so contribute nothing to layout. A fixed ratio there would be wrong for seven
+       of the eight and would buy nothing. -->
   <div class="about-rail" data-rail>
     <div class="about-rail__track" data-rail-track>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/story/lounge.webp" alt="A coupe glass held out over a polished bar, lit by a single brass wall lamp against dark panelling." />
+        <img fetchpriority="low" width="1500" height="1991" src="/assets/story/lounge.webp" alt="A coupe glass held out over a polished bar, lit by a single brass wall lamp against dark panelling." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
@@ -693,7 +708,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/examples/tulip.webp" alt="A tulip field in dry, low-angle light." />
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/tulip.webp" alt="A tulip field in dry, low-angle light." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
@@ -706,7 +721,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/examples/courtyard.webp" alt="A swimmer crossing a long narrow pool between sunlit ochre concrete walls." />
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/courtyard.webp" alt="A swimmer crossing a long narrow pool between sunlit ochre concrete walls." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
@@ -719,7 +734,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/examples/poppy.webp" alt="A poppy against a bright, washed-out sky." />
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/poppy.webp" alt="A poppy against a bright, washed-out sky." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 6 of 10</span></p>
           <div>
@@ -732,7 +747,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/examples/radish.webp" alt="A watermelon radish cut across, its green rim and pale centre on a light ground." />
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/radish.webp" alt="A watermelon radish cut across, its green rim and pale centre on a light ground." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
@@ -745,7 +760,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/story/glass.webp" alt="A pale bottle seen through misted glass, its edges dissolving into a dark green ground." />
+        <img fetchpriority="low" width="700" height="929" src="/assets/story/glass.webp" alt="A pale bottle seen through misted glass, its edges dissolving into a dark green ground." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 2 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
@@ -758,7 +773,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/examples/court.webp" alt="A tennis court from above, pale balls scattered on blue ground." />
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/court.webp" alt="A tennis court from above, pale balls scattered on blue ground." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 1 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
@@ -771,7 +786,7 @@
       </article>
 
       <article class="about-rail__card" data-rail-card>
-        <img src="/assets/story/driftwood.webp" alt="A weathered piece of driftwood curving across a plain pale ground, its grain running the length of it." />
+        <img fetchpriority="low" width="1200" height="1593" src="/assets/story/driftwood.webp" alt="A weathered piece of driftwood curving across a plain pale ground, its grain running the length of it." decoding="async" />
         <div class="about-rail__content">
           <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 6 of 10</span></p>
           <div>
@@ -827,7 +842,7 @@
          carry NO src attribute at all — `src=""` is not an empty image, it resolves against the
          document URL and re-requests the page, and it draws a broken-image box without JS. -->
     <div class="about-stream__stage" aria-hidden="true">
-      <img class="about-stream__frame" data-stream-frame src="/assets/story/profile-pearl.webp" alt="" loading="lazy" />
+      <img width="1200" height="1593" class="about-stream__frame" data-stream-frame src="/assets/story/profile-pearl.webp" alt="" loading="lazy" />
       <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
       <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
       <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
