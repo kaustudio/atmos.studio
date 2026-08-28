@@ -467,6 +467,46 @@ export function createNebulaField(canvas, ramp, options = {}) {
   } catch {
     return null;
   }
+  /* ===== THE READBACK, for the glass controls standing on this field ==============================
+
+     WHY IT LIVES IN HERE rather than in the caller that wants it. `preserveDrawingBuffer` is false
+     above and should stay false — turning it on makes the browser keep a second copy of every frame,
+     which is a real cost paid on every frame for something wanted ten times a second. With it off,
+     the drawing buffer is valid only between `renderer.render()` and the end of the current task, so
+     a reader outside this module can only be correct by accident of call order. `sample()` below is
+     called by update() itself, one line after the render, which is the one place that is always
+     right.
+
+     A 32x18 GRID, NOT A PER-CONTROL READ. getImageData is a GPU→CPU sync: the cost is in the stall,
+     not in the pixel count, so one 576-pixel read that every caller then indexes into beats one read
+     per control. 32x18 is coarse on purpose — this is asking "what colour is the gas over there",
+     and the answer wanted is the average of a region rather than a pixel that a bright filament can
+     swing. drawImage does the box filter on the GPU for free.
+
+     IT IS ALSO THE THROTTLE. `sampleEvery` frames between reads; the gas drifts slowly enough that
+     ten reads a second is more resolution than the eye asks of it, and the caller lerps between
+     them anyway. */
+  const SW = 32, SH = 18;
+  let scratch = null, sctx = null, grid = null, sampleCount = 0;
+  const sampleEvery = Math.max(1, options.sampleEvery || 3);
+  function readbackIfDue() {
+    if (--sampleCount > 0) return;
+    sampleCount = sampleEvery;
+    if (!scratch) {
+      try {
+        scratch = document.createElement('canvas');
+        scratch.width = SW; scratch.height = SH;
+        sctx = scratch.getContext('2d', { willReadFrequently: true });
+      } catch (e) { sctx = null; }
+      if (!sctx) { grid = null; return; }
+    }
+    try {
+      sctx.clearRect(0, 0, SW, SH);
+      sctx.drawImage(canvas, 0, 0, SW, SH);
+      grid = sctx.getImageData(0, 0, SW, SH).data;
+    } catch (e) { grid = null; }
+  }
+
   // three has been WebGL 2 only since r163, so the constructor above is the real gate; this catches
   // a build where it is not.
   if (renderer.capabilities.isWebGL2 === false) { try { renderer.dispose(); } catch { } return null; }
@@ -682,12 +722,32 @@ export function createNebulaField(canvas, ramp, options = {}) {
       uniforms.uRot.value = (rot || 0) * Math.PI / 180;
       govern(dt);
       renderer.render(scene, camera);
+      // Same task as the render, which is the only time the drawing buffer holds anything — see the
+      // readback note up top. Its own counter decides whether this frame actually pays for it.
+      if (options.sample !== false) readbackIfDue();
     },
     /** One frame at rest — the reduced-motion path, and the first frame under a cover. */
     renderStill(rot) {
       if (disposed) return;
       uniforms.uRot.value = (rot || 0) * Math.PI / 180;
       renderer.render(scene, camera);
+    },
+    /** The gas colour at a point, in VIEWPORT-normalised coordinates (0..1, y down) — the space a
+        getBoundingClientRect() lands in, because every caller is asking on behalf of a DOM box.
+        Returns null until the first readback has happened, when the context is lost, or when the
+        2D fallback is unavailable; a null means "no reflection", never a colour to guess at. */
+    sampleAt(nx, ny) {
+      if (!grid) return null;
+      const x = Math.min(SW - 1, Math.max(0, Math.round(nx * (SW - 1))));
+      const y = Math.min(SH - 1, Math.max(0, Math.round(ny * (SH - 1))));
+      const i = (y * SW + x) * 4;
+      const a = grid[i + 3] / 255;
+      // The field is drawn with premultiplied alpha over the page, so a thin region carries a small
+      // colour AND a small alpha. Un-premultiplying is what makes a wisp report its own hue rather
+      // than a darker version of it; alpha itself is returned so the caller can weigh how much gas
+      // is actually there.
+      if (a <= 0.004) return [0, 0, 0, 0];
+      return [grid[i] / a, grid[i + 1] / a, grid[i + 2] / a, a];
     },
     onContextLost(handler) {
       canvas.addEventListener('webglcontextlost', (ev) => { ev.preventDefault(); handler(); }, false);

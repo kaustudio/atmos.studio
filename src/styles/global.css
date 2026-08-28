@@ -320,6 +320,15 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      literal 14px; that is the definition of a decision nobody could repeat, which is exactly what
      the note above says a scale is for. It is named for the job, so the CTA family moves together
      and the neighbours on either side keep their own jobs — 15 is a paragraph lead, 13 is body. */
+  /* 14, WHICH IS WHERE THIS STARTED. The comp draws the control at 16/Medium and this token was
+     raised to 1rem to match it; at the comp's 12/24 padding that was in proportion, and at the 8/16
+     the control now carries it was not — 16 of label in 16 of air reads as a label that has outgrown
+     its box. The type scale's own figure is the one that fits, so the token goes back to it rather
+     than to a third number invented for this control.
+
+     REM, NOT PX, like every other step on this scale: these sizes are relative to the root so a
+     reader who has set a larger default text size gets a larger control, and a px here would be the
+     one label on the site that ignores them. */
   --fs-cta:0.875rem;          /* 14 — the glass call to action (gate, example page, landing, /about) */
   --fs-lead:0.9375rem;        /* 15 — lead paragraphs, the "Best for" line */
   --fs-body:0.8125rem;        /* 13 — body copy and the reading */
@@ -348,6 +357,53 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      the same row are the same object. The two row actions that reveal on hover take it as well —
      they are absolutely positioned, so matching the chips beside them costs no row height. */
   --btn-pad-chip:4px 8px;
+  /* ===== RADIUS — THE EXCEPTIONS, NAMED =========================================================
+     The rule at the top of this file says this system has no radius anywhere, and enforces
+     border-radius:0 on every control so a browser's own rounded push-button cannot leak in. That
+     rule stands: a square corner is still the default and still the system's.
+
+     What changed is that there are now two places where a radius is DESIGNED rather than inherited,
+     and the note at .glass-cta said the moment a second one appeared was the moment it stopped being
+     a one-off and needed a token. This is that moment. Stated here, once, so the set is countable —
+     if a third ever appears it joins this list rather than writing a figure of its own.
+
+     --radius-pill is a stadium: a control sized by its own label, whose corner is therefore half of
+     whatever height it happens to be. 999px rather than a real figure because the shape is "fully
+     round" rather than a measurement, so it stays right if the control is ever taller.
+
+     --radius-dock is stated as a LENGTH precisely because that trick fails on a box that MORPHS. The
+     anchor dock is 36px shut and 263px open on /about; --radius-pill would be a true stadium at the
+     first and a 132px lozenge at the second.
+
+     24px, RAISED FROM 18, AND ONLY THE OPEN PANEL MOVES. Worth stating plainly because it is not
+     obvious: 18 was already half the collapsed row, which is the ceiling — a corner cannot round a
+     36px box further than a stadium, and CSS scales overlapping radii down rather than overflowing.
+     So shut, this control looked identical at 18 and looks identical at 24; every pixel of the
+     change is in the 263px panel it opens into, which is the only state that had a corner left to
+     give. If the collapsed pill is ever wanted rounder it has to get shorter, not rounder.
+
+     THE TWO SURFACES THAT DRAW THIS DOCK DO NOT AGREE ON THAT ROW, and the figure survives it by
+     accident rather than by design, so it is written down: /about's collapsed pill is 36px and the
+     front page's mobile story is 32px. On the second, 18 is MORE than half the height, and CSS
+     scales overlapping corner radii down proportionally rather than overflowing — so it renders at
+     an effective 16px and is still exactly a stadium. Both surfaces read as a pill shut; only
+     /about's is literally 18. If the dock ever grows a third host, check its collapsed height rather
+     than assuming this figure travels. */
+  --radius-pill:999px;
+  --radius-dock:24px;
+  /* --radius-dock-row is the dock's INNER corner: the travelling active marker and the hover tint on
+     each row. It is not a taste figure either — it is --radius-dock minus the 6px the list is inset
+     by, which is the concentric rule, so it followed --radius-dock up from 12 to 18 rather than
+     being re-chosen. At 18 on a 33px row it lands past the stadium ceiling and clamps, which means
+     the rows are now fully round inside a rounded panel — a consequence of holding the concentric
+     rule at the larger corner, not a second decision. Two rounded boxes sharing a centre only look like one object
+     if the inner corner is the outer corner less the gap between them; equal radii read as the inner
+     box bulging, and a square inner box inside a round outer one reads as the two being unrelated,
+     which is what these rows did.
+
+     Collapsed, the toggle fills the pill and needs nothing: it is clipped by the pill's own overflow.
+     It is only open that the rows sit 6px in from that clip and have to state their own corner. */
+  --radius-dock-row:18px;
   /* A third family takes no padding token at all: SQUARE icon buttons, sized by width/height and
      flex-centred, at 16 (a toggletip's "i"), 26 (an inline close) and 30 (a row action). Padding on
      those is meaningless — but it must still be written, because a <button> with none inherits the
@@ -545,6 +601,100 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-line:color-mix(in srgb,var(--on-surface) 48%,transparent);
   --action-line-hover:color-mix(in srgb,var(--on-surface) 62%,transparent);
   --action-line-press:color-mix(in srgb,var(--on-surface) 72%,transparent);
+  /* ===== .glass-cta — THE GLASS ACTION'S OWN FILL, EDGE AND INK =================================
+     The one control on this site that does NOT resolve through --on-surface, and the reason is the
+     thing it stands on. Every other control sits on --surface or on a panel; this one sits in the
+     hole the nebula field clears around the landing's words, and that hole is near-white in light
+     and near-black in dark. A tint mixed from the page ink tracks the THEME; this control has to
+     track the FIELD, so it is stated as neutral black or neutral white at a measured alpha and the
+     label is white on both.
+
+     LIGHT IS A BLACK SCRIM, and the alphas are the design's ramp shifted up as a block. The comp
+     draws 40/50/60; over its own dark rust backdrop a white label on 40% is legible, and over the
+     hole this control actually stands in it is not — 40% black over the near-white centre composites
+     to #999 and carries white at 2.85:1, against the 4.5:1 WCAG 1.4.3 asks of 14px at weight 500.
+     55% is the floor that holds even over pure white (4.76:1, and 4.98:1 over the hole as measured),
+     so the ramp moves 55/65/75 and keeps the comp's 10-point step between states exactly.
+
+     THE FILL IS THE BOUNDARY HERE, not the edge — glass is fill-defined, and a 55% black pill on the
+     near-white hole is 4.69:1 against it, well past the 3:1 WCAG 1.4.11 asks. That is what frees the
+     edge to be what the comp draws: a white hairline at a tenth, an inner highlight rather than a
+     boundary. Dark cannot make that trade and states its own figure — see the dark block below. */
+  --cta-fill:rgb(0 0 0 / .55);
+  --cta-fill-hover:rgb(0 0 0 / .65);
+  --cta-fill-press:rgb(0 0 0 / .75);
+  /* EMPHASIS IS ONE STEP OF THE COMP'S OWN RAMP ABOVE QUIET — +10, the same interval the comp puts
+     between its three states. The comp has no second tier (it draws one control in three states), so
+     this tier is derived rather than given, and deriving it on the comp's grid is what keeps it from
+     being a private figure. Light has no ceiling to hit: deeper black is more contrast against the
+     hole, in both directions at once, so the rule applies unmodified. Dark does have one, and the
+     token block there records where it cuts in.
+
+     THE TIERS SHARE RAMP POSITIONS — filled rest is quiet hover's 65 — and now that the landing
+     stands them side by side that is worth being precise about. At rest the pair reads 65 against
+     55, which over the hole is grey 87 against 115: a step visible in greyscale, at any zoom,
+     without reading the labels, which is what the two-tier note further up this file asks emphasis
+     to survive. What the shared positions cost is that a HOVERED quiet control matches a resting
+     filled one — and a pointer is only ever on one of the two, so the one being compared against is
+     always at rest. Worth re-deriving if a surface ever hovers both at once. */
+  --cta-fill-emph:rgb(0 0 0 / .65);
+  --cta-fill-emph-hover:rgb(0 0 0 / .75);
+  --cta-fill-emph-press:rgb(0 0 0 / .85);
+  /* THE EDGE CARRIES THE REFLECTION NOW, so its strength is a token rather than a literal: the tint
+     is written into this same border and the two have to agree on one alpha.
+
+     .30 IN LIGHT, UP FROM THE COMP'S .10, and it is the tint that asks for it. A tenth of white over
+     this fill composites to grey 126 on a grey 112 pill — a hairline you can see, and nowhere near
+     enough signal to carry a hue: a tenth of the way toward a pale colour is a shift of three or
+     four levels, which is nothing. Light can afford the change because its boundary was never the
+     edge's job — the fill holds 4.69:1 against the page on its own — so this is a look decision and
+     not a measured one. Dark cannot, and says so at its own --cta-edge-a. */
+  --cta-edge-a:.30;
+  --cta-edge:rgb(255 255 255 / var(--cta-edge-a));
+  --cta-ink:#ffffff;
+  /* GEOMETRY, in the --cta-* family rather than in the rule, for the same reason the fills are:
+     this control's figures are set by a comp and re-tuned as a set, and a literal in the rule is a
+     figure the next person has to go and find. It does NOT take --btn-pad-lg (12px 16px) or any of
+     the --btn-pad-* family: those size the TOOL's chrome, and the whole argument for this control is
+     that the screens it stands on are not the tool. The flanks agree with --btn-pad-lg at 16; the
+     vertical is 8 by request, which is the one figure here that is neither the comp's 12 nor the
+     button family's.
+
+     THE HEIGHT IT BUYS IS 32px — 14 of label on line-height:1, 16 of padding, 2 of edge. State the
+     trade rather than bury it: that clears WCAG 2.5.8's 24px AA target, and it is 12px under the 44
+     touch wants — the smallest this control has ever stood, since the 12/16 it carried before the
+     comp made 40. The gate is the one surface on this site reached only by a thumb, so it is the one
+     place the difference is felt. --cta-pad is the single declaration that buys it back: 12px 16px
+     returns the control to 40 without touching the type or the flanks. */
+  --cta-pad:8px 16px;
+  --cta-blur:50px;
+  /* THE REFLECTION — see the note above .glass-cta's backdrop-filter. --cta-sat is how hard the
+     glass pushes the colour it TRANSMITS; --cta-reflect-alpha is how much of the sampled hue it
+     carries in its own fill, and it is bounded rather than free because the label's contrast floor
+     is computed against the fills above. --cta-reflect is written per-element from the tick and
+     falls back to the fill's own neutral when the field is not running. */
+  --cta-sat:1.7;
+  /* THE LIGHTNESS THE REFLECTION IS PAINTED AT, in OKLab L. The edge is a near-white rim, and .93
+     keeps it a near-white rim that has colour IN it rather than turning it into a coloured line that
+     happens to be pale. It is not free: swept across all 24 hues, a rim tinted at any L below 1.0
+     costs luminance, and in dark that luminance is load-bearing — see --cta-edge-a there for what it
+     cost and what bought it back. --cta-reflect-chroma is a gain, not a value: a 32x18 box average
+     of the gas is far less saturated than the gas looks, and without it the rim reads white.
+     --cta-reflect-cmax is the ceiling that gain runs into, and it is the chroma the boundary sweep
+     was actually run at — moving it invalidates that sweep. */
+  --cta-reflect-l:.93;
+  --cta-reflect-chroma:2.6;
+  --cta-reflect-cmax:.08;
+  /* HOW FAR OUT THE GLASS LOOKS FOR ITS COLOUR, as a fraction of the viewport. These controls stand
+     in the formation's cleared hole, so a reach scaled off the control's own box finds no gas at
+     all — see the two-ring note in methods/orbit.js. 0.18 clears the hole on the landing at every
+     size it was checked at; lower it and the tint fades toward neutral rather than breaking. */
+  --cta-reflect-reach:.18;
+  /* The coverage at which the tint reaches full strength. The gas over the hole is thin — measured
+     around .02 to .045 on the landing — so a knee set for dense gas would hold the effect at a
+     fraction of --cta-reflect-alpha forever. This is the dial that decides how quickly a control
+     leaving the hole saturates; it is not a safety limit, since the sweep above holds at any alpha. */
+  --cta-reflect-knee:.035;
   /* ===== action emphasis (two tiers) — what a control is FOR, not what it looks like.
      Every value below resolves through the chrome tokens above, so the tiers re-theme with
      everything else and no tier owns a colour of its own. Emphasis is never carried by colour
@@ -640,6 +790,42 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      dark edge on the same 3.07:1 the light one sits at, and is nearly a third lighter than the 50
      both used to share. Hover and press are unchanged, so the edge still only strengthens. */
   --action-line:color-mix(in srgb,var(--on-surface) 36%,transparent);
+  /* ===== .glass-cta in dark — THE COMP'S FIGURES, EXCEPT THE ONE THAT CANNOT CARRY ITS JOB =======
+     The fills are the comp's exactly: white at 10/20/30. They need no adjustment because the label
+     is already white and the hole behind this control is the darkest thing on the page — 10% white
+     over it composites to #2b2b2b and holds the label at 14.1:1, and 10.5:1 over the lightest patch
+     of gas that reaches the button. Light had to move; dark did not.
+
+     THE EDGE IS THE ONE FIGURE THAT DOES MOVE, and it moves because the trade light makes is not
+     available here. There the fill IS the boundary and the edge is free to be decoration; here the
+     fill is white-on-dark and lands 1.31:1 against the hole, so it cannot identify the control at
+     all and the edge has to. The comp's 10% takes that to 1.80:1, still short of WCAG 1.4.11's 3:1.
+     .36 — WHICH IS BACK TO THE FIGURE THIS CONTROL ALREADY CARRIED, and the reflection is what sent
+     it back. 28% was the least that cleared 3:1 with a PLAIN WHITE edge (3.24:1 over the hole,
+     3.11:1 over the lightest gas), and it was picked because it was still lighter than the 36% of
+     --action-line this control used to take. Putting the tint in the edge spends exactly that
+     margin, and there was no more than exactly that: swept across all 24 hues, a rim tinted at
+     L .93 falls to 2.76:1 at 28% and fails, and at that alpha ONLY an untinted pure white passes.
+     .36 holds the same sweep at 3.40:1 — better than the untinted 28% it replaces — so the colour
+     is bought with the alpha the system had already measured for this edge. Below .32 no tint is
+     possible here at all; that is the floor, not a preference. */
+  --cta-fill:rgb(255 255 255 / .10);
+  --cta-fill-hover:rgb(255 255 255 / .20);
+  --cta-fill-press:rgb(255 255 255 / .30);
+  /* THE PRESS IS CLAMPED, AND THIS IS THE ONE PLACE THE TWO THEMES STOP MIRRORING EACH OTHER.
+     Emphasis is +10 on the comp's ramp, which in light just means a deeper scrim and better
+     contrast at every step. Here "deeper" means LIGHTER, and the label riding on it is white — so
+     the ramp runs toward its own floor rather than away from it. A white fill over the lightest gas
+     that reaches this control breaches 4.5:1 at 36%, which is a hard ceiling on any fill in this
+     theme; the +10 rule would put the filled press at 40% and 3.46:1, a control whose most emphatic
+     state is the one that fails. 34 is the top of the ramp with margin — 4.78:1 over that gas,
+     5.93:1 over the hole — so the tier reads 20/30/34 and compresses at the top instead of
+     inverting. Worth knowing if the quiet ramp is ever raised: it tops out at 30 and there are six
+     points of headroom above it, not thirty. */
+  --cta-fill-emph:rgb(255 255 255 / .20);
+  --cta-fill-emph-hover:rgb(255 255 255 / .30);
+  --cta-fill-emph-press:rgb(255 255 255 / .34);
+  --cta-edge-a:.36;
   color-scheme:dark;
 }
 html,body{background:var(--surface);transition:background var(--dur-chrome) var(--ease-standard)}
@@ -656,18 +842,23 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    edge progressions — 15 → 38 → 48 on the 404, 50 → 62 → 72 on the landing, 36 → 62 → 82 on /about —
    because each was copied from whichever was in front of the author that day.
 
-   THE EDGE TAKES --action-line, WHICH IS THE ONLY ONE OF THE FOUR FIGURES WITH NUMBERS BEHIND IT.
-   WCAG 1.4.11 asks 3:1 of a control's visual boundary. /about's comment claims its 36% clears that;
-   measured on the rendered pair it does not — 36% of the ink over the light surface is 2.2:1, and it
-   only passes in dark (3.16:1), which is how a figure checked in one theme survives review. The 404's
-   15% is 1.51:1 in both. The token three lines up from here is the one that was actually measured on
-   both surfaces in both themes — 3.25 / 3.31 light, 4.91 / 4.71 dark — so this control takes it
-   rather than a fourth private mix, and re-tuning it re-tunes every control at once. /about and the
-   404 are left as they are: both are outside the front page this change was scoped to, and the 404
-   cannot reach this file anyway. Their comments now say they have drifted.
+   IT IS A PILL NOW, AND IT NO LONGER RESOLVES THROUGH --on-surface. Both are the comp's doing
+   (Figma 10360:7568 light, 10360:7572 dark) and both are departures worth naming: a 999px radius in
+   a system whose own rule two hundred lines up says it has none, and a fill stated as neutral black
+   or neutral white instead of mixed from the page ink. The radius argues for itself at the
+   declaration. The fill argues for itself at --cta-fill, and the short version is that this control
+   stands in the hole the nebula clears rather than on the page, so it has to track the FIELD.
 
-   THE PAIR SEPARATES ON THE FILL, NOT THE EDGE. Both tiers take the same edge progression, because a
-   boundary's job is to say "this is a control" and that sentence is the same on both of them.
+   THE EDGE STOPPED BEING THE BOUNDARY IN ONE THEME AND BECAME IT IN THE OTHER, which is why the two
+   halves of the token set do not mirror. WCAG 1.4.11 asks 3:1 of whatever identifies the control. In
+   light a black scrim on the near-white hole is 4.69:1 on its own, so the fill carries it and the
+   comp's white hairline at a tenth is free to be decoration. In dark the fill is white-on-dark and
+   lands 1.31:1, so it carries nothing and the edge has to — at 28% rather than the comp's 10%, which
+   is the least that clears 3:1. Same control, same drawing, one figure that could not be shared.
+
+   THE EDGE DOES NOT MOVE WITH THE STATE any more; see the note above the hover block. /about's
+   .about-cta and the 404's .nf-cta are unchanged and have now drifted further: both are outside the
+   two components this change implements, and the 404 cannot reach this file anyway.
 
    NO data-ix, DELIBERATELY. The tiers at the top of this file own the interaction contract for
    controls that do not declare one, and this control declares its own transition and its own three
@@ -679,15 +870,18 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    share a surface and cannot be the same object twice — the app's filled primary tier (the ink as
    the surface, the surface as the label) is the TOOL's voice, and the whole argument for this
    control is that these screens are not the tool. So it separates on the one property glass actually
-   has: the fill. Over the light surface that is 201 against 230, a step visible in greyscale, at any
-   zoom, without reading the labels — which is what the two-tier note further up this file asks
-   emphasis to survive. Ink stays --on-surface either way: 10.52:1 filled, 13.89:1 quiet.
+   has: the fill. The comp does not draw this tier, so its figures are derived on the comp's own
+   10-point grid rather than given; the reasoning is at --cta-fill-emph, and the clamp dark needs is
+   at its own. Ink is white throughout, and every state of both tiers in both themes clears the
+   4.5:1 WCAG 1.4.3 asks of 14px at weight 500 — at rest 4.76:1 quiet and 6.98:1 filled in light,
+   14.06:1 and 9.89:1 in dark. The tightest in the whole set is dark's filled press at 4.78:1, and
+   it is tightest because it is the only state that moves TOWARD the label rather than away.
 
-   ONLY THE GATE'S ACT CARRIES IT TODAY, and it is now alone on that screen. Worth knowing if it is
-   ever revisited: /about and the 404 present their single action on the QUIET fill, so the gate is
-   the one lone action on the site standing at 20%. That is deliberate for now — it is the act the
-   whole screen exists to offer — but the argument the tier was written for is a pair, and there
-   isn't one here any more.
+   THE TIER HAS ITS PAIR AGAIN. This note used to end "the argument the tier was written for is a
+   pair, and there isn't one here any more", which was true while the landing offered one act. It
+   offers two now — `Create` filled, `Learn More` quiet — so the two fills are read side by side on
+   the surface they were measured for. The phone gate's `Try an Example` still carries the tier
+   alone, and /about and the 404 still present their single action on the QUIET fill.
 
    HOVER IS GATED on (hover:hover), like every [data-ix] tier: a tap on a touchscreen latches :hover
    until something else is tapped, and this control's busiest instance lives on the one surface that
@@ -702,8 +896,14 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      label with air around it, so one declaration decides the size everywhere and the three overrides
      that used to sit below this rule are gone. Height falls out at 40px: 14px of label on
      line-height:1, 24 of padding, 2 of edge. */
-  padding:12px 16px;
-  background:color-mix(in srgb,var(--on-surface) 7%,transparent);
+  padding:var(--cta-pad);
+  /* THE FILL IS ONLY A FILL. It carried the reflection as a second background layer for a while;
+     the reflection is the EDGE's job now, which is both what was asked for and the more honest
+     reading of the word — a scrim does not reflect anything, a rim does. Every contrast figure
+     above is therefore exactly the fill's own, with nothing composited over it.
+     Kept as background-COLOR rather than the `background` shorthand, and so are the state rules
+     below: the shorthand resets background-image, and leaving that door shut costs nothing. */
+  background-color:var(--cta-fill);
   /* -WEBKIT FIRST, STANDARD LAST, and the order is load-bearing rather than stylistic. Written
      the other way round the minifier treats the later -webkit- as the winner and drops the
      unprefixed property from the bundle entirely: `npx vite build` on 18.08.26 emitted three
@@ -712,10 +912,19 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      showed; Firefox implements only the standard property, so both of these controls shipped
      with no blur at all there — glass with nothing behind it, which is a flat tint. Verified
      by grepping dist/assets/global-*.css, not by reading the source. */
-  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
-  border:1px solid var(--action-line);
-  border-radius:0;
-  color:var(--on-surface);
+  -webkit-backdrop-filter:blur(var(--cta-blur)) saturate(var(--cta-sat));backdrop-filter:blur(var(--cta-blur)) saturate(var(--cta-sat));
+  /* --cta-reflect is written on the element by the tick (methods/orbit.js -> _reflectCtas): the
+     gas colour sampled around this control, painted at --cta-reflect-l. It falls back to the plain
+     edge, so a field that never started, a reduced-motion visit and a control on a route with no
+     field behind it all render the untinted rim. */
+  border:1px solid var(--cta-reflect,var(--cta-edge));
+  /* A DESIGNED RADIUS rather than a drift — the argument, and the two places the system now admits
+     one, are at the --radius-* block. The blanket border-radius:0 at the top of this file is a type
+     selector, so this class outweighs it on specificity alone. --radius-pill is 999px rather than
+     the comp's 99px: the shape is "fully round" rather than a measurement, so it stays a pill if the
+     control is ever taller, where a fixed 99 would start reading as a rounded rectangle. */
+  border-radius:var(--radius-pill);
+  color:var(--cta-ink);
   font-family:'Neue Montreal',system-ui,sans-serif;
   /* 14 at Medium, which is the figure the other two members of this family were already setting by
      hand — the scale now names it rather than each control repeating it. Medium is 500, and 500 is
@@ -736,33 +945,37 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      applied to a whole tier and any label dropped into it should speak it. Here it is six specific
      phrases on one journey, and getting `an`, `for`, `to` and `All` right is editing, not styling.
 
-     --track-title, the figure the rest of this family carries. The flat tracking this had was there
-     to stop caps crowding, and there are no caps left to crowd. */
-  letter-spacing:var(--track-title);text-transform:none;
+     THE TRACKING IS --track-statement NOW, not --track-title. The flat tracking this once had was
+     there to stop caps crowding, and there are no caps left to crowd; --track-title replaced it and
+     was right at 14px. --track-statement is -0.02em, which was the comp's -0.32px exactly while
+     this control stood at 16. At the 14 it stands at now the same token is -0.28px — the comp's
+     tracking is a RATIO and it is stated as one, so it followed the size down rather than needing a
+     new figure. Flip this back to --track-title if -0.02em reads tight at 14; it is a look
+     question, not a measured one. The token is
+     named for statement-scale headings and this is a control, so the name is a stretch — but the
+     value is the design's, the token already holds it, and a literal here would be the kind of
+     private figure the rest of this block exists to stop. */
+  letter-spacing:var(--track-statement);text-transform:none;
   white-space:nowrap;text-decoration:none;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   transition:background-color var(--dur-chrome) var(--ease-button-hover),
              border-color var(--dur-chrome) var(--ease-button-hover);
 }
 .glass-cta[data-emph="primary"]{
-  background:color-mix(in srgb,var(--on-surface) 20%,transparent);
+  background-color:var(--cta-fill-emph);
 }
+/* THE EDGE NO LONGER MOVES WITH THE STATE, and dropping that is the comp's decision rather than an
+   omission. It used to walk --action-line → hover → press alongside the fill, which was two signals
+   for one event; the comp separates its three states on the fill alone and holds one edge across
+   all of them, so the edge reads as the object's own hairline and the fill reads as the state. The
+   transition above still lists border-color: the theme swap moves it, and a colour this control can
+   still arrive at has to be reachable by a transition. */
 @media (hover:hover){
-  .glass-cta:hover:not(:disabled){
-    background:color-mix(in srgb,var(--on-surface) 12%,transparent);
-    border-color:var(--action-line-hover);
-  }
-  .glass-cta[data-emph="primary"]:hover:not(:disabled){
-    background:color-mix(in srgb,var(--on-surface) 26%,transparent);
-  }
+  .glass-cta:hover:not(:disabled){ background-color:var(--cta-fill-hover) }
+  .glass-cta[data-emph="primary"]:hover:not(:disabled){ background-color:var(--cta-fill-emph-hover) }
 }
-.glass-cta:active:not(:disabled){
-  background:color-mix(in srgb,var(--on-surface) 18%,transparent);
-  border-color:var(--action-line-press);
-}
-.glass-cta[data-emph="primary"]:active:not(:disabled){
-  background:color-mix(in srgb,var(--on-surface) 32%,transparent);
-}
+.glass-cta:active:not(:disabled){ background-color:var(--cta-fill-press) }
+.glass-cta[data-emph="primary"]:active:not(:disabled){ background-color:var(--cta-fill-emph-press) }
 @media (prefers-reduced-motion:reduce){ .glass-cta{transition:none} }
 /* 36px is the figure /about and /404 present their one action at, and it is a POINTER figure — both
    of those are read on a desktop as often as not. The gate is the one surface on this site that is

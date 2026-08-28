@@ -1838,6 +1838,17 @@
 
 /* ---- THE LIVE DOCK -------------------------------------------------------------------------- */
 [data-dock-live].section-dock{
+  /* THE GAP BETWEEN ROWS, and it is one figure because it is one rhythm. 2px was already here,
+     between sibling groups; it is now also what keeps every other adjacent pair apart, so it is
+     named once rather than typed in two rules that could drift.
+
+     IT EXISTS SO TWO STATES CANNOT TOUCH. The rows used to abut exactly — 33px tall on a 33px pitch
+     — which was invisible while they were transparent and stopped being invisible the moment they
+     started drawing rounded backgrounds. Hover a row next to the active one and the two filled
+     shapes met on a shared edge, reading as one lozenge with a colour change in the middle rather
+     than as two rows in two states. 2px is enough because the corners curve away from each other:
+     at --radius-dock-row the shapes are already parting well before their edges would meet. */
+  --dock-row-gap:2px;
   z-index:100;
   width:fit-content;
   margin:0 auto;
@@ -1848,7 +1859,18 @@
   right:0;
 }
 
-/* THE PILL IS THE GLASS. Square, per the system. overflow is load-bearing: the list is laid out at
+/* THE PILL IS THE GLASS, and it is round now — --radius-dock, one of the two designed radii the
+   system admits to. The argument for the figure is at that token in global.css; the short version is
+   that shut, the corner clamps to half this pill's 36px row and it is a true stadium — the same
+   object as the glass buttons — while open it is a rounded panel rather than a 132px lozenge. The
+   token is 24px and only the open panel can see that: 18 was already the collapsed ceiling.
+
+   THE CORNER IS FREE HERE because of the overflow below. Every child is clipped to the rounded box —
+   the glass pane takes border-radius:inherit, the travelling indicator is clipped rather than needing
+   a corner of its own, and the focus rings inside are all inset, which a radius does not reach. So
+   this is one declaration and nothing else in the component had to learn about it.
+
+   overflow is load-bearing: the list is laid out at
    full size from the first frame and would spill out of the box through the whole morph without it.
    It is also why every control in here takes the inset focus ring — see about.html.
 
@@ -1864,6 +1886,7 @@
 [data-dock-live] .section-dock__pill{
   position:relative;
   overflow:hidden;
+  border-radius:var(--radius-dock);
   transition:width var(--dur-fold) var(--ease-fold),height var(--dur-fold) var(--ease-fold);
   box-shadow:0 1px 2px color-mix(in srgb,var(--on-surface) 8%,transparent),
              0 8px 24px color-mix(in srgb,var(--on-surface) 12%,transparent);
@@ -1932,8 +1955,14 @@
    this motion and a disclosure share one curve. The resource paints #161c33 on #e9ecf6, which is
    its own palette; here the block is --on-surface and the row above it flips to --surface, so the
    active row reads as inverted type in both modes and needs no light/dark rule of its own. */
+/* THE MARKER TAKES THE ROW CORNER. It is the ACTIVE state — the rows themselves are transparent in
+   live mode ([data-section-dock-link][data-active] below forces that), so this block is the only
+   thing drawing "you are here", and a square slab of --on-surface inside an 18px pill was the state
+   that most obviously had not been told about the corner. --radius-dock-row, so it is the same shape
+   as the hover tint it lands on top of. */
 [data-dock-live] .section-dock__indicator{
   display:block;
+  border-radius:var(--radius-dock-row);
   z-index:1;
   pointer-events:none;
   background-color:var(--on-surface);
@@ -2005,6 +2034,15 @@
   position:relative;z-index:2;
   -webkit-tap-highlight-color:transparent;
 }
+/* HOVER AND PRESS ARE BACKGROUNDS, so a radius on the row is all they need — [data-ix="cell"] at
+   the top of global.css paints its tint into this element's own border box. Stated on both kinds of
+   row because the dock has two: the links, and the group heads that open them.
+
+   SCOPED TO [data-dock-live] like everything else in this block. Without JS the dock is a nav in
+   flow with no pill around it — there is no outer corner for these to be concentric with, and a
+   rounded tint on a plain list row would be a shape appearing from nowhere. */
+[data-dock-live] .section-dock__link,
+[data-dock-live] .section-dock__group-head{border-radius:var(--radius-dock-row)}
 [data-dock-live] .section-dock__group[data-open] > .section-dock__group-head{color:var(--on-surface)}
 /* No size override on the group's number. It existed to stop a 9px figure being lost beside a 10px
    uppercase label; the head is --fs-detail now, so the number sits against it exactly as "3.1" sits
@@ -2039,7 +2077,20 @@
   overflow:hidden;
   transition:height var(--dur-fold) var(--ease-fold);
 }
-[data-dock-live] .section-dock__group + .section-dock__group{margin-top:2px}
+/* EVERY ADJACENT PAIR, not just the ones that were already spaced. Three boundaries exist in this
+   list and all three can put two states side by side: group beside group (this rule, which is where
+   the 2px came from), the head of an open group beside its own first link, and link beside link.
+   The last two are the sub's children, and margin-TOP on each of them covers both — the first li
+   takes its gap from the head above it, the rest from their siblings.
+
+   Top margins only, deliberately. The sub's open height is read from scrollHeight (aboutDock.js
+   subTarget), and a trailing bottom margin is the one thing scrollHeight is unreliable about across
+   engines; a leading margin pushes content down inside the sub's own overflow:hidden block
+   formatting context, which every engine measures. Nothing in the JS had to change: the indicator
+   is positioned from each link's own offsetTop/offsetHeight, and the pill from list.offsetHeight,
+   so both follow the new pitch on their own. */
+[data-dock-live] .section-dock__group + .section-dock__group{margin-top:var(--dock-row-gap)}
+[data-dock-live] .section-dock__sub > li{margin-top:var(--dock-row-gap)}
 
 /* ---- INSTANT --------------------------------------------------------------------------------- */
 /* Placement that is not a state CHANGE: first paint, a resize, a font landing, or a group being set
