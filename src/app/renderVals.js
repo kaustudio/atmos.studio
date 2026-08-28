@@ -2005,6 +2005,31 @@ export const renderValsMethods = {
         stagger: 0.09,
         ease: this.EASE ? this.EASE.entrance : 'power3.out',
       },
+
+      /* THE COLOUR DEMONSTRATIONS' OWN ARRIVAL — a separate object from maskMotion, and the two must
+         not be merged back together.
+
+         What reads this: aboutCascade, and only for sets carrying data-reveal-focus — the swatch
+         bars, the lightness ramps, the spectrum plot, the role chips, the plates. They resolve out
+         of a 9px blur instead of only fading, because they are looked at rather than read and a blur
+         is the one channel that still carries information at the end of a tween: a shape at 1px is
+         still arriving, where a position or an opacity 95% done is simply done.
+
+         WHY IT IS NOT maskMotion WITH MORE KEYS. It was, briefly, and it broke the thing it shared
+         with. maskMotion's 0.62/0.09 is not only a look — pageReveal arms a 1500ms per-element
+         deadline against it, and past that deadline rescue() does not soften the reveal, it removes
+         it and the block appears in one frame. Lengthening the shared object to give the blur room
+         to resolve pushed every paragraph of six lines or more past that deadline. Text and pictures
+         want opposite things from an arrival; they get two contracts.
+
+         COST. A filter is the expensive thing to animate on a page that was measured into shape, so
+         it is written only onto sets that opted in and cleared the moment it lands — nothing holds a
+         filter, or a will-change for one, at rest. */
+      focusMotion: {
+        duration: 0.9,
+        ease: this.EASE ? this.EASE.reveal : 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+        blur: 9,
+      },
       // True only while a wiped route swap is in flight, so a document route that mounts behind the
       // cover arms its reveals and waits to be released instead of playing them out of sight.
       arrivingByWipe: !!this._arrivingByWipe,

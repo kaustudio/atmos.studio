@@ -8,8 +8,8 @@
    document. Kept as a linked file rather than folded into the bundle because nothing is gained by
    moving it and the link is one line.
 
-   It therefore assumes no stylesheet's variables. --on-surface, --on-surface-muted and --line-strong
-   are global.css's and are relied on. --page-gutter and --track-flat are written with a fallback,
+   It therefore assumes no stylesheet's variables. --on-surface, --on-surface-muted and --line
+   are global.css's and are relied on (--line only below the narrow breakpoint now). --page-gutter and --track-flat are written with a fallback,
    which is the same value legal.css defines rather than a second opinion about it.
 
    The footer from the design comp (footer-light-mode.pdf / footer-dark-mode.pdf, a 1728×418 frame).
@@ -45,16 +45,28 @@
      mattered more than matching the comp — true, but it was an argument for changing the token, not
      for keeping three wrong figures to avoid a fourth. The token is 24 now, so the comp, the prose
      and this rule are the same line. See the grid block in global.css.
-   · the rules are --line-strong, not the comp's ink. The comp draws them at ~100% ink in light and
-     ~40% in dark — an asymmetry no single token expresses — while --line-strong is the hairline every
-     other structural rule on these pages already uses (.legal-head, .legal-hero::after, h2::before).
-     Colours were flagged as not final, so the system's line wins here. */
+   · THE RULE THAT OPENED THE FOOTER IS GONE. The comp draws it, at ~100% ink in light and ~40% in
+     dark — an asymmetry no single token expresses, which is why it took --line-strong here rather
+     than the comp's value, and then --line when that read too strong. Removed outright by request,
+     which is the honest end of that sequence: the thing being tuned was how little of it you could
+     see, and the answer kept being "less".
+
+     It costs nothing structural. The rule was a divider, not a boundary — WCAG 1.4.11 governs the
+     edges of CONTROLS and meaningful graphics, and this separated a row of meta text from whatever
+     sat above it. `.site-foot__meta`'s 33px of padding-top is what holds it apart now, and on the
+     landing the footer is over the field, where the rule was reading as a line drawn ACROSS the
+     artwork rather than under the page.
+
+     BOTH TOP RULES GO, because either one can be "the border above the footer" depending on the
+     surface: routes with the wordmark open on `.site-foot__brand`, and the landing drops the
+     wordmark so it opens on `.site-foot__meta`. The narrow breakpoint's two separators STAY — they
+     are inside the meta row rather than above the footer, and below 700px they are the only thing
+     keeping three stacked rows from reading as one block. Say so if those should go too. */
 .site-foot{padding:0 var(--page-gutter, 24px)}
 
 /* The rules ride the inner blocks, not .site-foot, so they stop at the gutter rather than running
    full bleed the way .legal-hero::after deliberately does. */
 .site-foot__brand{
-  border-top:1px solid var(--line-strong);
   padding:44px 0 22px;
 }
 /* line-height:0 so the anchor's own line box adds nothing under the mark — the same reason .nf-head a
@@ -79,7 +91,6 @@
    right of centre and moving them again the moment either label was edited. */
 .site-foot__meta{
   display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;
-  border-top:1px solid var(--line-strong);
   padding:33px 0 26px;
   font-size:12px;line-height:1;
   letter-spacing:var(--track-flat, 0px);
@@ -160,7 +171,7 @@
      line rather than two bands and a list: it states the structure the desktop row states with
      columns.
 
-     --line-strong, and drawn as a border-top on the block BELOW each boundary rather than a
+     --line, and drawn as a border-top on the block BELOW each boundary rather than a
      border-bottom on the one above: that way the rule belongs to the thing it introduces, and a block
      that is ever removed takes its own rule with it instead of leaving a line under nothing.
 
@@ -176,7 +187,7 @@
      missing class. Naming .site-foot__meta takes both to (0,2,0). */
   .site-foot__meta .site-foot__nav,
   .site-foot__meta .site-foot__rights{
-    border-top:1px solid var(--line-strong);
+    border-top:1px solid var(--line);
     margin-top:14px;padding-top:14px;
   }
   .site-foot__rights{justify-self:stretch}

@@ -29,7 +29,7 @@
 // / `killOrbit` are called from PaletteApp, wipe.js and the visibility handler, and they name the
 // stage's ROLE — the landing's turning field — rather than the orbs that used to be in it.
 
-import { rgb2oklab } from '../../lib/color.js';
+import { rgb2oklab, gamutMap, hexToRgb } from '../../lib/color.js';
 
 export const orbitMethods = {
   /* ---- COLOUR ------------------------------------------------------------------------------
@@ -222,7 +222,11 @@ export const orbitMethods = {
     // clear the heading and the sentence and then drawn straight through "Try an example" — it
     // cleared the words it was told about and sat on the one thing you are meant to press.
     // [data-glass-cta] does this job on desktop; [data-gate-actions] is its narrow twin.
-    const marks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta], [data-gate-actions]')];
+    // [data-land-nomark] is the opt-out, and the landing's footer is what needs it: it is inside
+    // [data-landing] and it contains <p>, so without this the hole would be solved to clear a row
+    // of meta text pinned to the bottom edge of the viewport. In the subtree, not of the copy.
+    const marks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta], [data-gate-actions]')]
+      .filter((m) => !m.closest('[data-land-nomark]'));
     if (!marks.length) return { x: 240, y: 100, r: 260 };            // pre-layout fallback: the 1280×720 measurement
     const cx = (window.innerWidth || 1440) / 2, cy = (window.innerHeight || 800) / 2;
     let dx = 0, dy = 0;
@@ -678,7 +682,8 @@ export const orbitMethods = {
        fonts.ready would only catch the first. src/notfound/main.js follows its heading for exactly
        this reason. The first callback fires immediately on observe and re-solves with the numbers we
        already have, which is harmless — dress() is idempotent. */
-    const reachMarks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')];
+    const reachMarks = [...document.querySelectorAll('[data-landing] h1, [data-landing] p, [data-glass-cta]')]
+      .filter((m) => !m.closest('[data-land-nomark]'));   // same opt-out as _heroReach's marks
     if (reachMarks.length && typeof ResizeObserver !== 'undefined') {
       o.reachWatch = new ResizeObserver(() => {
         if (this._orbit !== o) return;               // a rebuilt stage owns its own observer
@@ -717,7 +722,7 @@ export const orbitMethods = {
       if (vw !== o.vw || vh !== o.vh) { o.vw = vw; o.vh = vh; o.geom = this._fieldGeom(vw, vh); dress(); }
       o.rot = (o.rot + o.rotSpeed * dt) % 360;               // the one shared angle, ease:'none' by construction
       o.t += dt;
-      if (this._nebula) this._nebula.update(dt, o.rot);
+      if (this._nebula) { this._nebula.update(dt, o.rot); this._reflectCtas(); }
     };
     this.playOrbit();
     // _landingLit, not _landingUp: coming back to the tab with an example open should not restart the
@@ -743,6 +748,116 @@ export const orbitMethods = {
       ry: b.height * 1.7 + 34,
     };
   },
+  /* ===== THE GLASS CONTROLS REFLECT THE FIELD =====================================================
+
+     WHAT IS ACTUALLY REFLECTED, and why it is not what is behind the button. The obvious reading of
+     "the button reflects the field" is: sample the gas under it. That returns almost nothing here,
+     and for a designed reason — these controls stand in the HOLE, which is the one region the
+     formation exists to keep clear (see _heroReach). Sampling the centre would have every control
+     reporting the same cleared near-neutral, and the effect would be invisible in exactly the place
+     it was asked for.
+
+     So it samples a RING around each control instead, which is both what reads and what is
+     physically honest: a glass object takes its colour from its surroundings, not from the wall
+     directly behind it. Eight points on an ellipse scaled off the control's own box, accumulated
+     PREMULTIPLIED — sum(rgb x alpha), sum(alpha), divide at the end. That is a coverage-weighted
+     average rather than a mean of hues, so dense gas pulls the colour and a thin wisp barely
+     registers, which is the weighting a reflection actually has. Averaging un-premultiplied hues
+     would let an almost-empty sample shout as loudly as a bright one.
+
+     ONLY THE HUE SURVIVES. The sampled lightness is thrown away and replaced with --cta-reflect-l,
+     the measured lightness of the control's own rest composite. Every contrast figure in global.css
+     was solved against those fills, and this is what keeps them true while the gas moves: the tint
+     can change what colour the pill is, never how light it is. Chroma is gained by
+     --cta-reflect-chroma (a box average is far flatter than the gas looks) and then clamped, so the
+     token is a dial that cannot reach neon.
+
+     IT IS LERPED, NOT WRITTEN RAW. The field reads back roughly ten times a second, and a custom
+     property inside a gradient cannot be transitioned by CSS — so the smoothing is done here, in
+     OKLab, toward the new sample. Interpolating in Lab rather than sRGB is what stops two
+     neighbouring hues from travelling through grey on the way between them.
+
+     COST. One readback for the whole field (nebulaField's 32x18 grid), then pure arithmetic per
+     control — no per-control GPU work. getBoundingClientRect on a handful of elements at 10Hz is
+     the only layout read, and the element list is re-queried every thirtieth sample rather than
+     every one, because React can swap the landing's acts underneath this. */
+  _reflectCtas() {
+    const f = this._nebula; if (!f || !f.sampleAt) return;
+    const st = this._reflect || (this._reflect = { els: [], n: 0, theme: null, cfg: null });
+    if (--st.n <= 0) { st.n = 30; st.els = [...document.querySelectorAll('[data-landing] .glass-cta')]; }
+    if (!st.els.length) return;
+    // The four dials live in CSS with the fills they answer to; re-read only when the theme moves,
+    // because getComputedStyle on the root is a style flush and this runs on a ticker.
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    if (theme !== st.theme || !st.cfg) {
+      const cs = getComputedStyle(document.documentElement);
+      const num = (n, d) => { const v = parseFloat(cs.getPropertyValue(n)); return isFinite(v) ? v : d; };
+      st.cfg = { L: num('--cta-reflect-l', 0.93), gain: num('--cta-reflect-chroma', 2.6),
+                 cmax: num('--cta-reflect-cmax', 0.08), alpha: num('--cta-edge-a', 0.3),
+                 reach: num('--cta-reflect-reach', 0.18), knee: num('--cta-reflect-knee', 0.035) };
+      st.theme = theme;
+    }
+    const { L: targetL, gain, cmax, alpha: edgeAlpha, reach, knee } = st.cfg;
+    const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
+    const K = 0.34;             // lerp toward the new sample, per readback
+    for (const el of st.els) {
+      const b = el.getBoundingClientRect();
+      if (!b.width || !b.height) continue;
+      const cx = (b.left + b.right) / 2, cy = (b.top + b.bottom) / 2;
+      /* TWO RINGS, and the outer one is the reason this reads at all. A ring scaled off the
+         control's own box never leaves the hole — measured on the landing it returns coverage
+         around 0.006, which is the formation doing exactly its job and the reflection getting
+         nothing to reflect. The outer ring is a fraction of the VIEWPORT (--cta-reflect-reach), so
+         it reaches the gas the hole is cut out of.
+
+         BOTH ARE ACCUMULATED INTO ONE SUM rather than picked between, and the premultiplied
+         weighting is what makes that correct without a rule: the inner ring contributes in
+         proportion to the gas it actually finds, so it adds locality when a wisp drifts across the
+         control and falls silent when it does not. No branch decides which ring wins — the gas
+         does. */
+      const rings = [[b.width * 1.25, b.height * 2.5], [vw * reach, vh * reach * 0.9]];
+      let sr = 0, sg = 0, sb = 0, sa = 0, n = 0;
+      for (const [rx, ry] of rings) {
+        for (let i = 0; i < 8; i++) {
+          const t = i * Math.PI / 4;
+          const p = f.sampleAt((cx + Math.cos(t) * rx) / vw, (cy + Math.sin(t) * ry) / vh);
+          n++;
+          if (!p) continue;
+          sr += p[0] * p[3]; sg += p[1] * p[3]; sb += p[2] * p[3]; sa += p[3];
+        }
+      }
+      const prev = el._ctaReflect || (el._ctaReflect = { a: 0, b: 0, cov: 0 });
+      let na = 0, nb = 0;
+      const cov = n ? sa / n : 0;
+      if (sa > 0.002) {
+        const lab = rgb2oklab(sr / sa / 255, sg / sa / 255, sb / sa / 255);
+        na = lab.a; nb = lab.b;
+      }
+      prev.a += (na - prev.a) * K; prev.b += (nb - prev.b) * K; prev.cov += (cov - prev.cov) * K;
+      let ca = prev.a * gain, cb = prev.b * gain;
+      const c = Math.hypot(ca, cb);
+      if (c > cmax) { ca *= cmax / c; cb *= cmax / c; }
+      // Nothing to say: no gas, or gas with no colour in it. Removing the property rather than
+      // writing a colourless one is what lets --cta-edge's own fallback in global.css apply.
+      if (c < 0.0015 || prev.cov < 0.0015) { el.style.removeProperty('--cta-reflect'); continue; }
+      /* MIXED FROM WHITE, NOT WRITTEN FLAT, and the alpha never moves. The edge is the boundary in
+         dark and its strength is what carries WCAG 1.4.11, so --cta-edge-a is the one number this
+         must not touch — only the hue inside it changes. `m` is how much gas there is, and it drives
+         the mix rather than the alpha: no gas gives back exactly the pure white of --cta-edge, so
+         the ramp's bottom is continuous with the untinted rim instead of stepping to a grey. */
+      const g = hexToRgb(gamutMap(targetL, ca, cb));
+      const m = Math.min(1, prev.cov / knee);
+      const mix = (v) => Math.round(255 + (v - 255) * m);
+      el.style.setProperty('--cta-reflect', 'rgba(' + mix(g[0]) + ',' + mix(g[1]) + ',' + mix(g[2]) + ',' + edgeAlpha + ')');
+    }
+  },
+  /** Drop every tint this wrote. The field going away must not leave a colour behind on a control
+      that is now standing on the plain surface. */
+  _clearCtaReflect() {
+    const st = this._reflect; if (!st) return;
+    for (const el of st.els) { try { el.style.removeProperty('--cta-reflect'); delete el._ctaReflect; } catch (e) { } }
+    this._reflect = null;
+  },
   /** Is the painted floor still the thing on screen? True until the field has dissolved over it. */
   _floorLive() {
     const el = document.querySelector('[data-orbit-floor]');
@@ -762,6 +877,7 @@ export const orbitMethods = {
   },
   killOrbit() {
     this._landRevealed = false;
+    this._clearCtaReflect();
     this._tearDownNebula();
     // per-visit seeds and bakes — a return to the landing re-rolls the wheel and re-reads the theme
     this._wheel = null; this._rampData = null; this._rampKey = null;

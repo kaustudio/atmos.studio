@@ -135,7 +135,7 @@ export default class AboutPage extends React.Component {
     this._killIntervals = initIntervals(root);
     this._killPills = initFeaturePills(root, vals.maskMotion);
     this._killSticky = initStickyTitle(root);
-    this._killCascade = initCascade(root, vals.maskMotion);
+    this._killCascade = initCascade(root, vals.maskMotion, vals.focusMotion);
     this._killOptical = initOptical(root);
     /* LAST, and for the same reason the pins go first: the dock holds a ScrollTrigger against every
        one of the fourteen sections plus one spanning the whole run, so it wants a document whose
