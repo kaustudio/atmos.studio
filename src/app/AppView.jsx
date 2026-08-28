@@ -386,7 +386,7 @@ function MobileExampleList({ ml }) {
           was width:100% and is now sized by its label, matching the gate's lone act rather than
           spanning a column it has no sibling to share. */}
       <div data-cta-row="1" style={sx('flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:24px var(--page-gutter) 34px')}>
-        <button type="button" className="glass-cta" data-focus="chrome" onClick={ml.onLeave} aria-label="Back to Start: return to the start screen">Back to Start</button>
+        <button type="button" className="glass-cta" data-focus="chrome" onClick={ml.onLeave} aria-label="Back to Start: return to the start screen"><TextSwap>Back to Start</TextSwap></button>
       </div>
     </div>
   );
@@ -529,7 +529,7 @@ function MobileStory({ st }) {
             <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
             <div className="story-hero__act">
               <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
-                aria-label="See how Atmos reads it: begin the story">See How Atmos Reads It</button>
+                aria-label="See how Atmos reads it: begin the story"><TextSwap>See How Atmos Reads It</TextSwap></button>
             </div>
           </div>
         </header>
@@ -858,7 +858,7 @@ function MobileStory({ st }) {
               <p className="story-cta__lead">{st.handoffLine}</p>
               <div className="story-actions">
                 <button type="button" className="glass-cta" data-focus="chrome"
-                  onClick={st.onAnother} aria-label="Explore another palette: open the example palettes">Explore Another Palette</button>
+                  onClick={st.onAnother} aria-label="Explore another palette: open the example palettes"><TextSwap>Explore Another Palette</TextSwap></button>
               </div>
             </div>
           </div>
@@ -1043,7 +1043,7 @@ function MobileShareView({ ms }) {
             destination whichever way they came in. One act, one label, one destination, always. */}
         {ms.canLeave && (
           <div data-cta-row="1" style={sx('display:flex;flex-wrap:wrap;gap:12px;margin-top:18px')}>
-            <button type="button" className="glass-cta" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See All Examples: every example palette">See All Examples</button>
+            <button type="button" className="glass-cta" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See All Examples: every example palette"><TextSwap>See All Examples</TextSwap></button>
           </div>
         )}
       </div>
@@ -1109,15 +1109,37 @@ function SkipLink() {
    right-click-copy, a crawler, a reader with no JS — gets the address itself and a real document at
    the other end. A router that swallowed those would be trading the whole no-JS floor for a
    transition. See navigate() in renderVals. */
-function SiteFooter({ route, onNavigate }) {
+/* `landmark` exists for exactly one caller, and it is a correctness flag rather than a style knob.
+   A <footer> that is not inside sectioning content maps to the contentinfo landmark, and a document
+   is meant to have one. The landing is position:fixed over the tool rather than instead of it, so
+   while it is up BOTH are in the DOM — and giving the landing a real <footer> put two contentinfo
+   landmarks and two copies of About/Privacy/Terms in the same accessibility tree. The landing's copy
+   renders as a plain <div>: same styles, same links, no second landmark. The tool's stays the
+   document's one contentinfo, which is what it has always been.
+
+   Not solved by hiding the tool instead, deliberately: everything behind the landing is already
+   exposed to assistive tech and always has been — the skip link at the top of global.css exists
+   because of it — and quietly making the tool inert here would be a different change wearing this
+   one's clothes. */
+function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
+  const Root = landmark ? 'footer' : 'div';
   const link = (href, label) => (
     <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
   );
   return (
-    <footer className="site-foot">
-      <div className="site-foot__brand">
-        <a href="/" onClick={onNavigate} aria-label="Atmos Gallery, home"><span className="site-foot__mark" aria-hidden="true"></span></a>
-      </div>
+    <Root className="site-foot">
+      {/* THE WORDMARK IS OPTIONAL, and the landing is the one surface that turns it off. It is a
+          full-bleed masked graphic — 876x136 of ink stretched to the column — which is the right
+          way to close a document you have just read to the bottom of, and the wrong thing to put
+          under a screen whose whole subject is one wordmark already standing at the top of it. The
+          same mark twice on one screen, the second one twenty times larger, reads as a mistake.
+          `.site-foot__meta` carries its own border-top, so dropping this leaves the rule above the
+          meta row intact and nothing else has to change. */}
+      {brand && (
+        <div className="site-foot__brand">
+          <a href="/" onClick={onNavigate} aria-label="Atmos Gallery, home"><span className="site-foot__mark" aria-hidden="true"></span></a>
+        </div>
+      )}
       <div className="site-foot__meta">
         {/* One word, so inline-block costs no wrapping — the swap is safe here in a way it is not
             for a multi-word link inside running prose. */}
@@ -1132,7 +1154,7 @@ function SiteFooter({ route, onNavigate }) {
         </nav>
         <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
       </div>
-    </footer>
+    </Root>
   );
 }
 
@@ -1238,7 +1260,7 @@ function LandingStage({ vals, covered, quiet }) {
                     ring formation has to clear, so it has to be here whether or not it holds two. */}
                 <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;align-self:center;margin-top:26px;pointer-events:auto')}>
                   {vals.gateHasExample && (
-                    <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" onClick={vals.gateExample} aria-label="Try an Example: open an example palette, read only">Try an Example</button>
+                    <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" onClick={vals.gateExample} aria-label="Try an Example: open an example palette, read only"><TextSwap>Try an Example</TextSwap></button>
                   )}
                   {/* `Save for Desktop` stood here — the quiet second act that copied the site's
                       address to the clipboard so the reader could open it on a machine that can run
@@ -1261,17 +1283,53 @@ function LandingStage({ vals, covered, quiet }) {
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 507px')}>Colour read from light and atmosphere.</span></span>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds.</span></span>
                 </h1>
-                <div style={sx('margin-top:36px;pointer-events:auto')}>
-                  {/* Was an HBtn carrying glassCta/glassCtaHover/glassCtaActive — three style objects
-                      and two pieces of React state to express a hover and a press that CSS already
-                      owns for every other control on the site. It is .glass-cta now, so the front
-                      page's three actions are one object in one place. data-glass-cta stays: orbit.js
-                      reads it as a geometry mark the field's hole has to clear (see the contract there),
-                      and that has nothing to do with how the button looks. */}
-                  <button type="button" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Get Started">Get Started</button>
+                {/* TWO ACTS NOW, AND THE TIER FINALLY HAS ITS PAIR. Was an HBtn carrying
+                    glassCta/glassCtaHover/glassCtaActive — three style objects and two pieces of
+                    React state to express a hover and a press that CSS already owns for every other
+                    control on the site. It is .glass-cta now, so the front page's actions are one
+                    object in one place.
+
+                    `Create` is the act the screen exists to offer and takes [data-emph="primary"];
+                    `Learn More` is the quiet second. global.css's note at --cta-fill-emph says that
+                    tier was written for a pair and had none left — this is the pair, so the two
+                    fills are now doing the job they were measured for rather than sitting on a lone
+                    control.
+
+                    LEARN MORE IS AN ANCHOR, NOT A BUTTON, and that is deliberate three times over.
+                    It is a real address, so a middle-click and a cmd-click open /about in a tab the
+                    way the footer's own About link does — vals.navigate only intercepts the plain
+                    left-click a router is entitled to. It keeps `button[data-glass-cta]` matching
+                    exactly one element, which is what wipe.js's focus handoff selects on. And an
+                    anchor is what a screen reader should meet for something that goes somewhere.
+
+                    data-glass-cta is on BOTH: orbit.js reads it as a geometry mark the field's hole
+                    has to clear (see the contract there) and its querySelectorAll takes every one,
+                    so the hole now clears the row rather than half of it. */}
+                <div style={sx('margin-top:36px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;pointer-events:auto')}>
+                  <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Create"><TextSwap>Create</TextSwap></button>
+                  <a href="/about" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.navigate} aria-label="Learn More: what Atmos reads and how"><TextSwap>Learn More</TextSwap></a>
                 </div>
               </div>
             )}
+          </div>
+          {/* THE FOOTER, ON THE LANDING TOO — the same component the tool and both legal routes
+              close with, minus its wordmark (see the note at SiteFooter).
+
+              data-land-nomark IS LOAD-BEARING, not a hook for styling. orbit.js's _heroReach()
+              solves the field's hole from `[data-landing] h1, [data-landing] p, [data-glass-cta]`,
+              and this footer brings two <p> elements into that subtree sitting at the very bottom
+              of the viewport. Left unmarked they would be read as copy the formation has to clear,
+              and the hole would open from the centred block all the way to the bottom edge — the
+              composition destroyed by a footer nobody was looking at. The attribute is what
+              _heroReach filters on; it says "this is in the landing but it is not the landing's
+              copy".
+
+              ABSOLUTE, so it does not enter the flex centring above. The stage is a fixed box with
+              justify-content:center, and a third child in that flow would push the statement and
+              its two acts off the optical centre the field is solved around. pointer-events:auto
+              because the stage's own brand block is inert. */}
+          <div data-land-nomark="1" style={{ ...sx('position:absolute;left:0;right:0;bottom:0;z-index:5;pointer-events:auto'), ...(quiet ? { opacity: 0 } : null) }}>
+            <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false} />
           </div>
         </div>
   );
@@ -2475,8 +2533,8 @@ function ContrastDrawer({ vals }) {
                 {row.isHeader && (<>
                   <div style={sx('width:34px;flex:none')}></div>
                   {row.chips.map((c, ci) => (
-                    <div key={ci} data-cx-cell={'chip-' + ci} data-ov-wipe="1" style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
-                      <span aria-hidden="true" style={c.style}></span>
+                    <div key={ci} style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
+                      <span aria-hidden="true" data-cx-cell={'chip-' + ci} data-ov-band="1" style={c.style}></span>
                     </div>
                   ))}
                 </>)}
@@ -2485,15 +2543,18 @@ function ContrastDrawer({ vals }) {
                       a hook the chips sat at full strength while the ratios they label swept in
                       under them — a matrix whose data arrives into an axis that was already there.
                       They take the same beat as the cells, so the whole grid arrives as one object.
-                      data-ov-wipe: the chips are a colour SURFACE, and the horizontal mask is what
-                      a surface arrives with — it draws across rather than materialising. The other
-                      wipe in this app is the harmony swatch, for the same reason. Everything else
-                      in either drawer is a control or a row with a sentence on it, and a wipe drags
-                      a hard edge across a word: a second, worse reading of text the drawer already
-                      reveals properly. Those fade, and their words take the vertical line mask,
-                      which stays the one treatment text gets anywhere on this surface. */}
-                  <div data-cx-cell={'chip-r' + ri} data-ov-wipe="1" style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
-                    <span aria-hidden="true" style={row.chip.style}></span>
+                      data-ov-band, and it sits on the 24px COLOUR SPAN rather than on the 34px
+                      layout cell holding it. Clipping the cell would sweep the reveal up through
+                      ten pixels of empty box before it reached any colour, so the chip would appear
+                      partway rather than fill — the gesture has to run on the ink, not on the
+                      gap around it.
+                      These briefly faded instead, on the objection that a 34px square is too small
+                      for a clip to travel across. That was true of the HORIZONTAL wipe they carried
+                      at the time and does not survive the change of axis: filling from the bottom
+                      edge is exactly what a small swatch can do, because it is a miniature of the
+                      result stage's own band. */}
+                  <div style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
+                    <span aria-hidden="true" data-cx-cell={'chip-r' + ri} data-ov-band="1" style={row.chip.style}></span>
                   </div>
                   {row.cells.map((cell, ci) => (
                     <div key={ci} data-cx-cell={cell.key} style={cell.style}>
@@ -2511,7 +2572,7 @@ function ContrastDrawer({ vals }) {
           <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
-              <div key={ti} data-cx-cell={'on-' + ti} style={t.style}>
+              <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
                 <span style={{ fontSize: 'var(--fs-label)' }}>{t.hex}</span>
                 <span style={sx('text-transform: uppercase; font-size:var(--fs-label)')}>{t.onLabel} · {t.ratio}:1</span>
               </div>
@@ -2934,11 +2995,12 @@ function HarmonyDrawer({ vals }) {
           </div>
         </div>
 
-        {/* data-ov-wipe on the swatches: they are colour SURFACES, and the horizontal mask is a
-            surface's reveal — the tile draws across rather than materialising. It is the one place
-            in either drawer besides the matrix legend where a wipe is right, because everything
-            else here is a control or a row with a sentence on it, and dragging a hard edge across a
-            word is a second, worse reading of text the drawer already reveals properly.
+        {/* data-ov-band on the swatches: they take the SIGNATURE BAND REVEAL — the clip rising from
+            the bottom edge that animateBands gives the result stage, the gesture a palette arrives
+            with in this app. A swatch here is that same object at a smaller size, so it arrives the
+            same way rather than getting a treatment of its own. It was briefly a horizontal wipe,
+            on a tidy theory about giving surfaces the opposite axis to text; that invented a second
+            vocabulary for colour when the app already had one.
             ONE HARMONY, AT SIZE. Each swatch names itself: the SOURCE colour is labelled in words
             rather than by a 5px square nobody has a legend for, and a colour whose chroma had to be
             reduced to fit sRGB says MAPPED on the colour it happened to, instead of being covered by
@@ -2946,7 +3008,7 @@ function HarmonyDrawer({ vals }) {
         <div data-hx-sec="1" data-hx-preview="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div style={sx('display:flex;gap:1px;width:100%')}>
             {harmony.cells.map((cell, ci) => (
-              <HBtn key={ci} type="button" data-hx-cell="1" data-ov-wipe="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
+              <HBtn key={ci} type="button" data-hx-cell="1" data-ov-band="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
                 <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
                   {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
                 </span>

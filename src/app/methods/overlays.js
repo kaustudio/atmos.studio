@@ -293,12 +293,20 @@ export const overlayMethods = {
       // So the tween takes the property outright and hands it back on landing: `transition: none`
       // for the duration, restored by clearProps. The contract is untouched — it simply does not
       // get to run against an animation that is already animating the same thing.
-      // THE WIPE IS OPT-IN, AND THE DEFAULT IS A FADE. A horizontal reveal is right for a bare
-      // colour surface and wrong for everything that carries a word: it drags a hard edge across
-      // a label, which is a second reading of the same text the drawer already reveals properly,
-      // and on a control — the AA/AAA switch, the harmony models — it reads as the button being
-      // built rather than arriving. Text is masked VERTICALLY by _maskLineReveal and by nothing
-      // else; controls fade; only [data-ov-wipe] takes the horizontal mask.
+      // THE BAND REVEAL IS OPT-IN, AND THE DEFAULT IS A FADE. Both opt-ins are the result stage's
+      // gesture and differ only in which edge they open from, chosen by the element's own shape:
+      //   [data-ov-band]  fills from the BOTTOM — the harmony swatch strip, the matrix's chips.
+      //   [data-ov-wipe]  opens LEFT TO RIGHT — the per-colour rows, which are the same band laid
+      //                   out wide, where a bottom-up fill would have no distance to travel.
+      // What neither is for is a longer list, and each entry is a different objection, so they are
+      // kept separately rather than summarised:
+      //   · anything carrying a word (the per-colour rows, the matrix's ratio cells) — an edge
+      //     travelling across a label is a second and worse reading of text the drawer already
+      //     reveals properly through the vertical line mask;
+      //   · controls (the AA/AAA switch, Passing Only, the harmony models, the export formats) —
+      //     a control is not a colour, and uncovering one reads as the button being built.
+      // Text is masked by _maskLineReveal and by nothing else; controls fade; colour takes the
+      // band reveal, on the axis its own geometry gives it.
       const own = cells.filter((c) => sec.contains(c));
       if (own.length) {
         const cellStep = own.length > 1 ? Math.min(this.DUR.overlayItem, (itemDur * 0.5) / (own.length - 1)) : 0;
@@ -307,7 +315,8 @@ export const overlayMethods = {
         // element's offset is its position in the block's own order, whichever reveal it takes.
         own.forEach((c, ci) => {
           const at = t + this.DUR.overlayStep + ci * cellStep;
-          if (c.hasAttribute('data-ov-wipe')) this._wipeIn(tl, [c], at, itemDur, 0, F);
+          if (c.hasAttribute('data-ov-band')) this._bandIn(tl, [c], at, itemDur, 0, F);
+          else if (c.hasAttribute('data-ov-wipe')) this._wipeIn(tl, [c], at, itemDur, 0, F);
           else tl.from(c, { opacity: 0, duration: itemDur, ease: F, clearProps: 'opacity,transition' }, at);
         });
       }
@@ -369,42 +378,54 @@ export const overlayMethods = {
      it, each with a 10px rise so it arrives rather than switches on. The bands and the detail
      overlay still wipe, and should — they are uncovering colour, which is exactly the thing a mask
      is for. */
-  // THE ITEM WIPE — a horizontal mask, and the axis is the whole argument.
+  // THE BAND REVEAL, QUOTED. A colour swatch in this app is uncovered by a clip rising from its
+  // bottom edge — that is animateBands in motion.js, the gesture a palette arrives with on the
+  // result stage, and it is the oldest thing in the motion system. The harmony drawer's swatch
+  // strip is the same object at a smaller size, so it takes the same gesture rather than one of
+  // its own.
   //
-  // This surface now has exactly two reveal mechanics and they are told apart by DIRECTION rather
-  // than by kind. COPY is masked VERTICALLY: _maskLineReveal splits a paragraph into its rendered
-  // lines and slides each one up from 110% inside its own overflow box. ITEMS are masked
-  // HORIZONTALLY: a clip opens left to right across the row. Both are masks — which is what makes
-  // the panel feel like one system — but no element is ever doing the same gesture as the element
-  // inside it, which is what made the earlier version read as two animations stacked in one place.
+  // IT WAS BRIEFLY HORIZONTAL, and that is worth keeping because the reasoning was plausible and
+  // wrong. The argument ran: text is masked vertically, so give surfaces the other axis and no
+  // element can ever be performing the same gesture as the element inside it. Tidy, symmetrical,
+  // and it invented a second vocabulary for colour when the app already had one. Consistency with
+  // the thing itself beats a clean rule about axes — a swatch in a drawer and a band on the result
+  // stage are the same kind of thing and should arrive the same way. The collision the horizontal
+  // axis was avoiding does not arise here anyway: swatches carry a hex, not a sentence, and no
+  // [data-drawer-split] line lives inside one.
   //
-  // The earlier attempt failed on exactly that point. A clip-path wipe ran on every box in the
-  // panel AND on the words inside them, both upward, both on the same curve: a block wiping up
-  // while its own text wiped up. That was removed, and for a day items merely faded, which is
-  // legible but says nothing — a fade is what you use when you have not decided what the thing is.
-  // Changing the axis, rather than the mechanic, keeps the vocabulary and removes the collision.
+  // CLIP ONLY, no opacity, because that is what the signature is. A colour band's box IS its ink,
+  // so there is nothing for a fade to cover that the clip does not already reveal, and adding one
+  // would make this a near-quote instead of a quote.
   //
-  // LEFT TO RIGHT, not right to left. 28k.studio — where this is ported from — pushes its content
-  // to +102% and slides it back, so its reveal sweeps from the right. That reads correctly there
-  // because the panel it lives in is full-bleed. Ours is a drawer that has just travelled in from
-  // the right edge; a row uncovering right-to-left would run against the panel that carried it.
-  // Opening from the left is the reading direction and the settling direction at once.
+  // The DURATION is the drawer's, not the result stage's. This file has argued from the start that
+  // the utility band has its own length — an instrument you open and shut is not the arrival the
+  // product is about — and the mechanic is what carries the signature, not the number of
+  // milliseconds. The beat happens to agree exactly: DUR.stagger and DUR.overlayItem are both 50ms.
+  // THE ROW WIPE — the band reveal turned on its side, for a band that is WIDE rather than tall.
   //
-  // A CLIP, NOT A WRAPPER. The reference gets its mask from an overflow box with a translating
-  // child, which is the better mechanic and is not available here: these items are React-managed
-  // interactive controls, and wrapping them at animation time means reconciliation, event handlers
-  // and focus all take a risk for a visual detail. A clip on the element itself needs no DOM at
-  // all. What it gives up is the content's own travel behind the mask edge — the reveal uncovers
-  // in place rather than sliding — and that is the one honest difference from the reference.
+  // Same clip, same curve, same clock; only the edge it opens from differs. A swatch is a small
+  // square or a strip standing up, and filling it from the bottom is the gesture the result stage
+  // established. A per-colour ROW is the same colour laid out the other way — one swatch stretched
+  // across the panel with its reading on it — and a bottom-up fill on a 40px-tall, 460px-wide bar
+  // travels almost no distance: the gesture has nowhere to happen. Opening it left to right runs
+  // the reveal along the bar's long axis, which is where the eye reads it anyway.
   //
-  // Opacity rides underneath. It is what covers the case a clip cannot: an item whose box is
-  // wider than its ink still has to arrive, and a wipe across empty padding shows nothing.
+  // So the axis follows the SHAPE, not a rule about kinds. Both are the same mechanic quoting the
+  // same signature; a band is revealed along whichever dimension it actually has.
   _wipeIn(tl, targets, at, dur, step, ease) {
     if (!targets || !targets.length) return;
     tl.fromTo(targets,
-      { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0 },
-      { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, duration: dur, ease: ease || this.EASE.overlay,
-        stagger: step, clearProps: 'clipPath,opacity,transition' },
+      { clipPath: 'inset(0 100% 0 0)' },
+      { clipPath: 'inset(0 0% 0 0)', duration: dur, ease: ease || this.EASE.overlay,
+        stagger: step, clearProps: 'clipPath,transition' },
+      at);
+  },
+  _bandIn(tl, targets, at, dur, step, ease) {
+    if (!targets || !targets.length) return;
+    tl.fromTo(targets,
+      { clipPath: 'inset(100% 0 0 0)' },
+      { clipPath: 'inset(0% 0 0 0)', duration: dur, ease: ease || this.EASE.overlay,
+        stagger: step, clearProps: 'clipPath,transition' },
       at);
   },
   // THE GROUP DIVIDERS, DRAWING. Added to whichever timeline is arriving rather than fired beside

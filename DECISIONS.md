@@ -6,43 +6,52 @@ doesn't know it was ever made.
 
 ---
 
-## 2026-08-27 — Three reveals, told apart by what the thing IS
+## 2026-08-27 — Colour is uncovered, text is masked, everything else fades
 
-The overlay surfaces now have three arrival mechanics, and which one an element gets is decided by
-what kind of thing it is rather than by where it sits:
+Three arrival mechanics across the overlay surfaces, and which one an element gets is decided by
+what kind of thing it is — then, for colour, by the shape it happens to have:
 
 | kind | reveal | mechanic |
 | --- | --- | --- |
-| **text** | vertical mask | `_maskLineReveal` — split to rendered lines, each slides up from 110% |
-| **colour surface** | horizontal mask | `_wipeIn` — clip opens left to right, opt-in via `data-ov-wipe` |
-| **control** | fade | opacity, on the shared curve |
+| **text** | vertical line mask | `_maskLineReveal` — split to rendered lines, each slides up from 110% |
+| **colour, tall or square** | fills from the bottom | `_bandIn` — `data-ov-band` |
+| **colour, wide** | opens left to right | `_wipeIn` — `data-ov-wipe` |
+| **everything else** | fade | opacity, on the shared curve |
 
-**The axis is what separates the two masks, and that is the whole point.** An earlier attempt ran
-one clip-path wipe on every box in the panel AND on the words inside them, both upward, both on the
-same curve — a block wiping up while its own text wiped up, two reveals stacked in one place. It was
-removed, and for a day everything merely faded, which is legible and says nothing. Changing the
-AXIS rather than the mechanic keeps the vocabulary and removes the collision: no element is ever
-performing the same gesture as the element inside it.
+**All colour quotes one gesture: the result stage's own.** `animateBands` uncovers a palette's
+bands with a clip rising from the bottom edge — the oldest thing in this motion system and the
+moment the product is about. The harmony swatch strip and the contrast matrix's chips are that same
+object at a smaller size, so they take that clip rather than a treatment of their own. Only the
+DURATION differs, because the utility band has always had its own length; the beat needs no
+reconciling, since `DUR.stagger` and `DUR.overlayItem` are both 50ms.
 
-**The wipe is opt-in, and the test is whether the thing carries a word.** A horizontal reveal drags
-a hard edge across a label, which is a second and worse reading of text the drawer already reveals
-properly; on a control it reads as the button being built rather than arriving. So `data-ov-wipe`
-marks only colour surfaces — the contrast matrix's axis legend and the harmony swatches. Every other
-item fades: the AA/AAA and Passing Only switches, the harmony models, the Save/Copy actions, the
-export format list, the per-colour rows and the matrix's own ratio cells.
+**The axis follows the element's geometry, not its category.** A per-colour ROW — the contrast
+drawer's "text on each colour" bars — is the same band laid out the other way: 40px tall and 460
+wide, with its reading printed on it. A bottom-up fill there has almost no distance to travel, so
+the gesture has nowhere to happen; opening left to right runs the reveal along the bar's long axis,
+which is where the eye reads it anyway. Same clip, same curve, same clock, different edge.
+
+**The hook sits on the ink, not the box.** The matrix chips are 24px colour spans centred in 34px
+layout cells, so `data-ov-band` is on the span. Clipping the cell would sweep ten pixels of empty
+box before reaching any colour, and the chip would appear partway rather than fill.
+
+**Two wrong turns are recorded because both were plausible.** First: give surfaces the opposite axis
+to text, so no element ever performs the same gesture as the element inside it. Tidy, symmetrical —
+and it invented a second vocabulary for colour when the app already had one. Consistency with the
+thing itself beats a clean rule about axes. Second, and worse: that horizontal rule was generalised
+to "a colour surface is revealed horizontally wherever it appears" and pushed onto `animateBands`
+itself, rewriting the signature moment to match a drawer. **The drawers are consumers of this
+vocabulary; the result stage sets it.** A generalisation that reaches the signature moment has
+stopped being a vocabulary and become a habit.
+
+**What none of it is for**, kept as separate entries because each is a different objection: anything
+carrying a sentence (an edge travelling across a line of copy is a second and worse reading of text
+the drawer already reveals properly); and controls — the AA/AAA switch, Passing Only, the harmony
+models, the export format list — because a control is not a colour, and uncovering one reads as the
+button being built rather than arriving.
 
 **The export list stacks.** Its items are a `flex-direction: column`, so a staggered fade in DOM
 order reads as a vertical cascade — measured tops 414/459/504/549/594, fading 0.95/0.93/0.89/0.84/0.77.
-
-**And the result stage's bands changed axis.** They wiped UP from the bottom edge for most of this
-app's life. They are the largest colour surface in the product, so leaving them vertical made the
-signature moment the exception to the rule the rest of the app had just adopted. `animateBands` now
-opens left to right. **The length is untouched** — `reveal` (620ms) and `stagger` (50ms) are the
-arrival band and keep their values, as this file has argued throughout; only the direction moved.
-
-Not changed, and worth naming so the next pass does not assume otherwise: the fullscreen detail
-overlay's bands still arrive on `scaleY`, because that surface is reached from the grid and the
-universe rather than from the list, and its band geometry is doing a different job.
 
 ---
 

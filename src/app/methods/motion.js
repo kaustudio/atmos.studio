@@ -52,7 +52,17 @@ export const motionMethods = {
     // no journey — so the front-loading that makes an expo-out wrong for a 500px slide never gets
     // the chance to show. Ours does slide, so the trade is stated plainly in _drawerOut rather than
     // hidden: peak velocity returns to the first frame. That is the accepted cost of one curve.
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1) };
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1), reveal: this.cubicBezier(0.215, 0.61, 0.355, 1) };
+    /* `reveal` is `entrance` WITHOUT THE FRONT LOADING, and it is used by exactly one thing: the
+       focus pull on About's colour demonstrations (renderVals.focusMotion). entrance is an expo-out,
+       past 80% of its travel inside the first quarter of its duration — which is what you want from
+       a control answering a press, and from text that should become legible as early as it can. A
+       blur resolving on that curve is over before it reads as anything. This is an out-cubic — 58%
+       at a quarter, 88% at half — so the resolve stays legible for its whole length. Same curve the
+       loader's exit runs on, quoted to the digit.
+       A SECOND TOKEN, NOT A RETUNE: entrance is shared by the landing lines, the dropzone, the
+       masked text reveal on every document route and every control on the site, and all of them want
+       the front loading. */
     // `overlay` is the UTILITY-OVERLAY band, and it is a deliberate exception to the reveal token
     // rather than a retune of it. `reveal` (620ms) is the app's arrival: a palette resolving out of
     // a photograph, bands wiping up in sequence, a stage taking the screen. That is the moment the
@@ -555,30 +565,22 @@ export const motionMethods = {
   },
 
   // ===== result reveal =====
-  // Shared reveal: bands wipe LEFT TO RIGHT, one after the next (settle-with-authority).
+  // Shared reveal: bands wipe up from the bottom edge, one after the next (settle-with-authority).
   //
-  // They wiped UP from the bottom edge for most of this app's life, and the axis changed so that
-  // one rule holds everywhere: A COLOUR SURFACE IS REVEALED HORIZONTALLY. The utility drawers
-  // arrived at that rule from the other end — their swatches and their matrix legend take the same
-  // horizontal mask (_wipeIn in overlays.js), while text takes the vertical line mask and controls
-  // fade. The result stage's bands are the largest colour surface in the product and were the one
-  // place still doing it the other way, which made the app's signature moment the exception to its
-  // own vocabulary rather than the statement of it.
-  //
-  // The LENGTH is untouched, and that is deliberate. `reveal` (620ms) and `stagger` (50ms) are the
-  // arrival band — the moment a palette resolves out of a photograph — and this file has argued at
-  // length that they keep their length whatever else moves. Only the direction changed.
-  //
-  // Still a clip, not a transform. A clip reveals the band in place, so the colour never travels
-  // and never lands anywhere except where the layout already put it; scaling or translating a
-  // full-bleed colour band moves an edge the reader is using to judge the colour beside it.
+  // UP, and it stays up. This was briefly changed to a left-to-right wipe to match the harmony
+  // swatches, on the reasoning that one rule — "a colour surface is revealed horizontally" — ought
+  // to hold across the app. It should not, and the reason is that these bands are not an instance
+  // of anything: they are the arrival the product is about, a palette resolving out of a
+  // photograph, and the bottom-up wipe IS that moment rather than a treatment applied to it. The
+  // harmony drawer's swatches are a preview inside a utility panel and can take the panel's own
+  // vocabulary; the result stage sets the vocabulary and is not a consumer of it.
   animateBands() {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;
     const bands = root.querySelectorAll('[data-band]');
     if (this._reduce) { g.fromTo(bands, { opacity: 0 }, { opacity: 1, duration: .4, stagger: .03, ease: 'none', clearProps: 'opacity' }); return; }
-    g.set(bands, { clipPath: 'inset(0% 100% 0% 0%)' });                                // fully clipped, hidden
-    g.to(bands, { clipPath: 'inset(0% 0% 0% 0%)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe out from the left edge
+    g.set(bands, { clipPath: 'inset(100% 0 0 0)' });                                   // fully clipped, hidden
+    g.to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe up from the bottom edge
   },
   animateText(delay) {
     const g = window.gsap, root = this.resultRef.current;
