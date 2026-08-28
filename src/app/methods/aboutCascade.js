@@ -101,7 +101,7 @@ const MAX_STAGGER = 0.2;
 // patience.
 const MAX_RESCUE_MS = 4000;
 
-export function initCascade(root, motion) {
+export function initCascade(root, motion, focusMotion) {
   const gsap = window.gsap;
   const ScrollTrigger = window.ScrollTrigger;
   if (!gsap || !ScrollTrigger || !root) return noop;
@@ -112,6 +112,33 @@ export function initCascade(root, motion) {
   if (!sets.length) return noop;
 
   const MOTION = motion || FALLBACK;
+  /* THE SECOND ARRIVAL, AND IT IS A SECOND OBJECT ON PURPOSE.
+
+     A set is either a picture of colour or it is not, and the two get different animations — not one
+     animation with a flag on it. FOCUS is read only by sets carrying data-reveal-focus: the swatch
+     bars, the lightness ramps, the spectrum plot, the role chips, the plates. Everything else on this
+     page, including every set in here that is really a list of type, keeps MOTION exactly as it was.
+
+     They are separate because they want opposite things, and one shared contract broke both. Text
+     wants to be legible as early as it can — it rises out of its mask on the app's front-loaded
+     entrance curve and gets out of the way, and pageReveal's 1500ms per-element deadline is sized
+     against precisely that beat. A demonstration wants the opposite: it is looked at rather than
+     read, so it can afford to resolve, and the resolving IS the effect. Lengthening the shared object
+     to suit the second ran the first past its deadline, where rescue() does not soften the animation
+     but removes it — the block appears in one frame. Hence two objects, and hence this note. */
+  const FOCUS = focusMotion || null;
+  const isFocus = (set) => {
+    if (!FOCUS || !FOCUS.blur || !set.hasAttribute('data-reveal-focus')) return false;
+    /* AND NOTHING pageReveal OWNS. [data-reveal] is that module's own marker for copy it will split
+       into masked lines, so an element carrying it is text by definition and belongs to the other
+       animation entirely. A set holding one is not a picture of colour however it looks from outside
+       — about-figure__side was marked here and holds both a UI mockup and a paragraph, which put a
+       9px blur on a caption that pageReveal was simultaneously revealing line by line.
+       Cheaper to refuse the whole set than to blur it selectively: duration and ease are per-tween,
+       so a mixed set cannot be given two arrivals without becoming two tweens, and a set that needs
+       two tweens is two sets. */
+    return !set.querySelector('[data-reveal]') && !set.hasAttribute('data-reveal');
+  };
   // The beat between siblings, read from the stylesheet so it cannot drift from the token.
   const stagger = Math.min(cssSeconds('--dur-stagger', 0.05), MAX_STAGGER);
 
@@ -151,7 +178,12 @@ export function initCascade(root, motion) {
        their own layout, and the travel is only there to give the fade a direction. A larger rise on a
        six-cell grid reads as the grid assembling itself, which is a bigger claim than a set of
        swatches should be making. */
-    gsap.set(kids, { autoAlpha: 0, y: 12 });
+    /* The rise is the same either way. The note above still holds for a six-cell grid, and a picture
+       resolving out of focus needs no more travel than one fading — the blur is the added channel,
+       not a bigger movement. */
+    const focus = isFocus(set);
+    const M = focus ? FOCUS : MOTION;
+    gsap.set(kids, focus ? { autoAlpha: 0, y: 12, filter: 'blur(' + FOCUS.blur + 'px)' } : { autoAlpha: 0, y: 12 });
     touched.push(kids);
 
     /* 0.9 rather than 1: a set a hair shorter than the window still puts its last child against the
@@ -173,8 +205,11 @@ export function initCascade(root, motion) {
         unit.done = true;
         const tw = gsap.to(targets, {
           autoAlpha: 1, y: 0,
-          duration: MOTION.duration,
-          ease: MOTION.ease,
+          // filter only on the sets that asked for it, and cleared the moment it lands: nothing on
+          // this page holds a filter, or a will-change for one, at rest.
+          ...(focus ? { filter: 'blur(0px)', clearProps: 'filter' } : {}),
+          duration: M.duration,
+          ease: M.ease,
           stagger: stagger,
           overwrite: 'auto',
         });
@@ -196,8 +231,10 @@ export function initCascade(root, motion) {
         timers.push(setTimeout(() => {
           if (!unit.host.isConnected || tw.progress() >= 1) return;
           try { tw.kill(); } catch (e) { }
-          try { gsap.set(targets, { autoAlpha: 1, y: 0 }); } catch (e) { }
-        }, Math.min((MOTION.duration + stagger * targets.length) * 1000 + 900, MAX_RESCUE_MS)));
+          // filter with them: a stalled run must not leave a set legible-but-blurred, which reads
+          // as a rendering fault rather than an animation that did not finish.
+          try { gsap.set(targets, focus ? { autoAlpha: 1, y: 0, filter: 'none' } : { autoAlpha: 1, y: 0 }); } catch (e) { }
+        }, Math.min((M.duration + stagger * targets.length) * 1000 + 900, MAX_RESCUE_MS)));
       };
 
       units.push(unit);
@@ -253,7 +290,7 @@ export function initCascade(root, motion) {
     timers.forEach(clearTimeout);
     timers.length = 0;
     units.length = 0;
-    touched.forEach((kids) => { try { gsap.killTweensOf(kids); gsap.set(kids, { clearProps: 'opacity,visibility,y' }); } catch (e) { } });
+    touched.forEach((kids) => { try { gsap.killTweensOf(kids); gsap.set(kids, { clearProps: 'opacity,visibility,y,filter' }); } catch (e) { } });
     touched.length = 0;
   };
 }
