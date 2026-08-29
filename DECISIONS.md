@@ -6,6 +6,103 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-29 — One corner, one close mark, one hover
+
+The panel merge was one decision; what followed was a day of pulling every surface it touched onto
+the vocabulary it had just proved. Three rules came out of it, and each replaced a pile of local
+choices that were individually defensible and collectively a dialect.
+
+**One corner.** `--radius-pill` is a stadium — it rounds to half the shorter side — so it is not a
+size decision to be made per component; it is the shape the app is drawn in. The tab strip, the
+segmented rails, the applied-filter chips, the project rows, the name field, the harmony footer,
+the format tags and the trait chips all take it, and the only thing a component still decides is
+its height. Where a control looked wrong at full radius the fault was never the corner: the library
+trigger drew a lozenge at 38 × 32.5 because its sides were unequal, and squaring it to 32 fixed a
+shape problem that a smaller radius would only have hidden.
+
+**One close mark.** Every `Done` and every hand-set ✕ became the same icon-only `IconClose` button.
+A dialog closes; that is the whole message, and a word is a worse carrier of it than the mark
+already used everywhere else. Where the icon says it, the copy beside it went — an icon-only
+control keeps its accessible name in `aria-label`, which is where that sentence belonged all along.
+
+**The swap replaces the fill.** Controls carrying the masked text swap on hover no longer take the
+`[data-ix]` hover tint: the label lifting out and its twin rising into place IS the hover state, and
+a fill underneath it is a second answer to one question. It is gated on
+`(hover:hover) and (prefers-reduced-motion:no-preference)` so a touch device and a reduced-motion
+reader keep the fill they can actually perceive. **The trap here is CSS order, not specificity.**
+The `button-006` override sat in the correct media block and never applied, because an
+identical-specificity `opacity:1` lives later in the file; it works only directly after the rule it
+answers. It measured as `opacity: 1` on a real hover — nothing in the source said so.
+
+**Applied filters live in one place, and that took two goes.** The removable chips and their clear
+sit on the row below the band, not in the panel. The panel briefly carried a clear-all too, on the
+argument that its checked rows cannot clear themselves in a single press — true, and still wrong: a
+second place to clear filters makes two truths about the same state, and the panel's rows already
+*are* that state. What the panel keeps is the count on its Filter tab. The row outside survives the
+panel being shut, which is the case that matters, and it stays put when cleared because
+`_facetOutside` treats `[data-applied-filters]` as not-outside — without that, the one control that
+undoes a narrowing would also dismiss the surface you would narrow from next.
+
+**Two consequences that read as bugs.** A dialog rendered from a control that appears twice needs an
+owner: both `CopyControl` instances answered the same flag and drew two stacked sheets with two
+scrims, so the stage instance yields (`owns={!vals.hasOverlay}`) when the overlay is up. And copying
+runs a textarea fallback on every path, which mounts, selects, and removes — dropping focus to
+`body`. Invisible while the menu closed on copy; a lost keyboard place once the dialog was made to
+stay open, so the pressed row is refocused a frame later.
+
+---
+
+## 2026-08-29 — One door onto the library: Filter and Manage Projects are two tabs of one panel
+
+**Two buttons, one row apart, opened two surfaces onto the same library.** Manage Projects ended
+the projects band and Filter began the toolbar under it; one was a centred modal dialog, the other a
+non-modal right drawer. The split was in the interface rather than in the work — a project is a
+filter you made yourself — and the question neither could answer between them is the one people
+actually have: *which of the palettes in Coastal can also hold text*. Answering it meant dismissing
+one surface to open the other, and neither knew what the other had done.
+
+**They are now one panel with two tabs**, on the app's own segmented control: the same travelling
+pill as the feed's List / Grid / 3D, two columns instead of three, sized to its own
+labels and set against the panel's leading edge rather than stretched across it. Full width was the
+first attempt, on the reasoning that panel navigation should span its panel; at two columns that
+puts most of the strip's area between the two words, and the travelling pill crosses a gap wider
+than either label it lands on. Filter carries a STATE
+(how many narrowings are on, absent at rest — "Filter 0" reports nothing) and Projects carries a
+cardinality (how many folders exist, zero included, because that is why the tab is empty when it
+is). The panel is titled Manage Library — provisional, and the tab below it says which half you are
+looking at, so the title never has to name both.
+
+**The trigger became a glyph, and that is the one real cost.** A control that opens filtering AND
+project management has no honest one-word label: "Filter" names half of it and "Manage" the other
+half. So it is the library's own list row drawn at 12px inside a 32px square, with the applied-filter
+count beside it,
+the sentence on `title` and `aria-label`, and the panel naming itself in its heading the moment it
+arrives. It sits against the scope rail — where Manage Projects was — and takes the rail's height
+from `align-items:stretch` rather than stating one.
+
+**What the merge cost the manage surface, and what it bought.** It is non-modal now, so the library
+stays visible and operable behind it, and the focus trap went with the modality — there is nothing
+to trap when Tab is meant to leave. The one thing the trap was quietly providing was a commit for a
+pending rename: the old dialog could only be dismissed by a click that blurred the field first, and
+this panel also closes on Escape, where a focused input removed from the document does not reliably
+fire `blur`. `_commitProjectNames` now runs at the end of the close, after any natural blur has
+already committed, so it is a no-op on every path except the keyboard one it exists for.
+
+**Three consequences worth recording, because each looks like a bug from the outside.** The export
+dialog raised from a project row stacks at 157 rather than 127 — the number it has to clear moved
+when the dialog it opens over became a panel at 156. `_facetOutside` now treats anything in a
+`[role="dialog"]` or on a modal backdrop as *not* outside, or exporting a folder would put away the
+tab you exported it from. And `libraryTab` is null until pressed, so an unchosen panel opens where
+the work is — Projects when there is nothing yet to filter — while a press is always obeyed, because
+a tab that silently refuses one is a dead control.
+
+**The applied-filter row now arrives with the first filter and is absent otherwise.** With the
+trigger gone up to the rail, what is left on that row is state rather than controls. The result
+count's live region moved up to the section: a live region has to be in the DOM before the change it
+announces, and one mounted by the same render that fills it would have gone unspoken.
+
+---
+
 ## 2026-08-27 — Colour is uncovered, text is masked, everything else fades
 
 Three arrival mechanics across the overlay surfaces, and which one an element gets is decided by

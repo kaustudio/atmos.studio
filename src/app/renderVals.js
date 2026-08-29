@@ -119,7 +119,11 @@ export const renderValsMethods = {
     const s = this.state;
     const mono = 'Neue Montreal';
     const w = (b) => this.swatchGrow(b);   // one rule for a swatch's share, shared with the 3D card (pipeline.js)
-    const pill = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', padding: '8px 11px', lineHeight: 1 };
+    /* THE TRAIT PILL — the detail overlay's footer traits, and the one place the word "pill" in this
+       file finally means the shape as well as the role. It rounds with the result stage's own trait
+       chips, which are the same object one surface over; the 11px inset stays, because at a 26px
+       height the arc's widest point is at the text's own centre line and 11 clears it. */
+    const pill = { fontFamily: mono, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', borderRadius: 'var(--radius-pill)', padding: '8px 11px', lineHeight: 1 };
     const busy = s.stage === 'processing';
 
     // ===== contrast checker view (computed from sRGB relative luminance — WCAG, not OKLCH L) =====
@@ -160,9 +164,28 @@ export const renderValsMethods = {
         const bp = this.paletteMetrics(cp).bestPair;
         const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
-        const segOn = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        const segOn = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
+        const segOff = { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        /* THE TWO PAIRS BECOME RAILS, the same object as the library panel's tabs and the feed's
+           List / Grid / 3D: one bordered box, a travelling --on-surface pill inside it, and two
+           transparent buttons over the top. They were two adjacent bordered buttons with the
+           selected one filled — which says the same thing, and says it as two objects that happen
+           to agree rather than as one control with a position. The pill is what makes a segmented
+           control read as a switch: the selection MOVES between two halves of one box.
+           The buttons take viewToggleOptStyle, so a future edit to the app's segmented control
+           reaches the contrast checker too. segOn/segOff are left in place for Passing only, which
+           is not one of a pair — it is a filter that is on or off, and it keeps the bordered
+           treatment that says so. It takes the corner, though: a square button standing beside two
+           stadium rails would be the only right angle left on the surface, and the shape was never
+           what distinguished a filter from a switch — the fill is. */
+        const segPill = (second) => ({
+          position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 2)',
+          transform: 'translateX(' + (second ? 100 : 0) + '%)', background: 'var(--on-surface)',
+          transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)',
+        });
+        const segBtn = (active) => this.viewToggleOptStyle(active, { fontSize: 'var(--fs-micro)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' });
         cx = {
+          lensPill: segPill(aaa), sizePill: segPill(s.contrastLarge),
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
@@ -171,9 +194,9 @@ export const renderValsMethods = {
           sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: mono, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400 },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
-          aaStyle: aaa ? segOff : segOn, aaaStyle: aaa ? segOn : segOff, aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
+          aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
           setNormal: () => this.setState({ contrastLarge: false }), setLarge: () => this.setState({ contrastLarge: true }),
-          normalStyle: s.contrastLarge ? segOff : segOn, largeStyle: s.contrastLarge ? segOn : segOff,
+          normalStyle: segBtn(!s.contrastLarge), largeStyle: segBtn(s.contrastLarge),
           normalPressed: s.contrastLarge ? 'false' : 'true', largePressed: s.contrastLarge ? 'true' : 'false',
           togglePass: () => this.setState((st) => ({ contrastPassOnly: !st.contrastPassOnly })),
           passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: s.contrastPassOnly ? 'Passing only ✓' : 'Passing only',
@@ -607,8 +630,14 @@ export const renderValsMethods = {
         assignLabel: 'Add to Project',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
-        copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); this._focusCopyTrigger(true); },
-        copyCss: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'); this._focusCopyTrigger(true); },
+        /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
+           focus back to the trigger, which is what a MENU does — you pick, it goes away, and the
+           button behind it tells you what happened. A dialog is not a menu: it is a place you are
+           standing in, and taking it away is a poor way to say "done". The row you pressed reports
+           instead (see CopyControl), so the confirmation is on the thing you acted on, you can take
+           the other format without reopening anything, and focus stays where you left it. */
+        copyHexList: () => this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'),
+        copyCss: () => this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'),
       };
     }
 
@@ -686,6 +715,16 @@ export const renderValsMethods = {
        same wording about what a scaffold is. Only the subject changes, so only the subject is
        branched: a second dialog for folders would have meant two places to keep the format list
        right, and would have taught people that exporting a folder is a different act. It is not. */
+    /* STADIUMS, LIKE EVERY OTHER ROW YOU PICK. The same object as the assign dialog's project rows
+       — a full-width bordered row with a name at one end and its kind at the other — rounded the
+       same way, with the same inset correction: 14px of horizontal padding put "Tailwind v4"
+       against the widest point of a 21px arc, so it goes to 18. The raised plate stays, because a
+       row you choose from is not the sheet it sits on.
+       HOISTED OUT OF exportView because the copy dialog wears it too. Copy stopped being a dropdown
+       and became the same surface as Export, and "the same surface" has to mean one style object
+       rather than two that currently agree. */
+    const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid var(--line)', padding: '12px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
+
     let exportView = null;
     if (s.exportOpen && (s.exportPalette || s.exportProject)) {
       const semantic = !!s.exportSemantic;
@@ -694,12 +733,11 @@ export const renderValsMethods = {
       const pals = pid ? this.projectPalettes(pid) : [p];
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
-      const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: '12px 14px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
-      const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: mono, fontSize: 'var(--fs-micro)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
         kicker: pid ? 'Export project' : 'Export tokens',
-        stacked: !!pid,   // opened from Manage Projects, so it renders above it
+        stacked: !!pid,   // opened from the library panel's Projects tab, so it renders above it
         // WHAT THE FILE WILL HOLD, before a format is chosen. A folder export is the one act here
         // whose scale is not obvious from the thing you pressed, and "8 palettes, 40 colours, one
         // file" is the sentence that stops someone expecting eight downloads.
@@ -800,6 +838,24 @@ export const renderValsMethods = {
     const tagPool = this.projectFeed(s.feed);
     const activeTags = s.activeTags || [];
     const activeA11y = s.activeA11y || [];
+
+    /* WHICH HALF OF THE LIBRARY PANEL IS SHOWING — resolved here, once, because two things read it
+       long before the panel does: manageView below is only worth building when the Projects tab is
+       up, and the tab strip itself has to agree with whatever the body renders.
+
+       NULL MEANS "NOT CHOSEN YET", and that is what makes the default answerable. `libraryTab` is
+       null until the reader presses a tab, and stays null across the panel's close (see
+       _finishTagClose), so an unchosen panel can open where the work actually is: Filter normally,
+       Projects when there is nothing to filter — a library with no palettes in it has no traits to
+       narrow by, and opening onto an empty facet list while the only available act sits one tab
+       over would be a default chosen for tidiness.
+       A PRESS IS ALWAYS OBEYED, which is the other half of it. The reader can still walk to the
+       empty Filter tab and be told, in words, why it is empty; a tab that silently refuses the
+       press is a dead control, and this file's own rule is that a control which cannot act says so.
+       Everything downstream — the pressed state, the pill's position, the announcement — reads this
+       and not the raw flag, so the strip can never disagree with the body under it. */
+    const canFilter = tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0;
+    const libTab = s.libraryTab || (canFilter ? 'filter' : 'projects');
     const tagCounts = new Map();
     tagPool.forEach((p) => { new Set(p.descriptors.map((d) => d.toLowerCase())).forEach((d) => tagCounts.set(d, (tagCounts.get(d) || 0) + 1)); });
     // Tags combine with AND, so every count shown is the count YOU WOULD GET — the size of the
@@ -912,7 +968,7 @@ export const renderValsMethods = {
     // a sentence you can dismantle from either end. The count on the LAST chip is the live result
     // size; earlier chips show what the selection was worth at that point, which is why only the
     // final one carries a number — two numbers that mean different things is worse than one.
-    const focusFacetBtn = () => requestAnimationFrame(() => { const b = document.querySelector('[data-facet-btn]'); if (b) try { b.focus(); } catch (e) { } });
+    const focusFacetBtn = () => requestAnimationFrame(() => { const b = document.querySelector('[data-library-btn]'); if (b) try { b.focus(); } catch (e) { } });
     // Chips for BOTH groups, accessibility first so the chip order matches the panel's group order.
     // Only the final chip carries the live result count — two numbers meaning different things
     // beside each other is worse than one.
@@ -1000,8 +1056,14 @@ export const renderValsMethods = {
     let assignView = null;
     if (s.assignPalette) {
       const pal = s.assignPalette;
-      const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 14px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
-      /* Each row is a membership toggle now, not one choice among many. `current` still drives the
+      const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
+      /* STADIUMS, AND THE INSET THAT GOES WITH THEM. The rows were bordered rectangles in a dialog
+         whose every other control had already rounded; --radius-pill clamps to half their 40px
+         height, so the corner is a true stadium end. 14px of horizontal padding then put "Unfiled"
+         against the widest point of a 20px arc, so it goes to 18 — the same correction the fields
+         and the toast each needed. The raised plate stays: these are rows you pick, not a surface
+         you type into, and the plate is what tells them apart from the sheet they sit on.
+         Each row is a membership toggle now, not one choice among many. `current` still drives the
          mark, but it means "is in this project" rather than "is THE project", and Unfiled is
          current only when the set is empty — it is the absence of membership, not a member. */
       const live = s.feed.find((f) => f.id === pal.id) || pal;
@@ -1042,13 +1104,24 @@ export const renderValsMethods = {
         memberLine: memberOf.length
           ? 'In ' + (memberOf.length === 1 ? memberOf[0] : memberOf.slice(0, -1).join(', ') + ' and ' + memberOf[memberOf.length - 1])
           : 'Not in any project yet',
+        /* The act is two things at once and the button is a glyph, so the name says both: it creates
+           the project AND files this palette in it. It LEADS with the same two words the library
+           panel's own create button uses — "Create project" — because it is the same act with one
+           more consequence, and a reader who meets it in both places should not have to work out
+           that Add and Create are the same verb. The title is the bare verb for a pointer; the
+           sentence is for a screen reader. */
+        createAria: 'Create project and add ' + pal.name + ' to it',
         onCreate: (e) => { const inp = document.querySelector('[data-assign-new]'); const v = inp ? inp.value : ''; if (v && v.trim()) { this.newProjectAndAssign(v.trim()); } },
         onCreateKey: (e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.currentTarget.value; if (v && v.trim()) this.newProjectAndAssign(v.trim()); } },
       };
     }
 
+    /* BUILT ONLY WHEN IT IS ON SCREEN. It used to hang off `manageProjects`, a flag whose only job
+       was to say the dialog was open; the dialog is now a tab, so the condition is the same
+       question asked of the panel — is it open, and is this the half showing. Nothing else changed:
+       every row, count and handler below is the manage dialog's, moved. */
     let manageView = null;
-    if (s.manageProjects) {
+    if (s.tagMenuOpen && libTab === 'projects') {
       manageView = {
         empty: !hasProjects, rows: s.projects.map((pr) => {
           const count = this.projectPalettes(pr.id).length; return {
@@ -1508,13 +1581,19 @@ export const renderValsMethods = {
       // Export, which told the user the app has two copy features; it has one, and the format is
       // a detail of it. The formats move into a menu on a single Copy control, and the confirmation
       // lands on that control rather than in a status line somewhere else on the page.
+      /* The copy dialog's rows wear the export dialog's row: same object, same style, one source.
+         Copy is no longer a dropdown — see CopyControl in AppView — so the two surfaces have to be
+         the same surface rather than two that resemble each other. */
+      copyItemStyle: itemBase,
       copyMenuOpen: !!s.copyMenuOpen,
       toggleCopyMenu: () => this.toggleTip('copyMenuOpen', '[data-copy-menu]'),
       closeCopyMenu: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); },
       copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); } },
       copyDone: s.copied === 'pal-hex' ? 'Hex list' : s.copied === 'pal-css' ? 'CSS variables' : '',
-      copyHexList: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); copyPal('hex'); this._focusCopyTrigger(true); },
-      copyCss: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); copyPal('css'); this._focusCopyTrigger(true); },
+      // Neither closes the dialog any more, and neither moves focus — see the note on the overlay's
+      // pair above. The row reports; the sheet is left where the reader put it.
+      copyHexList: () => copyPal('hex'),
+      copyCss: () => copyPal('css'),
       // share link — the palette rides in the URL fragment, which never reaches a server
       shareCopied: s.copied === 'pal-share',
       onShare: () => this.shareCurrent(),
@@ -1538,19 +1617,10 @@ export const renderValsMethods = {
       // same box, same baseline, last in a row of four. The hairline was carrying the entire
       // distinction between navigating the library and changing its structure.
       //
-      // Now it stands outside the group at the far end of the same row — a secondary bordered
-      // action, the same edge and ink every other unfilled control in the app takes. It is also
-      // named for its subject ("Manage projects") rather than for the verb alone, because a bare
-      // "Manage" beside three project scopes could as easily mean managing the palettes in them.
-      // flex:none is load-bearing, not tidiness. This is the only door to creating, renaming,
-      // deleting and exporting a project, so it is the one control on the band that must never be
-      // the thing that gives way — the scroller beside it exists precisely so that it doesn't have
-      // to. Without it the button is a shrinkable flex item whose nowrap label is its only floor.
-      projManageStyle: {
-        fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase',
-        display: 'inline-flex', alignItems: 'center', padding: 'var(--btn-pad-sm)', whiteSpace: 'nowrap', flex: 'none',
-        background: 'none', border: '1px solid var(--action-line)', color: 'var(--on-surface)', cursor: 'pointer',
-      },
+      // MANAGE PROJECTS NO LONGER STANDS HERE. It was a bordered act at the end of this row, and it
+      // is now the second tab of the library panel — one door instead of two onto one library. Its
+      // style went with it: the tab takes the app's segmented-control style (libTabs below) rather
+      // than a bordered button's, because it is now a view of a surface rather than a way into one.
       /* THE STEP PAIR. No border of its own: the rail already draws one, and the hairline in the
          JSX separates the pair from the chips — a second box inside the box would read as another
          scope. Square by construction (a fixed 30px, not padding), because a chevron has no width
@@ -1576,8 +1646,50 @@ export const renderValsMethods = {
         background: 'none', border: '1px solid var(--action-line)',
         color: 'var(--on-surface)', cursor: 'pointer',
       }),
-      // the tag facet: a drawer in the contrast/harmony family + applied chip (one filter state)
+      // the library panel: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
+      /* ===== THE PANEL'S TWO TABS =====
+         The same object as the feed's List / Grid / 3D switch, one file over: a travelling pill
+         behind two aria-pressed buttons, built from the same viewToggleOptStyle so a future edit to
+         the app's segmented control reaches both. Two columns rather than three, and the pill is
+         written from libTab — the RESOLVED tab, never the raw flag — so the marker cannot sit under
+         a tab the body is not showing.
+
+         The counts say two different kinds of thing on purpose. Projects carries a cardinality (how
+         many folders there are, zero included: it is why the tab is empty when it is), Filter
+         carries a STATE (how many narrowings are on) and so is absent at rest — "Filter 0" would be
+         a number reporting nothing, and the trigger outside follows the same rule.
+         No opacity on either: the count is small text on a filled pill, and the archive's own audit
+         took opacity off these numerals once already for contrast. */
+      libTab,
+      libTabPill: {
+        position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 2)',
+        transform: 'translateX(' + (libTab === 'projects' ? 100 : 0) + '%)', background: 'var(--on-surface)',
+        transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)',
+      },
+      libTabs: [
+        { key: 'filter', label: 'Filter', count: appliedRaw.length ? String(appliedRaw.length) : '', aria: appliedRaw.length ? 'Filter, ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied' : 'Filter' },
+        { key: 'projects', label: 'Projects', count: String(s.projects.length), aria: s.projects.length === 1 ? 'Projects, 1 project' : 'Projects, ' + s.projects.length + ' projects' },
+      ].map((t) => ({
+        ...t, active: libTab === t.key,
+        // Guarded on the RESOLVED tab, not on the raw flag: with nothing chosen yet the flag is
+        // null, and a press on the tab already showing would otherwise re-announce and re-run the
+        // arrival of a panel that did not change.
+        onClick: () => { if (libTab !== t.key) this.setLibraryTab(t.key); },
+        style: this.viewToggleOptStyle(libTab === t.key, { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }),
+        countStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: libTab === t.key ? 'var(--surface)' : 'var(--on-surface-muted)' },
+      })),
+      // Left/Right across the pair, the same two lines the feed's view toggle takes: a segmented
+      // control is one control, and walking it with the arrows is what makes it one to a keyboard
+      // as well as to the eye. Focus follows the press so the next arrow continues from where you
+      // are, which is only possible because both buttons stay mounted across the switch.
+      libTabKey: (e) => {
+        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
+        e.preventDefault();
+        const next = libTab === 'filter' ? 'projects' : 'filter';
+        this.setLibraryTab(next);
+        requestAnimationFrame(() => { const b = document.querySelector('[data-lib-tab="' + next + '"]'); if (b) try { b.focus(); } catch (err) { } });
+      },
       // A TOGGLE, because it has always claimed to be one. The trigger carries aria-expanded, so it
       // announces as a disclosure, and it only ever opened — pressing it while the panel was up
       // re-ran the open and appeared to do nothing. Now that a press outside dismisses the panel,
@@ -1661,14 +1773,22 @@ export const renderValsMethods = {
       charAria: (s.charOpen ? 'Hide' : 'Show') + ' character traits, which are interpretations rather than measurements',
       // ===== the filter row's own state, kept visible OUTSIDE the overlay =====
       //
-      // A NUMBER ON THE TRIGGER. "Filter" said nothing about whether anything was filtered; the
+      // A NUMBER ON THE TRIGGER. The word said nothing about whether anything was filtered; the
       // only evidence was the chips beside it, which is fine until they wrap or the row is scanned
-      // at a glance. "Filter 1" is the count of narrowings currently applied, in the same place the
-      // scope chips carry theirs, so the two rows report themselves the same way.
+      // at a glance. The number is the count of narrowings currently applied, in the same place the
+      // scope chips carry theirs, so the two rows report themselves the same way. It survived the
+      // word: the trigger is a glyph now, and a glyph reports state even less than a noun does.
       filterCount: appliedRaw.length ? String(appliedRaw.length) : '',
-      filterAria: appliedRaw.length
-        ? (s.tagMenuOpen ? 'Close filters' : 'Filter palettes, ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied')
-        : (s.tagMenuOpen ? 'Close filters' : 'Filter palettes'),
+      /* THE TRIGGER'S WHOLE SENTENCE, because there is no visible label to read it from. Both jobs
+         are named — a control that opens two things and announces one of them is a control that
+         hides the other — and the applied count is spoken as well as printed. Label-in-name (SC
+         2.5.3) does not bite here: there is no visible text for the accessible name to disagree
+         with, which is exactly the trade this button makes. The title carries the short form to the
+         pointer; the panel's own heading says it again the moment it arrives. */
+      libraryTitle: 'Manage Library',
+      libraryAria: s.tagMenuOpen
+        ? 'Close Manage Library'
+        : 'Manage Library: filter palettes and organise projects' + (appliedRaw.length ? ', ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied' : ''),
       // A COUNT ONLY WHEN A FILTER IS HOLDING SOMETHING BACK, and never a bare total.
       //
       // This was "8 palettes" at rest, which is a number the page already states twice — the All
@@ -1770,7 +1890,6 @@ export const renderValsMethods = {
             ],
           })
         : null,
-      onOpenManage: () => this.openManage(),
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
       // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
       // user is being asked about looks the way it looks everywhere else — recognition is the whole
@@ -1793,7 +1912,11 @@ export const renderValsMethods = {
       recogniseOpen: () => this.recogniseOpen(),
       recogniseVariation: () => this.recogniseVariation(),
       trapRecognise: (e) => this.trapFocusIn('[data-recognise-dialog]', e),
-      manage: manageView, hasManage: !!s.manageProjects, closeManage: () => this.closeManage(), trapManage: (e) => this.trapFocusIn('[data-manage-dialog]', e),
+      // No hasManage, no closeManage, no focus trap: the manage surface is a tab of the library
+      // panel now, so it opens, closes and traps exactly as the panel does — which is to say it
+      // does not trap at all, because the panel is not modal. `manage` is null unless that tab is
+      // the one showing (see the gate on manageView).
+      manage: manageView,
       restore: restoreView, hasRestore: !!s.restorePending,
       closeRestore: () => this.closeRestore(), confirmRestore: () => this.confirmRestore(),
       trapRestore: (e) => this.trapFocusIn('[data-restore-dialog]', e),
@@ -2074,7 +2197,12 @@ export const renderValsMethods = {
       navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast
-      hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.name + ' deleted') : '', undoDelete: () => this.undoDelete(),
+      /* The toast says "<name> deleted" for a palette, whose name is the thing you would look for
+         if you had deleted the wrong one. A project states its KIND instead — the deleting is done
+         from a panel that lists every project by name, so the row that vanished is the answer to
+         "which one", and the sentence has one job: to be the handle on Undo. The spoken form still
+         names it (see the announce in deleteProject), so nothing is lost to a screen reader. */
+      hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.label || s.toast.name + ' deleted') : '', undoDelete: () => this.undoDelete(),
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',

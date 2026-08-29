@@ -428,7 +428,7 @@ export const persistenceMethods = {
     this._deleted = null; this._deletedProject = { project, index: idx, palIds };
     const projects = st.projects.slice(0, idx).concat(st.projects.slice(idx + 1));
     const feed = st.feed.map((p) => this.inProject(p, id) ? this.withProjects(p, this.palProjects(p).filter((x) => x !== id)) : p);
-    const patch = { projects, feed, toast: { name: project.name + ' project' } };
+    const patch = { projects, feed, toast: { name: project.name + ' project', label: 'Project Deleted' } };
     if (st.activeProject === id) patch.activeProject = null;
     patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
     // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next
@@ -1115,8 +1115,11 @@ export const persistenceMethods = {
     if (!projectId) this.closeAssign();
   },
   newProjectAndAssign(name) { const id = this.createProject(name); if (id) { const pal = this.state.assignPalette; if (pal) setTimeout(() => { this.assignPalette(pal.id, id); this.closeAssign(); }, 0); } },
-  openManage() { this._manageBack = document.activeElement; this.setState({ manageProjects: true }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-manage-dialog]'); if (d) { const b = d.querySelector('input,button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-manage-dialog]'); })); },
-  closeManage() { const back = this._manageBack; this._dialogOut('[data-manage-dialog]', () => this.setState({ manageProjects: false, announce: 'Manage projects closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
+  /* openManage / closeManage WERE HERE. The manage surface is no longer a dialog of its own — it is
+     the Projects tab of the library panel — so its open, close, focus capture and arrival are the
+     panel's (openTagFilter / closeTagFilter in overlays.js) and there is nothing left for a second
+     pair to do. Everything a project IS still lives in this file: createProject, renameProject,
+     deleteProject and the export below are untouched and are what that tab calls. */
   // Debounced save (immediate for delete/undo so a fast reload can't lose them).
   persist(opts) {
     const write = () => this.writePayload({ version: 1, seedVersion: SEED_VERSION, seeded: true, feed: this.state.feed, projects: this.state.projects });

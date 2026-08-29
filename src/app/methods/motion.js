@@ -178,12 +178,16 @@ export const motionMethods = {
      transition, which is how they all ended up cutting their background tint. One builder, three
      call sites, and the difference stated as the difference. */
   viewToggleOptStyle(active, extra) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', Object.assign({ position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)' }, extra || {})); },
+  // STADIUMS, like every other chip and control in the app. The corner is stated here rather than at
+  // the call sites for the reason this builder exists at all: its consumers — the harmony drawer's
+  // seven methods, the filter panel's sort pair — are one control wearing one shape, and a radius
+  // added per surface is a radius that will disagree per surface.
   // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
   // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
+  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
   pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1 }); },
   // The project rail's step buttons, beside pageNavStyle because they are the same idea one row up:
   // a direction you can go, or one you currently cannot. Square by construction — a fixed 30px

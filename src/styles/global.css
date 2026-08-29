@@ -160,7 +160,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    THE STRINGS ARE AUTHORED WITH THE CAPITALS THEY SHOULD HAVE, so `none` prints them: Text-ready,
    Limited Text, Dark, Balanced, Light, Warm, Cool, Done. Not `capitalize`, for the reason this file
    records twice already — it would set every word, and the drawer holds multi-word labels. */
-[data-tag-dialog] [data-ix]{text-transform:none!important}
+[data-library-dialog] [data-ix]{text-transform:none!important}
 /* DONE IS THE EXCEPTION INSIDE THE EXCEPTION. The rule above puts the drawer into sentence case
    because the drawer is a sheet — headings, counts, option labels, things you read. Done is none of
    those: it is the act that closes the panel, the same kind of object as RESTORE and BACK UP
@@ -169,23 +169,45 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 
    (0,3,0), by naming the dialog and both attributes, so it outranks the drawer-wide rule above on
    specificity rather than on sitting below it. */
-[data-tag-dialog] [data-drawer-act][data-ix]{
-  border-radius:var(--radius-pill);
-  text-transform:uppercase!important;
-}
+/* THE CASE HALF OF THIS RULE IS GONE WITH THE WORD. It read Done in caps because it was the act
+   that closed the panel and spoke the masthead's voice; the control carries the close mark now, so
+   there is no text left to transform. The corner stays: it is what makes this the same circle as
+   the trigger that opens the panel. */
+[data-library-dialog] [data-drawer-act][data-ix]{border-radius:var(--radius-pill)}
+/* AND SO IS THE TAB STRIP, for the same kind of reason one step up. The drawer-wide rule above is
+   about a SHEET's voice — headings, counts, option labels, things you read — and the two tabs are
+   none of those: they are the panel's navigation, the same segmented control as the library's
+   LIST / GRID / 3D and its ALL / UNFILED chips, which sit a few pixels away in caps. Sentence case
+   made the one control the panel is steered by read as quieter than the option rows beneath it.
+   (0,3,0), naming the dialog and both attributes, so it outranks the drawer-wide rule on
+   specificity rather than on order — the same construction as Done above. */
+[data-library-dialog] [data-lib-tab][data-ix]{text-transform:uppercase!important}
+/* A THIRD EXCEPTION FOR CLEAR FILTER STOOD HERE and went out with the control: the panel's copy of
+   the clear-all moved back to the applied-filter row outside, where the chips are. The row out there
+   is not in the drawer, so it speaks the app's caps without needing an exception at all. */
+/* ADD WAS THE THIRD EXCEPTION HERE and no longer needs to be one: the button carries a chevron
+   instead of the word, so there is no case left to state. The rule is gone rather than left
+   matching nothing — [data-manage-add] survives in the markup as the control's name in the DOM.
+   If a label ever comes back, so does this line. */
 /* The same contract, for the outlined acts that sit on --action-line rather than the masthead's
-   softer edge: the drawer's Done, and the Library toolbar's Manage Projects and Filter. All three
-   carry the swap and the pill already; this is the last property that was still answering a pointer
-   twice. The border is pinned to its REST token, not just the fill — the [data-ix="press"] tier
+   softer edge: the drawer's Done and the Library toolbar's panel trigger. Both carry the pill
+   already; this is the last property that was still answering a pointer twice. (Manage Projects was
+   the third and is gone — it is the panel's Projects tab now, and a tab answers a pointer the way
+   the app's segmented controls do.) The border is pinned to its REST token, not just the fill — the [data-ix="press"] tier
    walks border-color to --action-line-hover and then --action-line-press, which on a control with
    no fill left is the whole of what you would see move. */
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
-  [data-tag-dialog] [data-drawer-act][data-ix]:hover:not(:disabled),
-  [data-tag-dialog] [data-drawer-act][data-ix]:active:not(:disabled),
-  [data-proj-manage][data-ix]:hover:not(:disabled),
-  [data-proj-manage][data-ix]:active:not(:disabled),
-  [data-facet-btn][data-ix]:hover:not(:disabled),
-  [data-facet-btn][data-ix]:active:not(:disabled){
+  [data-library-dialog] [data-drawer-act][data-ix]:hover:not(:disabled),
+  [data-library-dialog] [data-drawer-act][data-ix]:active:not(:disabled),
+  [data-library-btn][data-ix]:hover:not(:disabled),
+  [data-library-btn][data-ix]:active:not(:disabled),
+  /* The toast's two acts join them the moment they carry the swap. Written on the surface rather
+     than on either button, so the undo, the dismiss and anything this bar grows later answer a
+     hover the same way — and because neither of them has an attribute of its own worth minting for
+     a corner case. They are outlined circles on --action-line: the same object as the drawer's Done
+     and the library trigger above, one size down. */
+  [data-toast] [data-ix]:hover:not(:disabled),
+  [data-toast] [data-ix]:active:not(:disabled){
     background:none!important;
     border-color:var(--action-line)!important;
   }
@@ -1094,7 +1116,20 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 
 /* ===== button-006 (masked text-swap CTA), remapped to system tokens ===== */
 .button-006{
-  --button-006-border-radius:0;
+  /* THE WHOLE FAMILY IS A STADIUM NOW, which is the decision the note beside the theme switch below
+     said would have to be made here rather than there. Roughly fifteen controls take it in one
+     declaration — New palette in the masthead, the result stage's Add to Project / Check Contrast /
+     Copy / Export / Share Link, the detail overlay's row, the shared-link pair, the export
+     scaffold toggle — because the corner is a local custom property that every layer of the
+     component already consumes: the button, its ::after focus ring, and both __bg layers through
+     border-radius:inherit. Nothing is left square behind a rounded front.
+     WHY IT MOVED. The square corner was the tool's voice and the pill was the front page's, and the
+     two met on every screen where they stand a row apart — BACK UP and RESTORE beside New palette
+     in the masthead, and the glass actions above the stage. One family reading as two systems is
+     the thing the corner was supposed to prevent.
+     --radius-pill, not a length: it clamps to half the shorter side, so these stay stadiums if the
+     type or the padding ever moves. */
+  --button-006-border-radius:var(--radius-pill);
   --button-006-surface:color-mix(in srgb, var(--on-surface) 7%, transparent);   /* rest bg  → glass */
   --button-006-on-surface:var(--on-surface);   /* rest text → on-surface */
   --button-006-accent:color-mix(in srgb, var(--on-surface) 16%, transparent);   /* hover bg → glass, strengthened */
@@ -1155,27 +1190,17 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    --ease-entrance is the masked-reveal curve, so the label lands exactly as a revealed line does. */
 .button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
 .button-006__hover{position:absolute;inset:0;z-index:2;}
-/* THE LIGHT/DARK SWITCH IS THE ONE ROUNDED ONE, and it is scoped rather than switched on the
-   family. --button-006-border-radius is a local custom property, so remapping it on one instance
-   carries everywhere the figure is already consumed: the button's own corner, the ::after focus
-   ring further down, and both __bg layers, which take border-radius:inherit. One declaration, no
-   part of the component left square behind a rounded front.
+/* THE LIGHT/DARK SWITCH USED TO BE THE ONE ROUNDED ONE. It carried --radius-pill here on the
+   argument that it alone sits in the masthead beside the wordmark rather than in a toolbar, while
+   the rest of the family was the tool's chrome and the tool's chrome was square. That premise is
+   gone — the corner moved to the family's own declaration above, exactly as this note said it would
+   have to — so all that is left here is the switch's edge.
 
-   WHY ONLY THIS ONE. B006 backs roughly fifteen controls — New palette, Save to archive, Check
-   contrast, Export, Share, Assign, the export scaffold toggle — and they are the TOOL's chrome,
-   which this system draws square. The theme switch is the one member of that family that sits in
-   the masthead beside the wordmark rather than in a toolbar, and it is the control the front page
-   shows before any work has started, next to the glass actions that are pills. Rounding the
-   family would be a different decision and a much larger one; if it is ever wanted, this rule
-   comes out and --button-006-border-radius changes at its own declaration instead.
-
-   --radius-pill, not a length: at 29px the corner clamps to a stadium, and it stays one if the
-   masthead's type or padding ever moves. Third and last entry in the --radius-* set. */
-/* [data-emphasis] IS ALSO ON THIS BUTTON and also remaps --button-006-line, at the same (0,2,0) as
+   [data-emphasis] IS ALSO ON THIS BUTTON and also remaps --button-006-line, at the same (0,2,0) as
    a lone [data-theme-switch] — so the emphasis block further down won on document order and the
    switch kept the 48% edge while the two buttons beside it went to 32%. Naming both attributes takes
    this to (0,3,0) and settles it by specificity rather than by position in the file. */
-.button-006[data-theme-switch][data-emphasis]{--button-006-border-radius:var(--radius-pill);--button-006-line:var(--masthead-line);--button-006-line-hover:var(--masthead-line)}
+.button-006[data-theme-switch][data-emphasis]{--button-006-line:var(--masthead-line);--button-006-line-hover:var(--masthead-line)}
 /* BACK UP AND RESTORE, the masthead's other two acts, take the same corner as the switch beside
    them. They are the only consumers of renderVals' tier3BtnStyle, and that object sets no radius —
    so this needs no !important: the blanket border-radius:0 they were inheriting is a TYPE selector,
@@ -1212,11 +1237,22 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-proj-group],
 [data-proj-pill],
 [data-proj-chip],
-[data-proj-manage],
 [data-toggle-init],
 [data-toggle-init] > span[aria-hidden="true"],
 [data-toggle-btn],
-[data-facet-btn],
+/* The library panel's own two tabs, in the list for the same reason the feed's three are: it is the
+   same segmented control — a travelling pill behind aria-pressed buttons — and a corner that
+   depended on which panel a toggle happened to sit in would be two controls, not one. */
+[data-lib-tabs],
+[data-lib-tabs] > span[aria-hidden="true"],
+[data-lib-tab],
+/* The contrast checker's two pairs, built as the same rail — see the note in AppView for why they
+   carry their own attribute names rather than the library tabs'. Same three entries: the box, the
+   pill that travels inside it, and the buttons over the top. */
+[data-seg-rail],
+[data-seg-rail] > span[aria-hidden="true"],
+[data-seg-btn],
+[data-library-btn],
 /* The rail's own prev/next steppers. These carry no border and no rest background — the corner is
    only ever seen on the hover and press tint the [data-ix="press"] tier paints, which was arriving
    as a square block inside a rounded rail. They keep that tint, unlike the chips beside them: a
@@ -1356,11 +1392,31 @@ button[data-row-cell] .tswap{flex:none}
    (0,4,0) BY NAMING data-ix AS WELL. The tier being overridden is [data-ix="seg"][aria-pressed=
    "false"]:hover at (0,3,0) with !important, so an attribute-and-state selector alone would tie on
    specificity and lose on document order. */
+/* THE LIBRARY PANEL'S TABS JOIN THEM, and they have to: the strip is the same object as the rails
+   above — a travelling --on-surface pill with unselected labels beside it — so an unselected tab
+   filling with 16% ink put the same grey slab against the same hard black one, inside a panel with
+   nothing else in it to absorb the noise. The tabs already carry .tswap, so unlike the rails there
+   was nothing to add: taking the tint away leaves the masked label doing the whole job, which is
+   the more legible event of the two anyway.
+   Reduced motion is still covered, and by the media query rather than by a second rule: with the
+   swap not running, the tint IS the feedback, so it comes back exactly where it is needed. */
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
   [data-proj-chip][data-ix][aria-pressed="false"]:hover,
   [data-proj-chip][data-ix][aria-pressed="false"]:active,
   [data-toggle-btn][data-ix][aria-pressed="false"]:hover,
-  [data-toggle-btn][data-ix][aria-pressed="false"]:active{background:transparent!important}
+  [data-toggle-btn][data-ix][aria-pressed="false"]:active,
+  [data-lib-tab][data-ix][aria-pressed="false"]:hover,
+  [data-lib-tab][data-ix][aria-pressed="false"]:active,
+  /* The contrast checker's two rails, and the harmony drawer's seven method chips. Both carry
+     .tswap now, and both sat beside — or, in the rails' case, directly against — a solid
+     --on-surface pill: an unselected option filling with 16% ink put a soft grey slab next to a
+     hard black one, which is the symptom that took the tint off the scope chips first. The chips in
+     the harmony drawer are not beside a pill, but they are the same control answering the same
+     gesture, and a tint on one of the two would be the inconsistency rather than the fix. */
+  [data-seg-btn][data-ix][aria-pressed="false"]:hover,
+  [data-seg-btn][data-ix][aria-pressed="false"]:active,
+  [data-hx-cell][data-ix="seg"][aria-pressed="false"]:hover,
+  [data-hx-cell][data-ix="seg"][aria-pressed="false"]:active{background:transparent!important}
 }
 
 /* THE CHIP'S TRUNCATION SURVIVES THE SWAP. ch.labelStyle (renderVals.js) truncates a project name
@@ -1490,6 +1546,31 @@ button[data-row-cell] .tswap{flex:none}
 .button-006:hover:not(:disabled) .button-006__bg.is--hover{opacity:1;}
 /* pressed: the deepest step of the same tint spectrum — clearly distinct from rest and hover in both themes */
 .button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:var(--button-006-press);box-shadow:inset 0 0 0 1px var(--button-006-line-press);}
+
+/* ===== THE FAMILY'S HOVER FILL IS OFF, and it has to be stated HERE rather than up in the
+   swap-only block with its siblings. The rule it overrides — .button-006:hover .is--hover{opacity:1}
+   three lines above — carries the same specificity, so the one that wins is the one that comes
+   later in the file. Placed with the declaration it answers, at the cost of sitting away from the
+   other swap-only rules; the alternative was inventing specificity to win an argument about order.
+
+   WHY AT ALL: every button-006 carries .b006-swap, the label that rises through a mask on hover,
+   which is the same argument that took the fill off the masthead acts, the rails, the drawer's
+   close and the library trigger. New palette, Add to Project, Check Contrast, Copy, Export, Share
+   Link and the shared-link pair were the last controls in the app answering a pointer twice.
+   The hover LAYER keeps its work — it is what the swap's second label lives in, and its inset ring
+   still draws the edge. Only its fill stops painting.
+
+   PRIMARY IS INCLUDED, deliberately. It is filled at rest, so its hover was a lift from one black
+   to a slightly different black: the least legible half of a two-part answer, beside a label that
+   visibly travels. Scoping this to [data-emphasis="secondary"] would have left the one filled
+   button in the row tinting while the three next to it did not.
+
+   Gated exactly as the other swap-only rules are: on a touchscreen and under reduced motion the
+   swap does not run, so the fill has to come back — a control that acknowledges nothing is worse
+   than one that acknowledges twice. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .button-006:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
+}
 .button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow var(--dur-fast) var(--ease-button-focus);}
 .button-006:focus-visible{outline:none;}
 .button-006:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-006-focus);}
@@ -1828,6 +1909,20 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 html.lenis,html.lenis body{height:auto}
 .lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}
 .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+/* AND THE SAME CONTAINMENT WITHOUT THE CLASS GATE, which is ours rather than Lenis's. The vendored
+   line above only applies while html carries BOTH .lenis and .lenis-smooth, and measured on this
+   build the root carries "lenis" alone — so every surface that opts out of Lenis to scroll natively
+   was computing overscroll-behavior:auto and chaining into the page behind it. The library panel is
+   where it shows worst: on the Projects tab with nothing in it the panel does not overflow at all,
+   so a wheel anywhere over it went straight to the document and scrolled the library underneath the
+   thing you were reading.
+   The gate was never load-bearing. "Do not let a scroll inside this surface move the page behind
+   it" is true whether or not the wheel is being smoothed, and it is true under prefers-reduced-
+   motion, where _initLenis returns early and the class never appears at all. Stated on the
+   attribute the app already uses to mean "this scrolls on its own": the two drawers, the export
+   scaffold and the phone's list and share views all take it, and the phone pair had already been
+   patching around it with an inline copy. */
+[data-lenis-prevent]{overscroll-behavior:contain}
 
 /* ===== DISCLOSURE CHEVRONS ====================================================================
    Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no

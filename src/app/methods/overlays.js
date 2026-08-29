@@ -159,7 +159,7 @@ export const overlayMethods = {
     const el = document.querySelector('[data-toast]');
     const hadFocus = !!(el && el.contains(document.activeElement));
     this._dismissToast();
-    if (hadFocus) { const r = document.querySelector('[data-row-hit]') || document.querySelector('[data-facet-btn]'); if (r) try { r.focus(); } catch (e) { } }
+    if (hadFocus) { const r = document.querySelector('[data-row-hit]') || document.querySelector('[data-library-btn]'); if (r) try { r.focus(); } catch (e) { } }
   },
 
   // ===== contrast checker (opt-in surface over the current palette) =====
@@ -794,20 +794,27 @@ export const overlayMethods = {
   // pointerdown, not click: it fires before focus moves, so the panel is already on its way out by
   // the time the thing underneath takes over.
   _facetOutside(e) {
-    const panel = document.querySelector('[data-tag-dialog]');
+    const panel = document.querySelector('[data-library-dialog]');
     if (!panel || panel.contains(e.target)) return;
     // The trigger toggles; without this exclusion the press would close the panel here and the
     // button's own click would immediately reopen it, so Filter would appear to do nothing.
-    if (e.target.closest && e.target.closest('[data-facet-btn]')) return;
+    if (e.target.closest && e.target.closest('[data-library-btn]')) return;
     // The applied chips and Clear all live OUTSIDE the panel, on the Library bar, and they are part
     // of filtering — removing a narrowing should not also put away the surface you would remove the
     // next one from.
     if (e.target.closest && e.target.closest('[data-applied-filters]')) return;
+    // NOR IS ANYTHING STACKED ON TOP OF IT "OUTSIDE" IT. The Projects tab can raise the export
+    // dialog over the panel, and that dialog is dismissed by pressing its own backdrop — so both
+    // the dialog and the backdrop have to be exempt, or exporting a folder would put away the tab
+    // you exported it from. Written as the general case rather than as the export dialog's two
+    // selectors: any modal that opens above this panel is a surface it is standing behind, not a
+    // press somewhere else on the page.
+    if (e.target.closest && e.target.closest('[role="dialog"],[data-modal-backdrop],[data-ex-backdrop]')) return;
     this.closeTagFilter();
   },
   openTagFilter() {
     this._tagBack = document.activeElement; this._tgDone = false;
-    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Filters opened. Press Escape to close, or click anywhere outside it.' }, () => {
+    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Manage Library opened. Press Escape to close, or click anywhere outside it.' }, () => {
       // Bound HERE and not inside the rAF below. The press that opened the panel cannot be the one
       // that closes it, because this runs off `click` — the last event of that gesture, long after
       // its pointerdown — so the next pointerdown is genuinely a new one. The rAF would also have
@@ -817,15 +824,21 @@ export const overlayMethods = {
       this._facetOutsideFn = (e) => this._facetOutside(e);
       document.addEventListener('pointerdown', this._facetOutsideFn, true);
       requestAnimationFrame(() => {
-        // focus lands in the search field — the drawer exists to be typed at
-        const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { }
-        try { this.buildTagTimeline(); if (this._tgTl) this._tgTl.play(0); this._revealDrawerText('[data-tag-dialog]'); } catch (e) { }
+        // FOCUS LANDS ON THE TAB STRIP, which is the panel's first choice and the thing a keyboard
+        // has to be able to make. It used to aim at the trait search field, and had aimed at it
+        // since before that field was folded away behind a disclosure that no longer renders — so
+        // the query returned null and focus quietly stayed on the trigger outside the panel. The
+        // panel is non-modal, so this is a real move rather than a formality: Tab from here walks
+        // the panel and then leaves it, which is the behaviour a surface that does not own the
+        // screen should have.
+        const t = document.querySelector('[data-lib-tab]'); if (t) try { t.focus(); } catch (e) { }
+        try { this.buildTagTimeline(); if (this._tgTl) this._tgTl.play(0); this._revealDrawerText('[data-library-dialog]'); } catch (e) { }
       });
     });
   },
   buildTagTimeline() {
     this._tgTl = null;
-    const g = window.gsap, root = document.querySelector('[data-tag-dialog]');
+    const g = window.gsap, root = document.querySelector('[data-library-dialog]');
     const backdrop = document.querySelector('[data-tg-backdrop]');
     if (!g || !root) return;
     const tl = g.timeline({ paused: true, onReverseComplete: () => this._finishTagClose() });
@@ -859,12 +872,60 @@ export const overlayMethods = {
       if (rows.length) g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
     });
   },
+  /* THE TAB SWITCH, and the arrival that comes with it. The panel is already on screen, so its own
+     entrance timeline is spent; without this the second tab would simply BE there between two
+     frames, which in this app reads as a bug rather than as a change. So the incoming blocks run
+     the drawer's own stagger again — the same duration, easing and step toggleFacetAll uses when
+     the trait list grows, because it is the same event: content arriving inside a panel that is
+     already open.
+
+     The pill under the tabs is a CSS transition on --dur-fold and travels on its own; only what it
+     reveals is scripted here.
+
+     Announced, because the change happens below the control that caused it and a screen reader
+     following the tab strip would otherwise be told nothing at all. The count goes with it: it is
+     the fact that would have been read off the panel had it been looked at. */
+  setLibraryTab(tab) {
+    if (!tab || this.state.libraryTab === tab) return;
+    const n = this.state.projects.length;
+    const said = tab === 'projects'
+      ? 'Projects tab, ' + (n === 1 ? '1 project' : n + ' projects') + '.'
+      : 'Filter tab.';
+    // The Filter tab's ⓘ closes with the tab it explains. It is a toggletip — dismissed by a press
+    // anywhere, including one on the tab strip — and leaving the flag set would bring the sheet
+    // back unasked the next time that tab came round.
+    this.setState({ libraryTab: tab, filterInfoOpen: false, announce: said }, () => {
+      const g = window.gsap;
+      if (!g || this._reduce) return;
+      const panel = document.querySelector('[data-library-panel]');
+      if (!panel) return;
+      const secs = [...panel.querySelectorAll('[data-tg-sec]')];
+      const rows = secs.length ? secs : [panel];
+      g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
+    });
+  },
+  /* A RENAME IN A FIELD YOU NEVER LEFT IS STILL A RENAME. The project name commits on blur, which
+     covered every way the old modal could be dismissed: its backdrop took the press, focus left the
+     field, blur fired, the name landed. This panel is non-modal and closes on Escape as well, and
+     an element removed from the document while focused does not reliably fire blur — so a name
+     typed and then dismissed with the keyboard would have been dropped on the floor.
+     Run at the END of the close (see _finishTagClose), which is what makes it cheap: by then a
+     click-outside has already blurred the field and committed, so the value matches the project and
+     this does nothing. It is only the keyboard path that reaches it with a change still pending. */
+  _commitProjectNames() {
+    document.querySelectorAll('[data-proj-name]').forEach((inp) => {
+      const id = inp.getAttribute('data-proj-name');
+      const pr = this.state.projects.find((x) => x.id === id);
+      const v = (inp.value || '').trim();
+      if (pr && v && v !== pr.name) this.renameProject(id, v);
+    });
+  },
   closeTagFilter() {
     // Unbound here rather than in _finishTagClose: the close tween outlives the decision to close,
     // and a second press during it would otherwise call closeTagFilter again mid-reverse.
     this._unbindFacetOutside();
     if (!this._tgTl) { this._finishTagClose(); return; }
-    this._drawerOut(this._tgTl, document.querySelector('[data-tag-dialog]'), document.querySelector('[data-tg-backdrop]'), () => this._finishTagClose());
+    this._drawerOut(this._tgTl, document.querySelector('[data-library-dialog]'), document.querySelector('[data-tg-backdrop]'), () => this._finishTagClose());
     clearTimeout(this._tgGuard);
     this._tgGuard = setTimeout(() => this._finishTagClose(), (this.DUR.overlayOut + 0.8) * 1000);
   },
@@ -882,8 +943,14 @@ export const overlayMethods = {
     // facetAllOpen resets with the panel, exactly as tagQuery does: both are ways of looking at the
     // trait list rather than filter state, and a panel that reopens twenty rows deep because of
     // something you did last time is a panel that reopens differently every time.
-    this.setState({ tagMenuOpen: false, tagQuery: '', facetAllOpen: false, announce: 'Filters closed.' }, () => {
-      // Focus returns to the Filter trigger — but only when the user did not put it somewhere else
+    // Committed BEFORE the state that unmounts the fields, and only ever with a value that differs.
+    try { this._commitProjectNames(); } catch (e) { }
+    // libraryTab resets with the panel, exactly as tagQuery and facetAllOpen do above: a surface
+    // that reopens on the tab you happened to leave it on is a surface that opens differently every
+    // time. Back to NULL rather than to 'filter' — that is the difference between "open where the
+    // work is" and "open on Filter and then argue with the library about it" (see libTab).
+    this.setState({ tagMenuOpen: false, tagQuery: '', facetAllOpen: false, libraryTab: null, announce: 'Manage Library closed.' }, () => {
+      // Focus returns to the library trigger — but only when the user did not put it somewhere else
       // themselves. Clicking outside IS choosing where focus goes next, and yanking it back to a
       // button they just clicked away from would undo their own move.
       const moved = document.activeElement && document.activeElement !== document.body
@@ -942,11 +1009,12 @@ export const overlayMethods = {
     if (!p) return;
     this._openExportSurface({ exportPalette: p, exportProject: null }, 'Export options for ' + p.name + ' opened. Press Escape to close.');
   },
-  /* Opened from INSIDE Manage Projects, and it stays on top of it rather than replacing it: the
-     folder you are exporting is the row you just pressed, and closing the manager to ask which
-     format would throw away the place you were in. Escape closes this one first (see the ordering
-     in PaletteApp's key handler) and focus goes back to the row's own Export button, so the trip
-     out is the trip in, reversed. */
+  /* Opened from INSIDE the library panel's Projects tab, and it stays on top of it rather than
+     replacing it: the folder you are exporting is the row you just pressed, and closing the panel
+     to ask which format would throw away the place you were in. Escape closes this one first (see
+     the ordering in PaletteApp's key handler) and focus goes back to the row's own Export button,
+     so the trip out is the trip in, reversed. The panel below it is non-modal and dismisses on a
+     press outside itself, so _facetOutside has to know this dialog is not "outside" — it does. */
   openProjectExport(id) {
     const n = this.projectPalettes(id).length;
     if (!n) return;   // an empty folder has nothing to write; the control is disabled anyway

@@ -163,6 +163,13 @@ export default class PaletteApp extends React.Component {
     // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
+    /* WHICH TAB THE LIBRARY PANEL SHOWS — filtering, or the projects the library is divided into.
+       NULL IS THE REAL DEFAULT, and it means "the reader has not chosen": renderVals then opens the
+       panel where the work is (see libTab — Filter normally, Projects when there is nothing yet to
+       filter), and any press replaces it with an answer that is always obeyed. It returns to null
+       on close, exactly as tagQuery and facetAllOpen do, because a surface that reopens in the
+       state you left it in two visits ago is a surface that opens differently every time. */
+    libraryTab: null,
     // character traits, folded away beneath the measured facets
     charOpen: false,
     // the Filters panel's combine rule, on the same 16px toggletip as the Library heading
@@ -176,7 +183,7 @@ export default class PaletteApp extends React.Component {
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
-    assignPalette: null, manageProjects: false, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or
        arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
@@ -390,7 +397,6 @@ export default class PaletteApp extends React.Component {
         // either of the two below it, so nothing else changes order by this.
         if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
-        if (this.state.manageProjects) { e.preventDefault(); this.closeManage(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
         if (this.state.exampleView) { e.preventDefault(); this.closeExampleOnPhone(); return; }
@@ -476,7 +482,10 @@ export default class PaletteApp extends React.Component {
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
-    const modal = !!(s.assignPalette || s.manageProjects || s.recognised || s.restorePending
+    // manageProjects is gone from this list because the surface is: managing projects is a tab of
+    // the library panel now, and that panel is deliberately non-modal — the library stays visible
+    // and operable behind it. Nothing here regressed; a member of this set left the app.
+    const modal = !!(s.assignPalette || s.recognised || s.restorePending
       || s.exportOpen || s.contrast || s.harmony);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix

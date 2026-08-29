@@ -30,12 +30,20 @@ export const wipeMethods = {
     // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
     // alone it would fire after the wipe and pull the reader back into the view they just left.
     this._viewClosing = false; this._viewPending = null;
+    /* THE LIBRARY PANEL, TORN DOWN RATHER THAN SWITCHED OFF. It is the one surface here that owns
+       something outside its own state — a document-level pointerdown listener, its arrival timeline
+       and a close guard — so setting its flag false in the batch below would have left all three
+       bound to a panel that no longer exists. _finishTagClose is the drawer's own teardown with the
+       exit tween skipped, which is right: the wipe is already covering the screen, so there is
+       nothing to watch leave. It also carries the pending project rename out (see
+       _commitProjectNames), so a name typed and then interrupted by Get Started still lands. */
+    if (this.state.tagMenuOpen) { try { this._finishTagClose(); } catch (e) { } }
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState({
       backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, landingDismissed: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
-      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null, manageProjects: false,
+      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
       announce: 'Intro will show again.',
     }, () => {
