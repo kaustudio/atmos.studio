@@ -1575,9 +1575,28 @@ button[data-row-cell] .tswap{flex:none}
    at 192px, which is one chip and the edge of another. The grid governs above a ~936px viewport,
    where four columns is already wider than the floor; below that the floor holds the scroller at a
    width you can still read two scopes in. It costs nothing: measured at 673px the whole band is
-   still one row with 54px to spare, so the guard never pushes anything onto a second line. */
+   still one row with 54px to spare, so the guard never pushes anything onto a second line.
+
+   AND A CEILING ON THE CEILING, because a proportion was the wrong instrument at the top end. Four
+   columns is grid-true at every width and ergonomically true at almost none of them: it is 448px at
+   1440, but 821px on a 27" and 1115px on an ultrawide, and a segmented control a metre into a
+   1115px row has stopped being a control and become a rule across the page. Worse, it made the cap
+   INVISIBLE on exactly the displays this tool is used on — you have to file ten folders before a
+   821px ceiling clips anything, so adding folders just extended the row and the ceiling read as
+   absent. Reported as "it only extends", and the report was right about the experience.
+   So the grid still decides the width while the width is reasonable, and 520px decides it after
+   that: enough for four or five scopes, which is the count the row was ever meant to show at once,
+   and past which the arrows are the better instrument anyway. Below 1512 nothing changes — the
+   proportion is already under the ceiling there — so the value this was tuned at is untouched.
+
+   TWO DECLARATIONS, AND THE FIRST IS NOT DEAD CODE. If an engine cannot parse the clamp() — a
+   percentage and a var() inside a math function is where older parsers give up — it drops that line
+   and keeps the plain one above, which caps at the same ceiling and simply loses the proportional
+   behaviour below it. The failure mode is a control that is still bounded rather than one that runs
+   off the row, and that is the failure worth designing for. */
 [data-proj-rail]{
-  max-width:max(280px, calc((100% - 11 * var(--grid-gutter)) / 3 + 3 * var(--grid-gutter)));
+  max-width:520px;
+  max-width:clamp(280px, (100% - 11 * var(--grid-gutter)) / 3 + 3 * var(--grid-gutter), 520px);
 }
 [data-proj-group]{
   background:
