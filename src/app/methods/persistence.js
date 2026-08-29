@@ -428,7 +428,13 @@ export const persistenceMethods = {
     this._deleted = null; this._deletedProject = { project, index: idx, palIds };
     const projects = st.projects.slice(0, idx).concat(st.projects.slice(idx + 1));
     const feed = st.feed.map((p) => this.inProject(p, id) ? this.withProjects(p, this.palProjects(p).filter((x) => x !== id)) : p);
-    const patch = { projects, feed, toast: { name: project.name + ' project', label: 'Project Deleted' } };
+    // 'Project deleted', not 'Project Deleted'. This is the only toast label written by hand — every
+    // other one is built as `name + ' deleted'` and arrives in sentence case — so Title Case here made
+    // one status line in the app speak differently from the rest of them. It also contradicted the
+    // rule recorded on the toast itself, where a capitalize transform was removed for turning whole
+    // sentences into 'Dry Season Deleted': a status line is prose, and prose is sentence case. The
+    // notice bar beside it carries full sentences for the same reason.
+    const patch = { projects, feed, toast: { name: project.name + ' project', label: 'Project deleted' } };
     if (st.activeProject === id) patch.activeProject = null;
     patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
     // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next

@@ -118,6 +118,24 @@
    index.html loads global.css alongside it. */
 .site-foot__meta a{transition:color var(--dur-chrome) var(--ease-button-hover)}
 .site-foot__meta a:hover{color:var(--on-surface-muted)}
+/* AND THE SWAP REPLACES IT WHERE THE SWAP RUNS. Every link in this row carries .tswap — the label
+   lifting out while its twin rises into place — and that IS the hover state. A colour change under
+   it is a second answer to one question, which is the rule the app already applies to the library
+   tabs, the scope chips, the contrast rails and the harmony chips.
+
+   THE GATE MIRRORS .tswap's OWN, and that is the whole reason this is a media query rather than a
+   deletion. The swap only runs under (hover:hover), and prefers-reduced-motion flattens it back to
+   nothing. So on a touch device and for a reader who has asked for stillness the colour is not the
+   second answer, it is the ONLY one, and taking it away outright would leave those two with a link
+   that does not respond at all. Suppressed exactly where the swap replaces it; kept everywhere else.
+
+   DIRECTLY AFTER THE RULE IT ANSWERS, and that placement is load-bearing rather than tidy. Both
+   selectors are (0,2,0), so this wins on document order alone — the same trap that made the
+   button-006 override sit in a correct media block and never apply, because an identical-specificity
+   declaration lived further down the file. Anything inserted between these two lines breaks it. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .site-foot__meta a:hover{color:inherit}
+}
 .site-foot__meta a:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 
 /* The one exception, and the reason is the shape of the link rather than a change of mind about the

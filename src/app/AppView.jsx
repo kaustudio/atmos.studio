@@ -2297,7 +2297,18 @@ export default function AppView({ vals }) {
               every other pair of nested boxes here. It carries no meaning to lose: aria-hidden, no
               state, no variants. A bullet is what it always was; this draws it as one. */}
           <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;border-radius:var(--radius-pill);background:var(--on-surface-muted)')}></span>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.4;letter-spacing:.01em;text-wrap:pretty')}>{vals.notice}</span>
+          {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
+              They sit in the same corner, take the same --surface-raised plate, the same
+              --line-strong edge, the same pill and the same shadow — and then set their text three
+              different ways: --fs-label against the toast's --fs-body, a hand-set .01em against its
+              --track-flat, and --on-surface-muted against its --on-surface. Two objects that agree
+              about every other property and disagree about the type read as one of them being
+              slightly broken rather than as a hierarchy.
+
+              The literal goes with it. --track-flat is 0 and its declaration calls itself the single
+              source for flat tracking; .01em beside it was the same drift as the six .06em sites
+              still outstanding elsewhere. */}
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
         </div>
       )}
 
@@ -2957,7 +2968,19 @@ function FeedSection({ vals }) {
 
         {/* FULLSCREEN 3D TORNADO: helix of palette cards (items built imperatively) */}
         <div data-reel-layer="1" role="region" aria-label="3D palette view" style={vals.reelStyle}>
-          <div data-reel-stage="1" style={sx('position:absolute;inset:0;overflow:clip;overscroll-behavior:none;cursor:grab;touch-action:none')}>
+          {/* NO overflow HERE, AND THAT IS THE FIX RATHER THAN AN OMISSION. This element is SCALED —
+              the frame recedes to _reelFromScale on the way out and grows from it on the way in — and
+              a clip travels with the transform that carries it. At 0.8 the clip rectangle is 80% of
+              the viewport centred, so its bottom edge sits a tenth of the screen ABOVE the real one,
+              and it rises there over the 1.2s the scale runs. The helix leaves downward through that
+              edge, so the curve was being cut off part-way down a frame nobody could see, and the cut
+              moved while it happened.
+
+              The clipping was never this element's job anyway: [data-reel-layer] is position:fixed,
+              inset:0 and overflow:hidden, it is not transformed by either transition, and it is the
+              thing that should decide what leaves the viewport. At rest the two boxes are identical,
+              which is why this was invisible until something scaled one of them. */}
+          <div data-reel-stage="1" style={sx('position:absolute;inset:0;overscroll-behavior:none;cursor:grab;touch-action:none')}>
             {/* pointer-events:none on the list is what makes the cards clickable at all. Every card
                 is pushed AWAY from the camera by the helix (z is (cos−1)·radius, so never positive),
                 which puts the list's own untransformed plane in FRONT of all of them for hit-testing

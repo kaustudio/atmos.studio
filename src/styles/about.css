@@ -1421,19 +1421,32 @@
    .doc-route prefix, because doc.css sets `.doc-route a{color:inherit}` at (0,1,1) and a bare
    .about-cta is (0,1,0), so the blanket link rule would otherwise decide this control's ink.
 
-   NOTE THE TRADE: .nf-cta stands 36px, where this stood 46. Both clear WCAG 2.5.8's 24px minimum and
-   36 is under the 44 that touch wants, so this is a smaller target than it was. It is the 404's own
-   figure, kept because matching the button was the ask. */
+   THE CORNER AND THE GEOMETRY ARE THE FAMILY'S NOW; THE FILL IS STILL THIS CONTROL'S OWN.
+   --radius-pill, --cta-pad, --fs-cta and --track-statement are what .glass-cta is built from, so
+   this control is drawn to the same figures as the action on the landing and stops being a second
+   dialect of the same idea. What it does NOT take is .glass-cta's fill: that is a 55% black with
+   white ink, and this is the quiet glass control — a 7% tint carrying an --on-surface label. The
+   difference is not decoration. The block below is a measured WCAG 1.4.11 fix (the edge at 36%
+   clears 3:1 at rest, where 15% measured 1.51:1 and made the shape visible only under a pointer),
+   and .glass-cta's own contrast is argued against a dark fill it would not have here.
+
+   PADDING IS THE BOX, so `height` is gone. A floor with the label floated in it is what --cta-pad
+   replaced across this family; height:36px + padding:0 16px says the same thing twice and only one
+   of them follows the token. It resolves to 32 on a pointer and 36 on a phone — the split the phone
+   query makes — where this stood at a flat 36.
+
+   AND .nf-cta MOVES WITH IT. The paragraph above this one is the reason: the two pages outside the
+   tool present their one action identically, so a change to either is a change to both. */
 .doc-route .about-cta{
   display:inline-flex;align-items:center;justify-content:center;
-  height:36px;padding:0 16px;
+  padding:var(--cta-pad);border-radius:var(--radius-pill);
   background:color-mix(in srgb,var(--on-surface) 7%,transparent);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border:1px solid color-mix(in srgb,var(--on-surface) 36%,transparent);
   color:var(--on-surface);
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:14px;font-weight:500;
-  letter-spacing:var(--track-title);white-space:nowrap;line-height:1;
+  font-size:var(--fs-cta);font-weight:500;
+  letter-spacing:var(--track-statement);white-space:nowrap;line-height:1;
   text-decoration:none;
   /* Tint only, no press geometry — the same interaction contract [data-ix] carries in the app. */
   transition:background-color var(--dur-chrome) var(--ease-button-hover),

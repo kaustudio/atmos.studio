@@ -241,15 +241,20 @@ body{display:flex;flex-direction:column}
    The glass earns its keep on this page specifically: the button sits above the particle layer, so
    the backdrop blur takes the cloud passing behind it — the same trick the landing plays with the
    orb ring behind the real one. */
+/* THE SAME FIGURES AS /about's ACTION, which is the whole point of this control — see the note at
+   .doc-route .about-cta in about.css. --radius-pill, --cta-pad, --fs-cta and --track-statement are
+   .glass-cta's, so both pages outside the tool are now drawn to the family's geometry; the 7% fill
+   and the ink stay, because that is what tells this quiet control apart from the landing's solid
+   one. Padding replaces the height floor, so this stands 32 on a pointer and 36 on a phone. */
 .nf-cta{
   display:inline-flex;align-items:center;
-  height:36px;padding:0 16px;
+  padding:var(--cta-pad);border-radius:var(--radius-pill);
   background:color-mix(in srgb,var(--on-surface) 7%,transparent);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent);
   color:var(--on-surface);
-  font-size:14px;font-weight:500;
-  letter-spacing:var(--track-title);white-space:nowrap;
+  font-size:var(--fs-cta);font-weight:500;line-height:1;
+  letter-spacing:var(--track-statement);white-space:nowrap;
   text-decoration:none;
   /* This was the whole interaction contract hand-copied — both beziers written out as literals and
      a translateY(1px) press. It is the same button as a [data-ix="press"], just on the one page
