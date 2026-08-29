@@ -2993,7 +2993,7 @@ function FeedSection({ vals }) {
           </div>
           {vals.reelEmpty && (
             <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet — drop a reference image to fill the reel.</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet. Drop a reference image to fill the reel.</span>
             </div>
           )}
           <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--page-gutter);pointer-events:none')}>
@@ -3791,10 +3791,6 @@ function ExportDialog({ vals }) {
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{ex.kicker}</span>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</span>
-            {/* The scale of a folder export, stated before a format is picked — see scopeLine. */}
-            {ex.scopeLine && (
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{ex.scopeLine}</span>
-            )}
           </div>
           {/* The app's one close mark, at the 32px circle the library panel and the project picker
               both use. This was the last surface still spelling the word. */}
@@ -3802,7 +3798,7 @@ function ExportDialog({ vals }) {
         </header>
 
         <div style={sx('padding:14px var(--page-gutter) 0')}>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>HEX / RGB / HSL — the authoritative values. The labelled CMYK approximation stays on-screen, never baked into a file you ship.</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every export contains HEX, RGB and HSL. The CMYK shown on screen is an approximation, so it is never included.</span>
         </div>
 
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
@@ -3817,30 +3813,38 @@ function ExportDialog({ vals }) {
           ))}
         </div>
 
-        <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 0')}>
+        {/* 22px OF BOTTOM PADDING, INHERITED RATHER THAN INVENTED. The line under this row carried
+            it — `padding:14px var(--page-gutter) 22px` on its own wrapper — so removing that line
+            took the dialog's last piece of breathing room with it and stood the switch on the sheet's
+            bottom edge. Same figure, moved up one row. */}
+        <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 22px')}>
           <div style={{ minWidth: 0 }}>
             <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-detail); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
-            <div style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.45;color:var(--on-surface-muted);margin-top:3px;text-wrap:pretty')}>Role-mapped starting layer to refine — not a finished system.</div>
           </div>
+          {/* THE SWITCH IS A PILL, which is what the one in the masthead already was. Both are the
+              same object down to the figures — a 28x14 track with a 10px knob inset 2 — and this one
+              was the only square copy of it, so the app drew one physical control two ways depending
+              on which surface you met it on.
+              --radius-pill on both layers and both parts: it clamps to half the shorter side, so the
+              track is a true stadium at 7 and the knob a circle at 5, and neither needs 50% or a
+              length. Four spans rather than two because B006 draws its label twice — the resting copy
+              and the one that rises through the mask — and a corner on only one of them would appear
+              halfway through the hover. */}
           <B006 data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Toggle semantic scaffold layer"
             hover={
               <span style={sx('display:inline-flex;align-items:center;gap:7px')}>
-                <span aria-hidden="true" style={sx('position:relative;display:inline-block;width:28px;height:14px;background:color-mix(in srgb, currentColor 30%, transparent);flex:none;transition:background var(--dur-chrome) var(--ease-standard)')}>
-                  <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:currentColor;transition:transform var(--dur-chrome) var(--ease-standard)'), transform: ex.semanticDotX }}></span>
+                <span aria-hidden="true" style={sx('position:relative;display:inline-block;width:28px;height:14px;background:color-mix(in srgb, currentColor 30%, transparent);flex:none;border-radius:var(--radius-pill);transition:background var(--dur-chrome) var(--ease-standard)')}>
+                  <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:currentColor;border-radius:var(--radius-pill);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: ex.semanticDotX }}></span>
                 </span>{ex.semanticLabel}
               </span>
             }
             label={
               <span style={sx('display:inline-flex;align-items:center;gap:7px')}>
-                <span style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;transition:background var(--dur-chrome) var(--ease-standard)'), background: ex.semanticTrackBg }}>
-                  <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: ex.semanticDotX }}></span>
+                <span style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;border-radius:var(--radius-pill);transition:background var(--dur-chrome) var(--ease-standard)'), background: ex.semanticTrackBg }}>
+                  <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);border-radius:var(--radius-pill);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: ex.semanticDotX }}></span>
                 </span>{ex.semanticLabel}
               </span>
             } />
-        </div>
-
-        <div style={sx('padding:14px var(--page-gutter) 22px')}>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.02em;color:var(--on-surface-muted)')}>{ex.layerLabel}</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 // Motion system: shared tokens, micro-interaction handlers, list-row activation (effect035) +
 // value readout (effect019), the result reveal (bottom-to-top band wipe, masked line reveals),
-// theme toggle, and the mono-label style builders.
+// theme toggle, and the uppercase-label style builders.
 import { syncThemeColor } from '../../lib/themeColor.js';
 
 export const motionMethods = {
@@ -156,7 +156,7 @@ export const motionMethods = {
     el.style.zIndex = '';
   },
 
-  // ===== style builder: the mono uppercase label — the dominant repeated pattern (single source) =====
+  // ===== style builder: the uppercase label — the dominant repeated pattern (single source) =====
   // Takes a step off the scale, not a number. It used to take px and was the last place in the app
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
   monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },

@@ -203,12 +203,23 @@
 .toc-article ul{margin:0 0 1.25em;padding-left:1.4em}
 .toc-article li{margin-bottom:.6em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
 
-/* Squared, per the system's zero-radius rule — the Osmo original carried a .25em radius here. */
+/* Squared, per the system's zero-radius rule — the Osmo original carried a .25em radius here.
+
+   NO MONOSPACE. This was ui-monospace,SFMono-Regular,Menlo,monospace, and it was the only place on
+   the whole site where a face other than Neue Montreal reached the screen. Four strings render
+   through it — `palette-generator`, `#` twice and `.ase` — and none of them needed a second typeface
+   to be read as literal: the tinted chip and its padding already say "this is a value, not prose",
+   which is the job the face was doubling up on. One family, and the distinction stays.
+
+   THE SIZE GOES WITH IT. 0.9em existed because a monospace face runs wider and taller on the same
+   em than the prose around it, so it had to be pulled back to sit level. At the same family that
+   compensation has nothing left to compensate for, and 90% of the surrounding line just reads as
+   text that has shrunk. Inheriting puts the chip on the line it sits in. */
 .toc-article code{
   background:color-mix(in srgb,var(--on-surface) 8%,transparent);
   padding:.1em .4em .15em;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:.9em;
+  font-family:inherit;
+  font-size:inherit;
 }
 
 .toc-article blockquote{

@@ -490,7 +490,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --track-statement:-0.02em;  /* statement-scale headings */
   --track-title:-0.01em;      /* card/section titles */
   --track-body:0.01em;        /* body copy */
-  --track-label:0.1em;        /* uppercase mono labels (system default) */
+  --track-label:0.1em;        /* uppercase labels (system default) */
   --track-flat:0px;           /* intentional flat tracking (labels/CTAs/wordmark) — the design's chosen override, single source */
   /* ===== GROUND =====
      Two colours the theme does not touch, named because they are roles rather than values.
@@ -607,7 +607,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --row-contrast-col:88px;    /* the maximum contrast ratio */
   --row-time-ink:100px;       /* the stamp itself — sized for the widest value the cell can hold, a
                                  same-day da-DK stamp ("14.06.26, 14.32"), which measures 100px in
-                                 the cell's own 9px tabular mono; a column that only fits its
+                                 the cell's own 9px tabular figures; a column that only fits its
                                  narrowest value is a column that jitters. Everything that must
                                  clear the stamp is derived from this, so it has to be the real
                                  width and not a round number near it. */

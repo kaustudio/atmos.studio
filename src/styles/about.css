@@ -2056,7 +2056,7 @@
    things elsewhere — and the group heads read as SHOUTED rather than as headings. Removing the
    transform alone would have left two settings behind that only make sense under it:
 
-     · --track-label is defined in global.css as "uppercase mono labels". A tenth of an em between
+     · --track-label is defined in global.css as "uppercase labels". A tenth of an em between
        sentence-case letters is not a label voice, it is loose type. --track-flat is the system's
        own way of saying flat, and is what the numbers in here already take.
      · --fs-label is 10px, which works for a group name only while capitals are carrying it. Set in
