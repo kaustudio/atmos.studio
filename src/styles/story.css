@@ -25,7 +25,7 @@
    only the first was visible: type contrast depended on which part of which photograph happened to be
    behind it, so it was a different answer per case and per scroll position; a photograph cannot
    follow `--surface`, so the one surface on the site had a single appearance while everything else
-   had two; and /about does not do it — in fourteen sections there is no full-bleed photograph behind
+   had two; and /about does not do it — in thirteen sections there is no full-bleed photograph behind
    body copy. Every chapter now sits on `var(--surface)` and every ink is a token, so light and dark
    are both correct by construction rather than by a second set of rules.
 

@@ -45,6 +45,13 @@
      band states the intent instead: the boundary between sections is always twice the boundary
      within one, at every viewport, and the clamps only bound the extremes. */
   --block-gap:clamp(40px, calc(var(--band-gap) * 0.5), 76px);/* between blocks inside one section */
+  /* THE HEIGHT OF THE SECTION NUMBER, AS A DISTANCE THE REST OF THE PAGE CAN USE. It is the only
+     thing standing between the top of a heading's box and the top of the heading's first line, and
+     the copy across the page has to clear the same amount to start level with the WORDS rather than
+     with the numeral. One em of line box — .about-sec__num sets line-height:1 — plus its .55em
+     margin, both in the number's own --fs-detail. Kept here rather than typed into the offset rule
+     so that changing the number's size or its gap moves the copy with it. */
+  --sec-num-lead:calc(var(--fs-detail) * 1.55);
   --rail-card:clamp(280px, 26vw, 420px);
 }
 
@@ -87,7 +94,7 @@
    statement scale and were breaking three and four lines deep — get to be two. The measure caps at
    --measure where the line would otherwise run past what is comfortable, so the column is a PLACE on
    the grid and the measure is still a measure. */
-/* THE SPLIT — headline at one edge of the viewport, body at the other, and the body sitting BELOW it.
+/* THE SPLIT — headline at one edge of the viewport, body at the other, and the two starting level.
 
    Not an indent. An indent carries the body in from the heading's edge and keeps them on one axis,
    which reads as one block set slightly wrong; this puts the two on opposite edges of the page with
@@ -99,37 +106,58 @@
    to mean the other side of the VIEWPORT. Heading in columns 1–5, prose in 8–12, so four columns of
    air separate them and each has its own hard edge.
 
-   And the prose starts a row down. Top-aligning them would make the two blocks read as a pair of
-   equals side by side; dropping the body to the second row puts the heading first in the eye and the
-   body under it, which is the reading order the copy actually has.
+   AND BOTH START ON THE SAME LINE, which is the change. The prose used to be dropped a row, so that
+   the heading came first in the eye; over more than a dozen sections that read as the body having slipped
+   rather than as an order being stated, and it gave away the one thing a span across the page has
+   going for it — a top edge the two sides share. The heading is already first by size, by weight and
+   by the number in front of it, and it is first in the DOM, so a screen reader and a reader with no
+   JavaScript both meet it first whatever the layout does. There was nothing left for the row to buy.
 
-   HOW THAT ROW IS RESERVED, and this is a correction. It used to be grid-row:2 on the first
-   paragraph only — which moved that one paragraph down and left row 1 of the right-hand column
-   empty, so the SECOND paragraph auto-placed into the hole above it. Measured in six of the seven
-   text sections: paragraph two sat above paragraph one, every time.
+   WHICH MEANS NO RESERVED CELL — and why one existed is worth keeping, because the trap it was built
+   for is still there. The drop used to be grid-row:2 on the FIRST paragraph only, which moved that
+   paragraph down and left row 1 of the right-hand column empty, so the SECOND paragraph auto-placed
+   into the hole above it. Measured in six of the seven text sections: paragraph two sat above
+   paragraph one, every time. The prose was read out of authored order, and the masked reveal — which
+   staggers in DOM order because DOM order is the reading order — reported the scramble faithfully by
+   starting on the lower paragraph. An empty generated grid item held row 1 so nothing could
+   auto-place into it.
 
-   That scrambled two things at once. The prose was read out of authored order — in "From sampled
-   colours to purposeful roles" the reader met "Atmos translates the visual character…" before "A
-   useful palette is not simply a row of attractive swatches…", which is the conclusion before its
-   premise. And the masked reveal, which staggers in DOM order because DOM order is the reading
-   order, therefore started the lower paragraph first. The reveal was never out of sequence; the
-   layout was, and the reveal was faithfully reporting it.
+   Plain auto-placement is the whole mechanism now, and it needs no cell to defend: the heading takes
+   row 1 of columns 1–5, the first paragraph takes row 1 of columns 8–12 across from it, and every
+   paragraph after that falls to the next row in the order it is written. Anything that pins a single
+   child to a row again brings the hole back with it.
 
-   An empty generated grid item holds row 1 of the right-hand column instead. Nothing can auto-place
-   into an occupied cell, so every paragraph flows into rows 2, 3, 4 in the order it is written, and
-   the count of paragraphs stops mattering. */
+   The rhythm down the right-hand side is the paragraphs' own margins — this grid sets no row-gap —
+   so the alignment moves where the copy starts and nothing else. */
 .about-col{
   grid-column:1 / -1;min-width:0;
   display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));column-gap:var(--grid-gutter);
 }
 .about-col > *{grid-column:8 / -1;min-width:0}
 .about-col > h2,.about-col > h3{grid-column:1 / span 5}
-/* The reserved cell. Zero height, so row 1 is still exactly as tall as the heading in it. */
-.about-col::before{content:'';grid-column:8 / -1;grid-row:1;height:0;pointer-events:none}
-/* A section whose column holds only prose — the grow block — has no heading to sit across from, so
-   its copy keeps the right-hand edge and simply starts at the top, in row 1, and the reserved cell
-   would push it down for no reason. */
-.about-col:not(:has(> h2)):not(:has(> h3))::before{display:none}
+/* LEVEL WITH THE HEADLINE, NOT WITH ITS NUMBER — the correction to the alignment above.
+
+   Sharing a top edge put the copy's first line beside "3.2", and the headline itself a line lower.
+   The numeral is apparatus: it is aria-hidden, it is set at a fifth of the heading's size and in the
+   muted tint, and nothing about it is the thing the copy is supposed to line up with. Two sizes of
+   type starting on the same line, with the actual headline below both, reads as the heading having
+   dropped rather than as an eyebrow doing its job.
+
+   So the right-hand column clears the number's block and starts on the heading's own first line. The
+   offset goes on the first paragraph, which is the only child in row 1, so the whole column moves
+   with it and the paragraphs' own margins keep the rhythm below.
+
+   :has(), so it lands only where a number is actually there to clear. The phone story is built from
+   these same components and its headings carry no numeral; without the guard every one of them would
+   push its copy down past a block of nothing.
+
+   WITHIN A PIXEL, and worth stating because it is the reason no second correction follows. Line box
+   tops are what this aligns, and ink sits lower than a line box top by the half-leading plus the gap
+   from ascender to cap height. Measured at 1440: 7.68px into the heading's line at 34px/1.14, and
+   6.77px into the paragraph's at 15px/1.65 — so the two cap heights land 0.91px apart with nothing
+   further done about it. That is the two line-heights happening to cancel, not a property of the
+   arrangement: change either one materially and measure again before trusting this note. */
+.about-col > h2:has(> .about-sec__num) + p{margin-top:var(--sec-num-lead)}
 .about-figure--full{grid-column:1 / -1}
 
 /* SCOPED TO main, and the scope is the whole point. This was `.about-route p`, which is every <p>
@@ -272,7 +300,7 @@
    and a bordered panel is a hierarchy element. It reads as a thing, and it is a waypoint.
    So when the effect is live both plates drop to the page's own background with no edge at all, and
    the only thing you see is the photograph travelling. aboutFlip.js sets [data-flip-live] on the root
-   when it builds and clears it on teardown, which is the same signal the rail and the stream already
+   when it builds and clears it on teardown, which is the same signal the rail already
    use — so no-JS, no-GSAP, a failed Flip and reduced motion all keep the drawn frame they need. */
 [data-flip-live] .about-plate{background:var(--surface);border-color:transparent}
 /* ONE RATIO AT BOTH WAYPOINTS, and it is the resource's own 56.25% padding-top written as a ratio.
@@ -375,108 +403,6 @@
   content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
   box-shadow:inset 0 0 0 1px var(--img-outline);
 }
-
-/* ------------------------------------------------------------- the spectrum plot
-
-   Hue across, lightness up, chroma as diameter — the three dimensions the copy names, drawn as the
-   three dimensions of the figure. aboutSpectrum.js positions the dots from the OKLCH coordinates in
-   the markup; everything here is what the plot looks like before and after it does.
-
-   The band under the field IS the hue axis: a genuine OKLCH sweep at fixed lightness and chroma, so
-   the axis a dot is measured against is the thing it is measured against. Thirteen stops every 30°,
-   which is dense enough that the eye reads a continuum rather than a set of steps. */
-.about-spectrum{position:relative;width:100%}
-.about-spectrum__field{
-  position:relative;width:100%;aspect-ratio:16/7;
-  border:1px solid var(--line);
-  border-bottom:none;
-}
-.about-spectrum__band{
-  order:2;width:100%;height:clamp(10px,1.2vw,16px);
-  background:linear-gradient(90deg,
-    oklch(0.68 0.16 0), oklch(0.68 0.16 30), oklch(0.68 0.16 60), oklch(0.68 0.16 90),
-    oklch(0.68 0.16 120), oklch(0.68 0.16 150), oklch(0.68 0.16 180), oklch(0.68 0.16 210),
-    oklch(0.68 0.16 240), oklch(0.68 0.16 270), oklch(0.68 0.16 300), oklch(0.68 0.16 330),
-    oklch(0.68 0.16 360));
-}
-.about-spectrum{display:flex;flex-direction:column}
-.about-spectrum__field{order:1}
-/* A dot is a circle, which is the one place this system draws one: it is a plotted point, not a
-   surface. The ring keeps a near-black dot visible against a dark field without tinting it. */
-.about-spectrum__dot{
-  position:absolute;top:0;left:0;
-  width:26px;height:26px;border-radius:50%;
-  box-shadow:0 0 0 1px color-mix(in srgb,var(--on-surface) 22%,transparent);
-}
-/* Before the script runs — and for good — the dots are an even row along the floor of the field.
-   That is the palette strip the section is arguing against, which makes it the right resting state. */
-.about-spectrum:not([data-spectrum-live]) .about-spectrum__field{
-  display:flex;align-items:flex-end;justify-content:space-around;padding:0 0 18px;
-}
-.about-spectrum:not([data-spectrum-live]) .about-spectrum__dot{position:relative}
-/* THE DOTS TEACH ON DEMAND. Each one carries its own three numbers, revealed on hover and on focus —
-   the reading is available for any colour the reader is curious about without printing fifteen figures
-   onto the plot at rest. A real <button>, so the whole plot is reachable by keyboard and every dot
-   announces its own measurement; the readout is decoration on top of an accessible name. */
-.about-spectrum__dot{border:none;padding:0;cursor:help;-webkit-appearance:none;appearance:none}
-/* THE TARGET IS NOT THE MARK. aboutSpectrum.js sizes each dot from its chroma against the field's
-   own width, so on a phone the least chromatic swatch is drawn at 12px — which is the right SIZE
-   for a mark carrying almost no chroma and no size at all for a control. This is the one place on
-   the page where a thing you tap is scaled by data rather than by the hand reaching for it, so the
-   hit area is stated separately and never falls under 32px. Transparent and centred, so it changes
-   what the button catches and nothing about what the figure draws. */
-.about-spectrum__dot::after{
-  content:'';position:absolute;left:50%;top:50%;
-  width:max(100%,32px);height:max(100%,32px);transform:translate(-50%,-50%);
-}
-.about-spectrum__read{
-  position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%, 4px);
-  opacity:0;pointer-events:none;
-  padding:6px 9px;white-space:nowrap;
-  background:var(--surface);border:1px solid var(--line-strong);color:var(--on-surface);
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
-  font-variant-numeric:tabular-nums;
-  transition:opacity var(--dur-state) var(--ease-standard),transform var(--dur-state) var(--ease-standard);
-}
-/* :focus AS WELL AS :focus-visible, and on a touch screen it is the only one of the three that fires.
-   The rule was hover plus focus-visible, which between them cover a mouse and a keyboard and nothing
-   else. A phone has no hover, and browsers deliberately withhold :focus-visible from a tap — verified
-   here on an emulated touch context (maxTouchPoints 5): after a tap the dot IS the activeElement and
-   :focus-visible still does not match, so the readout stayed at opacity 0. Which meant the three
-   numbers each dot exists to give up were unreachable on a phone by any gesture at all.
-   :focus-visible keeps its own line below because the RING is still keyboard-only — a tap should
-   reveal the reading without also drawing a focus ring nobody asked for. */
-.about-spectrum__dot:hover .about-spectrum__read,
-.about-spectrum__dot:focus .about-spectrum__read,
-.about-spectrum__dot:focus-visible .about-spectrum__read{opacity:1;transform:translate(-50%, 0)}
-.about-spectrum__dot:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
-/* IT WRAPS ON A PHONE, because a centred tooltip is only as safe as its half-width. Set on one line
-   the readout is ~180px, so a dot 30px inside the field's left edge put its left edge 20px into the
-   page margin. The dots are placed from JS and keep moving through the scrub, so a computed clamp
-   would have to track the tween; letting the line break instead halves the overhang for free and a
-   three-line tooltip is a perfectly ordinary tooltip. */
-@media screen and (max-width:620px){
-  .about-spectrum__read{white-space:normal;max-width:118px;line-height:1.45;text-align:center}
-  /* THE FIELD GETS ITS HEIGHT BACK. 16/7 is a landscape figure and it is the right shape beside a
-     column of copy; at 327px it is a 143px letterbox, and once `pad` is taken off both ends the
-     lightness axis — the palette's widest true range, 0.366 to 0.945 — had 108px to say it in.
-     4/3 gives that axis 203px, which is what separates five dots whose hues are 66° apart into five
-     dots. The hue axis is unchanged: it is the band underneath, and the band is the full circle at
-     every width. */
-  .about-spectrum__field{aspect-ratio:4/3}
-}
-@media (prefers-reduced-motion:reduce){ .about-spectrum__read{transition:none} }
-
-.about-route .about-spectrum__axis{
-  position:absolute;margin:0;
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
-  color:var(--on-surface-muted);white-space:nowrap;
-}
-.about-spectrum__axis--x{bottom:8px;right:10px}
-.about-spectrum__axis--y{top:10px;left:10px}
-.about-spectrum:not([data-spectrum-live]) .about-spectrum__axis{display:none}
 
 /* ------------------------------------------------------------- the interval rail
 
@@ -604,21 +530,6 @@
   }
 }
 
-/* THE SOURCE, shown beside the palette that came out of it. Every other palette on this page arrives
-   with its photograph; this one was the exception, which left the reader being told a set of hexes
-   fails without ever seeing what they were read from. The note beside it carries the reason. */
-.about-split__ref{
-  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
-  column-gap:var(--grid-gutter);align-items:center;margin-bottom:var(--block-gap);
-}
-.about-split__shot{grid-column:1 / span 4;position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--surface-raised)}
-.about-split__shot img{width:100%;height:100%;object-fit:cover;display:block}
-.about-route .about-split__note{grid-column:6 / -1;margin:0;max-width:var(--measure)}
-@media (max-width:900px){
-  .about-split__shot{grid-column:1 / -1}
-  .about-route .about-split__note{grid-column:1 / -1;margin-top:18px}
-}
-
 
 /* ===== THE TWO LENSES, THE THREE AXES AND THE THRESHOLDS
    Four figures that carry the page's only genuinely technical material, and the brief for all of them
@@ -630,9 +541,24 @@
    The narrative sentence is always visible first and the measurement sits under it, which is the
    progressive disclosure the brief asks for without hiding anything behind an interaction. */
 
-/* One colour against two colours, which is the whole distinction drawn rather than described. */
+/* One colour against two colours, which is the whole distinction drawn rather than described.
+
+   FOUR SHARED ROWS, and this is the correction. The two lenses were two independent flex columns,
+   which meant the only line they had in common was the one they started on. Measured at 918: the
+   left lens's reading is a three-row <dl> at 88px and the right's is a single ratio at 26px, so the
+   two notes — the same element, the same role, the punchline of each half — began 61px apart, and
+   the figure read as two unrelated cards rather than as one comparison. A figure whose entire job is
+   to hold two readings against each other has to put its corresponding parts on the same lines.
+
+   So the parent owns the four rows — label, band, reading, note — and each lens takes them by
+   subgrid. Nothing in the markup moved: both lenses already had exactly these four children in
+   exactly this order. The reading row is now as tall as the taller of the two, and the ratio sits at
+   its top so 5.56 lands on the same line as 0.551 — which is the comparison, one number against the
+   first of three. Below 900 the lenses stack and there is no second column to align to, so the rows
+   go back to the parent and each lens is a plain flex column again. */
 .about-lenses{
   display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
+  grid-template-rows:auto auto auto auto;
   column-gap:var(--grid-gutter);row-gap:var(--block-gap);
 }
 /* THE HIERARCHY WAS FLAT, and measured it was not a hierarchy at all: label 10px, reading 13px, note
@@ -640,8 +566,28 @@
    figure read as a block of small print with a swatch stuck on top. The reading IS the payload here —
    three coordinates on one side, one ratio on the other — so it takes the numeral treatment the stack
    cards already use, and the note steps properly down beneath it. */
-.about-lens{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px)}
-.about-lens__art{display:flex;gap:clamp(12px,2vw,28px);height:clamp(96px,12vw,168px)}
+.about-lens{
+  grid-column:span 6;grid-row:span 4;min-width:0;
+  display:grid;grid-template-rows:subgrid;row-gap:clamp(14px,1.6vw,22px);
+}
+/* THE BAND, NOT THE PLATE — and the arity is the only thing that differs across it.
+
+   The art used to be a fixed square: one 110px swatch on the left, two on the right. Two problems in
+   one shape. The left half spent 313 of its 423px on nothing, so a figure sitting on all twelve
+   columns had its ink huddled at the far left of each half and the column edges were never drawn.
+   And the right lens carried twice the colour of the left, which made "two colours" read as "more
+   important" rather than as "a pair".
+
+   Both lenses now take the same band across their half of the grid. The left is one field; the right
+   is the same field divided. Equal area, and the difference between them is a seam — which is what a
+   contrast ratio is measured across, so the drawing states the distinction instead of illustrating
+   it. Flush, no gap: .about-weights and .about-axis__ramp are the page's other multi-colour bands
+   and both butt their parts together, and here the two swatches meeting IS the measurement.
+
+   The height comes down as the width goes up, to clamp(72px,7vw,110px) — the same band family as
+   .about-weights at clamp(64px,8vw,110px). At the old 168px a full-width field would have been the
+   heaviest object on a page whose largest colour block is a proportion bar. */
+.about-lens__art{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;height:clamp(72px,7vw,110px)}
 
 /* THE COLOUR, PLAIN. These were briefly WebGL orb slots — a lit particle sphere per colour, with this
    rule painting a disc underneath as the no-WebGL floor. The spheres are gone and the swatch is the
@@ -652,19 +598,37 @@
    carry it — and it earns its place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
    so without an edge the darker of the two lenses would be a colour the reader cannot locate. */
 .about-lens__body{
-  flex:0 0 clamp(96px,12vw,168px);aspect-ratio:1;display:block;
+  display:block;
   background:var(--lens-swatch,var(--surface-raised));
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
 }
 
 /* The numerals, set as the figure's own subject. dl rather than three lines in one <p>: each of these
    is a term and a value, and a screen reader should not have to infer that from a line break. */
+/* ACROSS THE BAND, NOT DOWN ITS LEFT EDGE — and this is a correction the band above caused.
+
+   The readout was a flex column, which was right while the lens was a narrow card: a 110px swatch
+   with the numbers under it in some 250px of usable width, where three coordinates could only stack.
+   Widening the art into a full-column band took the lens from ~250px to 684px at 1440 and the stack
+   did not follow. Measured there: each row's box was 684px wide with its ink ending at 149, so 78%
+   of every row was empty, and the three rows stacked 120px tall against the other lens's single
+   37px line — which put 83px of nothing under 5.56 as well, because the two share a row.
+
+   Three equal tracks with the page's own gutter between them, and the arithmetic is exact rather
+   than close. The lens spans six grid columns, so its width is 6t + 5g; a third of that with the two
+   internal gutters taken out is (6t + 5g - 2g) / 3 = 2t + g — which is precisely what a two-column
+   span measures. The readouts land on grid columns 1–2, 3–4 and 5–6 of the lens's half without
+   anything here naming a column, and they hold that alignment at every width because it falls out of
+   the track arithmetic rather than out of a number typed in. */
 .about-route .about-lens__read{
-  margin:0;display:flex;flex-direction:column;gap:4px;
+  margin:0;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));column-gap:var(--grid-gutter);
 }
-.about-route .about-lens__read > div{display:flex;align-items:baseline;gap:12px}
+/* TERM ABOVE VALUE, which is the readout idiom this page already has: .about-figure__label over its
+   figure, .about-role__name over its hex and its share, .about-axis's label over its ramp. Beside the
+   value it needed a fixed 6.5em gutter to keep the three numbers on one edge — an edge that belonged
+   to the longest word rather than to the grid. Stacked, the numbers start on the track. */
+.about-route .about-lens__read > div{display:flex;flex-direction:column;gap:6px;min-width:0}
 .about-route .about-lens__read dt{
-  flex:0 0 auto;min-width:6.5em;
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);
@@ -676,6 +640,12 @@
 }
 /* One number, so it gets to be the biggest thing in the figure. The unit rides at label size beside
    it rather than at the same weight, because "5.56" is the measurement and "to 1" is its notation. */
+/* ALIGNED TO THE BOTTOM OF THE SHARED ROW, which is where the other lens's numerals are. This lens
+   has no term to set over its value — the figure label above the band already says WCAG CONTRAST, and
+   a second "RATIO" under it would name the same thing twice — so the row is as tall as the other
+   lens's term-plus-value and the ratio would hang at the top of it, level with three small labels
+   rather than with the three numbers it is the peer of. End-aligned, 5.56 sits on the same line as
+   0.551, and the space above it is exactly the line the other lens spends on naming its terms. */
 /* THE SAME SIZE AS THE OTHER LENS'S NUMBERS, because they are peers rather than tiers. This was
    clamp(38px,5.4vw,72px) on the reasoning that one number should get to be the biggest thing in the
    figure — but the figure holds TWO lenses side by side, and the other one's readings are the same
@@ -683,7 +653,8 @@
    0.551 at 25px, a 2.1x gap between siblings, which reads as two different levels of importance
    rather than two ways of reading one colour. Equal size, equal standing. */
 .about-route .about-lens__ratio{
-  margin:0;font-family:'Neue Montreal',system-ui,sans-serif;
+  margin:0;align-self:end;
+  font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:clamp(22px,2.6vw,34px);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
@@ -691,8 +662,32 @@
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);margin-inline-start:.6em;
 }
-.about-route .about-lens__note{margin:0;max-width:34ch;color:var(--on-surface-muted);font-size:var(--fs-detail);line-height:1.55}
-@media (max-width:900px){ .about-lens{grid-column:1 / -1} }
+/* TWO THIRDS OF THE LENS, so the note ends on a column line like everything else in the figure. A ch
+   cap is a measure but it is not a place: at 42ch the note stopped 312px into a 684px column, an edge
+   belonging to nothing. Two of the readout's three tracks plus the gutter between them is
+   (2W - g) / 3 — 448px at 1440, which is ~55 characters at --fs-detail, inside the caption range and
+   on the same line the middle readout ends on. It narrows with the grid, so the measure stays in
+   range at every width without a second rule. */
+.about-route .about-lens__note{
+  margin:0;max-width:calc((100% * 2 - var(--grid-gutter)) / 3);
+  color:var(--on-surface-muted);font-size:var(--fs-detail);line-height:1.55;
+}
+/* Stacked, each lens is the only thing on its line, so there is no second column to share rows with —
+   and leaving the four rows on the parent would hold two of them open under a one-lens column. */
+@media (max-width:900px){
+  .about-lenses{grid-template-rows:none}
+  .about-lens{
+    grid-column:1 / -1;grid-row:auto;
+    display:flex;flex-direction:column;gap:clamp(14px,1.6vw,22px);
+    /* AND THE SUBGRID GOES WITH IT. display:flex ignores grid-template-rows, so leaving the base
+       value here looks harmless — but the 560 rule below turns this back into a grid, and a subgrid
+       inheriting a single implicit row collapses all four children onto one line. Measured before
+       this line: the note, the band and the readings were drawn on top of each other and the OKLCH
+       label was underneath the swatch. A property that is inert at one width and load-bearing at the
+       next has to be reset where it stops being wanted, not where it stops having an effect. */
+    grid-template-rows:none;
+  }
+}
 
 
 /* Each ramp holds two coordinates still and moves the third, so the axis being described is the only
@@ -845,11 +840,18 @@
 .about-matrix li.is--text .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 20%,transparent);color:var(--on-surface)}
 .about-matrix li.is--large .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 10%,transparent);color:var(--on-surface)}
 .about-matrix li.is--none .about-matrix__use{background:none;color:var(--on-surface-muted)}
+/* A STADIUM, not a rectangle. --radius-pill is the token global.css defines for exactly this shape —
+   a control or a badge sized by its own label, whose corner is therefore half its height whatever the
+   label says — and it is what .about-cta, the section dock and every tier-3 action on the site
+   already take. These three verdicts are the only labelled chips on the page; square, they read as
+   table cells that happen to be filled, and the fill is the one thing here that is not information.
+   The inline padding goes up with the corner: 8px inside a 999px radius puts the first letter under
+   the curve. */
 .about-route .about-matrix__use,
 [data-mobile-story] .about-matrix__use{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
-  padding:4px 8px;white-space:nowrap;
+  padding:4px 12px;white-space:nowrap;border-radius:var(--radius-pill);
 }
 .about-matrix .is--text .about-matrix__use{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
 .about-matrix .is--large .about-matrix__use{background:var(--status-limited-surface);color:var(--status-limited-ink);border:1px solid var(--status-limited-line)}
@@ -905,24 +907,12 @@
   display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.4vw,30px);
 }
 .about-ui--compact{height:auto;padding:clamp(18px,2.2vw,28px);border:1px solid var(--line-strong)}
-.about-ui__bar{display:flex;align-items:center;gap:14px}
-.about-ui__dot{width:10px;height:10px;flex:none;background:var(--r-accent)}
-.about-ui__rule{flex:1;height:1px;background:color-mix(in srgb,var(--r-chrome, var(--r-text)) 30%,transparent)}
-.about-route .about-ui__tag{
-  flex:none;margin:0;color:var(--r-chrome, var(--r-text));
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
-  font-variant-numeric:tabular-nums;
-}
-/* CENTRED IN THE FRAME, and inside the splitter that is the whole design. The two layers are the
-   same card on two grounds, and the seam falls wherever the reader puts it — so a left-aligned card
-   means the text only ever exists on one side of the split and you compare two empty rectangles. A
-   centred card puts the sentence across the seam: the same words, in the same colour, half of them on
-   the ground that fails and half on the ground that passes, at the same moment. That is the argument
-   the section is making, and it is only visible if the type straddles the cut. */
+/* CENTRED IN THE FRAME, and capped at a reading measure inside it. The card is a specimen of the
+   palette, so the ground has to be visible around it on both sides — a card flush to one edge reads
+   as a layout rather than as a sample held up against its own background. */
 .about-ui__card{padding:clamp(18px,2.4vw,32px);background:var(--r-surface);width:100%;max-width:46ch;margin-inline:auto}
 .about-route .about-ui__title{
-  margin:0 0 10px;color:var(--r-chrome, var(--r-text));
+  margin:0 0 10px;color:var(--r-text);
   font-size:var(--fs-subtitle);font-weight:500;line-height:1.2;letter-spacing:var(--track-title);
 }
 /* THE SPECIMEN IS SET LARGE, and that is a WCAG decision rather than a typographic one.
@@ -939,63 +929,16 @@
   max-width:36ch;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);
 }
 .about-route .about-ui__actions{display:flex;align-items:center;gap:18px;margin:0}
-/* --r-chrome is the figure's OWN voice: the tag, the rule, the two readouts. It exists so that the
-   parts of the preview that are furniture are never the pair being tested — the specimen line is the
-   thing under measurement, and everything around it has to be plainly legible or the figure is
-   arguing against itself. Falls back to --r-text, so the palettes that need no such split are
-   untouched. */
 .about-ui__btn{
   display:inline-flex;align-items:center;padding:var(--btn-pad-md);
-  background:var(--r-primary);color:var(--r-chrome, var(--r-text));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-chrome, var(--r-text)) 30%,transparent);
+  background:var(--r-primary);color:var(--r-text);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-text) 30%,transparent);
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
 }
 .about-ui__link{
   color:var(--r-accent);
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
 }
-
-/* --------------------------------------------------- the before/after splitter
-
-   The Osmo resource's structure, on this system's terms: zero radius instead of 2rem, the ink
-   hairline instead of a white bar, and a handle that is a real slider rather than a bare div. Both
-   layers hold live interface previews rather than images — the resource allows any element, and it
-   means the "after" side is the browser actually drawing those hexes. */
-/* 2/1 rather than the resource's 3/2. What is inside is a wide interface, not a photograph, and at
-   16/9 across the full page the card floated in half a screen of empty ground. */
-.about-split{
-  position:relative;width:100%;aspect-ratio:5/2;overflow:hidden;
-  border:1px solid var(--line-strong);
-  touch-action:pan-y;   /* the handle owns horizontal drags; the page keeps vertical scroll */
-}
-.splitter-content{z-index:0;width:100%;height:100%;position:absolute;inset:0}
-.splitter-content.is--after{-webkit-clip-path:inset(0 0 0 42%);clip-path:inset(0 0 0 42%)}
-/* The bar is WHITE, which is the resource's own choice and is right for a reason worth stating: this
-   control sits over content it knows nothing about — here two dark palettes, tomorrow whatever is
-   being compared — so it cannot take a theme token and expect to be visible. White plus a hairline
-   shadow reads on any ground. It is the one element on this page not drawn from the palette, because
-   it is not part of the picture; it is the instrument measuring it. */
-.about-split__handle{
-  z-index:2;cursor:ew-resize;
-  background:#fff;box-shadow:0 0 0 1px rgb(0 0 0 / .18);
-  display:flex;align-items:center;justify-content:center;
-  width:2px;height:100%;position:absolute;top:0;bottom:0;left:42%;
-}
-.about-split__grip{
-  flex:none;display:flex;align-items:center;justify-content:center;
-  width:2.75em;height:2.75em;
-  background:#fff;color:#1a1a1a;box-shadow:0 2px 14px rgb(0 0 0 / .28);
-  /* THE ONE CURVE, and it is the resource's own: a drag handle is a physical affordance and the
-     roundness is what says "take hold of this". Everything else on this page is square. */
-  border-radius:100em;
-  transition:transform var(--dur-state) var(--ease-standard);
-}
-.about-split__icon{width:1.2em;display:block}
-@media (hover:hover){ .about-split__handle:hover .about-split__grip{transform:scale(1.12)} }
-.about-split[data-splitter-dragging] .about-split__grip{transform:scale(1.06)}
-.about-split__handle:focus-visible{outline:none}
-.about-split__handle:focus-visible .about-split__grip{outline:3px solid var(--on-surface);outline-offset:3px}
-@media (prefers-reduced-motion:reduce){ .about-split__grip{transition:none} }
 
 /* ------------------------------------------------------------ contrast readout
 
@@ -1072,8 +1015,15 @@
      value labels a swatch it has to fit inside. */
   --fs-nano:var(--fs-label);
 }
+/* COLUMN ONE, like everything else on this page. It sat at 2 / span 10 while it was the closing
+   statement set over an image sequence — centred type inside a full-bleed stage, where symmetry
+   about the page's middle was the placement and starting a column in was how you got it. With the
+   sequence gone the line is ordinary section type under an ordinary heading, and an inset of one
+   track is the stray edge the grid note at the top of this file exists to prevent: the h2 above it
+   starts on line one and so does every paragraph in the column beside it. Ten tracks rather than
+   twelve keeps the measure short of the full page at statement scale. */
 .about-route .about-statement{
-  grid-column:2 / span 10;
+  grid-column:1 / span 10;
   margin:0 0 clamp(48px,7vh,88px);
   font-size:var(--fs-statement);font-weight:500;line-height:1.08;
   letter-spacing:var(--track-statement);text-wrap:balance;
@@ -1091,15 +1041,15 @@
    nothing, on top of whatever margin it already had. It is deliberately the between-sections beat
    rather than the within-section one, because crossing from reading into an effect is a bigger
    boundary than crossing between two paragraphs. */
-.about-sec--gallery > .about-grid,
-.about-sec--belief > .about-grid{margin-bottom:var(--band-gap)}
+.about-sec--gallery > .about-grid{margin-bottom:var(--band-gap)}
 /* And a settle on the way out, so the next heading is not the first thing after the travel stops. */
-.about-rail,.about-stream{margin-bottom:var(--band-gap)}
-/* DOUBLE on the way IN to both, because these are the two boundaries where one effect releases the
-   scroll and another takes it with only a heading and a little prose between: the stack releases into
-   the gallery, the rail releases into the belief. Everywhere else a pinned section is preceded by a
-   whole argument. */
-.about-sec--gallery,.about-sec--belief{padding-top:calc(var(--band-gap) * 2)}
+.about-rail{margin-bottom:var(--band-gap)}
+/* DOUBLE on the way IN, because this is the boundary where one effect releases the scroll and another
+   takes it with only a heading and a little prose between: the stack releases into the gallery.
+   Everywhere else a pinned section is preceded by a whole argument. (The belief section carried the
+   same treatment until the image sequence that followed it was removed; with no pinned block left
+   there it is an ordinary section and takes the ordinary band.) */
+.about-sec--gallery{padding-top:calc(var(--band-gap) * 2)}
 
 /* SplitText's own two rules, restated: words hold together so lines still break between them,
    characters are their own boxes so each can be tweened. */
@@ -1157,7 +1107,7 @@
    section: a reader without JavaScript saw the last card and two hidden underneath it.
 
    Every other effect on this page guards exactly this with a `-live` attribute — data-rail-live,
-   data-stream-live, data-pills-live, data-sticky-live, data-intervals-live, data-spectrum-live.
+   data-pills-live, data-sticky-live, data-intervals-live.
    The stack was the only one without one, and the only one whose floor was broken.
 
    So the base rules below are the FLOOR: three ordinary blocks down the page, each as tall as its
@@ -1330,76 +1280,6 @@
 .about-rail:not([data-rail-live]){height:auto;overflow-x:auto;overflow-y:hidden;padding-block:var(--band-gap) 24px}
 .about-rail:not([data-rail-live]) .about-rail__track{padding-inline:var(--page-gutter)}
 
-/* --------------------------------------------------------------- the stream
-
-   Eight frames blooming out of the centre, one after another, driven by the section's own scroll.
-   The stage is a viewport tall and the statement sits over it. Without the script only the first
-   frame has a src, so what is left is one photograph — which is why that one is written into the
-   markup rather than filled in by JS. */
-.about-stream{
-  position:relative;width:100%;height:100vh;overflow:hidden;
-  /* The page's own twelve columns, so the statement over the stage can be placed by line rather than
-     centred on a measure. The stage itself is position:absolute and is unaffected by the tracks. */
-  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
-  column-gap:var(--grid-gutter);padding-inline:var(--page-gutter);
-  align-content:center;
-  background:var(--surface-raised);
-}
-.about-stream__stage{position:absolute;inset:0;z-index:0}
-.about-stream__frame{
-  position:absolute;inset:0;width:100%;height:100%;
-  object-fit:cover;will-change:transform;
-}
-/* Only the frames the script is driving start collapsed; the standalone first frame must not, or the
-   no-JS floor is an empty box. */
-.about-stream[data-stream-live] .about-stream__frame{transform:scale(0,0)}
-
-/* THE SCRIM, and it is not decoration — it is the only thing that makes the closing line readable.
-
-   The statement is white over eight photographs that change as you scroll, so its contrast is
-   whatever happens to be underneath at the moment you read it. Sampled at the statement's own
-   position, that ran from 11.56:1 on the ember portrait down to 1.33:1 on the radish, with the
-   courtyard and the court also under the 3:1 a line this size needs — three of eight unreadable, and
-   which one you get depends on where you stopped.
-
-   A text-shadow cannot fix that. A 40px blur at 55% is a halo: it darkens a soft field AROUND the
-   glyphs and leaves the glyph edges sitting on the picture, so it buys perhaps half a stop where the
-   deficit was a factor of three. This is a flat wash over the whole stage instead, under the text and
-   over every frame, which sets a floor no photograph can drop below: 54% black takes the worst case
-   (radish, luminance .74) to 4.6:1 and leaves the darkest images essentially as they were, because
-   they had contrast to spare. The pictures still read — that is what 46% is for.
-
-   IT HAS TO SIT ABOVE THE WHOLE STAGE, not inside it. This was `.about-stream__stage::after` at
-   z-index 1 for a while, which looked right and covered two frames out of eight: aboutStream.js
-   assigns each frame its own z-index 0…7 as it builds the sequence, so everything from the third
-   frame on painted straight over a scrim that was sitting at 1 among them. The maths said the text
-   was safe and the screen said otherwise — the bright frames were arriving unscrimmed.
-   On .about-stream instead, it is a sibling of the stage rather than a child of it. The stage is
-   position:absolute with z-index:0, which makes it a stacking context, so all eight frame z-indexes
-   are sealed inside it and one scrim at z-index 1 covers the lot. The statement stays at 2. */
-.about-stream::after{
-  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
-  background:rgb(0 0 0 / .54);
-}
-/* ON THE GRID, not on a ch measure. This sat in a flex container centred on max-width:22ch, which
-   put its edges 57px inside the nearest column lines — the only type on the page that was not placed
-   by line. The stream is a twelve-column grid now like every other section, and the statement takes
-   columns three through ten: symmetric about the page's centre, so it still reads as centred over a
-   bloom that radiates from the middle, and its edges are column edges. */
-/* TWO CLASSES IN THE SELECTOR, and that is the fix rather than a flourish. This element carries
-   both `about-statement` and `about-statement--over`, and the base statement is re-placed to
-   `1 / -1` inside the 1100px query further down this file. At one class each the two rules are the
-   same specificity (0,2,0) and the later one simply won, so below 1100px the closing statement
-   silently lost its eight-column placement and ran the full grid at 46px. Measured at 850px, its
-   computed grid-column was `1 / -1`. Naming both classes takes this to (0,3,0), so the placement
-   now holds wherever it is not deliberately released — and it IS released once, at 820, in the
-   same (0,3,0) form and alongside every other release. See the note there for why. */
-.about-route .about-statement.about-statement--over{
-  position:relative;z-index:2;grid-column:3 / span 8;
-  margin:0;max-width:none;text-align:center;
-  color:#fff;
-}
-
 /* ---------------------------------------------------------------- the close */
 
 .about-end{padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
@@ -1518,14 +1398,15 @@
      so the page's own rhythm broke exactly where it was trying hardest. One band here, like
      everywhere else. */
   .about-stack{padding-block:var(--band-gap)}
-  .about-sec--gallery,.about-sec--belief{padding-top:var(--band-gap)}
+  .about-sec--gallery{padding-top:var(--band-gap)}
   .about-col,.about-hero__inner,.about-hero__ref{grid-column:1 / -1}
   /* The split collapses with the columns. Two edges need width between them to read as two edges;
      inside 327px there is none, so the heading and the body share one column and stack in order.
      Specific enough to beat the base rules — .about-col > h2 is (0,2,0) and a bare `> *` is not. */
   .about-col > *,.about-col > h2,.about-col > h3{grid-column:1 / -1}
-  /* One column, so there is no second column to reserve a cell in. */
-  .about-col::before{display:none}
+  /* And stacked, the heading is directly above its copy rather than across from it, so there is no
+     number to clear — the offset would just be a gap nobody asked for. */
+  .about-col > h2:has(> .about-sec__num) + p{margin-top:0}
   .about-hero__ref{justify-self:stretch}
   /* 240px is the resource's own 15em, and without it there is no animation here at all. The small
      plate was capped at 340px — wider than the 327px column it sits in at this width, so the cap
@@ -1541,33 +1422,6 @@
      exists to remove. The resource keeps 56.25% at every width — its only narrow-screen rule is the
      small box's width, which is the line above. */
   .about-roles{grid-template-columns:repeat(2, minmax(0, 1fr))}
-  .about-split{aspect-ratio:4/5}
-  /* THE TWO LAYERS HAVE TO BE THE SAME BOX, and below this width they had stopped being one.
-
-     A clip-based comparison only reads if the seam cuts one card in two. Both .splitter-content
-     layers are inset:0 and identical — but the CARD inside each is sized by its own text, and the
-     two sentences differ by the word "Not". At 327px that word is a fourth line: measured, the
-     before card came out top 160 / height 269 and the after card top 176 / height 238. Centred in
-     their panes, the two then sat 16px apart with 31px between their heights, so the seam had the
-     before card's title on one side and the middle of the after card's body on the other, printed
-     over each other. Two cards, not one card on two grounds.
-
-     Top-aligned and stretched, the geometry is identical whatever the line counts do: the bar takes
-     its own height on both sides, the card takes everything left on both sides, and the title and
-     the body's first line start at the same y. The extra line the failing side carries is then the
-     only difference across the cut — which is the comparison the figure exists to make. No line
-     count is assumed anywhere, so this cannot drift back at some width nobody measured. */
-  .about-split .about-ui{justify-content:flex-start}
-  .about-split .about-ui__card{flex:1 1 auto;display:flex;flex-direction:column}
-  /* And the SPECIMEN absorbs the difference, so the readouts under it do not.
-     The one thing that legitimately differs between the two layers is the sentence — "Not suitable
-     for body text" against "Suitable for body text" — which is a line longer on the failing side.
-     Left to sit at its natural height that line pushed the whole action row down with it, so LIGHT-
-     NESS 0.496 and CHROMA 0.098 straddled the seam 31px apart and the reader compared two numbers
-     that were not on the same line. Growing the body instead parks the readouts on the card's floor
-     on both sides: title, first line and readouts all align, and the extra line lands in the slack
-     where it costs nothing. */
-  .about-split .about-ui__body{flex:1 1 auto}
   .about-checks li{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
   .about-checks__verdict{grid-column:2}
   /* THE MEASUREMENT AND ITS VERDICT ARE ONE COLUMN, SO THEY END ON ONE EDGE. Each li is its own
@@ -1601,13 +1455,10 @@
      The source has no such override. Its only narrow-screen rule is `@media (max-aspect-ratio:1/1)`,
      which changes padding and stacking INSIDE the card and never touches its positioning — see the
      block further down this file. */
-  /* THE CLOSING STATEMENT IS RELEASED WITH EVERYTHING ELSE, and it needs its own line here because
-     raising it to (0,3,0) above also lifted it out of reach of the base statement's release at 1100.
-     Eight of twelve tracks is a fair measure while the tracks are wide; at this width they are not.
-     Measured at 375: the content box is 327px, eleven gutters take 264px of it, so a track is 5.25px
-     and eight tracks plus seven gutters is 210px — a 28px statement was setting seven characters to
-     the line. Two classes here as well, or the rule it releases outranks it and nothing changes. */
-  .about-route .about-statement.about-statement--over{grid-column:1 / -1}
+  /* The closing statement needed its own release here while it carried a second class for the image
+     sequence it was set over. That variant is gone, so it is an ordinary .about-statement again and
+     the base rule's release at 1100 reaches it — which is the release it wanted: ten of twelve tracks
+     is a fair measure while the tracks are wide, and at 375 they are 5.25px each. */
 }
 /* NO narrow-screen rule for the stack, and that is the source's structure honoured rather than its
    letter copied. mwg_031's only such rule is `@media (max-aspect-ratio:1/1)`, which switches the card
@@ -2209,6 +2060,12 @@
   .about-lens__art{grid-column:1;height:clamp(84px,26vw,120px)}
   .about-route .about-lens__read,
   .about-route .about-lens__ratio{grid-column:2;margin:0}
+  /* Back to one track. Here the readout is the narrow half of a two-column lens — 241px at 375 —
+     and three tracks in that is 64px each, against a LIGHTNESS label that measures 62. The terms
+     stay above their values; only the row becomes a column. */
+  .about-route .about-lens__read{grid-template-columns:minmax(0,1fr);row-gap:14px}
+  .about-route .about-lens__ratio{align-self:start}
+  .about-route .about-lens__note{max-width:none}
 }
 
 /* ---- REDUCED MOTION -------------------------------------------------------------------------- */

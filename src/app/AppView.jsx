@@ -638,7 +638,7 @@ function MobileExampleList({ ml }) {
    obvious: the type's contrast depended on which part of which photograph happened to sit behind it,
    so it was a different answer per case and per scroll position; a fixed image cannot be themed, so
    the surface had one appearance while the rest of the site had two; and it is not what this site
-   does — /about has no full-bleed photograph behind body copy anywhere in its fourteen sections. The
+   does — /about has no full-bleed photograph behind body copy in any of its thirteen sections. The
    pictures are FIGURES now. They sit in the reading flow, framed, labelled, on the surface colour,
    and the surface colour is a token — so light and dark both work by construction rather than by a
    second set of rules.

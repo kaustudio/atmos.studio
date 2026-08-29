@@ -154,12 +154,13 @@ export function initCascade(root, motion, focusMotion) {
     /* `data-cascade="self"` PARKS THE BLOCK, NOT ITS CHILDREN, and it exists for the sets this module
        could not otherwise touch.
 
-       Audited on /about, eight graphic blocks had no entrance at all and sat fully drawn while the
-       copy around them rose out of masks. Four take the ordinary form below. The other three cannot:
-       `.pills` is an accordion whose buttons and panels aboutPills.js holds references to, `.about-split`
-       has its two faces and its handle positioned by aboutSplitter.js, and `.about-figure__media` wraps
-       a single `.about-shot` that aboutParallax.js drives. Parking the CHILDREN of any of those means
-       writing autoAlpha and y onto elements another module owns and is mid-way through positioning.
+       Audited on /about, the graphic blocks had no entrance at all and sat fully drawn while the
+       copy around them rose out of masks. Most take the ordinary form below. Two cannot: `.pills` is
+       an accordion whose buttons and panels aboutPills.js holds references to, and
+       `.about-figure__media` wraps a single `.about-shot` that aboutParallax.js drives. Parking the
+       CHILDREN of either means writing autoAlpha and y onto elements another module owns and is
+       mid-way through positioning. (A third, the before/after splitter, was here until its figure
+       was removed from the page.)
 
        `data-reveal` is not the alternative either: it routes through pageReveal's revealMasked, which
        calls splitLines, which calls wrapWords and rewrites innerHTML. On an accordion that discards

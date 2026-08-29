@@ -16,16 +16,13 @@
      aboutParallax   everything that moves against the scroll: the role cells, the section photographs
      aboutHighlight  the two statements whose characters resolve as you read them
      aboutDividers   every standalone hairline, drawn from its leading edge instead of being there
-     aboutSplitter   the before/after comparison, dragged
      aboutStack      the five steps, as five cards that recede and hand off
      aboutRail       the gallery, pinned, travelling sideways
-     aboutStream     eight photographs blooming out of the centre under the closing statement
-     aboutSpectrum   the palette read as hue, lightness and chroma — a strip becoming a measurement
      aboutIntervals  the gaps between colours, grown to the size of the steps they represent
      aboutPills      the six roles, explained one at a time, each with a photograph of its own
      aboutCascade    the sets that had no entrance — role cells, pills, matrix rows, weight key
      aboutOptical    display type nudged so its INK lands on the column line, not its box
-     aboutDock       the fourteen sections as a pill at the foot of the screen, four groups deep
+     aboutDock       the thirteen sections as a pill at the foot of the screen, four groups deep
 
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
    all of them are torn down together. None is load-bearing for reading the page. */
@@ -36,11 +33,8 @@ import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
 import { initFlipOnScroll } from './methods/aboutFlip.js';
 import { initDividers } from './methods/aboutDividers.js';
-import { initBeforeAfterSplitSlider } from './methods/aboutSplitter.js';
 import { initStackSlides } from './methods/aboutStack.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
-import { initImageStream } from './methods/aboutStream.js';
-import { initSpectrum } from './methods/aboutSpectrum.js';
 import { initIntervals } from './methods/aboutIntervals.js';
 import { initFeaturePills } from './methods/aboutPills.js';
 import { initCascade } from './methods/aboutCascade.js';
@@ -125,20 +119,17 @@ export default class AboutPage extends React.Component {
        on document.fonts.ready, which is the case that actually bites on this site. */
     this._killStack = initStackSlides(root);
     this._killRail = initHorizontalRail(root);
-    this._killStream = initImageStream(root);
     this._killFlip = initFlipOnScroll(root);
     this._killParallax = initGlobalParallax(root);
     this._killHighlight = initHighlightText(root);
     this._killDividers = initDividers(root, { motion: vals.maskMotion });
-    this._killSplitter = initBeforeAfterSplitSlider(root);
-    this._killSpectrum = initSpectrum(root);
     this._killIntervals = initIntervals(root);
     this._killPills = initFeaturePills(root, vals.maskMotion);
     this._killSticky = initStickyTitle(root);
     this._killCascade = initCascade(root, vals.maskMotion, vals.focusMotion);
     this._killOptical = initOptical(root);
     /* LAST, and for the same reason the pins go first: the dock holds a ScrollTrigger against every
-       one of the fourteen sections plus one spanning the whole run, so it wants a document whose
+       one of the thirteen sections plus one spanning the whole run, so it wants a document whose
        height has stopped moving. `lenis` is the app's instance rather than a global — an in-page jump
        that bypassed it would move the document out from under the smooth scroller, which is the
        reason legalToc takes the same argument. */
@@ -175,8 +166,8 @@ export default class AboutPage extends React.Component {
      are the last to let go. Killing a pin first would reflow the page underneath modules that are
      still holding measurements of it. */
   _teardown() {
-    ['_killDock', '_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killSpectrum', '_killSplitter', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
-      '_killStream', '_killRail', '_killStack'].forEach((k) => {
+    ['_killDock', '_killOptical', '_killCascade', '_killSticky', '_killPills', '_killIntervals', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
+      '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
     if (this._reveal) { try { this._reveal.destroy(); } catch (e) { } this._reveal = null; }

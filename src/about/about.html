@@ -31,12 +31,9 @@
        data-parallax="trigger" | "target"       — anything moving against the scroll
        data-highlight-text                      — a statement resolving character by character
                                      — the hero photograph, as cloth under the pointer
-       data-spectrum / data-spec-dot            — the hue/lightness/chroma plot
        data-intervals / data-step               — the spacing that is itself a measurement
-       data-splitter="wrap" | "after" | "handle" — the before/after comparison
        data-stack-slide / -wrap / -content      — the falling card stack
        data-rail / -track / -card               — the pinned horizontal gallery
-       data-stream / -frame / -src              — the image sequence
        data-section-dock-*                      — the anchor dock at the foot of the viewport
        data-dock-group / -group-toggle / -sub   — one of its four groups, its head, its sections
        data-section-dock-hide="n"               — a block the dock gets out of the way for -->
@@ -230,47 +227,29 @@
   </figure>
 </section>
 
-<!-- READING THE SPECTRUM — the science section, and the page's centrepiece.
+<!-- ONE SECTION, WHERE THERE WERE TWO. "Reading the shape of a palette" named the three dimensions
+     in prose and stopped; "One model, read three ways" showed the same three dimensions in three
+     palettes under a single line of copy — the page's heaviest interaction carrying its thinnest
+     argument, twenty screens after the definition it was demonstrating. They were one thought split
+     across a section boundary, and a reader who met the second had to hold the first that long to
+     see why the cards were three rather than any other number.
 
-     THE PLOT. Each dot carries this palette's own OKLCH coordinates and aboutSpectrum.js moves it
-     there: hue across, lightness up, chroma as diameter. At rest they are an even row along the floor
-     — the strip every other tool draws — and the scroll turns that row into the measurement it was
-     hiding. Without JS the row and the spectrum band under it are the figure, correctly coloured. -->
-<section id="shape-of-a-palette" class="about-sec about-grid" data-sec data-rule>
-  <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.2</span>Reading the Shape of a Palette</h2>
-    <p data-reveal>Two colours can share a hue and still perform entirely different roles. A change in lightness can separate one surface from another. It can also determine whether text can be read at all.</p>
-    <p data-reveal>A change in chroma can turn a quiet detail into a focal point without changing its underlying hue.</p>
-    <p class="about-lead" data-reveal>Atmos reads all three dimensions together.</p>
-  </div>
+     Merged, the prose defines and the stack demonstrates, in that order and without a band between
+     them. The number and the id are 2.2's because the heading is 2.2's; the dock loses a row and
+     part 2 is two sections. 2.3's own line is absorbed into the lead, which had to change anyway:
+     "Atmos reads all three dimensions together" followed by "the same three dimensions, read from
+     three different images" said "three dimensions" twice in consecutive sentences.
 
-  <figure class="about-figure about-figure--full">
-    <div class="about-spectrum" data-cascade data-reveal-focus data-spectrum>
-      <div class="about-spectrum__band" aria-hidden="true"></div>
-      <div class="about-spectrum__field" data-spectrum-field role="img"
-           aria-label="The five colours of Cut Powder plotted by hue and lightness: they climb from a deep red at 30 degrees and lightness 0.37 to a near-white at 96 degrees and lightness 0.95, the dots shrinking as they rise.">
-        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="96" data-l="0.945" data-c="0.021" style="background:#f1edde" aria-label="Background #F1EDDE, hue 96°, lightness 0.945, chroma 0.021"><span class="about-spectrum__read" aria-hidden="true">#F1EDDE &middot; hue 96° &middot; L 0.945 &middot; C 0.021</span></button>
-        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="81" data-l="0.818" data-c="0.103" style="background:#e6bd74" aria-label="Text #E6BD74, hue 81°, lightness 0.818, chroma 0.103"><span class="about-spectrum__read" aria-hidden="true">#E6BD74 &middot; hue 81° &middot; L 0.818 &middot; C 0.103</span></button>
-        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="36" data-l="0.509" data-c="0.166" style="background:#b0350c" aria-label="Primary #B0350C, hue 36°, lightness 0.509, chroma 0.166"><span class="about-spectrum__read" aria-hidden="true">#B0350C &middot; hue 36° &middot; L 0.509 &middot; C 0.166</span></button>
-        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="61" data-l="0.673" data-c="0.136" style="background:#d1802f" aria-label="Accent #D1802F, hue 61°, lightness 0.673, chroma 0.136"><span class="about-spectrum__read" aria-hidden="true">#D1802F &middot; hue 61° &middot; L 0.673 &middot; C 0.136</span></button>
-        <button type="button" class="about-spectrum__dot" data-focus="chrome" data-spec-dot data-hue="30" data-l="0.366" data-c="0.139" style="background:#770e05" aria-label="Surface #770E05, hue 30°, lightness 0.366, chroma 0.139"><span class="about-spectrum__read" aria-hidden="true">#770E05 &middot; hue 30° &middot; L 0.366 &middot; C 0.139</span></button>
-        <span class="about-spectrum__axis about-spectrum__axis--y" data-spec-axis aria-hidden="true">Lightness</span>
-        <span class="about-spectrum__axis about-spectrum__axis--x" data-spec-axis aria-hidden="true">Hue, 0&deg; to 360&deg;</span>
-      </div>
-    </div>
-    <div class="about-divider" data-divider aria-hidden="true"></div>
-    <figcaption data-reveal>Cut Powder moves from a deep, chromatic red to a pale, nearly neutral cream. As lightness rises, chroma falls. The palette becomes lighter by becoming quieter. This is visible in the OKLCH values. Lightness climbs from 0.366 to 0.945 while chroma falls from 0.139 to 0.021. Getting lighter and becoming more vivid are not the same move. Cut Powder does one by giving up the other.</figcaption>
-  </figure>
-</section>
-
-<!-- The three dimensions, one card each. Each card's ground and ink are a real pair from the seeded
+     The three cards are unchanged. Each card's ground and ink are a real pair from the seeded
      archive chosen to demonstrate its own dimension — a wide hue separation, a wide lightness
      separation, a vivid colour against a near-neutral — and every one clears AA. -->
-<section id="one-model-three-ways" class="about-stack" data-sec data-rule>
+<section id="shape-of-a-palette" class="about-stack" data-sec data-rule>
   <div class="about-grid">
     <div class="about-col">
-      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.3</span>One Model, Read Three Ways</h2>
-      <p data-reveal>The same three dimensions, read from three different images.</p>
+      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.2</span>Reading the Shape of a Palette</h2>
+      <p data-reveal>Two colours can share a hue and still perform entirely different roles. A change in lightness can separate one surface from another. It can also determine whether text can be read at all.</p>
+      <p data-reveal>A change in chroma can turn a quiet detail into a focal point without changing its underlying hue.</p>
+      <p class="about-lead" data-reveal>Atmos reads all three dimensions together. Each is taken on its own below, in the palette whose character turns on it.</p>
     </div>
   </div>
 
@@ -506,8 +485,6 @@
       <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#584b41"></span><span class="about-key__chip" style="background:#2f2721"></span></span><span class="about-matrix__val">1.74 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
       <li class="is--none"><span class="about-matrix__pair"><span class="about-key__chip" style="background:#bcb5b1"></span><span class="about-key__chip" style="background:#d1cecc"></span></span><span class="about-matrix__val">1.29 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
     </ul>
-    <div class="about-divider" data-divider aria-hidden="true"></div>
-    <figcaption data-reveal>Three pairs support body text. Three more support large text and meaningful non-text elements. The remaining four can still create atmosphere and visual depth, and should not carry essential information on their own. Cut High Room is almost achromatic, with chroma ranging from 0.004 to 0.025. Because chroma contributes very little separation, the palette builds its hierarchy through lightness. When colour stays quiet, light carries the structure. WCAG verifies which of those lightness relationships are strong enough to carry content.</figcaption>
   </figure>
 
 </section>
@@ -608,55 +585,6 @@
     <p data-reveal>A generated palette is a beginning, not a fixed answer. Strengthen a contrast. Quiet a surface. Shift an accent. Change the balance between hierarchy and harmony.</p>
     <p data-reveal>OKLCH makes those adjustments more controlled. One dimension can move while the others remain stable. WCAG verifies whether the adjusted relationship now meets its intended role. Atmos keeps the reasoning visible throughout, so the designer can see what changed, why it changed and which part of the original colour was preserved.</p>
   </div>
-
-  <figure class="about-figure about-figure--full">
-    <div class="about-split__ref">
-      <div class="about-split__shot" data-parallax="trigger" data-parallax-start="-6" data-parallax-end="6" data-parallax-disable="mobileLandscape">
-        <div data-parallax="target"><img fetchpriority="low" width="1500" height="1130" src="/assets/story/dusk.webp" alt="A wide dusk sky graded from grey-blue at the top through amber to a dark rust band at the horizon." decoding="async" /></div>
-      </div>
-      <p class="about-split__note">The source image holds every sampled colour between OKLCH lightness 0.50 and 0.85. It creates a beautiful sky, but leaves the palette without a colour dark enough to carry body text against its lighter surfaces. None of the original ten pairs reaches 4.5 to 1.</p>
-    </div>
-    <div class="about-split" data-cascade="self" data-splitter-initial="42" data-splitter="wrap">
-      <div class="splitter-content">
-        <!-- A PICTURE OF A SYSTEM, not a system. role="img" is what makes that true for a screen
-             reader, and it is doing two jobs: the text inside this layer is deliberately illegible
-             (1.92:1 body, 1.33:1 link, 2.42:1 button) because being illegible is the point, and it
-             must not be read out as though it were the page talking; and the two layers of the
-             splitter hold the SAME card, so without a single name each they announce the whole thing
-             twice with nothing to say which is the before. The label carries the verdict instead. -->
-        <div class="about-ui" role="img" aria-label="The palette as read: a rust specimen on the palette\u2019s lightest ground, measuring 3.96 to 1. Large enough to clear the large-text threshold, short of the body-copy one." style="--r-bg:#C0AA90;--r-surface:#DFC9A8;--r-text:#904D33;--r-chrome:#6E2F14;--r-primary:#DFC9A8;--r-accent:#6E2F14">
-          <div class="about-ui__bar"><span class="about-ui__dot"></span><span class="about-ui__rule"></span><span class="about-ui__tag">As read</span></div>
-          <div class="about-ui__card">
-            <p class="about-ui__title">Late Shell</p>
-            <p class="about-ui__body">3.96 to 1. Suitable for large text at AA. Not suitable for body text at AA.</p>
-            <p class="about-ui__actions"><span class="about-ui__btn">Lightness 0.496</span><span class="about-ui__btn">Chroma 0.098</span><span class="about-ui__link">Hue 42&deg;</span></p>
-          </div>
-        </div>
-      </div>
-      <div data-splitter="after" class="splitter-content is--after">
-        <div class="about-ui" role="img" aria-label="The same specimen after one change: the rust carried down the lightness axis to 0.388, measuring 4.52 to 1, which clears body copy." style="--r-bg:#C0AA90;--r-surface:#DFC9A8;--r-text:#87442B;--r-chrome:#6E2F14;--r-primary:#DFC9A8;--r-accent:#6E2F14">
-          <div class="about-ui__bar"><span class="about-ui__dot"></span><span class="about-ui__rule"></span><span class="about-ui__tag">Adjusted</span></div>
-          <div class="about-ui__card">
-            <p class="about-ui__title">Late Shell</p>
-            <p class="about-ui__body">4.52 to 1. Suitable for large text at AA. Suitable for body text at AA.</p>
-            <p class="about-ui__actions"><span class="about-ui__btn">Lightness 0.388</span><span class="about-ui__btn">Chroma 0.098</span><span class="about-ui__link">Hue 42&deg;</span></p>
-          </div>
-        </div>
-      </div>
-      <!-- A real slider, not just a draggable bar: arrow keys move it, Home and End take it to either
-           end, and it carries a name and a value. A comparison reachable only by dragging is one a
-           keyboard cannot make. -->
-      <div data-splitter="handle" class="about-split__handle" role="slider" tabindex="0" data-focus="chrome"
-           aria-label="Compare the palette as read with the adjusted text"
-           aria-valuemin="0" aria-valuemax="100" aria-valuenow="42" aria-valuetext="Comparison split">
-        <span class="about-split__grip" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" class="about-split__icon"><path d="M20.7931 11.5L15.2931 5.99995L16.0002 5.29285L22.3537 11.6464V12.3535L16.0002 18.7071L15.2931 18L20.793 12.5L3.20719 12.5L8.70714 18L8.00004 18.7071L1.64648 12.3535L1.64648 11.6464L8.00004 5.29285L8.70714 5.99995L3.2071 11.5L20.7931 11.5Z" fill="currentColor"></path></svg>
-        </span>
-      </div>
-    </div>
-    <div class="about-divider" data-divider aria-hidden="true"></div>
-    <figcaption data-reveal>Only the OKLCH lightness changes, from 0.496 to 0.388. Hue remains at 42&deg;. Chroma remains at 0.098. The warmth survives because the colour&rsquo;s hue and intensity are preserved. The result is then measured again using WCAG contrast, and this final test matters because OKLCH lightness and WCAG relative luminance are not the same measurement. Moving lightness guides the adjustment. It does not prove compliance on its own. The relationship becomes more usable without losing its atmosphere, and the designer remains in control of the decision.</figcaption>
-  </figure>
 </section>
 
 <!-- THE SEQUENCE, AS A SEQUENCE. Five steps, five cards, each pinned while it recedes and hands off
@@ -686,11 +614,7 @@
        thread at the moment it lands. Same treatment on the two parallax figures above, for the same
        reason. Intrinsic width/height are declared on all of them — the CSS sizes these to their
        container (object-fit:cover), so the attributes never change what is drawn; they give the
-       browser the aspect ratio before the bytes arrive.
-       The seven src-less [data-stream-frame] images further down deliberately carry NO dimensions:
-       aboutStream cycles eight sources of differing ratio through them, and they are absolutely
-       positioned and so contribute nothing to layout. A fixed ratio there would be wrong for seven
-       of the eight and would buy nothing. -->
+       browser the aspect ratio before the bytes arrive. -->
   <div class="about-rail" data-rail>
     <div class="about-rail__track" data-rail-track>
 
@@ -804,55 +728,22 @@
 
 <!-- The last section with nothing to demonstrate, so the photographs simply pass. Eight frames
      blooming out of the centre while the belief resolves over them. Without JS it is one image. -->
-<section id="one-image-complete-system" class="about-sec about-sec--belief" data-sec data-rule>
-  <div class="about-grid">
-    <div class="about-col">
-      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.2</span>One Image. A Complete Colour System.</h2>
-      <!-- BEFORE the images, not after them. This paragraph spent a version sitting alone underneath
-           the stream, where a small left-aligned block arriving after a full-bleed pinned sequence read
-           as a footnote to the photographs and was easy to scroll straight past. Ahead of them it is
-           ordinary section prose under its own heading — the same shape every other section uses — and
-           it doubles as the reading the stream needs as a run-up, which was 76px of heading and
-           nothing else. The images then illustrate a belief the reader already holds. -->
-      <p data-reveal>Atmos was made for the distance between inspiration and implementation. It does not turn images into rules. It turns visual instinct into a system that designers can understand, adapt and use. What begins as light, texture and atmosphere becomes a palette with structure, hierarchy and purpose. OKLCH preserves how the colours feel. WCAG tests what their relationships can do.</p>
-    </div>
+<section id="one-image-complete-system" class="about-sec about-grid" data-sec data-rule>
+  <div class="about-col">
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.2</span>One Image. A Complete Colour System.</h2>
+    <!-- BEFORE the closing line, not after it. This paragraph spent a version sitting alone underneath
+         the image sequence, where a small left-aligned block arriving after a full-bleed pinned
+         stack read as a footnote to the photographs and was easy to scroll straight past. Ahead of
+         the statement it is ordinary section prose under its own heading — the same shape every
+         other section uses — and the line then lands on a belief the reader already holds. -->
+    <p data-reveal>Atmos was made for the distance between inspiration and implementation. It does not turn images into rules. It turns visual instinct into a system that designers can understand, adapt and use. What begins as light, texture and atmosphere becomes a palette with structure, hierarchy and purpose. OKLCH preserves how the colours feel. WCAG tests what their relationships can do.</p>
   </div>
 
-  <!-- A DIFFERENT EIGHT FROM THE RAIL, on purpose. The gallery above shows the eight seeded palettes
-       and its photographs are load-bearing — each one is the image its hex strip and AA count were
-       actually read from, so they cannot be swapped for something that looks better. These carry no
-       claim at all: the closing belief plays over them and they exist to widen what the page has
-       shown you. Reusing the rail's eight here made the last thing you see the same as the last thing
-       you saw.
-       Ordered for rhythm rather than subject — pale, dark, saturated, near-black, warm, dark, pale,
-       landscape — so consecutive frames never sit at the same weight.
-       loading="lazy" because this section is some sixteen thousand pixels down: the script assigns
-       every src at mount, and without it that is 563 kB fetched before the reader has left the hero. -->
-  <div class="about-stream" data-stream>
-    <span data-stream-src="/assets/story/profile-pearl.webp" hidden></span>
-    <span data-stream-src="/assets/story/dusk.webp" hidden></span>
-    <span data-stream-src="/assets/story/turbine.webp" hidden></span>
-    <span data-stream-src="/assets/story/ember-disc.webp" hidden></span>
-    <span data-stream-src="/assets/story/lilies.webp" hidden></span>
-    <span data-stream-src="/assets/story/driftwood.webp" hidden></span>
-    <span data-stream-src="/assets/story/pines.webp" hidden></span>
-    <span data-stream-src="/assets/story/anthurium.webp" hidden></span>
-    <!-- The first frame carries a real src so the no-JS floor is one photograph rather than an empty
-         box, and it is medias[0] so the scripted and unscripted first frames agree. The other seven
-         carry NO src attribute at all — `src=""` is not an empty image, it resolves against the
-         document URL and re-requests the page, and it draws a broken-image box without JS. -->
-    <div class="about-stream__stage" aria-hidden="true">
-      <img width="1200" height="1593" class="about-stream__frame" data-stream-frame src="/assets/story/profile-pearl.webp" alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-      <img class="about-stream__frame" data-stream-frame alt="" loading="lazy" />
-    </div>
-    <p class="about-statement about-statement--over" data-highlight-text data-highlight-scroll-start="top 86%" data-highlight-scroll-end="center 45%" data-highlight-stagger="0.05">Not a literal copy of the image. A translation of how it feels.</p>
-  </div>
+  <!-- THE CLOSING LINE, ON THE PAGE'S OWN GRID. It spent a version set white and centred over a
+       pinned stack of eight photographs that bloomed out of the centre as you scrolled; with those
+       gone it is what the rest of the page is — a statement placed by column line, in the ink every
+       other line is set in, resolving character by character as it arrives. -->
+  <p class="about-statement" data-highlight-text data-highlight-scroll-start="top 86%" data-highlight-scroll-end="center 45%" data-highlight-stagger="0.05">Not a literal copy of the image. A translation of how it feels.</p>
 
 </section>
 
@@ -899,7 +790,7 @@
 
      LAST IN THE DOCUMENT ON PURPOSE. Live it is fixed to the foot of the viewport, so where it sits
      in the markup is invisible; with no JavaScript it is exactly what it reads as here — a nav at the
-     end of a long document listing its fourteen sections, which is worth having on its own. That is
+     end of a long document listing its thirteen sections, which is worth having on its own. That is
      also why the collapsing and the fixed positioning live behind [data-dock-live] (about.css), an
      attribute only the script sets. Nothing on this page is hidden by CSS that JS has to come back
      and reveal.
@@ -996,7 +887,6 @@
           <ul id="section-dock-g2" data-dock-sub class="section-dock__sub">
             <li><a data-section-dock-link href="#more-than-common-colours" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.1</span><span>More Than Common Colours</span></a></li>
             <li><a data-section-dock-link href="#shape-of-a-palette" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.2</span><span>The Shape of a Palette</span></a></li>
-            <li><a data-section-dock-link href="#one-model-three-ways" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.3</span><span>One Model, Three Ways</span></a></li>
           </ul>
         </li>
 

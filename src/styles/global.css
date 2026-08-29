@@ -14,9 +14,9 @@ html,body{margin:0;padding:0}
    says nothing about a radius. Measured on this build: 74 buttons on the landing alone sitting at
    `appearance:auto`, the section dock's toggle and its four group heads among them.
 
-   It has been fixed one control at a time until now — the spectrum dot states it at
-   .about-spectrum__dot, the dock's own two state it themselves — which is why it kept coming back
-   somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
+   It has been fixed one control at a time until now — the section dock's own two state it
+   themselves, and the figures each restated it for their own buttons — which is why it kept coming
+   back somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
    the system's, not each component's, and the comp's own note further down this file ("this system
    has no radius anywhere") is the thing being enforced.
 
@@ -853,12 +853,11 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    exactly the set this figure is for.
 
    NOTHING NUMERIC SURVIVES DOWN HERE, which is what makes changing the count safe. Every explicit
-   span on the route — the reading column and its headings, the two lens cells, the three axes, the
-   split figure's shot and note, the pills list and its visual, the hero's inner and its plate, and
-   both statements — is released to `1 / -1` at 900 or 820. Checked one by one; the last two to fall
-   are .about-statement at 1100 and .about-statement--over at 820. Anything added later that places
-   itself by number has to release itself by 820 as well, or it will span tracks that no longer
-   exist. */
+   span on the route — the reading column and its headings, the two lens cells and their readouts,
+   the three axes, the pills list and its visual, the hero's inner and its plate, and the closing
+   statement — is released to `1 / -1` at 900 or 820. Checked one by one; the last to fall is
+   .about-statement at 1100. Anything added later that places itself by number has to release itself
+   by 820 as well, or it will span tracks that no longer exist. */
 @media screen and (max-width:720px){
   :root{
     --page-gutter:16px;

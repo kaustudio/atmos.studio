@@ -5,7 +5,7 @@
    and a label that swaps on a vertical mask as the active section changes. The structure, the
    sequencing, the hide zones and every data-* name are the resource's and are left alone.
 
-   WHAT IT IS FOR: /about is fourteen sections and roughly twelve screens of scrolling, arranged as
+   WHAT IT IS FOR: /about is thirteen sections and roughly ten screens of scrolling, arranged as
    one argument that runs start to finish. A reader who has been carried that far has no way of
    knowing how much is left, and no way back to the section they half-remember. The page already
    numbers its sections; this is the number made navigable.
@@ -14,7 +14,7 @@
    list of five, which is a list you can read at a glance at the bottom of a screen. Fourteen is not:
    at the resource's own row height that is a column standing off the foot of the viewport taller
    than the thing it is meant to be a shortcut to. The page's numbering already carries the answer —
-   1.1 through 4.2 is four groups, not fourteen peers — so the dock shows the four and expands only
+   1.1 through 4.2 is four groups, not thirteen peers — so the dock shows the four and expands only
    the group you are currently reading. The groups are buttons rather than links: a group header that
    navigated would make the other ten sections reachable only by scrolling to them first.
 
@@ -43,7 +43,7 @@
    JS, so no JS is a pill that never opens. Here the fixed positioning and the collapsing are applied
    only once this module has confirmed its dependencies, by setting data-dock-live on the nav — the
    same contract aboutStickyTitle uses. Without it the markup is what it reads as: a nav at the foot
-   of the document listing all fourteen sections, which is worth having on its own.
+   of the document listing all thirteen sections, which is worth having on its own.
 
    [ATMOS 7] REDUCED MOTION REMOVES THE TRAVEL RATHER THAN SPEEDING IT UP. The resource's dur() floors
    every duration to zero, which for the dock's own arrival means it blinks into existence at the top

@@ -82,7 +82,7 @@ export function initFlipOnScroll(root) {
     });
   }
 
-  /* [ATMOS 4] The same `-live` signal aboutRail and aboutStream set, and for the same reason: the
+  /* [ATMOS 4] The same `-live` signal aboutRail sets, and for the same reason: the
      plates are drawn as visible frames so the destination is not a hole in the page, and that is only
      true when nothing is going to arrive in it. Once the flip is running the destination must recede
      into the background — an empty bordered panel that a photograph is about to land in is a hierarchy
