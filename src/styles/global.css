@@ -1094,8 +1094,14 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    clear; 44 is the comfortable target, not the legal one). The pair stands 46 there, which is what
    it already stood before it became glass — the height was never the thing that was wrong with it. */
 /* THE PHONE'S HEIGHT OVERRIDE IS GONE — these three surfaces used to raise the control to 46px
-   because the base was a 36px floor built for a pointer. --cta-pad sizes it on every surface now,
-   so there is nothing left to override.
+   each, in three rules, because the base was a 36px floor built for a pointer. --cta-pad sizes the
+   control everywhere now, so there is nothing left for a surface to restate.
+
+   THE PHONE DOES SET THE TOKEN, and that is not the thing this paragraph is about. What went was
+   three surfaces each declaring their own HEIGHT; what replaced it is one line in the phone query
+   handing --cta-pad a different padding, which the box is derived from. The difference is that the
+   old overrides could disagree with each other and with the base, and a token cannot: there is
+   exactly one declaration of this control's geometry per viewport class, and it is a padding.
 
    THE TRADE THAT REPLACED THOSE OVERRIDES IS STATED ONCE, AT --cta-pad, and not repeated here.
    It is the same question every time — this is the one journey on the site reached only by thumb,
@@ -1949,6 +1955,28 @@ button[data-row-cell] .tswap{flex:none}
      Set on :root inside the phone query, so /about and the legal documents read the same on a phone
      as the story does. Mobile, globally, is what this is. */
   :root{ --track-body:-0.0333em }
+
+  /* THE GLASS ACTION STANDS 36 ON THE PHONE, AND NOWHERE ELSE. --cta-pad is 8/16 at :root, which
+     builds a 32px control — the figure settled on at that token, argued there, and right for the
+     surfaces a pointer reads: /about and the 404 present their one action at that scale beside body
+     copy, and 32 sits correctly under it.
+
+     The phone is the case that token's own note keeps circling. These four surfaces — the gate, the
+     example list, the shared palette, the story's hero — carry the SOLE action on a journey reached
+     only by a thumb, with no pointer fallback and no second control to hit instead. 10/16 puts them
+     at 36: still under the 44 touch wants, still clear of WCAG 2.5.8's 24px AA floor, and 4px closer
+     to the hand than the pointer's figure without becoming the 40px slab that read as heavy under two
+     lines of centred copy on a 375px screen.
+
+     A TOKEN, NOT A RULE, and that distinction is what makes this safe to state twice. The height
+     falls out of the padding — there is no floor to fight, no !important, no second declaration of
+     the box — so :root here simply hands .glass-cta a different number and the cascade does the rest.
+     It is the same mechanism --logo-w and --track-body use eighteen lines up, and the reason the note
+     beside .glass-cta insists the padding IS the box.
+
+     Keyed to the phone query rather than to a width, so it moves with PHONE_MQ and the display rule
+     above it: one definition of "this is a phone", three consumers. */
+  :root{ --cta-pad:10px 16px }
 }
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders

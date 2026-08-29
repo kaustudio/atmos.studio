@@ -84,6 +84,19 @@
   position:relative;
   z-index:152;
   background:transparent;
+  /* DECORATIVE BLEED IS CLIPPED, NOT SCROLLED. The hero's radial ground is deliberately wider than
+     the viewport — it needs the room to finish its fade off-screen rather than inside the measure —
+     and an absolutely positioned child still counts toward the document's scrollable overflow. So it
+     pushed scrollWidth to 463 against a 375 clientWidth, and on a phone that is not a stray 88px of
+     sideways scroll, it is the whole page: mobile Safari widens the LAYOUT viewport to contain the
+     overflow and scales everything down to fit, so the site arrives shrunk with a dead band down one
+     side. It also moved the wordmark, which is position:fixed and therefore centres on the initial
+     containing block — 463 — while every laid-out element centred on 375. The mark reading 44px off
+     centre was this, diagnosed once as a preview artifact and wrongly dismissed.
+     overflow-x:clip rather than hidden: clip does not establish a scroll container, so the hero's
+     position:sticky still resolves against the document and keeps its 100svh pin. hidden would have
+     made this element the scrollport and stranded the hero at the top of it. */
+  overflow-x:clip;
   color:var(--on-surface);
 
   /* /about's two rhythm tokens, which its components are written against — `.about-sec` sets

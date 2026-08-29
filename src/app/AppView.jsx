@@ -821,7 +821,7 @@ function MobileStory({ st }) {
             repeat. The page is ~450px shorter for it. */}
         <section id="story-image" data-story-ch="image" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Start with the whole image</h2>
+            <h2 data-sec-head>Start With the Whole Image</h2>
             <p data-reveal>Atmos reads {st.name} from a photograph. Every colour it returns is a measurement of that frame, not a guess at what would go with it.</p>
             <p data-reveal>{st.descriptors && st.descriptors.length ? st.descriptors.join(' · ') : ''}</p>
           </div>
@@ -830,7 +830,7 @@ function MobileStory({ st }) {
         {/* 1.2 — THE STRUCTURE, as /about's weight figure: a bar of true shares, numbers in the key. */}
         <section id="story-structure" data-story-ch="structure" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>A palette is more than a list of colours</h2>
+            <h2 data-sec-head>A Palette Is More Than a List of Colours</h2>
             <p data-reveal>Each colour holds a share of the frame. These are the real proportions.</p>
           </div>
           <figure className="about-figure about-figure--full" data-cascade>
@@ -870,7 +870,7 @@ function MobileStory({ st }) {
             figure, because here they are the subject — a colour's region cut out of its own picture. */}
         <section id="story-where" data-story-ch="where" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>See where each colour comes from</h2>
+            <h2 data-sec-head>See Where Each Colour Comes From</h2>
             <p data-reveal>
               {st.anyRegion
                 ? 'Tap a colour to find it in the photograph.'
@@ -917,7 +917,7 @@ function MobileStory({ st }) {
         {/* 2.1 — CHARACTER, ROLE AND CONTRAST. Three /about figures behind one segmented group. */}
         <section id="story-relationships" data-story-ch="relationships" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Character, role and contrast</h2>
+            <h2 data-sec-head>Character, Role and Contrast</h2>
             <p data-reveal>Three readings of the same five colours, measured the same way the desktop measures them.</p>
           </div>
           <div className="about-figure about-figure--full">
@@ -1049,7 +1049,7 @@ function MobileStory({ st }) {
         {/* 2.2 — THE READING. */}
         <section id="story-interpretation" data-story-ch="interpretation" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Atmos turns colour into a reading</h2>
+            <h2 data-sec-head>Atmos Turns Colour Into a Reading</h2>
             {/* HIGHLIGHT TEXT ON SCROLL — Osmo Supply's resource, already ported and already on this
                 site (methods/aboutHighlight.js). The reading resolves character by character as it
                 comes up, which is the one place on this surface where that mechanic says something
@@ -1084,7 +1084,7 @@ function MobileStory({ st }) {
         <section id="story-gallery" data-story-ch="gallery" data-sec data-rule className="about-sec about-sec--gallery">
           <div className="about-grid">
             <div className="about-col">
-              <h2 data-sec-head>Different images, different structures</h2>
+              <h2 data-sec-head>Different Images, Different Structures</h2>
               <p data-reveal>Read another image, and watch the same process return a different system.</p>
             </div>
           </div>
@@ -1146,7 +1146,7 @@ function MobileStory({ st }) {
 
                 It also explains the earlier symptom that looked like flicker rather than absence.
                 One engine or the other, never both. The takeover owns this heading. */}
-              <h2 data-sticky-title="heading" className="story-cta__title">Ready to read your own image?</h2>
+              <h2 data-sticky-title="heading" className="story-cta__title">Ready to Read Your Own Image?</h2>
               <p className="story-cta__lead">{st.handoffLine}</p>
               <div className="story-actions">
                 {/* THE SUFFIX NAMED A SURFACE THIS DOES NOT OPEN. It read "open the example

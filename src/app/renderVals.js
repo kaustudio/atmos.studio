@@ -1272,7 +1272,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            what the page is about. The lead below it is unchanged on purpose: it says what Atmos does
            with an image, which is as true of the second palette as the first, and swapping both lines
            would leave the reader nothing recognisable to land on. */
-        heroTitle: s.storyCaseId ? p.name : 'Every image has an atmosphere',
+        heroTitle: s.storyCaseId ? p.name : 'Every Image Has an Atmosphere',
         image: this.dispUrl(p), hasImage: this.hasImg(p),
         descriptors: p.descriptors || [],
         rationale: p.rationale || '',
