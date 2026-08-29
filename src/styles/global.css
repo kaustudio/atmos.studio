@@ -145,6 +145,51 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    else: the segmented controls, the actions and the cells are apparatus and go on speaking in caps.
    This is the one control on the site that is a list of titles. */
 .section-dock [data-ix]{text-transform:none!important}
+/* THE FILTER DRAWER, ENTIRELY. This began as an exemption for the Character traits head alone, on
+   the argument that a heading is a heading and the option rows below it are labels on controls. The
+   rows are exempt now too, and the reason is a fault the narrow version left standing.
+
+   ENABLED AND DISABLED ROWS WERE IN DIFFERENT CASES. The option button takes
+   data-ix={o.disabled ? undefined : 'cell'} — the attribute is dropped when the row is
+   unavailable, because a control you cannot press should not answer a hover. But that attribute was
+   also carrying the uppercase voice, so an available option read TEXT-READY and an unavailable one
+   read Text-ready, in the same column, a row apart. Nobody chose that; it fell out of a hover
+   decision. Exempting the drawer settles it in the direction the panel already reads — it is a
+   sheet with headings and running counts rather than a toolbar.
+
+   THE STRINGS ARE AUTHORED WITH THE CAPITALS THEY SHOULD HAVE, so `none` prints them: Text-ready,
+   Limited Text, Dark, Balanced, Light, Warm, Cool, Done. Not `capitalize`, for the reason this file
+   records twice already — it would set every word, and the drawer holds multi-word labels. */
+[data-tag-dialog] [data-ix]{text-transform:none!important}
+/* DONE IS THE EXCEPTION INSIDE THE EXCEPTION. The rule above puts the drawer into sentence case
+   because the drawer is a sheet — headings, counts, option labels, things you read. Done is none of
+   those: it is the act that closes the panel, the same kind of object as RESTORE and BACK UP
+   LIBRARY in the masthead, and it speaks their voice. It takes the pill with it for the same
+   reason — one control family, one shape.
+
+   (0,3,0), by naming the dialog and both attributes, so it outranks the drawer-wide rule above on
+   specificity rather than on sitting below it. */
+[data-tag-dialog] [data-drawer-act][data-ix]{
+  border-radius:var(--radius-pill);
+  text-transform:uppercase!important;
+}
+/* The same contract, for the outlined acts that sit on --action-line rather than the masthead's
+   softer edge: the drawer's Done, and the Library toolbar's Manage Projects and Filter. All three
+   carry the swap and the pill already; this is the last property that was still answering a pointer
+   twice. The border is pinned to its REST token, not just the fill — the [data-ix="press"] tier
+   walks border-color to --action-line-hover and then --action-line-press, which on a control with
+   no fill left is the whole of what you would see move. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  [data-tag-dialog] [data-drawer-act][data-ix]:hover:not(:disabled),
+  [data-tag-dialog] [data-drawer-act][data-ix]:active:not(:disabled),
+  [data-proj-manage][data-ix]:hover:not(:disabled),
+  [data-proj-manage][data-ix]:active:not(:disabled),
+  [data-facet-btn][data-ix]:hover:not(:disabled),
+  [data-facet-btn][data-ix]:active:not(:disabled){
+    background:none!important;
+    border-color:var(--action-line)!important;
+  }
+}
 /* CONTENT INSIDE A CONTROL KEEPS ITS OWN CASE, and this is the cost of stating the voice on the
    ancestor instead of on the label. text-transform inherits, so a rule that means "this control
    speaks in caps" reaches every descendant of it — including the ones holding something the app
@@ -610,6 +655,22 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-line:color-mix(in srgb,var(--on-surface) 48%,transparent);
   --action-line-hover:color-mix(in srgb,var(--on-surface) 62%,transparent);
   --action-line-press:color-mix(in srgb,var(--on-surface) 72%,transparent);
+  /* ===== THE MASTHEAD'S EDGE — BACK ON --action-line ============================================
+     This was 32% for a while, a third lighter than --action-line, because at 48% the outline read
+     heavier than the pills it was drawing. It is back, and the reason is measured rather than
+     aesthetic: an outlined control's boundary IS its edge, WCAG 1.4.11 asks 3:1 of it, and there is
+     no headroom on this surface at all. 48% is 3.09:1; 40% is already 2.47:1; 32% was 2.01:1.
+
+     THERE IS NO SOFTER FIGURE THAT PASSES, and that is worth stating so it is not re-litigated by
+     trying a number in between. At 3:1 the composited grey is fixed at about #8d — whatever ink and
+     alpha reach it. Pure black at 42% lands on the same grey as --on-surface at 48% and looks
+     identical. A faint FILL cannot carry it either, for the same reason: on a near-white page any
+     3:1 boundary is a mid-grey, so a subtle fill is not an option, only a solid one.
+
+     THE TOKEN STAYS as the one place to change this row's edge — it just points at the compliant
+     value now. Setting it back to a 32% mix is one line, and costs 1.4.11 on these three controls;
+     the honest alternative is a solid fill, which is a different design. */
+  --masthead-line:var(--action-line);
   /* ===== .glass-cta — THE GLASS ACTION'S OWN FILL, EDGE AND INK =================================
      The one control on this site that does NOT resolve through --on-surface, and the reason is the
      thing it stands on. Every other control sits on --surface or on a panel; this one sits in the
@@ -1053,6 +1114,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   --button-006-focus-inset:-0.125em;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
   border-radius:var(--button-006-border-radius);
+
   /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
      uppercase label voice, prose stays in sentence case. Sources are written in natural case and
      this transform does the styling, so the policy can flip again without rewriting a string —
@@ -1093,6 +1155,275 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    --ease-entrance is the masked-reveal curve, so the label lands exactly as a revealed line does. */
 .button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
 .button-006__hover{position:absolute;inset:0;z-index:2;}
+/* THE LIGHT/DARK SWITCH IS THE ONE ROUNDED ONE, and it is scoped rather than switched on the
+   family. --button-006-border-radius is a local custom property, so remapping it on one instance
+   carries everywhere the figure is already consumed: the button's own corner, the ::after focus
+   ring further down, and both __bg layers, which take border-radius:inherit. One declaration, no
+   part of the component left square behind a rounded front.
+
+   WHY ONLY THIS ONE. B006 backs roughly fifteen controls — New palette, Save to archive, Check
+   contrast, Export, Share, Assign, the export scaffold toggle — and they are the TOOL's chrome,
+   which this system draws square. The theme switch is the one member of that family that sits in
+   the masthead beside the wordmark rather than in a toolbar, and it is the control the front page
+   shows before any work has started, next to the glass actions that are pills. Rounding the
+   family would be a different decision and a much larger one; if it is ever wanted, this rule
+   comes out and --button-006-border-radius changes at its own declaration instead.
+
+   --radius-pill, not a length: at 29px the corner clamps to a stadium, and it stays one if the
+   masthead's type or padding ever moves. Third and last entry in the --radius-* set. */
+/* [data-emphasis] IS ALSO ON THIS BUTTON and also remaps --button-006-line, at the same (0,2,0) as
+   a lone [data-theme-switch] — so the emphasis block further down won on document order and the
+   switch kept the 48% edge while the two buttons beside it went to 32%. Naming both attributes takes
+   this to (0,3,0) and settles it by specificity rather than by position in the file. */
+.button-006[data-theme-switch][data-emphasis]{--button-006-border-radius:var(--radius-pill);--button-006-line:var(--masthead-line);--button-006-line-hover:var(--masthead-line)}
+/* BACK UP AND RESTORE, the masthead's other two acts, take the same corner as the switch beside
+   them. They are the only consumers of renderVals' tier3BtnStyle, and that object sets no radius —
+   so this needs no !important: the blanket border-radius:0 they were inheriting is a TYPE selector,
+   which an attribute selector outweighs. The inline style is left alone, which matters because it
+   lives in renderVals.js.
+
+   THE THREE OF THEM ARE ONE ROW, which is the whole argument for including these two. The switch
+   rounded on its own would have been one pill between two square boxes in the same masthead. */
+[data-tier3-action]{border-radius:var(--radius-pill);border-color:var(--masthead-line)!important}
+
+/* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================
+   The projects rail and its chips, Manage Projects, the list/grid/3D rail and its buttons, Filter,
+   and the three sortable column heads. Radius ONLY — not one other property is touched here, and
+   the inline styles these carry (they are built in renderVals.js, which is holding another branch's
+   work) are left exactly as they are.
+
+   --radius-pill ON EVERY LEVEL, INCLUDING THE NESTED ONES, and that is not laziness: it comes out
+   concentric on its own. The token means "fully round", so each box clamps to half its OWN height —
+   and each level here is inset from its parent by exactly half the height difference. The projects
+   rail is 33 and clamps to 16.5; the group inside it is 31, inset by the 1px border, and clamps to
+   15.5; the travelling pill and the chips are 27, inset by the group's 2px padding, and clamp to
+   13.5. 16.5 − 1 = 15.5, and 15.5 − 2 = 13.5. The list/grid rail solves the same way. So there is no
+   arithmetic to keep in step and nothing to re-derive if a chip's padding changes.
+
+   THE GROUP IS IN THE LIST FOR A SECOND REASON: it carries overflow-x:auto, so it is the box that
+   clips a scrolled run of chips. Left square, a chip scrolled to the end would slide out through the
+   rail's rounded corner.
+
+   button[data-row-cell] IS DELIBERATELY NARROW. data-row-cell is on 45 elements and 11 of them are
+   bordered; only these three are the sortable heads, and the rest are cells inside [data-row-main]
+   — the per-row AA badges among them. Rounding by the attribute alone would have reached into every
+   row of the table, which is not what was asked for. */
+[data-proj-rail],
+[data-proj-group],
+[data-proj-pill],
+[data-proj-chip],
+[data-proj-manage],
+[data-toggle-init],
+[data-toggle-init] > span[aria-hidden="true"],
+[data-toggle-btn],
+[data-facet-btn],
+/* The rail's own prev/next steppers. These carry no border and no rest background — the corner is
+   only ever seen on the hover and press tint the [data-ix="press"] tier paints, which was arriving
+   as a square block inside a rounded rail. They keep that tint, unlike the chips beside them: a
+   stepper has no label to swap, so the tint is the only feedback it has. */
+[data-proj-step]{border-radius:var(--radius-pill)}
+
+/* THE 12px INTERACTIVE-LABEL FLOOR WAS HERE AND IS REVERTED. It raised the masthead pills, both
+   rails, Manage Projects, Filter and the sort heads from --fs-micro/--fs-label to --fs-detail, on
+   the argument that 9px uppercase is under any sensible floor for something you read and then press.
+   Removed by request: it read too large for this chrome, which is dense on purpose.
+
+   The trade is live again and worth naming rather than losing: the sort heads are back to 9px and
+   the rest of this row to 10px, which is below what better-typography would ask of an interactive
+   label. The controls are uppercase at weight 400 with generous tracking, which is what makes them
+   legible at that size here. If it is ever revisited, the fix is the type scale, not a rule like
+   this one — and the AA column has to widen first, since "AA pairs" needs 50px in a 48px cell at
+   12px, which is what sent it to the shorter label while this was in force. */
+/* THE THREE SORT HEADS KEEP THE CORNER AND LOSE THE EDGE. The 1px they carried inline is gone by
+   request: they sit in a table header rather than in a toolbar, and three outlined boxes along a
+   rule read as chrome competing with the rule itself. !important because the border is written into
+   renderVals' inline style, which is left alone — that file carries another branch's work.
+
+   `border:none`, not a transparent border. Both hide it, but a transparent 1px would still be
+   walked by the [data-ix="press"] tier, which sets border-color on hover and press: it would paint
+   an edge back in exactly where one was just removed. With no border at all there is nothing for it
+   to colour. The radius stays because the hover and press tint still fill the box, and that fill is
+   now the only thing drawing the control's shape. */
+button[data-row-cell]{
+  border-radius:var(--radius-pill);
+  border:none!important;
+  /* AND THE LABEL SITS ON THE COLUMN, NOT 6px INSIDE IT. The grid was never wrong: measured across
+     all three heads, the button box lands exactly on the value column beneath it (1047, 1161, 1390).
+     What was off was the TEXT, short by the button's own 6px of inline padding in every column — a
+     header label that did not line up with the figures it heads.
+
+     That inset was doing a job while the border existed: it kept the label off a visible edge. With
+     the edge gone it inset the label from nothing, and the misalignment was all that was left of it.
+     The vertical half stays — it is what holds the 24px target with the label being 11px — so only
+     the horizontal goes.
+
+     THE PILL KEEPS ITS PADDING AND THE TEXT STILL LANDS ON THE COLUMN. Zeroing padding-inline was
+     the first attempt and it aligned the label by destroying the hover surface: at 0 the tint is
+     exactly the text's own box, 48x24 for a 48px label, and a 999px radius on a 24px box clamps to
+     12 — so the rounded ends closed over the first and last glyph and what was left read as no pill
+     at all. Both are gettable. The padding comes back for the fill, and an equal negative margin
+     takes it back off the layout: justify-self aligns the MARGIN box, so the border box now sits
+     6px proud of the column while the text inside it lands exactly on the column edge.
+
+     The 6px of overhang is spent into --row-inset's 16px, which is the row's own margin from its
+     surface edge — so the pill grows into space the row already reserves and crosses nothing. */
+  padding-inline:6px!important;
+  margin-inline:-6px!important;
+}
+/* THE LABEL STOPS SHRINKING. "AA pairs" needs 38px and was getting 35, so it rendered "AA pair" with
+   the s clipped — at every size, not just the 12px experiment: this is why the column read "AA PA"
+   in the very first screenshot of this work.
+
+   IT IS NOT A PADDING PROBLEM, which is worth writing down because that is the obvious thing to try
+   and it cannot work. The button overflows its 48px cell by exactly the negative margin, so its
+   content box is (48 + 2m) - 2p, and p and m are the same figure — the content width is 48 whatever
+   they are set to. Trimming the padding moves the pill and changes nothing about the room for text.
+
+   The actual cause is .tswap carrying overflow:hidden, which is what makes the masked swap a mask.
+   A flex item with overflow:hidden resolves its automatic minimum size to 0 instead of its content
+   width, so the flex line was free to shrink the label below its own text. flex:none restores the
+   content floor; the button then overhangs its cell to the left, into the gutter it already reaches
+   with the negative margin, and the right edge stays where justify-self puts it — so the column
+   alignment solved earlier is untouched. */
+button[data-row-cell] .tswap{flex:none}
+
+/* THE AA BADGE IS A PILL. 35x16 of ink, so --radius-pill clamps to 8 and it reads as a stadium —
+   the same object as the chips and rails above it rather than the one square thing left in the row.
+   No !important: renderVals' aaBadge() sets a border but no radius, so an attribute selector clears
+   the blanket border-radius:0 on its own. */
+[data-aa-badge]{border-radius:var(--radius-pill)}
+
+/* THE TWO ROW ACTIONS ARE CIRCLES. Both the folder and the bin carry data-del, so one selector
+   reaches the pair; they are square 30x30, so --radius-pill clamps to 15 and they come out round
+   rather than stadium-shaped. That is the correct result for an icon-only control — a stadium on a
+   square box is a circle, and these are the only round things in the row because they are the only
+   ones with no label to give them a length.
+
+   No !important: their inline style sets a border but no radius, so an attribute selector clears
+   the blanket border-radius:0 without touching renderVals' object. */
+[data-del]{border-radius:var(--radius-pill)}
+
+/* THE STEPPER'S TINT IS INSET BY 2px SO IT TOUCHES NOTHING. At 30x31 the circle filled its button
+   edge to edge, which put it hard against the rail's own rounded end on one side and against its
+   twin on the other — two round shapes meeting on a shared tangent, which reads as one smudged
+   shape rather than as the one control under the pointer.
+
+   A TRANSPARENT BORDER PLUS padding-box, rather than padding: these buttons take their inline style
+   from renderVals.js (projStepStyle), which sets padding:0 and border:0, and that file is holding
+   another branch's work. box-sizing is border-box globally, so the 2px costs no layout — the button
+   stays 30x31 and only the painted area shrinks. The 12px chevron has 26x27 to sit in.
+
+   THE WHOLE TIER IS RESTATED rather than just the clip, and that is not belt-and-braces: the tier
+   paints with the `background` SHORTHAND, and a shorthand resets background-clip to border-box.
+   Declaring the clip alone would be undone by the very rule it is trying to modify. (0,4,0) by
+   naming data-ix, so this outranks the tier's (0,3,0) instead of relying on order. */
+[data-proj-step][data-ix]{border:2px solid transparent!important}
+[data-proj-step][data-ix]:hover:not(:disabled){
+  background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;
+  background-clip:padding-box!important;
+  border-color:transparent!important;
+}
+[data-proj-step][data-ix]:active:not(:disabled){
+  background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;
+  background-clip:padding-box!important;
+  border-color:transparent!important;
+}
+/* border-color IS RESTATED IN BOTH STATES, and it has to be. The same tier that paints the tint
+   also sets border-color:var(--action-line-hover) — written for controls whose 2px is a real edge,
+   which here is the 2px of clearance. Left alone it inked the gap in at 62% and drew a ring exactly
+   where the point was to have nothing: the collision back again, one step out. */
+
+/* ===== THE SEGMENTED RAILS ANSWER A HOVER WITH THEIR LABEL, NOT A TINT =========================
+   Same decision as the masthead, forced by a sharper symptom: these chips sit BESIDE a travelling
+   pill that is solid --on-surface, so an unselected chip filling with 16% ink on hover put a soft
+   grey slab immediately next to a hard black one. Two different objects claiming the same job, and
+   the tint lost — it read as a smear beside the pill rather than as a response.
+
+   THE SWAP HAD TO BE ADDED, NOT JUST THE TINT REMOVED. Neither rail carried .tswap: the chips and
+   the list/grid/3D buttons were plain labels whose only hover feedback WAS the background. Taking
+   it away on its own would have left them dead under the pointer, so the masked swap goes on at the
+   same time and does the whole job — the same affordance the masthead, the footer links and the
+   sort heads already use.
+
+   THE COUNT IS LEFT OUT of the swap deliberately. "8" beside "ALL" is a figure, not a label; a
+   number that lifts and re-enters on hover reads as the number CHANGING, which is the one thing it
+   must not appear to do.
+
+   PRESS STILL TINTS, at the tier's own 24%. With the surface no longer moving under the pointer,
+   the press is the only thing left that can confirm the click landed — and unlike hover it is
+   momentary, so it never sits next to the pill long enough to compete with it.
+
+   (0,4,0) BY NAMING data-ix AS WELL. The tier being overridden is [data-ix="seg"][aria-pressed=
+   "false"]:hover at (0,3,0) with !important, so an attribute-and-state selector alone would tie on
+   specificity and lose on document order. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  [data-proj-chip][data-ix][aria-pressed="false"]:hover,
+  [data-proj-chip][data-ix][aria-pressed="false"]:active,
+  [data-toggle-btn][data-ix][aria-pressed="false"]:hover,
+  [data-toggle-btn][data-ix][aria-pressed="false"]:active{background:transparent!important}
+}
+
+/* THE CHIP'S TRUNCATION SURVIVES THE SWAP. ch.labelStyle (renderVals.js) truncates a project name
+   at 26ch with text-overflow:ellipsis, and that only works on the box holding the TEXT — wrapping
+   the label in .tswap put an inline-block in between, so the outer span had nothing of its own left
+   to ellipsize. Handing the two copies the same treatment restores it: each one truncates itself,
+   and the ellipsis appears on whichever is on screen. */
+[data-proj-chip] .tswap{max-width:100%}
+[data-proj-chip] .tswap__a,
+[data-proj-chip] .tswap__b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* ===== THE MASTHEAD ANSWERS A HOVER WITH ITS LABEL, NOT WITH ITS SURFACE =======================
+   All three of these carry the masked text swap — the label lifts out and a second copy rises into
+   its place — and that is a bigger, more legible event than any tint. Running both meant the row
+   was saying the same thing twice, once loudly. The swap is left doing the whole job.
+
+   NEITHER HOVER NOR PRESS PAINTS ANYTHING NOW. The first pass here kept :active on the argument
+   that with the surface still under the pointer, the press was the only thing left to confirm a
+   click landed. That was wrong about what the reader is looking at: the swap is already mid-flight
+   when the click happens, the label is the thing holding their attention, and a fill arriving under
+   it for 120ms read as a flicker rather than as an answer. The whole contract is the label.
+
+   The set is every control that carries the swap and was rebuilt in this pass — the two masthead
+   buttons, the switch, both segmented rails, and the drawer's Done. Focus-visible is untouched: it
+   is a different question with a different reader, and data-focus="chrome" still draws its ring.
+
+   THE SWITCH IS DONE WITH TOKENS, NOT SELECTORS. button-006 paints its press through
+   --button-006-press and --button-006-line-press on two stacked layers; pointing those at the rest
+   values it already uses is one declaration and cannot miss a layer, where matching the two :active
+   selectors would have to.
+
+   THE TWO BUTTONS need !important because the tier they answer to uses it: [data-ix="press"]:hover
+   sets background AND border-color that way, so a plain declaration loses however specific it is.
+   Naming both attributes takes this to (0,4,0), above the tier's (0,3,0), and the !important then
+   settles the tie at the same weight rather than outranking it by accident.
+
+   THE SWITCH is button-006 and works differently: its hover is a whole layer, __bg.is--hover, faded
+   from 0 to 1. Holding that layer at 0 is cleaner than trying to neutralise its colours, and it
+   also takes the layer's inset ring out with it. [data-emphasis] is named again purely for the
+   extra point of specificity — see the note where its radius is set. */
+/* ===== THE SWAP-ONLY CONTRACT IS GATED ON THE SWAP ACTUALLY RUNNING =========================
+   Everything below removes a control's fill on the argument that its masked label already answers
+   the pointer. That argument holds in exactly one environment, and the block now says so.
+
+   (hover:hover) — the swap's own rule lives in a (hover:hover) block, so on a touchscreen it never
+   runs. Without this gate a TAP on Back up Library, Restore, Done, Manage Projects or Filter got no
+   swap AND no fill: a control that acknowledges nothing.
+
+   (prefers-reduced-motion:no-preference) — the swap is explicitly PARKED under reduce, even on
+   hover, further down this file. Without this gate a reader who asked for less motion lost the
+   animation they opted out of AND the tint that would have replaced it.
+
+   Outside these two conditions the [data-ix] tiers paint again, untouched. Motion is never the only
+   feedback channel. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  [data-tier3-action][data-ix]:hover:not(:disabled),
+  [data-tier3-action][data-ix]:active:not(:disabled){
+    background:none!important;
+    border-color:var(--masthead-line)!important;
+  }
+  /* The switch answers through tokens rather than selectors — same gate, same reason. */
+  .button-006[data-theme-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:var(--masthead-line)}
+  .button-006[data-theme-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
+}
 .button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
 .button-006__default .button-006__text{color:var(--button-006-on-surface);}
 .button-006__hover .button-006__text{color:var(--button-006-on-accent);}
@@ -1281,8 +1612,19 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    the pointer or the keyboard reaches its control. Focus, not just hover — the affordance has to
    exist for someone tabbing through the header, who has no pointer to reveal it with. */
 [data-sort-chevron][data-dim]{opacity:0}
+/* .75, NOT .42, AND THE FIGURE IS MEASURED. A sort arrow is a graphic that carries meaning — it is
+   the direction the column is about to order by — so WCAG 1.4.11 asks 3:1 of it, the same as any
+   control boundary. At .42 the muted ink composites to 1.83:1 over the light surface and 2.26:1
+   over the dark one: an affordance you can technically see and formally cannot. Light is the
+   binding case and needs .75 (3.29:1); dark clears from .55, and takes the same figure rather than
+   a second one, landing at 4.54:1.
+
+   THE HIERARCHY IT WAS PROTECTING SURVIVES. The point of dimming was that an invited arrow must not
+   read as strongly as the true one. It still does not: the active column's chevron is drawn in full
+   ink at 15.94:1, against this one's 3.29 in muted — a five-fold separation, where .42 bought a
+   two-fold one by making the invitation illegible instead. */
 [data-ix="press"]:hover>span>[data-sort-chevron][data-dim],
-[data-ix="press"]:focus-visible>span>[data-sort-chevron][data-dim]{opacity:.42}
+[data-ix="press"]:focus-visible>span>[data-sort-chevron][data-dim]{opacity:.75}
 @media (prefers-reduced-motion:reduce){[data-sort-chevron]{transition:none}}
 /* The pair arrives with the gutter that makes room for it: same duration, same ease, so the push and
    the fade are one gesture rather than two things that happen to coincide. The 10px is a hint of

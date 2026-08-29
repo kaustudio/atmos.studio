@@ -79,8 +79,12 @@ export function GlassEffect() {
 function themeSwitchLabel(vals) {
   return (
     <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
-      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;transition:background var(--dur-chrome) var(--ease-standard)'), background: vals.switchTrackBg }}>
-        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: vals.switchDotX }}></span>
+      {/* THE TRACK AND THE DOT BOTH TAKE --radius-pill, which is a stadium on the 28x14 track and a
+          circle on the 10x10 dot — the token means "fully round", so one figure serves both and
+          neither needs 50% or a length. A switch that reads as a pill is the physical object this
+          control has always been drawing; it was square only because the system was. */}
+      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;border-radius:var(--radius-pill);transition:background var(--dur-chrome) var(--ease-standard)'), background: vals.switchTrackBg }}>
+        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);border-radius:var(--radius-pill);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: vals.switchDotX }}></span>
       </span><B006Text>{vals.themeLabel}</B006Text>
     </span>
   );
@@ -94,6 +98,10 @@ export function ThemeSwitch({ vals }) {
   return (
     <B006
       data-emphasis="secondary"
+      /* The hook the pill radius is scoped to — see .button-006[data-theme-switch] in global.css.
+         B006 backs about fifteen controls across the tool and they are all still square; this one
+         is named rather than the token being changed underneath all of them. */
+      data-theme-switch=""
       data-focus="chrome"
       role="switch"
       aria-checked={vals.isDark}

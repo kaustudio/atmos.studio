@@ -145,7 +145,12 @@ const IconTrash = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0
 // The glyph sits in a fixed 9px slot: ✓ and ◐ draw at 9, ✕ is a narrower text glyph, and an
 // intrinsic slot let the badge's own width follow the state.
 const AaBadge = ({ aa }) => (
-  <span style={aa.aaBadgeStyle} title={aa.aaBadgeTitle}>
+  /* data-aa-badge carries the pill corner from global.css. It is on the COMPONENT rather than on the
+     list's call site, which is the wider change and the right one: the note above records that this
+     badge existed as three hand-rolled copies that had already drifted, and consolidating them is
+     why it is a component at all. Rounding one caller would start that over. The other two surfaces
+     — the palette meta row and the overlay's readout — take the corner with it. */
+  <span data-aa-badge="" style={aa.aaBadgeStyle} title={aa.aaBadgeTitle}>
     <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none;line-height:1')}>
       {aa.aaState === 'flexible' && <IconCheck size={9} />}
       {aa.aaState === 'limited' && <IconContrast size={9} />}
@@ -1558,30 +1563,21 @@ export default function AppView({ vals }) {
           </>)}
           {vals.showProjectsBar && (
             <div style={sx('display:flex;align-items:center;gap:8px')}>
-              <div style={sx('position:relative;display:flex')}>
-                <button type="button" data-ix="press" data-focus="chrome" aria-haspopup="menu" aria-expanded={vals.backupMenuOpen} onClick={vals.toggleBackupMenu} aria-label="Back up your library to a file" style={vals.tier3BtnStyle}><TextSwap>Back up</TextSwap><span aria-hidden="true" style={{ fontSize: 'var(--fs-nano)' }}>▾</span></button>
-                {vals.backupMenuOpen && (<>
-                  <div style={sx('position:fixed;inset:0;z-index:40')} onClick={vals.toggleBackupMenu} aria-hidden="true"></div>
-                  <div role="menu" style={sx('position:absolute;top:calc(100% + 6px);right:0;z-index:41;min-width:230px;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column')}>
-                    {vals.showBackUpProject && (
-                      <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={vals.backUpProject} style={sx('display:flex;flex-direction:column;gap:2px;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);cursor:pointer;color:var(--on-surface);font:inherit')}>
-                        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>Back up this project</span>
-                        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{vals.activeScopeLabel}</span>
-                      </button>
-                    )}
-                    {/* No text-transform here, unlike the item above it once had: this label is a
-                        written line, and capitalize sets every word of it, so "Every project and
-                        Unfiled" came out with a capital A on the conjunction. It went unnoticed
-                        while the line read "Every project + Unfiled", because capitalize has
-                        nothing to do to a plus sign. Sentence case, as authored. */}
-                    <button type="button" role="menuitem" data-ix="cell" data-focus="chrome" onClick={vals.backUpLibrary} style={sx('display: flex; flex-direction: column; gap: 2px; text-align: left; background: none; border: none; padding: var(--btn-pad-lg); cursor: pointer; color: var(--on-surface); font: inherit')}>
-                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail)')}>Back up whole library</span>
-                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>Every project and Unfiled</span>
-                    </button>
-                  </div>
-                </>)}
-              </div>
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
+              {/* ONE ACT, NO MENU. This was a disclosure: a trigger carrying aria-haspopup and a
+                  chevron, opening a two-item menu whose items were "Back up this project" and "Back
+                  up whole library". Removed by request — a menu is the right shape when a choice has
+                  to be made and the wrong one when the common case is the only case anyone reaches.
+                  The label now says what the single act does rather than naming a category, which is
+                  what let the chevron go.
+
+                  WHAT THIS COSTS, stated rather than buried: per-project backup is no longer
+                  reachable from the masthead. The handlers are untouched in renderVals.js —
+                  backUpProject, showBackUpProject, toggleBackupMenu, backupMenuOpen and
+                  activeScopeLabel are all still there and are now uncalled — so restoring the menu is
+                  markup rather than a feature. That file is left alone deliberately; it carries
+                  another branch's work at the moment. */}
+              <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back up</TextSwap></button>
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" data-tier3-action="" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
               <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
             </div>
           )}
@@ -1998,7 +1994,7 @@ function FeedSection({ vals }) {
             /* The label is its own span so it can be the ONLY part that truncates. As a bare text
                node beside the count there was nothing to put an ellipsis on, and a 46-character
                project name simply became a 294px chip — one name eating the whole frame. */
-            <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}>{ch.label}</span><span style={ch.countStyle}>{ch.count}</span></button>
+            <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}><TextSwap>{ch.label}</TextSwap></span><span style={ch.countStyle}>{ch.count}</span></button>
           ))}
         </div>
         {/* PRESENT ONLY WHEN THERE IS SOMEWHERE TO GO, which is the rule the rest of this band
@@ -2031,9 +2027,9 @@ function FeedSection({ vals }) {
       {vals.feedHasItems && (
         <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
           <span aria-hidden="true" style={vals.viewTogglePill}></span>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}>List</button>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}>Grid</button>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.reelPressed} tabIndex={vals.reelTab} onClick={vals.setReel} onKeyDown={vals.viewToggleKey} style={vals.reelToggleStyle}>3D</button>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}><TextSwap>List</TextSwap></button>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}><TextSwap>Grid</TextSwap></button>
+          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.reelPressed} tabIndex={vals.reelTab} onClick={vals.setReel} onKeyDown={vals.viewToggleKey} style={vals.reelToggleStyle}><TextSwap>3D</TextSwap></button>
         </div>
       )}
     </div>
@@ -2731,7 +2727,7 @@ function TagFilterDrawer({ vals }) {
             {/* ONE TITLE. "Archive filter" over "Filters" spent two levels naming one surface, and
                 neither of them named the thing being filtered. */}
             <span style={sx('display:flex;align-items:center;gap:9px;min-width:0')}>
-              <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>Filter library</span>
+              <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>Filter Library</span>
               {/* The rules of the panel, on the title that owns them. Same 16px control, same 288px
                   sheet, same easing as the Library heading and the AA badge — a third variant would
                   make the pattern a coincidence rather than a convention. */}
@@ -2767,11 +2763,17 @@ function TagFilterDrawer({ vals }) {
                 y" outside, because it IS the same fact. The drawer is library-owned chrome, so it
                 speaks the library's voices (see the contract in docs/interface-audit.md); only the
                 result-stage drawers keep the uppercase label voice. */}
-            <span role="status" aria-live="polite" style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.matchLabel}</span>
+            {/* The running "8 palettes" count stood here and is removed by request. It was also
+                this panel's aria-live region, so the announcement it carried is worth accounting
+                for rather than dropping quietly: FeedSection keeps a page-level
+                role="status" holding vals.resultSummary, which is driven by the same filter state,
+                so a screen reader is still told what the library came back with when a facet is
+                toggled — it is announced once, from the list, instead of twice. vals.matchLabel is
+                now unread. */}
           </div>
           {/* Done, not Close: selections apply live to the list behind, so nothing is pending and
               nothing is cancelled by leaving. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeFacet} aria-label="Done, close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Done</TextSwap></button>
+          <button type="button" data-drawer-act="" data-ix="press" data-focus="chrome" onClick={vals.closeFacet} aria-label="Done, close filters" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Done</TextSwap></button>
         </div>
         {/* ACTIVE FILTERS, pinned. One removable chip per applied value across every group, and the
             one Clear all. These used to sit at the bottom of the Character list — the longest thing
@@ -2820,11 +2822,22 @@ function TagFilterDrawer({ vals }) {
                   <span style={measuredLabelStyle}>{o.label}</span>
                   {/* count sits beside its label (F5), not across the row */}
                   <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  {/* A fourth span stood here on all three facet lists, right-aligned and holding
+                      o.reason — "Every palette here" — whenever an option was disabled. Removed by
+                      request. It was also the row's flex spacer at flex:1, and nothing takes that
+                      over: mark, label and count are all intrinsically sized, so the row is simply
+                      left-packed now and those three keep the positions they had.
+
+                      The data is untouched: renderVals still computes `reason` on both measured
+                      facets and it is now unread. That file is left alone on purpose — it carries
+                      another branch's work — so this is a markup removal rather than a feature one,
+                      and putting the line back is one span. o.disabled still does its real job: it
+                      drives aria-disabled, the cursor, the muted colour and FacetMark's unavailable
+                      state, none of which depended on the copy. */}
                   {/* Nothing at the row's end now but the occasional reason an inert row cannot be
                       picked. The state's meaning left this line for the note above the group: three
                       right-aligned fragments, one per row, clipped to whatever the panel had left,
                       asked the eye to assemble a definition out of a column. */}
-                  <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
@@ -2846,27 +2859,26 @@ function TagFilterDrawer({ vals }) {
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={measuredLabelStyle}>{o.label}</span>
                   <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-                  <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
                 </button>
               ))}
             </div>
           </div>
         ))}
 
-        {/* CHARACTER — behind a disclosure, because these are READINGS. Graphic and Smouldering are
-            interpretations of a palette; lightness and temperature are measurements of it. Ranked as
-            equals, the panel invited someone to treat a judgement as a property.
-            The vocabulary no longer overlaps either — Restrained and Stark used to be listed here
-            AND be Chroma and Contrast values, which is why this comment used to name them. */}
-        {/* data-tg-sec: this block held the rule that separates the measured groups from the
-            interpretive ones and was not in the arrival at all — so the one divider that carries the
-            panel's main distinction was the one thing that appeared instantly. */}
-        <div data-tg-sec="1" style={sx('padding:16px calc(var(--page-gutter) - 12px) 0')}>
-          <button type="button" data-ix="cell" data-focus="chrome" aria-expanded={vals.charOpen} aria-label={vals.charAria} onClick={vals.toggleChar} style={sx('position:relative;display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-top:1px solid transparent;padding:var(--btn-pad-lg);cursor:pointer;color:var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-align:left')}>
-            <OvRule />
-            <span data-disc-chev="1" data-open={vals.charOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.charLabel}
-          </button>
-        </div>
+        {/* THE CHARACTER TRAITS DISCLOSURE WAS HERE and has been removed by request. It was the
+            heading-and-chevron row that opened the interpretive facets — the reading that Graphic
+            and Smouldering are judgements about a palette while lightness and temperature are
+            measurements of it. The drawer now ends after the three measured groups.
+
+            WHAT IS LEFT BEHIND, AND WHY IT IS NOT AN OVERSIGHT: the block below still exists in
+            full — the trait search field, the Most-used / A–Z sort and the tag list — but it is
+            gated on vals.charOpen, and the control that could set that flag was the button removed
+            here. So it renders never. It is left in place rather than deleted for the same reason
+            the backup menu's handlers were: bringing the section back should be a button, not a
+            rebuild, and this is ~360 lines of working UI that nothing else can reach or damage.
+            renderVals still supplies charOpen, toggleChar, charAria and charLabel, now unread.
+
+            Say the word if the whole section should go; it comes out as one contiguous block. */}
         {vals.charOpen && (<div data-facet-char="1">
 
         {/* No heading and no explanation over the tag list. The search field, the Count/A–Z toggle
@@ -2919,7 +2931,6 @@ function TagFilterDrawer({ vals }) {
                   exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
                   standing in for a whole tag, which invited the reader to generalise from it, and
                   a second colour object competing with the swatch strips in the list behind. */}
-              <span style={sx('flex:1;min-width:0;text-align:end;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{o.disabled ? o.reason : ''}</span>
             </button>
           ))}
           {/* An empty state that says what happened and offers the way out, rather than a dead
