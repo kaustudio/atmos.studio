@@ -752,12 +752,25 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      vertical is 8 by request, which is the one figure here that is neither the comp's 12 nor the
      button family's.
 
-     THE HEIGHT IT BUYS IS 32px — 14 of label on line-height:1, 16 of padding, 2 of edge. State the
-     trade rather than bury it: that clears WCAG 2.5.8's 24px AA target, and it is 12px under the 44
-     touch wants — the smallest this control has ever stood, since the 12/16 it carried before the
-     comp made 40. The gate is the one surface on this site reached only by a thumb, so it is the one
-     place the difference is felt. --cta-pad is the single declaration that buys it back: 12px 16px
-     returns the control to 40 without touching the type or the flanks. */
+     THE VERTICAL WENT 12 → 8 → 12 → 8, AND IT IS SETTLED AT 8. The round trip is in the record
+     because the argument on each side is real and neither is going to stop being true, so the next
+     person to reach for this should find the trade rather than re-derive it.
+
+     THE CASE FOR MOVING IT: 8 builds a 32px control — 14 of label on line-height:1, 16 of padding,
+     2 of edge — and this control is the SOLE action on the gate, the example list and the shared
+     palette, which together are the one journey on this site reached only by a thumb. No pointer
+     fallback, no second control to hit instead. 32 is 12px under the 44 that touch wants.
+
+     THE CASE FOR LEAVING IT, WHICH IS THE ONE THAT HOLDS: 32 clears WCAG 2.5.8's 24px AA target
+     with room, so this is a comfort figure and not a compliance one. Against that, 40 was a visibly
+     heavier control under two lines of centred copy on a 375px screen — and the whole argument for
+     .glass-cta is that the screens it stands on are not the tool. A lone act on those surfaces is
+     sized by its label and meant to sit quietly beneath the sentence it answers; the extra 8px of
+     ink bought a target nobody had reported missing and cost the proportion that was designed.
+
+     SO THE FIGURE IS A DECISION, NOT A DEFAULT, and the undo is still one declaration: 12px 16px
+     returns the control to 40 without touching the type or the flanks. Take it if the small target
+     is ever actually reported from a phone rather than measured from a spec. */
   --cta-pad:8px 16px;
   --cta-blur:50px;
   /* THE REFLECTION — see the note above .glass-cta's backdrop-filter. --cta-sat is how hard the
@@ -984,10 +997,16 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   display:inline-flex;align-items:center;justify-content:center;
   /* THE PADDING IS THE BOX. This carried `min-height:36px;padding:0 16px` — the height set by a
      floor and the label floated in the middle of it, which is why the phone surfaces each had to
-     restate a taller floor of their own to get a thumb-sized control. 12/16 states the control as a
-     label with air around it, so one declaration decides the size everywhere and the three overrides
-     that used to sit below this rule are gone. Height falls out at 40px: 14px of label on
-     line-height:1, 24 of padding, 2 of edge. */
+     restate a taller floor of their own to get a thumb-sized control. --cta-pad states the control
+     as a label with air around it instead, so one declaration decides the size everywhere and the
+     three overrides that used to sit below this rule are gone.
+
+     THE HEIGHT IS NOT WRITTEN DOWN HERE, DELIBERATELY. It falls out of the token — at the 8/16 it
+     holds now, 14px of label on line-height:1 + 16 of padding + 2 of edge = 32 — and this note used
+     to state that figure, which is how it came to describe a 40px control that had not existed for
+     some time. A derived number restated at its call site is a number that goes quietly wrong the
+     first time the source moves. The arithmetic and the trade both live at --cta-pad; this rule
+     owns only the fact that the padding, rather than a floor, is what makes the box. */
   padding:var(--cta-pad);
   /* THE FILL IS ONLY A FILL. It carried the reflection as a second background layer for a while;
      the reflection is the EDGE's job now, which is both what was asked for and the more honest
@@ -1075,14 +1094,14 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    clear; 44 is the comfortable target, not the legal one). The pair stands 46 there, which is what
    it already stood before it became glass — the height was never the thing that was wrong with it. */
 /* THE PHONE'S HEIGHT OVERRIDE IS GONE — these three surfaces used to raise the control to 46px
-   because the base was a 36px floor built for a pointer. The 12px padding above sizes it at 40 on
-   every surface, so there is nothing left to override.
+   because the base was a 36px floor built for a pointer. --cta-pad sizes it on every surface now,
+   so there is nothing left to override.
 
-   STATE THE TRADE RATHER THAN BURY IT: 40 is 6px shorter than these stood, and it is under the 44
-   that touch wants. It clears WCAG 2.5.8's 24px AA target with room, and it is taller than the 36
-   that /about and the 404 present their action at — but this is the one journey on the site reached
-   only by thumb, so it is the one place the difference between 40 and 44 is felt. Raising it is one
-   declaration if it reads short in the hand. */
+   THE TRADE THAT REPLACED THOSE OVERRIDES IS STATED ONCE, AT --cta-pad, and not repeated here.
+   It is the same question every time — this is the one journey on the site reached only by thumb,
+   so it is the one place a short target is felt — and it has been answered in both directions more
+   than once. Two copies of that argument is how they end up disagreeing, which is exactly what
+   happened while this paragraph went on quoting a figure the token had already moved off. */
 /* A PAIR SHARES THE ROW; A LONE ACT IS SIZED BY ITS LABEL. One rule for both, and :not(:only-child)
    is what states the difference rather than each surface deciding for itself.
 
@@ -1229,6 +1248,16 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    clips a scrolled run of chips. Left square, a chip scrolled to the end would slide out through the
    rail's rounded corner.
 
+   THE TRAVELLING PILLS ARE MATCHED ON `[aria-hidden]` ALONE, NOT ON A TAG. All three entries used to
+   say `> span[aria-hidden="true"]`, which is a description of the markup that happened to exist
+   rather than of the thing being rounded. Two of the three markers are spans; the phone story's is a
+   div, so it was the one travelling pill in the app that stayed a square while the rail around it
+   and the buttons over it both became stadiums — a hard-cornered block sliding inside a stadium,
+   which is the exact "inner box unrelated to the outer" this note warns about four paragraphs up. It
+   was invisible in the source: every selector was present, correct and simply not matching.
+   What identifies these is that they are the decorative direct child of a segmented rail, and
+   [aria-hidden="true"] says that on its own — the buttons beside them carry aria-pressed.
+
    button[data-row-cell] IS DELIBERATELY NARROW. data-row-cell is on 45 elements and 11 of them are
    bordered; only these three are the sortable heads, and the rest are cells inside [data-row-main]
    — the per-row AA badges among them. Rounding by the attribute alone would have reached into every
@@ -1238,19 +1267,19 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-proj-pill],
 [data-proj-chip],
 [data-toggle-init],
-[data-toggle-init] > span[aria-hidden="true"],
+[data-toggle-init] > [aria-hidden="true"],
 [data-toggle-btn],
 /* The library panel's own two tabs, in the list for the same reason the feed's three are: it is the
    same segmented control — a travelling pill behind aria-pressed buttons — and a corner that
    depended on which panel a toggle happened to sit in would be two controls, not one. */
 [data-lib-tabs],
-[data-lib-tabs] > span[aria-hidden="true"],
+[data-lib-tabs] > [aria-hidden="true"],
 [data-lib-tab],
 /* The contrast checker's two pairs, built as the same rail — see the note in AppView for why they
    carry their own attribute names rather than the library tabs'. Same three entries: the box, the
    pill that travels inside it, and the buttons over the top. */
 [data-seg-rail],
-[data-seg-rail] > span[aria-hidden="true"],
+[data-seg-rail] > [aria-hidden="true"],
 [data-seg-btn],
 [data-library-btn],
 /* The rail's own prev/next steppers. These carry no border and no rest background — the corner is
@@ -1857,8 +1886,37 @@ button[data-row-cell] .tswap{flex:none}
          unreachable, which is the worst of the three states.
        · .site-foot — the phone story is the homepage on a phone, and it was the one surface on the
          site with no link to About, Privacy or Terms. Measured: zero of all three.
-     Neither is a piece of the tool, so neither is what this rule is defending against. */
-  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not(.skip-link):not(.site-foot){display:none!important}
+       · [data-mark-scrim] — the --surface ground the wordmark differences against on the surfaces
+         that scroll a photograph under it (see MarkScrim in AppView). It is chrome for the mark,
+         which is itself exempt one line up, so painting it out left the mark exempt and its ground
+         gone. It failed silently in the way this note keeps warning about: the element rendered,
+         resolved its gradient, and measured 0px tall.
+     None of the four is a piece of the tool, so none of them is what this rule is defending. */
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not([data-mark-scrim]):not(.skip-link):not(.site-foot){display:none!important}
+  /* AND BEING ON THE ALLOW-LIST IS ONLY HALF OF BEING VISIBLE. The rule above stops the footer
+     being painted out; it does not put it anywhere a reader can see it, and for a while it was not.
+
+     The landing stage is `position:fixed;inset:0;z-index:150` with an opaque `--surface` fill, and
+     it stays mounted on this surface on purpose — the story's hero is transparent so the colour
+     field shows through it, and LandingStage's position in the child list is what keeps the orbit
+     canvas alive across renders. So the gate is not the thing to move. What has to move is anything
+     that must stand in front of it, and [data-mobile-story] already does: story.css gives it 151.
+
+     The footer had neither half. Static and z-index:auto, it painted UNDER a full-viewport opaque
+     sheet: About, Privacy and Terms were laid out, hit-testable and focusable, and invisible — a
+     keyboard reader tabbed into five links behind a grey wall, which is worse than the display:none
+     this rule was written to undo. Measured after the fix: all five painted, all five reachable.
+
+     BACKGROUND AS WELL AS Z-INDEX, and that is the story's own rule rather than a second idea. The
+     surface is transparent by design and "every SECTION takes var(--surface)" (see story.css). The
+     footer is this page's last section, so it carries the ground like the rest of them — at 151
+     alone its type would sit straight on the drifting field.
+
+     151 PUT IT BETWEEN THE GATE AND THE STORY, and the story moved up to 152 to keep it there. Both
+     are siblings, so giving them the same number was a tie broken by document order — harmless
+     until the story had to cover the page from inside its own stacking context, which is what the
+     story picker does. The ladder is a strict order now and story.css states it in full. */
+  [data-app]:not(.doc-route)>.site-foot{position:relative;z-index:151;background:var(--surface)}
   /* The wordmark steps down a tenth on the phone. 165x26 is drawn for a desktop chrome bar with a
      toolbar either side of it; alone at the top of a 375px screen it is 44% of the width, and it is
      the one element on this surface the reader never needs to act on. Both numbers move together

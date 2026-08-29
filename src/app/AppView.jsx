@@ -100,6 +100,62 @@ const logoStyle = {
   WebkitMask: LOGO_MASK, mask: LOGO_MASK,
 };
 
+/* THE MARK'S GROUND, for the surfaces that scroll a photograph under it.
+
+   mix-blend-mode:difference is a promise the mark can only keep over a FLAT backdrop. Against
+   --surface it resolves to near-black in light and near-white in dark, which is why it has been
+   right everywhere it has ever been looked at. Against a photograph it resolves to the photograph:
+   measured on the share view's tennis court (avg rgb(97,137,161)), the mark came out rgb(158,118,94)
+   at the gradient's white stops — 1.08:1 against what it sits on — and rgb(41,1,23) at #8a8a8a, or
+   5.04:1. Not a fixed failure but an oscillating one, because that gradient is animated: the mark
+   faded in and out of existence on a 9s loop. On the share view it is also the way home, so this was
+   a CONTROL disappearing, not an ornament.
+
+   THE SCRIM RESTORES THE PREMISE RATHER THAN REPLACING THE MECHANIC. Difference blends against
+   whatever is painted below it in the stacking context; put --surface there and the mark differences
+   against --surface, which is the case it was designed for. Nothing about the mark changes — same
+   mask, same gradient, same animation, same z-index — so there is no second appearance to keep in
+   sync and no second thing to theme.
+
+   64px is the masthead's own height, which is the figure this codebase already uses for "the zone
+   the mark lives in": the desktop draws the mark inside a 64px bar, and the phone's answer had been
+   a 64px SPACER that scrolled away and took the ground with it. This is that spacer made fixed.
+
+   A GRADIENT RATHER THAN A BAND. A hard 64px edge over a full-bleed photograph reads as chrome
+   bolted on top of the picture; a fade reads as the picture arriving out of the surface, which is
+   what the rest of the page already does.
+
+   96px AND A STOP AT 66.6%, WHICH IS THE 64px BAND SOLID PLUS A 32px FADE. The stop has to clear the
+   mark completely or the fix is only half applied: the mark occupies 18.5-42, and the first attempt
+   at 64px-with-a-stop-at-42% put full --surface behind only its top 27px and left the descenders
+   differencing against a half-transparent blend of surface and photograph. It read as a grey smear
+   under the wordmark — the same failure as before, smaller. Solid to 64 puts the whole mark on the
+   backdrop it was drawn for with 22px to spare, and the fade happens entirely below it.
+
+   RENDERED ON ALL THREE PHONE BRANCHES, THOUGH ONLY ONE OF THEM CAN SEE IT.
+     · The share view is the surface this exists for.
+     · The example list never puts an image in the mark's band — the rows are --surface and the 72px
+       thumbnails stop well short of a centred 148.5px mark — so this paints --surface over --surface
+       and is invisible.
+     · The story's sections DO run full-bleed under the mark, but the mark is not there to be hurt by
+       them: heroExit scrubs it to autoAlpha 0 across the hero's exit, so it has left before the
+       first photograph arrives. The scrim leaves with it — heroExit fades both — rather than staying
+       behind as a veil over a mark that is no longer drawn.
+   The uniform render is what keeps the mark at the same child INDEX in each branch. React reconciles
+   unkeyed children by index, and a mark that changed position between branches would be the
+   torn-down-and-rebuilt logo the note in the tool branch exists to warn about.
+
+   NOT ON THE GATE, which is a different branch: its backdrop is the orbit field, the brand's arrival
+   and meant to be seen — and being a flat-ish wash rather than a photograph, it is a backdrop
+   difference already handles.
+
+   data-mark-scrim IS LOAD-BEARING TWICE. It is what heroExit fades, and it is what puts this on the
+   phone rule's allow-list in global.css — without that entry a direct child of [data-app] is painted
+   out, which is exactly what happened first time: the element rendered, carried its gradient, and
+   measured 0px tall. z-index 154: under the mark at 155, over the story at 151 and the share at 150. */
+const MARK_SCRIM = sx('position:fixed;top:0;left:0;right:0;height:96px;z-index:154;pointer-events:none;background:linear-gradient(to bottom, var(--surface) 0%, var(--surface) 66.6%, transparent 100%)');
+const MarkScrim = () => (<div data-mark-scrim="1" aria-hidden="true" style={MARK_SCRIM}></div>);
+
 /* ===== ICONS — Material Symbols Light, one variant, no exceptions =====
    Every glyph below is the published path from `material-symbols-light`, taken from the Iconify API
    rather than transcribed, because transcription is how a set drifts one icon at a time. The sharp
@@ -517,10 +573,17 @@ function MobileExampleList({ ml }) {
                 from light and atmosphere" is the more persuasive half. Stacked rather than side by
                 side because a row is 64px and two thumbnails would leave the name nowhere to go. */}
             <span aria-hidden="true" style={sx('flex:none;display:flex;flex-direction:column;width:72px;gap:2px')}>
+              {/* --img-outline, not a colour-mix off --on-surface. The two are nearly the same
+                  number and not the same idea: --on-surface is #1a1a1a light and #f3f3ef dark, so
+                  mixing off it draws a tinted rim — a warm off-white edge over a photograph in dark,
+                  which is the "dirt on the image edge" an image outline is specifically not meant to
+                  be. The token is pure black and pure white at 10%, it is what /about's figures
+                  already use, and going through it means a retune reaches every picture on the site
+                  rather than the ones that happened to be written by hand. */}
               {r.hasImage && (
                 <span style={sx('position:relative;display:block;width:100%;height:40px;overflow:hidden;background:var(--surface-raised)')}>
                   <img src={r.image} alt="" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
-                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 10%, transparent)')}></span>
+                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
                 </span>
               )}
               <span style={sx('display:flex;width:100%;height:' + (r.hasImage ? '6px' : '40px') + ';border:1px solid var(--line)')}>
@@ -546,7 +609,15 @@ function MobileExampleList({ ml }) {
           whole reason the rule that sizes them is written against :not(:only-child). This button
           was width:100% and is now sized by its label, matching the gate's lone act rather than
           spanning a column it has no sibling to share. */}
-      <div data-cta-row="1" style={sx('flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:24px var(--page-gutter) 34px')}>
+      {/* THE BOTTOM INSET IS THE DEVICE'S, NOT A NUMBER THAT LOOKS LIKE IT. This was a flat 34px,
+          which is exactly the home indicator's height on the phones it was tuned on — so it was
+          right there and a guess everywhere else: too much on a device with no inset, and too
+          little the moment the inset is larger or the phone is turned over and the inset moves.
+          It matters more here than almost anywhere, because this row holds the only act on the
+          surface and it is the last thing in a 100dvh scroller.
+          calc(24px + env(...)) is the form story.css already uses for the same edge — same base,
+          same fallback — so the three phone surfaces now clear the hardware the same way. */}
+      <div data-cta-row="1" style={sx('flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:24px var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px))')}>
         <button type="button" className="glass-cta" data-focus="chrome" onClick={ml.onLeave} aria-label="Back to Start: return to the start screen"><TextSwap>Back to Start</TextSwap></button>
       </div>
     </div>
@@ -686,11 +757,53 @@ function MobileStory({ st }) {
             it is the brand's own field rather than a photograph. */}
         <header className="story-hero about-grid" data-story-hero>
           <div className="story-hero__inner" data-story-hero-inner>
-            <h1 data-story-hero-line>{st.heroTitle}</h1>
-            <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
-            <div className="story-hero__act">
-              <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
-                aria-label="See how Atmos reads it: begin the story"><TextSwap>See How Atmos Reads It</TextSwap></button>
+            {/* THE COPY'S OWN LIGHT, and it is the gate's answer to the same problem one branch up.
+
+                orbit.js solves the field's hole from _heroReach, which measures
+                `[data-landing] h1, [data-landing] p, [data-glass-cta], [data-gate-actions]`. None of
+                those is here: this hero's copy is inside [data-mobile-story], so the gas was solved
+                to clear the GATE's block — which on this surface is `quiet` and invisible — and then
+                drawn straight through the words that are actually on screen.
+
+                Adding this block to that selector is not the fix, and _fieldGeom's own note says why:
+                "a 375px-wide gate leaves no radius that both clears the block and stays on screen, so
+                on that one viewport geometry cannot win." The gate answers it with a radial wash of
+                the surface colour and lets the gas pass under the words dimmed rather than pushing it
+                off the screen. This is that wash, on the surface that had been left without one.
+
+                inset -80px -48px against the gate's -56px -40px: this block is taller — a 44px
+                two-line heading, a lead and an action, where the gate has a title and one sentence —
+                so the ellipse has more to cover before it can start falling off. z-index 0 under the
+                content's 1, aria-hidden, pointer-events:none: it is ground, not an object. */}
+            {/* THE WASH IS ON A BLOCK THAT HUGS THE COPY, not on the sticky box around it, and the
+                first attempt got that wrong in a way worth recording: .story-hero__inner is
+                height:100svh because it has to have somewhere to stick, so an ellipse inset from IT
+                is 375 x 812 of surface with an opaque core more than twice the height of the words.
+                It did not read as a ground under the copy, it read as the field being switched off.
+                This wrapper is sized by its own three children, which is what the gate's block is
+                too — same structure, same result.
+
+                closest-side, AND THAT KEYWORD IS THE WHOLE DIFFERENCE BETWEEN A GROUND AND A BAND.
+                A radial-gradient defaults to farthest-CORNER, so its 100% stop lands on the box's
+                diagonal — which means the middle of the top and bottom edges is only ~66% along the
+                ramp and still ~70% opaque when the box simply stops. It drew two hard horizontal
+                rules across the field, one above the heading and one below the button. closest-side
+                puts 100% on the nearest edge instead, so the wash reaches transparent exactly where
+                its box ends and there is nothing left to cut.
+
+                -140/-120 rather than the gate's -56/-40: those figures are what give the ramp room
+                to finish. The copy is 343 x ~225, so at this inset its corners sit around 74% along
+                and still hold roughly half the ground, while the ends of the long heading line sit
+                at 59% and keep most of it. Tighter insets put the words in the fade; wider ones
+                start washing the field off the screen, which is the failure above. */}
+            <div className="story-hero__block">
+              <span aria-hidden="true" style={sx('position:absolute;inset:-140px -120px;z-index:0;pointer-events:none;background:radial-gradient(ellipse closest-side at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
+              <h1 data-story-hero-line>{st.heroTitle}</h1>
+              <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
+              <div className="story-hero__act">
+                <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
+                  aria-label="See how Atmos reads it: begin the story"><TextSwap>See How Atmos Reads It</TextSwap></button>
+              </div>
             </div>
           </div>
         </header>
@@ -820,9 +933,27 @@ function MobileStory({ st }) {
                 codebase, and a control announcing itself as tabs without answering an arrow key
                 would be worse than one that never claimed to — this one does answer them. */}
             <div data-toggle-init className="toggle-switch" role="group" aria-label="Which reading to show">
-              <div aria-hidden="true" className="toggle-switch__bg"></div>
+              {/* A span, like the travelling pill in every other segmented control here. It was a
+                  div, which is a perfectly good box and was silently the only one in the app that
+                  did not round: the corner rule in global.css matched `> span[aria-hidden]`, so the
+                  rail and its buttons became stadiums and the marker sliding between them stayed a
+                  square. The rule no longer depends on the tag — but these three controls should
+                  still be one object down to their markup, so this matches them. */}
+              <span aria-hidden="true" className="toggle-switch__bg"></span>
+              {/* data-focus="chrome" AND NOTHING ELSE. global.css opens with a blanket
+                  `:focus{outline:none}` and hands every ring back through a data-focus tier, so an
+                  omission here is not a control with a weak ring — it is a keyboard-reachable
+                  control with no focus indicator at all, which is what these three were. Their
+                  desktop counterparts (data-seg-btn, data-lib-tab, data-proj-chip) all carry it.
+
+                  Deliberately NOT data-ix. That tier's hover fills an unselected option with 16%
+                  --on-surface, which is the grey-slab-beside-the-solid-pill this app has already
+                  taken off the scope chips and the library tabs. This control's feedback is the
+                  travelling pill and the label's colour, and both are complete; the ring was the
+                  only thing missing. */}
               {st.segs.map((t) => (
                 <button key={t.key} type="button" data-toggle-btn className="toggle-switch__btn"
+                  data-focus="chrome"
                   {...(t.selected ? { 'data-toggle-active': '' } : {})}
                   aria-pressed={t.selected} aria-label={t.aria} onClick={t.onPick}>
                   <span>{t.label}</span>
@@ -1018,8 +1149,16 @@ function MobileStory({ st }) {
               <h2 data-sticky-title="heading" className="story-cta__title">Ready to read your own image?</h2>
               <p className="story-cta__lead">{st.handoffLine}</p>
               <div className="story-actions">
+                {/* THE SUFFIX NAMED A SURFACE THIS DOES NOT OPEN. It read "open the example
+                    palettes", and Example Palettes is a real, differently-titled screen on this
+                    site — the one the share view's `See All Examples` goes to. This control calls
+                    openStoryPicker: an image chooser that covers the story in place, and which
+                    announces itself as "Choose an image." So a screen-reader user was promised a
+                    list and given a carousel, and the control's own live region contradicted its
+                    own name. The visible label stays: you do explore another palette, by reading
+                    another photograph. It is the half after the colon that has to be true. */}
                 <button type="button" className="glass-cta" data-focus="chrome"
-                  onClick={st.onAnother} aria-label="Explore another palette: open the example palettes"><TextSwap>Explore Another Palette</TextSwap></button>
+                  onClick={st.onAnother} aria-label="Explore another palette: choose a different image to read"><TextSwap>Explore Another Palette</TextSwap></button>
               </div>
             </div>
           </div>
@@ -1090,12 +1229,18 @@ function MobileStory({ st }) {
                   <span data-layered-slider-total className="layered-slider__span">05</span>
                 </div>
                 <div className="layered-slider__overlay-btm">
+                  {/* data-ix="icon", not "press": the press tier tints with --on-surface, which is
+                      near-black in light and would wash a control that is white ink on somebody's
+                      photograph. The icon tier fills from the control's OWN currentColor, so the
+                      tint is white here and follows the ink wherever this lands. Without either,
+                      these two were the only controls on the phone with no press state at all —
+                      the native tap highlight is suppressed below and nothing replaced it. */}
                   <div className="layered-slider__nav">
-                    <button type="button" data-layered-slider-prev data-focus="chrome"
+                    <button type="button" data-layered-slider-prev data-ix="icon" data-focus="chrome"
                       className="layered-slider__nav-button" aria-label="Previous image">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
                     </button>
-                    <button type="button" data-layered-slider-next data-focus="chrome"
+                    <button type="button" data-layered-slider-next data-ix="icon" data-focus="chrome"
                       className="layered-slider__nav-button" aria-label="Next image">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
                     </button>
@@ -1132,10 +1277,11 @@ function MobileShareView({ ms }) {
           the gutter reads as an attachment, where this is the evidence for everything under it.
           A 1px inset ring rather than a border: the outline must not shift the picture off the
           edges it is bleeding to. */}
+      {/* --img-outline for the same reason as the list's thumbnail — see the note there. */}
       {ms.hasImage && (
         <div data-ms-img="1" style={sx('flex:none;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--surface-raised);position:relative')}>
           <img src={ms.image} alt={'The photograph ' + ms.name + ' was read from'} style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
-          <span aria-hidden="true" style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--on-surface) 10%, transparent)')}></span>
+          <span aria-hidden="true" style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
         </div>
       )}
 
@@ -1191,7 +1337,8 @@ function MobileShareView({ ms }) {
 
       {/* Flows straight after the colours rather than anchoring to the bottom: on a tall phone a
           stretched footer strands this line half a screen away from what it refers to. */}
-      <div data-ms-foot="1" style={sx('flex:none;padding:24px var(--page-gutter) 34px')}>
+      {/* Same device inset as the list's foot — see the note there. */}
+      <div data-ms-foot="1" style={sx('flex:none;padding:24px var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px))')}>
         {ms.footLine && (
           <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         )}
@@ -1554,6 +1701,8 @@ export default function AppView({ vals }) {
             nowhere for it to lead — but on the two surfaces above the gate it is the way home, the
             same job it does in the tool. It is also why the foot below carries no `Back to Start`:
             one gesture, in the one place it sits on every screen. */}
+        {/* Invisible on this surface and rendered for the index alone — see MarkScrim. */}
+        <MarkScrim />
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
         <Analytics />
@@ -1580,6 +1729,15 @@ export default function AppView({ vals }) {
         {vals.showLanding && <LandingStage vals={vals} quiet />}
         {/* Decorative here, as it is on the gate: the story IS the start screen, so there is nowhere
             for the mark to lead. It becomes a button on the two surfaces above this one. */}
+        {/* NO MarkScrim HERE, and the reason is the surface underneath. This hero is a hole onto
+            the colour field, which is a soft wash rather than a photograph — the backdrop difference
+            was designed for and handles on the gate already. A --surface band over it would veil the
+            top of the brand's arrival to solve a legibility problem this surface does not have. By
+            the time a photograph DOES pass under the mark, heroExit has scrubbed the mark to zero.
+            (It was briefly rendered here to keep the mark at one child index across the three phone
+            branches. That argument was wrong: this branch draws the mark as a <div role="img"> and
+            the two above draw it as a <button>, so React remounts it on the type change whatever
+            the index is.) */}
         <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
         <MobileStory st={vals.mobileStory} />
         {/* THE ONLY WAY OFF THIS PAGE ON A PHONE. The foot is rendered by the document routes and,
@@ -1604,6 +1762,9 @@ export default function AppView({ vals }) {
         {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
             gradient under a difference blend. Opening an example must not change the brand — but it
             does change what the mark DOES: decorative on the gate, the way home from here. */}
+        {/* The surface MarkScrim exists for: a 4:3 photograph bleeds to both edges and scrolls
+            straight under a mark that stays put the whole way down. */}
+        <MarkScrim />
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
@@ -2111,9 +2272,31 @@ export default function AppView({ vals }) {
         </div>
       )}
 
+      {/* THE LAST SQUARE THING ANCHORED TO THIS CORNER. The toast six lines up is a stadium with
+          two 30px circles in it; this sat beside it as a hard-cornered plate, and the two are the
+          same object to a reader — a bar that arrives bottom-left and says what just happened.
+          One of them reporting in a different shape is the dialect the corner pass exists to end.
+
+          18px OF FLANK, NOT 13, AND THAT IS THE STADIUM'S CHARGE RATHER THAN A LOOK. A pill's
+          corner curves away from its own content, so type set at a square box's padding reads as
+          crowding an edge that is no longer there. The project rows made this correction first
+          (14 → 18, see optStyle) and the toast and the fields each needed it after; 13 → 18 is the
+          same figure for the same reason, and it is now the number this family uses.
+
+          NO DISMISS, AND THAT IS THE ONE PLACE IT DEPARTS FROM THE TOAST. The toast carries a way
+          out because it stopped timing out — it holds an undo, and an act nobody can decline is a
+          trap. This keeps its timer (see overlays.js: "Info-only notices keep their timer"), so a
+          control here would be a second way to do what the clock already does, on a surface with
+          nothing to lose. Give it one only if it ever stops expiring. */}
       {vals.hasNotice && (
-        <div data-notice="1" role="status" style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);color:var(--on-surface-muted);padding:9px 13px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
-          <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;background:var(--on-surface-muted)')}></span>
+        <div data-notice="1" role="status" style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:9px 18px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
+          {/* A DOT, NOW THAT IT SITS IN A PILL. It was a 6px square, which the house rule allows —
+              square is still the default and this is a mark, not a control sized by a label. It is
+              also the only other shape inside a stadium, and a hard corner nested in a round one
+              reads as the two being unrelated, which is the argument the radius block makes about
+              every other pair of nested boxes here. It carries no meaning to lose: aria-hidden, no
+              state, no variants. A bullet is what it always was; this draws it as one. */}
+          <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;border-radius:var(--radius-pill);background:var(--on-surface-muted)')}></span>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);line-height:1.4;letter-spacing:.01em;text-wrap:pretty')}>{vals.notice}</span>
         </div>
       )}
@@ -3407,12 +3590,12 @@ function LibraryDrawer({ vals }) {
                 figure the rows below use too, so every piece of text inside a control on this
                 surface starts on the same column. (The toast keeps 16: it is a 48px bar with a
                 deeper arc and a leading inset chosen for it by hand.) */}
-            <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:9px 40px 9px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
             {/* Filled --on-surface, unlike the toast's outlined pair: this is the one act on the tab
                 that commits something, and fill is how this system says primary. A GLYPH CARRIES ITS
                 NAME: aria-label states the act, title hands the word to a pointer, and the swap runs
                 on it exactly as it does on every other mark now. */}
-            <button type="button" data-manage-add="1" data-ix="cta" data-focus="chrome" onClick={vals.manage.onCreate} aria-label="Create project" title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:28px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
+            <button type="button" data-manage-add="1" data-ix="cta" data-focus="chrome" onClick={vals.manage.onCreate} aria-label="Create project" title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
         </div>
 
@@ -3719,20 +3902,50 @@ function AssignDialog({ vals }) {
           ))}
         </div>
         <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
-          <label style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
+          {/* THE SAME VOICE AS `ADD TO PROJECTS` AT THE TOP OF THIS DIALOG, which it was not: this
+              stood at --fs-micro with a hand-set .06em against the header's --fs-label at
+              --track-flat. 9px with half a pixel of tracking beside 10px with none — two uppercase
+              labels, 400px apart, in one sheet, differing by an amount too small to read as a
+              decision and too large to be nothing.
+
+              --fs-label is also what the scale says this is: its own note calls it "uppercase
+              labels; the workhorse", where --fs-micro is for "counts, eyebrows, row meta". This is
+              a label naming the field under it, so the token and the match point the same way.
+
+              AND THE TRACKING GOES THROUGH THE TOKEN. --track-flat is 0 and its declaration calls
+              itself the single source for flat tracking; a literal beside it is the second source
+              that makes the first one a suggestion. Six more sites still carry this same .06em —
+              left alone here because they are other surfaces, but they are the same drift. */}
+          <label style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New project</label>
           {/* THE SAME FIELD AS THE LIBRARY PANEL'S, down to the numbers: a stadium with the act
-              inside it at inset-block:4px, 28px wide, and 40px of trailing padding so a long name
+              inside it at inset-block:4px, 32px wide, and 44px of trailing padding so a long name
               stops before the disc. Two places in this app create a project and they were two
               different controls — a field with a "Create & add" button beside it here, a field with
-              a chevron inside it there. One act, one shape.
+              a chevron inside it there. One act, one shape. Both still carry these figures; change
+              one and change the other, or the sentence above stops being true.
+
+              IT STANDS 40 NOW, WHICH IS THE HEIGHT OF THE ROWS ABOVE IT. At 9px of vertical padding
+              it measured 35.5 against their 39.5 — four pixels short of the only other full-width
+              control in the dialog, directly under it, sharing its left and right edges. Two stacked
+              stadiums of different heights read as a mistake rather than as a hierarchy, because
+              nothing here is claiming one is subordinate to the other: you pick a project from those
+              or you type a new one into this.
+
+              THE DISC GREW WITH IT, and it had to. Its height comes from inset-block:4px, so a
+              taller field made it 31.5 while its width stayed 28 — a lozenge, which is exactly the
+              fault the library trigger had at 38 x 32.5 and exactly the fault the corner is always
+              blamed for. Squaring it to 32 keeps it a true circle AND lands it on the size every
+              other icon-only circle in this app already uses. The trailing padding follows: a 32px
+              disc at 4px reaches 36px in from the edge, so 44 keeps the 8px of clearance a name had
+              before the disc grew, where the old 40 would have halved it.
               THE VISIBLE LABEL STAYS, and that is the one deliberate difference. The panel's field
               has only a placeholder, which is a label that disappears the moment you type; this one
               has "New project" above it, and matching downward would have cost the better of the
               two. It gains the aria-label the panel's field already had, so the name is on the
               control and not only above it. */}
           <div style={sx('position:relative;display:flex')}>
-            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:9px 40px 9px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} aria-label={assign.createAria} title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:28px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
+            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} aria-label={assign.createAria} title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
         </div>
       </div>

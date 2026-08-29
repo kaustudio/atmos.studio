@@ -1557,6 +1557,23 @@
   .about-split .about-ui__body{flex:1 1 auto}
   .about-checks li{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
   .about-checks__verdict{grid-column:2}
+  /* THE MEASUREMENT AND ITS VERDICT ARE ONE COLUMN, SO THEY END ON ONE EDGE. Each li is its own
+     grid, so this second track is sized by whichever of the two is wider — always the verdict, at
+     four or five uppercase words against "10.3 to 1". The ratio then sat at that track's LEFT edge,
+     which is a different x on every row, because it was being positioned by the width of the badge
+     underneath it rather than by anything of its own: BODY TEXT AT AA, LARGE TEXT AT AA and GRAPHIC
+     ONLY are three widths, so six ratios started at three different places and the column read as
+     ragged rather than as a column.
+
+     justify-self:end puts the number on the track's trailing edge, which is the li's trailing edge —
+     so the ratio, the badge under it and the panel's own margin all finish on one line. It also
+     makes the tabular figures already declared on .about-checks__val do the job they are for: right
+     aligned and tabular, the decimal points stack and the six ratios can be read down as a set.
+
+     ONLY HERE. Above 820 the row is three tracks and the ratio has one to itself, sized to its own
+     content — there is no slack for an alignment to take up, and this would be a no-op stating a
+     decision that is not being made. */
+  .about-checks__val{justify-self:end}
   .about-route .about-ui__actions{flex-wrap:wrap}
   /* THE STACK IS NOT RELEASED HERE, and the two rules that used to be are gone.
 

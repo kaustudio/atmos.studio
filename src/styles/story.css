@@ -43,9 +43,18 @@
    against. It follows that this surface needs no `data-lenis-prevent`; only the gallery's own
    horizontal row does, being the one genuine internal scrollport here.
 
-   z-index 151: above the landing stage's 150, so the story passes over the colour field — and below
+   z-index 152: above the landing stage's 150, so the story passes over the colour field — and below
    the 155+ the wordmark, wipe, lightbox and loader stand at, so the mark still floats over the story
-   exactly as it floats over every other phone surface. */
+   exactly as it floats over every other phone surface.
+
+   IT WAS 151, AND THE FOOTER IS WHY IT IS NOT. The phone's site footer is a SIBLING of this element
+   and had to be lifted over the landing stage as well, which put two peers on one number — and a
+   tie on z-index is broken by document order, so the later footer won. That is invisible until
+   something inside here has to cover the page: the story picker is fixed and full-screen, but it
+   lives in THIS element's stacking context, so no value it can hold will beat a sibling that has
+   already beaten its parent. The footer took 151 and the story moved up to 152, which restores the
+   whole ladder as a strict order rather than a tie: gate 150 · footer 151 · story 152 · picker 153 ·
+   mark scrim 154 · wordmark 155. Anything added between these has to pick a side of it. */
 /* THE SURFACE ITSELF IS TRANSPARENT; THE CHAPTERS CARRY THE GROUND.
 
    An opaque background here covered the landing stage beneath it, so the hero — which is transparent
@@ -56,9 +65,24 @@
    So the ground moves down one level: every SECTION takes `var(--surface)`, the hero takes none, and
    the surface between them is a hole onto the stage. Which also keeps the theming honest — the
    sections are the things with a background, and their background is a token. */
-[data-mobile-story]{
+/* THE TRANSPARENCY NEEDS THE SECOND CLASS TO SURVIVE, and without it the paragraph above described
+   a surface that had stopped existing. This element is <div data-mobile-story class="doc-route">,
+   and doc.css opens with `.doc-route{background:var(--surface)}` — (0,1,0) against this rule's
+   (0,1,0), so the winner is decided by which stylesheet the browser saw last.
+
+   AND THAT ORDER IS NOT FIXED. story.css is imported by AppView; doc.css comes in with AboutPage and
+   LegalPage, which are lazy. So the ground under the hero depended on whether a chunk for a route
+   nobody had visited happened to have loaded — the field showed or did not show for reasons that had
+   nothing to do with the field. What it produced when doc.css won is precisely the failure the note
+   above is written about: an opaque plate over the landing stage, and a hero built to be a hole onto
+   the colour field arriving as a flat empty screen.
+
+   [data-mobile-story].doc-route is (0,2,0) and both halves are true of this element and only this
+   element, so it states the exception rather than winning an argument on order. */
+[data-mobile-story],
+[data-mobile-story].doc-route{
   position:relative;
-  z-index:151;
+  z-index:152;
   background:transparent;
   color:var(--on-surface);
 
@@ -173,6 +197,23 @@
   text-align:center;
   gap:14px;
 }
+/* THE COPY BLOCK, which exists so the radial ground behind it can be sized by the WORDS rather than
+   by the 100svh box they are centred in. See the note in AppView for what that box produced. It
+   carries the column layout the inner used to hold directly; the inner keeps the centring and the
+   sticky height, which are its own two jobs. */
+.story-hero__block{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:14px;
+  width:100%;
+}
+/* AND THE COPY STANDS ABOVE THE WASH. The ground is absolutely positioned at z-index 0; without a
+   layer of their own the h1, the lead and the action are static and would paint under it. Stated on
+   the children rather than by pushing the wash to a negative z-index, which would drop it behind the
+   block's own stacking context and back under the field it exists to sit on top of. */
+.story-hero__block > :not([aria-hidden="true"]){ position:relative; z-index:1 }
 /* NO WASH BEHIND THE HERO COPY. A radial of the surface colour stood here — the gate's own solution,
    carried over — and it was a white disc on a light theme, visible as a shape rather than as light.
    The colour field is the brand's own atmosphere and the hero is meant to sit IN it, not on a plate
@@ -183,13 +224,29 @@
    told about (see _heroReach in methods/orbit.js), which is what keeps it off the copy — so this is a
    geometry guarantee rather than a paint one, and it is the same guarantee the desktop landing has
    always relied on. */
+/* THE ONE TRACKING FIGURE ON THIS SITE THAT IS NOT A TOKEN, and it is written here rather than
+   minted so the exception stays countable.
+
+   It was --track-statement (-0.02em), which is the tier this heading shares with the chapter h2s —
+   one token giving -0.88px at 44 and -0.44px at 22, tightening in proportion, which is the whole
+   reason the scale is stated in em. -0.04em is twice that, and at 44px it lands at -1.76px.
+
+   WHY IT IS NOT --track-display. That token is -0.03em and would have been the obvious neighbour,
+   but it is owned by .about-hero h1, which clamps 34 → 86px; retuning it to -0.04 to serve this one
+   heading would have tightened an 86px headline on a different route by nearly a pixel, which is a
+   change nobody asked for arriving as a side effect. The scale is not the wrong shape — this is one
+   heading asking for something the scale does not carry.
+
+   WHAT WOULD FOLD IT BACK IN: if a second display heading ever wants -0.04em, that is the moment it
+   becomes a tier and joins the --track-* block, exactly as the radius block says of its own set. One
+   call site is a decision; two is a pattern being written by hand. */
 .story-hero h1{
   margin:0;
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-weight:500;
   font-size:var(--fs-display);
   line-height:1.04;
-  letter-spacing:var(--track-statement);
+  letter-spacing:-0.04em;
   text-wrap:balance;
 }
 .story-hero__lead{
@@ -594,10 +651,28 @@
 .toggle-switch__btn[data-toggle-active]{ color:var(--on-surface) }
 /* The panel is a figure under a control, not a caption on it — it takes the block gap the rest of
    the surface uses between a thing and the thing it belongs to. Lost when the old segmented
-   group's rules were removed with the control they belonged to. */
+   group's rules were removed with the control they belonged to.
+
+   AND LOST AGAIN, SILENTLY, BECAUSE THIS RULE NEVER MATCHED. It said `margin:18px 0 0` and measured
+   0: the panel is <figure class="about-figure" data-story-panel>, about.css says `.about-figure
+   {margin:0}`, and the two selectors are both (0,1,0) — so the later stylesheet won and the gap was
+   restored in the source without being restored on the screen. The rail sat welded to the panel,
+   which the corner pass then made worse rather than caused: a stadium meeting a square-cornered box
+   flush leaves a wedge of dead ground at each of its bottom corners. Scoped to [data-mobile-story]
+   to clear .about-figure on specificity — the same move about.css already makes one rule down, for
+   this exact collision with this exact class.
+
+   --block-gap RATHER THAN THE 18px IT ASKED FOR, which is the note above taken at its word instead
+   of approximated. 18 was a literal sitting between the surface's two real figures and belonging to
+   neither: measured on a 375px phone this surface runs 14-15px inside a block, 25px between blocks
+   (--block-gap) and 45px between sections (--band-gap). The control and the panel are two blocks in
+   one figure, and .about-col → .about-figure--full is already spending exactly --block-gap on the
+   same relationship a few pixels up. Using the token puts this pair in that rhythm and keeps it
+   there at every viewport, where 18 was only ever right at one. */
 /* overflow:hidden is what makes the height fold read as a fold rather than as a box shrinking around
    content that is already drawn past its edge. See setStoryTab in methods/persistence.js. */
-[data-story-panel]{ margin:18px 0 0; overflow:hidden }
+[data-story-panel]{ overflow:hidden }
+[data-mobile-story] [data-story-panel]{ margin:var(--block-gap) 0 0 }
 /* No JS: the pill never moves, so the active button states itself rather than relying on a position
    the stylesheet cannot know. */
 .toggle-switch:not([data-toggle-live]) .toggle-switch__bg{ display:none }
@@ -782,12 +857,14 @@
    a resource in: zero radius, the site's tokens, and the type on the ladder.
 
    IT COVERS, IT DOES NOT REPLACE. Fixed and full-screen above the story so the eight chapters keep
-   their scroll position and their built masks while the reader looks. z-index 152: over the story's
-   151, under the wordmark and the loader at 155+. */
+   their scroll position and their built masks while the reader looks. z-index 153: over the story's
+   152, under the mark's scrim at 154 and the wordmark and loader at 155+ — which is right rather
+   than incidental, because this surface is full-bleed photography and the mark needs its ground
+   here for exactly the reason the share view does. */
 [data-story-picker]{
   position:fixed;
   inset:0;
-  z-index:152;
+  z-index:153;
   background:var(--surface);
   overscroll-behavior:contain;
 }
@@ -914,13 +991,21 @@
 .layered-slider__overlay-btm{ display:flex; align-items:center; justify-content:center; width:100% }
 .layered-slider__nav{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; pointer-events:auto }
 /* 48px, not the resource's 3em: this is the one surface reached only by a thumb, and 48 clears the
-   44 a touch target wants. Square, like every other control here. */
+   44 a touch target wants.
+
+   NOT SQUARE ANY MORE, and the line that used to end this note — "Square, like every other control
+   here" — was a true statement about a system that has since changed its mind. --radius-pill is the
+   app's one corner now, and it reaches every icon-only bordered control in the tool: the close mark,
+   the row actions, the toast's two acts, all circles at 32. These are the same object one size up,
+   and they were the last pair still drawing a hard corner. At 48 square the token clamps to 24, so
+   they come out as true circles rather than lozenges. */
 .layered-slider__nav-button{
   display:flex;
   align-items:center;
   justify-content:center;
   width:48px;
   height:48px;
+  border-radius:var(--radius-pill);
   padding:12px;
   background:none;
   border:1px solid rgb(255 255 255 / .3);

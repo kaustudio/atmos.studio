@@ -144,8 +144,14 @@ export function initHeroExit(root) {
      autoAlpha, so it ends hidden rather than transparent: a fixed layer at opacity 0 still takes the
      tap that belongs to the chapter under it, and this one is a button. Scrubbed like everything else
      here, so scrolling back to the top brings it with the hero it left with. */
-  const mark = document.querySelector('[data-logo]');
-  if (mark) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
+  /* [data-mark-scrim] is in this selector deliberately, even though the story branch no longer
+     renders one: it is the fixed --surface band the wordmark differences against on the phone (see
+     MarkScrim in AppView), and if a surface running this hero ever grows one it must leave with the
+     mark rather than stay behind as a permanent veil holding ground for something no longer drawn.
+     Matching nothing costs nothing; the two are one object and should never disagree about whether
+     it is up. */
+  const mark = document.querySelectorAll('[data-logo], [data-mark-scrim]');
+  if (mark.length) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
 
   const trigger = tl.scrollTrigger;
 
@@ -154,6 +160,6 @@ export function initHeroExit(root) {
     try { tl.kill(); } catch (e) { }
     try { gsap.set(inner, { clearProps: 'opacity,filter' }); } catch (e) { }
     try { if (field) gsap.set(field, { clearProps: 'opacity,visibility,filter,zIndex' }); } catch (e) { }
-    try { if (mark) gsap.set(mark, { clearProps: 'opacity,visibility' }); } catch (e) { }
+    try { if (mark.length) gsap.set(mark, { clearProps: 'opacity,visibility' }); } catch (e) { }
   };
 }

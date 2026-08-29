@@ -238,6 +238,17 @@ export default class PaletteApp extends React.Component {
   // in behind the wash that surface already carries. See _fieldGeom — desktop has no wash and no
   // exception.
   FIELD_NARROW_MUL = 0.34;
+  // Narrow only, and applied AFTER that cap: how much taller the hole stands than the uniform shrink
+  // leaves it. The cap above is a single radius applied to both axes, so it preserves the hole's
+  // shape — which is right on the gate, where the copy is a title and one sentence, and wrong on the
+  // phone story, where the same hole has to clear a two-line 44px heading, a lead and an action
+  // stacked under each other. That block is TALLER than the gate's and the shrink took the same
+  // proportion off both axes, so the gas closed in above and below the words first.
+  // 1.1 lifts only the vertical radius, so the hole keeps its width and gains the air where the copy
+  // actually needs it. It stays well inside FIELD_HOLE_ASPECT — the copy is wider than it is tall on
+  // this viewport, so ix leads and a tenth on iy does not come close to flipping which axis is long
+  // — and the guard is re-applied below anyway rather than assumed.
+  FIELD_NARROW_VLIFT = 1.1;
   // The most elongated the hole may get. It follows the copy's own box — which on a landscape
   // viewport is more than twice as wide as it is tall — and past this it stops reading as an ellipse
   // around a block and starts reading as a slot cut through the picture.
@@ -266,9 +277,39 @@ export default class PaletteApp extends React.Component {
      as they were their own files. So the entry route decides, once. From then on the switch in the
      masthead is the only thing that moves it, on any route, and they never disagree inside a
      session. */
+  /* AND A PHONE IS NOT THAT EITHER, which took a while to see because the test reads the ROUTE and
+     the phone's difference is in the SURFACE. `/` on a phone does not mount the tool — global.css
+     paints out everything inside [data-app] that is not a named phone surface — so what a phone
+     reader actually gets at `/` is MobileStory, which this codebase describes as "/about's page, at
+     one column" and renders with className="doc-route". It is a document by every definition here
+     except the one this line was testing.
+
+     The cost was the whole argument above, inverted: the reader the document clause exists for —
+     arriving at night, no relationship with the tool's defaults — is MOST likely to be on a phone,
+     and was the one reader who could not be served. There is no way out of it either. The masthead
+     switch is inside the tool branch, so it is display:none on this viewport: light was not a
+     default there, it was the only option, on a 7,900px surface built to be read.
+
+     THE PHONE FOLLOWS THE OS ON EVERY PHONE SURFACE, not only the story, and that is the session
+     invariant below doing its job rather than a wider claim. The story, the example list and the
+     read-only palette view are one journey; deciding per surface would flip the theme underneath a
+     reader walking from one to the next, which is the thing "they never disagree inside a session"
+     is there to prevent. And the light-surface argument does not reach any of them: it is about
+     JUDGING colour — the drop zone, the result stage, the library — and none of that mounts here.
+     What a phone shows is somebody's finished palette in full-bleed bands over a photograph, where
+     the evidence carries its own ground and the theme only dresses the chrome around it.
+
+     PHONE_MQ rather than a width, so this stays the same decision as the display rule and the
+     `narrow` flag below it, which is what that constant's note asks of anything reading it. */
   _entryTheme() {
-    if (!isDoc(this._entryRoute)) return 'light';
+    if (!isDoc(this._entryRoute) && !this._phoneAtEntry()) return 'light';
     try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
+  }
+  /* Read at mount, before `narrow` exists — this runs inside the same object literal that defines
+     it — and never again: the theme is an entry decision, so a tablet rotated into phone range mid
+     session keeps the appearance it opened in rather than swapping under the reader. */
+  _phoneAtEntry() {
+    try { return !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); } catch (e) { return false; }
   }
 
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }

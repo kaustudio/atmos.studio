@@ -277,6 +277,14 @@ export const orbitMethods = {
       const cap = Math.min(vw, vh) * this.FIELD_NARROW_MUL;
       const k = Math.min(1, cap / Math.max(ix, iy));
       ix *= k; iy *= k;                                             // shrink the hole, keep its shape
+      // ...then give the vertical axis back a tenth. The shrink is uniform on purpose, but the block
+      // this hole clears on a phone is stacked rather than wide — heading, lead, action — so an
+      // even shrink takes the air off the top and bottom first. See FIELD_NARROW_VLIFT.
+      iy *= this.FIELD_NARROW_VLIFT;
+      // Re-guard rather than assume: the lift is the one step here that can make the hole TALLER
+      // than it is wide, and past FIELD_HOLE_ASPECT that is a slot cut through the picture rather
+      // than an ellipse around a block. It does not bind at today's figures; it will if either moves.
+      ix = Math.max(ix, iy / this.FIELD_HOLE_ASPECT);
     }
     /* The rim, as a multiple of the hole. Taken at the viewport's CORNER, so the gas has finished by
        the furthest point of the page and every edge is crossed well before that — which is the
