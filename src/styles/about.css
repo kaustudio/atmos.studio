@@ -1946,13 +1946,25 @@
 .section-dock__label{line-height:1.5;display:block}
 
 /* The caret, pointing the way the list opens. Turns rather than swaps, which is the argument
-   [data-disc-chev] and [data-sort-chevron] both make in global.css. */
+   [data-disc-chev] and [data-sort-chevron] both make in global.css.
+
+   THE NUDGE FOLLOWS THE ROTATION, AND THIS ONE HAD THE WRONG HALF OF THE PAIR. A 5px square with a
+   right and bottom border is an L, and its ink sits down-and-right of the box it is centred in; what
+   that becomes on screen depends entirely on which way the box is then turned. .section-dock__chev
+   below carries both answers, tuned against a row of this same text: rotate(45deg) points the corner
+   DOWN and hangs below the line, so it is lifted -1.5px; rotate(-135deg) points it UP and rides
+   above the line, so it is pushed +0.5px.
+
+   This caret is at -135deg — the point-up case — and was carrying -1px, which is the sign of the
+   point-DOWN correction. So the rotation lifted the ink about a pixel off the text's centre and the
+   translate lifted it another, and the arrow sat visibly high against its own label. It takes the
+   figure its sibling already uses at this rotation, so the two carets in this dock now agree. */
 .section-dock__caret{
   flex:none;width:5px;height:5px;
   border-right:1.5px solid currentColor;
   border-bottom:1.5px solid currentColor;
   opacity:.45;
-  transform:translateY(-1px) rotate(-135deg);
+  transform:translateY(.5px) rotate(-135deg);
   transition:opacity var(--dur-fast) var(--ease-standard);
 }
 [data-dock-live] .section-dock__toggle:hover .section-dock__caret{opacity:.8}
