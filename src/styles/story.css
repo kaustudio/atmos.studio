@@ -237,29 +237,50 @@
    told about (see _heroReach in methods/orbit.js), which is what keeps it off the copy — so this is a
    geometry guarantee rather than a paint one, and it is the same guarantee the desktop landing has
    always relied on. */
-/* THE ONE TRACKING FIGURE ON THIS SITE THAT IS NOT A TOKEN, and it is written here rather than
-   minted so the exception stays countable.
+/* THE EXCEPTION IS GONE, AND THE COPY IS WHY. This carried -0.04em, the one tracking figure on the
+   site that was not a token — argued at length right here, and argued entirely FROM 44px: "-0.04em
+   is twice [--track-statement], and at 44px it lands at -1.76px". The note's own closing condition
+   was about a second display heading wanting the same value. The opposite happened instead: this
+   stopped being a display heading.
 
-   It was --track-statement (-0.02em), which is the tier this heading shares with the chapter h2s —
-   one token giving -0.88px at 44 and -0.44px at 22, tightening in proportion, which is the whole
-   reason the scale is stated in em. -0.04em is twice that, and at 44px it lands at -1.76px.
+   The copy is now a statement about the product — "Atmos Gallery is designed for larger screens." —
+   where it used to be a display line about the work. --fs-statement is the token for exactly that
+   ("32 — landing statement", global.css), it is what the desktop gate's own statement is set in, so
+   the two surfaces that say this now say it at one size. Once the size is the statement tier the
+   tracking is too: --track-statement is "the tier this heading shares with the chapter h2s", which
+   is the token this rule held before the display-scale exception was minted for it. The exception
+   count on this site is back to zero, without anything having to be folded into the --track- block.
 
-   WHY IT IS NOT --track-display. That token is -0.03em and would have been the obvious neighbour,
-   but it is owned by .about-hero h1, which clamps 34 → 86px; retuning it to -0.04 to serve this one
-   heading would have tightened an 86px headline on a different route by nearly a pixel, which is a
-   change nobody asked for arriving as a side effect. The scale is not the wrong shape — this is one
-   heading asking for something the scale does not carry.
-
-   WHAT WOULD FOLD IT BACK IN: if a second display heading ever wants -0.04em, that is the moment it
-   becomes a tier and joins the --track-* block, exactly as the radius block says of its own set. One
-   call site is a decision; two is a pattern being written by hand. */
+   WHAT THIS COSTS, stated rather than buried: the story opens at 32 and still CLOSES at --fs-display
+   (see .story-cta further down), so the ladder is no longer symmetrical. That is correct rather than
+   sloppy — the close is a headline asking a question, the open is now a notice — but if the two are
+   ever meant to rhyme again, this is the rule that moved. */
 .story-hero h1{
   margin:0;
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-weight:500;
-  font-size:var(--fs-display);
-  line-height:1.04;
-  letter-spacing:-0.04em;
+  /* TWO LINES IS THE BRIEF, AND TWO LINES IS A WIDTH PROBLEM BEFORE IT IS A SIZE ONE. At a flat
+     --fs-statement this set three lines on every phone: measured 3 at 390 and 3 at 320. The
+     threshold is not one number — 30px is the ceiling at 390 and 22px at 320 — because the line
+     count is a ratio between the measure and the type, and only one of those was being held still.
+     So the size follows the viewport, which is what a clamp is for and what .about-hero h1 and the
+     landing statement both already do on this site.
+     7vw is the middle term, fitted to the measured thresholds rather than picked: the hero block is
+     the viewport less 64px of doubled gutter, and two lines of this sentence want about a tenth of
+     that per point of type. 24px is the floor because it is --fs-title, and a hero that goes under a
+     section heading has stopped being a hero — below about 360px the sentence takes its third line
+     back, which is the right trade. 44px is --fs-display, the ladder's top rung and this heading's
+     original size, reached at 629px where it sets two lines comfortably. */
+  font-size:clamp(24px, 7vw, 44px);
+  line-height:1.08;
+  letter-spacing:var(--track-statement);
+  /* AND A CAP FOR THE OTHER END. The clamp holds two lines up the phone range and then loses them
+     the other way: at 900px the block is 836 wide and the sentence fits on ONE line at 44px, which
+     is both a 44-character measure for a hero and not what was asked for. 24ch cuts it back to two
+     without touching the small end — at phone sizes the block is already narrower than the cap, so
+     it never engages there. ch, not px, so the cap tracks the type: it is a measure, and a measure
+     is counted in characters. The block centres its children, so a narrower h1 stays centred. */
+  max-width:24ch;
   text-wrap:balance;
 }
 .story-hero__lead{
@@ -821,12 +842,23 @@
 /* Scoped to the surface so it out-specifies the widened `[data-mobile-story] h2` (0,1,1), which
    would otherwise hold this at the 22px section-heading size — the very thing this rule exists to
    depart from. */
+/* TWO LINES, AND THE SIZE IS WHAT BUYS THEM. "Ready to Read Your Own Image?" set three lines at
+   --fs-display: measured 3 at 320px and 3 at 390px, where a question asked over three short lines
+   reads as a paragraph rather than as a question. 40px still breaks to three at 320 and 36 is the
+   ceiling that holds two across the phone range, so the scale step below it is the honest choice
+   rather than a number tuned to one device.
+
+   AND IT PUTS THE STORY'S OPEN AND CLOSE AT ONE SIZE. The hero moved to --fs-statement when its copy
+   became a statement about the product; this note's predecessor recorded that the ladder had gone
+   asymmetrical as a result and named this rule as the one that would have to move if the two were
+   ever meant to rhyme again. They are, and it has. line-height follows the hero's 1.08 for the same
+   reason — one figure, set once, on both ends of the same page. */
 [data-mobile-story] .story-cta__title{
   margin:0;
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-weight:500;
-  font-size:var(--fs-display);
-  line-height:1.04;
+  font-size:var(--fs-statement);
+  line-height:1.08;
   letter-spacing:var(--track-statement);
   color:var(--on-surface);
   text-wrap:balance;

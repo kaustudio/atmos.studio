@@ -82,7 +82,7 @@
 /* The one width where 165px of wordmark and a theme switch do not both fit. At 375px the switch ends
    at 107 and the mark starts at 107 — zero clearance, the two touching, and the mark pushed 2.5px off
    the page's centre line by the squeeze. It was never visible before because the desktop gate blanked
-   these routes below 720px (see global.css); with that fixed, this is the first width they are
+   these routes below the gate's width (see global.css); with that fixed, this is the first width they are
    actually read at. The mark comes down rather than the switch losing its label: the label is what
    makes the control legible, and the wordmark is artwork that reads perfectly well smaller. */
 @media screen and (max-width:560px){

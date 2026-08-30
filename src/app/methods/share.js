@@ -63,8 +63,8 @@ export const shareMethods = {
     });
     this.setState((st) => ({
       feed: [mine, ...st.feed], current: mine, sharedView: false,
-      announce: 'Saved ' + mine.name + ' to your archive.',
-    }), () => { this.persist({ immediate: true }); this._clearShareHash(); this.showNotice('Saved to your archive.'); });
+      announce: 'Saved ' + mine.name + ' to your Library.',
+    }), () => { this.persist({ immediate: true }); this._clearShareHash(); this.showNotice('Saved to your Library.'); });
   },
 
   // "Make your own" — drop the shared palette and land on the dropzone.

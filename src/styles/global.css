@@ -29,7 +29,17 @@ html,body{margin:0;padding:0}
 button,
 input[type="text"],
 input[type="file"],
-input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0}
+input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0;font-family:inherit}
+/* font-family:inherit IS THE LINE THAT MAKES "only Neue Montreal" TRUE RATHER THAN MAINTAINED.
+   Form controls do not inherit the family — that is a UA rule, not an oversight of this file — so
+   `body`'s declaration one line down has never reached a single button. What has been holding the
+   face on them is an inline `fontFamily: 'Neue Montreal'` repeated at something like sixty call
+   sites, and the moment one is written without it that control renders in the UA default. One had
+   been: the wordmark button computed `Arial`, and it went unnoticed for the one reason it could —
+   the mark is a CSS mask over a gradient, so the button holds no text for the wrong face to paint.
+   A control that draws nothing is not a bug today and is a bug the first time somebody puts a label
+   in it. Stated once, here, where the appearance reset for the same four selectors already lives.
+   The inline declarations are now redundant rather than wrong; removing them is a separate sweep. */
 body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 @keyframes hue{0%{background:#1a1a1a}18%{background:#c87d3c}36%{background:#7d8d91}54%{background:#9a5128}72%{background:#828f92}90%{background:#cdbfd2}100%{background:#1a1a1a}}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
@@ -329,7 +339,8 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    The JS scale was built for reveals and overlays and has nothing between .24 and .62; crushing the
    chrome durations into that gap would retime the whole interaction contract to no purpose. */
 :root{
-  /* The wordmark's drawn size. Stepped down a tenth on the phone — see the PHONE_MQ block. */
+  /* The wordmark's drawn size. Stepped down a tenth on the phone — see the phone-token block
+     that sits under the supported-minimum gate near the end of this file. */
   --logo-w:165px;
   --logo-h:26px;
   --dur-micro:.12s;         /* press, thumb nudge, the smallest state change */
@@ -845,12 +856,16 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    two-or-three-track rule by 900px, so twelve tracks below that were twelve names for one column —
    and 16/16 is the margin and gutter that go with it.
 
-   720px, and it WAS the site's existing phone boundary — the width the desktop gate further down this
-   file used to take the tool out of the document entirely. The gate has since grown a second clause
-   for the phone turned sideways, so the two figures are no longer the same one: see the rule
-   directly below this block for which half of it follows the device and which stays with the width.
-   Below 720 the only things laid out on this grid are the three documents and the footer, which is
-   exactly the set this figure is for.
+   720px, and it WAS the site's existing phone boundary — the width at which the desktop gate further
+   down this file took the tool out of the document entirely. IT IS NO LONGER THAT FIGURE, and the
+   difference is the point. The gate now stands at the SUPPORTED MINIMUM WIDTH, 1024, which is the
+   narrowest viewport the tool is drawn for; this block asks about a phone's proportions and the
+   answer did not move with it. 24px either side of a 375px screen is 13% of it spent on air, which
+   is what makes four columns right there — none of that argument reaches a 900px window, where
+   twelve tracks fit and the showcase reads as the document it is. See also the rule directly below
+   this block for the half of the phone figure that follows the device rather than the width.
+   Below 720 the things laid out on this grid are the three documents, the phone's showcase surfaces
+   and the footer, which is exactly the set this figure is for.
 
    NOTHING NUMERIC SURVIVES DOWN HERE, which is what makes changing the count safe. Every explicit
    span on the route — the reading column and its headings, the two lens cells and their readouts,
@@ -1831,11 +1846,18 @@ button[data-row-cell] .tswap{flex:none}
   [data-del]{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
   [data-info]{opacity:1}
 }
-/* Honest small-viewport gate: the universe, stage and drawers need room, so on narrow screens we
-   show a calm 'best on desktop' state rather than a broken adaptive layout. The gate is not a bare
-   panel — React puts data-desk-gate on the LANDING surface below 720px (see AppView), so the small
-   screen gets the ring formation around the copy and the wordmark at the top, exactly as desktop
-   does. Everything else in the app frame is hidden; the fixed wordmark is not.
+/* Honest small-viewport gate: the universe, stage and drawers need room, so below the supported
+   minimum width we show a calm 'best on desktop' state rather than a broken adaptive layout. The
+   gate is not a bare panel — React puts data-desk-gate on the LANDING surface below that width (see
+   AppView), so the small screen gets the ring formation around the copy and the wordmark at the top,
+   exactly as desktop does. Everything else in the app frame is hidden; the fixed wordmark is not.
+
+   AND THIS RULE IS THE SECOND LINE OF DEFENCE, NOT THE FIRST. AppView returns the showcase — or,
+   with no example to tell a story from, the gate alone — before the tool's tree is ever built, so
+   under the minimum the result stage, the library and the drawers are ABSENT rather than hidden.
+   What is left for the allow-list below to paint out is the chrome those early returns still carry.
+   display:none over a mounted tool was always the weaker guarantee: it measures, it animates, it
+   holds a WebGL context and it takes taps, all where nobody can see it.
 
    Two exceptions are read-only palette surfaces. data-mobile-share is a shared link opened on a
    phone, which shows the palette instead of the gate (see MobileShareView): the gate still stands
@@ -1863,26 +1885,36 @@ button[data-row-cell] .tswap{flex:none}
    stands for the TOOL — that is what the paragraph above says and what every exception here has been
    granted against — but the selector was `[data-app] > *`, and [data-app] is on the legal routes too
    (AppView keeps it there so the wipe's inert guards and the theme crossfade can see them). So below
-   720px /privacy and /terms rendered their masthead, their whole statement and the footer, and this
+   the gate's width /privacy and /terms rendered their masthead, their whole statement and the footer, and this
    rule painted display:none over all of it: a blank page, on the two documents most likely to be
    opened from a phone, and — via the prerender — for a reader with no JavaScript as well. It was the
    allow-list failing exactly the way its own note warns a new surface will.
    Naming .doc-route rather than adding three more :not()s, because the answer is not "these
    particular children are allowed" but "this whole route is not the tool". /about arrives under the
    same class and needs no further entry. */
-/* THE SECOND CLAUSE IS THE PHONE TURNED SIDEWAYS. This was `(max-width:720px)` alone, which is true
-   of every phone held upright and false of every one turned over: 812 points across on a 13 mini,
-   932 on a 15 Pro Max. Rotating the device walked past this rule into the whole tool with 390 points
-   of height to run it in — the leak the note above warns about, through the axis it never checked.
-   (pointer:coarse) and (max-height:600px) adds phones in landscape and nothing else: a tablet is
-   820-1180 tall either way, and a laptop reports pointer:fine whatever size its window is.
+/* THE FIGURE IS THE SUPPORTED MINIMUM WIDTH, 1024, and it is argued in full at MIN_TOOL_WIDTH in
+   src/app/PaletteApp.jsx. In short: `max-width:720px` answered "is this a phone", and was then asked
+   to carry "can the tool be worked here", which is a different question with a bigger number. The
+   result stage, the action bar and the library table are drawn for 1024 and were being squeezed into
+   721 on the strength of not being a handset.
 
-   THIS SELECTOR AND PaletteApp's PHONE_MQ ARE ONE DECISION WRITTEN TWICE, because a media query
+   `not all and (min-width:1024px)` RATHER THAN `max-width:1023px`: those two are not complements, and
+   a 1023.5px viewport — browser zoom, a fractional DPR, a scrollbar taken off an odd width — matches
+   neither, which would mount the tool half a pixel under its own minimum. Negating the minimum has no
+   gap by construction and states the figure the way the constant does.
+
+   THE SECOND CLAUSE IS THE SHORT COARSE SCREEN. Phones in landscape are 812-932 across, so the width
+   clause now catches them on its own; what this still catches alone is the 1024x600 coarse panel,
+   wide enough to pass and about 390 points tall once browser chrome is out of it. A tablet is
+   820-1180 tall either way, and a laptop reports pointer:fine whatever size its window is, so neither
+   is touched by it.
+
+   THIS SELECTOR AND PaletteApp's BELOW_MIN_MQ ARE ONE DECISION WRITTEN TWICE, because a media query
    cannot be shared between a stylesheet and matchMedia without a build step. They must not drift:
    this rule paints display:none while that constant decides which surface mounts, and when they
    disagree a surface mounts, measures, animates and takes taps underneath a rule hiding it — with
    nothing in the console to say so. Change one, change the other, in the same commit. */
-@media (max-width:720px),(pointer:coarse) and (max-height:600px){
+@media not all and (min-width:1024px),(pointer:coarse) and (max-height:600px){
   /* TWO CLASSES ON THE ALLOW-LIST, and they are the exceptions the list itself created. Everything
      inside [data-app] that is not a named phone surface is painted out here, which is right for the
      desktop tool — and was silently also true of two things that belong on every viewport:
@@ -1922,6 +1954,29 @@ button[data-row-cell] .tswap{flex:none}
      until the story had to cover the page from inside its own stacking context, which is what the
      story picker does. The ladder is a strict order now and story.css states it in full. */
   [data-app]:not(.doc-route)>.site-foot{position:relative;z-index:151;background:var(--surface)}
+}
+
+/* ===== AND THESE THREE STAY AT THE PHONE'S OWN WIDTH ========================================
+   THE GATE MOVED TO 1024; THESE DID NOT, AND SPLITTING THEM IS THE WHOLE EDIT. They shared a query
+   with the gate for as long as "below the gate" and "on a phone" were one figure, and the note on
+   --cta-pad said so in as many words: one definition of "this is a phone", three consumers. That
+   sentence stopped being true the moment the gate became a statement about the TOOL's minimum
+   instead of about the device.
+
+   Every one of the three is argued from a handset and none of the arguments survives the raise:
+     · --logo-w — 165px is 44% of a 375px screen. On a 900px one it is 18%, and stepping the
+       wordmark down there would shrink the brand on a viewport with room to spare.
+     · --track-body — -0.5px at --fs-lead, which is the tightening small columns of prose want.
+     · --cta-pad — 36px instead of 32 for a sole action reached only by a thumb. A 900px window is
+       a pointer machine; 32 is that machine's figure and is argued at the token.
+   Left on the gate's query all three would now dress the showcase on a laptop window somebody had
+   narrowed, which is neither what they were measured for nor what it would look like.
+
+   BOTH CLAUSES ARE KEPT so that what a phone gets is byte-for-byte what it got before: upright by
+   width, sideways by the coarse-and-short pair, exactly as this block read when it was part of the
+   gate above. No media type, for the same reason — this is the query those three tokens have always
+   had, moved rather than rewritten. */
+@media (max-width:720px),(pointer:coarse) and (max-height:600px){
   /* The wordmark steps down a tenth on the phone. 165x26 is drawn for a desktop chrome bar with a
      toolbar either side of it; alone at the top of a 375px screen it is 44% of the width, and it is
      the one element on this surface the reader never needs to act on. Both numbers move together
@@ -1973,8 +2028,10 @@ button[data-row-cell] .tswap{flex:none}
      It is the same mechanism --logo-w and --track-body use eighteen lines up, and the reason the note
      beside .glass-cta insists the padding IS the box.
 
-     Keyed to the phone query rather than to a width, so it moves with PHONE_MQ and the display rule
-     above it: one definition of "this is a phone", three consumers. */
+     Keyed to the phone query rather than to a width of its own, so it moves with --logo-w and
+     --track-body: one definition of "this is a phone", three consumers. It no longer moves with the
+     display gate, and the block header above says why — the gate is a statement about the tool's
+     minimum width, this is a statement about a hand. */
   :root{ --cta-pad:10px 16px }
 }
 

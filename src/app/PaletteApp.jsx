@@ -37,26 +37,40 @@ import { initLayeredSlider } from './methods/layeredSlider.js';
 import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
 
-/* ===== WHAT COUNTS AS A PHONE ===============================================================
-   THE GATE WAS KEYED TO WIDTH ALONE, and a phone has two orientations. `(max-width:720px)` is true
-   of every phone held upright and false of every one turned sideways: an iPhone 13 mini is 812
-   points across in landscape, a 15 Pro Max is 932. So rotating the device walked straight past the
-   gate into the full desktop tool — the library table, the universe, the reel and the drawers —
-   in about 390 points of HEIGHT. The gate's own copy says reading an image means
-   weighing colours, roles and contrast side by side, and that needs room; room is two dimensions,
-   and only one of them was ever being asked about. This is the leak the allow-list comment in
-   global.css warns a new surface will cause, arriving through the axis nobody checked.
+/* ===== THE SUPPORTED MINIMUM WIDTH ==========================================================
+   1024px, NAMED AND STATED ONCE. The gate used to ask "is this a phone" — `max-width:720px` — and
+   was then relied on to answer "can the tool be worked here", which is a different question with a
+   different number. 721px is not a width this interface was ever drawn for: the result stage sets a
+   palette, its roles, its contrast figures and its actions side by side, the action bar wraps twice
+   before it fits (see the nowrap note on the output group in AppView), and the library table loses
+   columns it needs in order to be a table. Everything from 721 to 1023 rendered as a squeeze nobody
+   designed, on the strength of not being a phone.
 
-   THE SECOND CLAUSE IS DELIBERATELY NARROW. `(pointer:coarse) and (max-height:600px)` adds phones
-   in landscape and NOTHING else:
-     · phone landscape — coarse, 375-430 tall           → gated (the fix)
-     · phone portrait  — already caught by max-width    → gated, unchanged
-     · tablet either way — coarse but 820-1180 tall     → NOT gated, unchanged
-     · laptop, any window size — pointer:fine           → NOT gated, unchanged
-   `pointer` is the PRIMARY pointer, so a touchscreen laptop with a trackpad reports fine and keeps
-   the tool. 600 sits clear of both edges: the tallest phone landscape is 430, the shortest tablet
-   is 820. Height alone would have gated a desktop window someone had merely dragged short, which is
-   a different question and not one the reader asked us.
+   So the figure is a SUPPORTED MINIMUM instead — the narrowest viewport the tool is actually drawn
+   for — and below it there is no attempt at the tool at all. What stands there is the mobile/tablet
+   showcase: the story, the example list and the read-only palette view, which are finished surfaces
+   rather than compromised ones. Raising the number widens their audience; it does not create a new
+   in-between state.
+
+   `not all and (min-width:...)` RATHER THAN `max-width:1023px`, because those two are not
+   complements. A viewport of 1023.5px — browser zoom, a fractional device pixel ratio, a scrollbar
+   taken off an odd width — matches neither, and the tool would mount half a pixel under its own
+   minimum. Negating the minimum leaves no gap by construction, and it says out loud what the figure
+   IS: the width at which the tool is supported.
+
+   THE SECOND CLAUSE IS THE SHORT COARSE SCREEN, and it survives the raise on its own merits. Every
+   phone in landscape is 812-932 points across, so the width clause now catches all of them and the
+   orientation leak this clause was added for is closed twice over. What it still catches alone is
+   the 1024x600 coarse panel — cheap Android tablets, kiosk and in-car displays — which clears the
+   width and has about 390 points of usable height once browser chrome is out of it.
+     - phone, either orientation        under 1024 wide           -> gated
+     - tablet portrait                  768-1024 wide             -> gated
+     - tablet landscape                 1024+ wide, 820+ tall     -> NOT gated
+     - 1024x600 coarse panel            wide enough, far too short -> gated (this clause alone)
+     - laptop window under 1024         pointer:fine but narrow   -> gated (this is the raise)
+   `pointer` is the PRIMARY pointer, so a touchscreen laptop with a trackpad reports fine and is
+   judged on width alone, like every other pointer machine. Height alone would gate a desktop window
+   somebody had merely dragged short, which is a different question and not one the reader asked us.
 
    ONE STRING, TWO CONSUMERS, AND THEY MUST NOT DRIFT. global.css hides the tool with the matching
    `@media` and this decides the STATE — which surface mounts, how the ring formation is sized, what
@@ -64,7 +78,8 @@ import { initCascade } from './methods/aboutCascade.js';
    mounts, measures, animates and takes taps while a display:none is painted over it. That has
    happened here once already (see data-mobile-list in the gate's own note). Change one, change the
    other, in the same commit. */
-export const PHONE_MQ = '(max-width:720px), (pointer:coarse) and (max-height:600px)';
+export const MIN_TOOL_WIDTH = 1024;
+export const BELOW_MIN_MQ = `not all and (min-width:${MIN_TOOL_WIDTH}px), (pointer:coarse) and (max-height:600px)`;
 
 export default class PaletteApp extends React.Component {
   static defaultProps = { proportional: true, swatchCount: 5 };
@@ -160,7 +175,7 @@ export default class PaletteApp extends React.Component {
        neither. Starts closed so the buttons cannot flash in before the first measurement. */
     projStep: { can: false, start: true, end: true },
     // the tag facet: one disclosure control, closed by default; the query is typeahead state.
-    // tagSort: 'count' serves discovery (what is this archive made of), 'alpha' known-item lookup
+    // tagSort: 'count' serves discovery (what is this Library made of), 'alpha' known-item lookup
     // (I want GOLDEN) — the two reasons anyone opens a facet list.
     tagMenuOpen: false, tagQuery: '', tagSort: 'count',
     /* WHICH TAB THE LIBRARY PANEL SHOWS — filtering, or the projects the library is divided into.
@@ -204,11 +219,11 @@ export default class PaletteApp extends React.Component {
     landingDismissed: (this._shared || isDoc(this._entryRoute)) ? true : this._landingDismissed(),
     showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
     page: 0,
-    // List sort. 'time' desc is the archive's own default — newest first, what the feed already
+    // List sort. 'time' desc is the Library's own default — newest first, what the feed already
     // meant before there was anything to sort BY. Deliberately not persisted: page size is a
     // standing preference, an ordering is a question you are asking of the list right now.
     sortKey: 'time', sortDir: 'desc',
-    narrow: (function () { try { return !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); } catch (e) { return false; } })(),
+    narrow: (function () { try { return !!(window.matchMedia && window.matchMedia(BELOW_MIN_MQ).matches); } catch (e) { return false; } })(),
     pageSize: (function () { try { const v = parseInt(localStorage.getItem('palette-generator/pagesize'), 10); return [12, 24, 36].indexOf(v) >= 0 ? v : 12; } catch (e) { return 12; } })(),
   };
 
@@ -299,8 +314,9 @@ export default class PaletteApp extends React.Component {
      What a phone shows is somebody's finished palette in full-bleed bands over a photograph, where
      the evidence carries its own ground and the theme only dresses the chrome around it.
 
-     PHONE_MQ rather than a width, so this stays the same decision as the display rule and the
-     `narrow` flag below it, which is what that constant's note asks of anything reading it. */
+     BELOW_MIN_MQ rather than a width of its own, so this stays the same decision as the display
+     rule and the `narrow` flag below it, which is what that constant's note asks of anything
+     reading it. */
   _entryTheme() {
     if (!isDoc(this._entryRoute) && !this._phoneAtEntry()) return 'light';
     try { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; } catch (e) { return 'light'; }
@@ -309,7 +325,7 @@ export default class PaletteApp extends React.Component {
      it — and never again: the theme is an entry decision, so a tablet rotated into phone range mid
      session keeps the appearance it opened in rather than swapping under the reader. */
   _phoneAtEntry() {
-    try { return !!(window.matchMedia && window.matchMedia(PHONE_MQ).matches); } catch (e) { return false; }
+    try { return !!(window.matchMedia && window.matchMedia(BELOW_MIN_MQ).matches); } catch (e) { return false; }
   }
 
   _landingDismissed() { try { return localStorage.getItem('palette-generator/landing') === '1'; } catch (e) { return false; } }
@@ -441,6 +457,18 @@ export default class PaletteApp extends React.Component {
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
         if (this.state.exampleView) { e.preventDefault(); this.closeExampleOnPhone(); return; }
+        /* THE SHARED ARRIVAL, WHICH THIS LADDER USED TO WALK STRAIGHT PAST. A share link constructs
+           at stage 'result', so with no clause of its own Escape fell all the way to the last line
+           and called doReset() — on the read-only showcase that dropped the palette, swapped the
+           surface for the story, and announced "Ready for a new reference image." to a viewport with
+           no dropzone on it, while the hash stayed in the address bar ready to resurrect the whole
+           thing on the next reload. Measured at 900px before the fix.
+           Routed to the mark's own exit rather than to a bespoke one, so the two ways off this
+           surface cannot say different things: same destination, same announcement, same dropped
+           hash. Below the supported minimum only — above it the shared palette is on the result
+           stage, where Escape means what it means everywhere else in the tool and the last line of
+           this ladder is the right answer. */
+        if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
         if (this.state.exampleList) { e.preventDefault(); this.closeExampleList(); return; }
         if (this.state.copyMenuOpen) { e.preventDefault(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
@@ -474,7 +502,7 @@ export default class PaletteApp extends React.Component {
     // budget and hero measurement all differ there, and those are build-time decisions. Crossing the
     // breakpoint rebuilds the formation rather than leaving desktop-sized decisions in place.
     try {
-      this._mq = window.matchMedia(PHONE_MQ);
+      this._mq = window.matchMedia(BELOW_MIN_MQ);
       // The one teardown that stays: a breakpoint crossing rebuilds the formation because it is
       // SIZED for the viewport class (see the ring count in _rings), which no amount of parking
       // fixes. Rebuilt only if the stage is lit — crossing into narrow with an example open would

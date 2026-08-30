@@ -385,7 +385,7 @@
    already uses. Muted, because it is the annotation and the hex is the name. */
 .about-key__ok{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 .about-key__hex,.about-key__pct{
@@ -393,6 +393,22 @@
   font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
   font-variant-numeric:tabular-nums;
 }
+/* THE HEX AND ITS COORDINATES READ AT 11, AND THEY SHARE ONE DECLARATION BECAUSE THEY ARE ONE
+   FIGURE. The hex was --fs-micro (9) and the OKLCH triplet --fs-nano (8) — the two smallest rungs on
+   the ladder, carrying the only literal values in the key. 8px of uppercase tabular figures is below
+   anything this site asks a reader to actually read; it was legible as a texture and not as a number.
+
+   OFF THE LADDER, DELIBERATELY AND ONCE. 11 sits between --fs-label (10) and --fs-detail (12), and
+   neither of those is right: this is not a label and it is not secondary copy, it is the notation the
+   whole figure exists to print. Rather than mint a rung for one component, both consumers take a
+   single declaration here — so the exception is one line, countable, and moves as one thing.
+   0.6875rem, not 11px: every step on the ladder is rem so a reader who has set a larger default text
+   size gets larger type, and a px here would be the one figure on the page that ignores them.
+
+   IT HOLDS AT EVERY WIDTH. The ≤560 block used to step the hex to --fs-label and the triplet to
+   --fs-micro; both overrides are gone, because the argument for 11 is legibility and a phone is
+   where that argument is strongest, not weakest. */
+.about-key__hex,.about-key__ok{font-size:.6875rem}
 .about-key__pct{color:var(--on-surface-muted)}
 
 /* a masked photograph that moves against its frame — the parallax resource's own background pattern */
@@ -2033,8 +2049,6 @@
     display:grid;grid-template-columns:10px minmax(0,1fr) 120px 48px;
     align-items:center;gap:0 16px;padding:12px 0;border-bottom:1px solid var(--line);
   }
-  .about-weights__key .about-key__hex{font-size:var(--fs-label)}
-  .about-weights__key .about-key__ok{font-size:var(--fs-micro)}
   .about-weights__key .about-key__pct{
     font-size:var(--fs-body);font-weight:500;color:var(--on-surface);text-align:right;
   }

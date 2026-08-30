@@ -447,7 +447,7 @@ export const persistenceMethods = {
   // ---- portable project file (accountless permanence) — DISTINCT from token export ----
   buildProjectFile(scope) {
     const st = this.state; let projects, palettes;
-    if (scope === 'archive') { projects = st.projects.slice(); palettes = st.feed.slice(); }
+    if (scope === 'library') { projects = st.projects.slice(); palettes = st.feed.slice(); }
     else { const pid = (scope && scope !== '__unfiled__') ? scope : null; projects = pid ? st.projects.filter((p) => p.id === pid) : []; palettes = st.feed.filter((p) => pid ? this.inProject(p, pid) : this.palProjects(p).length === 0); }
     return { schema: 'palette-generator/project-file', version: 1, exportedAt: new Date().toISOString(), projects, palettes };
   },
@@ -460,7 +460,7 @@ export const persistenceMethods = {
     const data = this.buildProjectFile(scope);
     const d = new Date(), date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let fn;
-    if (scope === 'archive') fn = 'atmos_library_backup_' + date + '.json';
+    if (scope === 'library') fn = 'atmos_library_backup_' + date + '.json';
     else { const nm = (scope && scope !== '__unfiled__') ? this.projectName(scope) : 'unfiled'; fn = 'atmos_project_' + this.slugName(nm) + '_' + date + '.json'; }
     this.download(fn, JSON.stringify(data, null, 2), 'application/json');
   },
@@ -918,14 +918,17 @@ export const persistenceMethods = {
     if (!url) { this.setState({ announce: 'This palette can\u2019t be shared.' }); return; }
     const after = () => { this.setState({ copied: 'story-send' }); if (this._copyT) clearTimeout(this._copyT); this._copyT = setTimeout(() => this.setState({ copied: null }), 1500); };
     if (navigator.share) {
-      navigator.share({ title: 'Atmos Gallery \u2014 ' + p.name, text: 'Open ' + p.name + ' on a desktop to read a palette from your own image.', url })
-        .then(() => { this.setState({ announce: 'Shared. Open it on a desktop to read your own image.' }); after(); },
+      // A colon, not the em dash this carried. It is the one string here that leaves the app
+      // entirely — it is what the share sheet shows and what lands in the recipient's message —
+      // so it is product copy wearing a title's clothes, and it follows the same rule as the rest.
+      navigator.share({ title: 'Atmos Gallery: ' + p.name, text: 'Open ' + p.name + ' on a wider screen to read your own image.', url })
+        .then(() => { this.setState({ announce: 'Shared. Open it on a wider screen to read your own image.' }); after(); },
           // A dismissed share sheet is not an error and must not be reported as one; the reader
           // decided not to send it, which is a complete outcome.
           () => { });
       return;
     }
-    this.copy(url, 'story-send', 'Link copied. Open it on a desktop to read your own image.');
+    this.copy(url, 'story-send', 'Link copied. Open it on a wider screen to read your own image.');
   },
 
   /* ===== CHOOSING THE STORY'S IMAGE =========================================================
@@ -1054,18 +1057,49 @@ export const persistenceMethods = {
      routine here would reintroduce exactly the fault that design exists to prevent.
 
      NOT closeExampleOnPhone() either, which goes UP one level and is right for a control that says
-     "back". The mark is not a back button; it is the way home from anywhere, so it clears both
+     "back". The mark is not a back button; it is the way home from anywhere, so it clears the view
      flags and lands on the gate whichever surface it was pressed from.
 
-     The exit still plays. Every trip between these surfaces pairs an exit with an entrance, and a
-     surface that is deleted rather than left is the jump this file has already fixed twice — so
-     whichever one is on top leaves the way it would have left anyway. `current` is deliberately
-     untouched: the gate's next press continues from the example you last looked at, which is the
-     cursor openExampleById is careful to keep in step. */
+     THE SHARED ARRIVAL WAS THE ONE IT COULD NOT LEAVE, and it failed in the worst available way.
+     MobileShareView serves two arrivals behind two separate flags — `exampleView` for one you chose,
+     `sharedView` for one somebody sent you — and this routine cleared the first and never the
+     second. `_mobileShare()` reads `(sharedView || exampleView)`, so on a shared link the mark ran,
+     wrote "Returned to the start screen." into the live region, and left the surface exactly where
+     it was: a focusable control with an aria-label promising a destination, an announcement saying
+     it had arrived, and nothing moved. A screen reader was told the page had changed when it had
+     not, which is worse than a button that visibly does nothing. Measured before the fix at 900px on
+     a real share link — announcement present, `[data-mobile-share]` still mounted, hash still in the
+     address bar.
+
+     THE SHARED CASE TAKES THREE MORE STEPS THAN THE EXAMPLE ONE, and each is a state that would
+     otherwise outlive the surface it belongs to:
+       · the hash — left in place, a reload would reopen a stranger's palette over whatever the
+         reader had moved on to. That is the whole reason _clearShareHash exists; saveShared and
+         makeOwnFromShared already call it and this is the third way off the surface.
+       · `current` — a shared palette is not in the archive and is not theirs. Left set, widening
+         past the supported minimum would put someone else's palette on the result stage with the
+         `sharedView` flag now false, which is the tool saying "this is yours" about a thing it was
+         handed by a link.
+       · `stage` — a shared arrival constructs at 'result'. 'upload' is the stage the gate and the
+         story stand in front of, so this lands the same state a first visit has.
+     The example case keeps all three: `current` is deliberately untouched there, because the gate's
+     next press continues from the example you last looked at, which is the cursor openExampleById is
+     careful to keep in step. Neither `_examples()` nor `gateHasExample` reads `current`, so clearing
+     it on the shared path cannot disturb that cursor.
+
+     The exit still plays, and now it plays for both arrivals. Every trip between these surfaces
+     pairs an exit with an entrance, and a surface that is deleted rather than left is the jump this
+     file has already fixed twice — so whichever one is on top leaves the way it would have left
+     anyway. `_shareOut` is the share surface's exit whichever flag put it there. */
   returnToGateOnPhone() {
     if (this._shareClosing || this._listClosing) return;
-    const land = () => this.setState({ exampleView: false, exampleList: false, announce: 'Returned to the start screen.' });
-    if (this.state.exampleView) {
+    const wasShared = !!this.state.sharedView;
+    const land = () => this.setState(
+      wasShared
+        ? { sharedView: false, exampleView: false, exampleList: false, stage: 'upload', current: null, imageUrl: null, announce: 'Returned to the start screen.' }
+        : { exampleView: false, exampleList: false, announce: 'Returned to the start screen.' },
+      wasShared ? () => this._clearShareHash() : undefined);
+    if (this.state.exampleView || wasShared) {
       this._shareClosing = true;
       this._shareOut(() => { this._shareClosing = false; land(); });
     } else if (this.state.exampleList) {
@@ -1104,7 +1138,7 @@ export const persistenceMethods = {
   },
   copySiteLink() {
     const href = (typeof location !== 'undefined' ? location.origin + '/' : 'https://atmos.gallery/');
-    this.copy(href, 'gate-link', 'Link copied. Open it on a desktop to read your own image.');
+    this.copy(href, 'gate-link', 'Link copied. Open it on a wider screen to read your own image.');
   },
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },

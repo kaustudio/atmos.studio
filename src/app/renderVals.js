@@ -256,7 +256,24 @@ export const renderValsMethods = {
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
           style: { flexGrow: w(b), flexBasis: 0, minWidth: '190px', height: '340px', background: b.hex, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', willChange: 'opacity' },
           bandRingStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 1 },
-          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
+          /* THE SHARE IS A FIGURE, NOT A LABEL, and it had been dressed as one. Three things moved
+             together here and they are one decision:
+               · opacity is GONE. `on` is onColor()'s guaranteed-AA ink for this swatch, and the
+                 veil spent the AA the function had just computed: measured on Kiln Light, the
+                 authored pairs run 5.21-15.44:1 and the RENDERED ones 3.58-8.65:1, so two of five
+                 swatches sat under the 4.5:1 that 10px text has to clear. The colour was correct
+                 and then thrown away one property later.
+               · --fs-label is the token for UPPERCASE LABELS (its own comment says so). This is a
+                 number, it is the second half of what the row exists to say, and 10px put it below
+                 the 12px floor small copy should hold. --fs-body at 500 is not invented for this:
+                 about.css already promotes the same figure to exactly that, full-strength, while
+                 stepping the hex DOWN beside it. The hex still leads here by size, because this row
+                 is a copy button and the hex is what it copies.
+               · tabular-nums, because these are a right-aligned column of changing digits and
+                 proportional figures make the column ragged. About's key has carried it all along.
+             --track-flat rather than a raw .06em: the tracking that went with the uppercase token
+             does not belong on digits, and the project has a token for flat. */
+          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
           valuesWrap: { display: 'flex', flexDirection: 'column', width: '100%', position: 'relative', zIndex: 2 },
         };
       });
@@ -614,7 +631,9 @@ export const renderValsMethods = {
           groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
           weightPct: Math.round((b.weight / tw2) * 100) + '%',
           style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: '.06em', color: on, opacity: 0.72, padding: '16px 14px 0' },
+          // The detail overlay's copy of the band label — same decision as the result stage's, see
+          // the note there.
+          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '16px 14px 0' },
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
@@ -1286,7 +1305,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            what the page is about. The lead below it is unchanged on purpose: it says what Atmos does
            with an image, which is as true of the second palette as the first, and swapping both lines
            would leave the reader nothing recognisable to land on. */
-        heroTitle: s.storyCaseId ? p.name : 'Every Image Has an Atmosphere',
+        /* THE FIRST-ARRIVAL LINE IS THE WIDTH NOTICE NOW, and it is deliberately only the
+           first-arrival one: pick a case and this becomes that palette's name, which is the
+           behaviour the ternary has always had. The statement does its work on the way in and then
+           gets out of the way of the image the story is about. */
+        heroTitle: s.storyCaseId ? p.name : 'Atmos Gallery Is Designed for Larger Screens.',
         image: this.dispUrl(p), hasImage: this.hasImg(p),
         descriptors: p.descriptors || [],
         rationale: p.rationale || '',
@@ -1442,7 +1465,29 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            existed to do the sending. Copy that describes a button the screen no longer has is worse
            than copy that never claimed it, so the invitation is now the plain one: open Atmos on a
            desktop, with an image of your own. */
-        handoffLine: 'Open Atmos on a desktop and drop in an image of your own. Weighing colours, roles and contrast side by side is work that wants a wider screen.',
+        /* THE CLOSE, SUPPLIED VERBATIM. Two sentences doing the two jobs this section has: state
+           what the tool needs, then name the one thing there is to do from here.
+
+           "Explore another palette here" IS THE BUTTON UNDERNEATH IT, in the button's own words.
+           That is the fault this line has now been rewritten for twice: it described a dropzone
+           after Send to Desktop was removed, and before that a control that had already gone. The
+           lead and the only act on the screen finally say the same thing.
+
+           "Atmos", not "Atmos Gallery", and that is the register this surface already speaks in:
+           the hero's lead, every chapter and the reading itself all say Atmos in running prose
+           ("Atmos reads Dry Season from a photograph"). The full name is the wordmark's and the
+           statement headings'.
+
+           "desktop" AND "your computer", WHICH THE GATE'S OWN FIGURE DOES NOT AGREE WITH, and it
+           is recorded here rather than quietly reconciled. MIN_TOOL_WIDTH is 1024: a tablet held
+           in landscape is 1180 across and gets the whole tool without a computer being involved,
+           and the hero two screens up now says "designed for larger screens" for that reason. This
+           line says desktop. Supplied copy wins over a consistency argument, and the argument is
+           left written down so the next person changing either one can see the other.
+
+           No em dash. The only dash left in product copy is the EN dash in "1\u20132 colour pairs"
+           (the contrast readouts), which is a numeric range and the one place it is correct. */
+        handoffLine: 'Atmos is designed for desktop. Explore another palette here, or open Atmos on your computer to create your own.',
       };
     }
 
@@ -1493,7 +1538,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
               fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
             },
             hexStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-lead)', letterSpacing: '.02em', textTransform: 'uppercase' },
-            metaStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: '.06em', opacity: 0.75, display: 'inline-flex', alignItems: 'center', gap: '6px' },
+            // The showcase's copy of the same figure — same decision as the result stage's band
+            // label, see the note there. This one had the worse veil of the two at 0.75.
+            metaStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', display: 'inline-flex', alignItems: 'center', gap: '6px' },
           };
         }),
         // Only the example can be left — a shared link has nowhere to go back TO, and a control
@@ -1510,9 +1557,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // through returnToIntro(). The list surface below still has its own ml.onLeave.
         // Nothing under an example. The line explaining that this ships with the app was telling
         // someone who had just pressed "Try an example" what they had pressed. A shared link is a
-        // different arrival — that reader did not choose this surface and has no way off it, so it
-        // keeps the one sentence that says where the tool actually lives.
-        footLine: s.exampleView ? '' : 'Open Atmos Gallery on a desktop to read a palette from your own image.',
+        // different arrival — that reader did not choose this surface and did not come for the
+        // product, so it keeps the one sentence that says where the tool actually lives. (They are
+        // not stranded on it: the mark above leaves this surface on either arrival now — see
+        // returnToGateOnPhone, where the shared path also drops the hash and the palette.)
+        footLine: s.exampleView ? '' : 'Open Atmos Gallery on a wider screen to read your own image.',
       };
     }
 
@@ -1916,8 +1965,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         count: s.recognised.count,
         // Stated in words, never by colour or icon alone (SC 1.4.1).
         line: s.recognised.count === 1
-          ? 'You extracted this image before. It is already in your archive.'
-          : 'You extracted this image before. Your archive already holds ' + s.recognised.count + ' palettes from it.',
+          ? 'You extracted this image before. It is already in your Library.'
+          : 'You extracted this image before. Your Library already holds ' + s.recognised.count + ' palettes from it.',
         strip: s.recognised.palette.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
         openAria: 'Open the existing palette ' + s.recognised.palette.name,
         variationAria: 'Extract this image again anyway, adding a second entry with the same colours and keeping ' + s.recognised.palette.name,
@@ -1940,7 +1989,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
       showBackUpProject: s.activeProject !== null,
       backUpProject: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile(s.activeProject); },
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('archive'); },
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); },
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
       // The phone's own way home for the brand mark — see returnToGateOnPhone in persistence.js for
@@ -2204,7 +2253,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to Project',
-      assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your archive before filing it in a project',
+      assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
       // React drops a value when a rerender mixes the `border` shorthand with one of its parts,
       // so a hover state that touches the border swaps the WHOLE shorthand, never borderColor alone.

@@ -802,7 +802,7 @@ function MobileStory({ st }) {
               <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
               <div className="story-hero__act">
                 <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
-                  aria-label="See how Atmos reads it: begin the story"><TextSwap>See How Atmos Reads It</TextSwap></button>
+                  aria-label="Explore an Example: begin the story"><TextSwap>Explore an Example</TextSwap></button>
               </div>
             </div>
           </div>
@@ -1050,16 +1050,23 @@ function MobileStory({ st }) {
         <section id="story-interpretation" data-story-ch="interpretation" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Atmos Turns Colour Into a Reading</h2>
-            {/* HIGHLIGHT TEXT ON SCROLL — Osmo Supply's resource, already ported and already on this
-                site (methods/aboutHighlight.js). The reading resolves character by character as it
-                comes up, which is the one place on this surface where that mechanic says something
-                true rather than decorative: the sentence is the product's OUTPUT, composed from the
-                analysis, and watching it resolve is watching the reading arrive. Same attribute
-                contract /about uses on its own closing statement. */}
+            {/* data-reveal, NOT data-highlight-text — and the paragraph this replaces argued the
+                other way, so it is worth saying why it lost. The highlight (Osmo's resource, ported
+                in methods/aboutHighlight.js) resolved the reading character by character on scroll,
+                on the argument that watching it resolve is watching the reading arrive. True of the
+                sentence; not true of the page. It was a second motion vocabulary for one paragraph
+                — every other piece of copy on this surface arrives through the masked line reveal,
+                an overflow-hidden block with the words sliding up inside it: the hero, the chapter
+                headings, the useLine one element below this, the gate, the loader. One paragraph
+                animating differently read as a different product speaking mid-sentence.
+
+                Nothing had to be wired up: pageReveal collects [data-reveal] per [data-sec] and this
+                section carries one, so the statement simply joins the group its own neighbour is
+                already in. initHighlightText stays armed on the story root and now finds nothing —
+                /about still uses it on its own closing statement, and leaving the call means a
+                future section that wants it works without a rebuild. */}
             {st.rationale && (
-              <p className="about-statement" data-highlight-text
-                data-highlight-scroll-start="top 86%" data-highlight-scroll-end="center 52%"
-                data-highlight-stagger="0.05">{st.rationale}</p>
+              <p className="about-statement" data-reveal>{st.rationale}</p>
             )}
             {st.useLine && <p data-reveal>{st.useLine}</p>}
           </div>
@@ -1158,7 +1165,7 @@ function MobileStory({ st }) {
                     own name. The visible label stays: you do explore another palette, by reading
                     another photograph. It is the half after the colon that has to be true. */}
                 <button type="button" className="glass-cta" data-focus="chrome"
-                  onClick={st.onAnother} aria-label="Explore another palette: choose a different image to read"><TextSwap>Explore Another Palette</TextSwap></button>
+                  onClick={st.onAnother} aria-label="Explore Another Palette: choose a different image to read"><TextSwap>Explore Another Palette</TextSwap></button>
               </div>
             </div>
           </div>
@@ -1510,7 +1517,7 @@ function LandingStage({ vals, covered, quiet }) {
            in its own box, and a box that runs to the LARGE viewport's bottom centres the gate copy
            below the middle of what the reader can actually see — and pushes the ring formation,
            which is solved around that centre, off with it. */
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Desktop recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Larger screen recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* THE FIELD (decorative). Two elements and nothing else in the markup: the air, and the
               stage the engine appends its canvas to. Where a hundred and sixteen orb tiles used to
               be — each with a float wrapper, a clip and five shading layers — there is one painted
@@ -1543,12 +1550,21 @@ function LandingStage({ vals, covered, quiet }) {
                     the words keep a ground to sit on. Which is the subject of the product anyway. */}
                 <span aria-hidden="true" style={sx('position:absolute;inset:-56px -40px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
                 <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
-                  {/* Two masked line-groups, not one wrapping line — the same shape the desktop statement uses.
-                      It fixes the break where it belongs ("is a" ends the first line at every width
-                      instead of wherever the measure happens to land) and gives each line its own
-                      reveal, so the heading rises in two beats rather than one. */}
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery is a</span></span>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Desktop Experience.</span></span>
+                  {/* Two masked line-groups, not one wrapping line. It fixes the break where it
+                      belongs — subject and copula end the first line at every width, rather than
+                      wherever the measure happens to land — and gives each line its own reveal, so
+                      the heading rises in two beats rather than one.
+
+                      THE COPY NAMES A WIDTH NOW, NOT A DEVICE, and that is a correction rather than
+                      a rewrite. "Desktop Experience." was written when the gate stood at 721px, back
+                      when "not a phone" and "wide enough" were the same sentence. They are not: the
+                      gate is MIN_TOOL_WIDTH, 1024, so a tablet in landscape is 1180 across and gets
+                      the whole tool while the same tablet in portrait is 820 and lands here — where
+                      the old line sent it to go and find a laptop, when rotating was the answer.
+                      Same words as the story's own hero, because these two surfaces say one thing
+                      and a reader can meet either of them first. */}
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery Is</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Designed for Larger Screens.</span></span>
                 </h1>
                 {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
                     makes it one is that it never said why, so it read as a limitation of the site
@@ -1645,6 +1661,48 @@ function LandingStage({ vals, covered, quiet }) {
             <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false} />
           </div>
         </div>
+  );
+}
+
+/* THE ARRIVAL, LIFTED OUT OF THE TOOL'S BRANCH SO THE GATE CAN HAVE IT TOO.
+
+   The logo-reveal loader: first visit of the session, before the Get Started landing.
+
+   This was written inline in the desktop return, which was fine while that return was also the one
+   the gate fell through to. It is not any more — under the supported minimum width AppView answers
+   with the showcase or the gate and never builds the tool at all — so the loader had to become
+   something two branches can render rather than something one branch owns. Nothing about it changed
+   in the move; it is the same markup at the same z-190, and `data-load-wrap` is still on the gate's
+   allow-list in global.css for exactly this reason: the loader is the ARRIVAL, not the tool, and a
+   phone arrives just as much as a desktop does.
+
+   Guarded here rather than at the call sites so both read the same and neither can forget it. */
+function LogoLoader({ show }) {
+  if (!show) return null;
+  return (
+    <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:#ffffff')}>
+      <div data-load-bg="1" style={sx('position:absolute;inset:0;background:var(--ground)')}></div>
+      <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 var(--page-gutter);box-sizing:border-box')}>
+        <div style={{ width: '100%' }}>
+          <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%')}>
+            {/* 206px is not arbitrary: the img below fills the box with no object-fit, so the box
+                must carry the wordmark's own ratio or the letterforms render condensed.
+                atmos-gallery-wordmark-white.svg is 878×166, so 39 × (878/166) = 206. */}
+            <div data-load-logobox="1" style={sx('position:relative;width:206px;height:39px;flex:none;overflow:hidden')}>
+              <div data-load-logo="1" style={sx('position:absolute;inset:0;transform:translateY(110%);will-change:transform')}>
+                <img src="/assets/atmos-gallery-wordmark-white.svg" alt="Atmos Gallery" style={sx('width:100%;height:100%;display:block')} />
+              </div>
+            </div>
+            <div style={sx('flex:none;overflow:hidden')} data-load-numbox="1">
+              <div data-load-num="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1;letter-spacing:var(--track-statement);color:#ffffff;font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
+            </div>
+          </div>
+          <div style={sx('margin-top:24px;width:100%;height:3px;overflow:hidden')}>
+            <div data-load-progress="1" style={sx('width:100%;height:100%;background:#ffffff;transform-origin:0% center;transform:scale3d(0,1,1)')}></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1773,6 +1831,58 @@ export default function AppView({ vals }) {
       </div>
     );
   }
+  /* AND THE GATE ITSELF — WHAT IS LEFT WHEN THERE IS NO STORY TO TELL.
+
+     The three branches above are the showcase, and every one of them needs a seeded example to stand
+     on: the story reads a photograph, the list chooses between photographs, the share view IS one.
+     With storage blocked or the feed empty there is none, and this is the surface that answers
+     instead — the ring formation, the wordmark, the gate's copy and the landing's own footer. Same
+     stage, same arrival, no tool. It is the fourth phone surface, and the only one that was never
+     written down as one.
+
+     BECAUSE IT USED TO FALL THROUGH TO THE TOOL'S RETURN AND BE PAINTED OUT. global.css hid every
+     child of [data-app] that was not on its allow-list, so what a reader SAW was right — but the
+     desktop tool was built, laid out and measured first: the result stage, the library table, the
+     four drawers, the reel, the export scaffold, all of them alive under a display:none. That is
+     exactly the failure the allow-list's own note has warned about twice, arriving from the other
+     side — there it was a phone surface hidden by mistake, here it is the whole tool hidden on
+     purpose, and neither is a thing that should be mounted at all. An early return is the only
+     version of "not mounted" that is actually true, and it is what the other three branches have
+     always done. The CSS gate stays as the second line of defence over the chrome these branches
+     do carry.
+
+     IT ALSO ENDS A SECOND FOOTER. LandingStage renders `.site-foot` inside itself — absolute, at the
+     foot of the stage, brand and landmark off (see the note there) — and the tool's return renders
+     another one whenever the stage is 'upload', which the gate always is. Two of them, the outer at
+     the z-151 the allow-list grants it, painting over the one the landing had put at the bottom of
+     its own composition. Only the landing's is wanted here, so only the landing is rendered.
+
+     LandingStage SITS AT INDEX 2, as it does in every branch above and below. React reconciles
+     unkeyed children by index, and only the same DOM keeps the canvas _buildOrbField appended to it
+     imperatively — a stage that changed index across a branch switch would be torn down and rebuilt,
+     which is the hole those notes were written to close. */
+  if (vals.narrow) {
+    return (
+      /* dvh, like the three showcase wrappers: 100vh is a document taller than the screen, and the
+         only thing that ever produced here was a strip of empty page to rubber-band into. */
+      <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
+        <SkipLink />
+        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
+        {/* No `covered`, no `quiet`: this surface IS the stage rather than something standing over
+            it, so the formation stays lit and the gate's copy is the copy it is solved around. */}
+        {vals.showLanding && <LandingStage vals={vals} />}
+        {/* Decorative, as it is on the story: the gate is the start screen, so there is nowhere for
+            the mark to lead. showLogoDecor is true whenever `narrow` is, so the guard is a formality
+            — kept so this reads as the same decision the tool's return makes two screens down. */}
+        {vals.showLogoDecor && (
+          <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        )}
+        <LogoLoader show={vals.showLoader} />
+        <Analytics />
+        <SpeedInsights />
+      </div>
+    );
+  }
   return (
     <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
 
@@ -1806,32 +1916,7 @@ export default function AppView({ vals }) {
       {/* click-to-zoom lightbox: fixed overlay the zoomed reference image FLIPs into */}
       <div data-click-zoom-lightbox="1" style={sx('z-index:170;cursor:zoom-out;background-color:#000000e6;justify-content:center;align-items:center;padding:3em;display:none;position:fixed;inset:0')}></div>
 
-      {/* Logo reveal loader: first-ever visit only, before the Get Started landing. */}
-      {vals.showLoader && (
-        <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:#ffffff')}>
-          <div data-load-bg="1" style={sx('position:absolute;inset:0;background:var(--ground)')}></div>
-          <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 var(--page-gutter);box-sizing:border-box')}>
-            <div style={{ width: '100%' }}>
-              <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:24px;width:100%')}>
-                {/* 206px is not arbitrary: the img below fills the box with no object-fit, so the box
-                    must carry the wordmark's own ratio or the letterforms render condensed.
-                    atmos-gallery-wordmark-white.svg is 878×166, so 39 × (878/166) = 206. */}
-                <div data-load-logobox="1" style={sx('position:relative;width:206px;height:39px;flex:none;overflow:hidden')}>
-                  <div data-load-logo="1" style={sx('position:absolute;inset:0;transform:translateY(110%);will-change:transform')}>
-                    <img src="/assets/atmos-gallery-wordmark-white.svg" alt="Atmos Gallery" style={sx('width:100%;height:100%;display:block')} />
-                  </div>
-                </div>
-                <div style={sx('flex:none;overflow:hidden')} data-load-numbox="1">
-                  <div data-load-num="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1;letter-spacing:var(--track-statement);color:#ffffff;font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
-                </div>
-              </div>
-              <div style={sx('margin-top:24px;width:100%;height:3px;overflow:hidden')}>
-                <div data-load-progress="1" style={sx('width:100%;height:100%;background:#ffffff;transform-origin:0% center;transform:scale3d(0,1,1)')}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoLoader show={vals.showLoader} />
 
       {/* THE BAR IS GLASS NOW. Same 64px, same two clusters in the same corners — the only thing
           that changed is what fills it. Two declarations left this string, both because the glass
@@ -1880,7 +1965,15 @@ export default function AppView({ vals }) {
             {/* "New generation" named the machinery. What the button makes is a palette, and the
                 rest of the app has spent five rounds learning to say so: the Library holds palettes,
                 and Add to project files one. */}
-            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}>New palette</span>} />
+            {/* B006Text, LIKE EVERY OTHER LABEL IN THIS FAMILY — and its absence here was not
+                cosmetic. The note beside the swap-only rule in global.css takes the hover FILL off
+                every button-006 on one stated premise: "every button-006 carries .b006-swap, the
+                label that rises through a mask on hover". This label did not carry it, so the
+                premise was false for the masthead's primary act — no fill, no swap, nothing. The
+                same note calls that out in advance: a control that acknowledges nothing is worse
+                than one that acknowledges twice. Measured on the result stage: 6 of 9 button-006
+                controls had .b006-swap, and the 3 without it were this one and the shared pair. */}
+            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>New palette</B006Text></span>} />
             {vals.showProjectsBar && (<span aria-hidden="true" style={sx('width:1px;height:22px;flex:none;background:var(--line-strong)')}></span>)}
           </>)}
           {vals.showProjectsBar && (
@@ -1994,8 +2087,13 @@ export default function AppView({ vals }) {
               <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;margin:0 0 18px;border:1px solid var(--line-strong);background:var(--surface-raised)')}>
                 <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A palette someone shared with you. It isn’t saved in this browser unless you save it.</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-                  <B006 onClick={vals.onSaveShared} aria-label="Save this shared palette to your archive" label="Save to archive" />
-                  <B006 onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" label="Make your own" />
+                  {/* The other two that were passing a bare string, and so rendering no swap mask.
+                      Wrapped in the same B006Text every sibling uses, in the same 14px alignment box
+                      the icon-bearing labels carry, so the pair lines up with Add to Project and
+                      Check contrast rather than sitting a pixel off them. No icon, so no icon slot:
+                      the box is here for the baseline, not for a glyph. */}
+                  <B006 onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Save to Library</B006Text></span>} />
+                  <B006 onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Make your own</B006Text></span>} />
                 </span>
               </div>
             )}
@@ -2040,8 +2138,10 @@ export default function AppView({ vals }) {
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
-              {/* nowrap INSIDE the group. The row may wrap — it has to, between the desktop gate at
-                  720px and the width this bar was drawn for — but the validate/output trio wraps as
+              {/* nowrap INSIDE the group. The row may wrap — it has to, between the supported
+                  minimum width and the width this bar was drawn for; that gap is a good deal
+                  narrower than it was, since the gate went from 721 to 1024 and took the worst of
+                  these widths off the board — but the validate/output trio wraps as
                   one block or not at all. Letting it break internally put Export on a line of its
                   own under a hairline that stayed behind with Copy, which reads as two groups where
                   there is one. Core acts stay put; the output cluster is what moves. */}
@@ -2196,9 +2296,10 @@ export default function AppView({ vals }) {
           rather than needing to be told about it. The legal routes carry it unconditionally — see
           their branch at the top of this file.
 
-          Below 720px the desktop gate hides every child of [data-app] except the gate itself, and this
-          is a child of [data-app], so it goes with them — which is correct: that screen is not the
-          tool, it is the notice standing in for it. */}
+          Below the supported minimum width this return is never reached at all — AppView answers
+          with the showcase or the gate, several screens up — so the footer down here is the tool's
+          own, on the one stage that has room for it. The gate carries the landing's footer instead,
+          which is the one that belongs to that composition. */}
       {vals.isUpload && <SiteFooter route={vals.route} onNavigate={vals.navigate} />}
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />

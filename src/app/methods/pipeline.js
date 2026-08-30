@@ -429,7 +429,20 @@ export const pipelineMethods = {
   // (reverse of the bottom-to-top entry), then the upload surface rises in a beat later.
   doReset() {
     const g = window.gsap, root = this.resultRef.current;
-    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
+    /* `sharedView:false` IS PART OF THE RESET, and leaving it out was a flag outliving its palette.
+       The flag means "the thing in `current` came from a link and is not in your Library", so it is
+       only ever true ABOUT `current` — and this line sets `current` to null. Left set it went stale
+       in two directions: below the supported minimum `_mobileShare()` reads
+       `(sharedView || exampleView) && current`, so the read-only surface vanished and the story took
+       its place while the flag insisted a shared palette was still open; on the desktop it survived
+       into the NEXT generated palette, which would then be offered a "save this to your Library"
+       prompt for a palette the pipeline had already saved. makeOwnFromShared has always cleared it
+       one line before calling this, which is the same fix applied at the one call site that
+       remembered — this moves it to the reset itself, where every caller gets it.
+       The hash is deliberately NOT dropped here: the address still names that palette, and a reload
+       giving you what the URL says is not a fault. The two paths that mean "I am done with this
+       link" — makeOwnFromShared and returnToGateOnPhone — call _clearShareHash themselves. */
+    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, sharedView: false, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
     if (this._reduce || !g || !root || this.state.stage !== 'result' || document.hidden) { commit(); return; }
     const bands = [...root.querySelectorAll('[data-band]')];
     const fx = [...root.querySelectorAll('[data-fx]')];
