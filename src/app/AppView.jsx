@@ -2308,23 +2308,32 @@ export default function AppView({ vals }) {
                   ))}
                 </div>
                 )}
-                {/* THE READING, STANDING. It sat behind the More disclosure so it would not come
-                    between the palette and the decision — but that disclosure is gone (it was
-                    hiding one or two chips, see renderVals), and this is one muted 13px line. It
-                    arrives with the result view's own reveal rather than on a press of its own. */}
-                <p data-reading-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.rationale}</p>
+                {/* WHAT THE PALETTE IS FOR, IN THE SLOT THE READING HELD. The reading stood here —
+                    "Warm, saturated reds kept in shadow split by stark contrast" — a description of
+                    what the analysis SAW, composed from the same swatches the bands above it are
+                    already showing. Removed by request: under the palette it restated the picture
+                    rather than telling you anything to do with it, and it is still the story's
+                    standing statement and the detail overlay's closing line, so nothing is lost from
+                    the product by taking it off this one screen.
+                    What takes the slot is composeUse()'s recommendation, which answers the question
+                    the result stage is actually for. It keeps its own weight rather than inheriting
+                    the reading's muted 13px: it is the only prose left on this surface and it is a
+                    recommendation, not an aside. It keeps data-split too, so it still arrives on the
+                    masked line reveal it had in its old position. */}
+                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
-              {/* WHAT IT IS FOR, holding the slot the reading used to. A recommendation composed
-                  from the same analysis the reading is, so the two can never disagree.
+              {/* THE RIGHT-HAND COLUMN IS GONE WITH THE LINE IT HELD. It was a fixed 360px holding
+                  one right-aligned paragraph — composeUse()'s recommendation — which has moved into
+                  the reading's old slot on the left. An empty 360px column would keep reserving a
+                  third of this row for nothing, and the row's space-between would push the name
+                  block around it.
 
                   A "Strongest pair" readout sat here for one commit and came straight back out. It
                   was a third thing competing for the same eye-line with no hierarchy between them,
                   and pairwise contrast already has a surface built for exactly this question — the
                   Contrast drawer, one button away, with all C(n,2) pairs and an AA/AAA lens. One
-                  affordance per act; a number floated next to a recommendation is not an act. */}
-              <div style={sx('width:360px;flex:none;display:flex;flex-direction:column;align-items:flex-end')}>
-                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);text-align:end;margin:0;text-wrap:pretty")}>{vals.result.useLine}</p>
-              </div>
+                  affordance per act; a number floated next to a recommendation is not an act. That
+                  note is kept because the argument still holds for whatever is proposed here next. */}
             </div>
             {/* The palette's metadata readout — the detail pane's bottom line, restored from the
                 old inline row expansion. A hairline seals it off from the name/rationale block
