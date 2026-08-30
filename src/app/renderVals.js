@@ -1383,6 +1383,16 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            behaviour the ternary has always had. The statement does its work on the way in and then
            gets out of the way of the image the story is about. */
         heroTitle: s.storyCaseId ? p.name : 'Atmos Gallery Is Designed for Larger Screens.',
+        /* THE ACT NAMES WHAT IT OPENS, on the same condition and for the same reason the heading
+           does. "Explore an Example" is the right words exactly once — on first arrival, when the
+           heading is the width notice and there is no palette on the screen yet to name. The moment
+           a reader has chosen one, the button is the only thing still calling it "an example": the
+           heading says High Key, the field behind it is a reading of High Key, and the act under
+           both offers something generic. It is also the honest label for what the press does, which
+           is open THAT palette's story, not a sample of the idea.
+           Split from heroTitle rather than derived from it because the two say different things on
+           the first-arrival branch — one is a sentence about the viewport, the other is a verb. */
+        beginLabel: s.storyCaseId ? 'Explore ' + p.name : 'Explore an Example',
         image: this.dispUrl(p), hasImage: this.hasImg(p),
         descriptors: p.descriptors || [],
         rationale: p.rationale || '',

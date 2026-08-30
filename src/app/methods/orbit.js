@@ -31,6 +31,83 @@
 
 import { rgb2oklab, gamutMap, hexToRgb } from '../../lib/color.js';
 
+/* THE FIGURES THE PALETTE WHEEL IS BUILT WITH — gathered here, next to the authored stations they
+   replace, for the same reason nebulaField's LOOK is gathered: every one was looked at against the
+   eight examples rather than derived, so they are named and movable instead of buried in the
+   derivation. The geometry figures stay in PaletteApp with the rest of the stage's dimensions;
+   these are colour, and colour lives with the stations. */
+const PAL = {
+  /** Below this OKLab chroma a swatch's hue angle is noise (reading.js calls the same floor
+      CHROMA_FLOOR at the same value). Such a swatch keeps its chroma and borrows the palette's
+      dominant hue, rather than being dropped: a washed cream holding three quarters of High Key IS
+      that palette, and throwing it away would leave the field reading as the accent.
+      `greyTrust` is where that stops being a cliff. A swatch just above the floor has a hue that is
+      barely more trustworthy than one just below it, and the fan multiplies exactly that error:
+      Frozen Slate's 1.6% slate at chroma 0.025 was opened into a magenta arc off a hue angle that
+      was mostly rounding. Between the two figures a swatch's offset from the dominant hue is scaled
+      by how much of a hue it actually has, so the step becomes a ramp and the fan only amplifies
+      what was really measured. */
+  greyFloor: 0.02,
+  greyTrust: 0.06,
+  /** THE FAN. The least arc, in degrees, the palette's hues are opened out to. Garnet's five sit
+      inside TWELVE DEGREES of each other — true to the photograph, and as a wheel it is one flat
+      note with nothing to travel through; the field came back a single terracotta wash that could
+      have been read off any warm picture. Fanning the offsets from the dominant hue opens that into
+      a red-through-orange sweep that is still unmistakably Garnet: the palette decides WHERE on the
+      wheel it sits and in what order, this decides that there is a wheel at all. Palettes already
+      wider than this are not touched — `fan` bottoms out at 1.
+
+      AND THE FAN IS CAPPED IN DEGREES, NOT ONLY IN RATIO, which is the whole difference between a
+      spread and an invention. A multiplier moves the OUTERMOST swatch furthest, so at 5x Garnet's
+      one deep red 9° off the centre landed at 47° — a gold sector in a field of reds, a colour
+      nobody photographed. `addMax` is the most degrees the fan may ADD to a swatch's own offset, so
+      the amplification is bounded wherever it is largest and the palette's true spacing survives
+      underneath it. A wide palette (fan = 1) adds nothing and is untouched by this too.
+
+      MEASURED, ACROSS ALL EIGHT SEEDS, and this is the acceptance test for any change to these
+      three figures: no derived station lands more than 20° from a hue that is actually IN its
+      palette, and six of the eight stay inside 16°. The one 20° is Ruled Open Country's near-black,
+      which is under the grey floor and therefore sits at the dominant hue by rule rather than by
+      fan. Before the cap the worst was 49°. */
+  spanMin: 40,
+  fanMax: 3.2,
+  addMax: 16,
+  /** CHROMA IS SCALED, NOT NORMALISED, and the exponent is the whole argument. Mapping every
+      palette's loudest swatch onto one target would make Midfield's restrained blues shout exactly
+      as loudly as Garnet's reds, which is the one thing the eight examples differ in most. Raising
+      the correction to `soft` applies a fraction of it: a quiet palette is lifted enough to survive
+      being drawn as thin gas, a loud one is brought down enough not to scream, and the gap between
+      them survives. `top` is where the authored wheel's loudest station already sits. */
+  cTop: 0.135,
+  cSoft: 0.6,
+  cGainMin: 0.55,
+  cGainMax: 3.2,
+  /** The ceiling no station clears, whatever the gain did. Past this the gas stops reading as
+      pigment suspended in the page and starts reading as a filter laid over it. */
+  cMax: 0.17,
+  /** HOW MUCH OF THE WHEEL A SWATCH IS OWED. 0 gives every swatch an equal share, 1 gives it exactly
+      the share it holds in the palette. The app already has one rule for this — swatchGrow, which
+      the list strip, the detail bands and the 3D card all read — and the wheel honours it by
+      more than half so that a palette carrying three quarters of one colour LOOKS like it does,
+      while a 4% accent still gets an arc you can see rather than a hairline. */
+  weightBias: 0.55,
+  shareMin: 0.5,          // x the even share: the floor under the smallest arc
+  /** Which harmony the tonal ladder wears, by how wide the fanned wheel already is. Only the two
+      ANALOGOUS patterns are reachable from a palette, and that is a rule rather than a shortlist:
+      splitAccent, compAccent and triadAccent each put a complement in the mid-dark, which is exactly
+      the colour a palette-derived field must not contain — "based on Garnet" cannot mean a teal
+      nobody photographed. A narrow wheel takes the wider drift so the ladder carries the interest
+      the wheel is not carrying; a broad one takes the tighter, because the wheel already has it. */
+  harmSplit: 70,
+  /** The gamut lift, as a function of hue rather than a per-station figure. Yellow and yellow-green
+      carry their chroma high and go olive on a ramp that suits blue — the authored table states this
+      three times (58° +0.03, 88° +0.06, 118° +0.04) and this is the same curve, continuous, so a
+      palette landing anywhere in that arc gets the same correction. */
+  liftPeak: 0.06,
+  liftHue: 88,
+  liftSpan: 60,
+};
+
 export const orbitMethods = {
   /* ---- COLOUR ------------------------------------------------------------------------------
      THE TWELVE STATIONS, unchanged in every figure from the set that dressed the orbs. What changed
@@ -103,6 +180,168 @@ export const orbitMethods = {
       ],
     };
   },
+
+  /* ---- THE WHEEL THE FIELD ACTUALLY WEARS ---------------------------------------------------
+     THE LANDING IS A READING OF ONE OF THE EIGHT EXAMPLES, chosen per visit, and the twelve authored
+     stations above are what it falls back to. This is an amendment to §8 of the contract below and
+     it is written there too; the short version is that the field used to be a demonstration of the
+     hue wheel and is now a demonstration of the PRODUCT — what this tool does to a photograph, at
+     the size of the whole screen, before a word of the page has been read. A visitor who arrives
+     twice sees two different landings because the tool returns two different palettes, which is the
+     truest thing the front page can say about it.
+
+     WHAT IS GIVEN UP, stated so nobody restores half of it by accident: the whole spectrum is no
+     longer present around the copy at once. Garnet is a red field. High Key is a pale one. That was
+     §8's acceptance criterion and it is deliberately spent — the twelve stations were an authored
+     wheel that no palette in the archive matches, and a landing that shows every hue is a landing
+     that shows none of the tool's actual output. Everything else §8 protects is kept exactly:
+     neighbouring gas is neighbouring hue, each station owns a contiguous arc, the wheel closes with
+     no seam, every pixel still goes through gamutMap, and the tonal ladder is still solved against
+     the page rather than taken from the photograph.
+
+     WHICH PALETTE. Held on the instance rather than in state so the ramp can be baked synchronously
+     inside initOrbit; mirrored into state by _setFieldPalette for the credit under the footer.
+     Cleared by killOrbit alongside the wheel's rotation, so a return to the landing re-rolls both.
+     The live archive leads and the seed table is the floor, so a reader whose storage is blocked
+     still gets a wheel. IT CANNOT TELL BLOCKED FROM EMPTIED, and that is a known limit rather than
+     an oversight: deleting all eight examples reaches the same branch as storage refusing to load
+     them, so the footer would credit a record the archive no longer holds, with a bundled thumbnail.
+     Distinguishing them needs a reseed signal the feed does not carry. The alternative — no wheel
+     at all — costs every storage-blocked visitor the landing to spare one reader who deleted the
+     whole example set a stale name. */
+  _fieldPool() {
+    const live = this._examples ? this._examples() : [];
+    if (live.length) return live;
+    // makeSeed() is the same eight, freshly built — it reads no storage, so this survives the one
+    // case _examples() cannot cover. Cached because it allocates forty swatches and converts them.
+    if (!this._seedPool) { try { this._seedPool = this.makeSeed(); } catch (e) { this._seedPool = []; } }
+    return this._seedPool;
+  },
+  _fieldPalette() {
+    const pool = this._fieldPool();
+    if (!pool.length) return null;
+    let p = this._fieldPalId ? pool.find((x) => x.id === this._fieldPalId) : null;
+    /* THE FIRST PICK IS RANDOM ON DESKTOP AND FOLLOWS THE STORY ON A PHONE, and the asymmetry is
+       the surface rather than a preference. The desktop landing says nothing about which palette it
+       is showing except the credit under the footer, so a different one per arrival is free variety
+       — the front page demonstrating that the tool returns a different reading of every picture.
+       A phone's front page is the STORY, whose first chapter is transparent onto this very field and
+       whose copy names its case out loud two screens later ("Atmos reads Dry Season from a
+       photograph"). A field rolled independently of that would have the words and the artwork
+       describing two different palettes on one screen, which is not variety, it is a bug. So on
+       narrow the story's case leads, and every later change to it comes through setFieldPalette. */
+    if (!p && this.state.narrow && this._storyCase) {
+      const st = this._storyCase();
+      if (st) p = pool.find((x) => x.id === st.id) || null;
+    }
+    if (!p) p = pool[Math.floor(Math.random() * pool.length)];
+    this._fieldPalId = p.id;
+    return p;
+  },
+  /* THE GAMUT LIFT AS A CURVE. See PAL.liftPeak — the authored table's three dL figures, restated as
+     a function of hue so a palette landing between them gets the correction they describe rather
+     than the nearest one's. Triangular rather than a cosine because the three figures it has to
+     reproduce are themselves linear in distance from the peak. */
+  _hueLift(H) {
+    const d = Math.abs(((H - PAL.liftHue + 540) % 360) - 180);
+    return d >= PAL.liftSpan ? 0 : PAL.liftPeak * (1 - d / PAL.liftSpan);
+  },
+  /* THE WHEEL, BUILT OUT OF A PALETTE. Returns the same station shape `list` holds — H, C, an
+     optional dL and a harmony key — plus a `share` of the wheel, or null if the palette has no
+     colour in it to build one from.
+
+     WHAT IS TAKEN FROM THE PALETTE AND WHAT IS NOT. Hue, chroma and proportion are taken. LIGHTNESS
+     IS NOT, and that one line is what keeps the artwork legible: the tonal ladder is solved against
+     `--surface` (see _ladder), which is what makes the thinnest gas dissolve into the page in both
+     themes. A palette's own five lightnesses are authored against a photograph — Garnet opens on
+     L 0.09 and High Key on L 0.93 — and dropping either set in here would put the near end of the
+     ladder on the wrong side of the page. So a palette supplies WHICH COLOURS the field is made of;
+     the page still decides how far from itself they stand. That is also why one shader serves both
+     themes with one exposure, which is the property this must not spend.
+
+     THE DOMINANT HUE IS SUMMED AS A VECTOR, not averaged as an angle: Garnet's swatches sit at 28°
+     and 355°, whose arithmetic mean is 191° — the opposite side of the wheel from every colour in
+     the palette. Weighted by area x chroma, which is analysePalette's own weighting for the same
+     question, so the landing and the reading agree about what colour a palette mostly is. */
+  _paletteStations(p) {
+    const sw = (p && p.swatches) || [];
+    if (sw.length < 2) return null;
+    const DEG = 180 / Math.PI;
+    const parts = sw.map((s) => {
+      const a = +s.a || 0, b = +s.b || 0;
+      let H = Math.atan2(b, a) * DEG; if (H < 0) H += 360;
+      return { C: Math.hypot(a, b), H, w: Math.max(+s.weight || 0, 0) };
+    });
+    let vx = 0, vy = 0;
+    parts.forEach((q) => {
+      if (q.C <= PAL.greyFloor) return;
+      const r = q.w * q.C, t = q.H / DEG;
+      vx += r * Math.cos(t); vy += r * Math.sin(t);
+    });
+    if (!vx && !vy) return null;      // a wholly achromatic palette has no wheel in it
+    let domH = Math.atan2(vy, vx) * DEG; if (domH < 0) domH += 360;
+    // The greys join the wheel at the dominant hue rather than at their own noise angle: they keep
+    // their (tiny) chroma and their share, so they read as the near-neutral the palette actually
+    // holds instead of as a stray hue nobody photographed.
+    parts.forEach((q) => { if (q.C <= PAL.greyFloor) q.H = domH; });
+    // Offset from the dominant hue, scaled by how much hue the swatch actually has — see greyTrust.
+    parts.forEach((q) => {
+      const conf = Math.max(0, Math.min(1, (q.C - PAL.greyFloor) / (PAL.greyTrust - PAL.greyFloor)));
+      q.d = (((q.H - domH + 540) % 360) - 180) * conf;
+    });
+    let lo = Infinity, hi = -Infinity, maxC = 0, totW = 0;
+    parts.forEach((q) => { lo = Math.min(lo, q.d); hi = Math.max(hi, q.d); maxC = Math.max(maxC, q.C); totW += q.w; });
+    const span = hi - lo;
+    const fan = Math.min(PAL.fanMax, Math.max(1, PAL.spanMin / Math.max(span, 1)));
+    const gain = Math.min(PAL.cGainMax, Math.max(PAL.cGainMin, Math.pow(PAL.cTop / Math.max(maxC, 1e-4), PAL.cSoft)));
+    // Ascending signed offset, so consecutive stations are consecutive hues and the one long step is
+    // the wheel closing — which the ramp walks the short way round, back through the same arc. A
+    // palette does not contain a full revolution and the wheel does not invent one for it.
+    const open = (d) => d + Math.max(-PAL.addMax, Math.min(PAL.addMax, (fan - 1) * d));
+    /* The harmony is chosen off the wheel that will actually be drawn — open(hi) − open(lo), not
+       span × fan. Those two are only equal while the fan is unbounded, and it is not: addMax bites
+       hardest on exactly the outermost swatch, which is the one the raw product was measuring. They
+       agree on all eight seeds today; they would not on a palette with one far outlier, which is the
+       case this term exists to answer. */
+    const k = (open(hi) - open(lo)) < PAL.harmSplit ? 'analogWide' : 'analogTight';
+    const n = parts.length, even = 1 / n;
+    return parts.slice().sort((x, y) => x.d - y.d).map((q) => {
+      const H = ((domH + open(q.d)) % 360 + 360) % 360;
+      const w = totW > 0 ? q.w / totW : even;
+      return {
+        H,
+        C: Math.min(PAL.cMax, q.C * gain),
+        dL: this._hueLift(H),
+        k,
+        share: Math.max(even * PAL.shareMin, even + (w - even) * PAL.weightBias),
+      };
+    });
+  },
+  /* THE ONE WHEEL EVERY SURFACE READS — the ramp, the painted floor and the bloom. Stations arrive
+     with a `share`; this is where those become CONTIGUOUS ARCS, normalised and given a start `at`,
+     so the three readers cannot disagree about where a colour sits. The authored twelve come through
+     here too, at an even twelfth each, which reproduces the old wheel exactly.
+     Memoised on the palette rather than on the theme: nothing in a station answers to the surface —
+     the ladder does, and that is applied per ROW when the ramp is baked. */
+  _wheelStations() {
+    /* THE PALETTE IS RESOLVED BEFORE THE KEY IS READ, for the reason its two readers state at
+       length: _fieldPalette PICKS on its way through, so a key taken first is stamped with the empty
+       id the wheel was not built from. Unreachable today — _ensureFieldPalette is initOrbit's first
+       statement, and setFieldPalette assigns the id before anything asks — and the worst it could do
+       is one redundant rebuild returning identical stations. It matches its siblings anyway: three
+       memos keyed off one id should not be ordered three different ways. */
+    const S = this._orbitStations();
+    const list = this._paletteStations(this._fieldPalette())
+      || S.list.map((s) => ({ ...s, share: 1 / S.list.length }));
+    const key = this._fieldPalId || '';
+    if (this._wheelList && this._wheelKey === key) return this._wheelList;
+    let tot = 0; list.forEach((s) => { tot += s.share; });
+    if (!(tot > 0)) tot = list.length;
+    let run = 0;
+    list.forEach((s) => { s.share = s.share / tot; s.at = run; run += s.share; });
+    this._wheelList = list; this._wheelKey = key;
+    return list;
+  },
   /* ROTATE THE WHEEL, NEVER SHUFFLE IT. A shuffle was fresh every arrival and destroyed the one
      thing the twelve stations are for — neighbouring hues being neighbouring. Turning the whole
      wheel by a random amount, in a random direction, is just as unrepeatable and leaves the spectrum
@@ -149,32 +388,62 @@ export const orbitMethods = {
      the tool is mapped through — so the gas wears the app's actual OKLCH space rather than a shader
      approximation of it, chroma walked down where sRGB cannot hold it and never faked.
 
-     COLUMNS ARE STATIONS, NOT DEGREES. Each station owns exactly 1/12 of the wheel, which is the
-     property the orb formation had when twelve orbs walked one revolution. The stations sit 27–35°
-     apart, so this stretches the wheel by a couple of degrees in places; that is invisible, and an
-     even share per station is what keeps the twelve authored moods legible as twelve.
+     COLUMNS ARE STATIONS, NOT DEGREES, AND A STATION'S ARC IS ITS SHARE. The authored twelve take an
+     even twelfth each — the property the orb formation had when twelve orbs walked one revolution,
+     and the reason the twelve moods stay legible as twelve. A palette's stations take the share
+     _paletteStations gave them, which is most of the way to the proportion the swatch holds in the
+     palette: three quarters of High Key is one washed cream, and three quarters of the wheel is what
+     that has to look like. Both walk the same cumulative `at`, so there is one rule, not two.
 
-     256x32 with a linear filter, which is finer than gas can show. 8192 gamut maps, ~10ms, paid once
-     per landing arrival inside a module that is already off the critical path. */
+     HUE IS INTERPOLATED THE SHORT WAY ROUND, as a signed delta wrapped into ±180 rather than by
+     adding a turn to the ascending pair. The old form assumed a wheel whose stations climb through
+     360° and close once, which the twelve do and a palette's five do not — the closing step of a
+     palette wheel runs BACKWARDS through the arc it just crossed. The delta form is the general
+     statement of the same rule and reproduces the authored wheel exactly (30→58 is +28, 355→30 is
+     +35), so nothing about the fallback moved.
+
+     THAT IS MEASURED, NOT ASSERTED: the old index walk and this share walk were baked side by side
+     over the twelve authored stations and compared byte for byte — 0 of 32768 bytes differ, in BOTH
+     wheel directions. The interesting edge is dir < 0 at x = 0, where u lands exactly on 1: the old
+     form wrapped to station 0 at f = 0 and this one holds station 11 at f = 1, which are the same
+     colour because every term — hue, chroma, dL and both harmony blends — is interpolated to its
+     endpoint. Re-run that comparison before changing anything in this loop.
+
+     256x32 with a linear filter, which is finer than gas can show. 8192 gamut maps — measured at 6ms
+     warm and 9ms cold. It used to be paid once per landing arrival, inside a module already off the
+     critical path, and that sentence stood here after it had stopped being true: a reader can change
+     the palette now, and each change invalidates this memo. It is still never paid on a frame that
+     matters, but the reason is different and it lives in setFieldPalette rather than here — the
+     rebuild is deferred a frame off the press that asked for it. Anything that calls this
+     synchronously from an event handler is putting 6ms of gamut mapping in front of a tap. */
   _orbitRampData() {
-    // Keyed by THEME, not by visit: the ladder is solved against the page, so a theme switch is a
-    // different ramp — see _ladder. Everything else about it, the wheel included, is unchanged.
-    const key = this.state.theme;
+    /* Keyed by THEME AND BY PALETTE. The ladder is solved against the page, so a theme switch is a
+       different ramp (see _ladder); the wheel is now solved against a palette, so choosing another
+       example on a phone is a different ramp too. The wheel's per-visit ROTATION is in neither key
+       and must not be — it is what stops the spectrum arriving from the same place twice, and
+       rebuilding it on a theme switch would spin the colour round the ring on the way.
+       THE WHEEL IS RESOLVED BEFORE THE KEY IS READ. _wheelStations may PICK the visit's palette on
+       its way through _fieldPalette, so a key taken first would be stamped with the empty id the
+       bake did not use — one wasted 8192-gamut-map rebuild on the next call, and a cache line that
+       says the wrong thing about what it holds. Ordering, not defensiveness: everything below reads
+       `st` anyway. */
+    const S = this._orbitStations(), st = this._wheelStations(), n = st.length;
+    const key = this.state.theme + '|' + (this._fieldPalId || '');
     if (this._rampData && this._rampKey === key) return this._rampData;
-    const S = this._orbitStations(), st = S.list, n = st.length;
     const wheel = this._orbitWheel();
     const W = 256, H = 32;
     const data = new Uint8Array(W * H * 4);
     const mix = (a, b, t) => a + (b - a) * t;
     for (let x = 0; x < W; x++) {
-      // walk the stations in index space; `dir` reverses the wheel without disturbing its order
-      const pos = (wheel.dir > 0 ? (x / W) : (1 - x / W)) * n;
-      const i0 = Math.floor(pos) % n, i1 = (i0 + 1) % n, f = pos - Math.floor(pos);
+      // Walk the stations by ARC, not by index: `at` is where each one starts and `share` is how much
+      // of the wheel it owns. `dir` reverses the wheel without disturbing its order.
+      const u = wheel.dir > 0 ? (x / W) : (1 - x / W);
+      let i0 = n - 1;
+      for (let i = 1; i < n; i++) { if (u >= st[i].at) i0 = i; else { i0 = i - 1; break; } }
+      const i1 = (i0 + 1) % n;
       const s0 = st[i0], s1 = st[i1];
-      // hue is interpolated the short way round, which for an ascending wheel means adding a turn
-      // to the wrapping pair rather than sliding 325° backwards through every station between.
-      const h1 = s1.H + (s1.H < s0.H ? 360 : 0);
-      const hue = mix(s0.H, h1, f);
+      const f = s0.share > 0 ? Math.min(1, Math.max(0, (u - s0.at) / s0.share)) : 0;
+      const hue = s0.H + (((s1.H - s0.H + 540) % 360) - 180) * f;
       const C = mix(s0.C, s1.C, f);
       const dL = mix(s0.dL || 0, s1.dL || 0, f);
       const A = S.HARM[s0.k], B = S.HARM[s1.k];
@@ -195,16 +464,38 @@ export const orbitMethods = {
     this._rampKey = key;
     return this._rampData;
   },
-  /* The wheel as twelve hexes at its MID tone — the painted floor's stops, and the bloom's tint.
-     Same stations, same gamut map, read off the same ladder position the ramp's middle row holds. */
+  /* The wheel as one hex per station at its MID tone — the painted floor's stops, and the bloom's
+     tint. Same stations, same gamut map, read off the same ladder position the ramp's middle row
+     holds. Each entry carries `v`: WHERE ON THE SCREEN WHEEL that station starts, in the same
+     normalised coordinate the ramp's columns run in, `dir` already applied. The floor used to
+     reverse the list for an anticlockwise wheel and space the stops evenly, which was exact only
+     while every station owned the same arc — a palette's do not, and the still has to hold the same
+     proportions the gas does or the dissolve between them is a swap between two pictures. */
   _orbitFloorHexes() {
-    const key = this.state.theme;
+    // Wheel first, key second — see _orbitRampData: resolving the wheel is what settles the palette
+    // id the key is made of.
+    const S = this._orbitStations(), st = this._wheelStations(), wheel = this._orbitWheel();
+    const key = this.state.theme + '|' + (this._fieldPalId || '');
     if (this._floorHexes && this._floorKey === key) return this._floorHexes;
-    const S = this._orbitStations(), wheel = this._orbitWheel();
-    const list = wheel.dir > 0 ? S.list : S.list.slice().reverse();
-    this._floorHexes = list.map((s) => {
+    this._floorHexes = st.map((s) => {
       const L = this._ladder(s.dL)[2], c = s.C * S.TC[2], rad = s.H * Math.PI / 180;
-      return this.gamutMap(L, c * Math.cos(rad), c * Math.sin(rad));
+      return {
+        hex: this.gamutMap(L, c * Math.cos(rad), c * Math.sin(rad)),
+        /* WHERE THE RAMP SHOWS THIS STATION'S PURE COLOUR, which is not the same question as where
+           its arc begins — and the difference is a whole arc on half of all visits.
+           The ramp reads column x at wheel position u = dir > 0 ? x/W : 1 − x/W, and a station is
+           un-mixed at u = at (f = 0). So on a clockwise wheel that is screen position at, and on an
+           anticlockwise one it is 1 − at. Taking the arc's lower screen edge (1 − at − share)
+           instead put every hex one station along: measured over both share regimes and both counts,
+           all n stations mismatched at dir < 0 and none at dir > 0.
+           HEAD had the same error, uniformly — an even twelfth is 30°, small enough between two soft
+           layers at a quarter opacity to have never been noticed. It does not stay small once the
+           arcs are the palette's own: a 38%-share dominant swatch turns 30° into 137°, which is the
+           floor and the field disagreeing about which colour is where, right through the 0.8s
+           crossfade that exists because they are supposed to be the same picture.
+           `% 1` because at = 0 gives 1, and the wheel closes: the conic wants that stop at 0deg. */
+        v: wheel.dir > 0 ? s.at : (1 - s.at) % 1,
+      };
     });
     this._floorKey = key;
     return this._floorHexes;
@@ -314,17 +605,20 @@ export const orbitMethods = {
     const geom = (this._orbit && this._orbit.geom) || this._fieldGeom(vw, vh);
     const hexes = this._orbitFloorHexes(), n = hexes.length;
     const wheel = this._orbitWheel();
-    /* hex[j] belongs at clockwise-from-noon angle 270 + 360*turn − (360/n)*j; listing the wheel
-       backwards from that start is the same set of stops in the order CSS wants them.
+    /* A station that starts at screen-wheel position `v` belongs at clockwise-from-noon angle
+       270 + 360*turn − 360*v; listing the wheel backwards from that start — decreasing v, therefore
+       increasing CSS angle — is the same set of stops in the order CSS wants them. The station at
+       v = 0 lands on the conic's own `from`, so it is repeated at 0deg and 360deg and the wheel
+       closes on itself.
        Exact on a round hole and approximate on an elliptical one — the shader spaces its hues evenly
        around the BAND, which on a wide hole is not the same as evenly around the protractor, and CSS
        has no conic that follows an ellipse. The drift is at most a few tens of degrees, between two
        soft layers at a quarter opacity, over a 0.8s crossfade; and where the floor is permanent
        there is nothing on screen for it to disagree with. */
     const from = (270 + 360 * wheel.turn) % 360;
-    const step = 360 / n;
-    const stops = [];
-    for (let k = 0; k <= n; k++) stops.push(hexes[(n - (k % n)) % n] + ' ' + (k * step).toFixed(2) + 'deg');
+    const walk = hexes.slice().sort((a, b) => b.v - a.v);
+    const stops = [walk[n - 1].hex + ' 0deg'];
+    walk.forEach((e) => stops.push(e.hex + ' ' + (360 * (1 - e.v)).toFixed(2) + 'deg'));
     /* An ELLIPSE of the same two radii, with the stops written as percentages of it — which is how
        CSS makes one gradient describe both axes at once. The percentages are the field's own band
        fractions, so the floor rises out of the hole and fades at the rim in the same places. */
@@ -354,7 +648,10 @@ export const orbitMethods = {
     const bloom = document.querySelector('[data-orbit-bloom]');
     if (!bloom) return;
     const hexes = this._orbitFloorHexes();
-    const warm = hexes[0], cool = hexes[Math.floor(hexes.length / 2)];
+    // The two ends of the wheel in STATION order — first and opposite — rather than of the sorted
+    // walk above: what this wants is two colours from different parts of the palette, which is what
+    // the station order gives whatever arc each one owns.
+    const warm = hexes[0].hex, cool = hexes[Math.floor(hexes.length / 2)].hex;
     bloom.style.background = 'radial-gradient(72% 62% at 34% 30%, ' + this.hexA(warm, 0.10) + ' 0%, transparent 68%),'
       + 'radial-gradient(66% 58% at 70% 74%, ' + this.hexA(cool, 0.09) + ' 0%, transparent 66%)';
   },
@@ -428,7 +725,15 @@ export const orbitMethods = {
 
     const vw = window.innerWidth || 1440, vh = window.innerHeight || 800;
     const geom = (this._orbit && this._orbit.geom) || this._fieldGeom(vw, vh);
-    const field = createNebulaField(cv, this._orbitRampData(), {
+    /* A COPY OF THE RAMP, NOT THE RAMP. createNebulaField keeps the array it is handed BY REFERENCE
+       as the texture's own buffer, and setRamp writes into that buffer — so handing over the
+       memoised _rampData would make every later swap silently rewrite the bytes this module still
+       believes are the first wheel. Nothing depended on that while the only swap was a theme change
+       (which allocates a fresh array anyway); the palette crossfade below reads the current wheel
+       back out, and a shared buffer would have it fading from a colour to itself. One 32kB copy,
+       once per field, buys the two owners their own memory. */
+    const bake = this._orbitRampData();
+    const field = createNebulaField(cv, { data: new Uint8Array(bake.data), width: bake.width, height: bake.height }, {
       innerX: geom.ix,
       innerY: geom.iy,
       outN: geom.outN,
@@ -508,12 +813,108 @@ export const orbitMethods = {
          it against the new page anyway. That is an accident of where the switch happens to sit, not
          a property of this module, and a landing that answers the theme only because something else
          tore it down first is one route change away from being wrong. */
-      this._nebula.setRamp(this._orbitRampData());
-      if (this._reduce) this._nebula.renderStill(this._orbit ? this._orbit.rot : 0);
+      this._applyRamp();
     }
     // The floor is the same wheel and answers to the same switch, whether or not it is the surface
-    // currently on screen — it is what a lost context would hand back.
+    // currently on screen — it is what a lost context would hand back. The bloom is the same wheel
+    // too and was being left behind here: it is painted once at build out of _orbitFloorHexes, which
+    // is solved against the page, so a theme switch left the air around the field tinted off the
+    // OTHER theme's ladder for the rest of the visit.
     this._paintFloor(this._floorLive() ? this._floorOpacity() : undefined);
+    this._paintBloom();
+  },
+
+  /* ===== THE VISIT'S PALETTE ======================================================================
+
+     The landing is a reading of one of the eight examples (see _wheelStations). Two things move it:
+     the visit itself, which picks one at random, and the reader, who picks one by opening it.
+
+     WHY THE READER'S PICK REACHES ALL THE WAY HERE. On a phone the tool is not in the DOM — what the
+     small screen offers instead is the eight examples, read-only — and the field is not replaced by
+     those surfaces, it is COVERED by them (see LandingStage's `covered`). So the stage the reader
+     comes back to is the same one they left, and having it come back wearing the palette they just
+     looked at is the one thing that ties the two surfaces together. It costs one ramp.
+
+     THE SWAP IS A CUT, AND THAT IS A MEASUREMENT RATHER THAN A PREFERENCE. This carried a
+     crossfade: the 256x32 strip lerped byte by byte over DUR.overlay and pushed with setRamp each
+     frame, so the gas drained of colour and refilled instead of changing between two frames. It was
+     removed because it was never once seen. Instrumented on the live app, per call site:
+
+       showExample      the commit one line later flips _mobileShare, componentDidUpdate parks the
+                        ticker, and update() — the only thing that calls renderer.render — stops.
+                        Measured: 10 setRamp calls, ZERO renders. The dissolve was written into a
+                        texture nobody drew, for 0.8s, on the same frames _shareIn's entrance needs.
+       chooseStoryCase  runs entirely underneath [data-wipe], alongside buildStoryMasks (15-34ms),
+                        ScrollTrigger.refresh and lenis.scrollTo — the busiest frames the phone has,
+                        and the wipe exists precisely so nobody watches them.
+       setStoryCase     the field is lit and rendering, and the reader is at chapter 7 being scrolled
+                        to chapter 1.1 — past the hero, never onto it. The one path that drew the
+                        dissolve is the one path where it is off screen.
+
+     So all three paid ~48 frames of a 32kB lerp plus a texture upload to animate something with no
+     viewer. A dissolve nobody can see is not a dissolve. THE HOUSE RULE IS NOT SUSPENDED — surfaces
+     still arrive rather than appear; this one has no arrival because the surface is not on screen.
+     It also removed a real inconsistency rather than only cost: _paintBloom and _paintFloor are
+     single style writes and always were, so while the gas dissolved the air around it cut. Three
+     instant writes agree with each other; two and a tween did not.
+
+     IF A VISIBLE PALETTE CHANGE IS EVER ADDED — a re-roll control on the desktop landing is the
+     obvious one — the crossfade is what it needs, and it belongs back HERE rather than at the call
+     site. Two ramp textures and a mix uniform is the wrong answer: that puts a second sampler inside
+     a forty-eight step march, per pixel, forever, to pay for eight tenths of a second. Lerping the
+     strip on the CPU is the right shape and costs 0.19ms a frame; it was only the trigger that was
+     wrong. The bloom has to join it, or the air will cut while the gas dissolves.
+
+     THE BAKE IS OFF THE TAP. Changing palette invalidates the ramp, and rebuilding it is ~8000 gamut
+     maps — measured at 6ms here, and 7ms of wall time inside showExample, 20ms inside setStoryCase
+     once the floor and the bloom are repainted too. Scaled to a mid-range phone that is 30-80ms of
+     latency added to the press that asked for it, on a module whose own note says the bake is paid
+     "once per landing arrival inside a module that is already off the critical path" — no longer
+     true the moment a reader can change the palette. So the id and the state mirror are written
+     synchronously, because React needs them for the credit, and every pixel of consequence is
+     deferred one frame. Nothing can see the difference: on all three paths the field is covered,
+     wiped or scrolled away. */
+  _ensureFieldPalette() {
+    const p = this._fieldPalette();
+    const id = p ? p.id : null;
+    if (this.state.fieldPalId !== id) this.setState({ fieldPalId: id });
+    return p;
+  },
+  setFieldPalette(p) {
+    const id = p && p.id;
+    if (!id || id === this._fieldPalId) return false;
+    /* THE STAGE HAS TO BE UP BEFORE THE ID IS WRITTEN. It used to be written first and the gate
+       applied after, which left a caller reached with the landing down — none today, a desktop one
+       tomorrow — setting a preference nothing would ever paint. _fieldPalette honours an id it
+       finds, so the next arrival would have silently stopped re-rolling: "random per visit" defeated
+       by a write that did nothing else. */
+    if (!this._landingUp()) return false;
+    // Only palettes the landing would have picked itself. A generated palette reaching this would
+    // put a name under the footer that credits an image the visitor cannot open from here.
+    if (!this._fieldPool().some((x) => x.id === id)) return false;
+    this._fieldPalId = id;
+    this._wheelList = null; this._wheelKey = null;
+    this._rampData = null; this._rampKey = null;
+    this._floorHexes = null; this._floorKey = null;
+    if (this.state.fieldPalId !== id) this.setState({ fieldPalId: id });
+    // One frame later, and coalesced: two changes inside one frame bake once. See the note above.
+    if (this._repaintReq) return true;
+    this._repaintReq = requestAnimationFrame(() => {
+      this._repaintReq = 0;
+      if (!this._landingUp()) return;
+      this._paintBloom();
+      this._applyRamp();
+      if (this._floorLive()) this._paintFloor();
+    });
+    return true;
+  },
+  /** Hand the field the wheel it should be wearing. Writes, never draws — setRamp only marks the
+      texture dirty, so a running ticker picks it up on its next frame and a stage held still by
+      reduced motion has to be told. */
+  _applyRamp() {
+    const f = this._nebula; if (!f) return;
+    f.setRamp(this._orbitRampData());
+    if (this._reduce) f.renderStill(this._orbit ? this._orbit.rot : 0);
   },
 
   // ── THE MASKED-LINE MOVE, factored. Pre-authored spans inside overflow:hidden masks: parked below
@@ -567,6 +968,12 @@ export const orbitMethods = {
       if (g0 && !this.state.showLoader && !this._wipeRunning) this._landingTextReveal(g0);
       return;
     }
+    /* THE VISIT'S PALETTE, BEFORE ANYTHING IS BAKED FROM IT. The floor, the bloom and the ramp are
+       all solved against it two lines down, and the credit under the footer reads it out of state —
+       so it is settled here, once, rather than picked by whichever of them asks for the wheel first.
+       initOrbit is only ever reached from a rAF, a lifecycle callback or the GSAP-ready kick, never
+       from render, so the setState inside is safe. */
+    this._ensureFieldPalette();
     /* Floor first, in every case and before anything asynchronous is asked for. It is one element
        and three style writes, so there is no arrival cost worth deferring, and it is what the
        visitor looks at while three is still on the wire. */
@@ -646,12 +1053,30 @@ export const orbitMethods = {
        8. THE COLOUR IS THE APP'S OKLCH, and it is baked rather than approximated. Every pixel of the
           ramp goes through gamutMap, chroma walked down where sRGB cannot hold it. Hue is read off
           the SCREEN angle, so the wheel stands still against the words and revolves as one body
-          while the gas swirls through it; each of the twelve stations owns exactly one twelfth of
-          it, which is the property twelve orbs walking one revolution used to hold. The wheel is
-          ROTATED per visit, never shuffled.
+          while the gas swirls through it. The wheel is ROTATED per visit, never shuffled.
+          AMENDED — THE WHEEL IS A PALETTE, NOT A SPECTRUM. The twelve authored stations, each owning
+          exactly one twelfth of the wheel, were the property twelve orbs walking one revolution used
+          to hold, and they are now the FALLBACK rather than the picture: the field is built from one
+          of the eight example palettes, chosen at random per visit, and named under the footer. What
+          this spends is the old acceptance line "the whole spectrum is present around the copy at
+          once" — Garnet is a red field, High Key a pale one, and a landing that showed every hue was
+          a landing that showed none of the tool's actual output. What it keeps, and what any pass
+          here still has to keep: neighbouring gas is neighbouring hue; every station owns one
+          CONTIGUOUS arc (now its share of the palette rather than an even twelfth); the wheel closes
+          with no seam; the tonal ladder is solved against `--surface` and never taken from the
+          photograph, which is what keeps one exposure serving both themes; and only ANALOGOUS
+          harmonies are reachable from a palette, because a complement in the mid-dark would be a
+          colour the palette does not contain. See _wheelStations and _paletteStations.
+       9. THE PALETTE IS ALSO THE READER'S, and changing it is a DISSOLVE. On a phone the tool is not
+          in the DOM and the eight examples are what the small screen offers instead; opening one
+          re-bases the field on it (setFieldPalette), so the stage the reader comes back to is
+          wearing what they just looked at. The strip is crossfaded on the CPU — never a second
+          sampler in the march — and skipped outright while the stage is covered, which is where
+          every reader-driven change happens.
        ACCEPTANCE: a turning disc of colour with the brand copy in a clear hole at its centre; the
        hole holds at every viewport and through a full resize drag, and no gas ever crosses onto the
-       words; the wordmark keeps thinner air behind it than the gas around it; the whole spectrum is present around the copy at once and travels round it
+       words; the wordmark keeps thinner air behind it than the gas around it; the palette the credit
+       names is the palette on screen, present around the copy at once and travelling round it
        continuously, with no seam where the wheel closes; the disc runs off every edge rather than
        sitting on the page as a ring; the gas reads as pigment on the light theme and as light on the
        dark one, from the same shader; the cursor parts the gas it passes through and it closes
@@ -661,6 +1086,11 @@ export const orbitMethods = {
     const o = {
       active: false, rot: 0, t: 0, rotSpeed: 360 / this.FIELD_ROT_SECS,
       vw: window.innerWidth || 1440, vh: window.innerHeight || 800,
+      /* THE NODE THIS STAGE WAS BUILT AGAINST. Held so somebody can ask whether it is still in the
+         document: a route change unmounts LandingStage without killing the orbit, and an object
+         pointing at detached DOM answers every other question exactly as a live one does. See the
+         staleness check in PaletteApp's componentDidUpdate. */
+      host: document.querySelector('[data-orbit]'),
     };
     o.geom = this._fieldGeom(o.vw, o.vh);
 
@@ -887,8 +1317,19 @@ export const orbitMethods = {
     this._landRevealed = false;
     this._clearCtaReflect();
     this._tearDownNebula();
-    // per-visit seeds and bakes — a return to the landing re-rolls the wheel and re-reads the theme
+    /* Per-visit seeds and bakes — a return to the landing re-rolls the wheel AND the palette it is
+       built from, and re-reads the theme.
+       state.fieldPalId is deliberately NOT reset here. killOrbit is one of the paths out of
+       componentWillUnmount, so this method must not touch state at all; and it does not need to —
+       _ensureFieldPalette is the first thing initOrbit does, so the mirror is corrected before the
+       rebuilt stage has painted. What it leaves behind in the meantime is a name under a footer that
+       is either unmounted or under the wipe. */
+    // The deferred repaint holds no reference to anything being torn down, but it would bake a ramp
+    // for a stage that is going away — and on a breakpoint crossing it would land between killOrbit
+    // and the initOrbit that follows it.
+    if (this._repaintReq) { try { cancelAnimationFrame(this._repaintReq); } catch (e) { } this._repaintReq = 0; }
     this._wheel = null; this._rampData = null; this._rampKey = null;
+    this._fieldPalId = null; this._wheelList = null; this._wheelKey = null;
     this._floorHexes = null; this._floorKey = null;
     this._surfLab = null; this._surfKey = null;
     const o = this._orbit;

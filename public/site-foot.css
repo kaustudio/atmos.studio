@@ -209,3 +209,9 @@
     margin-top:14px;padding-top:14px;
   }
   .site-foot__rights{justify-self:stretch}
+}
+/* ^ THIS BRACE WAS MISSING, and had been since the narrow block was written: the file ran 23 open
+   braces to 22 closed, so the query above never terminated and anything appended to this file
+   silently joined it. Nothing ever had been appended, so nothing had ever been wrong — which is
+   exactly why it was worth closing before something was. The failure mode is invisible: a rule meant
+   for every width would quietly apply only below 700px. */

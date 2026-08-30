@@ -832,9 +832,12 @@ function MobileStory({ st }) {
               <span aria-hidden="true" style={sx('position:absolute;inset:-140px -120px;z-index:0;pointer-events:none;background:radial-gradient(ellipse closest-side at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
               <h1 data-story-hero-line>{st.heroTitle}</h1>
               <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image.</p>
+              {/* The label names the palette once there is one to name — see beginLabel in
+                  renderVals. `data-case="own"` for the same reason the picker's titles carry it: the
+                  name is a string the reading invented, so nothing downstream may case it. */}
               <div className="story-hero__act">
                 <button type="button" className="glass-cta" data-focus="chrome" onClick={st.onBegin}
-                  aria-label="Explore an Example: begin the story"><TextSwap>Explore an Example</TextSwap></button>
+                  aria-label={st.beginLabel + ': begin the story'}><TextSwap><span data-case="own">{st.beginLabel}</span></TextSwap></button>
               </div>
             </div>
           </div>
@@ -1477,23 +1480,18 @@ function SkipLink() {
    exposed to assistive tech and always has been — the skip link at the top of global.css exists
    because of it — and quietly making the tool inert here would be a different change wearing this
    one's clothes. */
-/* `lead` is the third flag, and like the other two it is a structural decision rather than a style
-   knob. It is a node dropped in as the FIRST child of the meta row — today the landing's "Based on
-   …" credit, and nothing else. It goes through the footer rather than standing beside it because
-   the two have to share three things that are all stated in this component's stylesheet and nowhere
-   else: the page margin, the row's own baseline, and the 700px breakpoint where the row stops being
-   a row. A sibling block would have had to restate each of them, and the first edit to any of the
-   three would have moved one and not the other.
-   Its presence is what turns the meta row from "left · centre · right" into "lead left, everything
-   else pushed right" — see .site-foot--lead in site-foot.css. Absent, this component renders and
-   behaves exactly as it did. */
-function SiteFooter({ route, onNavigate, brand = true, landmark = true, lead = null }) {
+/* A `lead` prop lived here for one caller — the landing's "Based on …" credit, dropped in as the
+   first cell of the meta row so it would share the page margin, the row's baseline and the 700px
+   breakpoint. The landing no longer draws a footer at all (see the tombstone in LandingStage), so
+   the prop went with it and the credit carries its own three lines of layout instead. If something
+   ever needs a cell at the head of this row again, that is the shape it had. */
+function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
   const Root = landmark ? 'footer' : 'div';
   const link = (href, label) => (
     <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
   );
   return (
-    <Root className={'site-foot' + (lead ? ' site-foot--lead' : '')}>
+    <Root className="site-foot">
       {/* THE WORDMARK IS OPTIONAL, and the landing is the one surface that turns it off. It is a
           full-bleed masked graphic — 876x136 of ink stretched to the column — which is the right
           way to close a document you have just read to the bottom of, and the wrong thing to put
@@ -1507,7 +1505,6 @@ function SiteFooter({ route, onNavigate, brand = true, landmark = true, lead = n
         </div>
       )}
       <div className="site-foot__meta">
-        {lead}
         {/* One word, so inline-block costs no wrapping — the swap is safe here in a way it is not
             for a multi-word link inside running prose. */}
         <p className="site-foot__origin">A Part of <a href="https://kau.studio"><TextSwap>KauStudio</TextSwap></a></p>
@@ -1688,32 +1685,49 @@ function LandingStage({ vals, covered, quiet }) {
               </div>
             )}
           </div>
-          {/* THE FOOTER, ON THE LANDING TOO — the same component the tool and both legal routes
-              close with, minus its wordmark (see the note at SiteFooter).
+          {/* THE FOOTER IS NOT DRAWN HERE ANY MORE, and what it leaves behind is the credit alone.
 
-              data-land-nomark IS LOAD-BEARING, not a hook for styling. orbit.js's _heroReach()
-              solves the field's hole from `[data-landing] h1, [data-landing] p, [data-glass-cta]`,
-              and this footer brings two <p> elements into that subtree sitting at the very bottom
-              of the viewport. Left unmarked they would be read as copy the formation has to clear,
-              and the hole would open from the centred block all the way to the bottom edge — the
-              composition destroyed by a footer nobody was looking at. The attribute is what
-              _heroReach filters on; it says "this is in the landing but it is not the landing's
-              copy".
+              TOMBSTONE. This band used to render <SiteFooter brand={false} landmark={false} />, a
+              second copy of the footer the document already ends with — measured, two `.site-foot`
+              nodes in the tree on every landing: this one, and the real <footer> child of [data-app]
+              at the bottom of the page. On a phone the duplicate was worse than redundant: the story
+              scrolls 8000px to a real footer, and this copy sat at opacity 0 under `quiet` the whole
+              way, occupying the one band the credit needed.
+
+              WHAT IT COSTS ON DESKTOP, so nobody rediscovers it as a bug: the landing is
+              position:fixed over the document, so the real footer behind it cannot be reached while
+              the landing is up. About, Privacy and Terms are therefore not linked from the wide
+              front page any more — `Learn More` still goes to /about, and everything returns the
+              moment the landing is dismissed. Removed by request; if the legal pair has to be
+              reachable from here, the answer is a one-line legal row rather than the whole footer
+              back, and it belongs beside this credit.
+
+              data-land-nomark IS STILL LOAD-BEARING, and now for the credit rather than the footer.
+              orbit.js's _heroReach() solves the field's hole from
+              `[data-landing] h1, [data-landing] p, [data-glass-cta]` and filters on this attribute;
+              anything dropped in here that matches those selectors would otherwise be read as copy
+              the formation has to clear, and the hole would open from the centred block all the way
+              to the bottom edge. The credit is built from divs and spans for the same reason, so it
+              matches nothing even if the attribute is ever lost.
 
               ABSOLUTE, so it does not enter the flex centring above. The stage is a fixed box with
-              justify-content:center, and a third child in that flow would push the statement and
-              its two acts off the optical centre the field is solved around. pointer-events:auto
-              because the stage's own brand block is inert. */}
-          <div data-land-nomark="1" style={{ ...sx('position:absolute;left:0;right:0;bottom:0;z-index:5;pointer-events:auto'), ...(quiet ? { opacity: 0 } : null) }}>
-            {/* THE CREDIT — what the field behind this is a reading of. Passed to SiteFooter as its
-                `lead` rather than rendered beside it: it is the first cell of the footer's own meta
-                row, so it stands on the page margin the rest of the row stands on, sits on the same
-                baseline, and stacks with the rest of the row below 700px — three things a sibling
-                block would have had to restate. See .site-foot--lead in site-foot.css for the row
-                it turns that grid into, and the note at SiteFooter for why the prop exists.
+              justify-content:center, and a third child in that flow would push the statement and its
+              two acts off the optical centre the field is solved around.
+
+              pointer-events:none: nothing in here is interactive now the links have gone, and the
+              band spans the full width directly over the copy block — it has no business catching a
+              press aimed at Create.
+
+              IT DOES NOT GO QUIET WITH THE REST OF THE LANDING. `quiet` is the phone story's state,
+              and it exists to stop the gate's heading and act sitting behind chapter 1's own words.
+              The credit is not competing copy — it is the caption for the artwork chapter 1 is
+              transparent onto, which is precisely the screen where naming the palette does the most
+              work. It stays, and the opaque chapters below scroll over it. */}
+          <div data-land-nomark="1" style={sx('position:absolute;left:0;right:0;bottom:0;z-index:5;pointer-events:none')}>
+            {/* THE CREDIT — what the field behind this is a reading of.
 
                 The landing's colour is no longer an authored wheel: it is one of the eight example
-                palettes, chosen per visit, and on a phone it is whichever one the reader last opened
+                palettes, chosen per visit, and on a phone it is whichever one the story is telling
                 (see the amended §8 in methods/orbit.js). An artwork made out of somebody's
                 photograph should say which photograph — and this line does a second job that no
                 other element on the front page does, which is state what the tool actually makes
@@ -1721,23 +1735,27 @@ function LandingStage({ vals, covered, quiet }) {
                 claim is that a palette is READ FROM AN IMAGE, and a name on its own does not show
                 that an image was involved.
 
+                ON BOTH SURFACES NOW. It was withheld below the supported minimum while the footer
+                was still here, because the two together made a five-band block that crossed the
+                gate's own button on a 667pt phone. The footer is gone, so the argument is gone with
+                it — and the phone is the surface where the field is most of what is on screen.
+
                 IT IS A CAPTION, so it belongs at the edge of the artwork rather than under the
                 statement — put in the centred block it would enter _heroReach and open the field's
-                hole around a credit. It sits inside [data-land-nomark] for that reason too: that
-                attribute is what keeps this whole bottom band out of the measurement (see the note
-                below), and it has to keep covering the credit as well as the footer.
+                hole around a credit.
 
-                STACKED, PICTURE OVER WORDS, and the picture leads. Side by side, at the size a
-                footer row allows, the image was a 48px chip being read as an icon — a decoration in
+                STACKED, PICTURE OVER WORDS, and the picture leads. Side by side, at the size the old
+                footer row allowed, the image was a 48px chip being read as an icon — a decoration in
                 front of a sentence rather than the thing the sentence is about. Over the line it is
-                a photograph with a caption under it, which is what this actually is, and it can then
-                take a real width: one column of the page's own grid, clamped so it stays a
-                thumbnail at both ends of the range (see .site-foot__lead-shot).
+                a photograph with a caption under it, which is what this actually is, and it takes a
+                real width: ONE COLUMN OF THE PAGE'S OWN GRID, re-derived from --grid-cols and
+                --grid-gutter so it follows the phone breakpoint (12/24 to 4/16) without a second
+                rule, and clamped at both ends so it stays a thumbnail. Measured from the viewport
+                rather than from `100%`: a percentage resolves against this shrink-to-fit column and
+                would be circular.
 
-                No entrance of its own. It arrives with the footer — which is to say it is simply
-                there — because the thing it describes is the field, and the field has its own
-                dissolve out of the painted floor to make. A second arrival at the bottom of the
-                screen would be competing with it.
+                No entrance of its own — the thing it describes is the field, and the field has its
+                own dissolve out of the painted floor to make.
 
                 Square corners and an INSET ring rather than a border: the house image treatment
                 (.about-shot, .about-rail__card, the phone example row), which is what stops a
@@ -1745,27 +1763,21 @@ function LandingStage({ vals, covered, quiet }) {
                 ground the box holds before the file lands. The <img> is decorative — alt="" — because
                 the line under it is the content; a second reading of "Garnet" would be a screen
                 reader saying the name twice. */}
-            {/* NOT ON THE SMALL SURFACE, and that is a room argument and a redundancy one.
-                Below the supported minimum this footer stacks into four bands — origin, three
-                links, rights — and the credit would make it five, ~100px more of a screen that is
-                already centring a heading, a sentence and an act above it: measured on a 667pt
-                phone the band's top crosses the gate's own button. And it would be saying something
-                the phone has already said. A phone's front page is the story, whose hero IS the
-                palette's name and whose copy names it again two chapters later; the credit exists
-                because the WIDE landing has no other way to tell you what you are looking at. */}
-            <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false}
-              lead={(vals.landingCredit && !vals.narrow) ? (
-                <div className="site-foot__lead" data-land-credit="1">
-                  <span className="site-foot__lead-shot" aria-hidden="true">
-                    <img src={vals.landingCredit.image} alt="" decoding="async" fetchPriority="low" />
-                  </span>
-                  {/* The footer's own meta voice — 12px, flat tracking — inherited rather than
-                      restated: this is one row of one component and should not carry a second
-                      register of type. The name takes full ink and the preposition does not; the
-                      palette is the information here and "Based on" is the grammar around it. */}
-                  <p className="site-foot__lead-line">Based on <span>{vals.landingCredit.name}</span></p>
+            {vals.landingCredit && (
+              <div data-land-credit="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 var(--page-gutter) 26px')}>
+                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;width:clamp(56px, (100vw - 2 * var(--page-gutter) - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols), 96px);aspect-ratio:3/2;background:var(--surface-raised)')}>
+                  <img src={vals.landingCredit.image} alt="" decoding="async" fetchPriority="low" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
+                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
+                </span>
+                {/* 12px flat is the register the footer's meta row used to set at this corner of the
+                    screen, kept now that the row has gone so the caption still reads as chrome
+                    rather than as copy. The name takes full ink and the preposition does not: the
+                    palette is the information here, and "Based on" is the grammar around it. */}
+                <div style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>
+                  Based on <span style={sx('color:var(--on-surface)')}>{vals.landingCredit.name}</span>
                 </div>
-              ) : null} />
+              </div>
+            )}
           </div>
         </div>
   );

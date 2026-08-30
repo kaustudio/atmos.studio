@@ -736,6 +736,15 @@ export const persistenceMethods = {
   },
   showExample(ex) {
     if (!ex) return;
+    /* THE STAGE UNDERNEATH TAKES THE PALETTE WITH IT. The phone does not replace the landing when it
+       opens an example, it covers it (see LandingStage's `covered`) — so the field the reader comes
+       back to is the same one they left, and it now comes back as a reading of the palette they went
+       to look at. See setFieldPalette in methods/orbit.js.
+       BEFORE the setState, not inside its callback, and that is the difference between a dissolve
+       and a cut: _landingLit() is still true here, so the ramp crossfades over the same beat the
+       read-only panel is arriving in. One commit later the stage is covered and the swap would be
+       written straight in, under a panel that has not finished arriving. */
+    this.setFieldPalette(ex);
     this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' }, () => this._shareIn());
   },
   closeExampleOnPhone() {
@@ -880,6 +889,9 @@ export const persistenceMethods = {
     if (!id || id === (this._storyCase() || {}).id) return;
     const p = this._examples().find((x) => x.id === id);
     if (!p) return;
+    // The field is the prologue's visual — chapter 1 is transparent onto it — so a story that
+    // changes which palette it is telling has to change which palette the field is. See showExample.
+    this.setFieldPalette(p);
     this.setState({ storyCaseId: id, storySwatch: null, storyMasks: null, announce: 'Now reading ' + p.name + '.' }, () => {
       this.buildStoryMasks();
       // Back to the chapter that introduces a picture, not to the top: the reader chose a case, so
@@ -993,6 +1005,9 @@ export const persistenceMethods = {
     if (!ex) return;
     if (this._pickerClosing || this._wipeRunning) return;
     this._pickerClosing = true;
+    // Same reason as setStoryCase: the reader is choosing which palette the phone's whole surface is
+    // about, and the field behind chapter 1 is part of that surface.
+    this.setFieldPalette(ex);
 
     this._wipeCover({
       commit: (after) => {

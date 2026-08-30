@@ -218,6 +218,14 @@ export default class PaletteApp extends React.Component {
     // A document route arrives past them for a different reason: there is no tool on it to introduce.
     landingDismissed: (this._shared || isDoc(this._entryRoute)) ? true : this._landingDismissed(),
     showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
+    /* WHICH OF THE EIGHT THE LANDING FIELD IS A READING OF — a MIRROR, not the source of truth.
+       methods/orbit.js holds the answer on the instance (`_fieldPalId`), because the ramp is baked
+       synchronously inside initOrbit and a value that only exists after a commit would be a frame
+       late every time. This copy exists for one reader: the credit under the landing's footer, which
+       is React's to draw. orbit.js writes it through _ensureFieldPalette / setFieldPalette and
+       nothing else may; null means the field has not picked yet, or there is nothing to pick from.
+       Not persisted — a different palette on each arrival is the whole point. */
+    fieldPalId: null,
     page: 0,
     // List sort. 'time' desc is the Library's own default — newest first, what the feed already
     // meant before there was anything to sort BY. Deliberately not persisted: page size is a
@@ -581,6 +589,22 @@ export default class PaletteApp extends React.Component {
        No longer gated on motion. Reduced motion used to be denied the stage entirely because the
        formation's POPULATION depended on which renderer could run; a volume has no population, so
        what it now gets is the same field rendered once and left still (see the contract's §6). */
+    /* AND "ISN'T BUILT" HAS TO MEAN "ISN'T ON THE SCREEN", not "no object is held". A document route
+       — /about, /privacy, /terms — returns before LandingStage in AppView, so the whole stage leaves
+       the DOM while `_orbit` and `_nebula` go on pointing at detached nodes; navigateTo does not
+       kill the orbit, deliberately, because the wipe is covering the swap. Coming back then finds a
+       truthy `_orbit`, declines to rebuild, and hands the reader a landing with no field, no floor
+       and no bloom on it — reachable entirely through the product's own chrome, since the landing's
+       footer links to /about and that page's mark links back.
+       That was survivable while a dead stage was merely blank. It is not now: the credit under the
+       footer names the palette the field is a reading of, so the blank screen arrives with a caption
+       asserting what is on it. Verified: canvas count 0, floor and bloom unpainted, "Based on Forged
+       Midfield" underneath.
+       The host node is the honest test — `_fieldCanvas` is null wherever WebGL 2 never started, and
+       that stage is alive and correct. killOrbit first, because the old object still owns a
+       ResizeObserver, a ticker callback and a GL context that nothing else will ever release. */
+    const stale = !!this._orbit && !(this._orbit.host && document.contains(this._orbit.host));
+    if (stale) this.killOrbit();
     if (lit && this._gsapReady && !this._orbit) { this.initOrbit(); }
     /* The theme reaches the landing: the logo returns here from anywhere, so the switch in the
        masthead can be thrown with this stage alive behind whatever was covering it. Neither surface

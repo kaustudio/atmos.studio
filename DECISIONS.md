@@ -6,6 +6,114 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-30 — The landing field is a reading, not a spectrum
+
+The volumetric field behind the front page was coloured from twelve hand-authored OKLCH stations
+walking the whole hue wheel. It was a beautiful demonstration of a colour wheel, and a colour wheel
+is not what this tool makes. It now takes its colour from one of the eight seeded example palettes —
+a different one per arrival — and says which, under the footer, with the photograph it was read from.
+
+**This spends an acceptance criterion, deliberately.** The motion contract's §8 required "the whole
+spectrum present around the copy at once". It cannot be: Garnet is a red field and High Key a pale
+one, and that is the point — a landing showing every hue was showing none of the tool's actual
+output. Everything else §8 protects is kept and is still enforceable: neighbouring gas is
+neighbouring hue, each station owns one contiguous arc, the wheel closes with no seam, every pixel
+goes through `gamutMap`. The twelve stations survive as the fallback, and the ramp reproduces them
+byte for byte — the even-twelfth walk is the same code path as a palette's uneven one, at equal
+shares.
+
+**Hue, chroma and proportion are taken from the palette. Lightness is not.** The tonal ladder stays
+solved against `--surface`, which is the whole reason one shader and one exposure serve both themes:
+the thinnest gas dissolves into the page in either. A palette's own five lightnesses are authored
+against a photograph — Garnet opens on L 0.09, High Key on 0.93 — and dropping either set in would
+put the near end of the ladder on the wrong side of the page. A palette says *which colours*; the
+page still says *how far from itself* they stand.
+
+**The fan is capped in degrees, not only in ratio, and that is the difference between spreading a
+palette and inventing one.** Garnet's five swatches sit inside twelve degrees of each other;
+unfanned the field came back a single terracotta wash that could have been read off any warm
+picture. But a multiplier moves the outermost swatch furthest, and at 5× Garnet's one deep red nine
+degrees off centre landed at 47 — a gold sector in a field of reds, a colour nobody photographed.
+`PAL.addMax` bounds what the fan may ADD to any one swatch, so the amplification is capped exactly
+where it is largest. A second correction pulls a swatch's offset toward the dominant hue in
+proportion to its chroma: a hue angle read off chroma 0.025 is mostly rounding, and the fan was
+amplifying that too — Frozen Slate's 1.6% slate became a magenta arc.
+
+**Only analogous harmonies are reachable from a palette.** The three accent patterns each put a
+complement in the mid-dark, which is precisely the colour a palette-derived field must not contain.
+"Based on Garnet" cannot mean a teal nobody photographed.
+
+**On a phone the story leads, not chance.** The desktop landing rolls a palette per arrival because
+nothing on that screen contradicts it. A phone's front page is the story, whose first chapter is
+transparent onto this same field and whose copy names its case out loud — so there the field follows
+the story, and every later change to it (the image chooser, chapter 7's gallery, opening an example
+read-only) re-bases the field through one method. That is not variety versus coherence; the two
+surfaces just have different amounts to disagree with.
+
+**The swap is a dissolve, and the arithmetic is on the CPU.** Two ramp textures and a mix uniform
+would put a second sampler inside a forty-eight step march, per pixel, forever, to pay for eight
+tenths of a second. Lerping the 32 kB strip itself costs nothing and needs no shader change — and it
+is skipped outright while the stage is covered, which is where every reader-driven change happens.
+
+**The swap is a cut, and that was a measurement.** The first cut of this carried a ramp crossfade —
+the 32 kB strip lerped on the CPU rather than a second sampler in a forty-eight step march. It was
+removed after instrumenting all three call sites: `showExample` parks the ticker one commit later,
+so the dissolve wrote 10 frames into a texture that was rendered **zero** times; `chooseStoryCase`
+runs under the wipe; `setStoryCase` runs while the reader is being scrolled past the hero. A dissolve
+nobody can see is not a dissolve — and it was inconsistent besides, since the bloom and the floor are
+single style writes, so the air cut while the gas dissolved. The house rule is not suspended: there
+is no arrival because the surface is not on screen. If a *visible* palette change is ever added, the
+crossfade belongs back in `_applyRamp` and the bloom has to join it.
+
+**The bake came off the tap.** Changing palette invalidates the ramp, and rebuilding it is ~8000
+gamut maps — 6 ms here, 7 ms of wall time inside `showExample` and 20 ms inside `setStoryCase` once
+the floor and bloom repaint too, which is 30–80 ms of added latency on a mid-range phone. The id and
+its state mirror are written synchronously because React needs them for the credit; every pixel is
+deferred one frame. Measured after: 0.20 ms and 0.30 ms.
+
+**The landing stopped drawing a second footer, and the credit took the corner.** The band at the
+bottom of the stage used to render `SiteFooter` — a duplicate of the footer the document already
+ends with; two `.site-foot` nodes in the tree on every landing. On a phone it was worse than
+redundant: the story scrolls to a real footer at the end of 8000px, while this copy sat at opacity 0
+under `quiet` occupying the one band the credit needed. So the footer goes and the credit is what
+is left there, on both surfaces — its thumbnail one column of the page's own grid, re-derived from
+`--grid-cols` / `--grid-gutter` so it follows the phone breakpoint without a second rule, clamped at
+both ends, and measured off the viewport because a percentage resolves against a shrink-to-fit
+column and is circular. It does **not** go quiet with the rest of the landing: it is not competing
+copy, it is the caption for the artwork chapter 1 is transparent onto, and the opaque chapters below
+scroll over it (verified at four scroll depths).
+
+*The cost, recorded so nobody rediscovers it as a bug:* the landing is `position:fixed` over the
+document, so the real footer behind it cannot be reached while the landing is up. About, Privacy and
+Terms are no longer linked from the wide front page — `Learn More` still goes to /about, and all
+three return the moment the landing is dismissed. Removed by request. If the legal pair has to be
+reachable from there, the answer is a one-line legal row beside the credit, not the whole footer
+back.
+
+**Three things an adversarial review caught, all confirmed by replay before they were touched.**
+*The painted floor was one arc out of register with the shader on an anticlockwise wheel* — it placed
+each station's hex where its arc BEGINS, but the ramp is un-mixed where the arc STARTS IN u, which on
+`dir < 0` is the other end. Every station mismatched at `dir < 0`, none at `dir > 0`. The error
+predates this work and was a flat 30° on an even twelfth, small enough between two layers at a
+quarter opacity never to be noticed; the palette's own arcs turn it into up to 137°, which is the
+floor and the field disagreeing about which colour is where, throughout the crossfade that exists
+because they are meant to be the same picture. *The credit's band swallowed the landing's CTAs on
+short desktop windows* — the band is absolutely positioned over a centred copy block, so it lands ON
+it rather than pushing it; at 1280×420 `elementFromPoint` at the centre of Create returned
+`.site-foot__meta`. `BELOW_MIN_MQ` gates height only under `pointer:coarse`, deliberately, so the
+credit answers the height itself. It also stopped swallowing clicks outright, which should have been
+true whatever the height. *And returning from /about handed back a landing with no field on it* —
+`navigateTo` does not kill the orbit, so `_orbit` survived pointing at detached DOM and the rebuild
+gate declined. That was survivable while a dead stage was merely blank; it is not once a caption
+underneath names what the absent field is a reading of. "Isn't built" now means "isn't in the
+document".
+
+*(Also found: `public/site-foot.css` had been missing its closing brace since the narrow block was
+written. Nothing had ever been appended to it, so nothing had ever been wrong — but the height query
+above would have been the first thing, and it would have failed in the least visible way possible.)*
+
+---
+
 ## 2026-08-29 — One corner, one close mark, one hover
 
 The panel merge was one decision; what followed was a day of pulling every surface it touched onto
