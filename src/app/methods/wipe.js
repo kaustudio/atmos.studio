@@ -4,6 +4,37 @@
 import { routeFor, pathFor, isDoc, applyHead, routeName } from '../routes.js';
 
 export const wipeMethods = {
+  /* A SURFACE ARRIVES AT ITS OWN TOP.
+
+     Three gestures in this file swap what the reader is looking at without the browser doing a
+     navigation, and a document that does not reload keeps whatever scroll offset the last one left
+     behind. navigateTo has always closed that hole; the landing pair did not, and the landing is
+     position:fixed over the tool rather than instead of it — so a reader who scrolled to the foot of
+     the tool, clicked the mark and clicked Create was handed the page back exactly where they left
+     it, with the top of the tool a screen and a half above them and nothing on screen to say so.
+
+     Through Lenis rather than around it: it owns the scroll while it is running, and a raw
+     window.scrollTo leaves its internal position stale, so the reader's next gesture jumps back to
+     where Lenis still thinks it is. Immediate, because every caller is already behind the cover —
+     there is nothing to watch travel, and an eased scroll under an opaque panel is only a delay. */
+  _scrollToTop() {
+    // force, because Lenis declines a programmatic scroll outright while it is stopped — and it is
+    // stopped for every surface that takes the wheel off it (the grid's Observer, the phone story).
+    // Those are exactly the states a reader leaves behind on the way back to the landing.
+    try { if (this._lenis) this._lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) { }
+    /* AND THEN CHECK, because Lenis returning early is indistinguishable from Lenis having done it.
+       It compares the destination against its own targetScroll and returns if they match — so any
+       offset the page acquired WITHOUT passing through it (the browser restoring a position on
+       reload, an anchor jump, focus dragging an off-screen control into view) leaves it convinced it
+       is already at zero while the reader is 700px down. The native scroll is the floor under that,
+       and reset() hands the corrected position straight back so its next frame does not lerp the
+       reader back to where it still thought they were. */
+    try {
+      if (!window.scrollY) return;
+      window.scrollTo(0, 0);
+      if (this._lenis) this._lenis.reset();
+    } catch (e) { }
+  },
   _resetIntroState(afterCb) {
     // journey flags only — palettes, projects, theme untouched.
     // 'palette-generator/landing' is PERMANENT dismissal, not session-scoped: '1' survives reloads so
@@ -47,6 +78,9 @@ export const wipeMethods = {
       restorePending: null,
       announce: 'Intro will show again.',
     }, () => {
+      // The landing covers the tool, it does not replace it, so the offset left behind here is
+      // invisible until Get Started uncovers it again. Spend it now, while the cover is down.
+      this._scrollToTop();
       setTimeout(() => this.initOrbit(), 0);
       if (afterCb) afterCb();
     });
@@ -199,7 +233,10 @@ export const wipeMethods = {
     if (this.state.landingDismissed || this._wipeRunning) return;
     const persist = (afterCb) => {
       try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { } this.killOrbit();
-      this.setState({ landingDismissed: true }, afterCb || function () { });
+      // Here rather than in doSwap, so the reduced-motion path above — which persists and returns
+      // without ever building a timeline — starts at the top too. Ahead of afterCb because the
+      // arming that follows it measures the copy it is about to raise.
+      this.setState({ landingDismissed: true }, () => { this._scrollToTop(); if (afterCb) afterCb(); });
     };
     const focusChrome = () => { requestAnimationFrame(() => { const f = document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'); if (f) try { f.focus(); } catch (e) { } }); };
     const g = window.gsap;
@@ -350,9 +387,8 @@ export const wipeMethods = {
       // serves the wrong one.
       if (push) { try { history.pushState({ route: next }, '', pathFor(next)); } catch (e) { } }
       applyHead(next);
-      // A new document starts at the top. Lenis owns the scroll while it is running, so ask it
-      // rather than going around it and leaving its internal position stale.
-      try { if (this._lenis) this._lenis.scrollTo(0, { immediate: true }); else window.scrollTo(0, 0); } catch (e) { }
+      // A new document starts at the top — see _scrollToTop, which the landing pair now shares.
+      this._scrollToTop();
       // The live region NAMES the destination. It used to be cleared here, which meant a route
       // change said nothing at all: no reload, no focus move of its own, and a <title> swap that
       // screen readers do not reliably announce. The page is the only thing that changed, so the
