@@ -311,20 +311,28 @@ export const universeMethods = {
       this._built = true;   // synchronous 'field built' flag — stops the cDU gate re-scheduling rebuilds that strip clones
     } catch (err) { this._obs = null; }
   },
-  // Tile hover/focus in the universe: bring up the ring AND lift the palette band so it slides
-  // to overlap the image (the palette reads as drawn from its source). Inner layers only —
-  // never the card box or its position. Event-driven per tile, interruptible; no field-wide dim.
+  /* Tile hover/focus in the universe: bring up the ring. That is the whole of it now.
+     THE PALETTE BAND USED TO LIFT — `y: -20` with an upward shadow, so the panel slid further over
+     the image and the palette read as drawn from its source. Removed by request: the card is a
+     readout, and a readout that moves under the pointer is a readout you have to wait for before
+     you can finish reading it. The overlap the lift was dramatising is still there and always was —
+     the panel sits at HERO-16, sixteen pixels into the image, at rest.
+     THE RING IS WHAT ANSWERS THE POINTER, and it is enough: an opacity change is a state change
+     without a geometry change, which is this app's rule for a control under a pointer (see the
+     press tiers in global.css). Motion is not the only feedback channel here, so removing it costs
+     the hover nothing it needed.
+     It also settles the card's height. pbase's bottom is derived to sit 14px off the card's foot
+     (see universeTile.js); the lift moved it to 34 and back on every hover, so the one measurement
+     the geometry is built on was only true while nothing was hovered. */
   stackEnter(el) {
-    if (!el) return; const r = el.querySelector('[data-ring]'), pb = el.querySelector('[data-pbase]');
+    if (!el) return; const r = el.querySelector('[data-ring]');
     if (this._reduce || !window.gsap) { if (r) r.style.opacity = '1'; return; }
     if (r) window.gsap.to(r, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
-    if (pb) window.gsap.to(pb, { y: -20, boxShadow: '0 -16px 32px rgba(0,0,0,0.16)', duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
   },
   stackLeave(el) {
-    if (!el) return; const r = el.querySelector('[data-ring]'), pb = el.querySelector('[data-pbase]');
+    if (!el) return; const r = el.querySelector('[data-ring]');
     if (this._reduce || !window.gsap) { if (r) r.style.opacity = '0'; return; }
     if (r) window.gsap.to(r, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, overwrite: 'auto' });
-    if (pb) window.gsap.to(pb, { y: 0, boxShadow: '0 0px 0px rgba(0,0,0,0)', duration: this.DUR.state, ease: this.EASE.exit, overwrite: 'auto' });
   },
   // bring a focused original tile into view (keyboard) by panning the field toward centre
   // — called only when the last input was keyboard (_kbdInput); pointer focus never moves the camera

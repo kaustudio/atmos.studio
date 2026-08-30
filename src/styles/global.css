@@ -412,12 +412,31 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --fs-body:0.8125rem;        /* 13 — body copy and the reading */
   --fs-detail:0.75rem;        /* 12 — menu items, notes, secondary copy */
   --fs-label:0.625rem;        /* 10 — uppercase labels; the workhorse, 83 uses */
-  --fs-micro:0.5625rem;       /*  9 — counts, eyebrows, row meta */
+  /* ===== 11, AND THE FLOOR FOR ANYTHING A READER HAS TO READ =================================
+     --fs-micro (9) and --fs-nano (8) held every metric LABEL on this site — Hue, Chroma, Max
+     contrast, AA text pairs, the list's column heads, its dates. Measured on the grid card in the
+     light theme those labels sat at 8px and 2.43:1, which is small enough and faint enough that the
+     word naming a value was harder to read than the value. Nothing informative is drawn below this
+     rung any more; what is left under it is three decorative glyphs (see --fs-nano).
+     0.6875rem, and it is not a new number — the weights key on /about and the story already needed
+     11 and wrote it as a literal, which is the second call site the note above says turns a decision
+     into a rung. This is that rung, so the literal goes. */
+  --fs-fine:0.6875rem;        /* 11 — metric labels, dates, column heads: the smallest READABLE size */
+  --fs-micro:0.5625rem;       /*  9 — retired as a text size; no informative use remains */
   /* PURE, not a tinted neutral. An image outline picks up whatever it is drawn over, so a near-white
      like --on-surface (#f3f3ef) reads as dirt along the edge of a photograph rather than as an edge.
      Black in light, white in dark, at a tenth. */
   --img-outline:rgb(0 0 0 / .10);
-  --fs-nano:0.5rem;           /*  8 — swatch value labels, the smallest thing drawn */
+  /* 8 — THREE DECORATIVE GLYPHS, AND ONE CHIP THAT ASKED FOR IT. The glyphs are the AA badge's ✕,
+     the facet disclosure's ▸ and the contrast matrix's ✓/✕: all aria-hidden, each redundant beside
+     a number or label that says the same thing, which is what lets them be this small.
+     The EXAMPLE chip is the exception and is recorded rather than folded in. It is an informative
+     label — it marks a palette as seeded rather than yours — so AG-03's floor puts it at 11 and it
+     was there. It is at 8 by request. If the floor is ever re-argued, this is the one call site
+     that has to be looked at again; the rest of the ladder holds.
+     Everything else this token used to carry (the swatch value labels and a dozen more) is at
+     --fs-fine. */
+  --fs-nano:0.5rem;           /*  8 — decorative glyphs, and the EXAMPLE chip (see above) */
   /* ===== BUTTON GEOMETRY =====
      Three sizes. It was twelve paddings across the forty buttons that declared one, and ten of
      those sat within a pixel of a neighbour in each direction — 8px 13px beside 9px 14px beside
@@ -614,7 +633,21 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      themselves the badges ended in a ragged right edge down a list whose whole point is that its
      columns line up. The second reason recorded here — that the sort header's ⓘ read from the same
      token so the badge and its explanation shared one edge — went with the ⓘ. */
-  --row-aa-mark:35px;
+  /* 44, AND IT IS A MEASURED FIGURE, NOT A ROUND ONE. This slot is fixed rather than intrinsic so
+     the three badge states (✓ / ◐ / ✕ + AA) share one right edge down the list — see the note at
+     aaBadge. 35 was the width the content needed while the label was --fs-nano: 9px glyph + 4px gap
+     + "AA" at 8px + 12px of padding. At --fs-fine the same content measures 40px, so the glyph was
+     being pushed out of the start edge — and invisibly to scrollWidth, which only reports overflow
+     at the END edge, so the box measured "not overflowing" while the icon was visibly cut. 44 is 40
+     plus the extra 4 the padding below adds. Re-measure this if the badge's type moves again. */
+  /* THE CONTRAST PANEL'S CONTROL ROW, ONE HEIGHT. Three controls stand in that row and only two of
+     them were ever the same shape: the two segmented rails are a bordered box around a button
+     (1 + 2 + 27 + 2 + 1 = 33), while Passing only is a single bordered button and arrived at 29 from
+     its padding alone. Four pixels apart, side by side, on a row whose whole job is to look like one
+     set of controls. Stated once here and read by both, so a change to either cannot leave them
+     disagreeing again — which is what happens when a height is a coincidence of padding. */
+  --cx-control-h:33px;
+  --row-aa-mark:44px;
   --row-contrast-col:88px;    /* the maximum contrast ratio */
   --row-time-ink:100px;       /* the stamp itself — sized for the widest value the cell can hold, a
                                  same-day da-DK stamp ("14.06.26, 14.32"), which measures 100px in

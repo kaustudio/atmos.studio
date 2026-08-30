@@ -289,14 +289,31 @@ const AaBadge = ({ aa }) => (
 // current palette NAMED rather than only dotted. The square stays beside the word, so the state is
 // carried by shape as well as text and survives a greyscale render (SC 1.4.1).
 const CardIdentity = ({ c }) => (<>
-  <span style={sx('display:flex;align-items:baseline;gap:8px;min-width:0')}>
-    <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+  {/* flex:1 so this row claims the card's full content width. Without it the wrapper is a flex item
+      at its intrinsic size — 115px of a 270px row — and the chip's margin-auto below could only
+      reach the end of the NAME, which is where it already sat. An auto margin needs spare space to
+      push into, and this is what supplies it. */}
+  <span style={sx('display:flex;align-items:baseline;gap:8px;min-width:0;flex:1')}>
+    {/* -0.01em across the card's type, settled by eye: -0.04 read as crushed, -0.02 was still
+        tight. That order is what negative tracking does soonest to UPPERCASE at 11px, and half this
+        card's lines are uppercase. It is --track-title's figure, not borrowed as that token —
+        "title" would be a lie at 11px — so it stays a card-local literal.
+        Seven sites, because the card has two renderings, the engine tile and the reduced-motion
+        grid, and they must not drift. Change all seven or none. */}
+    <span style={sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
     {c.isExample && (
-      <span style={sx('flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);padding:2px 6px')}>Example</span>
+      /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
+          trailing the name. It is a STATUS, not part of the title: against the right edge it lines
+          up with the values column below it and reads down the wall of cards as its own signal,
+          where hung off the name it started at a different x on every card.
+          The name gets min-width:0 to go with it. Without that a flex item will not shrink below its
+          content, so a long name would have pushed the chip back off the edge — the ellipsis it
+          already asks for cannot fire until the item is allowed to be narrower than its text. */
+      <span style={sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:2px 6px')}>Example</span>
     )}
   </span>
   {c.current && (
-    <span style={sx('display:inline-flex;align-items:center;gap:6px;flex:none;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface)')}>
+    <span style={sx('display:inline-flex;align-items:center;gap:6px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface)')}>
       <span style={sx('width:7px;height:7px;background:var(--on-surface);flex:none')} aria-hidden="true"></span>Viewing</span>
   )}
 </>);
@@ -306,9 +323,19 @@ const CardIdentity = ({ c }) => (<>
 // it draws the same badge the list row and the detail panel draw, from the same aaReadout.
 const CardMetrics = ({ c }) => (
   <div style={c.cardMetricsStyle} aria-hidden="true">
+    {/* 4px between a label and its value, not 2. At 8-over-10 the pair was 18px of type and 2px
+        held them together; at 11-over-13 it is 24px and the same 2px read as the two lines
+        touching. The gap between PAIRS is 14 (see cardMetricsStyle), so this has to stay well under
+        it or the grouping inverts — 4 keeps the ratio near the 1:3 it had before. */}
     {c.cardMetrics.map((m, mi) => (
-      <div key={mi} style={sx('display:flex;flex-direction:column;gap:2px;min-width:0')}>
-        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.09em;text-transform:uppercase;color:#a3a39c;white-space:nowrap')}>{m.label}</span>
+      <div key={mi} style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
+        {/* THE COLOUR WAS THE DARK THEME'S, HARD-CODED, AND IT ONLY FAILED IN THE LIGHT ONE.
+            #a3a39c is --on-surface-muted's DARK value written as a literal. On a dark card it is
+            the right colour and measures 6.5:1; on the light card's #fafaf8 it measured 2.43:1 —
+            an informative label, at 8px, at barely half the contrast its own value had. The token
+            resolves per theme, which is the entire reason the token exists, and it lands at 5.5:1
+            light / 6.5:1 dark. Nothing else about the label changed except the size floor. */}
+        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
         {/* Value first, badge trailing — the opposite order to the list row, and for the reason the
             row uses its own: put the number where the eye is already reading. The row's values are
             a RIGHT-aligned numeric column, so the badge leads and the count lands on the shared
@@ -316,7 +343,12 @@ const CardMetrics = ({ c }) => (
             on one line — so a leading badge indented this one number out of that column and broke
             the only alignment the grid has. The number takes the column edge; the badge follows as
             the qualifier it is. */}
-        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
+        {/* --fs-body and tabular figures. These are the values a reader compares BETWEEN cards —
+            hue against hue, max contrast against max contrast — read across a wall of them at a
+            glance. At --fs-label they were 10px, a size the ladder reserves for uppercase labels,
+            and set in proportional digits so the same figure took a different width on every card
+            and no column of them ever lined up. */}
+        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
           <span style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
           {m.aa && <AaBadge aa={m.aa} />}
         </span>
@@ -348,8 +380,8 @@ function ValueRow({ v, showCaveat }) {
     <button type="button" data-ix="cell" data-focus="value" onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
       <span style={v.colStyle}>
         <span style={v.labelRowStyle}>
-          <span style={sx('font-family: Neue Montreal; font-size:var(--fs-nano)')}>{v.labelText}</span>
-          {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-nano); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
+          <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine)')}>{v.labelText}</span>
+          {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-fine); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
         </span>
         <span style={showCaveat ? sx('font-family: Neue Montreal; text-transform: uppercase; overflow: hidden; display: block') : sx('font-family: Neue Montreal; text-transform: uppercase; font-size:var(--fs-detail); overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
       </span>
@@ -491,7 +523,7 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
                     twice. Same division the scope chips make between their label and their count. */}
                 <span style={sx('text-transform:capitalize;font-size:var(--fs-detail)')}><TextSwap>{f.label}</TextSwap></span>
                 {isDone && (
-                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;gap:5px;flex:none;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface);white-space:nowrap')}><IconCheck /> Copied</span>
+                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;gap:5px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface);white-space:nowrap')}><IconCheck /> Copied</span>
                 )}
               </button>
               );
@@ -597,7 +629,7 @@ function MobileExampleList({ ml }) {
                   string in its own case because those rows carry no tier, so the one object read two
                   ways depending on the screen. See the [data-ix] casing block in global.css. */}
               <span data-case="own" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.traits.join(' · ')}</span>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.traits.join(' · ')}</span>
             </span>
             <span aria-hidden="true" style={sx('flex:none;display:inline-flex;color:var(--on-surface-muted);transform:rotate(-90deg)')}><IconChevron size={12} /></span>
           </button>
@@ -1373,7 +1405,11 @@ function MobileShareView({ ms }) {
 
 // Off-screen but IN the accessibility tree — the live regions' own style, and the one to reach for
 // whenever a control's spoken form has to carry a word its visible form leaves out.
-const liveRegionStyle = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+/* ONE VISUALLY-HIDDEN STYLE, for anything that must be read and not seen. It was defined once for
+   the live region and is now also what the contrast matrix's per-cell descriptions ride, so the two
+   cannot drift into two slightly different ways of hiding the same kind of text. */
+const visuallyHidden = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+const liveRegionStyle = visuallyHidden;
 
 /* Curved-wipe transition layer. Caps are transient motion shape — the one sanctioned curved
    exception; never a persistent border-radius on UI.
@@ -1441,13 +1477,23 @@ function SkipLink() {
    exposed to assistive tech and always has been — the skip link at the top of global.css exists
    because of it — and quietly making the tool inert here would be a different change wearing this
    one's clothes. */
-function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
+/* `lead` is the third flag, and like the other two it is a structural decision rather than a style
+   knob. It is a node dropped in as the FIRST child of the meta row — today the landing's "Based on
+   …" credit, and nothing else. It goes through the footer rather than standing beside it because
+   the two have to share three things that are all stated in this component's stylesheet and nowhere
+   else: the page margin, the row's own baseline, and the 700px breakpoint where the row stops being
+   a row. A sibling block would have had to restate each of them, and the first edit to any of the
+   three would have moved one and not the other.
+   Its presence is what turns the meta row from "left · centre · right" into "lead left, everything
+   else pushed right" — see .site-foot--lead in site-foot.css. Absent, this component renders and
+   behaves exactly as it did. */
+function SiteFooter({ route, onNavigate, brand = true, landmark = true, lead = null }) {
   const Root = landmark ? 'footer' : 'div';
   const link = (href, label) => (
     <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
   );
   return (
-    <Root className="site-foot">
+    <Root className={'site-foot' + (lead ? ' site-foot--lead' : '')}>
       {/* THE WORDMARK IS OPTIONAL, and the landing is the one surface that turns it off. It is a
           full-bleed masked graphic — 876x136 of ink stretched to the column — which is the right
           way to close a document you have just read to the bottom of, and the wrong thing to put
@@ -1461,6 +1507,7 @@ function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
         </div>
       )}
       <div className="site-foot__meta">
+        {lead}
         {/* One word, so inline-block costs no wrapping — the swap is safe here in a way it is not
             for a multi-word link inside running prose. */}
         <p className="site-foot__origin">A Part of <a href="https://kau.studio"><TextSwap>KauStudio</TextSwap></a></p>
@@ -1658,7 +1705,67 @@ function LandingStage({ vals, covered, quiet }) {
               its two acts off the optical centre the field is solved around. pointer-events:auto
               because the stage's own brand block is inert. */}
           <div data-land-nomark="1" style={{ ...sx('position:absolute;left:0;right:0;bottom:0;z-index:5;pointer-events:auto'), ...(quiet ? { opacity: 0 } : null) }}>
-            <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false} />
+            {/* THE CREDIT — what the field behind this is a reading of. Passed to SiteFooter as its
+                `lead` rather than rendered beside it: it is the first cell of the footer's own meta
+                row, so it stands on the page margin the rest of the row stands on, sits on the same
+                baseline, and stacks with the rest of the row below 700px — three things a sibling
+                block would have had to restate. See .site-foot--lead in site-foot.css for the row
+                it turns that grid into, and the note at SiteFooter for why the prop exists.
+
+                The landing's colour is no longer an authored wheel: it is one of the eight example
+                palettes, chosen per visit, and on a phone it is whichever one the reader last opened
+                (see the amended §8 in methods/orbit.js). An artwork made out of somebody's
+                photograph should say which photograph — and this line does a second job that no
+                other element on the front page does, which is state what the tool actually makes
+                while standing inside an example of it. The picture is here for the same reason: the
+                claim is that a palette is READ FROM AN IMAGE, and a name on its own does not show
+                that an image was involved.
+
+                IT IS A CAPTION, so it belongs at the edge of the artwork rather than under the
+                statement — put in the centred block it would enter _heroReach and open the field's
+                hole around a credit. It sits inside [data-land-nomark] for that reason too: that
+                attribute is what keeps this whole bottom band out of the measurement (see the note
+                below), and it has to keep covering the credit as well as the footer.
+
+                STACKED, PICTURE OVER WORDS, and the picture leads. Side by side, at the size a
+                footer row allows, the image was a 48px chip being read as an icon — a decoration in
+                front of a sentence rather than the thing the sentence is about. Over the line it is
+                a photograph with a caption under it, which is what this actually is, and it can then
+                take a real width: one column of the page's own grid, clamped so it stays a
+                thumbnail at both ends of the range (see .site-foot__lead-shot).
+
+                No entrance of its own. It arrives with the footer — which is to say it is simply
+                there — because the thing it describes is the field, and the field has its own
+                dissolve out of the painted floor to make. A second arrival at the bottom of the
+                screen would be competing with it.
+
+                Square corners and an INSET ring rather than a border: the house image treatment
+                (.about-shot, .about-rail__card, the phone example row), which is what stops a
+                hairline reading as dirt along the edge of a photograph. --surface-raised is the
+                ground the box holds before the file lands. The <img> is decorative — alt="" — because
+                the line under it is the content; a second reading of "Garnet" would be a screen
+                reader saying the name twice. */}
+            {/* NOT ON THE SMALL SURFACE, and that is a room argument and a redundancy one.
+                Below the supported minimum this footer stacks into four bands — origin, three
+                links, rights — and the credit would make it five, ~100px more of a screen that is
+                already centring a heading, a sentence and an act above it: measured on a 667pt
+                phone the band's top crosses the gate's own button. And it would be saying something
+                the phone has already said. A phone's front page is the story, whose hero IS the
+                palette's name and whose copy names it again two chapters later; the credit exists
+                because the WIDE landing has no other way to tell you what you are looking at. */}
+            <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false}
+              lead={(vals.landingCredit && !vals.narrow) ? (
+                <div className="site-foot__lead" data-land-credit="1">
+                  <span className="site-foot__lead-shot" aria-hidden="true">
+                    <img src={vals.landingCredit.image} alt="" decoding="async" fetchPriority="low" />
+                  </span>
+                  {/* The footer's own meta voice — 12px, flat tracking — inherited rather than
+                      restated: this is one row of one component and should not carry a second
+                      register of type. The name takes full ink and the preposition does not; the
+                      palette is the information here and "Based on" is the grammar around it. */}
+                  <p className="site-foot__lead-line">Based on <span>{vals.landingCredit.name}</span></p>
+                </div>
+              ) : null} />
           </div>
         </div>
   );
@@ -2065,9 +2172,9 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('width:380px;display:flex;flex-direction:column;gap:12px')}>
               <div style={sx('display:flex;justify-content:space-between;align-items:center')}>
-                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
+                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
                   <span style={sx('width:7px;height:7px;background:var(--on-surface);animation:blink 1.5s ease infinite')} aria-hidden="true"></span>{vals.procStatus}</span>
-                <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); color: var(--on-surface-muted)')}>OKLCH</span>
+                <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); color: var(--on-surface-muted)')}>OKLCH</span>
               </div>
               <div style={sx('height:2px;width:100%;background:var(--line);position:relative')}>
                 {/* Full width, drawn by scaleX from the left edge — the loader's bar primitive, not a
@@ -2230,7 +2337,7 @@ export default function AppView({ vals }) {
               <span data-meta-line="1" aria-hidden="true" style={sx('display:block;flex:none;width:100%;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
                 <div key={gi} style={sx('flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column')}>
-                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
+                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>
                     {g.rows.map((m, mi) => (
@@ -2244,7 +2351,7 @@ export default function AppView({ vals }) {
                             align-items:baseline on the wrapper, so the badge's own word sits on the
                             same line as the value it qualifies rather than floating beside it. */}
                         <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
                             <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')}>{m.value}</span>
@@ -2265,7 +2372,7 @@ export default function AppView({ vals }) {
                 {vals.result.hasRef && vals.result.refImageNode}
                 {vals.result.noRef && (
                   <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
                   </div>
                 )}
               </div>
@@ -2613,7 +2720,7 @@ function FeedSection({ vals }) {
             a figure that lifts and re-enters on hover reads as the number CHANGING, which is the
             one thing it must never appear to do. The glyph names the surface, the number names what
             filtering is holding back, and they are two facts that change on different occasions. */}
-        <TextSwap><IconList size={12} /></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+        <TextSwap><IconList size={12} /></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
       </button>
       </div>
       {/* HOW the section is drawn, on the row with the controls that decide WHAT it holds. It sat
@@ -2670,7 +2777,7 @@ function FeedSection({ vals }) {
           group order — each removable on its own, so a narrowing can be undone from either end. */}
       {vals.appliedTags.map((t) => (
         <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
-          {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-micro)' }}>✕</span>
+          {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-fine)' }}>✕</span>
         </button>
       ))}
       {/* No aria-label: the visible text is the accessible name, so label-in-name (SC 2.5.3) can
@@ -2793,7 +2900,7 @@ function FeedSection({ vals }) {
                 grid padding puts its text edge exactly where the strip below begins — so the line
                 it must state is already stated by its text. Boxing it would push the word 6px off
                 that line. Each column aligns by the rule its content needs. */}
-            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
+            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -2888,14 +2995,14 @@ function FeedSection({ vals }) {
                       leads with, so the demotion is a size step and never a fade. */}
                   <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);flex:none")}>{c.name}</span>
                   {c.isExample && (
-                    <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); padding: 2px 6px')}>Example</span>
+                    <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); border-radius:var(--radius-pill); padding: 2px 6px')}>Example</span>
                   )}
                   {/* "Viewing" sits with the name and the Example chip — the labels that say what
                       this palette IS — and, structurally, it has to sit before the flexible column:
                       appearing on the right would push the metric columns left on whichever row was
                       selected, and a column that moves for one row is not a column. */}
                   {c.current && (
-                    <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
+                    <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
                       <span style={sx('width:7px;height:7px;background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
                   )}
                   {/* THE TRAIT TAGS ARE GONE FROM THE ROW, and the flexible child stays. It was
@@ -2971,10 +3078,11 @@ function FeedSection({ vals }) {
           <nav aria-label="Palette list pages" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
             {vals.showPageSize ? (
               <div role="group" aria-label="Palettes per page" style={sx('display:flex;align-items:center;gap:10px')}>
-                {/* Sentence case, --fs-detail: the footer is the same section's chrome as the two
-                    control bands at its top, and a region that changes voice halfway down reads as
-                    two regions. See the chipStyle note in renderVals. */}
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Per page</span>
+                {/* The words "Per page" stood here and are gone by request. The control is three
+                    numbers in a segmented rail, which is legible as a page size without being told
+                    so — and the group's own aria-label ("Palettes per page", on the wrapper above)
+                    is what a screen reader reads, so removing the visible text costs the accessible
+                    name nothing. */}
                 <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
                   <span aria-hidden="true" style={vals.pageTogglePill}></span>
                   {vals.pageSizeOptions.map((o) => (
@@ -2985,9 +3093,18 @@ function FeedSection({ vals }) {
             ) : <span></span>}
             {vals.showPager && (
               <div style={sx('display:flex;align-items:center;gap:10px')}>
-                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}><TextSwap>Prev</TextSwap></button>
-                <span aria-live="polite" style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>{vals.pageLabel}</span>
-                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}><TextSwap>Next</TextSwap></button>
+                {/* The same chevron pair the project rail steps on, rotated the same way — one
+                    direction control, one glyph, on both rows. aria-label already carried the words,
+                    so nothing is lost to a screen reader by dropping them from the face. */}
+                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(90deg)')}><IconChevron size={12} /></span></button>
+                {/* The figure twice: seen as "1/2", heard as "Page 1 of 2". The live region is the
+                    hidden one — it is a stable element whose text changes, which is what makes a
+                    polite announcement reliable, and it says the sentence rather than the slash. */}
+                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>
+                  <span aria-hidden="true">{vals.pageLabel}</span>
+                  <span aria-live="polite" style={visuallyHidden}>{vals.pageLabelSpoken}</span>
+                </span>
+                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(-90deg)')}><IconChevron size={12} /></span></button>
               </div>
             )}
           </nav>
@@ -3008,14 +3125,14 @@ function FeedSection({ vals }) {
                         <span style={c.heroFadeStyle}></span>
                       </div>
                       <div data-pbase="1" style={c.pbaseStyle}>
-                        <div data-strip="1" style={sx('display:flex;height:46px;width:100%')} aria-hidden="true">
+                        <div data-strip="1" style={sx('display:flex;height:46px;flex:none;width:100%')} aria-hidden="true">
                           {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
                         </div>
                         <div style={sx('padding:12px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
                           <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                             <CardIdentity c={c} />
                           </div>
-                          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
+                          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
                         </div>
                         <CardMetrics c={c} />
                       </div>
@@ -3037,14 +3154,14 @@ function FeedSection({ vals }) {
                       {c.hasImage && (<span aria-hidden="true" style={c.imgStyle}></span>)}
                       {c.noImage && (<span style={c.heroFallback}></span>)}
                     </div>
-                    <div data-strip="1" style={sx('display:flex;height:46px;width:100%')} aria-hidden="true">
+                    <div data-strip="1" style={sx('display:flex;height:46px;flex:none;width:100%')} aria-hidden="true">
                       {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
                     </div>
                     <div style={sx('padding:12px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
                       <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                         <CardIdentity c={c} />
                       </div>
-                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
+                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
                     </div>
                     <CardMetrics c={c} />
                   </button>
@@ -3142,26 +3259,30 @@ function ContrastDrawer({ vals }) {
               because a rule scoped to the drawer uses it to put those two back into caps, and a
               shared name would have carried that voice in here. Same object, same corner, stated in
               global.css beside the tabs' entry. */}
-          <div data-cx-cell="lens" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="WCAG level">
+          <div data-cx-cell="lens" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);height:var(--cx-control-h);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="WCAG level">
             <span aria-hidden="true" style={contrast.lensPill}></span>
             <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAA} aria-pressed={contrast.aaPressed} style={contrast.aaStyle}><TextSwap>AA</TextSwap></button>
             <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAAA} aria-pressed={contrast.aaaPressed} style={contrast.aaaStyle}><TextSwap>AAA</TextSwap></button>
           </div>
-          <div data-cx-cell="size" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="Text size">
+          <div data-cx-cell="size" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);height:var(--cx-control-h);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="Text size">
             <span aria-hidden="true" style={contrast.sizePill}></span>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal</TextSwap></button>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal text</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large text</TextSwap></button>
           </div>
           <button type="button" data-cx-cell="filter" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}><TextSwap>{contrast.passLabel}</TextSwap></button>
         </div>
 
         <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px var(--page-gutter) 0')}>
-          <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.aa} of {contrast.total} pairs pass {contrast.lensLabel}</span>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted)')}>min {contrast.threshold}:1</span>
+          {/* Both halves are composed in renderVals against the SAME threshold the cells are graded
+              on, so the sentence, the minimum and the matrix cannot report different criteria — which
+              is exactly what they did while this line interpolated an AA-only count next to a level
+              the reader had changed. */}
+          <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
         </div>
 
         <div data-cx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
+          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
           <div style={contrast.matrixColsStyle}>
             {contrast.rows.map((row, ri) => (
               <div key={ri} style={sx('display:flex;align-items:stretch')}>
@@ -3193,8 +3314,13 @@ function ContrastDrawer({ vals }) {
                   </div>
                   {row.cells.map((cell, ci) => (
                     <div key={ci} data-cx-cell={cell.key} style={cell.style}>
-                      <span style={cell.numStyle}>{cell.ratio}</span>
+                      {/* The ratio joins the glyph behind aria-hidden and the whole statement is
+                          carried by the hidden span below it. Read aloud, the visible pair was the
+                          number alone: "10.3", with the two colours it compares in a header several
+                          rows back and the verdict in a glyph screen readers are told to skip. */}
+                      <span aria-hidden="true" style={cell.numStyle}>{cell.ratio}</span>
                       <span data-cx-mark="1" aria-hidden="true" style={cell.glyphStyle}>{cell.glyph}</span>
+                      {cell.aria && <span style={visuallyHidden}>{cell.aria}</span>}
                     </div>
                   ))}
                 </>)}
@@ -3204,7 +3330,7 @@ function ContrastDrawer({ vals }) {
         </div>
 
         <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
+          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
               <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
@@ -3217,7 +3343,7 @@ function ContrastDrawer({ vals }) {
 
         <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 26px')}>
           <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
-            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-micro); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
+            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
           </div>
           <div data-cx-sample="1" data-cx-cell="sample" style={contrast.sampleStyle}>The quick brown fox jumps over the lazy dog</div>
@@ -3515,7 +3641,7 @@ function LibraryDrawer({ vals }) {
                 coverage" named the measurement, which made the group read as a compliance report.
                 Text usability names the QUESTION the group answers — can I set type in this — which
                 is why anyone opens it. */}
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Text usability</span>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Text usability</span>
             <div role="group" aria-label="Filter by text usability" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {vals.a11yOptions.map((o) => (
                 <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
@@ -3529,7 +3655,7 @@ function LibraryDrawer({ vals }) {
                       margin-inline-start:auto sends it to the row's trailing edge, tabular-nums
                       keeps the digits on one grid, and the row's own --btn-pad-lg puts every number
                       on the same 16px inset the rest of the panel uses. */}
-                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                   {/* A fourth span stood here on all three facet lists, right-aligned and holding
                       o.reason — "Every palette here" — whenever an option was disabled. Removed by
                       request. It was also the row's flex spacer at flex:1, and nothing takes that
@@ -3560,13 +3686,13 @@ function LibraryDrawer({ vals }) {
             else. A dimension owns its domain words. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
           <div key={g.id} data-tg-sec="1" style={sx('padding:14px calc(var(--page-gutter) - 12px) 0')}>
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
+            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
             <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {g.options.map((o) => (
                 <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
                   <FacetMark active={o.active} unavailable={o.disabled} />
                   <span style={measuredLabelStyle}>{o.label}</span>
-                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
             </div>
@@ -3635,7 +3761,7 @@ function LibraryDrawer({ vals }) {
                   them and none of them line up. What made the old right-hand column wrong was the
                   150px colour strip that used to sit between the name and its number; the strip is
                   gone, so the column is just a column. */}
-              <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-micro);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+              <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
               {/* Checkbox, label, count — the same three things every facet row now shows. An
                   exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
                   standing in for a whole tag, which invited the reader to generalise from it, and
@@ -3760,7 +3886,7 @@ function LibraryDrawer({ vals }) {
                     name is a quantity of nothing in particular, and aria-label on a span with no
                     role is not reliably read — so the description this field points at carries the
                     whole sentence as real text, and only the digits are visible. */}
-                <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
+                <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
                   <span aria-hidden="true">{pr.count}</span>
                   <span style={liveRegionStyle}>{pr.countAria}</span>
                 </span>
@@ -3848,7 +3974,7 @@ function HarmonyDrawer({ vals }) {
                 <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
                   {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
                 </span>
-                <span style={sx('text-transform: uppercase; font-size:var(--fs-micro); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
+                <span style={sx('text-transform: uppercase; font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
               </HBtn>
             ))}
           </div>
@@ -3977,7 +4103,7 @@ function RecogniseDialog({ vals }) {
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
             {r.strip.map((b, i) => (<span key={i} style={b.style}></span>))}
           </span>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
         </div>
         <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
           <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}><TextSwap>Open existing palette</TextSwap></button>
@@ -4117,7 +4243,7 @@ function RestoreDialog({ vals }) {
             {r.rows.map((m, mi) => (
               <div key={mi}>
                 <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                  <dt style={sx('font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                  <dt style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                   <dd style={sx('margin:0;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;font-variant-numeric:tabular-nums')}>{m.value}</dd>
                 </div>
                 <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>

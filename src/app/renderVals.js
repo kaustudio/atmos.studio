@@ -80,18 +80,39 @@ const A11Y_SPOKEN = {
 // badge widths and a ragged right edge. Fixed slot + flex-end = one edge, which the list header's ⓘ
 // reads from the same token — so badge and marker align exactly the way the pair count aligns
 // under AA PAIRS and the ratio under MAX CONTRAST.
-const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flex: 'none', width: 'var(--row-aa-mark)', padding: '2px 6px', fontFamily: MONO, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
+const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px', flex: 'none', width: 'var(--row-aa-mark)', padding: '3px 8px', fontFamily: MONO, fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-label)', textTransform: 'uppercase', fontWeight: 500, background: 'var(--status-' + st + '-surface)', color: 'var(--status-' + st + '-ink)', border: '1px solid var(--status-' + st + '-line)' });
 // What every surface renders: the verdict, then the count. No denominator in the VALUE — it is
 // C(n,2), a number nobody reasons in, and repeating it implied a compliance percentage. It is
 // stated once in the list header's ⓘ, and again in the title of every badge, everywhere.
+/* THE SELECTED CRITERION, SAID ONE WAY. "AA" alone is not a threshold — WCAG sets four, one per
+   level and text size — so every surface that reports a pass has to name both halves or it is
+   reporting against a number the reader cannot see. This builds the phrase the summary, the matrix
+   cells and the badge tooltip all end with, so the three can never describe the same measurement
+   differently. Sentence-cased for mid-sentence use; the callers supply the capital. */
+const CRITERION = (level, large) => level + ' contrast for ' + (large ? 'large' : 'normal') + ' text';
+
 const aaReadout = (met) => ({
   aaState: met.aaState,
   aaBadgeStyle: aaBadge(met.aaState),
-  // The verdict and its definition, then THIS palette's exact figure. The definition is about the
-  // band ("3 or more"); the parenthetical is about the palette in hand, which is the one thing the
-  // band cannot tell you and the reason the count still earns its place here.
-  aaBadgeTitle: A11Y_TITLE[met.aaState] + ' (' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs at 4.5:1)',
-  aaValueText: String(met.aaPairs),
+  /* THE MEASUREMENT, AND NOT THE CLASSIFICATION IT USED TO LEAD WITH. This read
+     "Text-Ready: 3 or more colour pairs meet WCAG AA for normal text (3 of 10 colour pairs at
+     4.5:1)" — a band name, the band's definition, and only then the palette in hand. The band name
+     is a claim about the whole palette ("this one is text-ready") that the number underneath it
+     does not support: three usable pairs out of ten is a fact about three pairs, not a property of
+     the palette. A reader who took the badge at its word would be choosing type colours the badge
+     never measured.
+     So the parenthetical becomes the whole sentence. It states the count, the denominator, the
+     level, the text size the level is for, and the ratio that level requires — every term the
+     reader needs to check it, and no term that generalises past what was measured.
+     A11Y_TITLE and A11Y_LABEL are still the filter taxonomy's names (see the note at the top of
+     this file); this readout no longer borrows them. */
+  aaBadgeTitle: met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet ' + CRITERION('AA', false) + ' (4.5:1).',
+  /* WITH ITS DENOMINATOR. It was the bare count, on the argument that C(n,2) is a number nobody
+     reasons in and that repeating it implied a compliance percentage. Both halves of that were
+     wrong the moment the label stopped saying how many pairs there are: "3" beside "AA text pairs"
+     is a quantity with no scale, and a reader cannot tell 3 of 10 from 3 of 45. The denominator is
+     the scale, and it is the only thing that makes the numerator mean anything. */
+  aaValueText: met.aaPairs + '/' + met.totalPairs,
 });
 
 // A slider track drawn as its own axis. n evenly spaced samples through a colour function, emitted
@@ -142,13 +163,33 @@ export const renderValsMethods = {
         const sw = cp.swatches, N = sw.length, aaa = s.contrastLens === 'AAA';
         const th = s.contrastLarge ? (aaa ? 4.5 : 3) : (aaa ? 7 : 4.5);
         const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', border: '1px solid color-mix(in srgb, var(--on-surface) 20%, transparent)' } });
+        /* THE SUMMARY USED TO ANSWER A QUESTION NOBODY HAD ASKED. It read `summary.aa` from
+           contrastSummary(), which counts pairs at a hard-coded 4.5 — the AA/normal threshold — so
+           selecting AAA moved the matrix, moved the minimum, and left the sentence above them both
+           reporting the AA count. At AAA + normal the panel showed one passing pair, "min 7:1", and
+           "3 of 10 pairs pass AAA" in the same eyeful. contrastSummary is right for what it is used
+           for elsewhere (the palette's AA metric, which is defined at 4.5), so it is left alone and
+           the panel counts its own pairs at its own threshold — the same `th` the cells are graded
+           against, one line down, which is what makes the two incapable of disagreeing. */
+        const criterion = CRITERION(aaa ? 'AAA' : 'AA', s.contrastLarge);
+        let passCount = 0, pairTotal = 0;
         const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map(chip) }];
         sw.forEach((rb, i) => {
           const cells = sw.map((cb, j) => {
             if (j >= i) return { blank: true, key: '', ratio: '', glyph: '', numStyle: {}, glyphStyle: {}, style: { flex: 1, minWidth: 0, height: '34px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)' } };
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
+            pairTotal++; if (pass) passCount++;
             return {
               blank: false, key: i + '-' + j, pass, ratio: r.toFixed(1), glyph: pass ? '✓' : '✕',
+              /* EACH CELL SAYS WHAT IT MEASURED. Visually a cell is legible from its row and column
+                 chips; read aloud it was the bare number "10.3", with the two colours it compares
+                 sitting in a header the reader passed several rows ago and a verdict carried only by
+                 an aria-hidden glyph. So the cell carries the whole statement — both hex values, the
+                 ratio, and whether it meets the criterion currently selected — and the number and
+                 glyph go aria-hidden so it is said once rather than twice. It is rebuilt on every
+                 render, so switching level or text size rewrites every description with it. */
+              aria: rb.hex.toUpperCase() + ' and ' + cb.hex.toUpperCase() + '. Contrast ratio '
+                + r.toFixed(1) + ' to 1. ' + (pass ? 'Meets ' : 'Does not meet ') + criterion + '.',
               style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent', opacity: dim ? 0.22 : 1 },
               numStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', lineHeight: 1, color: 'var(--on-surface)' },
               glyphStyle: { fontSize: 'var(--fs-nano)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)' },
@@ -172,8 +213,15 @@ export const renderValsMethods = {
         const bp = this.paletteMetrics(cp).bestPair;
         const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
-        const segOn = { fontFamily: sans, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { fontFamily: sans, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        /* PASSING ONLY IS THE ROW'S ODD CONTROL, and it stays that way on purpose — it is a filter
+           that is on or off, not one of a pair, so it keeps the bordered treatment that says so (see
+           the rail note below). What it should NOT keep is a different height and a different type
+           size from the two rails beside it. --fs-label rather than --fs-fine: this is a control, and
+           10 is the size every other button label in the app is set at. --cx-control-h with flex
+           centring rather than tuned padding: at 10px the padding alone builds a 28px box, and
+           chasing 33 with a half-pixel of padding is how two controls end up almost aligned. */
+        const segOn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
+        const segOff = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
         /* THE TWO PAIRS BECOME RAILS, the same object as the library panel's tabs and the feed's
            List / Grid / 3D: one bordered box, a travelling --on-surface pill inside it, and two
            transparent buttons over the top. They were two adjacent bordered buttons with the
@@ -191,10 +239,14 @@ export const renderValsMethods = {
           transform: 'translateX(' + (second ? 100 : 0) + '%)', background: 'var(--on-surface)',
           transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)',
         });
-        const segBtn = (active) => this.viewToggleOptStyle(active, { fontSize: 'var(--fs-micro)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' });
+        const segBtn = (active) => this.viewToggleOptStyle(active, { fontSize: 'var(--fs-fine)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' });
         cx = {
           lensPill: segPill(aaa), sizePill: segPill(s.contrastLarge),
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
+          // Both lines of the summary, composed here so the view holds no arithmetic and no grammar.
+          summaryText: passCount + ' of ' + pairTotal + ' pairs meet ' + criterion,
+          minText: 'Minimum ' + th.toFixed(th % 1 ? 1 : 0) + ':1',
+          criterion, passCount, pairTotal,
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
           rows, textOn,
@@ -240,8 +292,8 @@ export const renderValsMethods = {
             rowStyle: rowBase, rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
-            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
+            labelStyle: this.monoLabel('var(--fs-fine)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
+            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
             valueStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
@@ -312,7 +364,7 @@ export const renderValsMethods = {
           // stating a raw fraction while the row two sections down led with ✓ AA.
           title: 'Accessibility', rows: [
             { label: 'Max contrast', value: curMet.contrastMax.toFixed(1) + ':1' },
-            { label: 'AA pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
+            { label: 'AA text pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
           ],
         },
         {
@@ -387,8 +439,8 @@ export const renderValsMethods = {
     // badge shows, and the figure is what the badge cannot.
     const itemAria = (p, met) => 'Open ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ')
       + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase()
-      + '. Text usability: ' + A11Y_SPOKEN[met.aaState] + ', ' + met.aaPairs + ' of ' + met.totalPairs
-      + ' colour pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
+      + '. ' + met.aaPairs + ' of ' + met.totalPairs
+      + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
       + '. Generated ' + this.relTime(p.time) + (p.id === curId ? '. Currently viewing' : '');
 
     // --- LIST view: canonical, one row each, keyboard-navigable ---
@@ -434,8 +486,15 @@ export const renderValsMethods = {
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
-    const metricValue = { minWidth: '2ch', textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'end', paddingRight: '0', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    /* THE THREE COMPARED COLUMNS READ AT 12. AA pairs, max contrast and the date are not labels —
+       they are the figures the list exists to be sorted and scanned by, read DOWN a column across
+       every row on the page. They sat at --fs-label (10) and --fs-fine (11), sizes this ladder
+       reserves for the words that NAME a value, so the name and the number were the same weight of
+       thing. --fs-detail is the first rung above the label floor and the size the ticket's baseline
+       asks of a compared value. All three keep tabular-nums, which is what makes a column of them
+       line up at any size. */
+    const metricValue = { minWidth: '2ch', textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'end', paddingRight: '0', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     // The same inset as its neighbours — the difference is what it is measured against. For them
     // it is space before the next column; for this one there is no next column, so it pairs with
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
@@ -446,7 +505,7 @@ export const renderValsMethods = {
     // which is exactly how the value ended up flush while the header sat inset.
     // No private inset any more: the row grid's own --row-inset padding is the 16px this cell used
     // to carry itself, back when it was the only edge of the row that kept one.
-    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
@@ -482,7 +541,7 @@ export const renderValsMethods = {
         // row's 24px content box, so --row-list-height is untouched.
         // 24px floor: WCAG 2.5.8's AA target baseline. The chip was 18px tall, and it repeats
       // thirty-odd times down a list, so it was the app's most-repeated undersized target.
-      tagBtnBase: { position: 'relative', zIndex: 2, minHeight: '24px', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: 'var(--btn-pad-chip)', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
+      tagBtnBase: { position: 'relative', zIndex: 2, minHeight: '24px', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: 'var(--btn-pad-chip)', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
         // the row's one main action, stretched over the whole row: focus tints the row it covers
         onHitFocus: (e) => this.rowTintOn(e.currentTarget.closest('[data-row]')),
         onHitBlur: (e) => this.rowTintOff(e.currentTarget.closest('[data-row]')),
@@ -495,7 +554,7 @@ export const renderValsMethods = {
         // each column carries ONLY its own measurement: pairs here, ratio there
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
         aaCell, metricValue, contrastCell, timeCell,
-        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. Text usability: ' + A11Y_SPOKEN[met.aaState] + ', ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs reach 4.5 to 1, maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
+        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
         deleteAria: 'Delete ' + p.name,
@@ -542,7 +601,7 @@ export const renderValsMethods = {
         { label: 'Max contrast', text: met.contrastMax.toFixed(1) + ':1' },
         // the one metric carrying a verdict as well as a number — badge from the shared readout,
         // so the card says exactly what the row and the detail panel say
-        { label: 'AA pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
+        { label: 'AA text pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
         { label: 'Archetype', text: met.mood },
         // Eighth entry, and the one that squares the 2-column grid off at four full rows: the list
         // row ends on a date and the card had none, so the same palette was datable in one view and
@@ -569,7 +628,16 @@ export const renderValsMethods = {
         heroFallback: { position: 'absolute', inset: '0', background: 'linear-gradient(135deg, ' + stops + ')', backgroundSize: '220% 220%', animation: this._reduce ? 'none' : 'gradient-drift ' + (10 + (idx % 4)) + 's ease-in-out infinite', animationDelay: (idx * -2.1) + 's' },
         imgStyle: { width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center' },
         heroFadeStyle: { display: 'none' },
-        pbaseStyle: { position: 'absolute', left: '0', right: '0', top: (HERO - 16) + 'px', height: (UTH - HERO + 38) + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', display: 'flex', flexDirection: 'column', boxShadow: '0 0px 0px rgba(0,0,0,0)', zIndex: 1, willChange: 'transform', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)') },
+        /* THE PANEL'S BOTTOM IS THE CARD'S FOOT, and this formula did not put it there. It read
+           `UTH - HERO + 38`, which lands the panel's bottom edge at (HERO-16) + UTH - HERO + 38 =
+           UTH + 22 — twenty-two pixels PAST the card, at every card height there has ever been. The
+           overshoot is a constant, so raising UNIVERSE_TILE.H moved the panel down exactly as far as
+           it moved the floor and the content stayed cut. That is why the first attempt at this
+           changed nothing.
+           +2 puts it 14px short of the bottom instead: (HERO-16) + (UTH - HERO + 2) = UTH - 14, and
+           14 is the foot universeTile.js names — the same inset the metrics keep left and right, so
+           the readout sits in an even frame. Change the foot here and there together. */
+        pbaseStyle: { position: 'absolute', left: '0', right: '0', top: (HERO - 16) + 'px', height: (UTH - HERO + 2) + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', display: 'flex', flexDirection: 'column', boxShadow: '0 0px 0px rgba(0,0,0,0)', zIndex: 1, willChange: 'transform', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)') },
         // The block keeps its 8px rows: it was briefly tightened to 6 to stop the AA badge (taller
         // than a plain-text row) pushing the last row past the tile's bottom edge, but that was
         // treating a sizing problem as a spacing problem — the card was simply a row's worth too
@@ -579,7 +647,12 @@ export const renderValsMethods = {
         // of air to the left and right, 3px underneath. It now sits in an even frame. On the
         // engine tile the card is a fixed height and this padding is what that height reserves; on
         // the reduced-motion card, which grows to its content, this padding IS the foot.
-        cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', padding: '12px ' + UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px' },
+        // ROOM TO BREATHE AT THE NEW SIZE. The 8px row gap was set when a row was an 8px label over a
+        // 10px value — 18px of type. At 11 over 13 the pair is 24px tall and the gap between rows
+        // read as tighter than the gap inside one, which inverts the grouping: a label started
+        // belonging to the value above it. 14px row gap restores the ratio, and the block's top
+        // padding matches the inset the sides already keep.
+        cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px', padding: UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px' },
         ringStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 3 },
         strip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
@@ -615,8 +688,8 @@ export const renderValsMethods = {
             rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
-            labelStyle: this.monoLabel('var(--fs-nano)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
+            labelStyle: this.monoLabel('var(--fs-fine)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
+            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
             valueStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
@@ -701,8 +774,8 @@ export const renderValsMethods = {
           hover: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
           // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
           // colour the harmony can produce rather than on most of them.
-          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: '.08em', textTransform: 'uppercase', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '1px 5px', whiteSpace: 'nowrap' },
-          hexStyle: { fontFamily: sans, fontSize: 'var(--fs-micro)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
+          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.08em', textTransform: 'uppercase', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '1px 5px', whiteSpace: 'nowrap' },
+          hexStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
         };
       });
       const mappedCount = active.cells.filter((c) => c.mapped).length;
@@ -760,7 +833,7 @@ export const renderValsMethods = {
       const pals = pid ? this.projectPalettes(pid) : [p];
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
-const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
         kicker: pid ? 'Export project' : 'Export tokens',
@@ -825,7 +898,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     // by SIZE alone (12 → 9), which was already doing the work.
     // flex:none so the ellipsis eats the NAME and never the number: a scope chip whose count has
     // been truncated away is a chip that has stopped saying the one thing only it can say.
-    const countStyle = (active) => ({ fontFamily: sans, fontSize: 'var(--fs-micro)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', flex: 'none' });
+    const countStyle = (active) => ({ fontFamily: sans, fontSize: 'var(--fs-fine)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', flex: 'none' });
     /* NATIVE FOCUS, LEFT ALONE — and that is the whole point of this handler being a recorder
        rather than a preventDefault.
 
@@ -1114,7 +1187,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           key: String(id), label, current: cur, checked: cur ? 'true' : 'false',
           markStyle: {
             display: 'inline-flex', alignItems: 'center', gap: '5px', flex: 'none',
-            fontFamily: 'Neue Montreal', fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)',
+            fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)',
             textTransform: 'uppercase', color: 'var(--on-surface)',
             opacity: cur ? 1 : 0, transform: cur ? 'translateX(0)' : 'translateX(4px)',
             transition: this._reduce ? 'none' : 'opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)',
@@ -1623,6 +1696,28 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // the landing surface doubles as the small-screen surface — on phones it is always up, with
       // the gate copy in place of the statement + CTA (the tool needs room a phone hasn't got)
       showLanding: this._landingUp(), narrow: s.narrow,
+      /* WHAT THE FIELD IS A READING OF. The landing's colour is no longer an authored wheel — it is
+         one of the eight examples, chosen per visit and re-chosen when a phone reader opens one (see
+         the amended §8 in methods/orbit.js). An artwork made out of somebody's photograph should say
+         whose, and this one has a second job: it is the only thing on the front page that states
+         what the tool actually does, in the same breath as showing it.
+         Resolved through the same two sources orbit.js picks from, so the id can never name a
+         palette the credit cannot draw — the live archive first, the seed table as the floor.
+         `image` resolves through exampleUrl, which only ever returns one of our own bundled assets:
+         no string out of storage or off a share link can reach an <img src> (see pipeline.js's H1).
+         null whenever there is nothing to credit, and the block is not rendered. */
+      landingCredit: (() => {
+        /* Gated on the stage being in the document, not just on the id. killOrbit deliberately
+           leaves state.fieldPalId set (it must not touch state — it is on the unmount path), so
+           after getStarted the id stays non-null for the rest of the session and the `!id` guard
+           below never short-circuits again: every render of the tool — every keystroke, every hover
+           — would filter the whole archive and build an object nothing renders. */
+        const id = s.fieldPalId; if (!id || !this._landingUp()) return null;
+        const pool = (s.feed || []).filter((p) => p.example === true);
+        const p = (pool.length ? pool : (this._seedPool || [])).find((x) => x.id === id);
+        const image = p ? this.exampleUrl(p) : '';
+        return p && image ? { name: p.name, image } : null;
+      })(),
       showLoader: s.showLoader,
       landingBlend: s.theme === 'dark' ? 'screen' : 'multiply',
       getStarted: () => this.getStarted(),
@@ -1740,7 +1835,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // arrival of a panel that did not change.
         onClick: () => { if (libTab !== t.key) this.setLibraryTab(t.key); },
         style: this.viewToggleOptStyle(libTab === t.key, { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }),
-        countStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-micro)', letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: libTab === t.key ? 'var(--surface)' : 'var(--on-surface-muted)' },
+        countStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: libTab === t.key ? 'var(--surface)' : 'var(--on-surface-muted)' },
       })),
       // Left/Right across the pair, the same two lines the feed's view toggle takes: a segmented
       // control is one control, and walking it with the arrows is what makes it one to a keyboard
@@ -2058,9 +2153,14 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         this.setPageSize(next);
         const btns = [...document.querySelectorAll('[data-toggle-init] [data-toggle-btn]')]; const nb = btns[sizes.indexOf(next)]; if (nb) nb.focus();
       },
-      // "of", not "/". The same word the result summary above uses for the same relationship —
-      // a position inside a total — so the section states it one way rather than two.
-      pageLabel: 'Page ' + (page + 1) + ' of ' + pageCount,
+      /* TWO FORMS OF ONE FACT, and they are different on purpose. The face reads "1/2" by request:
+         beside two chevrons it is a position, and the words that used to be here were repeating a
+         relationship the glyphs already state. The SPOKEN form keeps the sentence, because a slash
+         is a typographic mark and not a word — "1/2" reaches a screen reader as "one slash two", or
+         as "one half", depending on the reader. So the visible string is aria-hidden and the live
+         region carries pageLabelSpoken instead; see the pager in AppView. */
+      pageLabel: (page + 1) + '/' + pageCount,
+      pageLabelSpoken: 'Page ' + (page + 1) + ' of ' + pageCount,
       prevDisabled: page <= 0, nextDisabled: page >= pageCount - 1,
       prevPage: () => this.setPage(page - 1), nextPage: () => this.setPage(page + 1),
       prevStyle: this.pageNavStyle(page <= 0), nextStyle: this.pageNavStyle(page >= pageCount - 1),
@@ -2081,7 +2181,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // Sentence case, like every other control: these were Title Case while a transform was
         // uppercasing them and the source case never showed. "AA" stays capital because it is the
         // WCAG level, not a word.
-        { key: 'aa', label: 'AA pairs' },
+        { key: 'aa', label: 'AA text pairs' },
         { key: 'contrast', label: 'Max contrast' },
         // "Date" named the type of the value, not the event. Created, because that is what the
         // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
@@ -2123,7 +2223,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
-          style: this.monoLabel('var(--fs-micro)', 'var(--track-flat)', {
+          style: this.monoLabel('var(--fs-fine)', 'var(--track-flat)', {
             // A CHIP, NOT A COLUMN. It hugs its label with the same padding on all four sides and
             // sits at its track's end, so the BOX lands on the column line and the label is centred
             // inside it. Filling the whole track was tried and removed: a tint one column wide

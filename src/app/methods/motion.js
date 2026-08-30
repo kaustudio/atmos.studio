@@ -187,8 +187,24 @@ export const motionMethods = {
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
   // plus aria-pressed), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-micro)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
-  pageNavStyle(disabled) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', cursor: disabled ? 'default' : 'pointer', border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)', opacity: disabled ? 0.35 : 1 }); },
+  toggleStyle(active) { return this.monoLabel('var(--fs-fine)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
+  /* THE PAGER STEPS ON A CHEVRON NOW, so this stopped being a label style. It was monoLabel with
+     --btn-pad-sm, which is the right box for the words "Prev" and "Next" and the wrong one for a
+     glyph: padding sizes a box around TEXT, and a chevron has no width of its own to pad — the same
+     reasoning projStepStyle below already records for the project rail's pair, which this now
+     matches. A fixed 30 square plus --radius-pill is a circle, which is what "full radius" means on
+     a control whose content is one mark.
+     opacity STAYS here where projStepStyle deliberately omits it: these two keep their hairline, so
+     the disabled state has an edge to fade as well as a glyph, and 0.35 is the figure this pager has
+     always used. */
+  pageNavStyle(disabled) {
+    return {
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
+      width: '30px', height: '30px', padding: '0', borderRadius: 'var(--radius-pill)',
+      border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)',
+      cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.35 : 1,
+    };
+  },
   // The project rail's step buttons, beside pageNavStyle because they are the same idea one row up:
   // a direction you can go, or one you currently cannot. Square by construction — a fixed 30px
   // rather than padding, because a chevron has no width of its own to pad — and borderless, since

@@ -390,7 +390,7 @@
 }
 .about-key__hex,.about-key__pct{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   font-variant-numeric:tabular-nums;
 }
 /* THE HEX AND ITS COORDINATES READ AT 11, AND THEY SHARE ONE DECLARATION BECAUSE THEY ARE ONE
@@ -408,7 +408,7 @@
    IT HOLDS AT EVERY WIDTH. The ≤560 block used to step the hex to --fs-label and the triplet to
    --fs-micro; both overrides are gone, because the argument for 11 is legibility and a phone is
    where that argument is strongest, not weakest. */
-.about-key__hex,.about-key__ok{font-size:.6875rem}
+.about-key__hex,.about-key__ok{font-size:var(--fs-fine)}
 .about-key__pct{color:var(--on-surface-muted)}
 
 /* a masked photograph that moves against its frame — the parallax resource's own background pattern */
@@ -464,7 +464,7 @@
 .about-route .about-intervals__hex{
   position:absolute;top:100%;left:0;right:0;margin-top:7px;text-align:center;
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   line-height:1;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 .about-intervals__gap{
@@ -494,7 +494,7 @@
    words cost four characters each and the figure stops needing to be decoded. */
 .about-route .about-intervals__deltas{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);line-height:1.6;letter-spacing:var(--track-flat);
+  font-size:var(--fs-fine);line-height:1.6;letter-spacing:var(--track-flat);
   text-transform:none;color:var(--on-surface-muted);
   font-variant-numeric:tabular-nums;white-space:nowrap;
 }
@@ -724,7 +724,7 @@
 .about-route .about-axis__step > span{
   position:absolute;top:100%;left:0;right:0;margin-top:6px;text-align:center;
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);line-height:1;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
 }
 /* Twelve hue marks in the space of six will collide, so only every third is labelled. */
@@ -866,7 +866,7 @@
 .about-route .about-matrix__use,
 [data-mobile-story] .about-matrix__use{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   padding:4px 12px;white-space:nowrap;border-radius:var(--radius-pill);
 }
 .about-matrix .is--text .about-matrix__use{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
@@ -906,7 +906,7 @@
 [data-mobile-story] .about-role__name{color:var(--on-surface)}
 .about-role__hex,.about-role__note{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-micro);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
 }
 
@@ -969,14 +969,14 @@
 }
 .about-route .about-checks__use{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);white-space:nowrap;
 }
 .about-checks__pair{display:flex;align-items:center;gap:10px;min-width:0;font-size:var(--fs-body);letter-spacing:var(--track-body)}
 .about-checks__val{font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat)}
 .about-checks__verdict{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   padding:4px 8px;white-space:nowrap;
 }
 .about-checks .is--pass .about-checks__verdict{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
@@ -1887,7 +1887,7 @@
 .section-dock__link-num{
   color:var(--on-surface-muted);
   margin-right:8px;
-  font-size:var(--fs-micro);
+  font-size:var(--fs-fine);
   line-height:1;
   letter-spacing:var(--track-flat);
   font-variant-numeric:tabular-nums;
