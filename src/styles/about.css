@@ -467,8 +467,34 @@
   font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   line-height:1;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
+/* min-content, NOT min-width:0, and this is the row's version of the rule the stacked layout
+   already states below: grows by its step, never shrinks below its own readout.
+   min-width:0 let flex shrink a gap past its own contents, and the contents are nowrap, so they did
+   not shrink with it — they printed across the swatches on either side. The breakpoint underneath
+   was supposed to prevent that, but its arithmetic (5 x 48 + 4 x 84) assumes four EQUAL gaps, and
+   aboutIntervals.js makes them unequal on purpose: each gap gets its share of step/mean, so the
+   narrowest one gets a fraction of a quarter. Midfield's smallest is 9.1% of the gap space rather
+   than 25%, which needs ~923px of it to hold an 84px readout instead of 336px. Measured before this
+   line: 16.9px of spill per side at 820px, still 2px at 1280px.
+   min-content is the readout's own width, so the clamp is whatever the content actually needs and
+   there is no second number to keep in step with the markup.
+
+   WHAT THIS COSTS, stated because it is a real cost and because the number is bigger than it looks.
+   min-content here is 94px, not the 84px the note below estimates: that figure was measured against
+   the old content, and Midfield's longest delta line ("Lightness +0.236") is 82px plus the read's
+   12px of padding. The narrowest gap is 9.1% of the gap space, so exact widths need 1033px of it,
+   which is a ~1545px viewport. Below that the narrow gaps sit on the clamp and the row compresses
+   toward even. Measured: 98/94/95/102 at 660px, 166/94/95/172 at 820px, 379/94/96/391 at 1440px,
+   against a true ratio of 4.52:1 — so it is nearly exact at 1440 (4.18) and flat at 660.
+
+   The width encoding degrades there. The NUMERIC one does not, and that is the whole reason this is
+   the right trade rather than a defeat: every gap prints its own step, so a reader at 1024px still
+   reads 0.236 against 0.054 and the caption still checks out against the figure. What this replaced
+   was those same numbers printed 17px over the swatches on each side.
+   Rotating at ~1545 instead would keep the widths exact at every size, at the price of putting
+   every laptop and most desktops on the stacked layout. That is a design call, not a bug fix. */
 .about-intervals__gap{
-  flex:1 1 0;min-width:0;position:relative;
+  flex:1 1 0;min-width:min-content;position:relative;
   display:flex;align-items:center;justify-content:center;
 }
 .about-route .about-intervals__read{

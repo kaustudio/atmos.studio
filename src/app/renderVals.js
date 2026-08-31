@@ -196,8 +196,17 @@ export const renderValsMethods = {
                  description is left alone: a filter is a visual narrowing, and quieting a pair is
                  not a reason to make its sentence harder for a screen reader to reach. */
               style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent' },
-              numStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', lineHeight: 1, color: 'var(--on-surface)', opacity: dim ? 0.22 : 1 },
-              glyphStyle: { fontSize: 'var(--fs-nano)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', opacity: dim ? 0.22 : 1 },
+              /* --fs-detail and --fs-fine, off the tokens this cell used to borrow. --fs-label is
+                 defined as "uppercase labels" and this is a number; --fs-nano is defined as
+                 "decorative glyphs" and this glyph is the only non-colour statement of pass or fail
+                 in the cell. Both sat under --fs-fine, which global.css names the smallest READABLE
+                 size, so the checker's own fifteen measurements were the smallest type on the
+                 surface. AG-03 asked for compared values at 12-13px for the same reason.
+                 tabular-nums because these are the one changing metric in the app that lacked it:
+                 every cell rewrites on an AA/AAA or Normal/Large toggle and on every palette, and
+                 they read down a column. */
+              numStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', lineHeight: 1, color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', opacity: dim ? 0.22 : 1 },
+              glyphStyle: { fontSize: 'var(--fs-fine)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', opacity: dim ? 0.22 : 1 },
             };
           });
           rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
