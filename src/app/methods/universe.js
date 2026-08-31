@@ -2,6 +2,7 @@
 // Osmo infinite grid, tone-disciplined — no scale-on-drag, no parallax) with a radial-bloom
 // entrance as ONE reversible timeline, plus the feed-view switcher shared with the 3D reel.
 import { UNIVERSE_TILE } from '../universeTile.js';
+import { buildEdgeMap, edgeAim, edgeBand, edgeCardScale } from '../universeEdge.js';
 
 export const universeMethods = {
   setFeedView(v) {
@@ -123,6 +124,7 @@ export const universeMethods = {
     if (this._cloneLayer && this._cloneLayer.parentNode) { this._cloneLayer.parentNode.removeChild(this._cloneLayer); } this._cloneLayer = null;
     this._uCards = null; this._uPos = null; this._uMoved = false;
     if (this._uResize) { window.removeEventListener('resize', this._uResize); this._uResize = null; }
+    if (this._uAim) { const w = document.querySelector('[data-universe-status]'); if (w) w.removeEventListener('click', this._uAim, true); this._uAim = null; }
     clearTimeout(this._uResizeT);
     this._built = false;
     // reset any transforms/bloom state left on the real originals (buttons + inner wrappers + plane)
@@ -178,11 +180,68 @@ export const universeMethods = {
     this.buildUniverse();
     if (!this._uResize) { this._uResize = () => { clearTimeout(this._uResizeT); this._uResizeT = setTimeout(() => { if (this.state.feedView === 'grid') this.buildUniverse(); }, 200); }; window.addEventListener('resize', this._uResize); }
   },
+  // CLICK FOLLOWS SIGHT AT THE EDGES.
+  //
+  // The refracting frame moves where a tile APPEARS without moving where it is, so at the rim the
+  // thing under the pointer and the thing the reader is looking at are two different palettes. This
+  // runs on the CAPTURE phase, ahead of both click paths — the clone layer's delegate and the real
+  // buttons' own onClick — and hands the press to whatever is actually visible at that point. The
+  // reasoning, the measurements and the inverse itself are over edgeAim in universeEdge.js.
+  _uEdgeAim(ev) {
+    // detail 0 is a keyboard activation or the synthesized click below; a real press is 1 or more.
+    // Without this a keyboard Enter arrives at clientX/Y 0,0 — the deepest corner of the bend — and
+    // gets "corrected" onto whatever tile happens to sit under the top-left rim.
+    if (!ev.detail) return;
+    if (this._uMoved) return;                       // a drag is not a click; the existing guards own that
+    const from = ev.target;
+    // Chrome (close, the drag hint) sits at z 5, over the band, and owns its own clicks. Only a
+    // press that landed on the FIELD is one this may re-aim.
+    if (!from || !from.closest || !from.closest('[data-plane]')) return;
+    const aim = edgeAim(ev.clientX, ev.clientY, window.innerWidth, window.innerHeight);
+    if (!aim) return;                               // outside the bend, or under a pixel of it
+    const seen = document.elementFromPoint(aim[0], aim[1]);
+    // The aim can leave the field entirely near a corner. That is not "the reader saw a gutter", it
+    // is the correction running out of field, so the original press stands.
+    if (!seen || !seen.closest || !seen.closest('[data-plane]')) return;
+    const SEL = '[data-pal-idx],[data-feed]';
+    const tSeen = seen.closest(SEL), tHit = from.closest(SEL);
+    if (tSeen === tHit) return;                     // sight and hit agree — still the common case in the band
+    ev.stopPropagation(); ev.preventDefault();
+    // No tile where the reader was looking means they pointed at a gutter that the bend had moved
+    // a card into. Opening the card under the pointer is exactly the wrong answer, so open nothing.
+    if (tSeen) tSeen.click();
+  },
+  // The edge frame's displacement map, rebuilt at the viewport's own size.
+  //
+  // It hangs off buildUniverse rather than off a resize listener of its own, and that is the point:
+  // every event that changes the field's geometry — the entrance, a window resize, a filter, a
+  // folder, a delete — already goes through there. A second listener would be a second opinion about
+  // how big the window is, and the frame would be a band of the wrong depth for exactly as long as
+  // the two disagreed. The band is a fixed pixel depth, so its SHARE of the map changes with every
+  // one of those events even when the field itself does not move.
+  _paintEdgeMap(w, h) {
+    const node = document.querySelector('[data-edge-map]');
+    if (!node || !w || !h) return;
+    const uri = buildEdgeMap(w, h);
+    if (!uri) return;
+    // The mask and the tint gradients are cut from --u-band, and on a short viewport that is no
+    // longer the constant renderVals seeded it with. Written here, from the same edgeBand() the map
+    // was just drawn with, so the frame cannot be masked at a depth it was not drawn at.
+    const edge = document.querySelector('[data-universe-edge]');
+    if (edge) try { edge.style.setProperty('--u-band', edgeBand(w, h).toFixed(1) + 'px'); } catch (e) { }
+    // Both spellings: feImage reads the plain `href` in every current engine and the namespaced one
+    // in older WebKit, and writing the pair costs nothing next to generating the map.
+    try {
+      node.setAttribute('href', uri);
+      node.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', uri);
+    } catch (e) { }
+  },
   buildUniverse() {
     try {
       const g = window.gsap, wrapper = document.querySelector('[data-universe-status]'), plane = document.querySelector('[data-plane]');
       if (!g || !window.Observer || !wrapper || !plane) { return; }
       const ow = plane.querySelector('[data-grid-originals]'); if (!ow) { return; }
+      this._paintEdgeMap(wrapper.clientWidth, wrapper.clientHeight);
       const origEls = [...ow.children]; const N = origEls.length; if (!N) { return; }
       // teardown prior build (but keep resize listener)
       if (this._obs) { try { this._obs.kill(); } catch (e) { } this._obs = null; }
@@ -213,6 +272,9 @@ export const universeMethods = {
       this._cloneLayer = cloneLayer;
       // decorative clones are click-openable too (drag-guarded), so any visible tile is actionable by pointer
       cloneLayer.addEventListener('click', (ev) => { if (this._uMoved) { this._uMoved = false; return; } const t = ev.target.closest && ev.target.closest('[data-pal-idx]'); if (!t) return; const p = this.state.feed[+t.dataset.palIdx]; if (p) this.openOverlay(p, t); });
+      // Bound to the WRAPPER, which outlives every rebuild, so it is bound once rather than per
+      // build the way the clone layer's listeners are (those go with the layer they sit on).
+      if (!this._uAim) { this._uAim = (ev) => this._uEdgeAim(ev); wrapper.addEventListener('click', this._uAim, true); }
       cloneLayer.addEventListener('mouseover', (ev) => { const t = ev.target.closest && ev.target.closest('[data-pal-idx]'); if (t) this.stackEnter(t); });
       cloneLayer.addEventListener('mouseout', (ev) => { const t = ev.target.closest && ev.target.closest('[data-pal-idx]'); if (t) this.stackLeave(t); });
 
@@ -235,7 +297,11 @@ export const universeMethods = {
             el.style.position = 'absolute'; el.style.top = '0'; el.style.left = '0'; el.style.width = TW + 'px'; el.style.height = TH + 'px';
             cloneLayer.appendChild(el);
           }
-          const cd = { el, baseX, baseY, setX: g.quickSetter(el, 'x', 'px'), setY: g.quickSetter(el, 'y', 'px') };
+          // scaleX/scaleY live on the SAME element and therefore in the same matrix as x/y, which is
+          // the point: the edge stretch is part of the pan engine's own transform rather than a
+          // second one competing with it. The bloom keeps [data-tile-inner] to itself — that is the
+          // separation the note further down is protecting, and this does not cross it.
+          const cd = { el, baseX, baseY, setX: g.quickSetter(el, 'x', 'px'), setY: g.quickSetter(el, 'y', 'px'), setSX: g.quickSetter(el, 'scaleX'), setSY: g.quickSetter(el, 'scaleY') };
           cards.push(cd); if (origAt.has(key)) origCards.set(origEls[origAt.get(key)], cd);
         }
       }
@@ -247,9 +313,19 @@ export const universeMethods = {
       this._uField = { totalW, totalH, cellW, cellH, offX: cellW * OVER, offY: cellH * OVER, vw: wrapper.clientWidth, vh: wrapper.clientHeight, TW, TH };
       const LERP = 0.08, WHEEL = 0.6, DRAG = 1.0, CLAMP = 90, offX = cellW * OVER, offY = cellH * OVER;
       const wrap = (v, s) => ((v % s) + s) % s;
+      const vw = wrapper.clientWidth, vh = wrapper.clientHeight, hw = TW * 0.5, hh = TH * 0.5;
       const tick = () => {
         pos.x += (pos.tx - pos.x) * LERP; pos.y += (pos.ty - pos.y) * LERP;
-        for (let i = 0; i < cards.length; i++) { const cd = cards[i]; cd.setX(wrap(cd.baseX + pos.x + offX, totalW) - offX); cd.setY(wrap(cd.baseY + pos.y + offY, totalH) - offY); }
+        for (let i = 0; i < cards.length; i++) {
+          const cd = cards[i];
+          const x = wrap(cd.baseX + pos.x + offX, totalW) - offX, y = wrap(cd.baseY + pos.y + offY, totalH) - offY;
+          cd.setX(x); cd.setY(y);
+          // The card's own stretch, from its centre. Written every frame and unconditionally: it is
+          // 1,1 everywhere but the approaches, so there is no branch to get wrong and no state to
+          // leave behind when a card wraps from one edge of the field to the other.
+          const sc = edgeCardScale(x + hw, y + hh, vw, vh);
+          cd.setSX(sc[0]); cd.setSY(sc[1]);
+        }
       };
       this._ticker = tick;
       tick();   // position every tile ONCE (so the bloom happens in place) — ticker not started yet

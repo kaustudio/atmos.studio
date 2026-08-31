@@ -6,6 +6,85 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-08-31 — The grid's edges are glass, and the card is what bends
+
+The spatial grid faded its four edges into `--surface-raised` — an inset shadow with 40px of spread
+under 120px of blur, so 160px of every side was the page's own near-white laid over the field. On a
+tool whose entire subject is colour, that was 160px of every side spent hiding it. The edges now
+refract what passes under them instead.
+
+**The reference cannot be ported, and the reason is structural rather than budgetary.** Osmo's
+liquid-glass carousel is a GLSL lens over a WebGL row: three.js owns the images, draws them to a
+render target, and the fragment shader refracts that texture. This field is not a texture. It is
+live DOM — focusable buttons carrying real text, a hero image and a colour strip, panned by
+transform — and a fragment shader cannot sample DOM. Rasterising the tiles per frame to feed one
+would cost the text, the focus ring and the hit targets, and would show a seam wherever the copy met
+the real thing. So the refraction is done where the pixels actually are: `backdrop-filter` with an
+SVG `feDisplacementMap`, which is the same operation the shader's `pull`/`uDispersion` block
+performs, expressed in the one filter graph that has access to a DOM backdrop.
+
+**Two displacement passes, not three, and it is a frame-budget decision.** One pass per channel is
+the obvious graph. Measured at 1732×1328 panning every frame: no edge 60fps, one pass 60, two 59,
+three 43. The third is a cliff, not a slope, and it lands on the one surface in the product whose
+whole interaction is a continuous pan. Green is taken as half of each remaining pass instead, which
+puts it back on the middle scale it would have had. Everything else that looked like a suspect was
+measured and cleared first — the map's resolution changes nothing across 866×664 down to 108×83, a
+trivial `url()` filter over the same box costs 2fps, and four band elements (less total area, four
+filter instances) is 16fps, which is worse than either.
+
+**The fallback is two rules, and that duplication is load-bearing.** Blur-only and blur-plus-filter
+belong in one rule, letting the cascade drop the second where `url()` cannot be parsed. The minifier
+does not leave that standing: `vite build` on 31.08.26 deleted the blur-only declaration as
+redundant *and* synced the `url()` into the `-webkit-` alias that had never carried it — both halves
+of the fallback gone, and the prefixed property left asserting a capability it was written not to
+claim. Two declarations of one property in one rule cannot survive minification; two rules can. An
+`@supports` test is not the answer either: `CSS.supports('backdrop-filter','url(#x)')` answers true
+in engines that parse the value and render nothing.
+
+**The tangential drag is what makes cards stick. The normal push can only magnify.** The first build
+pushed straight in from the edge and read as polite no matter how far it was pushed, because
+continuity forces the map to zero at the inner boundary — so the mapping always stretches, and it
+stretches the *gutters* along with the cards. No value of the bend closes a gap between two of them.
+Dragging content sideways *along* the boundary does close it: two neighbours are swept into the same
+arc and their colour meets. Running the reference locally is what established the magnitude — its
+`rimOff` peaks at about a quarter of the viewport, against the 2% this shipped with first.
+
+**Pixels bend pixels; cards bend cards.** A displacement field has no idea what a card is. It bends
+whatever pixel is at a coordinate, so a card straddling the band has its top displaced further than
+its bottom and is *sheared* — the panel tears from its own border, and the hero image, the only
+dense thing in a card, takes all the visible damage while the white metrics panel barely shows it.
+That is why one round read as an effect happening to the image rather than to the card. The stretch
+is now a transform on the whole tile, riding the pan engine's own quickSetters so it lands in the
+same matrix as the position, and the pixel field is back to what glass needs at the rim and no more.
+
+**A refracting edge decouples what you see from what you click, and the fix is the aim, not a
+smaller number.** At the first and far gentler settings, 1.85% of points inside the band already
+resolved to a different tile by sight than by hit. Swept at 44/36/28/20/12px of bend the mismatch
+goes 1.85/1.53/1.08/0.76/0.43% — it falls roughly with the effect and never reaches zero, so buying
+it off costs the whole thing and still opens the wrong palette now and then. A capture-phase handler
+re-aims the press through the same offset field the map is drawn from, which is why it followed the
+effect from a 44px bend to a 260px drag without being touched.
+
+**Every distance is a share of the viewport as well as a figure in pixels.** A flat 420px card reach
+left a 488px clear strip at 1732×1328 and looked fine; at 1400×900 it left 60px, and at 1091×968 it
+left 128px, against a card that is 463px tall. Every card on screen was morphing and there was no
+overview left to have — which is the whole point of a grid view. Capped at 17% of the short side,
+65–69% of the field is untouched across those same three sizes. The band already had this cap; the
+card reach did not, and the difference was invisible until the window got smaller.
+
+**Forced colors takes the glass away entirely.** A reader in a high-contrast mode has asked the OS
+to guarantee legibility, and unlike the tint, a 44px sideways bend is not something a substituted
+palette can make safe. The frame carries no state, label or data, so removing it costs nothing but
+the effect.
+
+**Still absent, deliberately: the reference's lit rim.** Its bright ring is a large part of why it
+reads as an object, and glass here is fill-defined — the Osmo rim vocabulary has been turned down
+three times for making an edge the heaviest thing on screen. Refraction is a transmission property
+and belongs to the fill's side of that rule; a ring does not. Offered twice during this work and
+left out both times, so it stays a decision rather than an oversight.
+
+---
+
 ## 2026-08-30 — The landing field is a reading, not a spectrum
 
 The volumetric field behind the front page was coloured from twelve hand-authored OKLCH stations

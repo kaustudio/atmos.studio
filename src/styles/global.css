@@ -2289,3 +2289,107 @@ html.lenis,html.lenis body{height:auto}
   inset: 0;
   box-shadow: inset 0 0 1.75em var(--glass-clamp);
 }
+
+/* ===== THE UNIVERSE'S EDGE — a refracting frame, not a white fade ==============================
+   The reasoning, the figures and the map that drives this live in src/app/universeEdge.js; this
+   rule is only the part that has to be a stylesheet rather than an inline style, which is the
+   @supports-shaped fallback chain below and the mask that gives the frame its four sides.
+
+   THE ELEMENT IS THE ONE THE VIGNETTE USED TO BE. Same box, same z-index, same job — keep the
+   wrapping field from hard-clipping at the viewport — done by bending what passes under it instead
+   of painting the page's own near-white over it.
+
+   TWO RAMPS, TWO DIFFERENT CURVES, and they are separate on purpose:
+     · the MASK decides how far in the glass reaches and how quickly it arrives. It multiplies the
+       backdrop-filter as well as the fill, so it is the refraction's envelope.
+     · the BACKGROUND is the tint, and it runs its own gradient so the surface colour can arrive
+       LATER than the bend does. If the two shared one curve the frame would be a fade again, just a
+       shorter one.
+   The two mask gradients are composited additively rather than layered, so a corner is the union of
+   both sides at full strength and not a seam between them.
+
+   THE GEOMETRY IS WRITTEN FROM JS (--u-band, --u-blur, --u-tint), the same way .glass-cta takes
+   --cta-reflect from the tick. universeEdge.js's EDGE block is the single source for those figures
+   because the displacement map is generated from the same numbers; a band declared here and a map
+   built there would agree exactly once. */
+[data-universe-edge]{
+  /* Outer edge at offset 0, inner boundary at --u-band. The alphas are a ~t^1.8 falloff sampled at
+     the quarters — gentler than the displacement's own curve, so the glass fades in before the bend
+     becomes visible rather than switching on with it. */
+  -webkit-mask-image:
+    linear-gradient(to right,#000 0,rgba(0,0,0,.61) calc(var(--u-band) * .25),rgba(0,0,0,.29) calc(var(--u-band) * .5),rgba(0,0,0,.09) calc(var(--u-band) * .75),transparent var(--u-band),transparent calc(100% - var(--u-band)),rgba(0,0,0,.09) calc(100% - var(--u-band) * .75),rgba(0,0,0,.29) calc(100% - var(--u-band) * .5),rgba(0,0,0,.61) calc(100% - var(--u-band) * .25),#000 100%),
+    linear-gradient(to bottom,#000 0,rgba(0,0,0,.61) calc(var(--u-band) * .25),rgba(0,0,0,.29) calc(var(--u-band) * .5),rgba(0,0,0,.09) calc(var(--u-band) * .75),transparent var(--u-band),transparent calc(100% - var(--u-band)),rgba(0,0,0,.09) calc(100% - var(--u-band) * .75),rgba(0,0,0,.29) calc(100% - var(--u-band) * .5),rgba(0,0,0,.61) calc(100% - var(--u-band) * .25),#000 100%);
+  mask-image:
+    linear-gradient(to right,#000 0,rgba(0,0,0,.61) calc(var(--u-band) * .25),rgba(0,0,0,.29) calc(var(--u-band) * .5),rgba(0,0,0,.09) calc(var(--u-band) * .75),transparent var(--u-band),transparent calc(100% - var(--u-band)),rgba(0,0,0,.09) calc(100% - var(--u-band) * .75),rgba(0,0,0,.29) calc(100% - var(--u-band) * .5),rgba(0,0,0,.61) calc(100% - var(--u-band) * .25),#000 100%),
+    linear-gradient(to bottom,#000 0,rgba(0,0,0,.61) calc(var(--u-band) * .25),rgba(0,0,0,.29) calc(var(--u-band) * .5),rgba(0,0,0,.09) calc(var(--u-band) * .75),transparent var(--u-band),transparent calc(100% - var(--u-band)),rgba(0,0,0,.09) calc(100% - var(--u-band) * .75),rgba(0,0,0,.29) calc(100% - var(--u-band) * .5),rgba(0,0,0,.61) calc(100% - var(--u-band) * .25),#000 100%);
+  /* ADD, not source-over: two frames laid over each other leave the corners at the square of one
+     side's alpha, which is a visible dark notch in all four. */
+  -webkit-mask-composite:source-over;
+  mask-composite:add;
+
+  /* THE TINT, four sides, each reaching --u-tint only at the outermost pixel. Corners take both and
+     land a little heavier, which is what a bevel meeting a bevel actually does.
+
+     STEEP, NOT LINEAR, and this is the declaration that decides whether the whole thing still reads
+     as a fade. A straight ramp over 132px puts half the tint at the band's midpoint, and half of a
+     62% surface wash is exactly what the old vignette looked like — the refraction was underneath it
+     the whole time and could not be seen. The stops below are a ~t^2.5 falloff sampled at the
+     quarters: at the halfway line the tint is down to a tenth of its peak, so the middle of the band
+     is clear glass and the surface colour only arrives in the last quarter, where the bend is
+     strongest and something has to resolve the clip. Checked side by side against the linear version
+     on the seeded field. */
+  background:
+    linear-gradient(to right,color-mix(in srgb,var(--surface) var(--u-tint),transparent) 0,color-mix(in srgb,var(--surface) calc(var(--u-tint) * .42),transparent) calc(var(--u-band) * .25),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .16),transparent) calc(var(--u-band) * .5),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .035),transparent) calc(var(--u-band) * .75),transparent var(--u-band)),
+    linear-gradient(to left,color-mix(in srgb,var(--surface) var(--u-tint),transparent) 0,color-mix(in srgb,var(--surface) calc(var(--u-tint) * .42),transparent) calc(var(--u-band) * .25),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .16),transparent) calc(var(--u-band) * .5),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .035),transparent) calc(var(--u-band) * .75),transparent var(--u-band)),
+    linear-gradient(to bottom,color-mix(in srgb,var(--surface) var(--u-tint),transparent) 0,color-mix(in srgb,var(--surface) calc(var(--u-tint) * .42),transparent) calc(var(--u-band) * .25),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .16),transparent) calc(var(--u-band) * .5),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .035),transparent) calc(var(--u-band) * .75),transparent var(--u-band)),
+    linear-gradient(to top,color-mix(in srgb,var(--surface) var(--u-tint),transparent) 0,color-mix(in srgb,var(--surface) calc(var(--u-tint) * .42),transparent) calc(var(--u-band) * .25),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .16),transparent) calc(var(--u-band) * .5),color-mix(in srgb,var(--surface) calc(var(--u-tint) * .035),transparent) calc(var(--u-band) * .75),transparent var(--u-band));
+
+  /* FROSTED GLASS IS THE FLOOR. Every engine with a backdrop-filter at all gets this much, and it
+     is already a pane rather than a wash — the refraction below is an enhancement on top of it, not
+     the thing that makes the edge work.
+
+     NOT AN @supports BLOCK, and that is worth stating because it is the obvious move:
+     CSS.supports('backdrop-filter','url(#x)') answers TRUE in engines that parse the value and then
+     render nothing, so an @supports test would hand the refraction to a browser that cannot draw it
+     and take the blur away from the one place a fallback was needed. Probed in this project's own
+     preview before this was written. */
+  -webkit-backdrop-filter:blur(var(--u-blur));
+  backdrop-filter:blur(var(--u-blur));
+}
+/* THE REFRACTION, ON A DOUBLED SELECTOR, and the duplication is load-bearing rather than a typo.
+   The two declarations belong in ONE rule and were written that way first — blur alone, then blur
+   plus the filter, letting the cascade drop the second in an engine that cannot parse url(). The
+   minifier does not leave that standing. `npx vite build` on 31.08.26 emitted:
+
+       -webkit-backdrop-filter:blur(var(--u-blur)) url(#atmos-universe-edge);
+       backdrop-filter:blur(var(--u-blur)) url(#atmos-universe-edge)
+
+   — the blur-only declaration deleted as redundant, and the url() SYNCED INTO the -webkit- alias
+   that had never carried it. Both halves of the fallback gone, and the prefixed property left
+   asserting a capability it was specifically written not to claim. Two declarations of one property
+   in one rule cannot survive minification; two rules can, because the selectors differ and there is
+   nothing to fold. Same failure the note on .glass-cta's backdrop-filter records, arriving from the
+   other direction — verify this by grepping dist/assets/global-*.css, not by reading this file. */
+[data-universe-edge][data-universe-edge]{
+  backdrop-filter:blur(var(--u-blur)) url(#atmos-universe-edge);
+}
+/* FORCED COLORS TAKES THE GLASS AWAY ENTIRELY, and this is the one mode where that is the kinder
+   answer rather than a degradation. A reader in a high-contrast mode has asked the OS to guarantee
+   legibility; a band that blurs a card's title and bends it 44px sideways is the exact opposite of
+   what was asked for, and unlike the tint it is not something forced-colors can override into
+   safety — the distortion survives any palette the OS substitutes. So the whole chain goes: no
+   bend, no split, no frost, no tint. The field then meets the viewport as a clean cut, which is
+   honest and fully legible.
+
+   The frame is decorative here in the strict sense — it carries no state, no label and no data, and
+   the wrapping field it edges is still complete without it — so removing it costs a reader nothing
+   but the effect. Not verified in a real forced-colors session: this project's preview is Chromium
+   on macOS, which has no forced-colors mode to enter. */
+@media (forced-colors: active){
+  [data-universe-edge],
+  [data-universe-edge][data-universe-edge]{
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+    background:none;
+  }
+}
