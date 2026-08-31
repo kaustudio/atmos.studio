@@ -210,12 +210,19 @@ export const pipelineMethods = {
   // hex by hand without moving the hash is the one thing that would make this table lie.
   //
   // The set is chosen for hue coverage, not for mood. Measured dominant hue runs 30 / 44 / 58 / 82 /
-  // 128 / 164 / 238 / 263 degrees, which is as much of the wheel as eight real photographs can hold:
-  // red through orange, gold and chartreuse into green, then two blues. The gaps are the source
-  // material's, not an oversight — there is no magenta and no clean cyan to be had, so the arc from
-  // 263 back round to 30 is empty. Two of these carry their own opposition (papaya on green, yellow
+  // 98 / 128 / 238 / 263 degrees: red through orange, gold and chartreuse, then two blues. The gaps
+  // are the source material's, not an oversight — there is no magenta and no clean cyan to be had,
+  // so the arc from 263 back round to 30 is empty. One of these carries its own opposition (yellow
   // balls on a blue court), which is what keeps the middle of the set from reading as one long warm
   // run the way an earlier eight did.
+  //
+  // THE 164 SLOT IS GONE and with it the set's only true green, which is a real cost and is recorded
+  // rather than glossed. Ruled Open Country held it at chroma 0.157; it was replaced by request with
+  // Hard Gunmetal, read off a photograph whose most colourful swatch is 0.036 from neutral. What the
+  // set gains is a kind it did not have — a genuinely achromatic palette, which is worth showing on a
+  // tool that reads colour, because "there is almost none here" is an answer it has to be able to
+  // give. What it loses is green. Its 98 is nominal: at that chroma the angle barely means anything,
+  // so read the run above as six hues, two blues and one neutral rather than as eight steps.
   //
   // Seeds keep imageUrl null and carry a KEY instead. The key is resolved against EXAMPLE_SRC below
   // and nowhere else, so the H1 invariant at the top of this file survives the examples having
@@ -227,7 +234,7 @@ export const pipelineMethods = {
     'courtyard': '/assets/examples/courtyard.webp',
     'poppy': '/assets/examples/poppy.webp',
     'radish': '/assets/examples/radish.webp',
-    'papaya': '/assets/examples/papaya.webp',
+    'stride': '/assets/examples/stride.webp',
     'court': '/assets/examples/court.webp',
     'profile-sky': '/assets/examples/profile-sky.webp',
   },
@@ -287,12 +294,18 @@ export const pipelineMethods = {
         rat: 'Hues held to a single note: low-chroma greens, warm. Washed and quiet.',
         sw: [['#eae8dd', .7766], ['#b8cd79', .0814], ['#6c9429', .0557], ['#3c5e19', .0480], ['#1b2f0c', .0382]],
       }),
-      // 164° — green, carrying its own complement
+      // 98° — nominally olive, and the set's one achromatic: nothing in it is 0.04 from neutral.
+      // Not hand-written. The image was put through this app's own extraction and the five swatches,
+      // their weights, the name, the descriptors and the rationale are all what it returned, so the
+      // seed is a real output of the tool rather than a designer's account of one. Checked against an
+      // independent k-means over the same pixels: same five clusters in the same order, shares within
+      // three points. The greys are the photograph, not a fault in the read — the sky is a dusty
+      // steel blue in absolute terms and the motion blur averages the sand toward khaki.
       this.seedObj({
-        key: 'papaya', hash: '1e83a904f39350e0', age: 50 * H,
-        name: 'Ruled Open Country', desc: ['Charged', 'Precise'], arch: 'neutral',
-        rat: 'One colour carrying the frame: saturated tones with clear structure between them. Restrained and quietly atmospheric.',
-        sw: [['#1b6d4e', .7556], ['#221d14', .0797], ['#c05118', .0637], ['#d17827', .0507], ['#903215', .0503]],
+        key: 'stride', hash: 'a05fdec8e9bc48ac', age: 50 * H,
+        name: 'Hard Gunmetal', desc: ['Moody', 'Graphic', 'Clinical'], arch: 'graphic',
+        rat: 'Achromatic greys kept in shadow, sitting close together. Low and deliberate.',
+        sw: [['#130e10', .3243], ['#50595b', .2236], ['#717c78', .1811], ['#3e312b', .1547], ['#a6a188', .1163]],
       }),
       // 238° — blue, carrying its own complement
       this.seedObj({

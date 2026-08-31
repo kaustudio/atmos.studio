@@ -30,7 +30,7 @@ import { buildMasks } from '../../lib/masks.js';
    BUMP THIS WHENEVER makeSeed's TABLE CHANGES — a name, a hash, a swatch, an added or removed
    example. That is the whole contract, and it is the one thing a future edit to pipeline.js has to
    remember. */
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
@@ -242,9 +242,23 @@ export const persistenceMethods = {
      Nothing else has to be repaired. Memberships point from a palette to a project, never the other
      way, so dropping an example orphans nothing; `current` is null on boot unless a share link set
      it; and _storyCase falls through to the first example when the id it held is gone. */
+  /* FILING SURVIVES THE RE-SEED, and it did not before. This replaced every example record with a
+     fresh one from the table, which is right for the swatches and the copy — that is the whole point
+     of the version — but those records also carry projectIds, and THAT is not ours: it is the one
+     thing on an example that the reader made. So a seed bump silently emptied their projects of every
+     example they had filed, while the paragraph above SEED_VERSION promised the opposite. Caught by
+     bumping to 3 for the Hard Gunmetal swap and watching Garnet fall out of Scan and Eliza.
+     Matched on id, which is hash + variation, so a palette keeps its filing across a change to its
+     name, descriptors or rationale. A palette whose hash changed, or one dropped from the table, is a
+     different palette and takes no filing with it — Ruled Open Country's assignments are gone by the
+     same rule, which is correct: there is nothing left to file. */
   _reseed(feed) {
     const mine = feed.filter((p) => p.example !== true);
-    const seeds = this.makeSeed();
+    const filed = new Map(feed.filter((p) => p.example === true).map((p) => [p.id, this.palProjects(p)]));
+    const seeds = this.makeSeed().map((p) => {
+      const was = filed.get(p.id);
+      return (was && was.length) ? this.withProjects(p, was) : p;
+    });
     const taken = new Set(mine.map((p) => p.id));
     return mine.concat(seeds.filter((p) => !taken.has(p.id)));
   },

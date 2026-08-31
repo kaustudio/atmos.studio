@@ -946,6 +946,13 @@
      courtyard 15.44   tulip 11.10   papaya 10.06   poppy 7.88   court 7.83
      profile-sky 5.70   profile-ember 4.47   radish 2.52
 
+   papaya has since been replaced by stride (pipeline.js). Its row above is the original measurement
+   and no longer describes a background that ships. Re-checked by a comparable but not identical
+   method — same cover mapping and title band, one scrim rather than a sweep — which put stride at
+   7.87 against papaya's 10.63 and radish's 3.80 on that same scale: lower than the image it
+   replaces, because the sand is bright, and still nowhere near the case that sets the number.
+   Radish is still what 0.44 is for.
+
    Seven pass. Radish is a white cross-section behind the middle of the word and fails the 3:1 large
    text threshold outright (--fs-display at 500 clears WCAG's large-text bar, so 3:1 applies, not
    4.5:1). 0.44 at the band is where it clears with margin — radish 3.60, and the next worst is

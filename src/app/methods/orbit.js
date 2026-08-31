@@ -66,9 +66,14 @@ const PAL = {
 
       MEASURED, ACROSS ALL EIGHT SEEDS, and this is the acceptance test for any change to these
       three figures: no derived station lands more than 20° from a hue that is actually IN its
-      palette, and six of the eight stay inside 16°. The one 20° is Ruled Open Country's near-black,
+      palette, and six of the eight stay inside 16°. The one 20° was Ruled Open Country's near-black,
       which is under the grey floor and therefore sits at the dominant hue by rule rather than by
-      fan. Before the cap the worst was 49°. */
+      fan. Before the cap the worst was 49°.
+
+      NOT RE-MEASURED since Ruled Open Country was replaced by Hard Gunmetal (pipeline.js). The
+      figures above stand for the previous eight. The new palette is achromatic — every swatch is
+      inside 0.036 chroma, so the whole of it is under the grey floor this paragraph describes, and
+      it is the case most likely to move the worst number. Re-run the test before quoting these. */
   spanMin: 40,
   fanMax: 3.2,
   addMax: 16,
