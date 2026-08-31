@@ -845,7 +845,35 @@ export const persistenceMethods = {
     this.setState({
       storySwatch: next,
       announce: next === null ? 'Showing the whole photograph.' : 'Showing where ' + hex + ' appears in the photograph.',
-    });
+    }, () => { if (next !== null) this.revealStoryImage(); });
+  },
+
+  /* THE ANSWER COMES TO THE READER. The picks sit UNDER the photograph, and on a phone five of them
+     plus their notes are taller than the screen, so choosing one from the bottom of the list lit a
+     region nobody could see: the control worked, the feedback was two screens away, and finding it
+     was the reader's job. Tapping a colour is a question about the picture, so the picture is what
+     has to be on screen when it is answered.
+
+     ONLY WHEN IT IS ACTUALLY OUT OF SIGHT. A control that scrolls every time is worse than one that
+     never does: with the image already in view the page would lurch on every tap while the reader
+     compares two colours, which is the common case. 0.6 of its own height is the threshold, so a
+     photograph mostly on screen is left alone and a sliver at the top edge is not counted as seen.
+
+     Only on SELECT, never on deselect. Tapping the lit swatch again means "put it back", which is a
+     dismissal, and following a dismissal by moving the page is the tool arguing with the reader.
+
+     Through scrollStoryTo, so this inherits the Lenis-or-native choice and the reduced-motion jump
+     that every other anchor on this surface already makes, rather than a second scrolling idiom. */
+  revealStoryImage() {
+    const sel = '[data-story-ch="where"] .story-mask';
+    const el = document.querySelector(sel);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if (!r.height || !vh) return;
+    const visible = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+    if (visible / r.height >= 0.6) return;
+    this.scrollStoryTo(sel);
   },
 
   /* THREE READINGS, ONE GESTURE. The panel is replaced wholesale by React, so without this the swap
