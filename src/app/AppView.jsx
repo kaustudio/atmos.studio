@@ -38,12 +38,12 @@ import { Analytics } from '@vercel/analytics/react';
 /* THE FRAGMENT NEVER LEAVES, and without this it did. A share link carries the whole palette in
    #p= (lib/share.js), and the SDK's own payload is location.href ENTIRE: read the shipped script and
    the pageview body is `o: e(f)`, where e() returns location.href untouched unless a `route` is
-   passed. We render <Analytics beforeSend={stripFragment} /> bare, and the React wrapper only sets disableAutoTrack when
+   passed. We rendered it bare, with no route, and the React wrapper only sets disableAutoTrack when
    props.route !== undefined, so the automatic pageview fires with the full href. Opening a shared
-   link therefore posted that palette's name, descriptors, rationale and swatches to Vercel — which
+   link therefore posted that palette's name, descriptors, rationale and swatches to Vercel, which
    is also what made "opening one tells us nothing" false on the privacy page.
    beforeSend can rewrite the url before anything is sent, so the fragment is cut here rather than
-   trusted not to matter. Applied at every <Analytics beforeSend={stripFragment} /> call site; a new one must carry it too. */
+   trusted not to matter. Applied at every call site below; a new one must carry it too. */
 const stripFragment = (event) => {
   try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
   catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
