@@ -93,8 +93,10 @@ export function initHorizontalRail(root) {
         scrollTrigger: {
           trigger: card,
           containerAnimation: scrollTween,
-          start: 'left 120%',
-          end: 'right -20%',
+          // 110/-10, paired with the 110vw pad in about.css. See the note there for why all three
+          // move together, what the old 120/-20 cost the reader, and why 105 was too far.
+          start: 'left 110%',
+          end: 'right -10%',
           scrub: true,
         },
       });

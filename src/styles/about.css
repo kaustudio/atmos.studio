@@ -1282,9 +1282,29 @@
   display:flex;flex-direction:column;justify-content:center;
   overflow:hidden;
 }
+/* 110vw, DOWN FROM THE SOURCE'S 120, AND THE TWO OFFSETS IN aboutRail.js MOVE WITH IT.
+
+   Measured before the change: once the section pinned, the reader scrolled 300px with an empty band
+   on screen before the first card's edge crossed the viewport, because at pin start that edge sat at
+   127% of the viewport. A pinned section that shows nothing while it takes the scroll reads as the
+   document having ended, which is what was reported.
+
+   The three numbers are one number written three times, and the file's own note says so: the pad is
+   the lead in, `start: 'left P%'` is drift progress zero, and `end: 'right -(P-100)%'` is drift
+   progress one, because at pin end the trailing pad closes flush with the right edge. So P moves in
+   all three places or in none.
+
+   110 IS MEASURED, NOT PICKED. 105 was tried first and overshot: it put the first card's leading edge
+   at 95% of the viewport at pin start, so a card was already on screen before the section had taken
+   any scroll. That answers the complaint by deleting the gesture, and this effect is a fly-through
+   that is supposed to open on an empty frame. 110 lands the edge just outside instead, so the card
+   is arriving within the first fifty pixels rather than the first three hundred.
+
+   The 900px pad below is the source's own phone value and is left alone. It only has to be no
+   shorter than the drift start, or progress zero is unreachable and ScrollTrigger clamps it. */
 .about-rail__track{
   display:flex;width:max-content;gap:var(--grid-gutter);
-  padding-inline:120vw;
+  padding-inline:110vw;
   will-change:transform;
 }
 /* The source widens the pad on narrow screens, where a viewport is a smaller absolute distance. */
