@@ -1536,9 +1536,16 @@ function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
               own category — a footer is already a list of pages, so "Privacy Policy" and "Terms and
               Conditions" were each saying it twice. The PATHS are untouched: /about, /privacy and
               /terms are indexed, sitemapped and 308'd at the edge (see routes.js), and a label is
-              not a URL. */}
+              not a URL.
+
+              `Privacy`, NOT `Policy`, and the reason is that it was never only here. Trimming the
+              category word left this footer saying Policy while the page's own <h1>, the terms
+              footer and the noscript block all said Privacy: one page under two names, and the one
+              this footer chose is the half that names the document type rather than the subject,
+              which is the opposite of the rule the paragraph above states. Privacy is what a reader
+              is looking for and what every other surface already called it. */}
           {link('/about', 'How it Works')}
-          {link('/privacy', 'Policy')}
+          {link('/privacy', 'Privacy')}
           {link('/terms', 'Terms')}
         </nav>
         <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
@@ -2459,7 +2466,18 @@ export default function AppView({ vals }) {
           with the showcase or the gate, several screens up — so the footer down here is the tool's
           own, on the one stage that has room for it. The gate carries the landing's footer instead,
           which is the one that belongs to that composition. */}
-      {vals.isUpload && <SiteFooter route={vals.route} onNavigate={vals.navigate} />}
+      {/* THE RESULT STAGE GETS THE ROW TOO, and until now it got nothing. This was
+          `vals.isUpload && ...`, so the moment a palette existed the site's only links to How it
+          Works, Privacy and Terms left with the dropzone: measured on the result stage, zero
+          .site-foot nodes and no anchor to /privacy or /terms anywhere on the page. A reader who
+          came to use the tool could not reach either legal document from the state they spend all
+          their time in, which is also the state that just sent their image somewhere.
+          Compact rather than the whole footer, per the tombstone further up this file: brand and
+          landmark off, so this is one nav row and not a second document ending. The upload state
+          keeps the full footer, being the end of that composition rather than a strip under it. */}
+      {vals.isUpload
+        ? <SiteFooter route={vals.route} onNavigate={vals.navigate} />
+        : <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false} />}
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />

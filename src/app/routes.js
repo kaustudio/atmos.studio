@@ -48,7 +48,7 @@ export function routeName(route) {
   // page that is called one thing in the link and another in the announcement is two pages to
   // anyone navigating by ear.
   if (route === ABOUT) return 'How it Works';
-  if (route === PRIVACY) return 'Policy';
+  if (route === PRIVACY) return 'Privacy';
   if (route === TERMS) return 'Terms';
   return 'Palette generator';
 }
