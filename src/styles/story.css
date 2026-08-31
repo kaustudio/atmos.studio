@@ -595,6 +595,49 @@
   width:50vw;
   padding-inline:8px;
 }
+/* THE CARD'S GEOMETRY LIVES HERE, NOT IN about.css, AND THAT IS THE WHOLE OF A REAL BUG.
+
+   This surface borrows about.css's rail-card component, which is fine for what it looks like and
+   wrong for what it MEASURES. about.css is imported by AboutPage.jsx, and AboutPage is React.lazy,
+   so those rules ship in a lazily loaded chunk: neither blocking stylesheet in <head> contains them.
+   On a phone's first visit the rail therefore renders with no aspect-ratio and the photograph in
+   normal flow at its natural size, so a card is 1218px tall instead of 229.
+
+   That would be a brief flash and nothing more, except this row is PINNED. ScrollTrigger writes the
+   pinned element's height into an inline style, and it re-measured after the images loaded and
+   before the About chunk arrived: it captured 1246px and kept it. The cards then settled to their
+   real 229 inside a frozen 1246 box, which is a correct row of photographs floating in 280px of
+   nothing above and the same below. Reported as the images looking squeezed, and as coming right
+   only after touching something, because a later state change forces the refresh that recaptures it.
+
+   Measured with about.css switched off in the page: card 1218 tall, image static at 900x1195,
+   object-fit fill, content inline. With these four rules and about.css still off: 229, which is
+   the number the pin needs to see.
+
+   Only the load-bearing properties are duplicated. Decoration stays in about.css, because a scrim
+   arriving late is a flash and a height arriving late is a frozen wrong number. */
+[data-mobile-story] .about-rail__card{
+  position:relative;
+  flex:none;
+  aspect-ratio:3/4;
+  overflow:hidden;
+}
+[data-mobile-story] .about-rail__card img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  z-index:0;
+}
+[data-mobile-story] .about-rail__content{
+  position:relative;
+  z-index:1;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
 .story-horizontal .about-rail__card{
   width:100%;
   padding:0;
