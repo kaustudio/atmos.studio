@@ -229,7 +229,7 @@ export const motionMethods = {
   // it — most contrast, most accessible pairs, most recent — rather than a blanket ascending. A
   // second activation on the same column flips it. Sorting resets to page 1: staying on page 4 of a
   // reordered list shows a slice of rows that has nothing to do with what was just asked for.
-  SORT_LABELS: { contrast: 'max contrast', aa: 'AA pairs', time: 'date created' },
+  SORT_LABELS: { contrast: 'max contrast', aa: 'AA text pairs', time: 'date created' },
   setSort(key) {
     // Reordering replaces every row's contents just as wholesale as a page change does, so it takes
     // the same arrival rather than snapping to a new order in place.

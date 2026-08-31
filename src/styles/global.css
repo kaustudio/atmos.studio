@@ -1499,6 +1499,44 @@ button[data-row-cell] .tswap{flex:none}
   [data-seg-btn][data-ix][aria-pressed="false"]:active,
   [data-hx-cell][data-ix="seg"][aria-pressed="false"]:hover,
   [data-hx-cell][data-ix="seg"][aria-pressed="false"]:active{background:transparent!important}
+
+  /* ===== AND THE SAME, TIER-WIDE, RATHER THAN ONE SELECTOR AT A TIME ========================
+     The list above grew a name at a time as each control got its swap. The rule is the same every
+     time — a control that answers with its LABEL does not also need to answer with a fill — so the
+     two tiers where that now holds everywhere state it once.
+
+     THE TEST IS A LABEL, NOT A TIER, and that correction is the whole of this block's history.
+     It first took the fill off both tiers at once, on the reasoning that every control in them
+     swapped something on hover. An icon-only button does swap — the glyph slides under its mask —
+     but a glyph moving 14px inside a 32px circle is not the same event as a word rising through
+     one, and stripping the fill from those left the small round chrome buttons answering a pointer
+     with almost nothing. So the removal now applies where there is a WORD to do the answering:
+
+     press, text-bearing (Back up, Restore, Clear filters, Cancel, Extract again anyway): the label
+     rises through the mask, and that is loud enough to be the entire acknowledgement.
+
+     press, icon-only (28 of them: every drawer's close mark, the page and project steppers, a row's
+     delete and folder marks): fill kept. `:has(.tswap__a)` is what separates them — an icon-only
+     button either carries no swap at all, or carries one whose .tswap__a holds a single <svg>, and
+     both fall outside the selector. Structural, so a new icon button is classified correctly the
+     moment it is written, with nothing to remember to tag.
+
+     icon (the slider chevrons and the two toggletip marks): fill kept, tier-wide. These are the
+     standalone marks — no word anywhere in them — so the 16%/28% tint on line 264 stands as their
+     only hover, which is what it was written to be.
+
+     WHAT IS DELIBERATELY NOT HERE, both stated so the next reader does not think they were missed:
+       · [data-ix="cell"] — the 20 swatch value rows. No swap, and no control edge to strengthen:
+         their only border is a top hairline that rules the stack. The 12% tint is the whole of
+         their feedback, and a copy target that does not respond to a pointer is worse than one that
+         responds twice. It keeps its fill until it has something else to answer with.
+       · [data-ix="cta"] — the filled primary. Its hover does not ADD a fill, it lifts one the
+         control already wears, so there is no tint here to remove; holding it would need the rest
+         value, which every call site writes inline.
+     Both stay gated with everything else above: on a touchscreen and under reduced motion the swap
+     does not run, so the fill has to come back. */
+  [data-ix="press"]:has(.tswap__a):not(:has(.tswap__a > svg:only-child)):hover:not(:disabled),
+  [data-ix="press"]:has(.tswap__a):not(:has(.tswap__a > svg:only-child)):active:not(:disabled){background:transparent!important}
 }
 
 /* THE CHIP'S TRUNCATION SURVIVES THE SWAP. ch.labelStyle (renderVals.js) truncates a project name

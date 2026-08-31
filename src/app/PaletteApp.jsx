@@ -198,6 +198,12 @@ export default class PaletteApp extends React.Component {
     // The file is parsed and checked BEFORE this is set, so the dialog only ever describes a file
     // that would actually import — a bad file never gets a confirmation to click.
     restorePending: null,
+    /* THE PROJECT PICKER'S PENDING SET. Membership used to be written to the feed on every tap,
+       which made a mis-tap a real edit you had to notice and undo by tapping again — and the row's
+       tick was the only thing that told you it had happened. The picker holds the intended set here
+       instead and commits it once, so nothing changes until it is confirmed and Cancel is a real
+       way out. null while the dialog is shut; an array of project ids while it is open. */
+    assignPending: null,
     assignPalette: null, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or

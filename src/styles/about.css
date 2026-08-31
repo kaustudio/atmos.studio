@@ -1298,9 +1298,31 @@
 
 /* ---------------------------------------------------------------- the close */
 
-.about-end{padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
+/* THE PAGE'S ONE ACT GETS THE WHOLE SCREEN. Every other section on /about is sized by its content
+   and reads as part of a run; this one is the end of the argument and the only thing on the page a
+   reader can DO, and at content height it arrived as one more band — the invitation and the section
+   above it competing for the same screen.
+
+   min-height, not height, and that distinction is the whole safety of it: at 100svh a reader who has
+   scaled their text up, or who is on a short landscape phone, would have the line and the control
+   clipped by a box that refuses to grow. min-height gives the section the viewport as a FLOOR and
+   lets it become taller when the content needs it, which is the same rule the type work applied to
+   every fixed box on the tool.
+
+   svh rather than vh or dvh: it is the height with the browser's chrome EXPANDED, so the section is
+   never taller than what is actually visible and nothing shifts when a mobile URL bar retracts. It
+   is the unit the story's own closing CTA already pins at (story.css), so the two surfaces that end
+   with the same invitation end it the same way.
+
+   align-content centres the single grid row in the taller box. The padding-block stays and is now a
+   minimum breathing space rather than the whole measure — border-box means it sits inside the
+   100svh rather than adding to it. */
+.about-end{
+  min-height:100svh;
+  align-content:center;
+  padding-block:var(--band-gap) calc(var(--band-gap) * 1.2);
+}
 .about-end__inner{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;text-align:center}
-.about-end .about-divider{margin-bottom:clamp(40px,6vh,72px)}
 .about-route .about-end__line{
   margin:0;max-width:18ch;
   font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.08;

@@ -4,6 +4,7 @@ import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
+import { CONTRAST_MIN, CRITERION, RATIO_TEXT } from '../lib/wcag.js';
 
 const MONO = 'Neue Montreal';
 
@@ -84,12 +85,6 @@ const aaBadge = (st) => ({ display: 'inline-flex', alignItems: 'center', justify
 // What every surface renders: the verdict, then the count. No denominator in the VALUE — it is
 // C(n,2), a number nobody reasons in, and repeating it implied a compliance percentage. It is
 // stated once in the list header's ⓘ, and again in the title of every badge, everywhere.
-/* THE SELECTED CRITERION, SAID ONE WAY. "AA" alone is not a threshold — WCAG sets four, one per
-   level and text size — so every surface that reports a pass has to name both halves or it is
-   reporting against a number the reader cannot see. This builds the phrase the summary, the matrix
-   cells and the badge tooltip all end with, so the three can never describe the same measurement
-   differently. Sentence-cased for mid-sentence use; the callers supply the capital. */
-const CRITERION = (level, large) => level + ' contrast for ' + (large ? 'large' : 'normal') + ' text';
 
 const aaReadout = (met) => ({
   aaState: met.aaState,
@@ -161,7 +156,7 @@ export const renderValsMethods = {
       const cp = this.contrastPalette();
       if (cp) {
         const sw = cp.swatches, N = sw.length, aaa = s.contrastLens === 'AAA';
-        const th = s.contrastLarge ? (aaa ? 4.5 : 3) : (aaa ? 7 : 4.5);
+        const th = CONTRAST_MIN(aaa, s.contrastLarge);
         const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', border: '1px solid color-mix(in srgb, var(--on-surface) 20%, transparent)' } });
         /* THE SUMMARY USED TO ANSWER A QUESTION NOBODY HAD ASKED. It read `summary.aa` from
            contrastSummary(), which counts pairs at a hard-coded 4.5 — the AA/normal threshold — so
@@ -180,7 +175,7 @@ export const renderValsMethods = {
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
             pairTotal++; if (pass) passCount++;
             return {
-              blank: false, key: i + '-' + j, pass, ratio: r.toFixed(1), glyph: pass ? '✓' : '✕',
+              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th), glyph: pass ? '✓' : '✕',
               /* EACH CELL SAYS WHAT IT MEASURED. Visually a cell is legible from its row and column
                  chips; read aloud it was the bare number "10.3", with the two colours it compares
                  sitting in a header the reader passed several rows ago and a verdict carried only by
@@ -189,10 +184,20 @@ export const renderValsMethods = {
                  glyph go aria-hidden so it is said once rather than twice. It is rebuilt on every
                  render, so switching level or text size rewrites every description with it. */
               aria: rb.hex.toUpperCase() + ' and ' + cb.hex.toUpperCase() + '. Contrast ratio '
-                + r.toFixed(1) + ' to 1. ' + (pass ? 'Meets ' : 'Does not meet ') + criterion + '.',
-              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent', opacity: dim ? 0.22 : 1 },
-              numStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', lineHeight: 1, color: 'var(--on-surface)' },
-              glyphStyle: { fontSize: 'var(--fs-nano)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)' },
+                + RATIO_TEXT(r, th) + ' to 1. ' + (pass ? 'Meets ' : 'Does not meet ') + criterion + '.',
+              /* PASSING ONLY DIMS THE READING, NOT THE TABLE. The opacity sat on the CELL, and a
+                 cell owns two of the matrix's rules — its own borderLeft and borderTop. So filtering
+                 took every failing cell's share of the grid down to 22% with it, and the structure
+                 broke into a patchwork of full-strength and ghosted lines that belonged to no row or
+                 column. The lines are the table; they are what makes a cell readable as the meeting
+                 of two colours, and they should not report anything about the pair inside.
+                 So the cell keeps its borders and its ground at full strength and the two things
+                 that ARE the reading — the ratio and the mark — carry the dim instead. The hidden
+                 description is left alone: a filter is a visual narrowing, and quieting a pair is
+                 not a reason to make its sentence harder for a screen reader to reach. */
+              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent' },
+              numStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', lineHeight: 1, color: 'var(--on-surface)', opacity: dim ? 0.22 : 1 },
+              glyphStyle: { fontSize: 'var(--fs-nano)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', opacity: dim ? 0.22 : 1 },
             };
           });
           rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
@@ -259,7 +264,7 @@ export const renderValsMethods = {
           normalStyle: segBtn(!s.contrastLarge), largeStyle: segBtn(s.contrastLarge),
           normalPressed: s.contrastLarge ? 'false' : 'true', largePressed: s.contrastLarge ? 'true' : 'false',
           togglePass: () => this.setState((st) => ({ contrastPassOnly: !st.contrastPassOnly })),
-          passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: s.contrastPassOnly ? 'Passing only ✓' : 'Passing only',
+          passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: 'Passing only',
         };
       }
     }
@@ -1165,15 +1170,22 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
       /* STADIUMS, AND THE INSET THAT GOES WITH THEM. The rows were bordered rectangles in a dialog
          whose every other control had already rounded; --radius-pill clamps to half their 40px
-         height, so the corner is a true stadium end. 14px of horizontal padding then put "Unfiled"
-         against the widest point of a 20px arc, so it goes to 18 — the same correction the fields
-         and the toast each needed. The raised plate stays: these are rows you pick, not a surface
-         you type into, and the plate is what tells them apart from the sheet they sit on.
-         Each row is a membership toggle now, not one choice among many. `current` still drives the
-         mark, but it means "is in this project" rather than "is THE project", and Unfiled is
-         current only when the set is empty — it is the absence of membership, not a member. */
-      const live = s.feed.find((f) => f.id === pal.id) || pal;
-      const memberOf = this.palProjects(live).map((id) => this.projectName(id));
+         height, so the corner is a true stadium end. 14px of horizontal padding then put a row's
+         first letter against the widest point of a 20px arc, so it goes to 18 — the same correction
+         the fields and the toast each needed. The raised plate stays: these are rows you pick, not a
+         surface you type into, and the plate is what tells them apart from the sheet they sit on.
+         Each row is a membership toggle now, not one choice among many: `current` means "is in this
+         project" rather than "is THE project". Every row is a real project — see the options list
+         below for why the one that was not is gone. */
+      /* memberLine IS COMPUTED AND NOT RENDERED. The view dropped it by request (see the note in
+         AppView's dialog header); each row is a role=checkbox carrying aria-checked, so the state
+         sits on the controls instead of in a sentence about them. It is kept because it is the
+         restore path if that call is ever revisited, and it is switched here from the archive to
+         the DRAFT so that path cannot come back broken: reading the saved record would have put the
+         sentence in flat contradiction with the marks under it, saying "Not in any project" while
+         three ticks showed on screen. Whatever states membership states what Confirm will write. */
+      const pending = s.assignPending || [];
+      const memberOf = pending.map((id) => this.projectName(id)).filter(Boolean);
       /* THE MARK IS A WORD AND A TICK, not a 6px dot. The dot said "current" to whoever already knew
          the convention and nothing at all to anyone else — and it flipped between opacity 0 and 1
          with no transition, so the one piece of feedback the dialog gave arrived as a pop, which
@@ -1181,8 +1193,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          `Added` is stated in words beside the tick because a tick alone is a colourless icon
          carrying the whole state of the row (SC 1.4.1), and it eases in on the chrome band like
          every other state change here. */
+      /* THE ROWS READ THE DRAFT — `pending`, declared above with the sentence it shares a source
+         with. Reading the archive here would show a row unticked immediately after it was tapped. */
       const mkOpt = (id, label) => {
-        const cur = id === null ? this.palProjects(live).length === 0 : this.inProject(live, id);
+        const cur = pending.indexOf(id) >= 0;
         return {
           key: String(id), label, current: cur, checked: cur ? 'true' : 'false',
           markStyle: {
@@ -1192,16 +1206,26 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
             opacity: cur ? 1 : 0, transform: cur ? 'translateX(0)' : 'translateX(4px)',
             transition: this._reduce ? 'none' : 'opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)',
           },
-          // Unfiled is not a membership, so it never reads as one. "Added" on the row that means
-          // "belong to nothing" would be a contradiction; the tick there says this is already where
-          // the palette stands, which is also why pressing it would do nothing.
-          markLabel: id === null ? 'Current' : 'Added',
+          markLabel: 'Added',
           style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id),
-          aria: (id === null ? 'Remove ' + pal.name + ' from every project' : (cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label)),
+          aria: cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label,
         };
       };
       assignView = {
-        name: pal.name, options: [mkOpt(null, 'Unfiled'), ...s.projects.map((pr) => mkOpt(pr.id, pr.name))],
+        /* NO `UNFILED` ROW. It was the first option here, a pseudo-project whose tick meant "in
+           nothing", and it made the empty state look like a destination: to unfile a palette you
+           had to FILE it somewhere called Unfiled, and the row sat among five real projects looking
+           like a sixth. Unticking every project is already the whole of that act, and each row's
+           own aria-checked is what states where the palette stands. Unfiled survives everywhere it is
+           genuinely a place to stand — the library scope chip, projectName(), what a deleted
+           project's palettes fall back to — because there it names a view of the archive rather
+           than somewhere to put something. */
+        name: pal.name, options: s.projects.map((pr) => mkOpt(pr.id, pr.name)),
+        /* AND WITH NO PSEUDO-PROJECT, THE LIST CAN NOW BE EMPTY. It never could before: Unfiled was
+           always there, so a reader with no projects still saw a row. A bare gap between the header
+           and the rule reads as something that failed to load, so the empty case says what this
+           place is and points at the field immediately below it, which is the only action there. */
+        emptyLine: 'No projects yet. Name one below to file ' + pal.name + '.',
         /* WHERE THIS PALETTE IS, RIGHT NOW, in one line under its name — the standing answer the
            dialog was missing. A toggle tells you what a press DID; this tells you what is true, so
            someone who has ticked three rows and lost track can read the result instead of
@@ -1209,7 +1233,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            changes underneath a screen reader that has already passed it. */
         memberLine: memberOf.length
           ? 'In ' + (memberOf.length === 1 ? memberOf[0] : memberOf.slice(0, -1).join(', ') + ' and ' + memberOf[memberOf.length - 1])
-          : 'Not in any project yet',
+          : 'Not in any project',
         /* The act is two things at once and the button is a glyph, so the name says both: it creates
            the project AND files this palette in it. It LEADS with the same two words the library
            panel's own create button uses — "Create project" — because it is the same act with one
@@ -1382,7 +1406,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            first-arrival one: pick a case and this becomes that palette's name, which is the
            behaviour the ternary has always had. The statement does its work on the way in and then
            gets out of the way of the image the story is about. */
-        heroTitle: s.storyCaseId ? p.name : 'Atmos Gallery Is Designed for Larger Screens.',
+        heroTitle: s.storyCaseId ? p.name : 'Atmos Gallery Is Designed for Larger Screens',
         /* THE ACT NAMES WHAT IT OPENS, on the same condition and for the same reason the heading
            does. "Explore an Example" is the right words exactly once — on first arrival, when the
            heading is the width notice and there is no palette on the screen yet to name. The moment
@@ -1452,14 +1476,24 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
               const ratio = this.contrastRatio(p.swatches[i].hex, p.swatches[j].hex);
               out.push({
                 key: i + '-' + j, a: p.swatches[i].hex, b: p.swatches[j].hex, ratio,
-                val: ratio.toFixed(1) + ' to 1',
+                // the band edge this pair was judged against, so the printed figure cannot
+                // appear to cross it the wrong way (see RATIO_TEXT).
+                val: RATIO_TEXT(ratio, ratio >= 4.5 ? 4.5 : 3) + ' to 1',
                 // .about-checks' own three states, not .about-matrix's — see the note on the panel.
                 cls: ratio >= 4.5 ? 'is--pass' : ratio >= 3 ? 'is--part' : 'is--fail',
-                use: ratio >= 4.5 ? 'Body text at AA' : ratio >= 3 ? 'Large text at AA' : 'Graphic only',
+                /* "DECORATIVE", NOT "GRAPHIC", AND THE DIFFERENCE IS A SUCCESS CRITERION. The third
+                   band read "Graphic only", which tells a reader the pair is usable for graphics —
+                   and 1.4.11 asks 3:1 of any graphical object that carries meaning, the very
+                   threshold this band is BELOW. So the label offered a use the ratio does not
+                   support: under 3:1 a pair meets no contrast minimum at all, and the only safe use
+                   left is decoration, which has no requirement because it carries no information.
+                   The band above it stays named for large TEXT alone even though 3:1 is also the
+                   non-text figure; the two criteria share a number and nothing else. See lib/wcag.js. */
+                use: ratio >= 4.5 ? 'Body text at AA' : ratio >= 3 ? 'Large text at AA' : 'Decorative only',
                 // NAMED, not left to two colour chips. The chips are decoration beside this.
                 pair: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase(),
                 aria: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase() + ', '
-                  + ratio.toFixed(1) + ' to 1, ' + (ratio >= 4.5 ? 'usable for body text' : ratio >= 3 ? 'usable for large text' : 'graphic use only'),
+                  + RATIO_TEXT(ratio, ratio >= 4.5 ? 4.5 : 3) + ' to 1, ' + (ratio >= 4.5 ? 'usable for body text' : ratio >= 3 ? 'usable for large text' : 'decorative use only'),
               });
             }
           }
@@ -2058,7 +2092,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
             ],
           })
         : null,
-      assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
+      assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), confirmAssign: () => this.confirmAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
       // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
       // user is being asked about looks the way it looks everywhere else — recognition is the whole
       // point of the dialog. Counting: `count` includes every entry already made from this image,

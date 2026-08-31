@@ -3,6 +3,7 @@
 // The same content-addressing the extraction uses, so a harmony saved as a palette gets an id of
 // the same KIND as a generated one rather than a timestamp with a different shape.
 import { hashBytes } from '../../lib/hash.js';
+import { CONTRAST_MIN, CRITERION } from '../../lib/wcag.js';
 
 export const overlayMethods = {
   // ================= fullscreen detail =================
@@ -166,8 +167,16 @@ export const overlayMethods = {
   contrastPalette() { const s = this.state; return s.overlay || s.current || (s.feed && s.feed[0]) || null; },
   openContrast() {
     const p = this.contrastPalette(); if (!p) return; this._contrastBack = document.activeElement; this._cxDone = false;
-    const sm = this.contrastSummary(p);
-    this.setState({ contrast: true, announce: 'Contrast checker opened for ' + p.name + '. ' + sm.aa + ' of ' + sm.total + ' pairs pass AA.' }, () => {
+    /* THE ANNOUNCEMENT COUNTS AT THE SELECTED CRITERION, and it was the last place that did not.
+       This read contrastSummary(), which counts at a hard-coded 4.5 — right for the palette's AA
+       metric, wrong for a panel whose level and text size the reader chooses. Open the drawer with
+       AAA still selected and it said the AA figure aloud while the summary and every matrix cell
+       showed AAA: the same defect the visible summary had, surviving in the spoken one because the
+       fix went to the view and this is in the opener.
+       It also names the text size now. "pairs pass AA" is a sentence about a threshold the listener
+       cannot see, and AA alone is two different numbers depending on the size selected. */
+    const cx = this.contrastAtCurrent(p);
+    this.setState({ contrast: true, announce: 'Contrast checker opened for ' + p.name + '. ' + cx.pass + ' of ' + cx.total + ' pairs meet ' + cx.criterion + '.' }, () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-contrast-dialog]');
         if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }   // focus immediately — never delayed by the slide
@@ -629,7 +638,12 @@ export const overlayMethods = {
     const root = document.querySelector('[data-contrast-dialog]'); if (!root) return;
     const [oL, oLarge] = oldKey.split('|'), [nL, nLarge] = newKey.split('|');
     const p = this.contrastPalette(); if (!p) return;
-    const thr = (lens, large) => large === 'true' ? (lens === 'AAA' ? 4.5 : 3) : (lens === 'AAA' ? 7 : 4.5);
+    /* The third copy of the threshold table lived here, and it is the one that would have failed
+       quietly: this decides which cells PULSE when the criterion changes, so a table that disagreed
+       with the panel's would animate the wrong cells — marks flickering on pairs whose verdict had
+       not moved, and none on the ones that had. CONTRAST_MIN takes both keys apart the same way the
+       panel builds them ('AA|true' etc, see the key in PaletteApp). */
+    const thr = (lens, large) => CONTRAST_MIN(lens === 'AAA', large === 'true');
     const oth = thr(oL, oLarge), nth = thr(nL, nLarge), sw = p.swatches;
     // pulse only cells whose pass verdict changed between the two thresholds
     if (oth !== nth) {
@@ -643,6 +657,18 @@ export const overlayMethods = {
     }
     const sum = root.querySelector('[data-cx-summary]'); if (sum) g.fromTo(sum, { opacity: 0.35 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
     if (oLarge !== nLarge) { const smp = root.querySelector('[data-cx-sample]'); if (smp) g.fromTo(smp, { opacity: 0.3 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' }); }
+  },
+  /* The count at whatever the panel is currently set to. contrastSummary below is the palette's AA
+     METRIC — a fixed property of the palette at 4.5, which is what the library column, the badge and
+     the filters all sort and group on, and it must stay fixed. This is the other question: how many
+     pairs clear the threshold the reader has selected right now. Same loop, different threshold, and
+     the threshold and its name both come from lib/wcag.js so this can never drift from the panel. */
+  contrastAtCurrent(p) {
+    const s = this.state, aaa = s.contrastLens === 'AAA';
+    const th = CONTRAST_MIN(aaa, s.contrastLarge);
+    const sw = p.swatches; let pass = 0, total = 0;
+    for (let i = 0; i < sw.length; i++) for (let j = i + 1; j < sw.length; j++) { total++; if (this.contrastRatio(sw[i].hex, sw[j].hex) >= th) pass++; }
+    return { th, pass, total, criterion: CRITERION(aaa ? 'AAA' : 'AA', s.contrastLarge) };
   },
   contrastSummary(p) { const sw = p.swatches; let aa = 0, total = 0; for (let i = 0; i < sw.length; i++) for (let j = i + 1; j < sw.length; j++) { total++; if (this.contrastRatio(sw[i].hex, sw[j].hex) >= 4.5) aa++; } return { aa, total }; },
   trapContrast(e) { this.trapFocusIn('[data-contrast-dialog]', e); },

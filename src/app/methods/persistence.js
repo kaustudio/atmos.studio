@@ -1156,20 +1156,62 @@ export const persistenceMethods = {
     this.copy(href, 'gate-link', 'Link copied. Open it on a wider screen to read your own image.');
   },
   trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
-  openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; this.setState({ assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
+  /* THE DRAFT IS SEEDED FROM THE LIVE RECORD, and the difference is not academic. Callers hand this
+     whatever palette object they are holding: the row hands its own, but the result stage hands
+     state.current, which confirmAssign does not rewrite — it maps `feed`. So seeding from the
+     argument showed the memberships that palette had when it was LOADED, and reopening the picker
+     after a confirm offered a draft that had forgotten what was just saved. Measured exactly that
+     way: confirm put Garnet in Ochre, reopening showed Ochre unticked.
+     `feed` is the archive, so the record in it is the answer; the argument is only how we know which
+     palette is meant. It falls back to the argument for a palette not in the feed — a shared link
+     being viewed, which has no archive record to read. */
+  openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; const liveRec = (this.state.feed || []).find((p) => p.id === pal.id) || pal; this.setState({ assignPending: this.palProjects(liveRec).slice(), assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
   closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
   /* The dialog STAYS OPEN on a project toggle. It used to close on every pick, which was right when
      picking was choosing — one slot, one answer, done. Now that a palette can be in several
      projects, closing after the first tick means reopening the dialog for the second, and the whole
-     point of the change was that a palette can be in more than one place at once.
-     Unfiled still closes: "belong to nothing" is a complete answer, so there is nothing left to
-     say and the dialog would only be in the way. */
+     point of the change was that a palette can be in more than one place at once. */
+  /* A TAP MOVES THE PENDING SET, NOT THE ARCHIVE. This called assignPalette() straight away, so
+     picking the wrong folder filed the palette in it and the only way back was to notice the tick
+     and tap again. Now the dialog is a draft: every tap toggles membership in state, Confirm writes
+     it, and closing throws it away.
+     There is no id-less call any more: the branch here that emptied the set was the Unfiled row's,
+     and unticking the projects one at a time is what empties it now. */
   pickAssign(projectId) {
-    const pal = this.state.assignPalette;
-    if (pal) this.assignPalette(pal.id, projectId);
-    if (!projectId) this.closeAssign();
+    if (!projectId) return;
+    /* THE UPDATER FORM, because this reads the value it is about to replace. Reading
+       this.state.assignPending and setting the result works for one tap and silently drops work for
+       two in the same batch: both toggles see the pre-batch set, and the second overwrites the
+       first. Caught by untickig two rows in one tick — [Scan, Eliza] came back as [Scan] instead of
+       empty, because the Eliza handler never saw Scan leave. A pointer cannot produce that (two
+       clicks are two events, and React flushes between them), but a keyboard repeat, a test, or any
+       future caller that loops over rows can, and there is no cost to being right. */
+    this.setState((st) => {
+      const cur = st.assignPending || [];
+      return { assignPending: cur.indexOf(projectId) >= 0 ? cur.filter((id) => id !== projectId) : cur.concat([projectId]) };
+    });
   },
-  newProjectAndAssign(name) { const id = this.createProject(name); if (id) { const pal = this.state.assignPalette; if (pal) setTimeout(() => { this.assignPalette(pal.id, id); this.closeAssign(); }, 0); } },
+  /* THE COMMIT, and the only place the picker touches the feed. withProjects takes the whole set
+     rather than toggling one id, so what lands is exactly what the dialog showed — no replay of
+     individual taps, and no chance of the two disagreeing.
+     The sentence names the palette and where it ended up, because "Saved." would confirm that
+     something happened without confirming what, which is the fault the old per-tap notice was
+     written to fix. */
+  confirmAssign() {
+    const pal = this.state.assignPalette; if (!pal) return;
+    const ids = (this.state.assignPending || []).slice();
+    const names = ids.map((id) => this.projectName(id)).filter(Boolean);
+    const msg = names.length
+      ? pal.name + ' is in ' + (names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]) + '.'
+      : pal.name + ' is not in any project.';
+    this.setState((st) => ({
+      feed: st.feed.map((p) => (p.id === pal.id ? this.withProjects(p, ids) : p)),
+      announce: msg,
+    }), () => { this.persist({ immediate: true }); this.showNotice(msg); this.closeAssign(); });
+  },
+  // The project is created for real — it is a thing in the library either way — but joining it is
+  // still a draft edit, so it lands in the pending set and waits for Confirm like every other row.
+  newProjectAndAssign(name) { const id = this.createProject(name); if (id) { const pal = this.state.assignPalette; if (pal) setTimeout(() => this.setState((st) => ({ assignPending: (st.assignPending || []).concat([id]) })), 0); } },
   /* openManage / closeManage WERE HERE. The manage surface is no longer a dialog of its own — it is
      the Projects tab of the library panel — so its open, close, focus capture and arrival are the
      panel's (openTagFilter / closeTagFilter in overlays.js) and there is nothing left for a second

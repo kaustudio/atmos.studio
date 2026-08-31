@@ -44,8 +44,11 @@ export function pathFor(route) {
    this is the one place those four names are written down. Short, because it is read out in full
    every time somebody navigates. */
 export function routeName(route) {
-  if (route === ABOUT) return 'About';
-  if (route === PRIVACY) return 'Privacy';
+  // In step with the footer's labels (SiteFooter in AppView): this is announced on arrival, and a
+  // page that is called one thing in the link and another in the announcement is two pages to
+  // anyone navigating by ear.
+  if (route === ABOUT) return 'How it Works';
+  if (route === PRIVACY) return 'Policy';
   if (route === TERMS) return 'Terms';
   return 'Palette generator';
 }

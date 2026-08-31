@@ -177,7 +177,11 @@ const MarkScrim = () => (<div data-mark-scrim="1" aria-hidden="true" style={MARK
    --fs-body and the action row. `display:block` and `flex:none` are on every one so an icon never
    picks up a text baseline gap or gets squeezed by a flex parent. */
 const IconCopy = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M16 1H2v16h2V3h12zm5 4H6v18h15zm-2 16H8V7h11z"></path></svg>);
-const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m9.55 17.308l-4.97-4.97l.714-.713l4.256 4.256l9.156-9.156l.713.714z"></path></svg>);
+// The check, supplied. Heavier stroke than the hairline it replaces, which is what a confirmation
+// wants at 12px — the old path was a 0.7-unit line that thinned to almost nothing beside the
+// uppercase labels it sits in. The decorative <path d="M0 0h24v24H0z" fill="none"/> from the source
+// SVG is dropped: it is a transparent 24x24 spacer, and the viewBox already establishes that box.
+const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"></path></svg>);
 const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M8 18q-2.502 0-4.251-1.749T2 12t1.749-4.251T8 6q.906 0 1.736.26t1.525.754q-.194.177-.367.377l-.344.401q-.539-.376-1.186-.584T8 7Q5.925 7 4.463 8.463T3 12t1.463 3.538T8 17q.717 0 1.365-.208q.646-.208 1.185-.584l.344.4q.173.202.367.379q-.695.494-1.525.754Q8.906 18 8 18m8 0q-.906 0-1.735-.26t-1.527-.753q.195-.177.368-.378l.344-.401q.544.377 1.189.584T16 17q2.075 0 3.538-1.463T21 12t-1.463-3.537T16 7q-.717 0-1.362.208t-1.188.584l-.344-.4q-.173-.201-.367-.379q.695-.494 1.525-.753Q15.095 6 16 6q2.502 0 4.251 1.749T22 12t-1.749 4.251T16 18m-4-1.558q-.944-.84-1.472-2T10 12t.528-2.442t1.472-2q.944.84 1.472 2T14 12t-.528 2.442t-1.472 2"></path></svg>);
 // Sort chevron — drawn at the same 1-unit hairline weight as the rest of the icon set, so it sits
 // in the header without shouting. It points DOWN at rest (descending) and rotates 180° to point up
@@ -286,7 +290,7 @@ const AaBadge = ({ aa }) => (
 // reduced-motion grid, which are two renderings of one card and had drifted into two copies.
 
 // The identity line: name, then the row's two labels — EXAMPLE for the seeded palettes, and the
-// current palette NAMED rather than only dotted. The square stays beside the word, so the state is
+// current palette NAMED rather than only dotted. The dot stays beside the word, so the state is
 // carried by shape as well as text and survives a greyscale render (SC 1.4.1).
 const CardIdentity = ({ c }) => (<>
   {/* flex:1 so this row claims the card's full content width. Without it the wrapper is a flex item
@@ -313,8 +317,8 @@ const CardIdentity = ({ c }) => (<>
     )}
   </span>
   {c.current && (
-    <span style={sx('display:inline-flex;align-items:center;gap:6px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface)')}>
-      <span style={sx('width:7px;height:7px;background:var(--on-surface);flex:none')} aria-hidden="true"></span>Viewing</span>
+    <span style={sx('display:inline-flex;align-items:center;gap:4px;flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface)')}>
+      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:var(--on-surface);flex:none')} aria-hidden="true"></span>Viewing</span>
   )}
 </>);
 
@@ -1512,9 +1516,16 @@ function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
             two statements as the site's third document, and it leads because it is the one somebody
             arriving here might actually be looking for. */}
         <nav className="site-foot__nav" aria-label="Site">
-          {link('/about', 'About')}
-          {link('/privacy', 'Privacy Policy')}
-          {link('/terms', 'Terms and Conditions')}
+          {/* The labels say what the page IS, not what kind of document it is. "About" named a
+              convention rather than a subject; "How it Works" is the subject, and it is what the
+              page spends its length on. Policy and Terms lose the words that only repeated their
+              own category — a footer is already a list of pages, so "Privacy Policy" and "Terms and
+              Conditions" were each saying it twice. The PATHS are untouched: /about, /privacy and
+              /terms are indexed, sitemapped and 308'd at the edge (see routes.js), and a label is
+              not a URL. */}
+          {link('/about', 'How it Works')}
+          {link('/privacy', 'Policy')}
+          {link('/terms', 'Terms')}
         </nav>
         <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
       </div>
@@ -1608,7 +1619,7 @@ function LandingStage({ vals, covered, quiet }) {
                       Same words as the story's own hero, because these two surfaces say one thing
                       and a reader can meet either of them first. */}
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Atmos Gallery Is</span></span>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Designed for Larger Screens.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Designed for Larger Screens</span></span>
                 </h1>
                 {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
                     makes it one is that it never said why, so it read as a limitation of the site
@@ -1653,8 +1664,8 @@ function LandingStage({ vals, covered, quiet }) {
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; max-width: 606px')}>
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:20ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 507px')}>Colour read from light and atmosphere.</span></span>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 507px')}>Colour read from light and atmosphere</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In seconds</span></span>
                 </h1>
                 {/* TWO ACTS NOW, AND THE TIER FINALLY HAS ITS PAIR. Was an HBtn carrying
                     glassCta/glassCtaHover/glassCtaActive — three style objects and two pieces of
@@ -3023,8 +3034,8 @@ function FeedSection({ vals }) {
                       appearing on the right would push the metric columns left on whichever row was
                       selected, and a column that moves for one row is not a column. */}
                   {c.current && (
-                    <span style={sx('display: inline-flex; align-items: center; gap: 6px; flex: none; font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
-                      <span style={sx('width:7px;height:7px;background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
+                    <span style={sx('display: inline-flex; align-items: center; gap: 4px; flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
+                      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
                   )}
                   {/* THE TRAIT TAGS ARE GONE FROM THE ROW, and the flexible child stays. It was
                       three uppercase words per row — SMOULDERING · GOLDEN · GRAPHIC — each one a
@@ -3263,7 +3274,7 @@ function ContrastDrawer({ vals }) {
       <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
+            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
             <span data-drawer-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</span>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" title="Close" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
@@ -3293,13 +3304,22 @@ function ContrastDrawer({ vals }) {
           <button type="button" data-cx-cell="filter" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}><TextSwap>{contrast.passLabel}</TextSwap></button>
         </div>
 
-        <div data-cx-sec="1" style={sx('display:flex;align-items:baseline;gap:8px;padding:16px var(--page-gutter) 0')}>
-          {/* Both halves are composed in renderVals against the SAME threshold the cells are graded
-              on, so the sentence, the minimum and the matrix cannot report different criteria — which
-              is exactly what they did while this line interpolated an AA-only count next to a level
-              the reader had changed. */}
+        {/* STACKED, WITH THE MINIMUM AS THE EYEBROW. Side by side at a shared baseline the two read
+            as one long line, and the threshold — the number the sentence is measured against — was
+            trailing the sentence that depended on it. Above it, it does what every other eyebrow in
+            this drawer does: says what is being counted before the count.
+            THE DOM ORDER MOVED WITH THE VISUAL ORDER rather than being flipped in CSS. `order` or
+            column-reverse would leave a screen reader hearing the sentence and then the threshold it
+            was measured against, which is the wrong way round for the same reason it looked wrong.
+            No new type is invented for the eyebrow: --fs-label, uppercase, --track-flat and
+            --on-surface-muted are already what this span carried and what "Contrast checker" above
+            the palette name carries. Only the position changed. 8px is the gap the drawer's section
+            eyebrows already keep from what they label.
+            Both halves are still composed in renderVals against the SAME threshold the cells are
+            graded on, so the sentence, the minimum and the matrix cannot report different criteria. */}
+        <div data-cx-sec="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px var(--page-gutter) 0')}>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
           <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
         </div>
 
         <div data-cx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
@@ -4175,8 +4195,14 @@ function AssignDialog({ vals }) {
               <span aria-hidden="true" style={o.markStyle}><IconCheck /> {o.markLabel}</span>
             </button>
           ))}
+          {/* The empty case, reachable since the Unfiled pseudo-row was removed (renderVals.js).
+              Not a live region: it is replaced by the first real row the moment a project exists,
+              and the create flow announces that itself. */}
+          {assign.options.length === 0 && (
+            <p style={sx("margin:0;padding:2px 0 6px;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted)")}>{assign.emptyLine}</p>
+          )}
         </div>
-        <div style={sx('padding:16px var(--page-gutter) 22px;margin-top:8px;border-top:1px solid var(--line)')}>
+        <div style={sx('padding:16px var(--page-gutter) 18px;margin-top:8px;border-top:1px solid var(--line)')}>
           {/* THE SAME VOICE AS `ADD TO PROJECTS` AT THE TOP OF THIS DIALOG, which it was not: this
               stood at --fs-micro with a hand-set .06em against the header's --fs-label at
               --track-flat. 9px with half a pixel of tracking beside 10px with none — two uppercase
@@ -4222,6 +4248,31 @@ function AssignDialog({ vals }) {
             <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} aria-label={assign.createAria} title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
+          {/* THE COMMIT PAIR. The picker is a draft now (see pickAssign), so it needs a way to say
+              yes and a way to walk away, and the two have to read as a pair rather than as one
+              button beside a close mark. button-006 at the app's two emphases: the filled tier for
+              the act that writes, the unfilled one for the way out — the same pairing the export and
+              restore dialogs already use, so a reader who has confirmed anything else in this app
+              knows which is which without being told.
+              Cancel is a real cancel: closeAssign drops the pending set, so nothing reaches the
+              archive. The X in the header does the same thing, deliberately — a reader who treats it
+              as a dismiss gets a dismiss, not a silent save. */}
+          {/* A RULE, NOT MORE SPACE, and this is the case that earns one. The field above creates a
+              project; the pair below commits the whole picker — two different acts, and stacked with
+              only a gap between them the buttons read as the field's own controls, as though Confirm
+              submitted the name. Space alone cannot fix that here: the gap would have to grow past
+              the dialog's own rhythm before the grouping flipped, and the dialog is already tight.
+              --line, the same hairline the list rows and the drawer sections rule with. */}
+        </div>
+        {/* THE FOOTER IS A SIBLING OF THE FIELD BLOCK, NOT ITS CHILD, and that is the whole reason
+            the rule reaches both edges. Nested inside, it inherited the gutter and drew a rule that
+            stopped short of the sheet on both sides — which reads as an underline belonging to the
+            field above it, the exact grouping the rule was added to break. Carrying --page-gutter
+            itself puts the rule edge to edge and the buttons back on the same inline edge as
+            everything above, the same construction the restore dialog's footer uses. */}
+        <div style={sx('display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:18px var(--page-gutter) 22px;border-top:1px solid var(--line)')}>
+          <B006 onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Cancel</B006Text></span>} />
+          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Confirm the projects for ' + assign.name} label={<span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconCheck /></span><B006Text>Confirm</B006Text></span>} />
         </div>
       </div>
     </div>

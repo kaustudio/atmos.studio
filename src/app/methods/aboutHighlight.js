@@ -35,15 +35,27 @@ function noop() { }
    Words wrap the characters, so line breaking is unchanged: an inline-block box cannot be broken
    inside, and the whitespace between them stays a real text node, which is what the browser breaks
    on. Splitting characters loose in the flow instead would let a line break land mid-word. */
+/* [ATMOS 4] A <br> SURVIVES THE SPLIT, and it has to. This read el.textContent and rebuilt from
+   that string, which is every character the element contains and none of the ELEMENTS — so a line
+   break written into the markup was silently dropped and the sentences it separated ran together on
+   one line. That cost nothing while the only target was a statement with no break in it; the
+   moment one had a <br>, the effect would have quietly rewritten the composition it was applied to.
+   So the walk is over childNodes rather than over a flattened string: text nodes split as before,
+   a <br> is rebuilt as a <br>, and anything else contributes its text the way textContent did — no
+   worse than the old behaviour for cases this has never met, and correct for the one it has.
+   The spoken label crosses the break with a SPACE. textContent gives "…an image.Leave with…" —
+   a <br> contributes no character — so the sentence a screen reader is handed would run two words
+   together at exactly the point the design puts a line break. */
 function splitChars(el) {
   const original = el.innerHTML;
-  const text = el.textContent;
   const prevLabel = el.getAttribute('aria-label');
-  if (!text || !text.trim()) return null;
+  const nodes = [].slice.call(el.childNodes);
+  const spoken = nodes.map((n) => (n.nodeName === 'BR' ? ' ' : n.textContent || '')).join('');
+  if (!spoken || !spoken.trim()) return null;
   try {
     const frag = document.createDocumentFragment();
     const chars = [];
-    text.split(/(\s+)/).forEach((part) => {
+    const addText = (part) => {
       if (!part) return;
       if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
       const word = document.createElement('span');
@@ -56,12 +68,16 @@ function splitChars(el) {
         chars.push(c);
       });
       frag.appendChild(word);
+    };
+    nodes.forEach((node) => {
+      if (node.nodeName === 'BR') { frag.appendChild(document.createElement('br')); return; }
+      (node.textContent || '').split(/(\s+)/).forEach(addText);
     });
     if (!chars.length) return null;
     el.textContent = '';
     el.appendChild(frag);
     // [ATMOS 2] the element speaks the sentence; the pieces say nothing.
-    el.setAttribute('aria-label', text.replace(/\s+/g, ' ').trim());
+    el.setAttribute('aria-label', spoken.replace(/\s+/g, ' ').trim());
     el.setAttribute('data-hl-split', '');
     return {
       chars,
