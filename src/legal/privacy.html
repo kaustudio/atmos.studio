@@ -19,10 +19,10 @@
   <div data-toc-content class="toc-article">
     <h2>Your images are read on your device</h2>
     <p>The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH, and discarded. The full-size image is never uploaded.</p>
-    <p>One thing does leave, and it leaves automatically: choosing an image starts the naming, so you are not asked first. A thumbnail of the image, up to about 960 px on its longest edge, together with the hex values and each colour's share, goes to Anthropic's API for the reading. Nothing goes with it: no filename, no account, no identifier. We don't keep it, and Anthropic doesn't train on it. If that call fails, the tool names the palette locally instead. It does not mean nothing was sent: the failure is usually a reply that did not come back, and by then the thumbnail has already reached us and Anthropic. Only a build with no interpreter configured sends nothing.</p>
+    <p>One thing does leave, and it leaves automatically: choosing an image starts the naming, so you are not asked first. A thumbnail of the image, up to about 960 px on its longest edge, together with the hex values and each colour&rsquo;s share, goes to Anthropic&rsquo;s API for the reading. Nothing goes with it: no filename, no account, no identifier. We don&rsquo;t keep it, and Anthropic doesn&rsquo;t train on it. If that call fails, the tool names the palette locally instead. It does not mean nothing was sent: the failure is usually a reply that did not come back, and by then the thumbnail has already reached us and Anthropic. Only a build with no interpreter configured sends nothing.</p>
 
     <h2>Your palettes stay in your browser</h2>
-    <p>Your library lives in this browser's local storage, under a handful of first-party keys beginning <code>palette-generator</code>. There is no server holding it and no account attached to it. Clearing your browser data deletes it, so if a palette matters to you, use Back up to keep a copy on your own disk.</p>
+    <p>Your library lives in this browser&rsquo;s local storage, under a handful of first-party keys beginning <code>palette-generator</code>. There is no server holding it and no account attached to it. Clearing your browser data deletes it, so if a palette matters to you, use Back up to keep a copy on your own disk.</p>
 
     <h2>Share links carry the palette itself</h2>
     <p>A shared link encodes the palette in the part of the URL after the <code>#</code>. Browsers never put that part in the request itself. That alone is not enough, because a script can still read it and send it separately, and ours did: our analytics reported the whole address, fragment included, until we changed it to cut the fragment before anything is sent.</p>
@@ -46,7 +46,7 @@
       CVR / VAT: DK39161443<br />
       <a href="mailto:hello@kau.studio">hello@kau.studio</a>
     </p>
-    <p>Anything unclear, or something you'd like removed: <a href="mailto:hello@kau.studio">hello@kau.studio</a>.</p>
+    <p>Anything unclear, or something you&rsquo;d like removed: <a href="mailto:hello@kau.studio">hello@kau.studio</a>.</p>
 
     <!-- The nav line this block used to carry (Terms · Back to Atmos Gallery) is now in the site
          footer below, which is on every page. What stays is the controller's identity: it is not

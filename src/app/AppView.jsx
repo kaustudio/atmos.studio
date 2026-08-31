@@ -2195,18 +2195,16 @@ export default function AppView({ vals }) {
             <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" title="Choose Image" style={sx('display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--radius-pill);background:var(--on-surface);color:var(--surface)')}><TextSwap><IconPlus size={20} /></TextSwap></span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
-          {/* BACK, AND BEFORE THE REQUEST RATHER THAN AFTER IT. A version of this note was removed
-              from here by request, on the reasoning that /privacy carries it in full. What that
-              reasoning missed is WHEN the send happens: naming is not something the reader asks for.
-              processFile goes straight to _runPipeline and runInterpretation (pipeline.js), so the
-              thumbnail is on its way to Anthropic the moment an image is chosen, and this button is
-              the only surface a reader passes on the way. A disclosure in the footer's privacy page
-              is a disclosure after the fact.
-              Kept to one sentence and a link, which is what the earlier removal was really about. */}
-          <p style={sx("max-width:52ch;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.55;color:var(--on-surface-muted)")}>
-            Choosing an image sends a small copy of it, with its colours, to Anthropic to name the palette. The full-size file stays on your device.{' '}
-            <a href="/privacy" data-focus="chrome" style={sx('color:var(--on-surface);text-decoration:underline;text-underline-offset:2px')}>How we handle it</a>
-          </p>
+          {/* NO DISCLOSURE HERE, BY REQUEST: it broke the hierarchy of a screen whose whole job is
+              one instruction. A version of it stood here briefly and is now carried in full on
+              /privacy, which the footer links from this same screen.
+              WHAT THAT COSTS, so the next person weighing it has the fact and not just the outcome:
+              naming is not something the reader opts into. processFile goes straight to
+              _runPipeline and runInterpretation (pipeline.js), so the thumbnail is on its way the
+              moment an image is chosen, and every disclosure therefore arrives after the send. That
+              is a product decision, not an oversight, and it is the reason the privacy page states
+              the automatic behaviour in its own first sentence on the subject rather than burying
+              it. If a chooser-side note ever returns, it belongs above the button, not under it. */}
         </>)}
 
         {vals.isProcessing && (
