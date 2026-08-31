@@ -34,6 +34,20 @@ import { isDoc, isLegal, pathFor } from './routes.js';
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
 // do inside the tool", and a single custom event makes that false. See DECISIONS.md.
 import { Analytics } from '@vercel/analytics/react';
+
+/* THE FRAGMENT NEVER LEAVES, and without this it did. A share link carries the whole palette in
+   #p= (lib/share.js), and the SDK's own payload is location.href ENTIRE: read the shipped script and
+   the pageview body is `o: e(f)`, where e() returns location.href untouched unless a `route` is
+   passed. We render <Analytics beforeSend={stripFragment} /> bare, and the React wrapper only sets disableAutoTrack when
+   props.route !== undefined, so the automatic pageview fires with the full href. Opening a shared
+   link therefore posted that palette's name, descriptors, rationale and swatches to Vercel — which
+   is also what made "opening one tells us nothing" false on the privacy page.
+   beforeSend can rewrite the url before anything is sent, so the fragment is cut here rather than
+   trusted not to matter. Applied at every <Analytics beforeSend={stripFragment} /> call site; a new one must carry it too. */
+const stripFragment = (event) => {
+  try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
+  catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
+};
 import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
@@ -1858,7 +1872,7 @@ export default function AppView({ vals }) {
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         <React.Suspense fallback={null}>{legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}</React.Suspense>
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        <Analytics />
+        <Analytics beforeSend={stripFragment} />
         <SpeedInsights />
       </div>
     );
@@ -1893,7 +1907,7 @@ export default function AppView({ vals }) {
         <MarkScrim />
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
-        <Analytics />
+        <Analytics beforeSend={stripFragment} />
         <SpeedInsights />
       </div>
     );
@@ -1936,7 +1950,7 @@ export default function AppView({ vals }) {
             .doc-route, and site-foot.css is scoped to nothing above .site-foot, so it lands here
             styled exactly as it does on /about. */}
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        <Analytics />
+        <Analytics beforeSend={stripFragment} />
         <SpeedInsights />
       </div>
     );
@@ -1956,7 +1970,7 @@ export default function AppView({ vals }) {
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
-        <Analytics />
+        <Analytics beforeSend={stripFragment} />
         <SpeedInsights />
       </div>
     );
@@ -2008,7 +2022,7 @@ export default function AppView({ vals }) {
           <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
         )}
         <LogoLoader show={vals.showLoader} />
-        <Analytics />
+        <Analytics beforeSend={stripFragment} />
         <SpeedInsights />
       </div>
     );
@@ -2181,10 +2195,18 @@ export default function AppView({ vals }) {
             <span style={sx('display:block;overflow:hidden')}><span data-drop-line="1" title="Choose Image" style={sx('display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--radius-pill);background:var(--on-surface);color:var(--surface)')}><TextSwap><IconPlus size={20} /></TextSwap></span></span>
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </button>
-          {/* The interpretation note that used to sit here — "a small downscaled thumbnail is sent to
-              the model … it isn't stored" — was removed by request, as the "everything stays in your
-              browser" line above it had been earlier. The disclosure itself is unchanged: it stands in
-              the README and in full on /privacy, which the footer links from this same screen. */}
+          {/* BACK, AND BEFORE THE REQUEST RATHER THAN AFTER IT. A version of this note was removed
+              from here by request, on the reasoning that /privacy carries it in full. What that
+              reasoning missed is WHEN the send happens: naming is not something the reader asks for.
+              processFile goes straight to _runPipeline and runInterpretation (pipeline.js), so the
+              thumbnail is on its way to Anthropic the moment an image is chosen, and this button is
+              the only surface a reader passes on the way. A disclosure in the footer's privacy page
+              is a disclosure after the fact.
+              Kept to one sentence and a link, which is what the earlier removal was really about. */}
+          <p style={sx("max-width:52ch;margin:14px auto 0;text-align:center;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.55;color:var(--on-surface-muted)")}>
+            Choosing an image sends a small copy of it, with its colours, to Anthropic to name the palette. The full-size file stays on your device.{' '}
+            <a href="/privacy" data-focus="chrome" style={sx('color:var(--on-surface);text-decoration:underline;text-underline-offset:2px')}>How we handle it</a>
+          </p>
         </>)}
 
         {vals.isProcessing && (
@@ -2552,7 +2574,7 @@ export default function AppView({ vals }) {
         </div>
       )}
 
-      <Analytics />
+      <Analytics beforeSend={stripFragment} />
       <SpeedInsights />
     </div>
   );
