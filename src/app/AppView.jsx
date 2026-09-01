@@ -3212,41 +3212,7 @@ function FeedSection({ vals }) {
                 ))}
               </div>
             </div>
-            {/* THE EDGE. The filter graph and the frame it drives — see src/app/universeEdge.js for
-                why this is an SVG displacement map over a backdrop-filter and not the GLSL lens the
-                reference uses (short version: a fragment shader cannot sample DOM, and these tiles
-                are focusable buttons with real text in them).
-
-                TWO DISPLACEMENT PASSES, ONE MAP, TWO SCALES. That is the whole of the dispersion:
-                the backdrop is sampled once bent wide and once bent tight, red is taken from the
-                wide one and blue from the tight one, and green is half of each — which lands it on
-                the middle scale a third pass would have given it. A single pass would bend the
-                backdrop just as far and arrive colourless; the split IS the effect. Why two rather
-                than the obvious three is a measured frame-budget decision, written out over
-                edgeScales in universeEdge.js.
-
-                The map's href is written from universe.js on every build, because the band is a
-                fixed pixel depth and its share of the viewport therefore is not. */}
-            <svg aria-hidden="true" focusable="false" width="0" height="0" style={sx('position:absolute;width:0;height:0;pointer-events:none')}>
-              <defs>
-                <filter id="atmos-universe-edge" x="0%" y="0%" width="100%" height="100%" colorInterpolationFilters="sRGB">
-                  <feImage data-edge-map="1" preserveAspectRatio="none" result="map" />
-                  <feDisplacementMap in="SourceGraphic" in2="map" scale={vals.edgeScales[0]} xChannelSelector="R" yChannelSelector="G" result="wide" />
-                  <feDisplacementMap in="SourceGraphic" in2="map" scale={vals.edgeScales[1]} xChannelSelector="R" yChannelSelector="G" result="tight" />
-                  {/* Red off the wide bend, blue off the tight one, green half from each. The two
-                      halves are what put green back on the scale it would have had from a pass of
-                      its own — drop either .5 and the split stops being a spread and becomes a
-                      two-colour fringe. */}
-                  <feColorMatrix in="wide" type="matrix" values="1 0 0 0 0  0 .5 0 0 0  0 0 0 0 0  0 0 0 1 0" result="cWide" />
-                  <feColorMatrix in="tight" type="matrix" values="0 0 0 0 0  0 .5 0 0 0  0 0 1 0 0  0 0 0 1 0" result="cTight" />
-                  {/* arithmetic rather than feBlend: the two inputs carry disjoint channels apart
-                      from the green they each hold half of, so a straight sum is exactly the
-                      recombination and needs no blend-mode reasoning. */}
-                  <feComposite in="cWide" in2="cTight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
-                </filter>
-              </defs>
-            </svg>
-            <div data-universe-edge="1" aria-hidden="true" style={vals.edgeGlassStyle}></div>
+            <div aria-hidden="true" style={vals.vignetteStyle}></div>
           </>)}
 
           {vals.universeReduced && (

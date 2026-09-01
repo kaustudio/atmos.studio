@@ -2,7 +2,6 @@
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
-import { EDGE, edgeScales } from './universeEdge.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
 import { CONTRAST_MIN, CRITERION, RATIO_TEXT } from '../lib/wcag.js';
@@ -2307,17 +2306,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       }),
       spaceStyle: { display: s.feed.length > 0 && s.feedView === 'grid' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: this._reduce ? 'auto' : 'hidden', touchAction: this._reduce ? 'auto' : 'none', userSelect: 'none', cursor: this._reduce ? 'default' : 'grab' },
       universeEngine: !this._reduce, universeReduced: !!this._reduce,
-      // The field's four edges. The style carries GEOMETRY ONLY — the mask, the tint gradients and
-      // the backdrop-filter chain are in global.css under [data-universe-edge], because the
-      // fallback for an engine that cannot draw url() in a backdrop-filter has to be a second
-      // declaration in a stylesheet and cannot be expressed inline at all. The three figures come
-      // from universeEdge.js's EDGE block, which is also what the displacement map is built from.
-      // --u-band is the FULL depth here and universe.js overwrites it with the viewport's own
-      // edgeBand() on every build. Seeding it rather than leaving it unset means the frame is never
-      // masked at 0 for the frame between mount and the first paint of the map.
-      edgeGlassStyle: { position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none', '--u-band': EDGE.BAND + 'px', '--u-blur': EDGE.BLUR + 'px', '--u-tint': Math.round(EDGE.TINT * 100) + '%' },
-      edgeScales: edgeScales(),
-
+      vignetteStyle: { position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none', boxShadow: 'inset 0 0 120px 40px var(--surface-raised)', background: 'radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--surface-raised) 72%, transparent) 100%)' },
       spaceRef: this.spaceRef, planeRef: this.planeRef, universeCloseRef: this.universeCloseRef,
       // overlay
       overlay, hasOverlay: !!s.overlay, closeOverlay: () => this.closeOverlay(),
