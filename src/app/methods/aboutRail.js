@@ -77,10 +77,20 @@ export function initHorizontalRail(root) {
   if (scrollTween.scrollTrigger) triggers.push(scrollTween.scrollTrigger);
 
   cards.forEach((card) => {
-    // The source's draw, verbatim: x between 30 and 50, y between 10 and 16, rotation between 10 and
-    // 20, each taking either sign. Drawn per load, as the effect intends.
+    /* The source's draw — x between 30 and 50, y between 10 and 16, rotation between 10 and 20 — with
+       ONE change, and it is the reason the last card no longer parks in the viewport.
+
+       [ATMOS 3] x KEEPS ITS SIGN: it starts positive and ends negative, always. The source draws the
+       sign at random, and a card whose x resolves POSITIVE is pushed to the right by up to half its
+       own width at the very moment its window closes — which, for the last card, is the moment the
+       track stops. Measured at 1091px: the trailing pad carried that card's right edge to -10vw and
+       the drift handed 42% of it back, so a rotated sliver of it stood inside the left edge with
+       nothing left to scroll. The first card has the mirror problem at pin start. Ending x on the
+       negative side means every card is still moving left, ahead of the track, as it leaves, and
+       the 10vw the pad has to spare is never spent. y and rotation keep the random sign; they are
+       what the drift's variety was always made of. */
     const values = {
-      x: (Math.random() * 20 + 30) * (Math.random() < 0.5 ? 1 : -1),
+      x: (Math.random() * 20 + 30),
       y: (Math.random() * 6 + 10) * (Math.random() < 0.5 ? 1 : -1),
       rotation: (Math.random() * 10 + 10) * (Math.random() < 0.5 ? 1 : -1),
     };
