@@ -5,27 +5,30 @@
 // nobody had changed one — and the first change that needed the card taller would have moved the
 // card without moving the cell it sits in, or the reverse.
 //
-// HEIGHT is not a round number, and shouldn't be: it is the card's content plus the frame the
-// content sits in. The pbase panel starts 16px up into the hero, then stacks the colour strip, the
-// identity block and the four metric rows; the card is that plus a 14px foot — the SAME inset the
-// metrics keep on their left and right, so the readout sits in an even frame instead of running out
-// of the bottom edge the way it did when the height was picked first and the content made to fit.
+// THE CARD IS THE PHOTOGRAPH AND ITS NAME. A square of image over a caption band:
+//     H = W + CAP = 300 + 44 = 344
+// The strip, the identity block and the eight metric rows that used to stack under a 150px hero
+// (and took the box to 463, a figure that had been wrong once already) have moved into the panel
+// that slides out beside the card when it is pressed — universe.js openTile, AppView's
+// UniversePanel. The field shows what was read; the panel shows what was read from it, on demand.
 //
-// THE ARITHMETIC, WRITTEN DOWN, because this number has now been wrong once:
-//     H = 150 (hero) - 16 (the pbase panel's overlap into it) + pbase + 14 (foot)
-//       = pbase + 148
-// 389 was that sum when the metric labels were 8px and their values 10px, giving pbase 241. Raising
-// them to 11 and 13 (see --fs-fine) took pbase to 277 and the content to 411, inside a box still
-// declared at 389 — and the wrapper is overflow:hidden, so the bottom 24px of every card, the last
-// metric row among them, was simply cut. Measured that way before this line changed.
-// A card whose type changes has to come back here. Read pbase off the live card
-// (`[data-pbase]`.getBoundingClientRect().height) and add 148.
-// Measured with the strip at its declared 46: 46 (strip) + 63 (identity) + 206 (metrics) = 315 of
-// content, at pbase's top of 134, plus the 14 foot = 463.
-// The metrics term moved 198 -> 206 when the label/value gap inside each pair went 2px -> 4px:
-// four rows, two pixels each. Any change to that gap, to the row gap, or to the type lands here.
-export const UNIVERSE_TILE = { W: 300, H: 463 };
+// The panel is NOT sized from this token. It is the card's open size, taken from the viewport on
+// every open: min(0.7 × the short side, (0.9 × the long side − the pair gap) / 2), so the card and
+// its panel together never leave the screen, and the panel's content scrolls inside its box rather
+// than growing the box. See openTile for the arithmetic, and UNIVERSE_OPEN below for the shares.
+//
+// CAP is the caption's height, and the hero's foot is derived from it (heroWrapStyle's `bottom`),
+// which is what the open tween moves to 0 so the photograph takes the whole box while the caption
+// fades. Change the caption's type and this is the number to revisit: a 15px name sits centred in
+// 44 with the same air the metrics keep at their sides.
+export const UNIVERSE_TILE = { W: 300, H: 344, CAP: 44 };
 
-// The metrics block's inset. Exported alongside the box because the foot above is derived from it —
-// change one and the other has to follow, which is only obvious if they live together.
+// The metrics block's inset — the caption's side padding, and the panel body's. One figure, so the
+// name on the closed card and the name at the head of the open panel start on the same x.
 export const UNIVERSE_TILE_INSET = 14;
+
+// The open state's shares of the viewport (the reference's own three: lightboxSize,
+// lightboxSizePortrait, lightboxPairMax). No gap between the card and its panel, by request: the
+// panel slides out from under the picture and stops flush against it, the two borders landing on
+// one pixel, so the pair reads as one object with a rule through it. (It was 16 for a day.)
+export const UNIVERSE_OPEN = { share: 0.7, sharePortrait: 0.8, pairMax: 0.9, gap: 0, dim: 0.4 };

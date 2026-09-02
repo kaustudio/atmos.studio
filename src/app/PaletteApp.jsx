@@ -215,7 +215,7 @@ export default class PaletteApp extends React.Component {
     storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyMasks: null,
     // The image chooser, which covers the story rather than replacing it (see chooseStoryCase).
     storyPicker: false,
-    pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', overlay: null,
+    pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', uOpen: null, overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
@@ -494,6 +494,10 @@ export default class PaletteApp extends React.Component {
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
         if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
         if (this.state.overlay) { e.preventDefault(); this.closeOverlay(); return; }
+        // an open card in the field closes before the field does — one Escape, one step out. A
+        // second Escape while that close is still playing is not swallowed: it falls through to
+        // the field's own exit, which resets the card on the way.
+        if (this.state.uOpen != null && !this._uClosing) { e.preventDefault(); this.closeTile(); return; }
         if (this.state.feedView === 'grid' || this.state.feedView === 'carousel') { e.preventDefault(); this.setFeedView('list'); return; }
         if (this.state.stage === 'result') { e.preventDefault(); this.doReset(); }
       }

@@ -451,11 +451,15 @@ export const renderValsMethods = {
     // that the label WAS the count ("3+ AA text pairs: 5 of 10 pairs…" is the same fact twice). The
     // labels are answers again, so the two carry different information: the verdict is what the
     // badge shows, and the figure is what the badge cannot.
-    const itemAria = (p, met) => 'Open ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ')
+    // The readout is one string in two places: the tile's accessible name carries it, so a keyboard
+    // reader has the whole card before opening anything, and the open panel is labelled with it, so
+    // opening the card changes what is SEEN without changing what is said.
+    const readout = (p, met) => 'Mood: ' + p.descriptors.join(', ')
       + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase()
       + '. ' + met.aaPairs + ' of ' + met.totalPairs
       + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
       + '. Generated ' + this.relTime(p.time) + (p.id === curId ? '. Currently viewing' : '');
+    const itemAria = (p, met) => 'Open ' + p.name + '. ' + readout(p, met);
 
     // --- LIST view: canonical, one row each, keyboard-navigable ---
     const scopedAll = this.scopedFeed(s.feed);
@@ -597,15 +601,26 @@ export const renderValsMethods = {
     });
 
     // --- PALETTE UNIVERSE: one real, focusable tile per palette (the engine clones these to fill) ---
+    // THE TILE IS THE PHOTOGRAPH AND ITS NAME. It used to wear the list row's whole content model,
+    // stacked — a 150px hero, the strip, the identity block, eight metrics — in a 300×463 box, and a
+    // field of forty of them was forty readouts competing at once, none of them the picture the
+    // palette was read from. The readout has not gone anywhere: it moves into the panel that slides
+    // out beside the card when the card is pressed (universe.js openTile, AppView's UniversePanel),
+    // which is where the reference this view is adapted from keeps it too. The field shows what was
+    // read; the panel shows what was read from it, on demand.
     // Box from the shared token, so the card and the field cell universe.js lays it out on cannot
-    // disagree — see universeTile.js for why the height is the number it is.
-    const UTW = UNIVERSE_TILE.W, UTH = UNIVERSE_TILE.H, HERO = 150;
-    const cardBox = (isCur) => ({ position: 'absolute', top: '0', left: '0', width: UTW + 'px', height: UTH + 'px', display: 'block', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', overflow: 'hidden' });
+    // disagree — see universeTile.js for the arithmetic.
+    const UTW = UNIVERSE_TILE.W, UTH = UNIVERSE_TILE.H, CAP = UNIVERSE_TILE.CAP;
+    // transform-origin at the corner: the engine's matrix3d maps the box from its top-left.
+    // overflow VISIBLE on the engine tile, because the panel slides out of it; the hero clips its own
+    // photograph, and nothing else in the card reaches its edge.
+    const cardBox = (isCur) => ({ position: 'absolute', top: '0', left: '0', width: UTW + 'px', height: UTH + 'px', display: 'block', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', overflow: 'visible', transformOrigin: '0 0' });
     const feedNodes = scoped.map((p, idx) => {
       const isCur = p.id === curId;
       const hasImage = this.hasImg(p);
       const stops = this.paletteStops(p);   // weight-true, and the same stops the 3D card wears
-      // SAME palette-card content model as the list row — identical data, stacked arrangement
+      // SAME palette-card content model as the list row — identical data, and in this view it is
+      // the open panel's arrangement rather than the tile's
       const met = this.paletteMetrics(p);
       const cardMetrics = [
         { label: 'Hue', text: met.hue + '°' },
@@ -623,8 +638,8 @@ export const renderValsMethods = {
         { label: 'Generated', text: this.absTime(p.time) },
       ];
       return {
-        name: p.name, descriptors: p.descriptors.join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
-        aria: itemAria(p, met),
+        id: p.id, name: p.name, descriptors: p.descriptors.join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
+        aria: itemAria(p, met), readout: readout(p, met),
         // The row's two identity labels, which the card was missing: EXAMPLE marks the seeded
         // palettes, and the current palette is named rather than only dotted. An unlabelled 7px
         // square asks the reader to already know what it means; the row spells it out, so the card
@@ -632,45 +647,65 @@ export const renderValsMethods = {
         isExample: p.example === true,
         hasImage, noImage: !hasImage, refImage: this.dispUrl(p),
         cardMetrics,
-        onClick: (e) => { if (this._uMoved) { this._uMoved = false; return; } if (!busy) this.openOverlay(p, e && e.currentTarget); },
+        // A press opens the card IN PLACE — the field's own disclosure — never the fullscreen detail
+        // straight away. The detail is one action further, inside the panel. (The reduced-motion
+        // grid, which shows everything at rest, keeps the direct door: openTile falls through.)
+        onClick: (e) => { if (!busy) this.openTile(p, e && e.currentTarget); },
         onEnter: (e) => this.stackEnter(e.currentTarget), onLeave: (e) => this.stackLeave(e.currentTarget),
         onFocus: (e) => { if (this._kbdInput) this.centerOnTile(e.currentTarget); this.stackEnter(e.currentTarget); },
         onBlur: (e) => this.stackLeave(e.currentTarget),
         tileAbs: cardBox(isCur),
-        tileFlow: Object.assign(cardBox(isCur), { position: 'relative', width: '100%', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)' }),
-        heroWrapStyle: { position: 'absolute', top: '0', left: '0', right: '0', height: HERO + 'px', overflow: 'hidden', background: 'var(--line)' },
+        tileFlow: Object.assign(cardBox(isCur), { position: 'relative', width: '100%', overflow: 'hidden', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)' }),
+        // The sliding panel: the card's border box (inset -1px), so its own hairline lands on the
+        // card's when it is out — translate by its width less the two borders and the pair shares
+        // one rule. --slide is the reference's clamp of the open scalar; --sx/--sy pick the axis.
+        panelStyle: { position: 'absolute', inset: '-1px', background: 'var(--surface-raised)', border: '1px solid var(--line)', pointerEvents: 'none', transform: 'translate(calc((100% - 2px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 2px) * var(--slide, 0) * var(--sy, 0)))' },
+        // The photograph fills the card down to the caption. `bottom` is what the open tween moves
+        // (to 0): the image takes the whole box while the caption fades, and the panel carries the
+        // name from there.
+        heroWrapStyle: { position: 'absolute', top: '0', left: '0', right: '0', bottom: CAP + 'px', overflow: 'hidden', background: 'var(--line)' },
         heroFallback: { position: 'absolute', inset: '0', background: 'linear-gradient(135deg, ' + stops + ')', backgroundSize: '220% 220%', animation: this._reduce ? 'none' : 'gradient-drift ' + (10 + (idx % 4)) + 's ease-in-out infinite', animationDelay: (idx * -2.1) + 's' },
-        imgStyle: { width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center' },
-        heroFadeStyle: { display: 'none' },
-        /* THE PANEL'S BOTTOM IS THE CARD'S FOOT, and this formula did not put it there. It read
-           `UTH - HERO + 38`, which lands the panel's bottom edge at (HERO-16) + UTH - HERO + 38 =
-           UTH + 22 — twenty-two pixels PAST the card, at every card height there has ever been. The
-           overshoot is a constant, so raising UNIVERSE_TILE.H moved the panel down exactly as far as
-           it moved the floor and the content stayed cut. That is why the first attempt at this
-           changed nothing.
-           +2 puts it 14px short of the bottom instead: (HERO-16) + (UTH - HERO + 2) = UTH - 14, and
-           14 is the foot universeTile.js names — the same inset the metrics keep left and right, so
-           the readout sits in an even frame. Change the foot here and there together. */
-        pbaseStyle: { position: 'absolute', left: '0', right: '0', top: (HERO - 16) + 'px', height: (UTH - HERO + 2) + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', display: 'flex', flexDirection: 'column', boxShadow: '0 0px 0px rgba(0,0,0,0)', zIndex: 1, willChange: 'transform', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)') },
-        // The block keeps its 8px rows: it was briefly tightened to 6 to stop the AA badge (taller
-        // than a plain-text row) pushing the last row past the tile's bottom edge, but that was
-        // treating a sizing problem as a spacing problem — the card was simply a row's worth too
-        // short. The height now comes from the content (see universeTile.js) and the rhythm is back.
-        //
-        // The foot matches the sides. With no bottom padding the readout ran out of the card: 14px
-        // of air to the left and right, 3px underneath. It now sits in an even frame. On the
-        // engine tile the card is a fixed height and this padding is what that height reserves; on
-        // the reduced-motion card, which grows to its content, this padding IS the foot.
-        // ROOM TO BREATHE AT THE NEW SIZE. The 8px row gap was set when a row was an 8px label over a
-        // 10px value — 18px of type. At 11 over 13 the pair is 24px tall and the gap between rows
-        // read as tighter than the gap inside one, which inverts the grouping: a label started
-        // belonging to the value above it. 14px row gap restores the ratio, and the block's top
-        // padding matches the inset the sides already keep.
+        // drawn at 1.1 so the engine's 12px drift toward the cursor never shows an edge (the
+        // reference's own margin); the engine writes the translate, this is only the rest state
+        imgStyle: { width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center', transform: 'scale(1.1)', willChange: 'transform' },
+        dimStyle: { position: 'absolute', inset: '0', background: 'var(--surface-raised)', opacity: 'var(--dim, 0)', pointerEvents: 'none', zIndex: 2 },
+        /* THE CAPTION IS THE CARD'S FOOT: the identity line on the surface, under a hairline — the
+           list row's first column, not a scrim over the photograph. The reference floats its caption
+           on a gradient into the image; that puts white type on a picture whose lightness this tool
+           does not control (High Key is a pale field), and this app already turned its own hero fade
+           off once for the same reason. The surface puts the name on a ground that is right in both
+           themes by construction. The current palette keeps its white ground and its ink-coloured
+           rule, exactly as the row marks it. */
+        captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', height: CAP + 'px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '0 ' + UNIVERSE_TILE_INSET + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)'), zIndex: 1 },
+        // 14px row gap, 16 column, 14 inset: the rhythm the card's block settled on (the pair inside
+        // a row is 4, so the gap between rows has to stay well above it or the grouping inverts). The
+        // reduced-motion card draws this directly; the open panel pads its body instead and keeps
+        // only the top here — see universePanel below.
         cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px', padding: UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px' },
-        ringStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 3 },
+        // The ring is the hover, and it is a hairline in the press tier's hover ink, drawn ON the
+        // card's own hairline (inset -1px reaches the border from inside the inner box) — so the
+        // pointer strengthens the edge the card already has, colour only, as every [data-ix]
+        // control does. It was boxShadow:'none' for a while: an element whose opacity was tweened
+        // on every hover and drew nothing at either end.
+        ringStyle: { position: 'absolute', inset: '-1px', boxShadow: 'inset 0 0 0 1px var(--action-line-hover)', opacity: 0, pointerEvents: 'none', zIndex: 3 },
         strip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
     });
+
+    // The open card's panel: the tile's own node, re-addressed. The same strip, identity and
+    // metrics the card used to wear, plus the two things a panel needs that a tile does not — a way
+    // out, and the door to the fullscreen detail. Resolved by id on every render, so a palette edited
+    // from the detail (filed, renamed) is read live, the way the overlay itself reads it.
+    const uOpenP = s.uOpen != null ? scoped.find((p) => p.id === s.uOpen) : null;
+    const uOpenNode = uOpenP ? feedNodes.find((n) => n.id === uOpenP.id) : null;
+    const universePanel = uOpenNode ? Object.assign({}, uOpenNode, {
+      panelAria: uOpenP.name + ' palette. ' + uOpenNode.readout,
+      cardMetricsStyle: Object.assign({}, uOpenNode.cardMetricsStyle, { padding: UNIVERSE_TILE_INSET + 'px 0 0' }),
+      onDetail: () => this.openOverlay(uOpenP, this._uOpenCard ? this._uOpenCard.el : null),
+      detailAria: 'Open ' + uOpenP.name + ' detail',
+      onClose: () => this.closeTile(),
+      closeAria: 'Close ' + uOpenP.name + ', or press Escape',
+    }) : null;
 
     // --- fullscreen palette detail overlay (reuses the swatch-band value system) ---
     let overlay = null;
@@ -2304,10 +2339,20 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           }),
         };
       }),
-      spaceStyle: { display: s.feed.length > 0 && s.feedView === 'grid' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: this._reduce ? 'auto' : 'hidden', touchAction: this._reduce ? 'auto' : 'none', userSelect: 'none', cursor: this._reduce ? 'default' : 'grab' },
+      // CLIP, NOT HIDDEN. A hidden overflow still scrolls when something inside asks — and focus()
+      // on a tile that sits past the stage's edge asks: the browser scrolled this box 418px to bring
+      // the tile in, the whole field with it, and nothing ever scrolled it back. The pan engine lays
+      // the field out in stage coordinates and so does the open card, so a scrolled stage put both
+      // 418px from where they were computed to be. clip forbids the scroll at the source; the engine
+      // (centerOnTile) is what brings a focused tile into view, and always was meant to be.
+      spaceStyle: { display: s.feed.length > 0 && s.feedView === 'grid' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: this._reduce ? 'auto' : 'clip', touchAction: this._reduce ? 'auto' : 'none', userSelect: 'none', cursor: this._reduce ? 'default' : 'grab' },
       universeEngine: !this._reduce, universeReduced: !!this._reduce,
-      vignetteStyle: { position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none', boxShadow: 'inset 0 0 120px 40px var(--surface-raised)', background: 'radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--surface-raised) 72%, transparent) 100%)' },
       spaceRef: this.spaceRef, planeRef: this.planeRef, universeCloseRef: this.universeCloseRef,
+      // The content layer lives INSIDE the plane, above the lifted card — z 5 over [clones auto,
+      // originals 1, shade 2, open card 4] — because the surface it lands on is the panel inside that
+      // card. No background and no border of its own: the panel draws those. Its box is the engine's
+      // to set (left/top/width/height on open, from the viewport); React owns only what never moves.
+      universePanel, universePanelStyle: { position: 'absolute', top: 0, left: 0, zIndex: 5, opacity: 0, pointerEvents: 'none', display: 'flex', flexDirection: 'column', overflow: 'hidden', textAlign: 'left', background: 'transparent', color: 'var(--on-surface)' },
       // overlay
       overlay, hasOverlay: !!s.overlay, closeOverlay: () => this.closeOverlay(),
       overlayRef: this.overlayRef, overlayBandsRef: this.overlayBandsRef, trapFocus: (e) => this.trapFocus(e),

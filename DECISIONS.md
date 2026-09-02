@@ -6,6 +6,113 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-02 — The grid card is the photograph; the readout opens beside it
+
+The spatial grid's tile was the list row's whole content model stacked into a 300×463 box — a
+150px hero, the strip, the identity block, eight metrics. A field of forty of them was forty
+readouts competing at once, and none of them was the picture the palette had been read from. It
+is now the picture and its name: a 300×300 photograph over a 44px caption band (`UNIVERSE_TILE`
+is 300×344, and the arithmetic is in universeTile.js). Press it and the card comes to the centre,
+flattens, grows to its open size, and a panel slides out from behind it carrying exactly what the
+tile used to wear — strip, identity, descriptors, the eight metrics — plus a door to the fullscreen
+detail and a close mark. The reference is Osmo's *Infinite Dome Grid* (Jesper Landberg's no-WebGL
+grid), and this time the whole of it: the flat x/y wrapping engine is replaced by the reference's
+projection — one `matrix3d` per card per frame, the field doming away from the centre, a lens
+swelling the cards under the cursor, a torch following the pointer through a shade, and every
+photograph drifting toward it. The August attempt (55a4c57) was a different thing — edge
+refraction on backdrop-filter and a displacement map, reverted for cost and for shearing the
+cards; a card's own projective transform bends the card whole, which is the effect that attempt
+could not reach. Every knob is a constant at the top of universe.js under the reference's own
+names, and at its figures.
+
+**The shade is the page, not black.** The reference darkens toward its own black stage. This one
+fades toward `--surface-raised`, which is the same statement made against the right ground in both
+themes, and it replaces the static vignette this view drew for the same purpose. The shade lives
+inside the plane at z 2 so the open card (z 4) and its panel (z 3) can sit above it; the lifted
+card carries its own share of the shade as `--dim` on a layer of its own, written by the render
+before it lifts and faded as it opens, so nothing pops bright. The masonry drop the flat engine
+gave each column is gone: the dome needs rows that are rows, or the bow reads as noise.
+
+**The open card rides the same loop.** The reference lerps the open cell's corners toward the box
+from one damped scalar; here that scalar is tweened instead — on `fold`, over `--dur-fold` — so the
+disclosure keeps its token curve, and the render divides the matrix by the element's LIVE size,
+which is tweened alongside, because the tile is not square and a pure quad lerp on 300×344 would
+have stretched the caption's type with the box. The loop keeps running while a card is open, so
+the torch and the lens still follow the cursor around it; only the pan is held.
+
+**The caption is on the surface, not on the image.** The reference floats its caption on a
+gradient into the photograph. That puts white type on a picture whose lightness this tool does not
+control — High Key is a pale field — and the tile had already had its own hero fade turned off for
+the same reason. The caption is the list row's first column under a hairline: `--surface-raised`,
+the current palette on white with an ink rule, right in both themes by construction.
+
+**The open runs on `fold`, not `entrance`.** Every other arrival in universe.js is an expo-out,
+and motion.js already says why that is wrong for this one: the card changes size, and a box
+growing on a front-loaded curve snaps open and creeps. `fold` is the in-out the travelling
+selection marker runs on — a disclosure and a moving selection share one motion character. The
+panel's contents land on `entrance` a beat later, because they are text arriving, not a box
+changing shape. The close is written out rather than reversed: the box's own travel would survive
+a reverse (fold is symmetric) but the contents' expo-out would come back as an expo-in and spend
+most of the exit invisible — the same lesson closeUniverse records. It plays as the reference's
+one motion: its scalar retracts the panel over the first three quarters of its travel and lands the
+card over the whole of it, the two moving together with the panel home first.
+
+**The panel is inside the card, as the reference builds it, and that is what makes the close
+honest.** For a day the panel was a separate surface beside the card, and every close had to
+choose between two lies: fade it, or leave it standing as an empty box where the card had been.
+The reference never has that choice to make because its sliding panel is a child of the item — it
+bends, shrinks and travels with the card for free, and the picture hides it the moment it is home
+— while the CONTENT is a separate, transparent lightbox that only ever fades. Ported as such: a
+`data-tile-panel` behind the photograph in every tile, driven by `--slide` from the same scalar
+(clamped from a quarter of the travel, as the reference clamps it), and a `data-universe-panel`
+content layer with no surface of its own, above the lifted card. The engine tile is
+`overflow:visible` for this; the hero clips its own photograph. And there is no gap between the two:
+the panel is the card's border box and translates by its width less both hairlines, so its rule
+lands on the card's and the pair reads as one object with one line through it.
+
+**The pair never leaves the screen, and the content yields instead.** The open size is the
+reference's own arithmetic: 0.7 of the short side, capped so card + panel stay inside 0.9
+of the long side; portrait puts the panel underneath at 0.8 of the width. What that cannot promise
+is that eight metrics fit a small box, so the panel's body scrolls inside it — it is the one
+scroll container in the view, and it declares `touch-action:pan-y` because the stage above it
+declares none. Measured: 1440×900 opens a 630 pair, 1100×700 a 490 pair, 1100×1400 stacks 630 over 630;
+nothing overflowed and nothing needed to scroll at any of them.
+
+**The panel lives inside the plane.** It has to sit above every other card and below the lifted
+one, and a sibling of the plane can only be above everything or below everything. So it is a
+child of the plane at z 3, the open card goes to z 4, originals stay at 2 and clones at auto — and
+the clone layer LOST its `z-index:1` for this, because a stacking context there would have trapped
+an opened clone under the panel. The pan is held for as long as a card is open (Observer's
+onChange returns, wheel included); a press anywhere but on the panel closes it, and may carry on
+as a drag once it has landed. Escape closes the card before it closes the field. Focus lands on
+the panel's close mark at once and returns to the card's real tile on close — the clone's original,
+if a clone was pressed — and moves BEFORE the panel is re-rendered aria-hidden, because Chrome
+blocks hiding an element that still holds focus.
+
+**Two faults found on the way, both older than this change.** A clone's click read its palette
+out of `state.feed` by an index that was built from the SCOPED feed, so with any filter or folder
+active a clone opened the wrong palette; it reads the scoped feed now. And the stage was
+`overflow:hidden`, which still scrolls when a descendant asks — `focus()` on a tile past the edge
+scrolled the whole field 418px and nothing scrolled it back. It is `overflow:clip`, which forbids
+that at the source; centring a focused tile is the engine's job (centerOnTile) and always was.
+The universe's close mark also never had its ref attached, so the focus `_enterGrid` places on it
+was a silent no-op; it is attached. And a mouse press on a clone focused it — a button is focused
+by a press whatever its tabindex, and these are aria-hidden, so Chrome reported focus inside a
+hidden subtree on every such press; the clone layer cancels mousedown's default now, which keeps
+the press and the click and leaves focus where it was.
+
+**Three things a cross-discipline review caught after the port.** The torch followed the pointer
+only, so a tile brought to the centre for a keyboard reader could land under 70% of shade with its
+focus ring at 1.9:1 — the hole now moves to the centre with the tile (centerOnTile), lens down.
+The hover ring had been `boxShadow:'none'` since before this work: an element tweened on every
+hover that drew nothing at either end; it draws a hairline in the press tier's hover ink, on the
+card's own edge. And an Escape inside the close was swallowed; it falls through to the field's
+exit now.
+
+**What did not change.** The reduced-motion grid still shows the full card at rest — everything
+the panel would disclose is already visible, so a press there stays the direct door to the detail.
+The 3D reel builds its own cards and was never coupled to the tile.
+
 ## 2026-08-30 — The landing field is a reading, not a spectrum
 
 The volumetric field behind the front page was coloured from twelve hand-authored OKLCH stations

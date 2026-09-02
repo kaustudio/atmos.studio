@@ -9,7 +9,9 @@ export const overlayMethods = {
   // ================= fullscreen detail =================
   // Freeze the universe under the detail so the originating tile stays put (stable return rect).
   freezeUniverse() { if (this._ticker && window.gsap) { window.gsap.ticker.remove(this._ticker); this._frozen = true; } },
-  resumeUniverse() { if (this._frozen && this._ticker && window.gsap) { window.gsap.ticker.add(this._ticker); this._frozen = false; } },
+  // Not while a card is open in the field: the detail can be opened FROM the panel, and its close
+  // must hand the field back to the open card, still held, not to the pan. closeTile resumes.
+  resumeUniverse() { if (this._uOpenCard || this._uClosing) return; if (this._frozen && this._ticker && window.gsap) { window.gsap.ticker.add(this._ticker); this._frozen = false; } },
 
   openOverlay(p, tileEl) {
     // One overlay session at a time. state.overlay is set asynchronously, so two activations in the

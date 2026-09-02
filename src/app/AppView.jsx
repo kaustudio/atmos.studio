@@ -375,6 +375,38 @@ const CardMetrics = ({ c }) => (
   </div>
 );
 
+// ===== THE OPEN CARD'S PANEL — the readout the tile used to wear, arriving on press =====
+// The strip at the head, exactly where the card carried it: the panel reads as the card's own band
+// unfolded, not as a second surface with its own idea of a top. Identity and metrics follow; the
+// foot holds the two controls. The body scrolls INSIDE the box — the pair is sized never to leave
+// the viewport (universe.js openTile), so when the box is small the content yields, not the layout.
+// touch-action pan-y on the body because the field above it declares none: a scroll container ends
+// the ancestor walk, so this is the one place a finger can scroll in the whole view.
+// Each `data-upanel-part` is a beat in the arrival — strip, body, foot, on --dur-stagger.
+const UniversePanel = ({ c }) => (<>
+  {/* The strip takes more of the open box than it took of the card — the swatches ARE the palette,
+      and a 46px band at the head of a 630px panel read as a ruled line over a page of air. A share
+      of the box, floored at the card's own band and capped where a band stops being a band: on a
+      tall panel the colour leads, on a short one the readout keeps its room and scrolls. */}
+  <div data-upanel-part="1" data-strip="1" style={sx('display:flex;flex:0 0 clamp(46px, 28%, 200px);width:100%')} aria-hidden="true">
+    {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
+  </div>
+  <div data-upanel-part="1" data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
+    <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
+      <CardIdentity c={c} />
+    </div>
+    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
+    <CardMetrics c={c} />
+  </div>
+  {/* The foot: the door to the detail leads, the close mark trails — the same 32px mark every
+      surface in the app closes with, on the same tier. Detail is a B006 because it LEAVES this
+      surface for a fullscreen one (aria-haspopup says so), where the close only changes this one. */}
+  <div data-upanel-part="1" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border-top:1px solid var(--line)')}>
+    <B006 data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} label={<B006Text>Open detail</B006Text>} />
+    <button type="button" data-ix="press" data-focus="chrome" data-upanel-close="1" onClick={c.onClose} aria-label={c.closeAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+  </div>
+</>);
+
 // The state marker both facet groups share. Three states, three SHAPES — empty square, filled
 // square with a check, and a bare rule — so the unavailable state is never carried by colour or
 // dimming alone (SC 1.4.1). A rule rather than a greyed box because a box, however faint, still
@@ -3205,30 +3237,37 @@ function FeedSection({ vals }) {
                 {vals.feedNodes.map((c, ci) => (
                   <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onMouseEnter={c.onEnter} onMouseLeave={c.onLeave} onFocus={c.onFocus} onBlur={c.onBlur} onClick={c.onClick} style={c.tileAbs}>
                     <div data-tile-inner="1" style={sx('position:absolute;inset:0;transform-origin:center center')}>
-                      <div style={c.heroWrapStyle} aria-hidden="true">
-                        {c.hasImage && (<span aria-hidden="true" style={c.imgStyle}></span>)}
+                      {/* THE PANEL, AS THE REFERENCE BUILDS IT: a surface behind the picture, inside the
+                          card, that slides out on --slide — so it moves, bends and shrinks with the card
+                          for free and is hidden by the picture whenever it is home. The engine sets
+                          --slide from the open scalar and --sx/--sy for the direction; the content that
+                          lands on it is a separate, transparent layer (data-universe-panel). First
+                          child, so everything else in the card paints over it. */}
+                      <span data-tile-panel="1" aria-hidden="true" style={c.panelStyle}></span>
+                      <div data-tile-hero="1" style={c.heroWrapStyle} aria-hidden="true">
+                        {c.hasImage && (<span data-tile-img="1" aria-hidden="true" style={c.imgStyle}></span>)}
                         {c.noImage && (<span style={c.heroFallback}></span>)}
-                        <span style={c.heroFadeStyle}></span>
                       </div>
-                      <div data-pbase="1" style={c.pbaseStyle}>
-                        <div data-strip="1" style={sx('display:flex;height:46px;flex:none;width:100%')} aria-hidden="true">
-                          {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
-                        </div>
-                        <div style={sx('padding:12px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
-                          <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
-                            <CardIdentity c={c} />
-                          </div>
-                          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
-                        </div>
-                        <CardMetrics c={c} />
+                      <div data-tile-caption="1" style={c.captionStyle}>
+                        <CardIdentity c={c} />
                       </div>
+                      {/* the card's own share of the shade — written by the engine while the card is
+                          lifted above the shade, so opening never pops it bright (universe.js render) */}
+                      <span data-tile-dim="1" aria-hidden="true" style={c.dimStyle}></span>
                       <span data-ring="1" aria-hidden="true" style={c.ringStyle}></span>
                     </div>
                   </button>
                 ))}
               </div>
+              {/* THE OPEN CARD'S CONTENT. One element for the whole field, filled with whichever card
+                  is open, exactly as the reference keeps one lightbox: the content is React's (it reads
+                  the live record), the box is the engine's (universe.js openTile). It has no surface of
+                  its own — the surface is the panel inside the card, above — so it only ever has to
+                  fade, and it sits in the plane above the lifted card so it paints over that panel. */}
+              <div data-universe-panel="1" role="group" aria-label={vals.universePanel ? vals.universePanel.panelAria : undefined} aria-hidden={vals.universePanel ? undefined : 'true'} style={vals.universePanelStyle}>
+                {vals.universePanel && (<UniversePanel c={vals.universePanel} />)}
+              </div>
             </div>
-            <div aria-hidden="true" style={vals.vignetteStyle}></div>
           </>)}
 
           {vals.universeReduced && (
@@ -3262,7 +3301,7 @@ function FeedSection({ vals }) {
             {/* The same close mark the reel uses, for the same reason and with the same one
                 deviation: --surface behind it, because this one floats over a live WebGL field too.
                 The pair are the app's only two full-screen stages and they now leave the same way. */}
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe, or press Escape" title="Close" style={sx('pointer-events:auto;flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+            <button type="button" ref={vals.universeCloseRef} data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe, or press Escape" title="Close" style={sx('pointer-events:auto;flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
           </div>
 
           {vals.universeEngine && (
