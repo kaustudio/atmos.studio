@@ -165,7 +165,7 @@ export const pipelineMethods = {
     // reserved for genuine failures, so a standalone build never surfaces it on every generation.
     pal.fallback = !!noLive;
     this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. Mood: ' + pal.descriptors.join(', ') + '.' }), () => this.persist({ immediate: true }));
-    if (errored) this.showNotice('Interpreted with the local reading. The live interpreter was unreachable.');
+    if (errored) this.showNotice('Named with the local reading. The live reading did not come back.', { sticky: true });
   },
   // ------- live interpretation call (pluggable: proxy endpoint → artifact runtime → none) -------
   async interpretLive(thumb, swatches) {
@@ -184,13 +184,23 @@ export const pipelineMethods = {
       Promise.resolve(promise).then((v) => { if (!done) { done = true; clearTimeout(t); resolve(v); } }, (e) => { if (!done) { done = true; clearTimeout(t); reject(e); } });
     });
   },
-  showNotice(msg) {
-    if (this._noticeT) clearTimeout(this._noticeT);
-    this.setState({ notice: msg }, () => this._noticeIn());
-    this._noticeT = setTimeout(() => this._dismissNotice(), 5000);
+  /* TWO KINDS OF NOTICE. A confirmation passes on its own — five seconds, held while the pointer or
+     focus is on it, because a reader who has turned to look at a notice has decided to deal with it.
+     An error-class notice (`sticky`) does not pass at all: a file that could not be read, storage that
+     is full, a live reading that never came back. Measured before this option, those left the screen
+     at exactly five seconds with no control, so anyone who looked away lost the only explanation of
+     what had just failed. Both carry the Dismiss the markup draws now (AppView, data-notice). */
+  showNotice(msg, options) {
+    const sticky = !!(options && options.sticky);
+    if (this._noticeT) { clearTimeout(this._noticeT); this._noticeT = null; }
+    this.setState({ notice: msg, noticeSticky: sticky }, () => this._noticeIn());
+    if (!sticky) this._armNoticeTimer();
   },
+  _armNoticeTimer() { if (this._noticeT) clearTimeout(this._noticeT); this._noticeT = setTimeout(() => { this._noticeT = null; this._dismissNotice(); }, 5000); },
+  _holdNotice() { if (this._noticeT) { clearTimeout(this._noticeT); this._noticeT = null; } },
+  _releaseNotice() { if (this.state.notice && !this.state.noticeSticky && !this._noticeT) this._armNoticeTimer(); },
   _noticeIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-notice]'); if (el) g.from(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
-  _dismissNotice() { const g = window.gsap; const el = document.querySelector('[data-notice]'); const clear = () => this.setState({ notice: null }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
+  _dismissNotice() { const g = window.gsap; const el = document.querySelector('[data-notice]'); if (this._noticeT) { clearTimeout(this._noticeT); this._noticeT = null; } const clear = () => this.setState({ notice: null, noticeSticky: false }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
 
   // ================= pre-seeded feed =================
   // The examples a first visit opens on. Each one is a photograph that ships with the app, and each

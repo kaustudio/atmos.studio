@@ -489,8 +489,8 @@ export const persistenceMethods = {
   importProjectFile(file) {
     if (!file) return;
     const rdr = new FileReader();
-    rdr.onload = () => { let obj = null; try { obj = JSON.parse(rdr.result); } catch (e) { this.showNotice('That file couldn’t be read. It may be damaged, or not a palette project file.'); return; } this.previewProjectFile(obj, file.name || ''); };
-    rdr.onerror = () => this.showNotice('Couldn’t open that file.');
+    rdr.onload = () => { let obj = null; try { obj = JSON.parse(rdr.result); } catch (e) { this.showNotice('That file couldn’t be read. It may be damaged, or not a palette project file.', { sticky: true }); return; } this.previewProjectFile(obj, file.name || ''); };
+    rdr.onerror = () => this.showNotice('Couldn’t open that file.', { sticky: true });
     rdr.readAsText(file);
   },
   // Validate ONLY — no state is touched. Returns the validated payload, or the one sentence saying
@@ -511,7 +511,7 @@ export const persistenceMethods = {
   // would describe a set that never lands.
   previewProjectFile(obj, fileName) {
     const read = this._readProjectFile(obj);
-    if (read.error) { this.showNotice(read.error); return; }
+    if (read.error) { this.showNotice(read.error, { sticky: true }); return; }
     const havePal = new Set(this.state.feed.map((p) => p.id));
     const haveProj = new Set(this.state.projects.map((p) => p.id));
     this.openRestore({
@@ -1278,7 +1278,7 @@ export const persistenceMethods = {
     for (let i = feed.length - 1; i >= 0 && (!res || !res.ok); i--) {
       if (feed[i].imageUrl) { feed[i].imageUrl = null; dropped++; res = attempt(Object.assign({}, payload, { feed })); }
     }
-    if (!res || !res.ok) { this.setState({ announce: 'Storage is full. Some palettes could not be saved, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full. Back up to keep your palettes safe.'); } }
+    if (!res || !res.ok) { this.setState({ announce: 'Storage is full. Some palettes could not be saved, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full. Back up to keep your palettes safe.', { sticky: true }); } }
     else if (dropped > 0) { this.setState({ announce: 'Storage is nearly full. Older reference images were dropped to keep your palettes, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space. Back up to keep everything.'); } }
   },
 };

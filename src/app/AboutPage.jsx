@@ -100,8 +100,14 @@ export default class AboutPage extends React.Component {
     const vals = this.props.vals;
 
     const hero = root.querySelector('[data-about-hero]');
+    /* A hard load onto the prerendered document: its copy has been on screen since first paint (held
+       there through DocFallback while this chunk loaded), so nothing visible is withheld and replayed.
+       Consumed here — a client-side arrival later in the session must not inherit it. */
+    const settled = !vals.arrivingByWipe && !!window.__prerenderedDoc;
+    try { window.__prerenderedDoc = null; } catch (e) { }
     this._reveal = initPageReveal(root, {
       motion: vals.maskMotion,
+      settled,
       hero,
       heroParts: hero ? ['h1', '.about-hero__lead'].map((s) => hero.querySelector(s)) : [],
       groups: aboutGroups(root),

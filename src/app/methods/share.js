@@ -42,7 +42,7 @@ export const shareMethods = {
   shareCurrent(pal) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
-    if (!url) { this.showNotice('This palette can’t be shared.'); return; }
+    if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
     this.copy(url, 'pal-share', 'Share link copied to your clipboard.');
     this.showNotice('A share link is a snapshot, not a backup. It can’t be recalled or restored.');
   },

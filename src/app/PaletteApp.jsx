@@ -423,6 +423,7 @@ export default class PaletteApp extends React.Component {
     safe(() => this._initLenis(), 'lenis');
     safe(() => requestAnimationFrame(() => { this._updateProjPill(); this._syncProjSteps(); }), 'projpill');
     safe(() => this._initLoader(), 'loader');
+    safe(() => this._syncAppInert(), 'inert');   // the landing covers the tool; what it covers is inert
     // Light on the tool, the reader's own appearance on a legal route — see _entryTheme.
     const theme = this.state.theme;
     try { document.documentElement.setAttribute('data-theme', theme); } catch (e) { }
@@ -436,10 +437,14 @@ export default class PaletteApp extends React.Component {
     // Back and forward are real navigations between these routes, so the swap is wiped exactly as a
     // click is. popstate has already moved the address bar by the time it fires, which is why
     // navigateTo is told not to push a second entry for it.
+    // The browser's own restoration would fire on the DEPARTING page the moment popstate lands,
+    // snapping it to the destination's old offset while the crossfade is still running. Manual, and
+    // navigateTo restores the offset itself, after the swap, from the entry's own state.
+    try { history.scrollRestoration = 'manual'; } catch (e) { }
     this._onPop = () => {
       const next = routeFor(location.pathname);
       if (next === this.state.route) return;
-      this.navigateTo(pathFor(next), { push: false });
+      this.navigateTo(pathFor(next), { push: false, scrollY: (history.state && history.state.scrollY) || 0 });
     };
     window.addEventListener('popstate', this._onPop);
     this.initMotion();
@@ -562,6 +567,7 @@ export default class PaletteApp extends React.Component {
        surviving pin refreshes every trigger on the next surface against a detached element. */
     this._syncStory();
     this._syncPicker();
+    this._syncAppInert();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
@@ -907,6 +913,13 @@ export default class PaletteApp extends React.Component {
       <>
         <AppView vals={this.renderVals()} />
         <WipeLayer />
+        {/* WHERE FOCUS WAITS DURING A TRANSITION. The wipes used to park it on the cover itself,
+            which is aria-hidden — Chrome refused the attribute with a console warning on every route
+            change ("Blocked aria-hidden on an element because its descendant retained focus"), and
+            browsers that do not refuse it hide the focused element from assistive technology for the
+            length of the wipe. This is a 1px sentinel with no aria-hidden: focusable, invisible, and
+            outside every branch so it survives the swap. wipe.js _parkFocus finds it. */}
+        <div data-focus-park="1" tabIndex={-1} style={{ position: 'fixed', left: 0, top: 0, width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', opacity: 0, outline: 'none' }}></div>
       </>
     );
   }

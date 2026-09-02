@@ -43,6 +43,12 @@
          favicon slot it collapsed to an illegible smear. -->
     <link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
     <link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
+    <!-- The two faces, asked for with the shell rather than discovered from inside the bundled
+         stylesheet a round trip later. They are font-display:swap, and on the document routes —
+         which have no loader to hide the swap behind — the reflow when Neue Montreal replaced the
+         fallback was a measured layout shift on every cold load. Two small files, one hop earlier. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/NeueMontreal-Regular.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/NeueMontreal-Medium.woff2" />
 
     <!-- Social cards. The image is an absolute URL on purpose: several scrapers, Slack's among them,
          will not resolve a relative one. Width and height are declared so a card can be laid out

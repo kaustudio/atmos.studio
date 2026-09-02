@@ -17,11 +17,16 @@ export const wipeMethods = {
      window.scrollTo leaves its internal position stale, so the reader's next gesture jumps back to
      where Lenis still thinks it is. Immediate, because every caller is already behind the cover —
      there is nothing to watch travel, and an eased scroll under an opaque panel is only a delay. */
-  _scrollToTop() {
+  _scrollToTop() { this._scrollToY(0); },
+  /* The same gesture for any offset, and the reason it exists: Back and Forward now restore the
+     offset the reader left a document at (navigateTo keeps it on the history entry), and a restore
+     has the same two obligations a reset to the top does — through Lenis, and then checked. */
+  _scrollToY(y) {
+    const target = Math.max(0, y || 0);
     // force, because Lenis declines a programmatic scroll outright while it is stopped — and it is
     // stopped for every surface that takes the wheel off it (the grid's Observer, the phone story).
     // Those are exactly the states a reader leaves behind on the way back to the landing.
-    try { if (this._lenis) this._lenis.scrollTo(0, { immediate: true, force: true }); } catch (e) { }
+    try { if (this._lenis) this._lenis.scrollTo(target, { immediate: true, force: true }); } catch (e) { }
     /* AND THEN CHECK, because Lenis returning early is indistinguishable from Lenis having done it.
        It compares the destination against its own targetScroll and returns if they match — so any
        offset the page acquired WITHOUT passing through it (the browser restoring a position on
@@ -30,8 +35,8 @@ export const wipeMethods = {
        and reset() hands the corrected position straight back so its next frame does not lerp the
        reader back to where it still thought they were. */
     try {
-      if (!window.scrollY) return;
-      window.scrollTo(0, 0);
+      if (Math.abs(window.scrollY - target) < 1) return;
+      window.scrollTo(0, target);
       if (this._lenis) this._lenis.reset();
     } catch (e) { }
   },
@@ -108,6 +113,15 @@ export const wipeMethods = {
       let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0);
     });
   },
+  /* Focus waits on the sentinel PaletteApp renders next to the cover (see its render note), never on
+     the cover: the cover is aria-hidden, and a focused descendant of an aria-hidden element is either
+     refused by the browser or hidden from assistive technology — both were happening, one per
+     browser. The layer is only the fallback for a document that somehow has no sentinel. */
+  _parkFocus(layer) {
+    const park = document.querySelector('[data-focus-park]') || layer;
+    if (!park) return;
+    try { park.setAttribute('tabindex', '-1'); park.focus({ preventScroll: true }); } catch (e) { }
+  },
   // rAF-stall recovery: if the GSAP ticker is asleep/throttled, the wipe timeline freezes and the
   // watchdog force-swaps — skipping the logo beat. Wake the ticker up front; if it still hasn't
   // advanced shortly after start, pump ticks manually.
@@ -178,9 +192,9 @@ export const wipeMethods = {
     layer.style.pointerEvents = 'auto';
     const inertEls = [document.querySelector('[data-app]')].filter(Boolean);
     inertEls.forEach((el) => { try { el.setAttribute('inert', ''); } catch (e) { } });
-    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; document.querySelectorAll('[data-app],[data-landing]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); };
+    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; document.querySelectorAll('[data-app],[data-landing]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); this._syncAppInert(true); };
     this._wipeClearGuards = clearGuards;
-    try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
+    this._parkFocus(layer);
     g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
     // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
     // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
@@ -255,10 +269,10 @@ export const wipeMethods = {
     layer.style.pointerEvents = 'auto';
     const inertEls = [document.querySelector('[data-app]'), landing].filter(Boolean);
     inertEls.forEach((el) => { try { el.setAttribute('inert', ''); } catch (e) { } });
-    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; inertEls.forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); const app = document.querySelector('[data-app]'); if (app) try { app.removeAttribute('inert'); } catch (e) { } };
+    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; inertEls.forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); const app = document.querySelector('[data-app]'); if (app) try { app.removeAttribute('inert'); } catch (e) { }  this._syncAppInert(true); };
     this._wipeClearGuards = clearGuards;
     // L1: park focus on the transition layer so it isn't stranded on an unmounting control
-    try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
+    this._parkFocus(layer);
     g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
     // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
     // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
@@ -375,30 +389,47 @@ export const wipeMethods = {
     const opts = options || {};
     const push = opts.push !== false;
     const next = routeFor(path);
-    if (next === this.state.route) return;
+    const from = this.state.route;
+    if (next === from) return;
     this._wipeRecoverStuck();
     if (this._wipeRunning) return;
 
-    const g = window.gsap;
-    const layer = document.querySelector('[data-wipe]');
+    /* WHICH GESTURE. The curved wipe and its brand beat are the site's way of saying "you are
+       somewhere else now", and they stay for the crossings where that is true: the tool or the
+       landing on one side, a document on the other. Two crossings never earned it. Privacy to terms
+       is one sentence's link between two statements that share a masthead, and Back and Forward are
+       the browser's own gesture, which a reader expects answered rather than performed — measured
+       before this branch, each cost the same 2.4s of inert screen as landing → tool. They take a
+       short crossfade instead (_wipeQuick: DUR.fast out, DUR.state in) and keep everything else the
+       cover guarantees: the inert guard, the parked focus, the watchdog, the announced destination. */
+    const quick = !push || (isDoc(from) && isDoc(next));
+    /* WHERE THE READER WAS. A pushed navigation records the departing page's offset on the entry it
+       is leaving, and a pop reads the destination's back off its own. Every arrival used to be forced
+       to the top, so Back from /privacy landed a reader at the top of an /about they had left 4800px
+       into. Restored AFTER the swap, because the offset has to exist in the arriving document first. */
+    if (push) { try { history.replaceState(Object.assign({}, history.state || {}, { route: from, scrollY: window.scrollY }), ''); } catch (e) { } }
+    const restoreY = push ? 0 : Math.max(0, opts.scrollY || 0);
+
     const commit = (afterCb) => {
       // The address bar moves with the content, not before it — a pushState that lands ahead of the
       // swap is a URL describing a page that is not on screen yet, and a reload in that window
       // serves the wrong one.
-      if (push) { try { history.pushState({ route: next }, '', pathFor(next)); } catch (e) { } }
+      if (push) { try { history.pushState({ route: next, scrollY: 0 }, '', pathFor(next)); } catch (e) { } }
       applyHead(next);
-      // A new document starts at the top — see _scrollToTop, which the landing pair now shares.
-      this._scrollToTop();
+      // A new document starts at the top — see _scrollToTop, which the landing pair now shares. A
+      // history move goes back to where it was, once the document is there to scroll (below).
+      if (!restoreY) this._scrollToTop();
       // The live region NAMES the destination. It used to be cleared here, which meant a route
       // change said nothing at all: no reload, no focus move of its own, and a <title> swap that
       // screen readers do not reliably announce. The page is the only thing that changed, so the
       // page is what gets said.
-      this.setState({ route: next, announce: routeName(next) + ' page.' }, afterCb || function () { });
+      this.setState({ route: next, announce: routeName(next) + ' page.' }, () => { if (restoreY) this._scrollToY(restoreY); (afterCb || function () { })(); });
     };
 
     // The cover is _wipeCover's; only these four decisions are the route's. The comments that used to
     // sit inline with them are kept at their new call sites.
     this._wipeCover({
+      quick,
       commit,
       // The tool's own arrival, when it is the destination: its copy rises out of its masks exactly
       // as it does under the loader and after Get Started, rather than the whole page block sliding
@@ -518,7 +549,9 @@ export const wipeMethods = {
     // already finished arriving — the page appears to be simply there, which is the fault this whole
     // change exists to fix. About takes it on exactly the same terms the two statements do, which is
     // what makes /about ↔ /privacy read as one gesture rather than as two products.
-    this._arrivingByWipe = true;
+    this._arrivingByWipe = !opts.quick;
+    // The short crossing. Everything above this line is shared; everything below is the panel's.
+    if (opts.quick) { this._wipeQuick({ commit, arm, release, focusDestination }); return; }
 
     const panel = layer.querySelector('[data-wipe-panel]');
     const capT = layer.querySelector('[data-wipe-cap-top]');
@@ -532,10 +565,11 @@ export const wipeMethods = {
       this._wipeClearPump();
       layer.style.pointerEvents = 'none';
       document.querySelectorAll('[data-app]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } });
+      this._syncAppInert(true);
     };
     this._wipeClearGuards = clearGuards;
     // L1: park focus on the transition layer so it isn't stranded on a control that is unmounting.
-    try { layer.setAttribute('tabindex', '-1'); layer.focus({ preventScroll: true }); } catch (e) { }
+    this._parkFocus(layer);
 
     g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
     // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
@@ -609,6 +643,60 @@ export const wipeMethods = {
     // loader's fold and Get Started both use, so all three arrivals share one rhythm.
     tl.call(release, null, '<+0.15');
     // built paused: wake the clock first, then pin the playhead to 0.
+    try { g.ticker.wake(); } catch (e) { }
+    tl.play(0);
+    this._wipeArmStallPump(g);
+  },
+
+  /* THE CROSSFADE, for the crossings that do not earn the panel — see navigateTo. The departing
+     content fades on DUR.fast, the route swaps, the arriving content fades in on DUR.state while its
+     own copy rises out of its masks (the tool's drop lines and rows through arm/release; a document
+     plays its own reveal on mount, which is why _arrivingByWipe is false here). Guards, watchdog,
+     stall pump and focus hand-off are the panel's, so the two gestures fail the same way. */
+  _wipeQuick(ctx) {
+    const g = window.gsap;
+    const app = document.querySelector('[data-app]');
+    if (app) { try { app.setAttribute('inert', ''); } catch (e) { } }
+    const clearGuards = () => { this._wipeClearPump(); document.querySelectorAll('[data-app]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); this._syncAppInert(true); };
+    this._wipeClearGuards = clearGuards;
+    this._parkFocus(null);
+    const parts = this._routeDrifters();
+    let swapped = false;
+    const doSwap = () => {
+      if (swapped) return; swapped = true;
+      ctx.commit(() => {
+        try { g.set(parts.all, { clearProps: 'opacity' }); } catch (e) { }
+        const arrived = this._routeDrifters().all;
+        try { g.set(arrived, { opacity: 0 }); g.to(arrived, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'opacity' }); } catch (e) { }
+        ctx.arm(false);
+        // A frame later, so the arriving copy starts from its armed state — the same beat every
+        // other arrival takes behind the panel's trailing edge.
+        requestAnimationFrame(() => { try { ctx.release(); } catch (e) { } });
+      });
+    };
+    const finish = () => {
+      if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; }
+      clearGuards(); this._wipeClearGuards = null;
+      this._wipeRunning = false; this._wipeTl = null; this._arrivingByWipe = false;
+      try { this._playStoryReveal(); } catch (e) { }
+      ctx.focusDestination();
+    };
+    const tl = g.timeline({ paused: true, onComplete: finish });
+    this._wipeWatchdog = setTimeout(() => {
+      this._wipeWatchdog = null;
+      if (!this._wipeRunning) return;
+      try { if (this._wipeTl) this._wipeTl.kill(); } catch (e) { }
+      this._wipeTl = null; this._wipeRunning = false;
+      clearGuards(); this._wipeClearGuards = null;
+      try { g.set(this._routeDrifters().all, { clearProps: 'opacity' }); } catch (e) { }
+      this._arrivingByWipe = false;
+      if (!swapped) doSwap(); else { try { ctx.release(); } catch (e) { } }
+      ctx.focusDestination();
+    }, 2500);
+    this._wipeTl = tl;
+    tl.to(parts.all, { opacity: 0, duration: this.DUR.fast, ease: this.EASE.exit }, 0);
+    tl.call(doSwap, null, this.DUR.fast);
+    tl.to({}, { duration: this.DUR.state + 0.06 });   // room for the arrival tween the swap starts
     try { g.ticker.wake(); } catch (e) { }
     tl.play(0);
     this._wipeArmStallPump(g);

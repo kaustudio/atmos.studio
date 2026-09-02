@@ -143,10 +143,23 @@ export const overlayMethods = {
     const d = this._deleted; this._deleted = null;
     if (!d) { this._dismissToast(); return; }
     this.setState((st) => { const feed = st.feed.slice(); feed.splice(Math.min(d.index, feed.length), 0, d.palette); return { feed, announce: 'Restored ' + d.palette.name + '.' }; }, () => {
+      this._revealRestoredRow(d.palette.id);
       this.persist({ immediate: true });
       if (this.state.feedView === 'grid') this.buildUniverse();
       this._dismissToast();
     });
+  },
+  /* UNDO ARRIVES THE WAY DELETE LEFT. The row folded away on height and opacity (deletePalette above)
+     and came back in a single frame at full height, every row beneath it jumping 48px — measured, and
+     the one place in the list where a surface appeared rather than arrived. The same tween, reversed,
+     from inside the commit callback so the row is never painted at full height first. */
+  _revealRestoredRow(id) {
+    const g = window.gsap;
+    if (this._reduce || !g || this.state.feedView !== 'list' || !id) return;
+    const row = [...document.querySelectorAll('[data-row][data-rowid]')].find((el) => (el.getAttribute('data-rowid') || '').indexOf(String(id)) === 0);
+    if (!row) return;
+    g.set(row, { overflow: 'hidden' });
+    g.from(row, { height: 0, opacity: 0, duration: this.DUR.state, ease: this.EASE.entrance, onComplete: () => { try { g.set(row, { clearProps: 'height,opacity,overflow' }); } catch (e) { } } });
   },
   // toast enter/exit — fade + small slide, --ease-standard; instant under reduced motion
   _toastIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },

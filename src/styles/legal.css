@@ -197,8 +197,12 @@
 
 .toc-article p{margin:0 0 1.25em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
 .toc-article strong{font-weight:500}
-.toc-article a{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+.toc-article a{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;transition:color var(--dur-state) var(--ease-standard)}
 .toc-article a:hover{color:var(--on-surface-muted)}
+/* The global :focus reset takes the ring off every anchor that does not carry data-focus, and these
+   are injected HTML that cannot. Underlined at rest, so focus had nothing left to change: measured,
+   the focused link's computed style was its unfocused neighbour's. The chrome ring, one step out. */
+.toc-article a:focus-visible{outline:3px solid var(--on-surface);outline-offset:2px}
 
 .toc-article ul{margin:0 0 1.25em;padding-left:1.4em}
 .toc-article li{margin-bottom:.6em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}

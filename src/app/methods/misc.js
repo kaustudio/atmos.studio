@@ -1,5 +1,31 @@
 // Lenis smooth scroll, click-to-zoom lightbox, and the sliding project-filter pill.
+import { isDoc } from '../routes.js';
+
 export const miscMethods = {
+  /* THE LANDING IS A COVER, SO WHAT IT COVERS IS INERT. The stage is position:fixed over the tool,
+     not instead of it, and the tool stayed in the tab order underneath: measured on a first visit,
+     Tab went Skip link → Create → Learn More → Toggle dark theme → Back up → Restore → the dropzone
+     → every library row, all of them under the field with no ring anyone could see. The wipes
+     already inert [data-app] for the length of the transition; this holds the same guard for as
+     long as the landing is up, and lifts it the moment the landing goes.
+     The children rather than [data-app] itself, because the landing, the mark, the loader and the
+     skip link are all children too and must stay live. Left alone while a wipe runs — the wipe owns
+     the guards then and calls this from its own clearGuards — and never lifted while a modal holds
+     the landmarks (see _bgInert), which would otherwise undo that dialog's own guard. */
+  _syncAppInert(force) {
+    // `force` is the wipes' own clearGuards, which run before the running flag drops.
+    if (this._wipeRunning && !force) return;
+    const app = document.querySelector('[data-app]');
+    if (!app) return;
+    const on = !this.state.landingDismissed && !this.state.narrow && !isDoc(this.state.route);
+    [].forEach.call(app.children, (el) => {
+      if (el.matches('[data-landing],[data-logo],[data-load-wrap],[data-wipe],.skip-link,[role="status"]')) return;
+      try {
+        if (on) el.setAttribute('inert', '');
+        else if (!this._bgInertOn) el.removeAttribute('inert');
+      } catch (e) { }
+    });
+  },
   // Lenis smooth scroll (vendored). Integration contract with the existing motion system:
   //  - driven by the GSAP ticker (one clock; no second rAF loop)
   //  - skipped under prefers-reduced-motion (native scroll is the floor)

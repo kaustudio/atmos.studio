@@ -62,8 +62,13 @@ export default class LegalPage extends React.Component {
        list although the markup no longer carries one: the filter drops it, and the day an eyebrow
        comes back it takes its place in the cascade rather than appearing all at once behind it. */
     const hero = root.querySelector('.legal-hero');
+    // Same contract as AboutPage: a hard load onto the prerendered statement leaves what is already
+    // on screen alone. Consumed on first use, so privacy → terms in the same session reveals as usual.
+    const settled = !vals.arrivingByWipe && !!window.__prerenderedDoc;
+    try { window.__prerenderedDoc = null; } catch (e) { }
     this._reveal = initPageReveal(root, {
       motion: vals.maskMotion,
+      settled,
       hero,
       heroParts: hero ? ['.legal-hero__label', 'h1', '.legal-hero__sub', '.legal-hero__meta'].map((s) => hero.querySelector(s)) : [],
       groups: articleGroups(root.querySelector('[data-toc-content]')),

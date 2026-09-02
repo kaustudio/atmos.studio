@@ -384,7 +384,7 @@ export const renderValsMethods = {
         {
           // "Reading" is the product's own word for the interpretation layer
           title: 'Reading', rows: [
-            { label: 'Archetype', value: curMet.mood },
+            { label: 'Character', value: curMet.mood },
             // WHERE THE NAME CAME FROM. Naming is the one step that can leave the device: the live
             // reading posts a ~320px thumbnail and the hex values (buildInterpRequest) and nothing
             // else; the local composer sends nothing at all. /privacy has always said so, but the
@@ -440,7 +440,7 @@ export const renderValsMethods = {
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
     let procStatus = '';
-    if (busy) { const STEPS = ['Reading light', 'Sampling the field', 'Clustering in OKLCH', 'Naming the mood']; procStatus = STEPS[Math.min(s.procStep, 3)] + '…'; }
+    if (busy) { const STEPS = ['Reading light', 'Sampling the field', 'Grouping the colours', 'Naming the mood']; procStatus = STEPS[Math.min(s.procStep, 3)] + '…'; }
 
     const curId = s.stage === 'result' && s.current ? s.current.id : null;
     // The card's spoken form. Its metrics grid is aria-hidden (it is the visual layer), so whatever
@@ -616,7 +616,7 @@ export const renderValsMethods = {
         // the one metric carrying a verdict as well as a number — badge from the shared readout,
         // so the card says exactly what the row and the detail panel say
         { label: 'AA text pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
-        { label: 'Archetype', text: met.mood },
+        { label: 'Character', text: met.mood },
         // Eighth entry, and the one that squares the 2-column grid off at four full rows: the list
         // row ends on a date and the card had none, so the same palette was datable in one view and
         // not in the other. Absolute stamp, exactly as the row's column carries it.
@@ -1415,7 +1415,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            first-arrival one: pick a case and this becomes that palette's name, which is the
            behaviour the ternary has always had. The statement does its work on the way in and then
            gets out of the way of the image the story is about. */
-        heroTitle: s.storyCaseId ? p.name : 'Atmos Gallery Is Designed for Larger Screens',
+        heroTitle: s.storyCaseId ? p.name : 'Colour Read from Light and Atmosphere',
         /* THE ACT NAMES WHAT IT OPENS, on the same condition and for the same reason the heading
            does. "Explore an Example" is the right words exactly once — on first arrival, when the
            heading is the width notice and there is no palette on the screen yet to name. The moment
@@ -1513,7 +1513,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           { key: 'light', label: 'Lightness', value: CAPS(an.lightness.band) },
           { key: 'temp', label: 'Temperature', value: met.temp },
           { key: 'chroma', label: 'Chroma', value: CAPS(an.chroma.band) },
-          { key: 'hue', label: 'Hue spread', value: CAPS(an.hue.band) },
+          { key: 'hue', label: 'Hue range', value: CAPS(an.hue.band) },
         ],
         // A11Y_LABEL, not A11Y_TITLE: the caption wants the NAME (Text-Ready); A11Y_TITLE is that
         // name plus its definition, which is a tooltip's job and a full line of type here.
@@ -1613,7 +1613,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
 
            No em dash. The only dash left in product copy is the EN dash in "1\u20132 colour pairs"
            (the contrast readouts), which is a numeric range and the one place it is correct. */
-        handoffLine: 'Atmos is designed for desktop. Explore another palette here, or open Atmos on your computer to create your own.',
+        handoffLine: 'Atmos opens in a window 1024 px or wider. Explore another palette here, or open Atmos on your computer to create your own.',
       };
     }
 
@@ -1797,9 +1797,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          the same surface rather than two that resemble each other. */
       copyItemStyle: itemBase,
       copyMenuOpen: !!s.copyMenuOpen,
-      toggleCopyMenu: () => this.toggleTip('copyMenuOpen', '[data-copy-menu]'),
-      closeCopyMenu: () => { this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); },
-      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); } },
+      toggleCopyMenu: () => this.toggleTip('copyMenuOpen', '[data-copy-layer]'),
+      closeCopyMenu: () => { this.closeTip('copyMenuOpen', '[data-copy-layer]'); this._focusCopyTrigger(); },
+      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('copyMenuOpen', '[data-copy-layer]'); this._focusCopyTrigger(); } },
       copyDone: s.copied === 'pal-hex' ? 'Hex list' : s.copied === 'pal-css' ? 'CSS variables' : '',
       // Neither closes the dialog any more, and neither moves focus — see the note on the overlay's
       // pair above. The row reports; the sheet is left where the reader put it.
@@ -2422,6 +2422,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',
+      // alert for a notice that stays until dismissed, status for one that passes — see showNotice
+      noticeRole: s.noticeSticky ? 'alert' : 'status',
+      dismissNotice: () => this._dismissNotice(), holdNotice: () => this._holdNotice(), releaseNotice: () => this._releaseNotice(),
       // per-swatch colour harmonies
       harmony, hasHarmony: !!s.harmony, closeHarmony: () => this.closeHarmony(), trapHarmony: (e) => this.trapHarmony(e),
       // token export

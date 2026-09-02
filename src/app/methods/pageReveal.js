@@ -79,7 +79,13 @@ function inertController() {
    options.groups    — [{ heading, blocks, rule }]. One entry per section: `heading` leads the
                        cascade and may be null, `blocks` follow it on the same stagger, and `rule` is
                        whichever element carries the --rule hairline for that section (the heading
-                       itself on a legal document, the section on About, null for no rule). */
+                       itself on a legal document, the section on About, null for no rule).
+   options.settled   — the route was a prerendered document and its copy was ALREADY ON SCREEN
+                       when this ran (a hard load; see main.tsx and DocFallback). Whatever the reader
+                       can see is left exactly as it is: not armed, not triggered, not swept. Only
+                       what is below the fold is withheld and scroll-revealed as usual. Without this
+                       a cold /about showed its copy, blinked it to opacity 0 the moment the chunk
+                       mounted, and rose it back out of its masks — the copy arriving twice. */
 export function initPageReveal(root, options) {
   var g = window.gsap;
   var opts = options || {};
@@ -92,6 +98,15 @@ export function initPageReveal(root, options) {
   var groups = (opts.groups || []).filter(function (grp) {
     return grp && (grp.heading || (grp.blocks && grp.blocks.length));
   });
+  // Settled: anything whose top is inside the first screen (with a little margin, so a section
+  // straddling the fold is not half-withheld) is already read and stays put.
+  var settled = !!opts.settled;
+  var settleLimit = window.innerHeight * 1.15;
+  function onScreen(el) { if (!el || !el.isConnected) return false; return el.getBoundingClientRect().top < settleLimit; }
+  if (settled) {
+    if (hero && onScreen(hero)) hero = null;
+    groups = groups.filter(function (grp) { return !onScreen(grp.heading || grp.blocks[0]); });
+  }
   if (!hero && !groups.length) return inertController();
 
   var pending = [];        // everything not yet visually resolved, for the failsafe to sweep

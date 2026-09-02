@@ -411,7 +411,12 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --fs-lead:0.9375rem;        /* 15 — lead paragraphs, the "Best for" line */
   --fs-body:0.8125rem;        /* 13 — body copy and the reading */
   --fs-detail:0.75rem;        /* 12 — menu items, notes, secondary copy */
-  --fs-label:0.625rem;        /* 10 — uppercase labels; the workhorse, 83 uses */
+  /* 11, UP FROM 10. Every action on the site — Add to Project, Check contrast, Copy, Export, Share,
+     New palette, Back up, Restore, the view and scope toggles — wore this token at 10px, which put
+     the controls that move the work forward below the 11px floor the note beneath argues for the
+     labels beside them. Measured on the result stage: actions at 10, metric labels at 11, body at
+     15 — the hierarchy inverted. The floor is the floor for a label too. */
+  --fs-label:0.6875rem;       /* 11 — uppercase labels; the workhorse */
   /* ===== 11, AND THE FLOOR FOR ANYTHING A READER HAS TO READ =================================
      --fs-micro (9) and --fs-nano (8) held every metric LABEL on this site — Hue, Chroma, Max
      contrast, AA text pairs, the list's column heads, its dates. Measured on the grid card in the
@@ -856,9 +861,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-primary-hover:color-mix(in srgb,var(--on-surface) 84%,var(--surface));
   --action-primary-press:color-mix(in srgb,var(--on-surface) 72%,var(--surface));
   --action-primary-line:var(--on-surface);
-  --action-primary-weight:500;
+  --action-primary-weight:400;   /* regular, like every other label on the site — the system's weight for controls */
   --action-primary-padding:0.75em 1.35em;
-  /* tier 2 — secondary: everything you do WITH the result. No fill, full-strength edge, medium
+  /* tier 2 — secondary: everything you do WITH the result. No fill, full-strength edge, regular
      weight, full-strength ink. Every unfilled control in the app is this tier.
 
      There WAS a third tier — utility: muted ink at weight 400 for the copy actions and the theme
@@ -872,7 +877,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --action-secondary-surface:transparent;
   --action-secondary-ink:var(--on-surface);
   --action-secondary-line:var(--action-line);
-  --action-secondary-weight:500;
+  --action-secondary-weight:400;
   /* hover/press tints for the unfilled tier — the sanctioned 16% → 24% spectrum, the same one
      [data-ix="press"] and button-006's own rest state already ride. Text stays
      --on-surface across all three states, so the worst case is 11.49:1 (light) / 10.56:1 (dark). */

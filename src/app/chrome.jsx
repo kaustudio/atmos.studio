@@ -106,7 +106,7 @@ export function ThemeSwitch({ vals }) {
       role="switch"
       aria-checked={vals.isDark}
       onClick={vals.toggleTheme}
-      aria-label="Toggle dark theme"
+      aria-label="Dark theme"
       title="Light / dark"
       label={themeSwitchLabel(vals)}
     />
@@ -171,7 +171,7 @@ export function DocHead({ vals }) {
       <GlassEffect />
       <span className="doc-head__theme"><ThemeSwitch vals={vals} /></span>
       <span className="doc-head__mark">
-        <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery">
+        <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery" data-focus="chrome">
           <span className="mark" role="img" aria-label="Atmos Gallery"></span>
         </a>
       </span>

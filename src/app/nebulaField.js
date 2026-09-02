@@ -487,7 +487,14 @@ export function createNebulaField(canvas, ramp, options = {}) {
      ten reads a second is more resolution than the eye asks of it, and the caller lerps between
      them anyway. */
   const SW = 32, SH = 18;
-  let scratch = null, sctx = null, grid = null, sampleCount = 0;
+  /* NOT ON THE FIRST FRAME. The first read is the first thing that waits on the GPU, and at that
+     moment the GPU is still compiling this shader and rendering its first raymarched frame — so the
+     main thread waits for both. Measured: 755ms in one call on a warm shader cache, 2079ms cold,
+     inside the loader's own choreography, which froze for exactly that long. Thirty frames of
+     rendering first lets the compile finish in the GPU process while the loader keeps moving; the
+     controls have no gas to reflect until the field has faded in anyway. */
+  let scratch = null, sctx = null, grid = null;
+  let sampleCount = Math.max(0, options.sampleWarmup == null ? 30 : options.sampleWarmup);
   const sampleEvery = Math.max(1, options.sampleEvery || 3);
   function readbackIfDue() {
     if (--sampleCount > 0) return;
