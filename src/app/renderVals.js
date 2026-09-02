@@ -147,6 +147,9 @@ export const renderValsMethods = {
        file finally means the shape as well as the role. It rounds with the result stage's own trait
        chips, which are the same object one surface over; the 11px inset stays, because at a 26px
        height the arc's widest point is at the text's own centre line and 11 clears it. */
+    // --fs-label, as the list view's tags: the traits are the same words on every surface and they
+    // take the same size on every surface. (Raised to --fs-lead for an hour on 02.09.26; reverted
+    // the same day as inconsistent with the list.)
     const pill = { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', borderRadius: 'var(--radius-pill)', padding: '8px 11px', lineHeight: 1 };
     const busy = s.stage === 'processing';
 

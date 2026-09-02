@@ -318,7 +318,9 @@ const CardIdentity = ({ c }) => (<>
         "title" would be a lie at 11px — so it stays a card-local literal.
         Seven sites, because the card has two renderings, the engine tile and the reduced-motion
         grid, and they must not drift. Change all seven or none. */}
-    <span style={sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+    {/* --fs-body, the list row's size for the same name: the card, its open panel and the row are
+        three renderings of one identity line, and it took two sizes across them until 02.09.26. */}
+    <span style={sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
     {c.isExample && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
@@ -391,11 +393,14 @@ const UniversePanel = ({ c }) => (<>
   <div data-upanel-part="1" data-strip="1" style={sx('display:flex;flex:0 0 clamp(46px, 28%, 200px);width:100%')} aria-hidden="true">
     {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
   </div>
-  <div data-upanel-part="1" data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
+  <div data-upanel-part="1" data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;user-select:text;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
     <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
       <CardIdentity c={c} />
     </div>
-    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis')}>{c.descriptors}</span>
+    {/* --fs-label and --track-flat, exactly as the detail's trait chips set the same words: one size
+        and one tracking for the traits on every surface. (The card's own -0.01em stays on the card's
+        own lines; this is the chips' line, unpinned.) Wraps rather than truncates. */}
+    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-wrap:pretty')}>{c.descriptors}</span>
     <CardMetrics c={c} />
   </div>
   {/* The foot: the door to the detail leads, the close mark trails — the same 32px mark every
@@ -433,7 +438,7 @@ function ValueRow({ v, showCaveat }) {
           <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine)')}>{v.labelText}</span>
           {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-fine); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
         </span>
-        <span style={showCaveat ? sx('font-family: Neue Montreal; text-transform: uppercase; overflow: hidden; display: block') : sx('font-family: Neue Montreal; text-transform: uppercase; font-size:var(--fs-detail); overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
+        <span style={sx('font-family: Neue Montreal; text-transform: uppercase; font-size:var(--fs-detail); overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
       </span>
       <span style={v.iconWrapStyle} aria-hidden="true">
         {v.copied && <IconCheck />}
