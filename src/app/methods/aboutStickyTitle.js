@@ -103,15 +103,20 @@ function token(name, fallback) {
 
 /* → { chars, restore } or null. Same shape as aboutHighlight's splitChars, and deliberately so:
    two effects that split a sentence into characters should split it the same way. */
+/* [ATMOS 12] A <br> SURVIVES THE SPLIT — the same correction aboutHighlight.js records as its
+   [ATMOS 4], carried over the day this module took the closing statement on /about, which is set as
+   two sentences on two lines with a break in the markup. textContent drops the break and runs the
+   sentences together; walking childNodes rebuilds it, and the spoken label crosses it with a space. */
 function splitChars(el) {
   const original = el.innerHTML;
-  const text = el.textContent;
   const prevLabel = el.getAttribute('aria-label');
-  if (!text || !text.trim()) return null;
+  const nodes = [].slice.call(el.childNodes);
+  const spoken = nodes.map((n) => (n.nodeName === 'BR' ? ' ' : n.textContent || '')).join('');
+  if (!spoken || !spoken.trim()) return null;
   try {
     const frag = document.createDocumentFragment();
     const chars = [];
-    text.split(/(\s+)/).forEach((part) => {
+    const addText = (part) => {
       if (!part) return;
       if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
       const word = document.createElement('span');
@@ -126,9 +131,13 @@ function splitChars(el) {
         chars.push(c);
       });
       frag.appendChild(word);
+    };
+    nodes.forEach((node) => {
+      if (node.nodeName === 'BR') { frag.appendChild(document.createElement('br')); return; }
+      (node.textContent || '').split(/(\s+)/).forEach(addText);
     });
     if (!chars.length) return null;
-    el.setAttribute('aria-label', text.trim());
+    el.setAttribute('aria-label', spoken.replace(/\s+/g, ' ').trim());
     el.innerHTML = '';
     el.appendChild(frag);
     return {

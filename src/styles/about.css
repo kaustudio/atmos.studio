@@ -1363,12 +1363,35 @@
    align-content centres the single grid row in the taller box. The padding-block stays and is now a
    minimum breathing space rather than the whole measure — border-box means it sits inside the
    100svh rather than adding to it. */
+/* THE CLOSE IS A TAKEOVER NOW — the story's own closing mechanic (story.css .story-cta) on the page
+   the story was built from. The statement used to highlight on a short scrub inside a 100svh
+   section, and a reader scrolling to the end passed it before the last characters had arrived: the
+   scrub ran from "top 80%" to "center 55%", a quarter of a viewport, against a page that ends one
+   viewport later. Pinning the container for a second viewport makes the scroll itself the reveal —
+   the wrap's extra height IS the scrub, so the statement cannot be passed until it has been read.
+   Same three boxes as the story: a wrap twice the viewport, a sticky container one viewport tall, a
+   centred column inside it. aboutStickyTitle.js owns the characters; nothing else touches them. The
+   note above about min-height and svh now describes the floor rule at the end of this block. */
 .about-end{
-  min-height:100svh;
-  align-content:center;
-  padding-block:var(--band-gap) calc(var(--band-gap) * 1.2);
+  position:relative;width:100%;
+  height:200svh;
+  padding-inline:var(--page-gutter);
+  padding-block:0;
 }
-.about-end__inner{grid-column:1 / -1;display:flex;flex-direction:column;align-items:center;text-align:center}
+.about-end__container{
+  position:sticky;top:0;
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100svh;
+}
+.about-end__inner{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;margin-inline:auto;text-align:center}
+/* Characters and words are inline-block, for the reason the takeover's rule gives. */
+.about-end__line [data-st-word]{display:inline-block}
+.about-end__line [data-st-char]{display:inline-block}
+.about-end[data-st-active] .about-end__line [data-st-char]{will-change:opacity}
+/* THE FLOOR — no JavaScript, no GSAP, or reduced motion: the wrap has no reason to be two viewports
+   tall, and the close is what it was, one viewport, centred, readable. */
+.about-end:not([data-sticky-live]){height:auto;min-height:100svh;display:grid;align-content:center;padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
+.about-end:not([data-sticky-live]) .about-end__container{position:static;height:auto;display:block}
 .about-route .about-end__line{
   margin:0;max-width:18ch;
   font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.08;

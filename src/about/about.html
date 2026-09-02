@@ -29,7 +29,8 @@
        data-divider                             — a standalone hairline that draws on scroll
        data-flip-element="wrapper" | "target"   — the opening photograph's two waypoints
        data-parallax="trigger" | "target"       — anything moving against the scroll
-       data-highlight-text                      — a statement resolving character by character
+       data-highlight-text                      — a statement resolving character by character (none on
+                                                  this page now: the close is a sticky title, see below)
                                      — the hero photograph, as cloth under the pointer
        data-intervals / data-step               — the spacing that is itself a measurement
        data-stack-slide / -wrap / -content      — the falling card stack
@@ -743,9 +744,10 @@
 
   <!-- THE CLOSING LINE STOOD HERE and is gone by request: "Not a literal copy of the image. A
        translation of how it feels." The section keeps its heading and its column, which are what
-       carry the argument; the statement was restating it in a second voice. It was also the last
-       [data-highlight-text] on this page, so initHighlightText now finds nothing here — the call is
-       left armed in AboutPage.jsx so a future statement works without a rebuild. -->
+       carry the argument; the statement was restating it in a second voice. The page's close carried
+       [data-highlight-text] after this went and has since become a sticky title (see .about-end), so
+       initHighlightText finds nothing on this page — the call is left armed in AboutPage.jsx so a
+       future statement works without a rebuild. -->
 </section>
 
 <!-- THE CONCLUSION, in one block: the belief, then the invitation, then the act.
@@ -762,23 +764,25 @@
      centred in its own column, and a pill floating over it would be the one place on /about where
      navigation competes with the thing being offered. The number is the percentage of the viewport
      from the bottom at which this block counts as arrived — see the dock's own note on hide zones. -->
-<section class="about-end about-grid" data-sec data-section-dock-hide="22">
+<section class="about-end" data-sec data-sticky-title="wrap" data-section-dock-hide="22">
+  <!-- A TAKEOVER, LIKE THE STORY'S OWN CLOSE. Three boxes: this wrap, two viewports tall; a sticky
+       container one viewport tall; the centred column inside it. The extra viewport IS the scrub —
+       see about.css .about-end and aboutStickyTitle.js. No data-sticky-arc: one statement on the
+       page's own ground, exactly as the phone story closes. -->
+  <div class="about-end__container">
   <div class="about-end__inner">
     <!-- No divider here, by request. The other three on this page separate one section from the next
          inside a run; this one sat at the top of a block that now owns a whole viewport, where there
          is nothing above it to be divided FROM — the screen edge already does that work. -->
-    <!-- THE HIGHLIGHT, NOT THE MASKED REVEAL, AND ONLY ONE OF THEM. data-reveal is gone with the
-         attribute swap and that is not tidying: pageReveal hands every [data-reveal] block to
-         splitLines(), which rewrites innerHTML into per-line masks, while initHighlightText splits
-         the same element into per-character spans. Two engines rewriting one element is the exact
-         failure the story's CTA heading records — the second split replaces the first's nodes, the
-         floor one of them set at autoAlpha 0 stays on the survivors, and the line is invisible with
-         no tween on a single character. aboutGroups() collects [data-reveal], so dropping the
-         attribute is what hands this element over cleanly.
-         The scrub range is the page's own, not the resource's default: this line sits centred in a
-         100svh section, so it is on screen for a long scroll and "top 90% → center 40%" would finish
-         it long before it settles. -->
-    <p class="about-end__line" data-highlight-text data-highlight-scroll-start="top 80%" data-highlight-scroll-end="center 55%" data-highlight-stagger="0.05">Start with an image.<br />Leave with a colour system.</p>
+    <!-- THE STICKY TITLE, NOT THE HIGHLIGHT, AND STILL ONLY ONE ENGINE. The statement used to
+         highlight on a short scrub while it sat in a 100svh section — "top 80%" to "center 55%", a
+         quarter of a viewport, on a page that ends a viewport later — and a reader scrolling to the
+         end passed it before the last characters had arrived. Pinned for a second viewport, the
+         scroll itself is the reveal and the statement cannot be passed before it is read, which is
+         how the phone story's close already behaves. No data-reveal and no data-highlight-text on
+         this element: two engines rewriting one element is the failure the story's CTA heading
+         records, and aboutStickyTitle.js owns these characters alone. The <br> survives its split. -->
+    <p class="about-end__line" data-sticky-title="heading">Start with an image.<br />Leave with a colour system.</p>
     <!-- NO data-ix, AND THAT IS THE FIX RATHER THAN AN OMISSION. This carried data-ix="cta" on the
          reasoning that the attribute hands the control the app's interaction contract. It hands it
          the FILLED tier, which assumes the control's ink is already inverted — every other
@@ -796,6 +800,7 @@
          data-focus="chrome" stays and is still load-bearing: the global `:focus{outline:none}` reset
          leaves the page's only action with no focus ring at all without it. -->
     <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-focus="chrome">Create your Colour System</a></p>
+  </div>
   </div>
 </section>
 
