@@ -318,9 +318,14 @@ const CardIdentity = ({ c }) => (<>
         "title" would be a lie at 11px — so it stays a card-local literal.
         Seven sites, because the card has two renderings, the engine tile and the reduced-motion
         grid, and they must not drift. Change all seven or none. */}
-    {/* --fs-body, the list row's size for the same name: the card, its open panel and the row are
-        three renderings of one identity line, and it took two sizes across them until 02.09.26. */}
-    <span style={sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+    {/* --fs-body, the list row's size for the same name: the card, the row and the reduced grid are
+        renderings of one identity line and take one size. The OPEN panel is the exception, by
+        request: there the name is the head of a surface rather than a row's first column, so it
+        takes --fs-title — 24, the scale's heading step — with --track-title, and wraps rather than
+        truncates because a heading has the room a row does not. */}
+    <span style={c.titleName
+      ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);letter-spacing:var(--track-title);line-height:1.15;color:var(--on-surface);text-wrap:balance")
+      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
     {c.isExample && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
@@ -1486,8 +1491,14 @@ export function WipeLayer() {
   return (
     <div data-wipe="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:160;pointer-events:none;overflow:hidden;display:none')}>
       <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:var(--ground);will-change:transform')}>
-        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:100%;width:116%;height:15vh;background:var(--ground);border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
-        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:100%;width:116%;height:15vh;background:var(--ground);border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
+        {/* THE CAPS OVERLAP THE PANEL BY 2PX. Butted exactly at 100%, the seam between two boxes of
+            the same colour showed as a hairline the whole way up the screen: the panel travels on a
+            fractional transform, the cap scales on another, and where the two anti-aliased edges met
+            the page underneath bled through one pixel wide. Nothing is drawn there now — the cap sits
+            under the panel's edge, and its own origin moves with it so the curve still grows from the
+            same line. */}
+        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:calc(100% - 2px);width:116%;height:15vh;background:var(--ground);border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
+        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:calc(100% - 2px);width:116%;height:15vh;background:var(--ground);border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
         <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
           <div style={sx('overflow:hidden;padding:8px 6px')}>
             <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
@@ -2173,7 +2184,8 @@ export default function AppView({ vals }) {
                 than one that acknowledges twice. Measured on the result stage: 6 of 9 button-006
                 controls had .b006-swap, and the 3 without it were this one and the shared pair. */}
             <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>New palette</B006Text></span>} />
-            {vals.showProjectsBar && (<span aria-hidden="true" style={sx('width:1px;height:22px;flex:none;background:var(--line-strong)')}></span>)}
+            {/* No rule between New palette and the library pair any more (removed by request,
+                02.09.26): the gap carries the grouping on its own. */}
           </>)}
           {vals.showProjectsBar && (
             <div style={sx('display:flex;align-items:center;gap:8px')}>
@@ -2350,7 +2362,9 @@ export default function AppView({ vals }) {
                   one block or not at all. Letting it break internally put Export on a line of its
                   own under a hairline that stayed behind with Copy, which reads as two groups where
                   there is one. Core acts stay put; the output cluster is what moves. */}
-              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-inline-start:8px;border-inline-start:1px solid var(--line-strong)')}>
+              {/* The hairline that used to divide the trio from the filing act is gone (by request,
+                  02.09.26); the group is still one flex box so it wraps as one. */}
+              <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
                 <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} />
                 <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
@@ -3542,15 +3556,16 @@ function DetailOverlay({ vals }) {
           </div>
           {/* The same row as the result view's, deliberately: same order, same division, same
               weights. A palette opened fullscreen from the archive must not re-teach the user a
-              different set of controls. The hairline divides by consequence — ahead of it the act
-              that leaves something behind, behind it the ones that only read the palette back
-              to you, Contrast first because inspecting comes before copying. (No Share here: the
-              overlay has no shareable URL, so the group behind the hairline is a trio, not four.) */}
+              different set of controls. Filing leads because it leaves something behind; the trio
+              after it only reads the palette back to you, Contrast first because inspecting comes
+              before copying. (No Share here: the overlay has no shareable URL, so that group is a
+              trio, not four. The hairline that used to divide it from Filing went on 02.09.26, on
+              both surfaces.) */}
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             {/* Filing leads here, as it does on the result view: the act that is first in the
                 sequence and available — organise, then validate, then output. */}
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap;padding-inline-start:8px;border-inline-start:1px solid var(--line-strong)')}>
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
               <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
               <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} />
               <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />

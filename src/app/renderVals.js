@@ -702,6 +702,7 @@ export const renderValsMethods = {
     const uOpenP = s.uOpen != null ? scoped.find((p) => p.id === s.uOpen) : null;
     const uOpenNode = uOpenP ? feedNodes.find((n) => n.id === uOpenP.id) : null;
     const universePanel = uOpenNode ? Object.assign({}, uOpenNode, {
+      titleName: true,   // the name heads the panel at --fs-title (CardIdentity)
       panelAria: uOpenP.name + ' palette. ' + uOpenNode.readout,
       cardMetricsStyle: Object.assign({}, uOpenNode.cardMetricsStyle, { padding: UNIVERSE_TILE_INSET + 'px 0 0' }),
       onDetail: () => this.openOverlay(uOpenP, this._uOpenCard ? this._uOpenCard.el : null),
@@ -826,7 +827,7 @@ export const renderValsMethods = {
           hover: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
           // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
           // colour the harmony can produce rather than on most of them.
-          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.08em', textTransform: 'uppercase', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '1px 5px', whiteSpace: 'nowrap' },
+          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '2px 6px', whiteSpace: 'nowrap' },
           hexStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
         };
       });
