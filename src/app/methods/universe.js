@@ -611,6 +611,11 @@ export const universeMethods = {
       // focus lands at once, never at the end of the motion — the overlay's rule, for the same
       // reason: a keyboard reader is not made to wait for a tween to know where they are
       const cb = panel.querySelector('[data-upanel-close]'); if (cb) try { cb.focus({ preventScroll: true }); } catch (e) { }
+      // THE VIEW'S OWN CLOSE MARK GOES AWAY while a card is open. Leaving the field from here would
+      // tear the engine down under a card that is mid-open — an exit nothing can play — so the
+      // corner control is faded and taken out of the tab order until the card is home again;
+      // Escape and the panel's own mark are the ways back. Visibility, not display, so it fades.
+      this._uViewClose(false);
       if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } }
       const tl = this._uOpenTl = g.timeline({ defaults: { ease: this.EASE.fold, duration: this.DUR.fold } });
       tl.to(open, { k: 1, w: B, h: B }, 0);
@@ -647,6 +652,7 @@ export const universeMethods = {
       if (this._uRender) this._uRender();   // back under the shade at its rest transform, this frame
       g.set(panel, { opacity: 0, x: 0, y: 0 });
       this._uOpenTl = null; this._uOpenCard = null; this._uClosing = false;
+      this._uViewClose(true);
       // Focus moves BEFORE the state flips: the flip re-renders the panel aria-hidden, and a panel
       // hidden from assistive technology while its close mark still holds focus is a fault the
       // browser reports (and blocks). The reader is on the tile by the time the panel is gone.
@@ -683,7 +689,19 @@ export const universeMethods = {
       if (cap) g.set(cap, { opacity: 1 });
     }
     this._uOpenCard = null; this._uClosing = false; this._frozen = false;
+    this._uViewClose(true, true);
     if (this.state.uOpen != null) this.setState({ uOpen: null });
+  },
+  // The corner close mark, shown or put away. Hidden = faded on the exit curve, then visibility
+  // hidden so it leaves the tab order and the accessibility tree; shown = visible first, then
+  // faded in on the entrance curve. `instant` is the reset path.
+  _uViewClose(show, instant = false) {
+    const g = window.gsap, btn = this.universeCloseRef && this.universeCloseRef.current;
+    if (!btn) return;
+    if (this._uViewCloseTw) { try { this._uViewCloseTw.kill(); } catch (e) { } this._uViewCloseTw = null; }
+    if (instant || this._reduce || !g) { btn.style.opacity = show ? '' : '0'; btn.style.visibility = show ? '' : 'hidden'; return; }
+    if (show) { btn.style.visibility = ''; this._uViewCloseTw = g.to(btn, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }); }
+    else this._uViewCloseTw = g.to(btn, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, onComplete: () => { btn.style.visibility = 'hidden'; } });
   },
   // bring a focused original tile into view (keyboard) by panning the field toward centre
   // — called only when the last input was keyboard (_kbdInput); pointer focus never moves the camera

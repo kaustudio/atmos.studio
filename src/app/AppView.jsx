@@ -410,7 +410,10 @@ const UniversePanel = ({ c }) => (<>
   </div>
   {/* The foot: the door to the detail leads, the close mark trails — the same 32px mark every
       surface in the app closes with, on the same tier. Detail is a B006 because it LEAVES this
-      surface for a fullscreen one (aria-haspopup says so), where the close only changes this one. */}
+      surface for a fullscreen one (aria-haspopup says so), where the close only changes this one.
+      While a card is open this is the ONLY close mark on screen: the view's own, in the corner,
+      is put away for the duration (universe.js openTile), because leaving the field with a card
+      mid-open is an exit the engine cannot play. */}
   <div data-upanel-part="1" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border-top:1px solid var(--line)')}>
     <B006 data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} label={<B006Text>Open detail</B006Text>} />
     <button type="button" data-ix="press" data-focus="chrome" data-upanel-close="1" onClick={c.onClose} aria-label={c.closeAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
