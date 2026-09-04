@@ -2493,7 +2493,7 @@ export default function AppView({ vals }) {
                 {vals.result.hasRef && vals.result.refImageNode}
                 {vals.result.noRef && (
                   <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:.08em;text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
                   </div>
                 )}
               </div>

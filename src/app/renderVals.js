@@ -659,10 +659,13 @@ export const renderValsMethods = {
         onBlur: (e) => this.stackLeave(e.currentTarget),
         tileAbs: cardBox(isCur),
         tileFlow: Object.assign(cardBox(isCur), { position: 'relative', width: '100%', overflow: 'hidden', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)' }),
-        // The sliding panel: the card's border box (inset -1px), so its own hairline lands on the
-        // card's when it is out — translate by its width less the two borders and the pair shares
-        // one rule. --slide is the reference's clamp of the open scalar; --sx/--sy pick the axis.
-        panelStyle: { position: 'absolute', inset: '-1px', background: 'var(--surface-raised)', border: '1px solid var(--line)', pointerEvents: 'none', transform: 'translate(calc((100% - 2px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 2px) * var(--slide, 0) * var(--sy, 0)))' },
+        // The sliding panel: the card's border box (inset -1px of the inner, which sits inside the
+        // card's own 1px border, so the panel IS the card's box). It slides by its width less ONE
+        // pixel, so its leading hairline lands on the card's trailing one and the pair shares one
+        // rule. (Less two put it a pixel inside the card and left the content a pixel over the far
+        // edge — measured, 04.09.26.) --slide is the reference's clamp of the open scalar;
+        // --sx/--sy pick the axis.
+        panelStyle: { position: 'absolute', inset: '-1px', background: 'var(--surface-raised)', border: '1px solid var(--line)', pointerEvents: 'none', transform: 'translate(calc((100% - 1px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 1px) * var(--slide, 0) * var(--sy, 0)))' },
         // The photograph fills the card down to the caption. `bottom` is what the open tween moves
         // (to 0): the image takes the whole box while the caption fades, and the panel carries the
         // name from there.

@@ -321,7 +321,7 @@ export const universeMethods = {
       const cursor = { x: 0, y: 0, cx: 0, cy: 0 }, lens = { t: 0, c: 0 }, lit = { x: -1, y: -1 };
       // the open card, as the render loop sees it: k is the reference's open.c, w/h the element's
       // live size (the matrix has to divide by what the element IS, not what it was)
-      const open = this._uOpenK = { k: 0, w: TW, h: TH, cell: null, box: null };
+      const open = this._uOpenK = { k: 0, w: TW, h: TH, cell: null, box: null, panel: null, portrait: false };
       this._uView = { mid, cursor, lens, fine, pos, cellW, cellH, GAP, TW, TH };
 
       // the torch: a transparent hole of `hole` px, then a smoothstep ramp out to `edge`
@@ -405,7 +405,22 @@ export const universeMethods = {
             cd.el.style.setProperty('--dim', (dimAt(q) * (1 - k)).toFixed(4));
             // the reference's slide: the panel leaves once the card is a quarter of the way to the
             // box and is home again at the same point on the way back — one scalar, both surfaces
-            cd.el.style.setProperty('--slide', clamp(0, 1, (k - 0.25) / 0.75).toFixed(4));
+            const slide = clamp(0, 1, (k - 0.25) / 0.75);
+            cd.el.style.setProperty('--slide', slide.toFixed(4));
+            // THE CONTENT RIDES THE PANEL. It used to be parked at the panel's final box from the
+            // first frame, so for the last stretch of the open and the whole of the close the strip
+            // hung past the edge of a panel that was still travelling. Its box is the panel's box
+            // now, derived from the same card corner and the same size and the same slide, every
+            // frame — the two cannot come apart, because there is only one box.
+            if (open.panel) {
+              // the card's corner is the cell's corner plus half the gutter cellMatrix takes back
+              // the panel's INNER box: the panel is the card's border box, slid by its width less
+              // one pixel (renderVals panelStyle), and the content sits inside its hairlines
+              const px = q.tl.x + mid.x + GAP / 2 + 1 + (open.portrait ? 0 : (open.w - 1) * slide);
+              const py = q.tl.y + mid.y + GAP / 2 + 1 + (open.portrait ? (open.h - 1) * slide : 0);
+              open.panel.style.left = px.toFixed(2) + 'px'; open.panel.style.top = py.toFixed(2) + 'px';
+              open.panel.style.width = (open.w - 2).toFixed(2) + 'px'; open.panel.style.height = (open.h - 2).toFixed(2) + 'px';
+            }
             drift(cd, q, 1 - k);
             continue;
           }
@@ -579,7 +594,7 @@ export const universeMethods = {
     // the render's view of the open card: the box as cell corners about the stage centre, grown by
     // half a gutter because cellMatrix takes half a gutter back
     const open = this._uOpenK;
-    open.cell = cd; open.k = 0; open.w = TW; open.h = TH;
+    open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.panel = panel; open.portrait = portrait;
     open.box = { l: cardX - V.mid.x - V.GAP / 2, t: cardY - V.mid.y - V.GAP / 2, r: cardX + B - V.mid.x + V.GAP / 2, b: cardY + B - V.mid.y + V.GAP / 2 };
     el.setAttribute('data-universe-open', portrait ? 'portrait' : 'landscape'); el.style.zIndex = '4';
     el.style.setProperty('--sx', portrait ? '0' : '1'); el.style.setProperty('--sy', portrait ? '1' : '0');
@@ -587,9 +602,9 @@ export const universeMethods = {
     if (ring) g.set(ring, { opacity: 0 });
     this.setState({ uOpen: p.id, announce: 'Opened ' + p.name + '. Press Escape to close.' }, () => {
       if (!this._uOpenCard || this._uOpenCard.el !== el) return;   // reset landed in between (a rebuild)
-      // The content's box, where the panel will stop: flush against the card, no gap. It is
-      // transparent — the panel arriving under it is what draws the surface.
-      g.set(panel, { left: portrait ? cardX : cardX + B, top: portrait ? cardY + B : cardY, width: B, height: B, x: 0, y: 0, opacity: 1 });
+      // The content's box is the engine's, set every frame from the card's own corner (render);
+      // here only what does not move. It is transparent — the panel under it draws the surface.
+      g.set(panel, { x: 0, y: 0, opacity: 1 });
       const parts = [...panel.querySelectorAll('[data-upanel-part]')];
       g.set(parts, { opacity: 0, y: 6 });
       panel.style.pointerEvents = 'auto';
@@ -626,7 +641,7 @@ export const universeMethods = {
     const back = orig || (this.universeCloseRef && this.universeCloseRef.current) || null;
     const finish = () => {
       if (this._uOpenCard !== o) return;   // a reset got here first
-      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null;
+      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null; open.panel = null;
       el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : ''; el.style.width = TW + 'px'; el.style.height = TH + 'px';
       el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');
       if (this._uRender) this._uRender();   // back under the shade at its rest transform, this frame
@@ -659,7 +674,7 @@ export const universeMethods = {
     if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } this._uOpenTl = null; }
     const panel = document.querySelector('[data-universe-panel]');
     if (panel) { if (g) g.set(panel, { opacity: 0, x: 0, y: 0 }); panel.style.pointerEvents = 'none'; }
-    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; }
+    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; open.panel = null; }
     if (o && g) {
       const el = o.el; el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : '';
       el.style.width = UNIVERSE_TILE.W + 'px'; el.style.height = UNIVERSE_TILE.H + 'px'; el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');
