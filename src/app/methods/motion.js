@@ -327,10 +327,33 @@ export const motionMethods = {
   },
   // Resolve a CSS custom property to its concrete value in the ACTIVE theme (GSAP can't interpolate var()).
   _cssVar(name) { try { return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || ''; } catch (e) { return ''; } },
-  rowTintOn(el) { if (!el) return; el.dataset.hover = '1'; const g = window.gsap; if (this._reduce || !g) { el.style.background = 'var(--surface-white)'; return; } g.to(el, { backgroundColor: this._cssVar('--surface-white'), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' }); },
+  /* Row hover and focus: THE FILL RISES. These used to tween the row's own background to
+     --surface-white and back (DUR.state, EASE.standard) — a tint arriving in place. Now they
+     unclip the row's [data-row-fill] layer from its bottom edge to its top (renderVals
+     rowFillStyle), on DUR.swap and EASE.fold: the same motion and length as every label swap on
+     the site, since a fill rising through a mask and a label rising through a mask are one
+     gesture, and the reference's own curve for this. Same curve out as in, as the swap does, so
+     leaving reads as the arrival reversed rather than as a cut. The row's background is no longer
+     touched here at all — it belongs to the selected state (_syncListActive), which is why the
+     old data-hover hand-off between the two is gone. Reduced motion: set, not run.
+     THE EXPORT MENU'S ITEMS AND THE ASSIGN DIALOG'S OPTIONS share these handlers and carry no
+     fill layer, so for them the old in-place tint stays: a menu item is a word on a list, not a
+     row of the library, and its hover is the [data-ix] answer every other small control gives. */
+  // `el` is the row's wrap from the pointer (it holds the action buttons too) and the row itself
+  // from keyboard focus on the hit button; the fill is found under either.
+  rowTintOn(el) {
+    if (!el) return; const g = window.gsap, f = el.querySelector('[data-row-fill]');
+    // [data-lit] on the wrap is what the stylesheet reads to turn the two action glyphs — which
+    // sit above the fill, outside the row — to the surface's colour while the ink is up
+    if (f) { const w = el.closest('[data-row-wrap]'); if (w) w.setAttribute('data-lit', '1'); if (this._reduce || !g) { f.style.clipPath = 'inset(0% 0 0 0)'; return; } g.to(f, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.swap, ease: this.EASE.fold, overwrite: 'auto' }); return; }
+    if (this._reduce || !g) { el.style.background = 'var(--surface-white)'; return; }
+    g.to(el, { backgroundColor: this._cssVar('--surface-white'), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
+  },
   rowTintOff(el) {
-    if (!el) return; el.removeAttribute('data-hover'); if (el.getAttribute('data-cur') === '1') return;  // current row stays lit
-    const g = window.gsap; if (this._reduce || !g) { el.style.background = 'var(--surface-raised)'; return; } g.to(el, { backgroundColor: this._cssVar('--surface-raised'), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
+    if (!el) return; const g = window.gsap, f = el.querySelector('[data-row-fill]');
+    if (f) { const w = el.closest('[data-row-wrap]'); if (w) w.removeAttribute('data-lit'); if (this._reduce || !g) { f.style.clipPath = 'inset(100% 0 0 0)'; return; } g.to(f, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.swap, ease: this.EASE.fold, overwrite: 'auto' }); return; }
+    if (this._reduce || !g) { el.style.background = 'var(--surface-raised)'; return; }
+    g.to(el, { backgroundColor: this._cssVar('--surface-raised'), duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
   },
   // Selection no longer expands a row — it drives the overview panel above, and the row's only job
   // here is to SHOW that it is the selected one. So this reconciles the selected surface and nothing
@@ -351,8 +374,6 @@ export const motionMethods = {
     rows.forEach((r) => {
       const selected = (r === curRow);
       const token = selected ? '--surface-white' : '--surface-raised';
-      // Leave a hovered row alone: its own tween owns the background until the pointer leaves.
-      if (!selected && r.getAttribute('data-hover') === '1') return;
       // Tween only the two rows whose selection actually flipped; every other row is set flat, so a
       // re-render (pagination, delete, theme) never restages motion the user did not ask for.
       const flipped = changed && (selected || r.getAttribute('data-rowid') === this._selectedCurId);
@@ -576,7 +597,7 @@ export const motionMethods = {
     // the status bar / toolbar re-skin with the page, so the window keeps reading as one surface
     syncThemeColor();
     // clear any GSAP-baked inline background so rows fall back to the token-driven rowStyle under the new theme
-    try { const g = window.gsap; document.querySelectorAll('[data-list-wrap] [data-row]').forEach((r) => { if (g) g.killTweensOf(r); r.style.removeProperty('background-color'); r.style.removeProperty('background'); r.removeAttribute('data-hover'); }); } catch (e) { }
+    try { const g = window.gsap; document.querySelectorAll('[data-list-wrap] [data-row]').forEach((r) => { if (g) g.killTweensOf(r); r.style.removeProperty('background-color'); r.style.removeProperty('background'); const f = r.querySelector('[data-row-fill]'); if (f) { if (g) g.killTweensOf(f); f.style.clipPath = 'inset(100% 0 0 0)'; if (r.parentElement) r.parentElement.removeAttribute('data-lit'); } }); } catch (e) { }
     this.setState({ theme: next, announce: next === 'dark' ? 'Dark theme.' : 'Light theme.' }, () => {
       // brief crossfade over the re-skin — quick, --ease-standard; instant under reduced motion
       const g = window.gsap; if (this._reduce || !g) return;

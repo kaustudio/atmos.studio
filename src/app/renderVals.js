@@ -527,6 +527,12 @@ export const renderValsMethods = {
     // No private inset any more: the row grid's own --row-inset padding is the 16px this cell used
     // to carry itself, back when it was the only edge of the row that kept one.
     const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    // The same three cells on the hover fill's ink ground (AppView RowMain with `inv`): identical
+    // metrics, only the colour swapped for the surface's. --ink-fill-muted is the muted step on
+    // ink, defined beside the fill's other colours in global.css.
+    const metricValueInv = Object.assign({}, metricValue, { color: 'var(--surface)' });
+    const contrastCellInv = Object.assign({}, contrastCell, { color: 'var(--surface)' });
+    const timeCellInv = Object.assign({}, timeCell, { color: 'var(--ink-fill-muted)' });
     const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
     const feedList = listDecorated.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
@@ -574,7 +580,7 @@ export const renderValsMethods = {
         ...aaReadout(met),
         // each column carries ONLY its own measurement: pairs here, ratio there
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
-        aaCell, metricValue, contrastCell, timeCell,
+        aaCell, metricValue, contrastCell, timeCell, metricValueInv, contrastCellInv, timeCellInv,
         aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
@@ -599,6 +605,23 @@ export const renderValsMethods = {
         // is an inline style and no CSS rule can outrank it (see the note by --row-cell-inset).
         rowStyle: { position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', textAlign: 'left', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', border: '0', borderTop: rowIdx === 0 ? '0' : '1px solid var(--line)', padding: '0', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', font: 'inherit', opacity: busy ? 0.45 : 1 },
         markerStyle: { position: 'absolute', left: '0', top: '0', bottom: '0', width: '3px', background: 'var(--on-surface)', opacity: isCur ? 1 : 0, pointerEvents: 'none', zIndex: 3 },
+        /* THE HOVER IS A FILL THAT RISES THROUGH THE ROW. The reference (paulkalkbrenner.net/music,
+           the listen links) answers a pointer with a solid block growing in on
+           cubic-bezier(0.625,0.05,0,1) — this app's --ease-fold to the digit. Here the block is the
+           row: a tint layer the row's size, clipped to nothing at rest and unclipped from the
+           bottom edge up on hover (motion.js rowTintOn/Off), so the tint has a direction and a
+           leading edge where it used to fade in place. SOLID INK, as the reference is: the layer
+           is --on-surface and carries the row's content again in the surface's colours (AppView
+           RowMain with `inv`), laid out by the same flex column the row uses so the copy lands on
+           the original's pixels. It was a 12% tint for a day, on the argument that a row's strip,
+           badge and buttons cannot invert; they do not need to — the strip and the badge keep
+           their own colours on either ground, and the two action glyphs flip in the stylesheet
+           off the [data-lit] attribute rowTintOn sets on the wrap. The row's own background is
+           left to the selected state (_syncListActive) alone. First in DOM, no z-index: it paints
+           under everything that follows it. Inline clip-path is the rest state only. */
+        rowFillStyle: { position: 'absolute', inset: '0', display: 'flex', flexDirection: 'column', background: 'var(--on-surface)', clipPath: 'inset(100% 0 0 0)', pointerEvents: 'none', willChange: 'clip-path' },
+        // the current row's marker, on the fill: same bar, the surface's colour
+        markerInvStyle: { position: 'absolute', left: '0', top: '0', bottom: '0', width: '3px', background: 'var(--surface)', opacity: isCur ? 1 : 0 },
         restStrip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
     });

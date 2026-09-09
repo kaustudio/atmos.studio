@@ -298,6 +298,102 @@ const AaBadge = ({ aa }) => (
   </span>
 );
 
+// ===== THE LIST ROW'S CONTENT, ONCE =====
+// Rendered twice per row: at rest on the row's own surface, and again inside the row's hover fill
+// (renderVals rowFillStyle, [data-row-fill]) on an ink ground with `inv` set, where every colour
+// that was the ink's is the surface's. The two copies sit on the same pixels — same grid, same
+// cells, same hooks (data-row-cell for the breakpoint spans, data-row-time for the step aside) —
+// so as the fill's clip edge rises through the row the type changes colour where the edge passes
+// it and nothing moves. The reference (paulkalkbrenner.net/music) does this to one word; the row
+// does it to a name, a chip, three figures and a stamp. What does NOT invert: the swatch strip,
+// which is the palette itself, and the AA badge, which carries its verdict in its own status
+// colours and has to say the same thing on either ground.
+const RowMain = ({ c, inv }) => (
+    <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:var(--grid-gutter);width:100%;min-height:var(--row-list-height);padding:12px var(--row-inset)')}>
+      {/* The colour IS the row's identity — people recognise a palette by how it looks,
+          not by an auto-generated name. So the strip leads and carries the mass: 24px
+          tall, which with the 12px padding is exactly --row-list-height, making the
+          strip the thing that DEFINES the row rather than a thumbnail sitting inside it.
+          Fixed 160px (not proportional to the row) so the strips align into a column and
+          stay comparable down the list. Bands use flexGrow: w(b) — the same
+          share-to-width mapping as the overview and the universe card, from one shared
+          w(); scaling the box up cannot drift the proportions. */}
+      {/* Hairline because the strip is now the anchor: a pale palette's outer band sits
+          at ~1.3:1 against --surface-raised, so without an edge the anchor bleeds into
+          the row. --line is the same hairline the other media islands take (reference
+          thumbnail, "No reference" box, universe card) — quiet by system decision, and
+          matching that decision beats inventing a heavier border no sibling has.
+          box-sizing is border-box globally, so the box stays exactly 160×24. */}
+      <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px;border:1px solid ' + (inv ? 'var(--ink-fill-line)' : 'var(--line)'))}>
+        {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
+      </div>
+      {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
+          four siblings of the row itself, which meant the tag list was the row's single
+          elastic child and quietly owned every pixel the metrics did not use (520 of
+          them at 1440, most of it empty). As one cell on the 2fr track it takes a
+          declared share instead of the remainder, and the metric columns get theirs. */}
+      {/* overflow:hidden because this cell is the 1fr track: it absorbs every width the
+          fixed columns do not take, so it is the one that runs out. The name and the
+          chip are flex:none and would otherwise spill into the AA column on a narrow
+          window. Clipped is recoverable; overlapping two columns is not. */}
+      <div data-row-cell="name" style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
+      {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
+          but at the same medium weight the filter panel gives its facet names. Both are
+          the same kind of thing — the name of a choosable, the subject of its row — and
+          13/500 is what that is called in this app. Still full --on-surface ink, not
+          muted: it is the row's only text identifier and the one thing a screen reader
+          leads with, so the demotion is a size step and never a fade. */}
+      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);flex:none;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
+      {c.isExample && (
+        <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
+      )}
+      {/* "Viewing" sits with the name and the Example chip — the labels that say what
+          this palette IS — and, structurally, it has to sit before the flexible column:
+          appearing on the right would push the metric columns left on whichever row was
+          selected, and a column that moves for one row is not a column. */}
+      {c.current && (
+        <span style={sx('display: inline-flex; align-items: center; gap: 4px; flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color:' + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>
+          <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:' + (inv ? 'var(--surface)' : 'var(--on-surface)'))} aria-hidden="true"></span>Viewing</span>
+      )}
+      {/* THE TRAIT TAGS ARE GONE FROM THE ROW, and the flexible child stays. It was
+          three uppercase words per row — SMOULDERING · GOLDEN · GRAPHIC — each one a
+          button that filtered in place, which made the row's middle a second control
+          bank running the length of the list: twenty-four small targets between a
+          palette's name and its numbers, none of them the thing the row is for.
+          Filtering by trait did not leave with them; it is one press away in the
+          library panel, where every other narrowing now lives, and the tags are still
+          on the palette itself (the detail view reads them).
+          The span survives on purpose. It is the cell's flexible child — it absorbs
+          every difference in name length so the identity cell settles without bidding
+          on the metric tracks beside it — and that job was never the tags'.
+          renderVals still supplies descriptorParts, tagBtnBase, tagOn and tagOff, now
+          unread: putting the row back is a map(), not a rebuild. */}
+      <span aria-hidden="true" style={sx('flex:1;min-width:0')}></span>
+      </div>
+      {/* the accessibility cluster — verdict first, numbers second. The badge is the
+          primary signal: fill AND glyph change per state (never colour alone), and a
+          reader who has never heard of 4.5:1 still gets pass / partial / fail. The
+          raw layer stays for whoever wants the actual numbers. Header shares the
+          column token, so the cluster stacks into a true column down the list. */}
+      {/* AA PAIRS — the verdict badge and the pair count it derives from, nothing
+          else. Badge left (its own column of glyphs down the list), count right so
+          the figures share one edge. */}
+      <span data-row-cell="aa" style={c.aaCell}>
+        <AaBadge aa={c} />
+        <span style={inv ? c.metricValueInv : c.metricValue}>{c.aaValueText}</span>
+      </span>
+      {/* MAX CONTRAST — a separate measurement, so a separate column */}
+      <span data-row-cell="contrast" style={inv ? c.contrastCellInv : c.contrastCell}>{c.contrastValueText}</span>
+      {/* absolute stamp as the value, relative as the hover layer; the row's aria
+          sentence still ends "Generated 3h ago", so both forms reach every modality.
+          data-row-time is the hook for the one movement in this row: on hover it steps
+          one gutter left, into room its own column already holds, and hands the margin
+          to the buttons. It is the only column allowed to move, which is why it is the
+          only one that carries a hook. */}
+      <span data-row-time="1" data-row-cell="date" style={inv ? c.timeCellInv : c.timeCell} title={inv ? undefined : c.timeRel}>{c.time}</span>
+    </div>
+);
+
 // ===== UNIVERSE CARD — the list row's content model, stacked =====
 // The card and the row report the SAME palette, and the card's job is to say the same things in a
 // different arrangement, not fewer things. Both pieces below are shared by the engine tiles and the
@@ -3082,14 +3178,26 @@ function FeedSection({ vals }) {
             screen reader can say which region those filter controls act on. */}
         <div id="library-list" data-list-wrap="1" style={vals.listWrapStyle}>
           {vals.feedList.map((c) => (
-            <div key={c.rowid} data-row-wrap="1" style={{ position: 'relative' }}>
+            /* Enter and leave are on the WRAP, not the row: the folder and bin buttons are the
+               wrap's children beside the row, so a pointer crossing onto one of them left the row
+               and put the fill down — under the very glyphs it had just lit. The wrap contains
+               both, so the fill stays up for as long as the pointer is anywhere on the line. */
+            <div key={c.rowid} data-row-wrap="1" onMouseEnter={c.onEnter} onMouseLeave={c.onLeave} style={{ position: 'relative' }}>
               {/* The row was a single <button>, which made interactive tags inside it illegal HTML.
                   Now it is a surface (this div carries the background, the selected sync and the
                   hover tint) with a STRETCHED activation button covering it — the same overlay
                   pattern the folder/delete buttons already use, just inset:0. The hit button is
                   first in DOM so keyboard order leads with the row's main action, then its tags;
                   it keeps data-feed so the list's arrow-key navigation still walks row to row. */}
-              <div data-row="1" data-cur={c.curFlag} data-rowid={c.rowid} onMouseEnter={c.onEnter} onMouseLeave={c.onLeave} style={c.rowStyle}>
+              <div data-row="1" data-cur={c.curFlag} data-rowid={c.rowid} style={c.rowStyle}>
+                {/* THE HOVER FILL — see rowFillStyle. The row's ink twin: the same content on an ink
+                    ground, clipped away at rest and unclipped from the bottom up by rowTintOn. First
+                    in DOM so the hit button and the row's real content stay above it in paint order;
+                    aria-hidden and pointer-events:none, since it repeats the row for the eye only. */}
+                <span data-row-fill="1" aria-hidden="true" style={c.rowFillStyle}>
+                  <span style={c.markerInvStyle}></span>
+                  <RowMain c={c} inv />
+                </span>
                 <button type="button" data-row-hit="1" data-feed="1" data-focus="card" disabled={c.disabled} aria-current={c.ariaCurrent} aria-label={c.aria} onFocus={c.onHitFocus} onBlur={c.onHitBlur} onClick={c.onClick} style={sx('position:absolute;inset:0;z-index:1;background:transparent;border:0;padding:0;margin:0;cursor:inherit')}></button>
                 <span data-cmark="1" aria-hidden="true" style={c.markerStyle}></span>
                 {/* One row, one job: recognition. The detail surface is the overview panel above —
@@ -3099,89 +3207,7 @@ function FeedSection({ vals }) {
                     trailing cell carries the other 8 itself (--row-cell-inset). Splitting it that
                     way is what lets the last column's value and its header label share one right
                     edge while the header's hover tint stays symmetrical around its own label. */}
-                <div data-row-main="1" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:center;gap:var(--grid-gutter);width:100%;min-height:var(--row-list-height);padding:12px var(--row-inset)')}>
-                  {/* The colour IS the row's identity — people recognise a palette by how it looks,
-                      not by an auto-generated name. So the strip leads and carries the mass: 24px
-                      tall, which with the 12px padding is exactly --row-list-height, making the
-                      strip the thing that DEFINES the row rather than a thumbnail sitting inside it.
-                      Fixed 160px (not proportional to the row) so the strips align into a column and
-                      stay comparable down the list. Bands use flexGrow: w(b) — the same
-                      share-to-width mapping as the overview and the universe card, from one shared
-                      w(); scaling the box up cannot drift the proportions. */}
-                  {/* Hairline because the strip is now the anchor: a pale palette's outer band sits
-                      at ~1.3:1 against --surface-raised, so without an edge the anchor bleeds into
-                      the row. --line is the same hairline the other media islands take (reference
-                      thumbnail, "No reference" box, universe card) — quiet by system decision, and
-                      matching that decision beats inventing a heavier border no sibling has.
-                      box-sizing is border-box globally, so the box stays exactly 160×24. */}
-                  <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px;border:1px solid var(--line)')}>
-                    {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
-                  </div>
-                  {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
-                      four siblings of the row itself, which meant the tag list was the row's single
-                      elastic child and quietly owned every pixel the metrics did not use (520 of
-                      them at 1440, most of it empty). As one cell on the 2fr track it takes a
-                      declared share instead of the remainder, and the metric columns get theirs. */}
-                  {/* overflow:hidden because this cell is the 1fr track: it absorbs every width the
-                      fixed columns do not take, so it is the one that runs out. The name and the
-                      chip are flex:none and would otherwise spill into the AA column on a narrow
-                      window. Clipped is recoverable; overlapping two columns is not. */}
-                  <div data-row-cell="name" style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
-                  {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
-                      but at the same medium weight the filter panel gives its facet names. Both are
-                      the same kind of thing — the name of a choosable, the subject of its row — and
-                      13/500 is what that is called in this app. Still full --on-surface ink, not
-                      muted: it is the row's only text identifier and the one thing a screen reader
-                      leads with, so the demotion is a size step and never a fade. */}
-                  <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);flex:none")}>{c.name}</span>
-                  {c.isExample && (
-                    <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); border: 1px solid var(--line-strong); border-radius:var(--radius-pill); padding: 2px 6px')}>Example</span>
-                  )}
-                  {/* "Viewing" sits with the name and the Example chip — the labels that say what
-                      this palette IS — and, structurally, it has to sit before the flexible column:
-                      appearing on the right would push the metric columns left on whichever row was
-                      selected, and a column that moves for one row is not a column. */}
-                  {c.current && (
-                    <span style={sx('display: inline-flex; align-items: center; gap: 4px; flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface)')}>
-                      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:var(--on-surface)')} aria-hidden="true"></span>Viewing</span>
-                  )}
-                  {/* THE TRAIT TAGS ARE GONE FROM THE ROW, and the flexible child stays. It was
-                      three uppercase words per row — SMOULDERING · GOLDEN · GRAPHIC — each one a
-                      button that filtered in place, which made the row's middle a second control
-                      bank running the length of the list: twenty-four small targets between a
-                      palette's name and its numbers, none of them the thing the row is for.
-                      Filtering by trait did not leave with them; it is one press away in the
-                      library panel, where every other narrowing now lives, and the tags are still
-                      on the palette itself (the detail view reads them).
-                      The span survives on purpose. It is the cell's flexible child — it absorbs
-                      every difference in name length so the identity cell settles without bidding
-                      on the metric tracks beside it — and that job was never the tags'.
-                      renderVals still supplies descriptorParts, tagBtnBase, tagOn and tagOff, now
-                      unread: putting the row back is a map(), not a rebuild. */}
-                  <span aria-hidden="true" style={sx('flex:1;min-width:0')}></span>
-                  </div>
-                  {/* the accessibility cluster — verdict first, numbers second. The badge is the
-                      primary signal: fill AND glyph change per state (never colour alone), and a
-                      reader who has never heard of 4.5:1 still gets pass / partial / fail. The
-                      raw layer stays for whoever wants the actual numbers. Header shares the
-                      column token, so the cluster stacks into a true column down the list. */}
-                  {/* AA PAIRS — the verdict badge and the pair count it derives from, nothing
-                      else. Badge left (its own column of glyphs down the list), count right so
-                      the figures share one edge. */}
-                  <span data-row-cell="aa" style={c.aaCell}>
-                    <AaBadge aa={c} />
-                    <span style={c.metricValue}>{c.aaValueText}</span>
-                  </span>
-                  {/* MAX CONTRAST — a separate measurement, so a separate column */}
-                  <span data-row-cell="contrast" style={c.contrastCell}>{c.contrastValueText}</span>
-                  {/* absolute stamp as the value, relative as the hover layer; the row's aria
-                      sentence still ends "Generated 3h ago", so both forms reach every modality.
-                      data-row-time is the hook for the one movement in this row: on hover it steps
-                      one gutter left, into room its own column already holds, and hands the margin
-                      to the buttons. It is the only column allowed to move, which is why it is the
-                      only one that carries a hook. */}
-                  <span data-row-time="1" data-row-cell="date" style={c.timeCell} title={c.timeRel}>{c.time}</span>
-                </div>
+                <RowMain c={c} />
               </div>
               {/* The buttons land on the row's own inset — the margin the stamp holds at rest and
                   hands over while the pointer is here. Their vertical centring and their arrival
@@ -3198,10 +3224,10 @@ function FeedSection({ vals }) {
                   The hover tint from [data-ix="press"] is deliberately KEPT: these two have no label
                   to swap and no edge left to answer with, so the tint is now the only thing that
                   says the glyph under the pointer is the one that will act. */}
-              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;color:var(--on-surface);cursor:pointer')}>
+              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>

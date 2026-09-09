@@ -1860,7 +1860,7 @@ button[data-row-cell] .tswap{flex:none}
    REPLACES the contract rather than adding to it — which left these buttons revealing themselves
    correctly on opacity/transform while their hover and press tint cut between two frames. Same
    trap as an inline transition, arrived at through the cascade instead. */
-[data-del]{opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity var(--dur-fast) var(--ease-standard),transform var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover)}
+[data-del]{color:var(--on-surface);opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity var(--dur-fast) var(--ease-standard),transform var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover)}
 /* click-to-zoom lightbox (squared — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
@@ -1912,6 +1912,27 @@ button[data-row-cell] .tswap{flex:none}
 [data-row-time]{transition:transform var(--dur-fast) var(--ease-standard)}
 [data-row-wrap]:hover [data-row-time],[data-row-wrap]:focus-within [data-row-time]{transform:translateX(calc(-1 * var(--row-action-gutter)))}
 [data-row-wrap]:hover [data-del],[data-row-wrap]:focus-within [data-del],[data-del]:focus-visible{opacity:1;pointer-events:auto;transform:translate(0,-50%)}
+/* THE ROW'S HOVER FILL IS SOLID INK (renderVals rowFillStyle), and these two glyphs sit above it,
+   outside the row, so they cannot be part of the inverted copy the fill carries. They flip here
+   instead, off [data-lit] — the attribute motion.js rowTintOn sets on the wrap for exactly as long
+   as the fill is up, and NOT off :hover, because focus on one of these buttons lowers the fill
+   (the hit button blurs) while :focus-within would still say lit, and a surface-coloured glyph on
+   the raised row is an invisible control. The colour travels on the transition [data-del] already
+   declares. The press tint is the [data-ix="press"] answer with the ink and surface swapped; the
+   !important matches the tier's own, and the longer selector is what wins.
+   --ink-fill-muted / --ink-fill-line: the muted type and the hairline on the ink ground, for the
+   copy's stamp, chip and strip edge — the surface at the alphas the [data-ix] tiers use. */
+:root{--ink-fill-muted:color-mix(in srgb,var(--surface) 72%,transparent);--ink-fill-line:color-mix(in srgb,var(--surface) 40%,transparent)}
+/* The AA badge on the ink ground. Its status tokens are written at :root in terms of the ink and
+   the surface, so on the fill they are restated with the two swapped: the flexible badge, ink on
+   the raised row, is surface with ink type here; the outlined states keep their alphas on the
+   surface instead. The verdict reads the same on either ground — which is the whole reason the
+   badge is not simply left alone: a solid ink chip on a solid ink fill is a chip that has gone. */
+[data-row-fill]{--status-flexible-surface:var(--surface);--status-flexible-ink:var(--on-surface);--status-flexible-line:var(--surface);--status-limited-ink:var(--surface);--status-limited-line:color-mix(in srgb,var(--surface) 42%,transparent);--status-none-ink:var(--ink-fill-muted);--status-none-line:color-mix(in srgb,var(--surface) 15%,transparent)}
+[data-row-wrap][data-lit] [data-del]{color:var(--surface)}
+@media (hover:hover){
+  [data-row-wrap][data-lit] [data-del][data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--surface) 16%,transparent)!important}
+}
 [data-info]{opacity:1;transition:opacity var(--dur-fast) var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
    are always visible & tappable — and with the buttons permanently on screen the stamp has to stand
