@@ -3813,7 +3813,12 @@ function LibraryDrawer({ vals }) {
             AND would be unsatisfiable); AND against tags. Same checkbox, count and zero-suppression
             rules as the tag rows — one grammar for every facet. */}
         {vals.hasA11yOptions && (
-          <div data-tg-sec="1" style={sx('padding:18px calc(var(--page-gutter) - 12px) 0')}>
+          /* data-sec / data-sec-head / data-sec-row / data-reveal / data-row-rule: the mobile story's
+             section hooks, read by overlays.js _syncLibraryReveal — the eyebrow rises out of its
+             mask, then row by row the mark, label and count rise and the hairline draws, on scroll
+             inside the drawer. Not data-tg-sec: the panel's own block fade would otherwise compose
+             with the reveal on the same element. */
+          <div data-sec="1" style={sx('padding:18px calc(var(--page-gutter) - 12px) 0')}>
             {/* No eyebrow, no note of its own — both moved into the panel's one paragraph above.
                 The group keeps its name for assistive tech on the role="group" below, which is
                 where it was always doing the load-bearing work. */}
@@ -3824,12 +3829,17 @@ function LibraryDrawer({ vals }) {
                 coverage" named the measurement, which made the group read as a compliance report.
                 Text usability names the QUESTION the group answers — can I set type in this — which
                 is why anyone opens it. */}
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Text usability</span>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Text usability</span>
             <div role="group" aria-label="Filter by text usability" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {vals.a11yOptions.map((o) => (
-                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
-                  <FacetMark active={o.active} unavailable={o.disabled} />
-                  <span style={measuredLabelStyle}>{o.label}</span>
+                <button key={o.key} type="button" data-sec-row="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx('position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid transparent;padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  {/* the row's hairline, drawn rather than present: scaleX on --rule from the left
+                      edge (the section rule's own primitive), defaulting to 1 so no JS, no GSAP and
+                      reduced motion all leave a plain line. Sits where border-bottom did; the border
+                      stays, transparent, so the row's box is unchanged. */}
+                  <span data-row-rule="1" aria-hidden="true" style={sx('position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--line);transform:scaleX(var(--rule,1));transform-origin:0 50%;pointer-events:none')}></span>
+                  <span data-reveal="1" style={sx('display:inline-flex;flex:none')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
+                  <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
                   {/* THE COUNT IS A COLUMN AGAIN. It sat against its label — "count belongs to the
                       label, so it sits against it" — and that is true of the pairing and false of
                       the reading: with the label flex:none the number landed wherever the word
@@ -3838,7 +3848,7 @@ function LibraryDrawer({ vals }) {
                       margin-inline-start:auto sends it to the row's trailing edge, tabular-nums
                       keeps the digits on one grid, and the row's own --btn-pad-lg puts every number
                       on the same 16px inset the rest of the panel uses. */}
-                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                   {/* A fourth span stood here on all three facet lists, right-aligned and holding
                       o.reason — "Every palette here" — whenever an option was disabled. Removed by
                       request. It was also the row's flex spacer at flex:1, and nothing takes that
@@ -3868,14 +3878,19 @@ function LibraryDrawer({ vals }) {
             Temperature → Warm still left an interpretive `warm` on offer below, meaning something
             else. A dimension owns its domain words. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
-          <div key={g.id} data-tg-sec="1" style={sx('padding:14px calc(var(--page-gutter) - 12px) 0')}>
-            <span style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
+          <div key={g.id} data-sec="1" style={sx('padding:14px calc(var(--page-gutter) - 12px) 0')}>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
             <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
               {g.options.map((o) => (
-                <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
-                  <FacetMark active={o.active} unavailable={o.disabled} />
-                  <span style={measuredLabelStyle}>{o.label}</span>
-                  <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                <button key={o.key} type="button" data-sec-row="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid transparent;padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  {/* the row's hairline, drawn rather than present: scaleX on --rule from the left
+                      edge (the section rule's own primitive), defaulting to 1 so no JS, no GSAP and
+                      reduced motion all leave a plain line. Sits where border-bottom did; the border
+                      stays, transparent, so the row's box is unchanged. */}
+                  <span data-row-rule="1" aria-hidden="true" style={sx('position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--line);transform:scaleX(var(--rule,1));transform-origin:0 50%;pointer-events:none')}></span>
+                  <span data-reveal="1" style={sx('display:inline-flex;flex:none')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
+                  <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
+                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
             </div>

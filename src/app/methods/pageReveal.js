@@ -94,6 +94,13 @@ export function initPageReveal(root, options) {
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   if (!g || reduce || !root) return inertController();
 
+  // The element that scrolls, when it is not the window — the library drawer is its own
+  // overflow-y:auto box (overlays.js _syncLibraryReveal). Triggers and the catch-up sweep measure
+  // against that box's viewport; everything else is unchanged.
+  var scroller = opts.scroller || null;
+  function viewH() { return scroller ? scroller.clientHeight : window.innerHeight; }
+  function viewTop() { return scroller ? scroller.getBoundingClientRect().top : 0; }
+
   var hero = opts.hero || null;
   var groups = (opts.groups || []).filter(function (grp) {
     return grp && (grp.heading || (grp.blocks && grp.blocks.length));
@@ -101,11 +108,13 @@ export function initPageReveal(root, options) {
   // Settled: anything whose top is inside the first screen (with a little margin, so a section
   // straddling the fold is not half-withheld) is already read and stays put.
   var settled = !!opts.settled;
-  var settleLimit = window.innerHeight * 1.15;
+  // A group's first block may be a beat (an array, see revealMasked); the trigger wants an element.
+  function firstBlock(grp) { var b = grp.blocks && grp.blocks[0]; return Array.isArray(b) ? b[0] : b; }
+  var settleLimit = viewTop() + viewH() * 1.15;
   function onScreen(el) { if (!el || !el.isConnected) return false; return el.getBoundingClientRect().top < settleLimit; }
   if (settled) {
     if (hero && onScreen(hero)) hero = null;
-    groups = groups.filter(function (grp) { return !onScreen(grp.heading || grp.blocks[0]); });
+    groups = groups.filter(function (grp) { return !onScreen(grp.heading || firstBlock(grp)); });
   }
   if (!hero && !groups.length) return inertController();
 
@@ -173,17 +182,38 @@ export function initPageReveal(root, options) {
      even started, against roughly a quarter-second for the whole landing. The lines are one run now,
      and the sequence between sections comes from the scroll position that triggered each one — which
      is where it comes from on every other surface of the site. */
-  function revealMasked(els) {
-    var fresh = els.filter(function (el) { return el && claim(el); });
-    if (!fresh.length) return;
-
-    // Split here, not at arm — see arm() for why the font makes that the only safe moment.
-    var lines = [], plain = [];
-    fresh.forEach(function (el) {
-      var s = splits.get(el) || splitLines(el);
-      if (s) { splits.set(el, s); lines = lines.concat(s.lines); }
-      else plain.push(el);   // never split — reveal it plainly rather than not at all
+  /* BEATS. An item handed in is an element — every one of its lines takes its own step of the
+     stagger, exactly as before — or an ARRAY of elements, which is one beat: every line of every
+     element in it rises on the same step, and the run advances by one. The library drawer's facet
+     rows are the reason (overlays.js _syncLibraryReveal): a row is a mark, a label and a count, and
+     they are one thing arriving, not three lines of a sentence. Returns the beat each item started
+     on, so a caller can draw a row's rule on the row's own step (see runGroup and grp.rules).
+     Prose callers pass elements only and see no change: the stagger is a function of the line's
+     beat, and for a run of plain elements the beat IS the line index. */
+  function revealMasked(items, fromBeat) {
+    var starts = [];
+    var fresh = [];                 // every element that is really going to animate
+    var beatOf = new Map();         // line or plain element → its beat
+    var beat = fromBeat || 0;       // a caller sequencing several groups hands in where to start
+    items.forEach(function (item) {
+      var els = (Array.isArray(item) ? item : [item]).filter(function (el) { return el && claim(el); });
+      starts.push(beat);
+      if (!els.length) return;
+      var group = Array.isArray(item);
+      els.forEach(function (el) {
+        fresh.push(el);
+        // Split here, not at arm — see arm() for why the font makes that the only safe moment.
+        var s = splits.get(el) || splitLines(el);
+        if (s) { splits.set(el, s); s.lines.forEach(function (line) { beatOf.set(line, beat); if (!group) beat++; }); }
+        else { beatOf.set(el, beat); if (!group) beat++; }   // never split — reveal it plainly rather than not at all
+      });
+      if (group) beat++;
     });
+    starts.end = beat;              // the beat after the last one used, for the next group in a sequence
+    if (!fresh.length) return starts;
+
+    var lines = [], plain = [];
+    fresh.forEach(function (el) { var s = splits.get(el); if (s) lines = lines.concat(s.lines); else plain.push(el); });
     // The block is shown now; its lines are parked inside their masks, so there is nothing to see
     // until the tween runs. Both happen before the next paint, so there is no flash.
     g.set(fresh, { opacity: 1 });
@@ -195,13 +225,14 @@ export function initPageReveal(root, options) {
         drop(el);
       });
     };
+    var stepOf = function (i, target) { return (beatOf.get(target) || 0) * MOTION.stagger; };
 
     if (lines.length) {
       g.killTweensOf(lines);
       var tw = g.fromTo(lines, { yPercent: 110 }, {
         yPercent: 0,
         duration: MOTION.duration,
-        stagger: MOTION.stagger,
+        stagger: stepOf,
         ease: MOTION.ease,
         onComplete: settle,
       });
@@ -218,10 +249,11 @@ export function initPageReveal(root, options) {
     }
     if (plain.length) {
       g.fromTo(plain, { opacity: 0 }, {
-        opacity: 1, duration: MOTION.duration, ease: MOTION.ease,
+        opacity: 1, duration: MOTION.duration, ease: MOTION.ease, stagger: stepOf,
         clearProps: 'opacity', onComplete: function () { plain.forEach(drop); }
       });
     }
+    return starts;
   }
 
   function drop(el) {
@@ -267,11 +299,12 @@ export function initPageReveal(root, options) {
   // Factored out so a ScrollTrigger callback and the catch-up pass below can both invoke it. Without
   // that split, anything ScrollTrigger declines to announce would only ever be recoverable by the
   // snap-to-visible failsafe — correct, but not animated.
-  function drawRule(el) {
+  function drawRule(el, delay) {
     if (!claim(el, 'rule')) return;
     g.to(el, {
       '--rule': 1,
       duration: 0.8,
+      delay: delay || 0,
       ease: MOTION.ease,
       onComplete: function () { el.style.removeProperty('--rule'); drop(el); }
     });
@@ -296,7 +329,11 @@ export function initPageReveal(root, options) {
     if (grp.heading) arm(grp.heading);
     if (grp.rule) { g.set(grp.rule, { '--rule': 0 }); pending.push(grp.rule); }
     grp.blocks = (grp.blocks || []).filter(Boolean);
-    grp.blocks.forEach(arm);
+    // A block may be a beat — an array of elements arriving on one step (see revealMasked).
+    grp.blocks.forEach(function (b) { (Array.isArray(b) ? b : [b]).forEach(arm); });
+    // Per-block rules, aligned with blocks by index: rules[i] draws on the step blocks[i] starts on.
+    grp.rules = (grp.rules || []).slice();
+    grp.rules.forEach(function (r) { if (r) { g.set(r, { '--rule': 0 }); pending.push(r); } });
   });
 
   /* One section, one cascade. The heading and every line of its body copy go into a SINGLE
@@ -307,10 +344,23 @@ export function initPageReveal(root, options) {
 
      No offsets. The heading leads because it is first in the array, which is the only ordering the
      landing uses either. */
-  function runGroup(grp) {
-    if (grp.rule) drawRule(grp.rule);
-    revealMasked((grp.heading ? [grp.heading] : []).concat(grp.blocks));
+  /* `fromBeat` is the step this group starts on, and it is only ever non-zero under opts.sequence:
+     groups revealed in ONE sweep (everything in view when the drawer opens) chain rather than start
+     together, so the second group's eyebrow follows the first group's last row instead of landing
+     beside its first. Three groups starting in the same frame read as three columns; chained, they
+     read as one list arriving top to bottom. A group revealed by its own trigger on scroll starts
+     at 0 as it always did. Returns the beat after the last one it used. */
+  function runGroup(grp, fromBeat) {
+    var base = fromBeat || 0;
+    if (grp.rule) drawRule(grp.rule, base * MOTION.stagger);
+    var starts = revealMasked((grp.heading ? [grp.heading] : []).concat(grp.blocks), base);
+    // A block's own rule draws on the block's beat — the rule and the words it underlines arrive
+    // together, exactly as a section's rule and heading do.
+    var offset = grp.heading ? 1 : 0;
+    grp.rules.forEach(function (r, i) { if (r) drawRule(r, (starts[offset + i] || base) * MOTION.stagger); });
+    return starts.end != null ? starts.end : base;
   }
+  var sequence = !!opts.sequence;
 
   function playHero() {
     // One call, so the stagger runs across the title's line, the summary's three and the meta's one
@@ -349,8 +399,8 @@ export function initPageReveal(root, options) {
     /* One trigger for the whole group, on whatever opens it. ENTER rather than the old 92/95: the
        cascade now has a tail, so it has to start earlier for its last block to still land before
        the reader's eye reaches it. */
-    triggers.push(ST.create({
-      trigger: grp.heading || grp.blocks[0],
+    triggers.push(ST.create(Object.assign({
+      trigger: grp.heading || firstBlock(grp),
       start: 'top ' + (ENTER * 100) + '%',
       once: true,
       onEnter: function () {
@@ -360,7 +410,7 @@ export function initPageReveal(root, options) {
         if (!played) { heldBack.push(grp); return; }
         runGroup(grp);
       }
-    }));
+    }, scroller ? { scroller: scroller } : {})));
   });
 
   // ---------------------------------------------------------------- catch-up
@@ -388,12 +438,14 @@ export function initPageReveal(root, options) {
   // remainder.
   function catchUp() {
     if (!played) return;
-    var limit = window.innerHeight * ENTER;
+    var limit = viewTop() + viewH() * ENTER;
+    var beat = 0;
     groups.forEach(function (grp) {
-      var host = grp.heading || grp.blocks[0];
+      var host = grp.heading || firstBlock(grp);
       if (!host || !host.isConnected) return;
       if (host.getBoundingClientRect().top >= limit) return;   // genuinely still below — leave it
-      runGroup(grp);
+      var next = runGroup(grp, sequence ? beat : 0);
+      if (sequence) beat = next;
     });
   }
 
@@ -489,7 +541,7 @@ export function initPageReveal(root, options) {
     }, 120);
   }
   function detach() {
-    window.removeEventListener('scroll', onScroll);
+    (scroller || window).removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onScroll);
     window.removeEventListener('load', onLoad);
     document.removeEventListener('visibilitychange', onVisible);
@@ -503,7 +555,7 @@ export function initPageReveal(root, options) {
     if (!document.hidden) { catchUp(); sweep(); }
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  (scroller || window).addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
   document.addEventListener('visibilitychange', onVisible);
 
@@ -535,7 +587,8 @@ export function initPageReveal(root, options) {
       if (played) return; played = true;
       playHero();
       // Groups whose trigger fired while the cover was still up, replayed now that they can be seen.
-      heldBack.forEach(runGroup);
+      var beat = 0;
+      heldBack.forEach(function (grp) { var next = runGroup(grp, sequence ? beat : 0); if (sequence) beat = next; });
       heldBack = [];
       catchUp();
       timers.push(setTimeout(sweep, 1500));   // covers what was already on screen at load

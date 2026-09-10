@@ -4,6 +4,7 @@
 // the same KIND as a generated one rather than a timestamp with a different shape.
 import { hashBytes } from '../../lib/hash.js';
 import { CONTRAST_MIN, CRITERION } from '../../lib/wcag.js';
+import { initPageReveal } from './pageReveal.js';
 
 export const overlayMethods = {
   // ================= fullscreen detail =================
@@ -873,9 +874,59 @@ export const overlayMethods = {
         // the panel and then leaves it, which is the behaviour a surface that does not own the
         // screen should have.
         const t = document.querySelector('[data-lib-tab]'); if (t) try { t.focus(); } catch (e) { }
+        // The facet reveal is built BEFORE the timeline, and both before this frame paints: the
+        // modules park the groups (opacity 0, rows at autoAlpha 0) synchronously, so the panel
+        // never shows a frame of fully drawn rows before withholding them.
+        try { this._syncLibraryReveal(); } catch (e) { }
         try { this.buildTagTimeline(); if (this._tgTl) this._tgTl.play(0); this._revealDrawerText('[data-library-dialog]'); } catch (e) { }
       });
     });
+  },
+  /* THE FACET GROUPS ARRIVE THE WAY THE MOBILE STORY'S SECTIONS DO — by request, and the same code:
+     pageReveal, with each group one section. The eyebrow rises out of its line mask, then each row
+     arrives on the next beat of the same stagger: its mark fades, its label and count rise through
+     their masks, and its hairline draws from the left edge — the section rule's own gesture, one
+     per row, in sequence down the group. Every element presents itself, subtly, on one clock
+     (0.62 / 0.09 / entrance, the story's motion object quoted from the same tokens). Each group is
+     one ScrollTrigger inside the drawer's own scroll box, with the catch-up sweep the module
+     carries, so a group already in view on open arrives at once and the ones below the fold arrive
+     as the reader reaches them. It was pageReveal for the eyebrow plus initCascade for the rows for
+     a revision — a fade-and-rise beside a mask — and the two vocabularies in one box is what read
+     as less than coherent.
+     The groups therefore leave the drawer's block schedule (_drawerIn): they carry data-sec /
+     data-sec-head / data-cascade instead of data-tg-sec / data-tg-cell, so the panel's own arrival
+     no longer fades them and the two systems never compose on one element. The header, the empty
+     state and the Projects tab keep the block schedule — they are chrome, not sections.
+     Played immediately rather than armed: there is no cover to wait for. The panel's expo-out
+     slide is past 80% of its travel inside its first 150ms, so the copy rises on a surface that is
+     already, to the eye, in place. Rebuilt on every return to the Filter tab (setLibraryTab) and
+     torn down with the panel (_finishTagClose). */
+  _syncLibraryReveal() {
+    this._killLibraryReveal();
+    if (this._reduce || !window.gsap) return;
+    const drawer = document.querySelector('[data-library-dialog]');
+    const panel = drawer && drawer.querySelector('[data-library-panel]');
+    if (!panel || !panel.querySelector('[data-sec]')) return;
+    const motion = { duration: this.DUR.reveal, stagger: 0.09, ease: this.EASE.entrance };
+    const groups = [...panel.querySelectorAll('[data-sec]')].map((sec) => {
+      const rows = [...sec.querySelectorAll('[data-sec-row]')];
+      return {
+        heading: sec.querySelector('[data-sec-head]'),
+        // one beat per row: everything in it marked data-reveal rises together
+        blocks: rows.map((r) => [...r.querySelectorAll('[data-reveal]')]),
+        rule: null,
+        rules: rows.map((r) => r.querySelector('[data-row-rule]')),
+      };
+    });
+    // sequence: the groups in view on open chain into one cascade rather than starting together
+    const reveal = initPageReveal(panel, { motion, groups, scroller: drawer, sequence: true });
+    this._libReveal = [() => reveal.destroy()];
+    try { reveal.play(); } catch (e) { }
+  },
+  // Torn down in reverse of the order built; each module restores what it withheld.
+  _killLibraryReveal() {
+    const kills = this._libReveal; if (!kills) return; this._libReveal = null;
+    kills.slice().reverse().forEach((k) => { if (typeof k === 'function') { try { k(); } catch (e) { } } });
   },
   buildTagTimeline() {
     this._tgTl = null;
@@ -935,14 +986,20 @@ export const overlayMethods = {
     // The Filter tab's ⓘ closes with the tab it explains. It is a toggletip — dismissed by a press
     // anywhere, including one on the tab strip — and leaving the flag set would bring the sheet
     // back unasked the next time that tab came round.
+    // The Filter tab's reveal modules hold triggers against nodes this state change unmounts, so
+    // they go before the render and come back after it (see _syncLibraryReveal).
+    this._killLibraryReveal();
     this.setState({ libraryTab: tab, filterInfoOpen: false, announce: said }, () => {
       const g = window.gsap;
       if (!g || this._reduce) return;
       const panel = document.querySelector('[data-library-panel]');
       if (!panel) return;
+      try { this._syncLibraryReveal(); } catch (e) { }
+      // Whatever the tab holds that is NOT a section — the Projects tab in full, the Filter tab's
+      // empty state — takes the drawer's own block stagger, as before.
       const secs = [...panel.querySelectorAll('[data-tg-sec]')];
-      const rows = secs.length ? secs : [panel];
-      g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
+      const rows = secs.length ? secs : (panel.querySelector('[data-sec]') ? [] : [panel]);
+      if (rows.length) g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
     });
   },
   /* A RENAME IN A FIELD YOU NEVER LEFT IS STILL A RENAME. The project name commits on blur, which
@@ -978,6 +1035,7 @@ export const overlayMethods = {
   _finishTagClose() {
     this._blockPlan = null;   // see _finishHarmonyClose
     if (this._tgDone) return; this._tgDone = true;
+    this._killLibraryReveal();
     clearTimeout(this._tgGuard);
     this._unbindFacetOutside();   // belt and braces: every teardown path leaves the document clean
     const back = this._tagBack; this._tgTl = null;
