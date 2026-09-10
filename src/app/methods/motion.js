@@ -253,6 +253,10 @@ export const motionMethods = {
   loadIntoResult(p, rowEl) {
     if (this.state.stage === 'result' && this.state.current && this.state.current.id === p.id) { if (rowEl && rowEl.focus) try { rowEl.focus(); } catch (e) { } return; }
     this._fromRects = null;
+    // Where this palette came from, so Close (pipeline.js closeResult) can put the reader back on
+    // the row rather than at the top of an empty stage. Only a row activation sets it; a generated
+    // palette has no row to go back to, and closeResult falls back to the plain reset there.
+    this._resultFrom = rowEl ? p.id : null;
     const g = window.gsap;
     // Anchor-scroll: bring the viewport UP to the result region as the palette reveals (one eased
     // motion, coordinated with the band wipe). With a stable stage height there is no reflow to pin.

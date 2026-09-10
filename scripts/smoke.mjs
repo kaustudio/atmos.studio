@@ -72,16 +72,6 @@ console.log('universe clones:', clones);
 await page.keyboard.press('Escape');
 await page.waitForTimeout(1500);
 
-// 3D reel
-const reelBtn = await page.$$('button[data-toggle-btn]');
-await reelBtn[2].click();
-await page.waitForTimeout(2500);
-await page.screenshot({ path: shots + '/11-reel.png' });
-const panels = await page.$$eval('[data-reel-list] > *', (els) => els.length);
-console.log('reel panels:', panels);
-await page.keyboard.press('Escape');
-await page.waitForTimeout(1500);
-
 // dark theme
 await page.click('button[aria-label="Toggle dark theme"]');
 await page.waitForTimeout(800);

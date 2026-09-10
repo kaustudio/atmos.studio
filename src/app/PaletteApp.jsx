@@ -12,7 +12,6 @@ import { persistenceMethods } from './methods/persistence.js';
 import { motionMethods } from './methods/motion.js';
 import { overlayMethods } from './methods/overlays.js';
 import { universeMethods } from './methods/universe.js';
-import { reelMethods } from './methods/reel.js';
 import { orbitMethods } from './methods/orbit.js';
 import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
@@ -498,8 +497,10 @@ export default class PaletteApp extends React.Component {
         // second Escape while that close is still playing is not swallowed: it falls through to
         // the field's own exit, which resets the card on the way.
         if (this.state.uOpen != null && !this._uClosing) { e.preventDefault(); this.closeTile(); return; }
-        if (this.state.feedView === 'grid' || this.state.feedView === 'carousel') { e.preventDefault(); this.setFeedView('list'); return; }
-        if (this.state.stage === 'result') { e.preventDefault(); this.doReset(); }
+        if (this.state.feedView === 'grid') { e.preventDefault(); this.setFeedView('list'); return; }
+        // Close rather than reset: a palette opened from a row goes back to that row (pipeline.js
+        // closeResult); one with no row behind it resets exactly as before.
+        if (this.state.stage === 'result') { e.preventDefault(); this.closeResult(); }
       }
     };
     document.addEventListener('keydown', this._onKey);
@@ -631,15 +632,6 @@ export default class PaletteApp extends React.Component {
     const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;
     if (wantSpatial && !this._spatialBuilt()) { requestAnimationFrame(() => { if (this.state.feedView === 'grid') this.initSpatial(); }); }
-    // reel lifecycle (mirror of the spatial pattern: transition-aware teardown, self-healing build)
-    const wantReel = s.feedView === 'carousel';
-    const prevWantReel = this._prevWantReel; this._prevWantReel = wantReel;
-    if (wantReel && !this._reelBuilt()) { requestAnimationFrame(() => { if (this.state.feedView === 'carousel') this.initReel(); }); }
-    if (!wantReel && prevWantReel && this._reelBuilt()) { this.killReel(); }
-    // resume the reel's ambient spin when the shared detail overlay closes above it
-    const ovOpen = !!s.overlay;
-    if (this._prevOvOpen && !ovOpen && s.feedView === 'carousel') { this._reelResume(); }
-    this._prevOvOpen = ovOpen;
     // Tear down ONLY on a real grid->list (or feed-emptied) transition — never on unrelated commits
     if (prevWant && !wantSpatial) { this.killSpatial(); }
     // list-view row activation: restore/establish the active (expanded) row after any re-render
@@ -936,7 +928,6 @@ Object.assign(
   motionMethods,
   overlayMethods,
   universeMethods,
-  reelMethods,
   orbitMethods,
   wipeMethods,
   loaderMethods,

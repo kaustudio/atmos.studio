@@ -59,7 +59,7 @@ a `display:none`.
   below).
 - **Library** — master–detail list (uniform rows led by a proportional swatch strip; sortable AA
   pairs / max contrast / date columns; tag filtering via a searchable drawer and clickable row
-  tags; pagination), the infinite draggable "universe" grid, and a 3D reel; fullscreen palette
+  tags; pagination), the infinite draggable "universe" grid; fullscreen palette
   detail; delete with undo. Selecting a row drives the overview panel above it — that panel is the
   single detail surface, and the rows no longer expand. The heading carries a 16px marker for where
   the library lives — the same toggletip the AA column uses, and the app's one "explain this"
@@ -192,7 +192,7 @@ src/notfound/*          the 404's particle field, the type rasteriser, and the p
 src/lib                 colour science, exporters, interpretation seam, sx() style parser
 src/app/PaletteApp.jsx  class core (state, lifecycle)
 src/app/methods/*       prototype method groups (pipeline, persistence, motion, overlays,
-                        universe, reel, orbit (the landing stage), wipe, loader, misc)
+                        universe, orbit (the landing stage), wipe, loader, misc)
 src/app/renderVals.js   the view-model
 src/app/AppView.jsx     the JSX template
 api/interpret.ts        serverless proxy for live interpretation

@@ -49,11 +49,13 @@ export const overlayMethods = {
     const tl = g.timeline({ paused: true, onReverseComplete: () => this._finishOverlayClose() });
     // reduced-motion (or no bands): a single two-step opacity fade — forward on open, reverse on close
     if (this._reduce || !bands.length) { tl.from(root, { opacity: 0, duration: .2, ease: 'none' }, 0); this._ovTl = tl; return; }
-    // the signature band wipe — same language as the result stage: bands rise from the bottom,
-    // staggered left-to-right; reverse() = chrome out, bands sink, backdrop last
-    g.set(bands, { transformOrigin: 'bottom center' });
+    // the signature band wipe — the result stage's own (motion.js animateBands), and now the open
+    // card's strip in the field: each band wiped up from its foot, left to right, on the reveal
+    // duration and the stage's stagger. It was a scaleY from the bottom edge for a while: the same
+    // direction, but a squash rather than an uncovering, and the one place a palette arrived by a
+    // different mechanic from the other two doors.
     tl.from(root, { opacity: 0, duration: .18, ease: 'none' }, 0);   // backdrop first in / last out
-    tl.from(bands, { scaleY: 0, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: .06 }, .08);
+    tl.from(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath' }, .08);
     // chrome (header, footer, value rows) fades in a beat after — colour leads; on reverse it exits first
     if (chrome.length) tl.from(chrome, { opacity: 0, duration: .4, ease: this.EASE.entrance, stagger: .02 }, this.DUR.reveal * 0.45);
     this._ovTl = tl;
@@ -63,10 +65,35 @@ export const overlayMethods = {
     const tileFocusable = this._openTileEl && this._openTileEl.getAttribute('tabindex') !== '-1' && !this._openTileEl.getAttribute('aria-hidden');
     this._ovBack = tileFocusable ? this._openTileEl : this._lastFocus;
     if (!this._ovTl) { this._finishOverlayClose(); return; }   // no timeline (shouldn't happen) → last-resort unmount
-    this._ovTl.reverse();                                    // close IS open reversed — nothing hand-written
-    // one generous safety fallback only, in case onReverseComplete never fires
+    /* THE CLOSE IS WRITTEN, NOT REVERSED. It was `this._ovTl.reverse()` — "close IS open reversed,
+       nothing hand-written" — and measured, that is what was wrong with it: a reversed expo-out is
+       an expo-in, so the first 300ms of the close moved nothing the eye could see, the chrome then
+       faded between 400 and 700ms, the bands sank between 500 and 900ms and the backdrop went last,
+       a second after the press. closeTile learned the same lesson (universe.js) and so did the
+       result stage's own reset (pipeline.js doReset), and this is that exit's grammar: the chrome
+       leaves first and fast, the bands sink bottom-first on the exit curve with the stage's own
+       stagger, the backdrop fades over the last stretch so nothing is left to pop at the cut, and
+       the dialog is released at 0.8 of the run — about 0.55s from the press, with the first frame
+       already moving. Reduced motion keeps the reversed fade, which is a fade either way. */
+    const g = window.gsap, root = this._detailRoot();
+    const bands = root ? [...root.querySelectorAll('[data-oband]')] : [];
+    if (this._reduce || !g || !root || !bands.length) {
+      this._ovTl.reverse();
+      clearTimeout(this._closeGuard);
+      this._closeGuard = setTimeout(() => this._finishOverlayClose(), (this._ovTl.duration() + 0.8) * 1000);
+      return;
+    }
+    const chrome = [...root.querySelectorAll('[data-ochrome]')];
+    this._ovTl.kill();
+    const total = this.DUR.reveal * 0.8 + this.DUR.stagger * (bands.length - 1);
+    const tl = this._ovTl = g.timeline();
+    if (chrome.length) tl.to(chrome, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, stagger: .02 }, 0);
+    tl.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger }, 0);
+    tl.to(root, { opacity: 0, duration: total * 0.3, ease: this.EASE.exit }, total * 0.5);
+    tl.call(() => this._finishOverlayClose(), null, total * 0.8);
+    // one generous safety fallback only, in case the call never lands
     clearTimeout(this._closeGuard);
-    this._closeGuard = setTimeout(() => this._finishOverlayClose(), (this._ovTl.duration() + 0.8) * 1000);
+    this._closeGuard = setTimeout(() => this._finishOverlayClose(), (total + 0.8) * 1000);
   },
   _finishOverlayClose() {
     // release the open latch BEFORE the _ovDone guard, so this function is unconditionally a

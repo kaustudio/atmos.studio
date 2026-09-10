@@ -3,7 +3,7 @@
 // matrix3d per card: the field domes away from the centre, swells under the cursor, a torch follows
 // the pointer through a shade, and each photograph drifts toward it. Ported to this app's tokens
 // with a radial-bloom entrance as ONE reversible timeline, plus the feed-view switcher shared with
-// the 3D reel. The open card (openTile) is the reference's lightbox on the same loop.
+// the one fullscreen view left since the 3D reel went. The open card (openTile) is the reference's lightbox on the same loop.
 import { UNIVERSE_TILE, UNIVERSE_OPEN } from '../universeTile.js';
 
 // The field's feel, every knob in one place — the reference's own names and, where the field is
@@ -25,17 +25,23 @@ const smooth = (t) => t * t * (3 - 2 * t);
 
 export const universeMethods = {
   setFeedView(v) {
-    // Re-entering grid while the close is still reversing: cancel the close and replay the bloom
-    // forward from wherever it is — no teardown, no lost click. (State never left 'grid'.)
-    if (v === 'grid' && v === this.state.feedView && this._uBloomTl && this._uBloomTl.reversed() && this._uBloomTl.isActive()) {
+    // Re-entering grid while the close is still playing: cancel the close and bring the field back
+    // from wherever it is — no teardown, no lost click. (State never left 'grid'.)
+    if (v === 'grid' && v === this.state.feedView && this._uCloseTl && this._uCloseTl.isActive()) {
       this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate the pending close completion
       // ...and with it the arrival that close was on its way to. The generation guard makes the
       // pending finish() a no-op, so nothing else would ever release this latch or run the queued
       // enter — the toggle would come back to life pointing at a view nobody asked for any more.
       this._viewClosing = false; this._viewPending = null;
-      // back to entrance pace — the close ran it at 1.8x, and an assembly resuming forward at
-      // exit speed would arrive faster than one that was never interrupted
-      this._uBloomTl.timeScale(1).play();
+      try { this._uCloseTl.kill(); } catch (e) { } this._uCloseTl = null;
+      const g = window.gsap, layer = document.querySelector('[data-universe-status]'), plane = document.querySelector('[data-plane]');
+      const chrome = layer ? [...layer.querySelectorAll('[data-universe-chrome]')] : [];
+      if (g) {
+        if (layer) g.to(layer, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance });
+        if (plane) g.to(plane, { scale: 1, duration: this.DUR.state, ease: this.EASE.entrance });
+        if (chrome.length) g.to(chrome, { opacity: 1, y: 0, duration: this.DUR.state, ease: this.EASE.entrance });
+        try { if (this._ticker) g.ticker.add(this._ticker); } catch (e) { }
+      }
       return;
     }
     if (v === this.state.feedView) return;
@@ -43,48 +49,38 @@ export const universeMethods = {
     /* ONE RULE FOR EVERY DEPARTURE: whatever is on screen plays its own exit, and the next view is
        built in that exit's completion.
 
-       Only the exit to the list ever obeyed it. The two fullscreen views could also be swapped
-       DIRECTLY — the toggle is List | Grid | 3D and the arrow keys cycle all three — and those two
-       paths called killSpatial()/killReel() synchronously on the click. Teardown empties the helix's
-       list and rips the clone layer out of the DOM, so a fully opaque layer lost its entire contents
-       between two frames while it was still the thing being looked at. Measured on the 3D→Grid
-       press: 32 cards to 0 on the same tick, layer opacity 1 throughout. It was the hardest cut in
-       the product, on the surface with the most on screen to lose. */
-    const enter = v === 'grid' ? () => this._enterGrid() : v === 'carousel' ? () => this._enterReel() : () => this._enterList(from);
+       Only the exit to the list ever obeyed it. While there was a third, 3D view (removed 10.09.26
+       — the field made it redundant) the two fullscreen views could be swapped DIRECTLY, and those
+       paths tore the leaving view down synchronously on the click: a fully opaque layer lost its
+       entire contents between two frames while it was still the thing being looked at. The rule
+       stays with one fullscreen view because it is the rule, not the workaround. */
+    const enter = v === 'grid' ? () => this._enterGrid() : () => this._enterList();
     if (from === 'list') { enter(); return; }
     // A second press while a view is already leaving does not start a second exit — it changes where
-    // the one already running lands. Dropping it instead would swallow Escape during a Grid→3D swap,
+    // the one already running lands. Dropping it instead would swallow Escape during the exit,
     // which is the one key that must always be able to get someone out of a fullscreen view.
     if (this._viewClosing) { this._viewPending = enter; return; }
     this._viewClosing = true;
     const done = () => { this._viewClosing = false; const next = this._viewPending || enter; this._viewPending = null; next(); };
-    if (from === 'carousel') this.closeReel(done); else this.closeUniverse(done);
+    this.closeUniverse(done);
   },
-  // The three arrivals. Each assumes the previous view has ALREADY played its exit and is hidden —
+  // The two arrivals. Each assumes the previous view has ALREADY played its exit and is hidden —
   // which is what makes it safe to tear down here, before the state flip, rather than after it.
   _enterGrid() {
     this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate any pending close completion
-    this.killSpatial(); this.killReel();
+    this.killSpatial();
     this._lenisStop();                                   // the universe's Observer owns the wheel
     try { document.body.style.overflow = 'hidden'; } catch (e) { }
     this._bloomNext = true;                              // play the radial assembly bloom on this entrance
     this.setState({ feedView: 'grid', announce: 'Spatial grid view. Drag to pan the field. Press a card to open it. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
   },
-  _enterReel() {
-    // entering the reel — fullscreen like the universe; scroll locked (nothing to scroll to)
-    this._uCloseGen = (this._uCloseGen || 0) + 1;
-    this.killSpatial();
-    this._lenisStop();
-    try { document.body.style.overflow = 'hidden'; } catch (e) { }
-    this.setState({ feedView: 'carousel', announce: '3D view. Drag or scroll to spin the cards. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { this.initReel(); const c = this.reelCloseRef && this.reelCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
-  },
   // The list is the one arrival that keeps its teardown INSIDE the state callback: the page behind
   // is real document flow rather than a layer of its own, so the fullscreen surface is hidden by the
   // re-render first and only then emptied.
-  _enterList(from) {
+  _enterList() {
     this._lenisStart();
     try { document.body.style.overflow = ''; } catch (e) { }
-    this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); this.killReel(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const rx = from === 'carousel' ? /3d/i : /grid/i; const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => rx.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
+    this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => /grid/i.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
   },
   // Open: the universe layer fades in and the tile field assembles from the viewport centre; close
   // is reverse() of the same timeline. The pan/Observer engine starts only at forward completion.
@@ -93,47 +89,27 @@ export const universeMethods = {
     const myGen = (this._uCloseGen = (this._uCloseGen || 0) + 1);
     const finish = () => { if (myGen !== this._uCloseGen) return; if (layer) try { layer.style.visibility = 'hidden'; } catch (e) { } done(); };   // hide synchronously before ANY teardown can un-hide
     if (this._reduce || !g || !layer) { finish(); return; }
-    /* NO TIMELINE TO REVERSE IS NOT "NO EXIT". buildUniverse only keeps _uBloomTl when it actually
-       played the bloom, and it plays the bloom only on an entrance — so every REBUILD of a field
-       that is already up (a window resize, deleting a palette, changing a filter or a folder) left
-       this method with nothing to reverse and dropped it straight into finish(). The field vanished
-       in a frame, and which of the two it did depended on whether you had touched a filter since
-       arriving. Recede by hand instead, on the shape the reverse produces: chrome lifts out first,
-       the plane settles back, the layer goes last. */
-    if (!this._uBloomTl) {
-      try { if (this._ticker) g.ticker.remove(this._ticker); } catch (e) { }
-      const plane = document.querySelector('[data-plane]');
-      const chrome = [...layer.querySelectorAll('[data-universe-chrome]')];
-      if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } }
-      // The timeline and the floor share ONE latched completion — passing `finish` to both would let
-      // a slow-but-alive tween land after the floor had already fired, and finish() is not idempotent:
-      // it calls done(), which builds the arriving view. Twice.
-      const land = this._exitFloor('u', 0.5, finish);
-      const tl = this._uCloseTl = g.timeline({ defaults: { ease: this.EASE.exit }, onComplete: land });
-      if (chrome.length) tl.to(chrome, { opacity: 0, y: -8, duration: 0.25 }, 0);
-      if (plane) tl.to(plane, { scale: 0.96, duration: 0.45, transformOrigin: 'center center' }, 0);
-      tl.to(layer, { opacity: 0, duration: 0.45 }, 0.05);
-      return;
-    }
-    const tl = this._uBloomTl;
-    // Deadlock guard: an interrupted close can leave the timeline fully reversed (progress 0) with the
-    // state flip never applied — reversing again fires no callback. Tear down synchronously instead.
-    if (tl.progress() <= 0.001 && !tl.isActive()) { finish(); return; }
+    /* THE EXIT IS WRITTEN, NOT REVERSED, for every departure. It used to reverse the bloom at 1.8x
+       when a bloom had played and recede by hand only on a rebuilt field, so the same press left
+       two ways depending on whether a filter had been touched since arriving — and the reversed
+       half was the worse one: a reversed expo-out is an expo-in, and the layer's own fade sat in
+       the first third of the assembly, so on the way out nothing moved for over half the run and
+       then everything dropped at once. One exit now, the shape the reverse was trying to produce:
+       chrome lifts out first, the plane settles back to where it arrived from, the layer goes
+       last — on the exit curve, about half a second, quicker than the arrival as every exit here
+       is (motion.js). */
     try { if (this._ticker) g.ticker.remove(this._ticker); } catch (e) { }   // freeze the pan so the field recedes cleanly
-    /* REVERSED, BUT NOT AT ENTRANCE PACE. A reverse plays the timeline's easing backwards too, and
-       every curve in it is expo-out — which reversed is expo-IN, all of the travel saved up for the
-       end. Worse, the layer's own fade lives in the first 0.31s of a 0.9s assembly, so on the way
-       out it does not begin until 0.59s in: press Close and the field holds perfectly still for
-       over half a second, then drops out at once. It read as a click that had not registered.
-       Compressed to ~0.5s the shape is unchanged and the dead stretch is halved — and it now leaves
-       on the same beat as the reel, which is the point of the two views sharing a switcher. The
-       exit being quicker than the entrance is the house rule everywhere else here (motion.js). */
-    tl.timeScale(1.8);
-    // Floored like every other exit: this callback does not merely end an animation, it flips the
-    // state that returns the reader to the page. A ticker that never wakes must not strand them on
-    // a field whose Close button no longer leads anywhere.
-    tl.eventCallback('onReverseComplete', this._exitFloor('u', tl.duration() / 1.8, finish));
-    tl.reverse();
+    const plane = document.querySelector('[data-plane]');
+    const chrome = [...layer.querySelectorAll('[data-universe-chrome]')];
+    if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } }
+    // The timeline and the floor share ONE latched completion — passing `finish` to both would let
+    // a slow-but-alive tween land after the floor had already fired, and finish() is not idempotent:
+    // it calls done(), which builds the arriving view. Twice.
+    const land = this._exitFloor('u', 0.5, finish);
+    const tl = this._uCloseTl = g.timeline({ defaults: { ease: this.EASE.exit }, onComplete: land });
+    if (chrome.length) tl.to(chrome, { opacity: 0, y: -6, duration: this.DUR.state }, 0);
+    if (plane) tl.to(plane, { scale: 0.985, duration: 0.45, transformOrigin: 'center center' }, 0);
+    tl.to(layer, { opacity: 0, duration: 0.45 }, 0.05);
   },
   killSpatial() {
     this._spatialLive = false;
@@ -497,26 +473,40 @@ export const universeMethods = {
       if (this._uBloomTl) { try { this._uBloomTl.kill(); } catch (e) { } this._uBloomTl = null; }
       if (!bloom) {
         if (layer && g) g.set(layer, { opacity: 1 });
-        g.set(inners, { opacity: 1, scale: 1, clearProps: 'transform' });
+        g.set(inners, { opacity: 1, y: 0, clearProps: 'transform' });
         g.set(plane, { clearProps: 'transform' });
         if (chrome.length) g.set(chrome, { opacity: 1, y: 0, clearProps: 'transform' });
         startEngine();
       } else {
-        // per-tile delay from its on-screen distance to viewport centre (true radial 'from:center')
+        /* THE CARDS APPEAR, THEY DO NOT ASSEMBLE. The bloom used to scale every card from 0.9 and
+           the whole plane from 0.96 while the layer faded, on a half-second radial spread — a field
+           rushing together out of the centre, which was the most emphatic arrival in the product on
+           the surface that is only a way of looking at the same list. Toned down by request: no
+           scale on the cards at all, a rise of the site's own cascade size (the 12px the about
+           page's sets take, less the fraction the parallax already gives), the plane barely
+           breathing (0.985), and the radial order kept but tightened, so the field is read as
+           already there and coming into view rather than as arriving from somewhere. The
+           entrance ease, and a length of its own: ARRIVE, one second by request (up from the
+           0.62 reveal token), because a field of thirty cards fading up is one large surface
+           arriving, not a line of type — the closest sibling is the overlay arrival at 0.8, and
+           this is a screen, not a panel. The radial spread scales with it so the order still
+           reads. The exit (closeUniverse) keeps its half second: quicker out than in, as ever. */
+        const ARRIVE = 1;
         const dist = cards.map((cd) => { const q = quad(cd); return Math.hypot((q.tl.x + q.br.x) / 2, (q.tl.y + q.br.y) / 2); });
-        const maxD = Math.max.apply(null, dist) || 1, SPREAD = 0.5;
+        const maxD = Math.max.apply(null, dist) || 1, SPREAD = ARRIVE * 0.5;
         const delays = dist.map((d) => (d / maxD) * SPREAD);
-        // bloom-START state (never the tile element itself — the render loop owns its transform)
+        // start state (never the tile element itself — the render loop owns its transform)
         if (layer) g.set(layer, { opacity: 0 });
-        g.set(plane, { scale: 0.96, transformOrigin: 'center center' });
-        g.set(inners, { opacity: 0, scale: 0.9, transformOrigin: 'center center' });
-        if (chrome.length) g.set(chrome, { opacity: 0, y: -8 });
-        // ONE reversible timeline: forward = assemble; reverse() (on close) = recede. Pan starts at forward end.
+        g.set(plane, { scale: 0.985, transformOrigin: 'center center' });
+        g.set(inners, { opacity: 0, y: 10 });
+        if (chrome.length) g.set(chrome, { opacity: 0, y: -6 });
+        // The arrival only. The exit is written by hand in closeUniverse — a reversed expo-out is
+        // an expo-in that holds still for half its length — so this timeline is never reversed.
         const tl = g.timeline({ onComplete: startEngine });
-        if (layer) tl.to(layer, { opacity: 1, duration: this.DUR.reveal * 0.5, ease: this.EASE.entrance }, 0);
-        tl.to(plane, { scale: 1, duration: 0.85, ease: this.EASE.entrance, transformOrigin: 'center center' }, 0);
-        tl.to(inners, { opacity: 1, scale: 1, duration: 0.5, ease: this.EASE.entrance, stagger: (i) => delays[i] }, 0);
-        if (chrome.length) tl.to(chrome, { opacity: 1, y: 0, duration: 0.4, ease: this.EASE.entrance, stagger: 0.06 }, 0.5);
+        if (layer) tl.to(layer, { opacity: 1, duration: ARRIVE * 0.5, ease: this.EASE.entrance }, 0);
+        tl.to(plane, { scale: 1, duration: ARRIVE, ease: this.EASE.entrance, transformOrigin: 'center center' }, 0);
+        tl.to(inners, { opacity: 1, y: 0, duration: ARRIVE, ease: this.EASE.entrance, stagger: (i) => delays[i] }, 0);
+        if (chrome.length) tl.to(chrome, { opacity: 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: 0.06 }, ARRIVE * 0.45);
         this._uBloomTl = tl;
       }
       this._built = true;   // synchronous 'field built' flag — stops the cDU gate re-scheduling rebuilds that strip clones
@@ -605,8 +595,18 @@ export const universeMethods = {
       // The content's box is the engine's, set every frame from the card's own corner (render);
       // here only what does not move. It is transparent — the panel under it draws the surface.
       g.set(panel, { x: 0, y: 0, opacity: 1 });
-      const parts = [...panel.querySelectorAll('[data-upanel-part]')];
+      /* THE STRIP ARRIVES AS THE RESULT STAGE'S BANDS DO. It faded and rose with the other parts
+         for a while; by request it now takes the app's one arrival for colour — each band wiped up
+         from its foot, staggered left to right, on the reveal duration and the entrance ease
+         (motion.js animateBands, the detail overlay's bands) — so a palette opens the same way from
+         the list, the field and the detail. The strip's box is shown at once; only its bands are
+         withheld, so nothing fades under a wipe. */
+      const parts = [...panel.querySelectorAll('[data-upanel-part]:not([data-strip])')];
+      const strip = panel.querySelector('[data-strip]');
+      const bands = strip ? [...strip.children] : [];
       g.set(parts, { opacity: 0, y: 6 });
+      if (strip) g.set(strip, { opacity: 1, y: 0 });
+      if (bands.length) g.set(bands, { clipPath: 'inset(100% 0 0 0)' });
       panel.style.pointerEvents = 'auto';
       // focus lands at once, never at the end of the motion — the overlay's rule, for the same
       // reason: a keyboard reader is not made to wait for a tween to know where they are
@@ -623,7 +623,9 @@ export const universeMethods = {
       if (cap) tl.to(cap, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit }, 0);
       // the contents land once the panel is all but out (fold is past 0.95 by three quarters of
       // its time) — the reference delays its lightbox for the same reason
-      tl.to(parts, { opacity: 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: this.DUR.stagger }, this.DUR.fold * 0.75);
+      const AT_IN = this.DUR.fold * 0.75;
+      if (bands.length) tl.to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath' }, AT_IN);
+      tl.to(parts, { opacity: 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: this.DUR.stagger }, AT_IN + this.DUR.stagger * 2);
     });
   },
   closeTile(done) {

@@ -2762,7 +2762,7 @@ export default function AppView({ vals }) {
   );
 }
 
-// ============================== FEED (list / universe / reel) ==============================
+// ============================== FEED (list / universe) ==============================
 function FeedSection({ vals }) {
   // aria-labelledby, not aria-label: the region is named BY its visible heading, so the two can
   // never drift apart the way a hardcoded "Recent generations" already had. No count beside it —
@@ -2966,11 +2966,10 @@ function FeedSection({ vals }) {
           alignment is structural rather than two matching numbers.
           margin-inline-start:auto keeps it at the far edge, away from the rail it does not join. */}
       {vals.feedHasItems && (
-        <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
+        <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
           <span aria-hidden="true" style={vals.viewTogglePill}></span>
           <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}><TextSwap>List</TextSwap></button>
           <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}><TextSwap>Grid</TextSwap></button>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.reelPressed} tabIndex={vals.reelTab} onClick={vals.setReel} onKeyDown={vals.viewToggleKey} style={vals.reelToggleStyle}><TextSwap>3D</TextSwap></button>
         </div>
       )}
     </div>
@@ -3346,7 +3345,7 @@ function FeedSection({ vals }) {
           {/* universe chrome (fixed above the field) */}
           <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            {/* The same close mark the reel uses, for the same reason and with the same one
+            {/* The app's close mark, at the 32px circle every other surface uses, with the same one
                 deviation: --surface behind it, because this one floats over a live WebGL field too.
                 The pair are the app's only two full-screen stages and they now leave the same way. */}
             <button type="button" ref={vals.universeCloseRef} data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe, or press Escape" title="Close" style={sx('pointer-events:auto;flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
@@ -3357,49 +3356,6 @@ function FeedSection({ vals }) {
           )}
         </div>
 
-        {/* FULLSCREEN 3D TORNADO: helix of palette cards (items built imperatively) */}
-        <div data-reel-layer="1" role="region" aria-label="3D palette view" style={vals.reelStyle}>
-          {/* NO overflow HERE, AND THAT IS THE FIX RATHER THAN AN OMISSION. This element is SCALED —
-              the frame recedes to _reelFromScale on the way out and grows from it on the way in — and
-              a clip travels with the transform that carries it. At 0.8 the clip rectangle is 80% of
-              the viewport centred, so its bottom edge sits a tenth of the screen ABOVE the real one,
-              and it rises there over the 1.2s the scale runs. The helix leaves downward through that
-              edge, so the curve was being cut off part-way down a frame nobody could see, and the cut
-              moved while it happened.
-
-              The clipping was never this element's job anyway: [data-reel-layer] is position:fixed,
-              inset:0 and overflow:hidden, it is not transformed by either transition, and it is the
-              thing that should decide what leaves the viewport. At rest the two boxes are identical,
-              which is why this was invisible until something scaled one of them. */}
-          <div data-reel-stage="1" style={sx('position:absolute;inset:0;overscroll-behavior:none;cursor:grab;touch-action:none')}>
-            {/* pointer-events:none on the list is what makes the cards clickable at all. Every card
-                is pushed AWAY from the camera by the helix (z is (cos−1)·radius, so never positive),
-                which puts the list's own untransformed plane in FRONT of all of them for hit-testing
-                while the cards still paint through it — the list has no background to hide them. A
-                press then landed on the list, where nothing listens, and the card under the cursor
-                never heard it. Taking the list out of hit-testing lets each press resolve against the
-                cards themselves, which order correctly among each other; the press still reaches the
-                stage behind them, so drag-to-spin is untouched. */}
-            <div data-reel-list="1" style={sx('position:relative;width:100%;height:100%;font-size:clamp(.5em, .75vw, 1.5em);perspective:75em;transform-style:preserve-3d;pointer-events:none')}></div>
-          </div>
-          {vals.reelEmpty && (
-            <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;pointer-events:none')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);text-align:center')}>No image-backed palettes here yet. Drop a reference image to fill the reel.</span>
-            </div>
-          )}
-          <div data-reel-chrome="1" style={sx('position:absolute;top:0;left:0;right:0;height:56px;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--page-gutter);pointer-events:none')}>
-            <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            {/* The app's close mark, at the 32px circle every other surface uses — with one deviation
-                it has to keep: --surface behind it, not none. Every other close mark sits on a sheet;
-                this one floats over a live WebGL stage, and a hairline ring with nothing behind it
-                disappears over whatever colour happens to be passing under it.
-                THE VISIBLE "ESC" HINT GOES WITH THE WORD. Escape closes every overlay in this app
-                and no other one advertises it, so the reel was the outlier rather than the standard;
-                the key still works, and the hint now lives in the accessible name. */}
-            <button ref={vals.reelCloseRef} type="button" data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close reel, or press Escape" title="Close" style={sx('pointer-events:auto;flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
-          </div>
-          <span data-reel-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to spin</span>
-        </div>
       </div>
     </section>
   );

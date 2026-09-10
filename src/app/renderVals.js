@@ -472,7 +472,7 @@ export const renderValsMethods = {
     const page = Math.min(s.page || 0, pageCount - 1);
     // Metrics once per palette, shared by the sort and by the row that renders them — paletteMetrics
     // walks every swatch PAIR, so computing it twice per palette per render is the one thing here
-    // worth not doing. Sorting is applied for the list only: grid and reel have no column headers,
+    // worth not doing. Sorting is applied for the list only: the grid has no column headers,
     // so reordering them would be an invisible change to an order nobody asked to change.
     const listRows = s.feedView === 'list'
       ? this.sortDecorated(scopedAll.map((p) => ({ p, met: this.paletteMetrics(p) })), s.sortKey, s.sortDir)
@@ -2217,18 +2217,16 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       onProjectFileChange: (e) => { const f = e && e.target && e.target.files && e.target.files[0]; if (f) this.importProjectFile(f); if (e && e.target) e.target.value = ''; },
       projectFileRef: this.projectFileRef,
       isListView: s.feedView === 'list', isGridView: s.feedView === 'grid',
-      setList: () => this.setFeedView('list'), setGrid: () => this.setFeedView('grid'), setReel: () => this.setFeedView('carousel'),
-      listToggleStyle: this.viewToggleOptStyle(s.feedView === 'list'), gridToggleStyle: this.viewToggleOptStyle(s.feedView === 'grid'), reelToggleStyle: this.viewToggleOptStyle(s.feedView === 'carousel'),
-      listPressed: s.feedView === 'list' ? 'true' : 'false', gridPressed: s.feedView === 'grid' ? 'true' : 'false', reelPressed: s.feedView === 'carousel' ? 'true' : 'false',
-      listTab: s.feedView === 'list' ? 0 : -1, gridTab: s.feedView === 'grid' ? 0 : -1, reelTab: s.feedView === 'carousel' ? 0 : -1,
-      reelStyle: { display: s.feedView === 'carousel' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: 'hidden', overscrollBehavior: 'none' },
-      reelEmpty: s.feedView === 'carousel' && this.reelPalettes().length === 0,
-      reelCloseRef: (this.reelCloseRef = this.reelCloseRef || React.createRef()),
-      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 3)', transform: 'translateX(' + (s.feedView === 'carousel' ? 200 : s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)' },
+      setList: () => this.setFeedView('list'), setGrid: () => this.setFeedView('grid'),
+      listToggleStyle: this.viewToggleOptStyle(s.feedView === 'list'), gridToggleStyle: this.viewToggleOptStyle(s.feedView === 'grid'),
+      listPressed: s.feedView === 'list' ? 'true' : 'false', gridPressed: s.feedView === 'grid' ? 'true' : 'false',
+      listTab: s.feedView === 'list' ? 0 : -1, gridTab: s.feedView === 'grid' ? 0 : -1,
+      // Two segments since the 3D view went (10.09.26): the field made it redundant.
+      viewTogglePill: { position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 2)', transform: 'translateX(' + (s.feedView === 'grid' ? 100 : 0) + '%)', background: 'var(--on-surface)', transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)' },
       viewToggleKey: (e) => {
         const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
         e.preventDefault();
-        const order = ['list', 'grid', 'carousel'];
+        const order = ['list', 'grid'];
         const next = order[(order.indexOf(this.state.feedView) + dir + order.length) % order.length];
         this.setFeedView(next);
         const grp = e.currentTarget && e.currentTarget.closest('[data-toggle-init]');

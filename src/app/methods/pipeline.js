@@ -450,7 +450,8 @@ export const pipelineMethods = {
   // ================= interaction =================
   // New Generation is the inverse of the generation reveal: the result recedes DOWNWARD
   // (reverse of the bottom-to-top entry), then the upload surface rises in a beat later.
-  doReset() {
+  doReset(opts) {
+    const o = opts || {};
     const g = window.gsap, root = this.resultRef.current;
     /* `sharedView:false` IS PART OF THE RESET, and leaving it out was a flag outliving its palette.
        The flag means "the thing in `current` came from a link and is not in your Library", so it is
@@ -465,7 +466,11 @@ export const pipelineMethods = {
        The hash is deliberately NOT dropped here: the address still names that palette, and a reload
        giving you what the URL says is not a fault. The two paths that mean "I am done with this
        link" — makeOwnFromShared and returnToGateOnPhone — call _clearShareHash themselves. */
-    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this.setState({ stage: 'upload', current: null, imageUrl: null, sharedView: false, announce: 'Ready for a new reference image.' }, () => { requestAnimationFrame(() => this.animateUploadIn()); }); };
+    // animateUploadIn runs IN the commit callback, not a frame later: React has committed the
+    // upload stage but nothing has painted yet, and a fromTo writes its start values at once, so
+    // the dropzone is never on screen at rest before it arrives. The rAF that used to sit here
+    // gave it exactly one painted frame at full opacity before the tween took it back to zero.
+    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this._resultFrom = null; this.setState({ stage: 'upload', current: null, imageUrl: null, sharedView: false, announce: o.announce || 'Ready for a new reference image.' }, () => { this.animateUploadIn(); if (o.after) try { o.after(); } catch (e) { } }); };
     if (this._reduce || !g || !root || this.state.stage !== 'result' || document.hidden) { commit(); return; }
     const bands = [...root.querySelectorAll('[data-band]')];
     const fx = [...root.querySelectorAll('[data-fx]')];
@@ -473,16 +478,73 @@ export const pipelineMethods = {
     clearTimeout(this._resetGuard); this._resetGuard = setTimeout(go, this.DUR.reveal * 1000 + 220);
     try {
       if (fx.length) g.to(fx, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.exit, stagger: .03 });
-      if (bands.length) g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger, onComplete: go });
+      if (bands.length) {
+        /* THE ARRIVAL CROSSES THE EXIT. The stage used to swap only when the last band had finished
+           sinking — its onComplete, plus the stagger tail — and the dropzone mounted into a stage
+           that had been empty for a beat. Measured: bands gone at 600ms, "Start here" at 718ms, a
+           tenth of a second of nothing between two things that should overlap. Every other arrival
+           on the site crosses its exit; this one queued behind it.
+           So the swap is scheduled at 0.8 of the exit's length, and the result's root fades over the
+           last stretch before it, so whatever a lagging band still shows at the cut is already
+           transparent: the stage can be unmounted mid-tween without a visible pop, and the dropzone
+           rises while the palette's tail is still leaving. The bands' onComplete and the guard
+           timer stay as the fallbacks they were. */
+        const total = this.DUR.reveal * 0.8 + this.DUR.stagger * (bands.length - 1);
+        g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger, onComplete: go });
+        g.to(root, { opacity: 0, duration: total * 0.3, ease: this.EASE.exit, delay: total * 0.5 });
+        g.delayedCall(total * 0.8, go);
+      }
       else go();
     } catch (e) { go(); }
   },
+  /* CLOSE, as distinct from New palette — reached by Escape in the result stage (PaletteApp). A
+     masthead close mark stood beside New palette for a day and was removed by request. A palette
+     opened from a library row leaves by the same exit New palette runs (doReset's sink and the
+     dropzone's arrival cross exactly as before), and then the viewport goes back to the row the
+     palette came from and focus lands on it: the reader is returned to the choice they were
+     making. A palette with no row behind it — one just generated, or a shared link — has nowhere
+     to return to, so Close there is New palette by another name. */
+  closeResult() {
+    const from = this._resultFrom;
+    if (!from) { this.doReset(); return; }
+    this.doReset({ announce: 'Closed the palette. Back at the library.', after: () => this._returnToRow(from) });
+  },
+  // The scroll runs as the stage swaps — the dropzone rising above and the library arriving under
+  // the pointer are one movement — through Lenis when it owns the page, on the reveal's length and
+  // curve. Focus follows once the row has stopped moving, preventScroll so the browser cannot
+  // second-guess the position the scroll just chose.
+  _returnToRow(id) {
+    const row = document.querySelector('[data-list-wrap] [data-rowid="' + id + '"]');
+    const anchor = row || document.querySelector('#library-list');
+    if (!anchor) return;
+    const HEAD = 96;   // the sticky masthead, and a breath under it
+    const y = Math.max(0, anchor.getBoundingClientRect().top + window.scrollY - HEAD);
+    const hit = row ? row.querySelector('[data-row-hit]') : null;
+    const land = () => { if (hit) try { hit.focus({ preventScroll: true }); } catch (e) { } };
+    const g = window.gsap;
+    if (this._reduce) { try { this._scrollToY(y); } catch (e) { window.scrollTo(0, y); } land(); return; }
+    try {
+      if (this._lenis) { this._lenis.scrollTo(y, { duration: this.DUR.reveal, force: true, onComplete: land }); return; }
+      if (g && g.plugins && g.plugins.scrollTo) { g.to(window, { scrollTo: { y, autoKill: false }, duration: this.DUR.reveal, ease: this.EASE.entrance, onComplete: land }); return; }
+    } catch (e) { }
+    window.scrollTo(0, y); land();
+  },
+  /* THE UPLOAD SURFACE ARRIVES the way it does on the very first visit: the dropzone rises and
+     fades in, and "Start here" with its two lines comes up through the same line masks the landing
+     statement uses. Both halves were missing here for a while. The zone was looked up by an
+     aria-label that had been renamed to "Choose image" (ff42660), so the query returned nothing and
+     this returned early — the dropzone popped in at rest. And the lines are behind a one-shot latch
+     (_dropRevealed, loader.js) that only the landing path ever reset, so even with the zone found
+     the copy would have faded as a block. The latch is released here: a reset IS a fresh arrival of
+     this surface. */
   animateUploadIn() {
     const g = window.gsap; if (!g || document.hidden) return;
-    const zone = document.querySelector('main button[aria-label^="Upload a reference image"]');
+    const zone = document.querySelector('main button[aria-label^="Choose image"]');
     if (!zone) return;
     if (this._reduce) { g.fromTo(zone, { opacity: 0 }, { opacity: 1, duration: .35, ease: 'none' }); return; }   // opacity crossfade only
-    g.fromTo(zone, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance });
+    g.fromTo(zone, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform' });
+    this._dropRevealed = false;
+    try { this._dropLinesReveal(g); } catch (e) { }
   },
   // ---- re-upload recognition -------------------------------------------------------------------
   // Same dialog family as move-to-project: backdrop, aria-modal, the shared focus trap, the shared

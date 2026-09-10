@@ -62,7 +62,6 @@ export const wipeMethods = {
     // the tool behind the landing returns to its default state — Get Started must always land on
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
     if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
-    if (this.state.feedView === 'carousel') { this.killReel(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
     // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
     // alone it would fire after the wipe and pull the reader back into the view they just left.
     this._viewClosing = false; this._viewPending = null;
