@@ -18,7 +18,7 @@
 //   2. Rate limiting via Vercel Firewall.
 //   3. `npm i -D @types/node` to clear the TS2591 build error.
 
-import { rejectNode } from './_guard.ts';
+import { rejectNode } from './_guard.js';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_OUTPUT_TOKENS = 400;
