@@ -81,6 +81,12 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  // Origin allowlist, kill switch, daily budget and the 1.5 MB ceiling live in _guard.ts. It runs
+  // before the key check so a request from elsewhere learns nothing about how this deployment is
+  // configured. The real byte length goes with it so a false Content-Length cannot slip past the cap.
+  const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+  if (rejectNode(req, res, Buffer.byteLength(raw, 'utf8'))) return;
+
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured' });
@@ -88,10 +94,6 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
-    // Origin allowlist, kill switch, daily budget and the 1.5 MB ceiling live in _guard.ts. The
-    // real byte length goes with it so a false Content-Length cannot slip past the cap.
-    if (rejectNode(req, res, Buffer.byteLength(raw, 'utf8'))) return;
     if (tooLarge(req, raw)) {
       res.status(413).json({ error: 'payload too large' });
       return;
