@@ -1,0 +1,14 @@
+# Atmos Gallery — security contact (RFC 9116)
+# Atmos Gallery is a client-side tool operated by KauStudio ApS.
+# There are no accounts and no user data on the server; the one server-side
+# endpoint is /api/interpret, which proxies a thumbnail to a model provider.
+
+Contact: mailto:hello@kau.studio
+Expires: 2027-09-12T00:00:00.000Z
+Preferred-Languages: da, en
+Canonical: https://atmos.gallery/.well-known/security.txt
+Policy: https://atmos.gallery/terms
+
+# We have no bug bounty. Reports are read by a person, usually within a week.
+# Please do not run load or denial-of-service tests against /api/interpret:
+# it is metered and rate limited, and a test of it costs us money directly.

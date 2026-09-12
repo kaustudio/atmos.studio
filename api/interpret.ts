@@ -18,6 +18,8 @@
 //   2. Rate limiting via Vercel Firewall.
 //   3. `npm i -D @types/node` to clear the TS2591 build error.
 
+import { rejectNode } from './_guard.ts';
+
 const MODEL = 'claude-sonnet-4-6';
 const MAX_OUTPUT_TOKENS = 400;
 
@@ -87,6 +89,9 @@ export default async function handler(req: any, res: any) {
 
   try {
     const raw = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+    // Origin allowlist, kill switch, daily budget and the 1.5 MB ceiling live in _guard.ts. The
+    // real byte length goes with it so a false Content-Length cannot slip past the cap.
+    if (rejectNode(req, res, Buffer.byteLength(raw, 'utf8'))) return;
     if (tooLarge(req, raw)) {
       res.status(413).json({ error: 'payload too large' });
       return;
