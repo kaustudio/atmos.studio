@@ -1256,7 +1256,7 @@
    inert here: Neue Montreal ships no tnum table, and 111% and 000% measure 29.39px and 30.34px with
    the property on or off. Nothing on this surface may lean on tabular metrics. */
 [data-mobile-story] .about-weights__key .about-key__pct{
-  font-size:var(--fs-body);
+  font-size:var(--fs-lead);   /* one step up with the result swatches (13.09.26); their 32px does not fit this 40px key column */
   font-weight:500;
   line-height:1.1;
   color:var(--on-surface);

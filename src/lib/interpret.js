@@ -9,7 +9,6 @@
 // touches the UI: it reads canInterpretLive() + liveComplete().
 
 import { composeReading } from './reading.js';
-import { withoutRetired } from './taxonomy.js';
 
 // ================= local interpretation — the guaranteed baseline =================
 // Delegates to the compositional engine. One naming system, not two: the old 5-archetype /
@@ -58,16 +57,9 @@ export function parseInterp(raw) {
   if (!obj || typeof obj !== 'object') return null;
   if (typeof obj.name !== 'string' || !obj.name.trim()) return null;
   if (typeof obj.rationale !== 'string' || !obj.rationale.trim()) return null;
-  if (!Array.isArray(obj.descriptors)) return null;
-  // The live path is the one place a descriptor can arrive as free text, so it is the one place the
-  // measured vocabulary could come back in — a model asked to describe a palette will happily return
-  // "Warm" and "Muted", which are facet values here (see taxonomy.js). Filtered, not rejected: a
-  // reading with two good terms and one duplicate is worth keeping without the duplicate.
-  const desc = withoutRetired(obj.descriptors.filter((d) => typeof d === 'string').map((d) => d.trim())).slice(0, 4);
-  // Two, not three. The floor exists so a thin reading falls back to the local engine rather than
-  // shipping a palette with nothing to say; the local engine's own guarantee is two, so demanding
-  // three of the live path held it to a standard the baseline does not meet.
-  if (desc.length < 2) return null;
+  // Descriptors are not read from the model any more, whatever it returns: a palette's tags are
+  // its two measured classifications (src/lib/classify.js), computed from the swatches. A reading
+  // is its name, its rationale and its archetype.
   const archetype = (typeof obj.archetype === 'string' && obj.archetype.trim()) ? obj.archetype.trim().toLowerCase().slice(0, 24) : 'interpreted';
-  return { name: obj.name.trim().slice(0, 42), descriptors: desc, rationale: obj.rationale.trim().slice(0, 240), archetype };
+  return { name: obj.name.trim().slice(0, 42), descriptors: [], rationale: obj.rationale.trim().slice(0, 240), archetype };
 }

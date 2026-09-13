@@ -64,15 +64,15 @@ export const pipelineMethods = {
   cachedReading(hash) {
     const e = this._readCache()[hash];
     if (!e || typeof e !== 'object') return null;
-    if (typeof e.name !== 'string' || !Array.isArray(e.descriptors)) return null;
-    return { name: e.name, descriptors: e.descriptors.filter((d) => typeof d === 'string'), rationale: typeof e.rationale === 'string' ? e.rationale : '', archetype: typeof e.archetype === 'string' ? e.archetype : 'interpreted' };
+    if (typeof e.name !== 'string') return null;
+    return { name: e.name, descriptors: [], rationale: typeof e.rationale === 'string' ? e.rationale : '', archetype: typeof e.archetype === 'string' ? e.archetype : 'interpreted' };
   },
   cacheReading(hash, it) {
     if (!hash || !it) return;
     try {
       const e = this._readCache();
       if (e[hash]) return;                      // first derivation wins, permanently
-      e[hash] = { name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, at: Date.now() };
+      e[hash] = { name: it.name, descriptors: [], rationale: it.rationale, archetype: it.archetype, at: Date.now() };
       const keys = Object.keys(e);
       if (keys.length > this.CACHE_MAX) {       // oldest-first eviction, so the cap can't grow unbounded
         keys.sort((a, b) => (e[a].at || 0) - (e[b].at || 0)).slice(0, keys.length - this.CACHE_MAX).forEach((k) => { delete e[k]; });
@@ -164,7 +164,7 @@ export const pipelineMethods = {
     // persists (round-trips through validation) and enables a future "Another reading". The notice below is
     // reserved for genuine failures, so a standalone build never surfaces it on every generation.
     pal.fallback = !!noLive;
-    this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. Mood: ' + pal.descriptors.join(', ') + '.' }), () => this.persist({ immediate: true }));
+    this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. ' + this.tagsSpoken(pal) + '.' }), () => this.persist({ immediate: true }));
     if (errored) this.showNotice('Named with the local reading. The live reading did not come back.', { sticky: true });
   },
   // ------- live interpretation call (pluggable: proxy endpoint → artifact runtime → none) -------
@@ -258,7 +258,7 @@ export const pipelineMethods = {
     const swatches = s.sw.map((e, i) => { const rgb = this.hexToRgb(e[0]); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { sid: i, hex: e[0], weight: e[1], L: lab.L, a: lab.a, b: lab.b }; });
     // id follows the generated form (hash + variation) rather than a name, so a seed and a re-read
     // of the same image are the same identity in every place identity is compared.
-    return { id: s.hash + '-0', hash: s.hash, variation: 0, imageUrl: null, exampleKey: s.key, time: Date.now() - s.age, name: s.name, descriptors: s.desc, rationale: s.rat, archetype: s.arch, example: true, swatches };
+    return { id: s.hash + '-0', hash: s.hash, variation: 0, imageUrl: null, exampleKey: s.key, time: Date.now() - s.age, name: s.name, descriptors: [], rationale: s.rat, archetype: s.arch, example: true, swatches };
   },
   // THE DESCRIPTORS HERE ARE THE ENGINE'S OWN. They were hand-authored, and every one of them was a
   // measured word — Garnet shipped as Low-lit · Warm · Saturated, which are Lightness, Temperature
@@ -272,35 +272,35 @@ export const pipelineMethods = {
       // 30° — red
       this.seedObj({
         key: 'profile-ember', hash: 'f757f5916e3a11e5', age: 8 * 60e3,
-        name: 'Garnet', desc: ['Smouldering', 'Golden', 'Graphic'], arch: 'graphic',
+        name: 'Garnet', arch: 'graphic',
         rat: 'Warm, saturated reds kept in shadow split by stark contrast. Shadowed but legible.',
         sw: [['#0f0302', .3609], ['#e12409', .2392], ['#f17645', .1454], ['#aa0906', .1416], ['#540604', .1128]],
       }),
       // 44° — orange
       this.seedObj({
         key: 'tulip', hash: 'ff280e7420bfb244', age: 3 * H,
-        name: 'Dry Season', desc: ['Golden', 'Charged', 'Graphic'], arch: 'graphic',
-        rat: 'Saturated reds sitting at mid weight, sitting close together. Even-tempered and workable.',
+        name: 'Dry Season', arch: 'graphic',
+        rat: 'Saturated oranges at mid weight, held close together. Charged, and legible for it.',
         sw: [['#a74b1b', .4919], ['#933913', .3580], ['#ab8766', .0972], ['#d5cdbf', .0449], ['#361905', .0079]],
       }),
       // 58° — terracotta, against the one teal in the set
       this.seedObj({
         key: 'courtyard', hash: '5b217989553d518d', age: 9 * H,
-        name: 'Forged Midfield', desc: ['Nostalgic', 'Still', 'Graphic'], arch: 'graphic',
+        name: 'Forged Midfield', arch: 'graphic',
         rat: 'Warm oranges sitting at mid weight, held to a single note. Plain and unhurried.',
         sw: [['#e2a779', .3819], ['#472f24', .2483], ['#19110e', .2014], ['#685a48', .0961], ['#9c7b60', .0723]],
       }),
       // 82° — gold
       this.seedObj({
         key: 'poppy', hash: '9f0f8f2c2b9d30f2', age: 26 * H,
-        name: 'Scorched Clear Morning', desc: ['Sunlit', 'Nostalgic', 'Graphic'], arch: 'graphic',
+        name: 'Scorched Clear Morning', arch: 'graphic',
         rat: 'Warm yellows lifted high, held to a single note. Airy and unforced.',
         sw: [['#e5e9eb', .5490], ['#664515', .1188], ['#c4b07b', .1132], ['#1e1506', .1109], ['#9d7b38', .1080]],
       }),
       // 128° — chartreuse
       this.seedObj({
         key: 'radish', hash: '4cae3f7a29e8ee24', age: 34 * H,
-        name: 'High Key', desc: ['Weightless', 'Nostalgic', 'Graphic'], arch: 'graphic',
+        name: 'High Key', arch: 'graphic',
         rat: 'Hues held to a single note: low-chroma greens, warm. Washed and quiet.',
         sw: [['#eae8dd', .7766], ['#b8cd79', .0814], ['#6c9429', .0557], ['#3c5e19', .0480], ['#1b2f0c', .0382]],
       }),
@@ -313,21 +313,21 @@ export const pipelineMethods = {
       // steel blue in absolute terms and the motion blur averages the sand toward khaki.
       this.seedObj({
         key: 'stride', hash: 'a05fdec8e9bc48ac', age: 50 * H,
-        name: 'Hard Gunmetal', desc: ['Moody', 'Graphic', 'Clinical'], arch: 'graphic',
+        name: 'Hard Gunmetal', arch: 'graphic',
         rat: 'Achromatic greys kept in shadow, sitting close together. Low and deliberate.',
         sw: [['#130e10', .3243], ['#50595b', .2236], ['#717c78', .1811], ['#3e312b', .1547], ['#a6a188', .1163]],
       }),
       // 238° — blue, carrying its own complement
       this.seedObj({
         key: 'court', hash: '480909a3cd5e5535', age: 74 * H,
-        name: 'Midfield', desc: ['Overcast', 'Still', 'Graphic'], arch: 'graphic',
+        name: 'Midfield', arch: 'graphic',
         rat: 'Hues held to a single note: restrained blues, cool. Restrained and quietly atmospheric.',
         sw: [['#547b95', .4699], ['#0a2944', .1977], ['#678da4', .1890], ['#456b85', .1140], ['#d0d2c6', .0293]],
       }),
       // 263° — periwinkle
       this.seedObj({
         key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 100 * H,
-        name: 'Frozen Slate', desc: ['Overcast', 'Still', 'Accented', 'Graphic'], arch: 'accented',
+        name: 'Frozen Slate', arch: 'accented',
         rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour. Even-tempered and workable.',
         sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
       }),
@@ -605,7 +605,7 @@ export const pipelineMethods = {
       const strip = cardEl.querySelector('[data-strip]');
       this._fromRects = strip ? [...strip.children].map((c) => c.getBoundingClientRect()) : null;
     } else { this._fromRects = null; }
-    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Showing palette: ' + p.name + '. Mood: ' + p.descriptors.join(', ') + '.' });
+    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Showing palette: ' + p.name + '. ' + this.tagsSpoken(p) + '.' });
   },
   onGridKey(e) {
     const nav = ['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Home', 'End'];

@@ -444,74 +444,11 @@ const ADJ = {
   hue: { mono: 'Monochrome', analogous: 'Harmonious', broad: 'Varied', opposed: 'Opposed' },
 };
 
-// ---- the interpretive lexicon --------------------------------------------------------------
-// COVERAGE IS BY CONSTRUCTION, not by accumulation. The previous version was ten independent `if`s,
-// and a mid-lightness, restrained, neutral, gently-contrasted palette matched none of them — which
-// was harmless while the mechanical labels were carrying the descriptor set and is fatal now that
-// they are gone: a palette with no descriptors has no name in the list row, no tags in the card and
-// no `mood` in its metrics.
-//
-// So THREE exhaustive tables, one per register, each a total function of its bands, and their word
-// sets are disjoint. Every palette therefore resolves to exactly three terms before the flags, and
-// the guarantee is provable rather than tested for — which matters because reading-check sweeps
-// 156 synthetic palettes and would only ever find the gaps it happened to land on.
-//
-// `loud` is the chroma question these readings actually turn on — whether the palette has colour to
-// spend — rather than the five-band chroma facet, which is the measurement.
-const LOUD = (A) => A.chroma.band === 'saturated' || A.chroma.band === 'vivid';
-
-function lightRegister(A) {
-  switch (A.lightness.band) {
-    case 'dark': return LOUD(A) ? 'Smouldering' : 'Sombre';
-    case 'low': return LOUD(A) ? 'Smouldering' : 'Moody';
-    case 'mid': return LOUD(A) ? 'Charged' : 'Still';
-    // Sunlit is the warm reading of a lifted palette and the one place two registers cross; it
-    // outranks the neutral word because "high and warm" is a stronger impression than "high".
-    case 'high': return A.temperature.band === 'warm' ? 'Sunlit' : (LOUD(A) ? 'Radiant' : 'Airy');
-    default: return 'Weightless';   // pale
-  }
-}
-function tempRegister(A) {
-  if (A.temperature.band === 'warm') return LOUD(A) ? 'Golden' : 'Nostalgic';
-  if (A.temperature.band === 'cool') return LOUD(A) ? 'Coastal' : 'Overcast';
-  return A.chroma.band === 'grey' ? 'Clinical' : 'Precise';
-}
-// STRUCTURE, from contrast. Contrast is the one axis with no facet in the filter panel, so these
-// four are the only register that carries no risk of reading as a synonym of a dimension the user
-// can also filter by — which is the whole failure this vocabulary change exists to remove.
-function structureRegister(A) {
-  switch (A.contrast.band) {
-    case 'stark': return 'Graphic';
-    case 'structured': return 'Etched';
-    case 'gentle': return 'Composed';
-    default: return 'Becalmed';   // flat — no wind in it, whatever the temperature
-  }
-}
-// The shapes worth naming when they occur, and silent when they do not. Neither is a band: a
-// palette can be temperature-split or carry a single loud accent at any lightness or contrast.
-function moodFlags(A) {
-  const out = [];
-  if (A.temperature.split) out.push('Contrasted');
-  if (A.chroma.spread === 'accented') out.push('Accented');
-  return out;
-}
-
-// DETERMINISTIC, and no longer seeded. Variety was worth having while the tail of the set was a
-// pick from a pool of moods; with three total functions there is nothing to vary that would not
-// make two identical palettes describe themselves differently — the same reason composeUse takes
-// no seed.
-function composeDescriptors(A) {
-  const out = [];
-  const seen = new Set();
-  const add = (w) => { if (w && !seen.has(w.toLowerCase())) { seen.add(w.toLowerCase()); out.push(w); } };
-  // The most distinctive register leads, on the same salience ranking the rationale uses — so the
-  // first word is still the one a person would notice first about this palette rather than a fixed
-  // running order that would put lightness in front of a violently split temperature.
-  const rank = { lightness: lightRegister, temperature: tempRegister, contrast: structureRegister };
-  A.salience.forEach((ax) => { if (rank[ax]) add(rank[ax](A)); });
-  moodFlags(A).forEach(add);
-  return out.slice(0, 4);
-}
+// THE REGISTERS ARE GONE. composeDescriptors and its three register tables (Sombre, Golden,
+// Graphic…) composed free-form mood words here until 13.09.26. A palette's tags are now its two
+// measured classifications — Temperature and Lightness, from src/lib/classify.js — the same values
+// the Library filters on, so the reading engine no longer emits descriptors at all. The name and the
+// rationale are untouched: those are the reading; the tags are the measurement.
 
 // ---- rationale ------------------------------------------------------------------------------
 // Fragments describe only what was measured. The hue noun is the one place a colour gets named,
@@ -636,7 +573,7 @@ function composeArchetype(A) {
 // It reads: <register> <medium>, <capability>. The capability clause is the honest half — a palette
 // with no usable text pairing must not be recommended for interface work, and aaState is the same
 // verdict the AA badge shows, so the two can never disagree.
-export function composeUse(A, aaState) {
+export function composeUse(A, aaState, counts) {
   if (!A) return '';
   const lb = A.lightness.band;                       // dark low mid high pale
   const ground = (lb === 'dark' || lb === 'low') ? 'dark' : (lb === 'pale' || lb === 'high') ? 'light' : 'mid-toned';
@@ -665,9 +602,14 @@ export function composeUse(A, aaState) {
         : 'photography-led layout';
 
   // The limit, stated plainly. This is the clause that stops the line becoming a sales pitch.
-  const capability = aaState === 'flexible' ? 'enough usable pairs to build type on'
-    : aaState === 'limited' ? 'usable for accents rather than body text'
-      : 'no usable text pairing, so treat it as imagery';
+  // The count sits beside the verdict when the caller has it: "enough to build type on" is a
+  // claim about three pairs out of ten, and the reader should meet the three and the ten in the
+  // same sentence rather than one layer down.
+  const tally = counts && typeof counts.aaPairs === 'number' && typeof counts.totalPairs === 'number'
+    ? counts.aaPairs + ' of ' + counts.totalPairs + ' pairs meet AA for normal text' : '';
+  const capability = aaState === 'flexible' ? (tally ? tally + ', enough to build type on' : 'enough usable pairs to build type on')
+    : aaState === 'limited' ? (tally ? tally + ', so use it for accents rather than body text' : 'usable for accents rather than body text')
+      : (tally ? 'no pair meets AA for normal text, so treat it as imagery' : 'no usable text pairing, so treat it as imagery');
 
   return 'Best for ' + ground + ', ' + register + ' ' + medium + '. ' + CAP(capability) + '.';
 }
@@ -676,7 +618,7 @@ export function composeReading(swatches, taken) {
   const A = analysePalette(swatches);
   // Neutral and Even used to sit in here; both are facet values, so the one palette the engine
   // cannot read was also the one palette carrying measured words as descriptors.
-  if (!A) return { name: 'Untitled', descriptors: ['Still', 'Quiet'], rationale: 'A palette with too little signal to read.', archetype: 'neutral' };
+  if (!A) return { name: 'Untitled', descriptors: [], rationale: 'A palette with too little signal to read.', archetype: 'neutral' };
 
   const seed = paletteSeed(swatches);
   // Determinism outranks collision avoidance: the same palette must read the same every time, so a
@@ -702,7 +644,7 @@ export function composeReading(swatches, taken) {
 
   return {
     name: name.trim().slice(0, 42),
-    descriptors: composeDescriptors(A),
+    descriptors: [],   // tags are computed from the swatches wherever the palette is shown
     rationale: composeRationale(A, rng(seed ^ 0x85ebca6b)).trim().slice(0, 240),
     archetype: composeArchetype(A),
   };

@@ -294,7 +294,33 @@ export const miscMethods = {
     this._czInit = true;
     lightbox.setAttribute('role', 'dialog'); lightbox.setAttribute('aria-modal', 'true'); lightbox.setAttribute('aria-hidden', 'true'); lightbox.setAttribute('aria-label', 'Reference image, enlarged'); lightbox.setAttribute('tabindex', '-1');
     const backdropColor = 'rgba(0,0,0,0.9)', transparent = 'rgba(0,0,0,0)';
-    const S = { open: false, anim: false, clone: null, srcDoc: null, scrollY: 0, trigger: null };
+    /* A WAY OUT YOU CAN SEE. The overlay closed on a click anywhere and on Escape, and neither is
+       something a control announces: a keyboard user arrived in a dialog with no button in it, and
+       the next Tab left it for the theme switch behind. This is the copy dialog's 32px Close, in
+       the overlay's own colours — white on the black backdrop, since the surface tokens read against
+       the page, not against this. It is also the one thing focus rests on while the image is up:
+       there is nothing else here to tab to, so Tab stays put rather than wrapping around a list of
+       one. A click on it bubbles to the overlay, whose click is already the close. */
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button'; closeBtn.setAttribute('data-ix', 'press'); closeBtn.setAttribute('data-focus', 'chrome');
+    closeBtn.setAttribute('aria-label', 'Close the enlarged image'); closeBtn.title = 'Close';
+    closeBtn.style.cssText = 'position:absolute;top:24px;right:24px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(255,255,255,.45);border-radius:var(--radius-pill);padding:0;color:#fff;cursor:pointer';
+    closeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block;flex:none"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>';
+    const S = { open: false, anim: false, clone: null, srcDoc: null, scrollY: 0, trigger: null, inerted: [] };
+    /* THE PAGE BEHIND IT LEAVES THE TREE. aria-modal is a request; inert is the guarantee, and it is
+       what the other dialogs get through _bgInert. That helper inerts the four landmarks inside
+       [data-app], which is the right set for a dialog rendered among them and the wrong one here:
+       the overlay is a direct child of [data-app], so its siblings are the whole rest of the app —
+       the chrome bar the Tab was escaping to included. Only what this call inerted is lifted on
+       close, so a guard that was already up (the landing's, a wipe's) is left exactly as it was. */
+    const guardOn = () => {
+      const app = document.querySelector('[data-app]'); if (!app) return;
+      [].forEach.call(app.children, (el) => {
+        if (el === lightbox || el.matches('[role="status"],[data-load-wrap],[data-wipe]') || el.hasAttribute('inert')) return;
+        try { el.setAttribute('inert', ''); S.inerted.push(el); } catch (e) { }
+      });
+    };
+    const guardOff = () => { S.inerted.forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); S.inerted = []; };
     const computeFlip = (src, dst) => ({ scaleX: src.width / dst.width, scaleY: src.height / dst.height, tx: (src.left + src.width / 2) - (dst.left + dst.width / 2), ty: (src.top + src.height / 2) - (dst.top + dst.height / 2) });
     const open = (img) => {
       const g = window.gsap;
@@ -320,9 +346,14 @@ export const miscMethods = {
       S.clone.style.width = w + 'px'; S.clone.style.height = h + 'px'; S.clone.style.display = 'block';
       S.clone.style.objectFit = srcComputed.objectFit; S.clone.style.objectPosition = srcComputed.objectPosition;
       lightbox.appendChild(S.clone);
+      lightbox.appendChild(closeBtn);
       lightbox.setAttribute('aria-hidden', 'false');
       document.documentElement.style.cursor = 'zoom-out';
-      try { lightbox.focus({ preventScroll: true }); } catch (e) { }
+      guardOn();
+      // Keys are owned from the first frame, not from the end of the arrival: a Tab pressed during
+      // the 0.55s flip would otherwise still walk out of the dialog.
+      document.addEventListener('keydown', onKeyDown, true);
+      try { closeBtn.focus({ preventScroll: true }); } catch (e) { }
       if (this._reduce || !g) { lightbox.style.backgroundColor = backdropColor; S.open = true; attach(); return; }
       S.anim = true;
       const dstRect = S.clone.getBoundingClientRect();
@@ -335,6 +366,7 @@ export const miscMethods = {
       lightbox.style.display = 'none'; lightbox.style.backgroundColor = '#000000e6';
       if (S.clone && S.clone.parentNode) S.clone.parentNode.removeChild(S.clone);
       S.clone = null; lightbox.setAttribute('aria-hidden', 'true'); S.srcDoc = null; S.open = false; S.anim = false;
+      guardOff();   // before focus returns: focus() on a still-inert trigger is a silent no-op
       if (S.trigger && S.trigger.isConnected) try { S.trigger.focus({ preventScroll: true }); } catch (e) { }
       S.trigger = null;
     };
@@ -359,9 +391,13 @@ export const miscMethods = {
       g.to(lightbox, { backgroundColor: transparent, duration: 0.3, ease: 'power2.in', delay: 0.18 });
     };
     const onOverlayClick = () => close();
-    const onKeyDown = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+      if (e.key === 'Tab') { e.preventDefault(); try { closeBtn.focus({ preventScroll: true }); } catch (err) { } }
+    };
     const onScroll = () => { if (Math.abs(window.scrollY - S.scrollY) < 2) return; close(); };
-    const attach = () => { lightbox.addEventListener('click', onOverlayClick); document.addEventListener('keydown', onKeyDown, true); window.addEventListener('scroll', onScroll, { passive: true }); };
+    // keydown is attached in open(), from the first frame; click and scroll wait for the arrival.
+    const attach = () => { lightbox.addEventListener('click', onOverlayClick); window.addEventListener('scroll', onScroll, { passive: true }); };
     const detach = () => { lightbox.removeEventListener('click', onOverlayClick); document.removeEventListener('keydown', onKeyDown, true); window.removeEventListener('scroll', onScroll); };
     this._czDocClick = (e) => {
       const trigger = e.target.closest && e.target.closest('[data-click-zoom]');

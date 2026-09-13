@@ -341,8 +341,12 @@ export const renderValsMethods = {
                · tabular-nums, because these are a right-aligned column of changing digits and
                  proportional figures make the column ragged. About's key has carried it all along.
              --track-flat rather than a raw .06em: the tracking that went with the uppercase token
-             does not belong on digits, and the project has a token for flat. */
-          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
+             does not belong on digits, and the project has a token for flat.
+             --fs-title, not --fs-body (13.09.26, by request): the share is the first thing a swatch
+             says and 13px read as a caption. 24 is the section-heading size, still medium weight,
+             and the overlay's swatches take the same size. The phone story's weights key stays at
+             --fs-lead: its percentage column is 40px wide and 24px digits do not fit it. */
+          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-title)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '14px 14px 0', position: 'relative', zIndex: 2 },
           valuesWrap: { display: 'flex', flexDirection: 'column', width: '100%', position: 'relative', zIndex: 2 },
         };
       });
@@ -351,7 +355,7 @@ export const renderValsMethods = {
       // 156×104 (same 3:2), sized to sit level with the metadata columns it now shares a row
       // with — the subtle enlargement the move down bought; click-to-zoom still carries the
       // full-size view, so the thumbnail only has to identify, not exhibit
-      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in' } }, React.createElement('img', { src: _ref, alt: 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', border: '1px solid var(--line-strong)' } })) : null;
+      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', border: '1px solid var(--line-strong)' } })) : null;
       // The metadata cluster — restored to the detail pane. It used to live ONLY in the list's
       // inline expansion; Phase 1 removed that expansion on the contract that this panel is the one
       // detail surface, but these five values (hue/chroma/lightness/temperature/archetype) were
@@ -427,8 +431,8 @@ export const renderValsMethods = {
       // and at the common count of three it was hiding exactly one, which costs a press, a state,
       // a width animation and a second row of motion to save 40px of a row that had 400 to spare.
       // A disclosure has to hide enough to be worth opening; this one never could.
-      const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState);
-      const allTraits = s.current.descriptors || [];
+      const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState, curMet);
+      const allTraits = this.paletteTags(s.current);
       result = {
         name: s.current.name, rationale: s.current.rationale, descriptors: allTraits, bands,
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
@@ -457,7 +461,7 @@ export const renderValsMethods = {
     // The readout is one string in two places: the tile's accessible name carries it, so a keyboard
     // reader has the whole card before opening anything, and the open panel is labelled with it, so
     // opening the card changes what is SEEN without changing what is said.
-    const readout = (p, met) => 'Mood: ' + p.descriptors.join(', ')
+    const readout = (p, met) => this.tagsSpoken(p)
       + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase()
       + '. ' + met.aaPairs + ' of ' + met.totalPairs
       + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1'
@@ -556,10 +560,15 @@ export const renderValsMethods = {
         // see AppView), applying itself through the SAME setActiveTag the facet panel uses. The tag
         // matching the active filter steps UP — full ink and medium weight, aria-pressed true — so
         // the filter's effect is legible in the rows themselves, by weight as well as colour.
-        descriptorParts: p.descriptors.map((d) => {
-          const key = d.toLowerCase(); const on = (s.activeTags || []).indexOf(key) >= 0;
-          return { text: d, on, pressed: on ? 'true' : 'false', aria: (on ? 'Remove the ' + key + ' filter' : 'Filter to ' + key + ' palettes'), onClick: () => this.setActiveTag(key) };
-        }),
+        // The two tags, each wired to ITS OWN facet group — temperature to activeTemp, lightness to
+        // activeLight — so a tag pressed in a row applies exactly the filter the panel would.
+        descriptorParts: (() => {
+          const tags = this.paletteTags(p);
+          return [['activeTemp', met.temp.toLowerCase()], ['activeLight', met.lightBand]].map(([key, band], i) => {
+            const on = (s[key] || []).indexOf(band) >= 0;
+            return { text: tags[i], on, pressed: on ? 'true' : 'false', aria: (on ? 'Remove the ' + tags[i].toLowerCase() + ' filter' : 'Filter to ' + tags[i].toLowerCase() + ' palettes'), onClick: () => this.setFacet(key, band) };
+          });
+        })(),
         tagOff: { color: 'var(--on-surface-muted)', fontWeight: 400 },
         tagOn: { color: 'var(--on-surface)', fontWeight: 500 },
         // the tag buttons ride ABOVE the row's stretched activation surface; everything else is
@@ -581,7 +590,7 @@ export const renderValsMethods = {
         // each column carries ONLY its own measurement: pairs here, ratio there
         contrastValueText: met.contrastMax.toFixed(1) + ':1',
         aaCell, metricValue, contrastCell, timeCell, metricValueInv, contrastCellInv, timeCellInv,
-        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + 'Mood: ' + p.descriptors.join(', ') + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
+        aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + this.tagsSpoken(p) + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
         onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
         deleteAria: 'Delete ' + p.name,
@@ -664,7 +673,7 @@ export const renderValsMethods = {
         { label: 'Generated', text: this.absTime(p.time) },
       ];
       return {
-        id: p.id, name: p.name, descriptors: p.descriptors.join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
+        id: p.id, name: p.name, descriptors: this.paletteTags(p).join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
         aria: itemAria(p, met), readout: readout(p, met),
         // The row's two identity labels, which the card was missing: EXAMPLE marks the seeded
         // palettes, and the current palette is named rather than only dotted. An unlabelled 7px
@@ -785,7 +794,7 @@ export const renderValsMethods = {
           style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
           // The detail overlay's copy of the band label — same decision as the result stage's, see
           // the note there.
-          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '16px 14px 0' },
+          weightStyle: { fontFamily: sans, fontSize: 'var(--fs-title)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '16px 14px 0' },
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
           infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
@@ -794,7 +803,7 @@ export const renderValsMethods = {
         };
       });
       overlay = {
-        name: p.name, rationale: p.rationale, descriptors: p.descriptors, bands: obands,
+        name: p.name, rationale: p.rationale, descriptors: this.paletteTags(p), bands: obands,
         time: this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
@@ -806,7 +815,7 @@ export const renderValsMethods = {
         // already filed read as a second copy.
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
-        assignLabel: 'Add to Project',
+        assignLabel: 'Add to projects',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
@@ -1492,9 +1501,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            the first-arrival branch — one is a sentence about the viewport, the other is a verb. */
         beginLabel: s.storyCaseId ? 'Explore ' + p.name : 'Explore an Example',
         image: this.dispUrl(p), hasImage: this.hasImg(p),
-        descriptors: p.descriptors || [],
+        descriptors: this.paletteTags(p),
         rationale: p.rationale || '',
-        useLine: composeUse(an, met.aaState),
+        useLine: composeUse(an, met.aaState, met),
         swatches: swatchRows,
         /* The bar is one role="img", so it needs one sentence describing the whole figure — /about's
            weight bar carries exactly this ("Dusk Slate by area: darkest green 44.1 per cent, …").
@@ -1506,6 +1515,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         litHex: selected ? selected.hex : '',
         litPct: selected ? selected.pct : '',
         anyRegion: swatchRows.some((r) => r.hasRegion),
+        allRegion: swatchRows.length > 0 && swatchRows.every((r) => r.hasRegion),
 
         /* CHAPTER 5 — three readings, one palette. Segmented buttons carrying aria-pressed, not a
            tablist: there is no tab primitive in this codebase and a control that announces itself
@@ -1602,11 +1612,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           const t = x.swatches.reduce((a, b) => a + (b.weight || 0), 0) || 1;
           return {
             key: x.id, name: x.name,
-            note: (x.descriptors || []).slice(0, 2).join(' · '),
+            note: this.paletteTags(x).join(' · '),
             image: this.dispUrl(x), hasImage: this.hasImg(x),
             strip: x.swatches.map((b, i) => ({ key: i, style: { flex: String((b.weight || 0) / t), background: b.hex } })),
             onOpen: () => this.setStoryCase(x.id),
-            aria: 'Read ' + x.name + '. ' + (x.descriptors || []).slice(0, 2).join(', '),
+            aria: 'Read ' + x.name + '. ' + this.tagsSpoken(x),
           };
         }),
 
@@ -1625,7 +1635,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           cases: this._examples().map((x) => ({
             key: x.id, id: x.id, name: x.name,
             image: this.dispUrl(x), hasImage: this.hasImg(x),
-            note: (x.descriptors || []).slice(0, 2).join(' · '),
+            note: this.paletteTags(x).join(' · '),
           })),
           onChoose: (i) => { const ex = this._examples()[i]; if (ex) this.chooseStoryCase(ex.id); },
           onClose: () => this.closeStoryPicker(),
@@ -1678,7 +1688,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
 
            No em dash. The only dash left in product copy is the EN dash in "1\u20132 colour pairs"
            (the contrast readouts), which is a numeric range and the one place it is correct. */
-        handoffLine: 'Atmos opens in a window 1024 px or wider. Explore another palette here, or open Atmos on your computer to create your own.',
+        handoffLine: 'Atmos opens in a window 1024 px or wider. Explore another palette here, or open Atmos on your computer to read a palette from an image of your own.',
       };
     }
 
@@ -1693,10 +1703,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // Composed once. analysePalette walks every swatch and paletteMetrics walks every PAIR of
       // them, so asking twice to fill a value and its own emptiness flag is the whole analysis run
       // twice for one boolean.
-      const msUse = composeUse(analysePalette(p.swatches), this.paletteMetrics(p).aaState);
+      const msUse = composeUse(analysePalette(p.swatches), this.paletteMetrics(p).aaState, this.paletteMetrics(p));
       mobileShare = {
         name: p.name,
-        descriptors: p.descriptors || [],
+        descriptors: this.paletteTags(p),
         rationale: p.rationale || '',
         hasRationale: !!(p.rationale || '').trim(),
         /* WHAT IT IS FOR, the second half of the desktop's reading. The result stage sets these two
@@ -1770,13 +1780,13 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           return {
             key: p.id,
             name: p.name,
-            traits: (p.descriptors || []).slice(0, 2),
+            traits: this.paletteTags(p),
             onOpen: () => this.openExampleById(p.id),
             // The photograph, resolved the same way the palette view resolves its own: a seeded
             // example's key against the bundled map, '' for anything else. The list was showing the
             // swatch strip alone, which is the palette without the thing it was read FROM.
             image: this.dispUrl(p), hasImage: this.hasImg(p),
-            aria: 'Open ' + p.name + '. ' + (p.descriptors || []).slice(0, 3).join(', ') + '.',
+            aria: 'Open ' + p.name + '. ' + this.tagsSpoken(p) + '.',
             strip: p.swatches.map((b, i) => ({
               key: i,
               style: { flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '2px', background: b.hex },
@@ -1862,9 +1872,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          the same surface rather than two that resemble each other. */
       copyItemStyle: itemBase,
       copyMenuOpen: !!s.copyMenuOpen,
-      toggleCopyMenu: () => this.toggleTip('copyMenuOpen', '[data-copy-layer]'),
-      closeCopyMenu: () => { this.closeTip('copyMenuOpen', '[data-copy-layer]'); this._focusCopyTrigger(); },
-      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('copyMenuOpen', '[data-copy-layer]'); this._focusCopyTrigger(); } },
+      toggleCopyMenu: () => { if (this.state.copyMenuOpen) this.closeCopyMenu(); else this.openCopyMenu(); },
+      closeCopyMenu: () => this.closeCopyMenu(),
+      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeCopyMenu(); } else this.trapFocusIn('[data-copy-dialog]', e); },
       copyDone: s.copied === 'pal-hex' ? 'Hex list' : s.copied === 'pal-css' ? 'CSS variables' : '',
       // Neither closes the dialog any more, and neither moves focus — see the note on the overlay's
       // pair above. The row reports; the sheet is left where the reader put it.
@@ -2478,7 +2488,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       assignDisabled: !filedCur,
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: 'Add to Project',
+      assignLabel: 'Add to projects',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
       // React drops a value when a rerender mixes the `border` shorthand with one of its parts,

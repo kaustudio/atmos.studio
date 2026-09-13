@@ -54,7 +54,7 @@ export function encodeShare(pal) {
   const payload = {
     v: VERSION,
     n: String(pal.name || '').slice(0, MAX_NAME),
-    d: (Array.isArray(pal.descriptors) ? pal.descriptors : []).filter((x) => typeof x === 'string').slice(0, MAX_DESCRIPTORS),
+    d: [],   // tags are computed from the swatches on arrival (src/lib/classify.js); older links still carry words here, which are ignored
     r: String(pal.rationale || '').slice(0, MAX_RATIONALE),
     // [hex-without-hash, weight as whole percent] — L/a/b are recomputed from the hex on the way
     // back in, so shipping them would only be a chance for the two to disagree.
@@ -120,7 +120,7 @@ export function decodeShare(hash) {
   return {
     // no id/time from the wire — the receiving app mints those if the palette is ever saved
     name: (typeof obj.n === 'string' && obj.n.trim() ? obj.n.trim() : 'Shared palette').slice(0, MAX_NAME),
-    descriptors: descriptors.length ? descriptors : ['Shared'],
+    descriptors: [],   // `d` from the wire is never shown: the tags are recomputed from the swatches
     rationale: (typeof obj.r === 'string' ? obj.r.trim() : '').slice(0, MAX_RATIONALE),
     archetype: 'shared',
     // A shared palette carries no reference image by construction. Pinning this to null (rather than

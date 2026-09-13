@@ -2,6 +2,7 @@
 // value readout (effect019), the result reveal (bottom-to-top band wipe, masked line reveals),
 // theme toggle, and the uppercase-label style builders.
 import { syncThemeColor } from '../../lib/themeColor.js';
+import { paletteTags as tagsFor, temperatureBand, lightnessBand, TEMP_LABEL } from '../../lib/classify.js';
 
 export const motionMethods = {
   // ---- motion tokens: one shared set, scaled by hierarchy ----
@@ -281,13 +282,20 @@ export const motionMethods = {
   },
 
   // ===== LIST view: additive row activation (effect035) + per-row value readout (effect019) =====
+  /* THE PALETTE'S TAGS. Two, always, in this order: temperature, then lightness — the same two
+     measured facets the Library filters on, from the same functions, so what a chip says and which
+     filter group the palette answers to are one fact. Stored descriptors (the old free-form mood
+     words) are never read for this: a palette's tags are recomputed from its swatches wherever it
+     is shown, which is what lets an archive written years ago carry the same tags as one made now. */
+  paletteTags(p) { return tagsFor(p && p.swatches); },
+  // The same two words for an accessible name: "Warm, Dark".
+  tagsSpoken(p) { return this.paletteTags(p).join(', '); },
   paletteMetrics(p) {
     const sw = p.swatches, n = sw.length;
     const dom = sw.reduce((a, b) => b.weight > a.weight ? b : a, sw[0]);
     let hue = Math.atan2(dom.b, dom.a) * 180 / Math.PI; if (hue < 0) hue += 360;
     const chroma = Math.sqrt(dom.a * dom.a + dom.b * dom.b);
     const Ls = sw.map((s) => s.L), lMin = Math.min.apply(null, Ls), lMax = Math.max.apply(null, Ls);
-    const avgA = sw.reduce((s, x) => s + x.a, 0) / n, avgB = sw.reduce((s, x) => s + x.b, 0) / n;
     const lums = sw.map((s) => this.relLum(s.hex));
     // The winning pair is captured in the loop that was already walking every pair for cMax, so
     // every surface that asks for metrics gets "use this on that" for nothing.
@@ -302,12 +310,14 @@ export const motionMethods = {
     const total = n * (n - 1) / 2;
     return {
       hue: Math.round(hue), chroma, lMin: Math.round(lMin * 100), lMax: Math.round(lMax * 100),
-      temp: (avgA + avgB) > 0.008 ? 'Warm' : (avgA + avgB) < -0.008 ? 'Cool' : 'Neutral',
+      // Both bands come from src/lib/classify.js, which is also what the palette's tags read — so
+      // the Temperature and Lightness groups and the chips can never disagree about a palette.
+      temp: TEMP_LABEL[temperatureBand(sw)],
       // Three buckets, not the reading engine's five. A filter is a way of narrowing a shelf, and
       // five lightness steps split it so finely that most choices return almost everything. Mean
       // weighted by area, so a palette is dark when most of its SURFACE is dark rather than when it
       // merely contains something dark — the same test the role heuristic uses.
-      lightBand: (() => { const t = sw.reduce((a, x) => a + (x.weight || 0), 0) || 1; const m = sw.reduce((a, x) => a + x.L * ((x.weight || 0) / t), 0); return m < 0.42 ? 'dark' : m > 0.68 ? 'light' : 'balanced'; })(),
+      lightBand: lightnessBand(sw),
       contrastMax: cMax, aaPairs: aa, totalPairs: total,
       // null when the palette has one swatch and therefore no pair at all.
       bestPair: n > 1 ? { fg: sw[dark].hex, bg: sw[light].hex, ratio: cMax } : null,

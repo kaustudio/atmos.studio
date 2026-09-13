@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "updated": "2026-07-31",
+  "version": 3,
+  "updated": "2026-09-13",
   "about": [
     "The single source of truth for Atmos Gallery's descriptive vocabulary.",
     "",
@@ -23,24 +23,37 @@
     "measured axes, so Warm was a Temperature facet value AND an interpretive tag, and the filter",
     "panel offered the same visible word in two dimensions with two meanings. src/lib/taxonomy.js is",
     "the runtime half of this artifact now — the local engine composes from interpretive registers",
-    "only, the live path filters what a model returns, and stored archives are filtered on read."
+    "only, the live path filters what a model returns, and stored archives are filtered on read.",
+    "",
+    "VERSION 3 MAKES THE TAGS THE FACETS. A palette's tags are exactly two of its facet values —",
+    "Temperature (Warm / Cool / Neutral) then Lightness (Dark / Balanced / Light) — computed from the",
+    "swatches by src/lib/classify.js, which is also what the Manage Library filter reads. No path",
+    "composes free-form mood words any more: the local engine, the live reading and the seeds all",
+    "carry an empty descriptor list, and stored descriptors are never displayed. The interpretive",
+    "registers below are kept as a record under tags.retiredAtV3. Note that these two tags use the",
+    "Library's own thresholds (mean a+b against ±0.008; area-weighted mean L against 0.42 / 0.68),",
+    "not the reading engine's warmth and five-step lightness facets recorded under `facets`."
   ],
   "sources": {
     "generator": {
       "file": "src/lib/reading.js",
-      "note": "lightRegister/tempRegister/structureRegister + moodFlags(). Three exhaustive tables with disjoint word sets, so every palette resolves to exactly three terms before flags — the guarantee is by construction, not by test. CLOSED vocabulary: the local reading cannot mint a term at runtime. The ADJ table survives for the RATIONALE, which is where an axis word belongs."
+      "note": "composeReading() returns descriptors: []. Tags are not composed; see src/lib/classify.js."
     },
     "seeds": {
       "file": "src/app/methods/pipeline.js",
-      "note": "makeSeed() — eight example palettes. Their descriptors were hand-authored measured words until version 2; each is now exactly what composeReading() returns for that swatch set, so a seed and a freshly read palette describe themselves in one vocabulary."
+      "note": "makeSeed() — eight example palettes. No hand-authored tags since version 3; each seed's tags are computed from its swatches like every other palette's."
     },
     "live": {
       "file": "src/lib/interpret.js",
-      "note": "The hosted-model path CAN return free text. It is tree-shaken out of the public build (README accuracy note 1), so in the shipped app the vocabulary is closed. Step B's lexicon constraint is what keeps it closed if that path ever ships."
+      "note": "The hosted-model path returns a name, a rationale and an archetype; any descriptors it returns are discarded by parseInterp."
     },
     "enforcement": {
       "file": "src/lib/taxonomy.js",
       "note": "RETIRED_DESCRIPTORS + withoutRetired(). Read by interpret.js (live path) and by persistence.js validateFeed (every stored record, backup file and cross-tab sync). taxonomy-check.mjs asserts it matches the `retired` block below in both directions."
+    },
+    "classification": {
+      "file": "src/lib/classify.js",
+      "note": "temperatureBand() and lightnessBand(): the single source of truth for both the Library's Temperature and Lightness facets (paletteMetrics reads them) and every palette's two tags (paletteTags)."
     }
   },
   "measures": {
@@ -261,84 +274,92 @@
   },
   "tags": {
     "note": [
-      "Interpretive terms only: what the palette is like, never what it measures. Sparse and",
-      "overlapping by design — a tag describes, it does not partition.",
-      "",
-      "The generator's set is a CLOSED lexicon and is exhaustive by construction: three registers,",
-      "disjoint word sets, one term each, plus up to two flags. Every term below is reachable and",
-      "every palette reaches three of them."
+      "Since version 3 the tags are the two measured classifications, in a fixed order:",
+      "Temperature, then Lightness. They partition the archive exactly as the filter's groups do,",
+      "because they are the filter's groups."
     ],
-    "registers": {
-      "light": {
-        "axis": "lightness x chroma loudness",
+    "facets": [
+      "temperature",
+      "lightness"
+    ],
+    "order": [
+      "Warm | Cool | Neutral",
+      "Dark | Balanced | Light"
+    ],
+    "retiredAtV3": {
+      "note": "The interpretive lexicon versions 1 and 2 composed. Nothing emits these any more; kept so the record of what a stored archive may contain stays readable.",
+      "registers": {
+        "light": {
+          "axis": "lightness x chroma loudness",
+          "terms": [
+            "Sombre",
+            "Smouldering",
+            "Moody",
+            "Still",
+            "Charged",
+            "Sunlit",
+            "Radiant",
+            "Airy",
+            "Weightless"
+          ]
+        },
+        "temperature": {
+          "axis": "temperature x chroma loudness",
+          "terms": [
+            "Golden",
+            "Nostalgic",
+            "Coastal",
+            "Overcast",
+            "Clinical",
+            "Precise"
+          ]
+        },
+        "structure": {
+          "axis": "contrast",
+          "note": "Contrast has no facet in the filter panel, so this register cannot read as a synonym of a dimension the user can also filter by.",
+          "terms": [
+            "Graphic",
+            "Etched",
+            "Composed",
+            "Becalmed"
+          ]
+        }
+      },
+      "flags": {
+        "note": "Named when they occur, silent when they do not.",
         "terms": [
-          "Sombre",
-          "Smouldering",
-          "Moody",
-          "Still",
+          "Contrasted",
+          "Accented"
+        ]
+      },
+      "addedAtV2": {
+        "note": "New terms, minted to close the coverage gaps the old ten-rule moodAdj() left. Nothing else was invented: the rest of the lexicon is version 1's, redistributed into registers.",
+        "terms": [
           "Charged",
-          "Sunlit",
           "Radiant",
           "Airy",
-          "Weightless"
+          "Etched",
+          "Composed"
         ]
       },
-      "temperature": {
-        "axis": "temperature x chroma loudness",
+      "retiredAtV2": {
+        "note": "Interpretive terms that no rule reaches any more. Not in `retired` below: they were never facet duplicates, they simply lost their branch.",
         "terms": [
-          "Golden",
-          "Nostalgic",
+          "Quiet"
+        ]
+      },
+      "fromSeeds": {
+        "note": "Version 1 listed these as seed-only. The registers emit all but Nostalgic's neighbours now, so the seeds no longer carry any term the generator cannot also produce.",
+        "terms": [
           "Coastal",
           "Overcast",
+          "Still",
+          "Nostalgic",
           "Clinical",
-          "Precise"
-        ]
-      },
-      "structure": {
-        "axis": "contrast",
-        "note": "Contrast has no facet in the filter panel, so this register cannot read as a synonym of a dimension the user can also filter by.",
-        "terms": [
-          "Graphic",
-          "Etched",
-          "Composed",
-          "Becalmed"
+          "Precise",
+          "Moody"
         ]
       }
-    },
-    "flags": {
-      "note": "Named when they occur, silent when they do not.",
-      "terms": [
-        "Contrasted",
-        "Accented"
-      ]
-    },
-    "addedAtV2": {
-      "note": "New terms, minted to close the coverage gaps the old ten-rule moodAdj() left. Nothing else was invented: the rest of the lexicon is version 1's, redistributed into registers.",
-      "terms": [
-        "Charged",
-        "Radiant",
-        "Airy",
-        "Etched",
-        "Composed"
-      ]
-    },
-    "retiredAtV2": {
-      "note": "Interpretive terms that no rule reaches any more. Not in `retired` below: they were never facet duplicates, they simply lost their branch.",
-      "terms": [
-        "Quiet"
-      ]
-    },
-    "fromSeeds": {
-      "note": "Version 1 listed these as seed-only. The registers emit all but Nostalgic's neighbours now, so the seeds no longer carry any term the generator cannot also produce.",
-      "terms": [
-        "Coastal",
-        "Overcast",
-        "Still",
-        "Nostalgic",
-        "Clinical",
-        "Precise",
-        "Moody"
-      ]
     }
   },
   "retired": {

@@ -20,6 +20,7 @@ import { readFileSync } from 'fs';
 // module can only be checked against that module.
 import { RETIRED_DESCRIPTORS } from '../src/lib/taxonomy.js';
 import { composeReading } from '../src/lib/reading.js';
+import { paletteTags, paletteBands, TEMP_LABEL, LIGHT_LABEL } from '../src/lib/classify.js';
 
 const vocab = JSON.parse(readFileSync(new URL('../taxonomy/vocabulary.json', import.meta.url)));
 let failures = 0;
@@ -112,10 +113,9 @@ console.log('\nCLASSIFICATION — no term is both a facet value and a tag');
 const facetLabels = new Set();
 Object.values(vocab.facets).forEach((f) => f.buckets.forEach((b) => facetLabels.add(b.label.toLowerCase())));
 // The declared lexicon: every term any register or flag is allowed to emit.
-const tagList = [
-  ...Object.values(vocab.tags.registers).flatMap((r) => r.terms),
-  ...vocab.tags.flags.terms,
-];
+// Version 3: tags ARE facet values — exactly Temperature and Lightness — so the lexicon of
+// interpretive tags is empty and the retired registers are kept in the artifact as a record.
+const tagList = [];
 const collisions = tagList.filter((t) => facetLabels.has(t.toLowerCase()));
 if (collisions.length) fail('terms in both systems: ' + collisions.join(', '));
 else ok(facetLabels.size + ' facet values, ' + tagList.length + ' tags, zero overlap');
@@ -127,10 +127,15 @@ else ok(Object.keys(retiredAll).length + ' retired terms, none still tagged');
 
 // The registers are only exhaustive if their word sets are disjoint — two registers sharing a term
 // would let one palette resolve to two descriptors and another to three.
-const regTerms = Object.values(vocab.tags.registers).flatMap((r) => r.terms);
+const regTerms = Object.values(vocab.tags.retiredAtV3.registers).flatMap((r) => r.terms);
 const dupTerm = regTerms.filter((t, i) => regTerms.indexOf(t) !== i);
-if (dupTerm.length) fail('term in two registers: ' + [...new Set(dupTerm)].join(', '));
-else ok(Object.keys(vocab.tags.registers).length + ' registers, ' + regTerms.length + ' terms, all disjoint');
+if (dupTerm.length) fail('term in two retired registers: ' + [...new Set(dupTerm)].join(', '));
+else ok(Object.keys(vocab.tags.retiredAtV3.registers).length + ' retired registers, ' + regTerms.length + ' terms, all disjoint');
+// The tag facets named by the artifact must be real facets with the labels the app shows.
+const tagFacets = vocab.tags.facets;
+const facetOk = tagFacets.every((f) => vocab.facets[f]);
+if (!facetOk) fail('tags.facets names a dimension the artifact does not define');
+else ok('tags are the ' + tagFacets.join(' + ') + ' facets, in that order');
 
 // ---------- 2b · the artifact and the runtime agree on what is retired ----------
 // Both directions. A term dropped from src/lib/taxonomy.js would silently start reappearing in the
@@ -195,15 +200,11 @@ for (const d of dims) {
   console.log('    ' + d.padEnd(12) + seen[d].size + '/' + total + ' buckets reached: ' + [...seen[d]].join(', '));
 }
 
-// ---------- 5 · the generator stays inside the declared lexicon ----------
-// The claim under test is `sources.generator`: CLOSED vocabulary, exhaustive by construction. Three
-// ways it can break, and all three are silent in the product — a term the artifact never declared,
-// a retired term coming back, or a palette resolving to fewer than three descriptors (which leaves a
-// row with no tags and a metrics `mood` of '').
-console.log('\nGENERATOR — descriptors stay inside the declared lexicon');
-const declared = new Set(tagList.map((t) => t.toLowerCase()));
-const emitted = new Set();
-let thin = 0, undeclared = [], regressed = [];
+// ---------- 5 · the generator emits no descriptors; tags come from classify.js ----------
+// The claim under test: a reading is name + rationale + archetype, and every palette's TAGS are the
+// two facet values the Library filters on — computed from the swatches, identical for identical data.
+console.log('\nGENERATOR — no free-form descriptors; tags equal the filter facets');
+let leaked = 0, mismatched = 0, unstable = 0;
 seed = 777;
 for (let i = 0; i < N; i++) {
   const n = 2 + Math.floor(rnd() * 6);
@@ -212,24 +213,19 @@ for (let i = 0; i < N; i++) {
   const tot = raw.reduce((a, b) => a + b, 0);
   const swatches = hexes.map((h, k) => { const [r, g, b] = hexToRgb(h); const lab = rgb2oklab(r / 255, g / 255, b / 255); return { hex: h, weight: raw[k] / tot, L: lab.L, a: lab.a, b: lab.b }; });
   const desc = composeReading(swatches, []).descriptors || [];
-  if (desc.length < 3) thin++;
-  desc.forEach((d) => {
-    const k = d.toLowerCase();
-    emitted.add(k);
-    if (!declared.has(k)) undeclared.push(d);
-    if (runtimeRetired.has(k)) regressed.push(d);
-  });
+  if (desc.length) leaked++;
+  const tags = paletteTags(swatches), bands = paletteBands(swatches);
+  if (tags.length !== 2 || tags[0] !== TEMP_LABEL[bands.temp] || tags[1] !== LIGHT_LABEL[bands.light]) mismatched++;
+  // a copy with the swatches in another order, and with L/a/b re-derived, must tag the same
+  const copy = swatches.slice().reverse().map((x) => ({ ...x }));
+  if (paletteTags(copy).join('|') !== tags.join('|')) unstable++;
 }
-if (thin) fail(thin + ' of ' + N + ' palettes resolved to fewer than three descriptors');
-else ok(N + ' random palettes, every one resolved to three or more descriptors');
-if (undeclared.length) fail('emitted but not declared in the artifact: ' + [...new Set(undeclared)].join(', '));
-else ok(emitted.size + ' distinct terms emitted, all declared');
-if (regressed.length) fail('emitted a retired term: ' + [...new Set(regressed)].join(', '));
-else ok('no retired term reachable from the generator');
-// Unreachable terms are not a failure — the flags are rare by design — but they are worth naming,
-// because a term nothing can produce is a term the vocabulary only claims to have.
-const unreachable = [...declared].filter((t) => !emitted.has(t));
-if (unreachable.length) console.log('    unreached in this sweep: ' + unreachable.join(', '));
+if (leaked) fail(leaked + ' of ' + N + ' readings still carried descriptors');
+else ok(N + ' random palettes, no reading carried a descriptor');
+if (mismatched) fail(mismatched + ' of ' + N + ' palettes tagged something other than their facet values');
+else ok('every palette tagged exactly [temperature, lightness], matching its facet bands');
+if (unstable) fail(unstable + ' of ' + N + ' palettes tagged differently under a reordered copy');
+else ok('identical palette data produced identical tags');
 
 console.log(failures ? '\nFAILED — ' + failures + ' problem(s)\n' : '\nAll checks passed.\n');
 process.exit(failures ? 1 : 0);

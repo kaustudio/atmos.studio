@@ -2141,7 +2141,7 @@
     align-items:center;gap:0 16px;padding:12px 0;border-bottom:1px solid var(--line);
   }
   .about-weights__key .about-key__pct{
-    font-size:var(--fs-body);font-weight:500;color:var(--on-surface);text-align:right;
+    font-size:var(--fs-lead);font-weight:500;color:var(--on-surface);text-align:right;
   }
 
   /* ---- 1.2, THE LENS PUTS ITS READOUT BESIDE THE COLOUR ------------------------------------

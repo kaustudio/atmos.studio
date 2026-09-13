@@ -488,7 +488,7 @@ export default class PaletteApp extends React.Component {
            this ladder is the right answer. */
         if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
         if (this.state.exampleList) { e.preventDefault(); this.closeExampleList(); return; }
-        if (this.state.copyMenuOpen) { e.preventDefault(); this.closeTip('copyMenuOpen', '[data-copy-menu]'); this._focusCopyTrigger(); return; }
+        if (this.state.copyMenuOpen) { e.preventDefault(); this.closeCopyMenu(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
         if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
@@ -580,7 +580,7 @@ export default class PaletteApp extends React.Component {
     // the library panel now, and that panel is deliberately non-modal — the library stays visible
     // and operable behind it. Nothing here regressed; a member of this set left the app.
     const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony);
+      || s.exportOpen || s.contrast || s.harmony || s.copyMenuOpen);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {

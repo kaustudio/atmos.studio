@@ -28,7 +28,7 @@ export const overlayMethods = {
     this._ovDone = false; this._ovBack = null;
     // freeze the pan so the field is stable beneath the dialog until close completes
     if (!this._reduce && window.gsap && tileEl) this.freezeUniverse();
-    this.setState({ overlay: p, announce: 'Opened ' + p.name + ' detail. Mood: ' + p.descriptors.join(', ') + '. Press Escape to close.' }, () => {
+    this.setState({ overlay: p, announce: 'Opened ' + p.name + ' detail. ' + this.tagsSpoken(p) + '. Press Escape to close.' }, () => {
       requestAnimationFrame(() => {
         const root = this._detailRoot();
         if (root) { const btn = root.querySelector('button'); if (btn) try { btn.focus(); } catch (e) { } }   // focus immediately — never delayed by the morph

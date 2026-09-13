@@ -2,6 +2,7 @@
 // original CSS strings (parsed by sx()) so the layout stays byte-faithful; computed styles come
 // from renderVals() untouched. No logic lives here.
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
 import { B006, B006Text, GlassEffect, TextSwap, ThemeSwitch } from './chrome.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
@@ -631,15 +632,19 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
     { label: 'Hex list', onPick: onHex },
     { label: 'CSS variables', onPick: onCss },
   ];
+  /* OUT OF THE LANDMARKS, LIKE EVERY OTHER MODAL. The sheet used to render where its trigger is,
+     inside <main>. The export dialog it is modelled on sits beside <main>, as a child of [data-app],
+     and that placement is what lets _bgInert take the landmarks out of the tree while it is open —
+     inert the wrapper the sheet is inside and the sheet goes with it. So the layer is portalled to
+     the same host the other dialogs are rendered under. React events still bubble through the
+     component tree, so nothing about the handlers changes; only where the DOM lands. */
+  const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
   return (<>
     <B006 data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
       onClick={onToggle} onKeyDown={onKey} aria-label="Copy the whole palette, in a format you choose"
       label={copyB006Label(done)} />
-    {open && owns && (
-      /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked.
-         The trigger is inline in a flex row, so the layer is a sibling of it rather than a child:
-         position:fixed would still resolve against the viewport, but a dialog nested inside a
-         button's own wrapper is a structure that only survives while nothing above it transforms. */
+    {open && owns && host && createPortal(
+      /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
       <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
         <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
         <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
@@ -690,7 +695,7 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
           </div>
         </div>
       </div>
-    )}
+    , host)}
   </>);
 }
 
@@ -1066,9 +1071,11 @@ function MobileStory({ st }) {
           <div className="about-col">
             <h2 data-sec-head>See Where Each Colour Comes From</h2>
             <p data-reveal>
-              {st.anyRegion
+              {st.allRegion
                 ? 'Tap a colour to find it in the photograph.'
-                : 'These colours are spread too finely to locate. The reading below still holds.'}
+                : st.anyRegion
+                  ? 'Tap a colour to find it in the photograph. The finest shares are marked as too spread to locate.'
+                  : 'These colours are spread too finely to locate. The reading below still holds.'}
             </p>
           </div>
           {st.hasImage && (
@@ -1112,7 +1119,7 @@ function MobileStory({ st }) {
         <section id="story-relationships" data-story-ch="relationships" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Character, Role and Contrast</h2>
-            <p data-reveal>Three readings of the same five colours, measured the same way the desktop measures them.</p>
+            <p data-reveal>Three readings of the same five colours, made the way the desktop makes them: character is interpreted, roles are assigned, contrast is measured.</p>
           </div>
           <div className="about-figure about-figure--full">
             {/* A segmented group carrying aria-pressed, not a tablist: there is no tab primitive in
@@ -1286,7 +1293,7 @@ function MobileStory({ st }) {
           <div className="about-grid">
             <div className="about-col">
               <h2 data-sec-head>Different Images, Different Structures</h2>
-              <p data-reveal>Read another image, and watch the same process return a different system.</p>
+              <p data-reveal>Read another image, and watch the same process return a different palette.</p>
             </div>
           </div>
 
@@ -4201,6 +4208,10 @@ function ExportDialog({ vals }) {
         <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 22px')}>
           <div style={{ minWidth: 0 }}>
             <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-detail); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
+            {/* What the switch adds, said once and left standing: the toggle used to be a bare
+                label, and a reader met six roles in the file with nothing on the sheet saying they
+                were suggestions. */}
+            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-fine); line-height:1.5; color: var(--on-surface-muted); text-wrap:pretty; margin-top:4px")}>Adds six suggested roles per palette, background to text. Suggestions to review, not decisions.</div>
           </div>
           {/* THE SWITCH IS A PILL, which is what the one in the masthead already was. Both are the
               same object down to the figures — a 28x14 track with a 10px knob inset 2 — and this one

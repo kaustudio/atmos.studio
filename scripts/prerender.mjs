@@ -59,7 +59,7 @@ const ROUTES = {
     src: 'src/legal/privacy.html',
     scope: 'legal-route',
     title: 'Atmos Gallery | Privacy and Image Processing',
-    description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values only when you request palette naming.',
+    description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values for naming, which starts as soon as you choose an image.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'PrivacyPolicy',

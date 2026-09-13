@@ -30,7 +30,7 @@ import { buildMasks } from '../../lib/masks.js';
    BUMP THIS WHENEVER makeSeed's TABLE CHANGES — a name, a hash, a swatch, an added or removed
    example. That is the whole contract, and it is the one thing a future edit to pipeline.js has to
    remember. */
-const SEED_VERSION = 3;
+const SEED_VERSION = 5;   // 5: the hand-authored mood tags leave the table; tags are computed (13.09.26)
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
@@ -684,8 +684,35 @@ export const persistenceMethods = {
     });
   },
   _focusCopyTrigger(defer) {
-    const go = () => { const b = document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
+    // Two CopyControls mount their trigger (stage and overlay); the one that opened the sheet is
+    // remembered, and the selector is only the fallback for a trigger that has since unmounted.
+    const go = () => { const back = this._copyBack; const b = (back && back.isConnected) ? back : document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
     if (defer) requestAnimationFrame(go); else go();
+  },
+  /* THE SAME ARRIVAL AS ASSIGN AND RESTORE. Copy is a modal dialog, so it opens the way the other
+     centred dialogs do: the opener is remembered, focus moves INTO the sheet (its Close button is
+     the first control, as it is in the export dialog), and the landmarks behind it go inert through
+     the flag in PaletteApp's modal set. Focus must move in, because the trigger it would otherwise
+     stay on is inside <main> and is inert for as long as the sheet is up.
+     On the way out the order matters: the state flips first, which lifts inert from the landmarks,
+     and only then does focus return — focus() on an element that is still inert is a silent no-op,
+     which left the next Tab starting from the top of the document. */
+  openCopyMenu() {
+    if (this.state.copyMenuOpen) return;
+    this._copyBack = document.activeElement;
+    this.setState({ copyMenuOpen: true }, () => requestAnimationFrame(() => {
+      const d = document.querySelector('[data-copy-dialog]');
+      if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      this._dialogIn('[data-copy-dialog]');
+    }));
+  },
+  closeCopyMenu() {
+    if (!this.state.copyMenuOpen || this._copyClosing) return;
+    this._copyClosing = true;
+    this._dialogOut('[data-copy-dialog]', () => {
+      this._copyClosing = false;
+      this.setState({ copyMenuOpen: false }, () => this._focusCopyTrigger(true));
+    });
   },
   /* THE PHONE'S TWO WAYS OUT. The gate used to be a wall: a sentence saying the tool needs a wider
      screen, and nothing to do about it. Someone who arrived from a link had to remember to come back
@@ -1208,7 +1235,7 @@ export const persistenceMethods = {
      palette is meant. It falls back to the argument for a palette not in the feed — a shared link
      being viewed, which has no archive record to read. */
   openAssign(pal) { if (!pal) return; this._assignBack = document.activeElement; const liveRec = (this.state.feed || []).find((p) => p.id === pal.id) || pal; this.setState({ assignPending: this.palProjects(liveRec).slice(), assignPalette: pal }, () => requestAnimationFrame(() => { const d = document.querySelector('[data-assign-dialog]'); if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } } this._dialogIn('[data-assign-dialog]'); })); },
-  closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Move-to-project closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
+  closeAssign() { const back = this._assignBack; this._dialogOut('[data-assign-dialog]', () => this.setState({ assignPalette: null, announce: 'Add to projects closed.' }, () => { if (back && back.focus) try { back.focus(); } catch (e) { } })); },
   /* The dialog STAYS OPEN on a project toggle. It used to close on every pick, which was right when
      picking was choosing — one slot, one answer, done. Now that a palette can be in several
      projects, closing after the first tick means reopening the dialog for the second, and the whole

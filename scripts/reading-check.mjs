@@ -99,9 +99,7 @@ const bad = rows.filter((r) => {
   const R = r.R;
   return !R.name || !R.name.trim() || R.name === 'Untitled'
     || R.name.length > 42 || R.name.trim().split(/\s+/).length > 3
-    || !Array.isArray(R.descriptors) || R.descriptors.length < 3 || R.descriptors.length > 4
-    || R.descriptors.some((d) => !d || !d.trim())
-    || new Set(R.descriptors.map((d) => d.toLowerCase())).size !== R.descriptors.length
+    || !Array.isArray(R.descriptors) || R.descriptors.length !== 0   // tags are computed, never composed
     || !R.rationale || R.rationale.length > 240 || !/[.]$/.test(R.rationale)
     || !R.archetype || /\s/.test(R.archetype);
 });
@@ -111,7 +109,6 @@ const show = args.has('--all') ? rows : args.has('--dupes') ? rows.filter((r) =>
 console.log('\n══ sample ══════════════════════════════════════════════════════════════════════\n');
 show.forEach((r) => {
   console.log(`  ${r.R.name}`);
-  console.log(`    ${r.R.descriptors.join(' · ')}`);
   console.log(`    ${r.R.rationale}`);
   console.log(`    \x1b[2m${r.A.temperature.band}/${r.A.chroma.band}/${r.A.lightness.band}/${r.A.contrast.band}/${r.A.dominance.band}/${r.A.hue.band}  ${r.sw.map((s) => s.hex).join(' ')}\x1b[0m\n`);
 });
