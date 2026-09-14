@@ -61,6 +61,13 @@ creations and two refreshes there, against ~330ms for the same work in flow on a
 before the gesture starts and 60fps through it, Chrome 93ms. Measured with Playwright's Chrome and
 WebKit; Playwright's Firefox build does not launch on this machine, so Firefox is unmeasured.
 
+**And what the click itself costs.** Interaction to Next Paint is the frame after the click, and
+the snapshot is painted in that frame. With the landing up, the whole tool sits invisible beneath it
+and was being cloned and painted too: Get Started measured 88–136ms as INP against 48ms with no
+snapshot at all. The snapshot now clones only what can be seen — the landing and the mark while the
+landing is up — and copies the field at half resolution, since it is veiled, scaled up and gone in
+1.2s. Get Started: 32–80ms. Vercel's field INP was 176ms at p75 under the old panel.
+
 ---
 
 ## 2026-09-02 — The grid card is the photograph; the readout opens beside it

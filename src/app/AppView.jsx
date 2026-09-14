@@ -49,7 +49,6 @@ const stripFragment = (event) => {
   try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
   catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
 };
-import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
 // stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
@@ -2010,7 +2009,6 @@ export default function AppView({ vals }) {
         <React.Suspense fallback={<DocFallback />}>{legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}</React.Suspense>
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
         <Analytics beforeSend={stripFragment} />
-        <SpeedInsights />
       </div>
     );
   }
@@ -2045,7 +2043,6 @@ export default function AppView({ vals }) {
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
         <Analytics beforeSend={stripFragment} />
-        <SpeedInsights />
       </div>
     );
   }
@@ -2088,7 +2085,6 @@ export default function AppView({ vals }) {
             styled exactly as it does on /about. */}
         <SiteFooter route={vals.route} onNavigate={vals.navigate} />
         <Analytics beforeSend={stripFragment} />
-        <SpeedInsights />
       </div>
     );
   }
@@ -2108,7 +2104,6 @@ export default function AppView({ vals }) {
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
         <Analytics beforeSend={stripFragment} />
-        <SpeedInsights />
       </div>
     );
   }
@@ -2160,7 +2155,6 @@ export default function AppView({ vals }) {
         )}
         <LogoLoader show={vals.showLoader} />
         <Analytics beforeSend={stripFragment} />
-        <SpeedInsights />
       </div>
     );
   }
@@ -2729,7 +2723,6 @@ export default function AppView({ vals }) {
       )}
 
       <Analytics beforeSend={stripFragment} />
-      <SpeedInsights />
     </div>
   );
 }

@@ -399,22 +399,48 @@ export const wipeMethods = {
   _snapshotPage() {
     const app = document.querySelector('[data-app]');
     if (!app) return null;
+    /* ONLY WHAT CAN BE SEEN. The landing is position:fixed, inset:0 and opaque over the tool, so
+       while it is up the whole tool underneath — header, dropzone, every library row — is in the
+       DOM and invisible. Cloning and painting it anyway was the largest single cost of the Get
+       Started click: measured as Interaction to Next Paint, 88–136ms with the full clone against
+       48ms with no snapshot at all, and the paint of that first ghost frame is what the reader is
+       waiting on. With the landing up, the snapshot is the landing and the mark, nothing else. */
+    const landing = app.querySelector('[data-landing]');
+    const landingUp = !!landing && !this.state.landingDismissed;
     const host = document.createElement('div');
     host.setAttribute('data-page-ghost', '1');
     host.setAttribute('aria-hidden', 'true');
     host.setAttribute('inert', '');
     host.style.cssText = 'position:fixed;inset:0;z-index:159;overflow:hidden;pointer-events:none;background:var(--surface);will-change:transform;transform:translate3d(0,0,0);transform-origin:50% 50%;';
-    const clone = app.cloneNode(true);
+    let clone, source;
+    if (landingUp) {
+      // The same box the app root would give it, so the fixed landing inside resolves the same way.
+      source = document.createElement('div');
+      source.appendChild(landing.cloneNode(true));
+      const mark = app.querySelector(':scope > [data-logo]');
+      if (mark) source.appendChild(mark.cloneNode(true));
+      clone = source;
+      source = landing;
+    } else {
+      clone = app.cloneNode(true);
+      source = app;
+    }
     clone.removeAttribute('data-app'); clone.setAttribute('data-ghost-app', '1');
     clone.querySelectorAll('[id]').forEach((el) => { try { el.removeAttribute('id'); } catch (e) { } });
     try { if (this._nebula) this._nebula.renderStill(this._orbit ? this._orbit.rot : 0); } catch (e) { }
-    const srcCv = app.querySelectorAll('canvas'), dstCv = clone.querySelectorAll('canvas');
+    /* AT HALF RESOLUTION. The copy is drawn under a veil, scaled up 1.2x and gone in 1.2s; a
+       full-DPR copy of the field costs a second upload of a 2880x1800 texture in the click's own
+       frame for a difference nobody can see. The canvas keeps its CSS box, so it covers the same
+       area. */
+    const srcCv = source.querySelectorAll('canvas'), dstCv = clone.querySelectorAll('canvas');
     srcCv.forEach((src, i) => {
       const dst = dstCv[i]; if (!dst) return;
       try {
-        dst.width = src.width; dst.height = src.height;
+        if (!src.width || !src.height) return;
+        const w = Math.max(1, Math.round(src.width / 2)), h = Math.max(1, Math.round(src.height / 2));
+        dst.width = w; dst.height = h;
         const c = dst.getContext('2d');
-        if (c && src.width && src.height) c.drawImage(src, 0, 0);
+        if (c) c.drawImage(src, 0, 0, w, h);
       } catch (e) { }
     });
     const veil = document.createElement('div');

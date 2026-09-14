@@ -3,6 +3,7 @@
 // near-verbatim; it is organised here as a class core plus prototype method groups.
 import React from 'react';
 import AppView from './AppView.jsx';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import * as C from '../lib/color.js';
 import * as X from '../lib/exporters.js';
 import * as I from '../lib/interpret.js';
@@ -905,6 +906,14 @@ export default class PaletteApp extends React.Component {
     return (
       <>
         <div data-page-window="1"><AppView vals={this.renderVals()} /></div>
+        {/* SPEED INSIGHTS, ONCE, WITH THE ROUTE NAMED. It used to be rendered inside each of AppView's
+            six returns, at a different child index in each — so every crossing between a document
+            and the tool unmounted the instance that owned the script, and the new one could not tell
+            the script anything. A client-side swap never changes the document the script was loaded
+            with either, so every vital was filed under "Unknown" and the dashboard could not say
+            which page a slow LCP or a long interaction belonged to. One instance here, outside every
+            branch, whose route prop follows the state; the component writes it onto the script. */}
+        <SpeedInsights route={pathFor(this.state.route)} />
         {/* WHERE FOCUS WAITS DURING A TRANSITION. The wipes used to park it on the cover itself,
             which is aria-hidden — Chrome refused the attribute with a console warning on every route
             change ("Blocked aria-hidden on an element because its descendant retained focus"), and
