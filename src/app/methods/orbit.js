@@ -231,11 +231,12 @@ export const orbitMethods = {
        is showing except the credit under the footer, so a different one per arrival is free variety
        — the front page demonstrating that the tool returns a different reading of every picture.
        A phone's front page is the STORY, whose first chapter is transparent onto this very field and
-       whose copy names its case out loud two screens later ("Dry Season is a palette of five
-       colours drawn from this image"). A field rolled independently of that would have the words
-       and the artwork describing two different palettes on one screen, which is not variety, it is
-       a bug. So on narrow the story's case leads, and every later change to it comes through
-       setFieldPalette. */
+       whose copy names its case out loud two screens later ("… is a palette of five colours drawn
+       from this image"). A field rolled independently of that would have the words and the artwork
+       describing two different palettes on one screen, which is not variety, it is a bug. So on
+       narrow the story's case leads, and every later change to it comes through setFieldPalette.
+       The phone still gets a different palette per load: the story rolls its own case (_storyCase),
+       and the field follows it. */
     if (!p && this.state.narrow && this._storyCase) {
       const st = this._storyCase();
       if (st) p = pool.find((x) => x.id === st.id) || null;

@@ -241,7 +241,7 @@ export const persistenceMethods = {
 
      Nothing else has to be repaired. Memberships point from a palette to a project, never the other
      way, so dropping an example orphans nothing; `current` is null on boot unless a share link set
-     it; and _storyCase falls through to the first example when the id it held is gone. */
+     it; and _storyCase rolls a new example when the id it held is gone. */
   /* FILING SURVIVES THE RE-SEED, and it did not before. This replaced every example record with a
      fresh one from the table, which is right for the swatches and the copy — that is the whole point
      of the version — but those records also carry projectIds, and THAT is not ours: it is the one

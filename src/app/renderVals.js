@@ -1479,7 +1479,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            So the opening statement holds while nothing has been chosen, and becomes the palette's own
            name the moment something has. storyCaseId is null until chooseStoryCase or setStoryCase
            writes it, which is exactly the "has chosen" test and needs no second flag: the default case
-           resolves through _storyCase's tulip fallback without ever setting it.
+           resolves through _storyCase's once-per-load random pick without ever setting it.
 
            It stays named afterwards rather than reverting on the next scroll, because the name is now
            what the page is about. The lead below it is unchanged on purpose: it says what Atmos does

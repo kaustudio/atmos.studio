@@ -364,15 +364,27 @@ export default class PaletteApp extends React.Component {
      and it keeps the storage-blocked case no worse than it is now rather than turning it into eight
      blank chapters. */
   _mobileStory() { return !!(this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare() && !this._mobileList()); }
-  /* THE CASE THE STORY TELLS. Dry Season by default — the brief names it, and it is the clearest of
-     the eight: one subject, a ground in two lights, and a 4.5% swatch that turns out to be the
-     flower. Falls back to whatever the feed's first example is, so a reordered seed table cannot
-     leave this null while examples exist. */
+  /* THE CASE THE STORY TELLS. A DIFFERENT EXAMPLE ON EVERY LOAD (15.09.26, by request), the way the
+     desktop landing already rolls a different palette per arrival (_fieldPalette in orbit.js). It
+     was Dry Season, always, so every visit on a phone told the same story about the same flower.
+
+     Rolled once, the first time anything asks, and held on the instance rather than in state.
+     storyCaseId stays null until the reader chooses, and that null is the "has chosen" test the hero
+     title and the begin label turn on (see mobileStory in renderVals). Everything that follows the
+     case asks this method: the field behind chapter 1, the story's masks, the chooser's opening
+     slide. So one held id keeps all of them on one palette for the whole visit.
+
+     No storage key: a reload is the new roll, for the reason openExampleOnPhone gives for its
+     cursor. Rolled again only if the held example has since been deleted. */
   _storyCase() {
     const ex = this._examples();
     if (!ex.length) return null;
     const id = this.state.storyCaseId;
-    return (id && ex.find((p) => p.id === id)) || ex.find((p) => p.exampleKey === 'tulip') || ex[0];
+    const chosen = id && ex.find((p) => p.id === id);
+    if (chosen) return chosen;
+    let held = this._storyDefaultId && ex.find((p) => p.id === this._storyDefaultId);
+    if (!held) { held = ex[Math.floor(Math.random() * ex.length)]; this._storyDefaultId = held.id; }
+    return held;
   }
   /* TWO QUESTIONS, and conflating them is what cost the orbs. _landingUp is "is the stage in the
      document" — it gates building the formation and rendering its slots, and the phone surfaces do
