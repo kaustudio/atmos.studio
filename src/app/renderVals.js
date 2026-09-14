@@ -1528,7 +1528,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         ].map((t) => ({
           ...t, key: t.id, selected: (s.storyTab || 'weight') === t.id,
           onPick: () => this.setStoryTab(t.id),
-          aria: t.label + (((s.storyTab || 'weight') === t.id) ? ', shown' : ', show this reading'),
+          aria: t.label + (((s.storyTab || 'weight') === t.id) ? ', shown' : ', show this view'),
           // No inline fill: the toggle switch draws its own moving pill, and the active button's
           // colour is [data-toggle-active]'s. See methods/toggleSwitch.js.
         })),
@@ -1616,7 +1616,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
             image: this.dispUrl(x), hasImage: this.hasImg(x),
             strip: x.swatches.map((b, i) => ({ key: i, style: { flex: String((b.weight || 0) / t), background: b.hex } })),
             onOpen: () => this.setStoryCase(x.id),
-            aria: 'Read ' + x.name + '. ' + this.tagsSpoken(x),
+            aria: 'Explore ' + x.name + '. ' + this.tagsSpoken(x),
           };
         }),
 

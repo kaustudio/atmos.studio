@@ -885,7 +885,8 @@
 /* Scoped to the surface so it out-specifies the widened `[data-mobile-story] h2` (0,1,1), which
    would otherwise hold this at the 22px section-heading size — the very thing this rule exists to
    depart from. */
-/* TWO LINES, AND THE SIZE IS WHAT BUYS THEM. "Ready to Read Your Own Image?" set three lines at
+/* TWO LINES, AND THE SIZE IS WHAT BUYS THEM. "Ready to Read Your Own Image?" (the heading until
+   15.09.26; "Ready to Try Your Own Image?" now, a letter shorter) set three lines at
    --fs-display: measured 3 at 320px and 3 at 390px, where a question asked over three short lines
    reads as a paragraph rather than as a question. 40px still breaks to three at 320 and 36 is the
    ceiling that holds two across the phone range, so the scale step below it is the honest choice

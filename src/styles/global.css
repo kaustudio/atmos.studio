@@ -146,10 +146,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    .about-route, so the same component shouted on one surface and spoke on the other.
 
    It is a table of contents. Its rows are the names of chapters, and a chapter name is a title —
-   `Character and Contrast`, `The Whole Picture`, `Where It Lives`. Those strings are authored with
-   the capitals they should have, so `none` prints what was typed. NOT `capitalize`, which would
-   force a capital onto every word and give `Character And Contrast`; the conjunction is lowercase on
-   purpose and only the source knows that.
+   `Character, Role and Contrast`, `The Whole Image`, `Where Colours Come From`. Those strings are
+   authored with the capitals they should have, so `none` prints what was typed. NOT `capitalize`,
+   which would force a capital onto every word and give `Character, Role And Contrast`; the
+   conjunction is lowercase on purpose and only the source knows that.
 
    Scoped to the dock rather than removed from [data-ix], because the contract is right everywhere
    else: the segmented controls, the actions and the cells are apparatus and go on speaking in caps.

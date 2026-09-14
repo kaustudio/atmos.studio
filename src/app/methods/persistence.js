@@ -961,7 +961,7 @@ export const persistenceMethods = {
     // The field is the prologue's visual — chapter 1 is transparent onto it — so a story that
     // changes which palette it is telling has to change which palette the field is. See showExample.
     this.setFieldPalette(p);
-    this.setState({ storyCaseId: id, storySwatch: null, storyMasks: null, announce: 'Now reading ' + p.name + '.' }, () => {
+    this.setState({ storyCaseId: id, storySwatch: null, storyMasks: null, announce: 'Now exploring ' + p.name + '.' }, () => {
       this.buildStoryMasks();
       // Back to the chapter that introduces a picture, not to the top: the reader chose a case, so
       // the answer to that press is the new photograph, not the prologue they have already read.
@@ -1098,7 +1098,7 @@ export const persistenceMethods = {
           storyCaseId: id,
           storySwatch: null,
           storyMasks: null,
-          announce: 'Now reading ' + ex.name + '. Starting again from the top.',
+          announce: 'Now exploring ' + ex.name + '. Starting again from the top.',
         }, () => {
           this.buildStoryMasks();
 

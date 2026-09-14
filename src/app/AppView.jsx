@@ -864,7 +864,7 @@ function MobileStory({ st }) {
             <span data-section-dock-label-wrap className="section-dock__label-wrap">
               <span className="section-dock__label">
                 <span className="section-dock__link-num">1.1</span>
-                <span>The Whole Picture</span>
+                <span>The Whole Image</span>
               </span>
             </span>
             <span className="section-dock__caret" aria-hidden="true"></span>
@@ -878,18 +878,18 @@ function MobileStory({ st }) {
                   <span className="section-dock__chev" aria-hidden="true"></span>
                 </button>
                 <ul id="story-dock-g1" data-dock-sub className="section-dock__sub">
-                  <li><a data-active data-section-dock-link href="#story-image" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.1</span><span>The Whole Picture</span></a></li>
-                  <li><a data-section-dock-link href="#story-structure" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.2</span><span>The Structure</span></a></li>
-                  <li><a data-section-dock-link href="#story-where" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.3</span><span>Where It Lives</span></a></li>
+                  <li><a data-active data-section-dock-link href="#story-image" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.1</span><span>The Whole Image</span></a></li>
+                  <li><a data-section-dock-link href="#story-structure" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.2</span><span>The Proportions</span></a></li>
+                  <li><a data-section-dock-link href="#story-where" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.3</span><span>Where Colours Come From</span></a></li>
                 </ul>
               </li>
               <li data-dock-group className="section-dock__group">
                 <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="story-dock-g2" data-ix="cell" data-focus="value" className="section-dock__group-head">
-                  <span className="section-dock__link-num">2</span><span>The Reading</span>
+                  <span className="section-dock__link-num">2</span><span>The Palette</span>
                   <span className="section-dock__chev" aria-hidden="true"></span>
                 </button>
                 <ul id="story-dock-g2" data-dock-sub className="section-dock__sub">
-                  <li><a data-section-dock-link href="#story-relationships" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.1</span><span>Character and Contrast</span></a></li>
+                  <li><a data-section-dock-link href="#story-relationships" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.1</span><span>Character, Role and Contrast</span></a></li>
                   <li><a data-section-dock-link href="#story-interpretation" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.2</span><span>What It Says</span></a></li>
                 </ul>
               </li>
@@ -899,7 +899,7 @@ function MobileStory({ st }) {
                   <span className="section-dock__chev" aria-hidden="true"></span>
                 </button>
                 <ul id="story-dock-g3" data-dock-sub className="section-dock__sub">
-                  <li><a data-section-dock-link href="#story-gallery" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.1</span><span>Other Atmospheres</span></a></li>
+                  <li><a data-section-dock-link href="#story-gallery" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.1</span><span>Other Examples</span></a></li>
                   <li><a data-section-dock-link href="#story-handoff" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.2</span><span>Your Own Image</span></a></li>
                 </ul>
               </li>
@@ -994,7 +994,7 @@ function MobileStory({ st }) {
             <div className="story-hero__block">
               <span aria-hidden="true" style={sx('position:absolute;inset:-140px -120px;z-index:0;pointer-events:none;background:radial-gradient(ellipse closest-side at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
               <h1 data-story-hero-line>{st.heroTitle}</h1>
-              <p className="story-hero__lead" data-story-hero-line>Atmos reads how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024 px or wider.</p>
+              <p className="story-hero__lead" data-story-hero-line>Atmos shows how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024 px or wider.</p>
               {/* The label names the palette once there is one to name — see beginLabel in
                   renderVals. `data-case="own"` for the same reason the picker's titles carry it: the
                   name is a string the reading invented, so nothing downstream may case it. */}
@@ -1071,10 +1071,10 @@ function MobileStory({ st }) {
             <h2 data-sec-head>See Where Each Colour Comes From</h2>
             <p data-reveal>
               {st.allRegion
-                ? 'Tap a colour to find it in the photograph.'
+                ? 'Select a colour to find it in the photograph.'
                 : st.anyRegion
-                  ? 'Tap a colour to find it in the photograph. The finest shares are marked as too spread to locate.'
-                  : 'These colours are spread too finely to locate. The reading below still holds.'}
+                  ? 'Select a colour to find it in the photograph. The finest shares are marked as too spread to locate.'
+                  : 'These colours are spread too finely to locate. Everything below still applies.'}
             </p>
           </div>
           {st.hasImage && (
@@ -1132,7 +1132,7 @@ function MobileStory({ st }) {
                 A group of pressed buttons rather than a tablist: there is no tab primitive in this
                 codebase, and a control announcing itself as tabs without answering an arrow key
                 would be worse than one that never claimed to — this one does answer them. */}
-            <div data-toggle-init className="toggle-switch" role="group" aria-label="Which reading to show">
+            <div data-toggle-init className="toggle-switch" role="group" aria-label="Which view to show">
               {/* A span, like the travelling pill in every other segmented control here. It was a
                   div, which is a perfectly good box and was silently the only one in the app that
                   did not round: the corner rule in global.css matched `> span[aria-hidden]`, so the
@@ -1249,7 +1249,7 @@ function MobileStory({ st }) {
         {/* 2.2 — THE READING. */}
         <section id="story-interpretation" data-story-ch="interpretation" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Atmos Turns Colour Into a Reading</h2>
+            <h2 data-sec-head>What Atmos Says About This Palette</h2>
             {/* data-reveal, NOT data-highlight-text — and the paragraph this replaces argued the
                 other way, so it is worth saying why it lost. The highlight (Osmo's resource, ported
                 in methods/aboutHighlight.js) resolved the reading character by character on scroll,
@@ -1353,7 +1353,7 @@ function MobileStory({ st }) {
 
                 It also explains the earlier symptom that looked like flicker rather than absence.
                 One engine or the other, never both. The takeover owns this heading. */}
-              <h2 data-sticky-title="heading" className="story-cta__title">Ready to Read Your Own Image?</h2>
+              <h2 data-sticky-title="heading" className="story-cta__title">Ready to Try Your Own Image?</h2>
               <p className="story-cta__lead">{st.handoffLine}</p>
               <div className="story-actions">
                 {/* THE SUFFIX NAMED A SURFACE THIS DOES NOT OPEN. It read "open the example
@@ -1362,10 +1362,10 @@ function MobileStory({ st }) {
                     openStoryPicker: an image chooser that covers the story in place, and which
                     announces itself as "Choose an image." So a screen-reader user was promised a
                     list and given a carousel, and the control's own live region contradicted its
-                    own name. The visible label stays: you do explore another palette, by reading
+                    own name. The visible label stays: you do explore another palette, by choosing
                     another photograph. It is the half after the colon that has to be true. */}
                 <button type="button" className="glass-cta" data-focus="chrome"
-                  onClick={st.onAnother} aria-label="Explore Another Example: choose a different image to read"><TextSwap>Explore Another Example</TextSwap></button>
+                  onClick={st.onAnother} aria-label="Explore Another Example: choose a different photograph"><TextSwap>Explore Another Example</TextSwap></button>
               </div>
             </div>
           </div>
@@ -1389,7 +1389,7 @@ function MobileStory({ st }) {
           scroll position and their built masks while the reader looks — and inert + aria-hidden go
           on the story underneath, because nothing behind a full-screen surface should be reachable. */}
       {st.pickerOpen && (
-        <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an image to read">
+        <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an example">
           <section data-layered-slider-init data-layered-slider-autoplay="0" className="layered-slider">
             <div className="layered-slider__container">
               <div data-layered-slider-mask className="layered-slider__mask-collection">
@@ -1411,7 +1411,7 @@ function MobileStory({ st }) {
                           navigating, so it must not be a link that goes nowhere. data-case="own"
                           because the palette's name is a string the reading invented. */}
                       <button type="button" className="layered-slider__text-title" data-focus="chrome"
-                        data-case="own" aria-label={'Read ' + c.name}>{c.name}</button>
+                        data-case="own" aria-label={'Choose ' + c.name}>{c.name}</button>
                     </div>
                   ))}
                 </div>
@@ -1481,7 +1481,7 @@ function MobileShareView({ ms }) {
       {/* --img-outline for the same reason as the list's thumbnail — see the note there. */}
       {ms.hasImage && (
         <div data-ms-img="1" style={sx('flex:none;width:100%;aspect-ratio:4/3;overflow:hidden;background:var(--surface-raised);position:relative')}>
-          <img src={ms.image} alt={'The photograph ' + ms.name + ' was read from'} style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
+          <img src={ms.image} alt={'The photograph ' + ms.name + ' was drawn from'} style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
           <span aria-hidden="true" style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
         </div>
       )}
@@ -1824,7 +1824,7 @@ function LandingStage({ vals, covered, quiet }) {
                     so the hole now clears the row rather than half of it. */}
                 <div style={sx('margin-top:36px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;pointer-events:auto')}>
                   <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" data-glass-cta="1" onClick={vals.getStarted} aria-label="Create"><TextSwap>Create</TextSwap></button>
-                  <a href="/about" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.navigate} aria-label="How it Works: what Atmos reads and how"><TextSwap>How it Works</TextSwap></a>
+                  <a href="/about" className="glass-cta" data-focus="chrome" data-glass-cta="1" onClick={vals.navigate} aria-label="How it Works: how Atmos turns an image into a palette"><TextSwap>How it Works</TextSwap></a>
                 </div>
               </div>
             )}
