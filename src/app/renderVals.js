@@ -1666,29 +1666,28 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            existed to do the sending. Copy that describes a button the screen no longer has is worse
            than copy that never claimed it, so the invitation is now the plain one: open Atmos on a
            desktop, with an image of your own. */
-        /* THE CLOSE, SUPPLIED VERBATIM. Two sentences doing the two jobs this section has: state
-           what the tool needs, then name the one thing there is to do from here.
+        /* THE CLOSE, SUPPLIED VERBATIM (copy brief, 14.09.26). Two sentences doing the two jobs
+           this section has: name what there is to do from here, then state what the full tool needs.
+           "Palette" is the output Start here names on the desktop.
 
-           "Explore another palette here" IS THE BUTTON UNDERNEATH IT, in the button's own words.
+           "Explore another example here" IS THE BUTTON UNDERNEATH IT, in the button's own words.
            That is the fault this line has now been rewritten for twice: it described a dropzone
            after Send to Desktop was removed, and before that a control that had already gone. The
            lead and the only act on the screen finally say the same thing.
 
            "Atmos", not "Atmos Gallery", and that is the register this surface already speaks in:
-           the hero's lead, every chapter and the reading itself all say Atmos in running prose
-           ("Atmos reads Dry Season from a photograph"). The full name is the wordmark's and the
-           statement headings'.
+           the hero's lead and the chapters say Atmos in running prose ("Atmos reads how colours
+           share weight"). The full name is the wordmark's and the statement headings'.
 
-           "desktop" AND "your computer", WHICH THE GATE'S OWN FIGURE DOES NOT AGREE WITH, and it
-           is recorded here rather than quietly reconciled. MIN_TOOL_WIDTH is 1024: a tablet held
-           in landscape is 1180 across and gets the whole tool without a computer being involved,
-           and the hero two screens up now says "designed for larger screens" for that reason. This
-           line says desktop. Supplied copy wins over a consistency argument, and the argument is
-           left written down so the next person changing either one can see the other.
+           "your computer", WHICH THE GATE'S OWN FIGURE DOES NOT AGREE WITH, and it is recorded
+           here rather than quietly reconciled. MIN_TOOL_WIDTH is 1024: a tablet held in landscape
+           is 1180 across and gets the whole tool without a computer being involved. This line says
+           computer. Supplied copy wins over a consistency argument, and the argument is left
+           written down so the next person changing either one can see the other.
 
            No em dash. The only dash left in product copy is the EN dash in "1\u20132 colour pairs"
            (the contrast readouts), which is a numeric range and the one place it is correct. */
-        handoffLine: 'Atmos opens in a window 1024 px or wider. Explore another palette here, or open Atmos on your computer to read a palette from an image of your own.',
+        handoffLine: 'Explore another example here, or open Atmos on your computer to create a palette from your own image. The full tool requires a window at least 1024 px wide.',
       };
     }
 

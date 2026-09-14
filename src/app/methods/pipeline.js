@@ -280,7 +280,10 @@ export const pipelineMethods = {
       this.seedObj({
         key: 'tulip', hash: 'ff280e7420bfb244', age: 3 * H,
         name: 'Dry Season', arch: 'graphic',
-        rat: 'Saturated oranges at mid weight, held close together. Charged, and legible for it.',
+        // The one authored rationale in this table: supplied copy (14.09.26), replacing an engine
+        // reading that claimed the palette's energy made it legible. Checked against the weights
+        // below: the two oranges hold 85% of the frame.
+        rat: 'Warm oranges carry most of the image, with muted brown, pale beige and a deep shadow completing the palette.',
         sw: [['#a74b1b', .4919], ['#933913', .3580], ['#ab8766', .0972], ['#d5cdbf', .0449], ['#361905', .0079]],
       }),
       // 58° — terracotta, against the one teal in the set

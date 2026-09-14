@@ -30,7 +30,7 @@ import { buildMasks } from '../../lib/masks.js';
    BUMP THIS WHENEVER makeSeed's TABLE CHANGES — a name, a hash, a swatch, an added or removed
    example. That is the whole contract, and it is the one thing a future edit to pipeline.js has to
    remember. */
-const SEED_VERSION = 5;   // 5: the hand-authored mood tags leave the table; tags are computed (13.09.26)
+const SEED_VERSION = 6;   // 6: Dry Season's rationale is the supplied copy (14.09.26)
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage

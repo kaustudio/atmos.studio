@@ -776,8 +776,9 @@
 /* ===== THE TAKEOVER — Osmo Supply's Sticky Title Scroll Effect.
    The resource's own structure: a tall wrapper, a sticky container one viewport high, and the
    headings stacked on each other so only one is ever on screen. Its 350vh for three statements is
-   kept, because the scroll distance IS the pacing — shortening it would turn three delivered
-   statements back into three that flick past.
+   kept, because the scroll distance IS the pacing — shortening it would turn delivered statements
+   back into ones that flick past. The takeover carries two statements since the 14.09.26 copy
+   brief, on the same height, so each now has more of the scroll than the three had.
 
    Dressed as this site rather than as the demo. No gradient ground, because the page has one ground
    and a takeover that changes it would read as a different site. Type at the page's own statement
@@ -785,12 +786,12 @@
    page agree with each other.
 
    [ATMOS] The stacking waits for data-sticky-live. In the resource, .is--stacked is hidden in CSS and
-   revealed from JS, so a reader with no JavaScript gets the first statement and loses two. Here the
-   stack only forms once aboutStickyTitle.js has confirmed it can animate; before that the three are
-   three ordinary paragraphs down the page, which is the floor every other effect here keeps. */
+   revealed from JS, so a reader with no JavaScript gets the first statement and loses the rest. Here
+   the stack only forms once aboutStickyTitle.js has confirmed it can animate; before that the
+   statements are ordinary paragraphs down the page, which is the floor every other effect here keeps. */
 .about-takeover{
   position:relative;width:100%;
-  /* Three statements, and the resource's own ratio for three. */
+  /* The resource's own ratio for three statements, kept for two (see above). */
   min-height:350vh;
   padding-inline:var(--page-gutter);
 }
@@ -802,8 +803,8 @@
 /* EIGHT COLUMNS, not the resource's 60em. Its max-width is in root ems while the type is set in its
    own, so the two are unrelated — and at this page's statement size that measure put a 150-character
    statement on seven lines, which is a paragraph in big type rather than a statement. Eight of the
-   page's own columns, and the size stepped down from the closing statement's 58px, so each of the
-   three lands in three or four lines. */
+   page's own columns, and the size stepped down from the closing statement's 58px, so a statement
+   lands in two to five lines rather than seven (measured at 1440 on the 14.09.26 copy). */
 .about-takeover__inner{
   position:relative;display:flex;flex-direction:column;
   align-items:center;justify-content:center;
@@ -821,10 +822,10 @@
 /* Only once the effect is running does the stack form. See [ATMOS 2] in aboutStickyTitle.js. */
 [data-sticky-live] .about-takeover__el.is--stacked{visibility:hidden;position:absolute;inset:0}
 /* THE INK IS THE SECTION'S, once the takeover is live. aboutStickyTitle.js scrubs a ground colour and
-   an ink colour onto the wrap across the same scroll range the statements run on, so the three beats
-   each arrive in a palette of their own instead of three screens of the same near-black. Inheriting is
-   what lets one animated `color` on the wrap reach all three statements without the module needing to
-   know how many there are. Outside the live state this rule does not apply and the statements keep
+   an ink colour onto the wrap across the same scroll range the statements run on, so the statements
+   arrive in palettes of their own instead of screens of the same near-black. Inheriting is what lets
+   one animated `color` on the wrap reach every statement without the module needing to know how many
+   there are. Outside the live state this rule does not apply and the statements keep
    --on-surface, which is the no-JS and reduced-motion floor. */
 .about-route [data-sticky-live] .about-takeover__el{color:inherit}
 /* Characters are inline-block so a transform can be tweened on each; the word wrapper keeps line
@@ -841,8 +842,8 @@
    nowhere else. */
 .about-takeover[data-st-active] .about-takeover__el [data-st-char]{will-change:opacity}
 
-/* Without the effect the wrapper has no reason to be three viewports tall, and the three statements
-   simply read down the page in the section's own rhythm. */
+/* Without the effect the wrapper has no reason to be three viewports tall, and the statements simply
+   read down the page in the section's own rhythm. */
 .about-takeover:not([data-sticky-live]){min-height:0;padding-block:var(--band-gap)}
 .about-takeover:not([data-sticky-live]) .about-takeover__container{position:static;height:auto;display:block}
 .about-takeover:not([data-sticky-live]) .about-takeover__inner{gap:var(--block-gap);max-width:none;text-align:left}

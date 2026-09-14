@@ -10,19 +10,19 @@
 
    WHAT IT IS FOR, because using it wrongly is the easy mistake: this is a full-screen takeover. The
    whole viewport is given to one statement at a time, at display size, with nothing else on screen.
-   It is not an emphasis you sprinkle on a paragraph. On /about it carries the three beats of the
-   page's central argument, which is the one place the page stops explaining and simply states.
+   It is not an emphasis you sprinkle on a paragraph. On /about it carries the page's central
+   argument a sentence to a screen, which is the one place the page stops explaining and simply states.
 
    [ATMOS 1] THE SPLIT IS HAND-ROLLED. The resource calls SplitText, which is a Club plugin and is
    not among the five vendored here — the same call aboutHighlight.js already declined, for the same
    reason, and the third hand-split in this codebase after splitLines() in maskLines.js and
    _maskLineReveal in motion.js. Words wrap the characters so line breaking is unchanged.
 
-   [ATMOS 2] THE FLOOR IS THREE READABLE STATEMENTS. The resource hides its stacked headings in CSS
-   with visibility:hidden and reveals them from JS, which means no JS is one statement and two
-   missing ones. Here the stacking is applied only once this module has confirmed GSAP, ScrollTrigger
-   and a willingness to animate, by setting data-sticky-live on the wrap. Without it the three are
-   three ordinary paragraphs down the page.
+   [ATMOS 2] THE FLOOR IS EVERY STATEMENT, READABLE. The resource hides its stacked headings in CSS
+   with visibility:hidden and reveals them from JS, which means no JS is one statement and the rest
+   missing. Here the stacking is applied only once this module has confirmed GSAP, ScrollTrigger
+   and a willingness to animate, by setting data-sticky-live on the wrap. Without it the statements
+   are ordinary paragraphs down the page.
 
    [ATMOS 3] Scoped to the mounted root, wrapped in init/destroy. A pin rewrites its target's
    position and inserts a spacer; leaving one alive after the route unmounts leaves every other
@@ -79,9 +79,14 @@ const PALETTES = [
 ];
 
 /* Where each palette sits on the run, as fractions of it, plus home. Six stops against three
-   statements is deliberate: each statement is held in two related palettes rather than one, so the
+   statements was deliberate: each statement was held in two related palettes rather than one, so the
    colour is still moving while the words are being read. The holds are what stop it reading as a
-   wash — a colour permanently in transit never registers as a palette at all. */
+   wash — a colour permanently in transit never registers as a palette at all.
+
+   TUNED FOR THREE, RUNNING TWO. The 14.09.26 copy put two statements on /about and these stops did
+   not move. Measured at 1440: the first statement is gone by 0.66 of the run and the second resolves
+   from there, so the first travels through four palettes and the second through two before home.
+   If the two should share the arc evenly, this table is the lever. */
 const STOPS = [
   { at: 0.04, dur: 0.10 },
   { at: 0.20, dur: 0.08 },

@@ -1020,7 +1020,7 @@ function MobileStory({ st }) {
         <section id="story-image" data-story-ch="image" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Start With the Whole Image</h2>
-            <p data-reveal>Atmos reads {st.name} from a photograph. Every colour it returns is a measurement of that frame, not a guess at what would go with it.</p>
+            <p data-reveal>{st.name} is a palette of five colours drawn from this image. Explore their proportions, properties and contrast to understand how they relate.</p>
             <p data-reveal>{st.descriptors && st.descriptors.length ? st.descriptors.join(' · ') : ''}</p>
           </div>
         </section>
@@ -1118,7 +1118,7 @@ function MobileStory({ st }) {
         <section id="story-relationships" data-story-ch="relationships" data-sec data-rule className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Character, Role and Contrast</h2>
-            <p data-reveal>Three readings of the same five colours, made the way the desktop makes them: character is interpreted, roles are assigned, contrast is measured.</p>
+            <p data-reveal>Explore the palette through its visual character, suggested roles and measured contrast between colours.</p>
           </div>
           <div className="about-figure about-figure--full">
             {/* A segmented group carrying aria-pressed, not a tablist: there is no tab primitive in
@@ -1291,8 +1291,8 @@ function MobileStory({ st }) {
         <section id="story-gallery" data-story-ch="gallery" data-sec data-rule className="about-sec about-sec--gallery">
           <div className="about-grid">
             <div className="about-col">
-              <h2 data-sec-head>Different Images, Different Structures</h2>
-              <p data-reveal>Read another image, and watch the same process return a different palette.</p>
+              <h2 data-sec-head>Different Images. Different Palettes.</h2>
+              <p data-reveal>Explore another example to see how a different image changes the colours, proportions and contrast.</p>
             </div>
           </div>
 
@@ -1512,10 +1512,10 @@ function MobileShareView({ ms }) {
             stage's own direction: the reading moved out of the leading slot there for exactly this
             reason, and the phone had been left carrying the half that was demoted.
 
-            It reads: Best for <ground>, <register> <medium>. <capability>. The last clause is the
-            honest half — a palette with no usable text pairing says so rather than being recommended
-            for type — and it comes from aaState, the same verdict the AA badge shows, so the line
-            and the badge can never disagree.
+            It reads: Best for <ground>, <register> <medium>. <capability>. Check the pair you intend
+            to use in the contrast checker. The capability clause is the honest half — a palette with
+            no usable text pairing says so rather than being recommended for type — and it comes from
+            aaState, the same verdict the AA badge shows, so the line and the badge can never disagree.
 
             --fs-lead in full ink, up from the --fs-body muted the reading had: it is the only
             description on this surface now, so it leads rather than annotates. The desktop sets it
@@ -1760,12 +1760,12 @@ function LandingStage({ vals, covered, quiet }) {
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Colour Read from</span></span>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Light and Atmosphere</span></span>
                 </h1>
-                {/* The reason, not just the rule. "Open this on a wider screen" is a refusal; what
-                    makes it one is that it never said why, so it read as a limitation of the site
-                    rather than of the work. Reading an image means comparing swatches, roles and
-                    contrast side by side, and that is a wide-screen job. */}
+                {/* What there is to do here, then the boundary. "Open this on a wider screen" is a
+                    refusal; this names what a phone CAN do (the example palettes) before what needs
+                    a computer (a palette from your own image), which explains the width by the
+                    capability behind it. Supplied copy, 14.09.26. */}
                 <p style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:none;text-wrap:pretty")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>The tool opens in a window 1024 px or wider. Reading an image means weighing colours, roles and contrast side by side, and that needs room.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Explore example palettes here. To create a palette from your own image, open Atmos on your computer in a window at least 1024 px wide.</span></span>
                 </p>
                 {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
                     arriving from a link with a sentence and no next move. Two acts that are honest
@@ -2294,9 +2294,11 @@ export default function AppView({ vals }) {
                   and the CTA each arrive on their own, which is the one gesture maskLines.js was
                   written to stop. Two masks, and the second half arrives on the same stagger as
                   everything else. No margin on the second one — the halves are a single sentence, so
-                  line-height alone sets the distance, exactly as a <br> would have. */}
+                  line-height alone sets the distance, exactly as a <br> would have.
+                  "palette" where it said "colour system" (14.09.26). The copy brief's shorter line,
+                  "Choose an image to discover its colour palette.", was tried and reverted by request. */}
               <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>Choose an image that captures the atmosphere</div></div>
-              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your colour system to carry.</div></div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your palette to carry.</div></div>
             </div>
             {/* THE CALL IS A DISC NOW, drawn from the Figma node (10384:7592): 24px of --on-surface
                 with the plus in --surface, which is the app's filled-CTA pair and the same fill the
@@ -2481,10 +2483,11 @@ export default function AppView({ vals }) {
                     standing statement and the detail overlay's closing line, so nothing is lost from
                     the product by taking it off this one screen.
                     What takes the slot is composeUse()'s recommendation, which answers the question
-                    the result stage is actually for. It keeps its own weight rather than inheriting
-                    the reading's muted 13px: it is the only prose left on this surface and it is a
-                    recommendation, not an aside. It keeps data-split too, so it still arrives on the
-                    masked line reveal it had in its old position. */}
+                    the result stage is actually for, followed by where to check the one pair a reader
+                    means to use. It keeps its own weight rather than inheriting the reading's muted
+                    13px: it is the only prose left on this surface and it is a recommendation, not an
+                    aside. It keeps data-split too, so it still arrives on the masked line reveal it
+                    had in its old position. */}
                 <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
               {/* THE RIGHT-HAND COLUMN IS GONE WITH THE LINE IT HELD. It was a fixed 360px holding
@@ -3331,7 +3334,25 @@ function ContrastDrawer({ vals }) {
   if (!vals.hasContrast) return null;
   const contrast = vals.contrast;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:110')}>
+    /* 157, ABOVE THE BRAND MARK (155), and the mark is the reason. This sat at 110 on the reasoning
+       the library panel's note used to give: a modal drawer can stay under the fixed wordmark because
+       its dimming backdrop takes the page, logo included, out of play. That held only while the
+       drawer stayed right of the mark. The drawer is 500px and the mark a centred 165px, so in any
+       window narrower than 1165px they meet — from 1024, the tool's own minimum, up. Measured at
+       1024: the drawer's edge at 524, the mark across 430–595, the wordmark printed crisp through
+       "Contrast checker" and the palette name. The mark is also a button, so it took presses aimed
+       at the backdrop and could send the reader home from under an open modal.
+       Above the mark, the backdrop dims it with the rest of the page and a press there closes the
+       drawer, which is what a modal says.
+       157 RATHER THAN 156, because this can open over the library panel. The panel closes on an
+       outside pointerdown, but a keyboard reader who tabs out of it and activates Check contrast
+       gets no pointerdown: at 110 the drawer opened UNDER the panel, with focus trapped in a surface
+       the panel was hiding. 157 is also the stacked export's number, and both are modal, so they
+       are never open together. Still under the toast (158) and the page transition (159, 160).
+       What this puts under the backdrop: a notice (128) raised while a drawer is open. Only two can
+       be — another tab's sync, which times out, and the live reading's fallback, which stays until
+       dismissed and so is still there when the drawer closes. */
+    <div style={sx('position:fixed;inset:0;z-index:157')}>
       <div data-cx-backdrop="1" onClick={vals.closeContrast} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
@@ -3384,8 +3405,9 @@ function ContrastDrawer({ vals }) {
           <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
         </div>
 
+        {/* A "Pairwise contrast" eyebrow stood above the matrix and is gone by request (14.09.26).
+            The matrix now sits on the section's own 14px under the summary sentence. */}
         <div data-cx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Pairwise contrast</div>
           <div style={contrast.matrixColsStyle}>
             {contrast.rows.map((row, ri) => (
               <div key={ri} style={sx('display:flex;align-items:stretch')}>
@@ -3598,10 +3620,11 @@ function LibraryDrawer({ vals }) {
     // hid the very list you are filtering, and there is no aria-modal and no focus trap: Tab leaves
     // the panel into the page, which is the honest behaviour for a surface that does not own the
     // screen. Escape still closes and returns focus to the trigger.
-    // z-index 156 — above the fixed brand mark (155), unlike the modal drawers at 120. Those can
-    // sit under it because their dimming backdrop subsumes the logo; this one has no backdrop, so
-    // at 120 the wordmark printed straight through the panel header. Still below the wipe (160),
-    // lightbox (170) and loader (190), which are whole-screen states that outrank any panel.
+    // z-index 156 — above the fixed brand mark (155); at 120 the wordmark printed straight through
+    // the panel header. The modal drawers once stayed under the mark on the grounds that their
+    // backdrop subsumes it, which failed wherever a drawer reached the mark's centre, so they sit at
+    // 157 now, above this panel as well (see ContrastDrawer). Still below the wipe (160), lightbox
+    // (170) and loader (190), which are whole-screen states that outrank any panel.
     <div style={sx('position:fixed;inset:0;z-index:156;pointer-events:none')}>
       <div data-library-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Manage Library" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:-18px 0 40px rgba(0,0,0,.10);display:flex;flex-direction:column;overflow-y:auto')}>
         {/* STICKY, and it is the state that makes it necessary rather than the title. The count, the
@@ -4037,7 +4060,9 @@ function HarmonyDrawer({ vals }) {
   if (!vals.hasHarmony) return null;
   const harmony = vals.harmony;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:120')}>
+    /* 157, for the contrast drawer's reasons (see its note). This one is 480px, so it met the mark
+       in any window narrower than 1125px; it sat at 120. */
+    <div style={sx('position:fixed;inset:0;z-index:157')}>
       <div data-hx-backdrop="1" onClick={vals.closeHarmony} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>

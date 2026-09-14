@@ -41,12 +41,12 @@ const ROUTES = {
     src: 'src/about/about.html',
     // The route wrapper's second class — see AppView's document-route branch and src/styles/doc.css.
     scope: 'about-route',
-    title: 'Atmos Gallery | How Images Become Colour Systems',
-    description: 'Atmos Gallery uses OKLCH to describe colours from an image, checks WCAG contrast across palette pairs and maps the palette to functional colour roles.',
+    title: 'Atmos Gallery | How Images Become Colour Palettes',
+    description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
-      name: 'Atmos Gallery | How Images Become Colour Systems',
+      name: 'Atmos Gallery | How Images Become Colour Palettes',
       url: ORIGIN + '/about',
       description: "Atmos Gallery reads a colour palette from an image's light and atmosphere rather than its literal pixels, assigns the result semantic roles, and checks the system it makes.",
       inLanguage: 'en',

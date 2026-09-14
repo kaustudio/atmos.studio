@@ -89,9 +89,9 @@ export function isDoc(route) {
    Nothing enforces either agreement, so an edit here is an edit in two files. */
 export const HEAD = {
   [ABOUT]: {
-    title: 'Atmos Gallery | How Images Become Colour Systems',
+    title: 'Atmos Gallery | How Images Become Colour Palettes',
     path: '/about',
-    description: 'Atmos Gallery uses OKLCH to describe colours from an image, checks WCAG contrast across palette pairs and maps the palette to functional colour roles.',
+    description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
     ogType: 'article',
   },
   [APP]: {

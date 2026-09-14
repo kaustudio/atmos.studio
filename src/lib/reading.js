@@ -573,6 +573,13 @@ function composeArchetype(A) {
 // It reads: <register> <medium>, <capability>. The capability clause is the honest half — a palette
 // with no usable text pairing must not be recommended for interface work, and aaState is the same
 // verdict the AA badge shows, so the two can never disagree.
+//
+// THEN AN INSTRUCTION, WHICH IS NOT PART OF THE VERDICT. The 14.09.26 copy brief replaced this line
+// with the bare count and "Check the pair you intend to use in the contrast checker."; the
+// recommendation came back by request and the instruction stayed after it. A count of pairs says
+// nothing about the ONE pair a reader means to set text on, and the sentence says where to find out.
+const USE_CHECK = 'Check the pair you intend to use in the contrast checker.';
+
 export function composeUse(A, aaState, counts) {
   if (!A) return '';
   const lb = A.lightness.band;                       // dark low mid high pale
@@ -606,12 +613,12 @@ export function composeUse(A, aaState, counts) {
   // claim about three pairs out of ten, and the reader should meet the three and the ten in the
   // same sentence rather than one layer down.
   const tally = counts && typeof counts.aaPairs === 'number' && typeof counts.totalPairs === 'number'
-    ? counts.aaPairs + ' of ' + counts.totalPairs + ' pairs meet AA for normal text' : '';
+    ? counts.aaPairs + ' of ' + counts.totalPairs + ' pairs ' + (counts.aaPairs === 1 ? 'meets' : 'meet') + ' AA for normal text' : '';
   const capability = aaState === 'flexible' ? (tally ? tally + ', enough to build type on' : 'enough usable pairs to build type on')
     : aaState === 'limited' ? (tally ? tally + ', so use it for accents rather than body text' : 'usable for accents rather than body text')
       : (tally ? 'no pair meets AA for normal text, so treat it as imagery' : 'no usable text pairing, so treat it as imagery');
 
-  return 'Best for ' + ground + ', ' + register + ' ' + medium + '. ' + CAP(capability) + '.';
+  return 'Best for ' + ground + ', ' + register + ' ' + medium + '. ' + CAP(capability) + '. ' + USE_CHECK;
 }
 
 export function composeReading(swatches, taken) {

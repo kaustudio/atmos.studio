@@ -14,9 +14,9 @@
      look good here would be the one thing that undoes the page.
 
      THE NARRATIVE. One photograph is carried the whole way down: it arrives, is counted by area, is
-     read as three dimensions, is given roles, is checked as pairs, is read again as intervals, is
-     refined, and leaves as a system. Every section is a step in one journey rather than a feature of
-     a product.
+     read as three dimensions, is given suggested roles, is checked as pairs, is read again as
+     intervals, is taken into use, and leaves as a palette to explore. Every section is a step in one
+     journey rather than a feature of a product.
 
      THE GRID. Every section is 100% wide and lays its contents on the site's own twelve columns
      (--grid-cols / --grid-gutter / --page-gutter in global.css) through .about-grid. Prose sits in a
@@ -45,7 +45,7 @@
   <div class="about-hero__inner">
     <h1>Colour Begins as Atmosphere</h1>
     <!-- The line the whole product turns on. Everything below is an expansion of it. -->
-    <p class="about-hero__lead">Start with an image.<br />Atmos turns its atmosphere into a colour system.</p>
+    <p class="about-hero__lead">Start with an image.<br />Atmos turns its atmosphere into a palette.</p>
   </div>
 
   <!-- The opening image, centred under the opening headline. Waypoint one of the flip: it starts here
@@ -70,8 +70,8 @@
     <div data-flip-element="wrapper" class="about-plate__wrap"></div>
   </div>
   <div class="about-col">
-    <p data-reveal>Before colour becomes a value, a token or a role, it is something we experience. The warmth of late-afternoon light. The cool distance of a horizon. A bright surface held against a quiet shadow. Every image contains a particular balance of colour, light and contrast. That balance is what gives it a mood.</p>
-    <p class="about-lead" data-reveal>Atmos begins there. It reads the visual character of an image, then translates it into a colour system made for use.</p>
+    <p data-reveal>Atmos draws five colours from an image and shows how much of it each one covers. It describes each colour by its lightness, chroma and hue, measures the contrast of all ten pairs, and suggests roles such as background, text and accent.</p>
+    <p class="about-lead" data-reveal>The sections below explain each step and how to read the results.</p>
   </div>
 </section>
 
@@ -82,30 +82,30 @@
      compete with a diagram. -->
 <section id="from-instinct-to-system" class="about-sec about-grid" data-sec data-rule>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.1</span>From Visual Instinct to a Usable System</h2>
-    <p data-reveal>Designers often know how something should feel before they know which colours will create it. The reference might be a photograph, a material, a landscape or a moment of light. Its atmosphere can be immediate, but translating that feeling into a working system is rarely straightforward.</p>
-    <p class="about-lead" data-reveal>Atmos is not a replacement for judgement. It gives that judgement a clearer starting point. The relationships are made visible. The roles are made explicit. Every adjustment remains open to the designer.</p>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.1</span>From an Image You Like to a Starting Palette</h2>
+    <p data-reveal>A project often starts with an image whose colours feel right. Picking them out by eye is slow, because each area holds many shades. Colours that look good together can also lack the contrast text needs.</p>
+    <p class="about-lead" data-reveal>Atmos does that first step for you and measures the result. You still choose which colours to use, and adjust them in your own design tools.</p>
   </div>
 </section>
 
 <!-- THE TAKEOVER — Osmo Supply's Sticky Title Scroll Effect, used as it is meant to be used.
 
      The whole viewport is given to one statement at a time, at display size, with nothing else on
-     screen. This is the one place the page stops explaining and simply states, and it is the three
-     beats of its central argument: what sampling gives you, what a contrast checker gives you, and
-     what sits between them. The words are the section's own, moved out of a paragraph and given a
-     screen each rather than rewritten.
+     screen. This is the one place the page stops explaining and simply states. The words are one
+     paragraph of supplied copy (14.09.26), given a screen per sentence rather than rewritten: why a
+     palette is worth understanding, then what Atmos brings together to help. They replaced three
+     beats (what sampling gives you, what a contrast checker gives you, what sits between them) that
+     ended on "from reference to system".
 
      <p> rather than <h2>, which is the one adaptation. The resource's markup uses headings because
-     its demo has no surrounding outline; these three are statements inside a section that already
-     has its heading, and three more h2s would claim to open three more sections. The data-sticky-title
-     attributes are untouched — the effect targets the attribute, not the tag. -->
+     its demo has no surrounding outline; these are statements inside a section that already has its
+     heading, and more h2s would claim to open more sections. The data-sticky-title attributes are
+     untouched — the effect targets the attribute, not the tag. -->
 <section class="about-takeover" data-sticky-title="wrap" data-sticky-arc data-sec>
   <div class="about-takeover__container">
     <div class="about-takeover__inner">
-      <p data-sticky-title="heading" class="about-takeover__el" data-optical>Sampling can produce colours. It does not explain which ones matter, how they relate or what each one should do.</p>
-      <p data-sticky-title="heading" class="about-takeover__el is--stacked" data-optical>A contrast checker can validate a pair. It does not preserve the character of the image that inspired it.</p>
-      <p data-sticky-title="heading" class="about-takeover__el is--stacked" data-optical>Atmos connects those decisions. It helps designers move from reference to system without losing the reason the reference was chosen in the first place.</p>
+      <p data-sticky-title="heading" class="about-takeover__el" data-optical>A palette is more useful when you can understand the relationships within it.</p>
+      <p data-sticky-title="heading" class="about-takeover__el is--stacked" data-optical>Atmos brings colour properties, proportions and contrast together, helping you explore how the colours could work while keeping the original image in view.</p>
     </div>
   </div>
 </section>
@@ -299,10 +299,10 @@
 
 <section id="sampled-to-roles" class="about-sec about-grid" data-sec data-rule>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.1</span>From Sampled Colours to Purposeful Roles</h2>
-    <p data-reveal>Colour becomes useful when it has a job. Up to here Atmos has produced a palette: five colours the image gave, with their measurements and the intervals between them. A colour system is that palette once every colour has a role and those relationships have been tested. This section is where one becomes the other.</p>
-    <p data-reveal>Atmos translates the visual character of an image into functional roles such as background, surface, text, primary, secondary and accent. The image provides the atmosphere. OKLCH preserves its relationships. The roles provide the structure. WCAG tests whether those roles work together.</p>
-    <p data-reveal>The system keeps the feeling of its source while becoming practical enough to use in an interface, identity or digital product.</p>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.1</span>From Sampled Colours to Suggested Roles</h2>
+    <p data-reveal>A palette describes the colours drawn from an image. Suggested roles offer possible ways to use those colours in a design.</p>
+    <p data-reveal>Atmos suggests background, surface, text, primary, secondary and accent roles. These are a starting point for exploration, not a finished design or a guarantee that every pairing meets a contrast requirement.</p>
+    <p data-reveal>Review the roles in the context of your work. Check contrast between the colours you use together, and adjust them in your own tools where needed.</p>
   </div>
 
   <!-- The same five colours, reordered by job — the tool's OWN output. semanticRoles() weighs
@@ -463,8 +463,8 @@
 <section id="contrast-creates-hierarchy" class="about-sec about-grid" data-sec data-rule>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.2</span>Contrast Creates Hierarchy</h2>
-    <p data-reveal>Compliance is not something added after the palette has been designed. Contrast shapes which relationships can carry content and which should remain atmospheric.</p>
-    <p data-reveal>A strong system needs quiet relationships as well as accessible ones. Backgrounds and surfaces may use restrained intervals to create depth. Text and essential controls need stronger separation because they carry information or action.</p>
+    <p data-reveal>Contrast helps you decide which colour pairs can carry text or essential visual information, and which are better suited to decorative use.</p>
+    <p data-reveal>Small differences between colours can create subtle depth. Text and essential controls need sufficient contrast against their backgrounds. Check each pairing for its intended use.</p>
   </div>
 
   <!-- THE EDIT, UNDER THE READER'S THUMB. Both halves are the SAME interface in the SAME five
@@ -534,7 +534,7 @@
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.4</span>The Intervals Matter</h2>
     <p data-reveal>The character of a palette often lives in the distance between its colours. A narrow change in OKLCH lightness can create subtle depth. A wider one can establish hierarchy. Related hues can produce harmony, while a controlled shift in chroma can introduce tension and focus.</p>
-    <p data-reveal>Atmos makes these intervals visible. It reveals which colours belong together and why they feel connected.</p>
+    <p data-reveal>Atmos makes these differences visible, helping you compare how closely the colours relate in lightness, chroma and hue.</p>
   </div>
 
   <!-- THE GAPS ARE THE MEASUREMENT. data-step is the perceptual distance between two neighbours in
@@ -588,9 +588,9 @@
     <!-- THIS SECTION USED TO DESCRIBE REFINEMENT — strengthening a contrast, quieting a surface —
          which the tool does not do: nothing in Atmos edits a colour. What it does have is five
          doors out of a reading, and this is the one place on the page that names them together. -->
-    <p data-reveal>A reading is a beginning, not a finished answer. What Atmos hands you is a palette with its measurements, and a set of ways to take it further.</p>
-    <p data-reveal>Check a pair in the contrast checker before you set type on it. Open a colour&rsquo;s harmonies to see what sits beside it. File the palette in a project in the Library, so readings that belong together stay together. Copy the values, or export them as tokens for Figma, CSS, Tailwind or ASE, with an optional semantic scaffold of six suggested roles to review in your own tools. And back up the Library: it lives in this browser and nowhere else.</p>
-    <p data-reveal>The adjusting happens where you build. OKLCH keeps the relationships legible while you do it, and WCAG tells you whether the result still holds.</p>
+    <p data-reveal>The palette is a starting point for your work. Explore its relationships and decide which colours to carry into your design.</p>
+    <p data-reveal>Use harmonies to explore related colours and the contrast checker to assess specific pairs. Keep related palettes together in Library projects, then copy the values or export them for your design tools. You can include six suggested roles as an optional starting structure.</p>
+    <p data-reveal>Make adjustments in your own tools and check contrast again when a pairing changes. Back up your Library to keep a separate copy of your saved palettes.</p>
   </div>
 </section>
 
@@ -601,13 +601,17 @@
 
 <!-- THE GALLERY, AS A SHELF. Eight palettes is more than a column wants and exactly what a rail is
      for: the section pins and the row travels, and each card drifts and levels out as it crosses the
-     middle. The three sensory fragments open it, resolving character by character — and two of the
-     three name photographs that are actually on the rail. -->
+     middle. The close follows the photographs directly. -->
 <section id="eight-images-eight-systems" class="about-sec about-sec--gallery" data-sec data-rule>
   <div class="about-grid">
     <div class="about-col">
-      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.1</span>Eight Images. Eight Systems</h2>
-      <p data-reveal>The same process, applied eight times. Each saved system preserves more than a row of hex values. It holds a particular relationship between atmosphere, contrast and function.</p>
+      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.1</span>Different Images. Different Palettes.</h2>
+      <!-- ONE PARAGRAPH WHERE THERE WERE TWO SECTIONS, by request (14.09.26). 4.2 ("One Image. A Palette
+           to Explore.") sat after the rail with a paragraph of its own; its heading is gone and the two
+           paragraphs were joined here and tightened, so the whole of it is read before the photographs.
+           Its fragment moved onto the paragraph, so a link to #one-image-complete-system still lands
+           on it. -->
+      <p id="one-image-complete-system" data-reveal>The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
     </div>
   </div>
 
@@ -733,27 +737,6 @@
   </div>
 </section>
 
-<!-- The last section with nothing to demonstrate, so the photographs simply pass. Eight frames
-     blooming out of the centre while the belief resolves over them. Without JS it is one image. -->
-<section id="one-image-complete-system" class="about-sec about-grid" data-sec data-rule>
-  <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.2</span>One Image. A Colour System to Build On</h2>
-    <!-- BEFORE the closing line, not after it. This paragraph spent a version sitting alone underneath
-         the image sequence, where a small left-aligned block arriving after a full-bleed pinned
-         stack read as a footnote to the photographs and was easy to scroll straight past. Ahead of
-         the statement it is ordinary section prose under its own heading — the same shape every
-         other section uses — and the line then lands on a belief the reader already holds. -->
-    <p data-reveal>Atmos was made for the distance between inspiration and implementation. It does not turn images into rules. What begins as light, texture and atmosphere becomes a system designers can understand, adapt and use.</p>
-  </div>
-
-  <!-- THE CLOSING LINE STOOD HERE and is gone by request: "Not a literal copy of the image. A
-       translation of how it feels." The section keeps its heading and its column, which are what
-       carry the argument; the statement was restating it in a second voice. The page's close carried
-       [data-highlight-text] after this went and has since become a sticky title (see .about-end), so
-       initHighlightText finds nothing on this page — the call is left armed in AboutPage.jsx so a
-       future statement works without a rebuild. -->
-</section>
-
 <!-- THE CONCLUSION, in one block: the belief, then the invitation, then the act.
 
      The belief paragraph used to sit alone in the reading column immediately under the stream — a
@@ -786,7 +769,7 @@
          how the phone story's close already behaves. No data-reveal and no data-highlight-text on
          this element: two engines rewriting one element is the failure the story's CTA heading
          records, and aboutStickyTitle.js owns these characters alone. The <br> survives its split. -->
-    <p class="about-end__line" data-sticky-title="heading">Start with an image.<br />Leave with a colour system.</p>
+    <p class="about-end__line" data-sticky-title="heading">Start with an image.<br />Discover its palette.</p>
     <!-- NO data-ix, AND THAT IS THE FIX RATHER THAN AN OMISSION. This carried data-ix="cta" on the
          reasoning that the attribute hands the control the app's interaction contract. It hands it
          the FILLED tier, which assumes the control's ink is already inverted — every other
@@ -803,7 +786,7 @@
 
          data-focus="chrome" stays and is still load-bearing: the global `:focus{outline:none}` reset
          leaves the page's only action with no focus ring at all without it. -->
-    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-focus="chrome"><span class="tswap"><span class="tswap__a">Create your Colour System</span><span class="tswap__b" aria-hidden="true">Create your Colour System</span></span></a></p>
+    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-focus="chrome"><span class="tswap"><span class="tswap__a">Explore Atmos</span><span class="tswap__b" aria-hidden="true">Explore Atmos</span></span></a></p>
   </div>
   </div>
 </section>
@@ -813,7 +796,7 @@
 
      LAST IN THE DOCUMENT ON PURPOSE. Live it is fixed to the foot of the viewport, so where it sits
      in the markup is invisible; with no JavaScript it is exactly what it reads as here — a nav at the
-     end of a long document listing its thirteen sections, which is worth having on its own. That is
+     end of a long document listing its twelve sections, which is worth having on its own. That is
      also why the collapsing and the fixed positioning live behind [data-dock-live] (about.css), an
      attribute only the script sets. Nothing on this page is hidden by CSS that JS has to come back
      and reveal.
@@ -824,7 +807,7 @@
 
      THE LABELS ARE SHORT, and deliberately not the h2s. "Some images already contain the required
      relationships" is a good heading and an impossible row in a pill at the foot of the screen; the
-     dock names the same section in four words. The number is the tie between them, which is what the
+     dock names the same section in three words. The number is the tie between them, which is what the
      numbering was added for.
 
      THEY ARE TITLE CASE, and the four group heads with them. The dock is a control, not a passage
@@ -832,7 +815,7 @@
      sentence you read, and title case is what separates a name from a phrase at that size. The h2s
      they point at stay sentence case, because those ARE the document.
 
-     Short words stay down — "Instinct to System", "The Shape of a Palette", "Colours to Roles" —
+     Short words stay down — "Image to Palette", "The Shape of a Palette", "The Palette in Use" —
      and the acronyms are left exactly as the page spells them: OKLCH and WCAG are the names of a
      colour space and a standard, so they are capital in any casing this dock is ever set in.
 
@@ -841,7 +824,7 @@
      came off, since the tracking and the size were both settings that only made sense under
      capitals. Title case is the middle setting, and it is the one this dock keeps.
 
-     data-ix="cell" ON ALL EIGHTEEN CONTROLS. The row tint, its curve and its duration arrive from
+     data-ix="cell" ON ALL SEVENTEEN CONTROLS. The row tint, its curve and its duration arrive from
      the interaction contract in global.css rather than from this component, which is what makes a
      dock row and a list row in the tool the same object. about.css therefore declares no transition
      of its own on these — an inline transition REPLACES the contract rather than joining it.
@@ -873,7 +856,7 @@
              label change and fills it from the active link, so the structure here is what carries. -->
         <span class="section-dock__label">
           <span class="section-dock__link-num">1.1</span>
-          <span>Instinct to System</span>
+          <span>Image to Palette</span>
         </span>
       </span>
       <!-- The affordance, instead of a standing "on this page" label: a caret pointing the way the
@@ -894,7 +877,7 @@
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g1" data-dock-sub class="section-dock__sub">
-            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Instinct to System</span></a></li>
+            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Image to Palette</span></a></li>
             <li><a data-section-dock-link href="#how-atmos-reads-colour" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.2</span><span>How Atmos Reads Colour</span></a></li>
             <li><a data-section-dock-link href="#reading-oklch" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.3</span><span>Reading OKLCH</span></a></li>
             <li><a data-section-dock-link href="#reading-wcag-contrast" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.4</span><span>Reading WCAG Contrast</span></a></li>
@@ -916,13 +899,13 @@
         <li data-dock-group class="section-dock__group">
           <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g3" data-ix="cell" data-focus="value" class="section-dock__group-head">
             <span class="section-dock__link-num">3</span>
-            <span>The System</span>
+            <span>The Palette in Use</span>
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g3" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Colours to Roles</span></a></li>
+            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Suggested Roles</span></a></li>
             <li><a data-section-dock-link href="#contrast-creates-hierarchy" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.2</span><span>Contrast Creates Hierarchy</span></a></li>
-            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Images That Already Work</span></a></li>
+            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Contrast in Practice</span></a></li>
             <li><a data-section-dock-link href="#the-intervals-matter" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.4</span><span>The Intervals Matter</span></a></li>
             <li><a data-section-dock-link href="#refine-without-losing" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.5</span><span>From Reading to Use</span></a></li>
           </ul>
@@ -935,8 +918,7 @@
             <span class="section-dock__chev" aria-hidden="true"></span>
           </button>
           <ul id="section-dock-g4" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Eight Images, Eight Systems</span></a></li>
-            <li><a data-section-dock-link href="#one-image-complete-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.2</span><span>A System to Build On</span></a></li>
+            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Example Palettes</span></a></li>
           </ul>
         </li>
 
