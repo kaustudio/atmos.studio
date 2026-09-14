@@ -940,9 +940,10 @@
 /* ===== THE IMAGE CHOOSER ==================================================================== */
 
 /* Osmo Supply's Layered Image Slider, carrying the choice at the end of the story. The resource's
-   own layout is kept — layered backgrounds, a centred title strip, the small masked frame, the
-   overlay with its counter and nav — and what changes is what always changes when this system takes
-   a resource in: zero radius, the site's tokens, and the type on the ladder.
+   own layout is kept — a centred title strip, the masked frame, the overlay with its counter and
+   nav — except that the frame is the whole screen now (see its rule), and what changes otherwise is
+   what always changes when this system takes a resource in: zero radius, the site's tokens, and the
+   type on the ladder.
 
    IT COVERS, IT DOES NOT REPLACE. Fixed and full-screen above the story so the eight chapters keep
    their scroll position and their built masks while the reader looks. z-index 153: over the story's
@@ -966,9 +967,6 @@
   overflow:clip;
 }
 [data-story-picker] .layered-slider__container{ position:absolute; inset:0 }
-.layered-slider__bg-collection{ position:absolute; inset:0; z-index:0; overflow:clip }
-.layered-slider__bg-item{ position:absolute; inset:0; width:100%; height:100% }
-.layered-slider__bg-img{ display:block; width:100%; height:100%; object-fit:cover; user-select:none; -webkit-user-select:none }
 /* Deeper than the resource's 15% black. Its backgrounds are campaign photography chosen to sit under
    white type; these are eight real palettes, and two of them are pale enough that the resource's
    scrim leaves a white title at roughly 1.9:1. 52% holds every one of the eight above AA. */
@@ -1003,7 +1001,11 @@
 
    THE DARKENING IS SPENT WHERE THE WORD IS. The first 30% of the frame is untouched at .10, exactly
    as it was, so the top of every photograph reads as it did before. The ramp opens through the title
-   band and continues to the bottom, where the mask frame sits over it anyway. */
+   band and continues to the bottom, behind the two nav buttons.
+
+   STILL THE RIGHT FIGURES with the frame full screen. They were measured on the full-bleed
+   backgrounds, and the frame now draws the same eight photographs under the same full-screen
+   object-fit:cover, so the title band sits on the same pixels it did. */
 .layered-slider__bg-dark{
   position:absolute;
   inset:0;
@@ -1016,8 +1018,16 @@
       rgb(0 0 0 / .36) 62%,
       rgb(0 0 0 / .50) 100%),
     rgb(0 0 0 / .18);
+  /* Pass-through, like the title collection below: a full-screen darkening over the frame. */
+  pointer-events:none;
 }
 
+/* PASS-THROUGH, so a tap on the photograph reaches it. This collection and the scrim above are both
+   full-screen boxes over the frame, and between them they took every tap that missed a word:
+   measured before these rules, a press at (60, 200) on a 390px chooser landed on
+   .layered-slider__text-list, and with that fixed, on .layered-slider__bg-dark. So the picture never
+   committed and [ATMOS 4] in methods/layeredSlider.js only ever worked on the small frame. The
+   titles take presses back below, and the module also sets them to auto on every render. */
 .layered-slider__text-collection{
   position:relative;
   z-index:3;
@@ -1026,6 +1036,7 @@
   justify-content:center;
   width:100%;
   height:100%;
+  pointer-events:none;
 }
 .layered-slider__text-list{ display:flex; align-items:center; justify-content:center; width:100%; height:100% }
 .layered-slider__text-item{ position:absolute; max-width:80%; text-align:center; cursor:pointer }
@@ -1046,17 +1057,23 @@
   letter-spacing:var(--track-statement);
   text-decoration:none;
   -webkit-tap-highlight-color:transparent;
+  pointer-events:auto;
 }
 
+/* THE FRAME IS THE WHOLE SCREEN, by request (15.09.26). It was the resource's small frame, 220px
+   wide at 4:5, hanging off the bottom edge over a full-bleed background that crossfaded the same
+   photograph. Inset 0 now, and the slide is untouched: the module steps each photograph by the
+   frame's own clientWidth, so at full width the transition between two photographs crosses the
+   whole screen on the same --ease-fold second. The crossfading background is gone from the markup,
+   since nothing under a full-screen frame can be seen.
+   z-index 1, UNDER the scrim (2) and the titles (3), where the background used to sit. It was 3,
+   above both, which was harmless for a small frame at the foot and would put a full-screen
+   photograph over the word and the darkening that keeps it readable. */
 .layered-slider__mask-collection{
   position:absolute;
-  left:50%;
-  bottom:0;
-  z-index:3;
-  width:min(58vw, 220px);
-  aspect-ratio:4/5;
+  inset:0;
+  z-index:1;
   overflow:hidden;
-  transform:translate(-50%, 26%);
 }
 .layered-slider__mask-list{ position:absolute; inset:0 }
 .layered-slider__mask-item{ position:absolute; inset:0; flex:none; width:100%; height:100%; overflow:hidden }
@@ -1069,22 +1086,37 @@
   display:flex;
   flex-flow:column;
   align-items:center;
-  justify-content:space-between;
+  /* flex-end since the counter moved into the bottom row: this holds one row now, not a top and a
+     bottom to space apart. */
+  justify-content:flex-end;
   width:100%;
   padding:calc(64px + env(safe-area-inset-top, 0px)) var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px));
   pointer-events:none;
 }
-.layered-slider__overlay-top{ display:flex; align-items:center; justify-content:center; gap:8px; pointer-events:auto }
+/* BETWEEN THE ARROWS (15.09.26, by request), centred by the nav row's space-between. It was the
+   resource's overlay-top, under the wordmark. Not a control, so it takes no presses: a tap between
+   the arrows falls through to the photograph like any other. */
+.layered-slider__counter{ display:flex; align-items:center; justify-content:center; gap:8px; pointer-events:none }
 .layered-slider__span{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-label);
   letter-spacing:var(--track-flat);
   font-variant-numeric:tabular-nums;
 }
+/* THE COUNT'S MASK. The module stacks every number in one grid cell and places each a line height
+   per slide away from the one being shown, from the slide's own progress ([ATMOS 6] in
+   methods/layeredSlider.js); overflow is what makes it a mask, as it is on .tswap. Tabular figures
+   keep every number the same width, so the cell never changes size as they pass. */
+[data-layered-slider-current]{ display:inline-grid; overflow:hidden; vertical-align:top }
+.layered-slider__count-line{ grid-area:1 / 1; display:block }
 .layered-slider__progress{ width:96px; height:2px; overflow:hidden; background:rgb(255 255 255 / .25) }
+/* A POSITION BAR, not the resource's autoplay timer: the chooser runs with autoplay off, so the
+   module fills this to the slide being shown ([ATMOS 5] in methods/layeredSlider.js). The scale3d(0)
+   below is only its state before the module draws it. */
 .layered-slider__progress-inner{ width:100%; height:100%; background:#fff; transform-origin:0%; transform:scale3d(0,1,1) }
 .layered-slider__overlay-btm{ display:flex; align-items:center; justify-content:center; width:100% }
-.layered-slider__nav{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; pointer-events:auto }
+/* The row itself passes presses through; only the two buttons take them (see .layered-slider__nav-button). */
+.layered-slider__nav{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; pointer-events:none }
 /* 48px, not the resource's 3em: this is the one surface reached only by a thumb, and 48 clears the
    44 a touch target wants.
 
@@ -1107,13 +1139,13 @@
   color:#fff;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
+  pointer-events:auto;
 }
 .layered-slider__nav-icon{ display:block; width:100%; height:100% }
 
 /* No JS: the slider never lays out, so the strip would stack every title on one spot. Showing the
    first alone is the honest floor — one image, named, with the way out still on screen. */
 [data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__text-item:not(:first-child),
-[data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__bg-item:not(:first-child),
 [data-story-picker] .layered-slider:not([data-layered-live]) .layered-slider__mask-item:not(:first-child){
   display:none;
 }

@@ -1374,16 +1374,16 @@ function MobileStory({ st }) {
 
       {/* ===== THE IMAGE CHOOSER — Osmo Supply's Layered Image Slider =====
 
-          Opened by the close's one act. The resource's structure and every one of its data-
-          attributes are kept: backgrounds that crossfade, a centred strip of titles, the small
-          masked frame at the bottom, the counter, the autoplay bar and the two nav buttons. The
-          module (methods/layeredSlider.js) supplies the swipe through Observer.
+          Opened by the close's one act. The resource's mechanics and data-attributes are kept: a
+          centred strip of titles, the masked frame whose photographs slide by the frame's own width,
+          the counter, the autoplay bar and the two nav buttons. The module
+          (methods/layeredSlider.js) supplies the swipe through Observer.
 
-          THE TITLES ARE THE PALETTE NAMES, and the two image sets are the same photograph twice: the
-          resource pairs a full-bleed background with a different image in the mask frame, which is a
-          campaign device. Here both are the case, because the reader is choosing between eight real
-          palettes and showing them two unrelated pictures per choice would be decoration standing
-          where information belongs.
+          THE FRAME IS THE WHOLE SCREEN, by request (15.09.26). It was the resource's small frame at
+          the bottom, over a full-bleed background crossfading the same photograph. The frame now
+          fills the chooser and keeps its slide, so moving between two photographs is a full-screen
+          transition; the crossfading background went with it, because under a full-screen frame it
+          could never be seen. The titles are the palette names, over the palette's own photograph.
 
           It COVERS the story rather than replacing it, so the eight chapters behind it keep their
           scroll position and their built masks while the reader looks — and inert + aria-hidden go
@@ -1392,11 +1392,11 @@ function MobileStory({ st }) {
         <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an image to read">
           <section data-layered-slider-init data-layered-slider-autoplay="0" className="layered-slider">
             <div className="layered-slider__container">
-              <div className="layered-slider__bg-collection">
-                <div className="layered-slider__bg-list">
+              <div data-layered-slider-mask className="layered-slider__mask-collection">
+                <div className="layered-slider__mask-list">
                   {st.picker.cases.map((c) => (
-                    <div key={c.key} data-layered-slider-bg className="layered-slider__bg-item">
-                      {c.hasImage && <img src={c.image} alt="" className="layered-slider__bg-img" />}
+                    <div key={c.key} data-layered-slider-mask-item className="layered-slider__mask-item">
+                      {c.hasImage && <img src={c.image} draggable="false" alt="" className="layered-slider__mask-img" />}
                     </div>
                   ))}
                 </div>
@@ -1417,24 +1417,7 @@ function MobileStory({ st }) {
                 </div>
               </div>
 
-              <div data-layered-slider-mask className="layered-slider__mask-collection">
-                <div className="layered-slider__mask-list">
-                  {st.picker.cases.map((c) => (
-                    <div key={c.key} data-layered-slider-mask-item className="layered-slider__mask-item">
-                      {c.hasImage && <img src={c.image} draggable="false" alt="" className="layered-slider__mask-img" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div className="layered-slider__overlay">
-                <div className="layered-slider__overlay-top">
-                  <span data-layered-slider-current className="layered-slider__span">01</span>
-                  <div className="layered-slider__progress">
-                    <div data-layered-slider-fill className="layered-slider__progress-inner"></div>
-                  </div>
-                  <span data-layered-slider-total className="layered-slider__span">05</span>
-                </div>
                 <div className="layered-slider__overlay-btm">
                   {/* data-ix="icon", not "press": the press tier tints with --on-surface, which is
                       near-black in light and would wash a control that is white ink on somebody's
@@ -1447,6 +1430,17 @@ function MobileStory({ st }) {
                       className="layered-slider__nav-button" aria-label="Previous image">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
                     </button>
+                    {/* BETWEEN THE ARROWS, by request (15.09.26). The counter and its bar sat at the
+                        top under the wordmark; the position now lives with the two controls that
+                        change it. The number swaps through a mask and the bar fills to the last
+                        slide: [ATMOS 6] and [ATMOS 5] in methods/layeredSlider.js. */}
+                    <div className="layered-slider__counter">
+                      <span data-layered-slider-current className="layered-slider__span">01</span>
+                      <div className="layered-slider__progress">
+                        <div data-layered-slider-fill className="layered-slider__progress-inner"></div>
+                      </div>
+                      <span data-layered-slider-total className="layered-slider__span">05</span>
+                    </div>
                     <button type="button" data-layered-slider-next data-ix="icon" data-focus="chrome"
                       className="layered-slider__nav-button" aria-label="Next image">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="100%" className="layered-slider__nav-icon" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>

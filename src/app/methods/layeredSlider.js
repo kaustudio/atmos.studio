@@ -26,7 +26,7 @@
    and re-inits over itself; that is kept, and the caller is handed the teardown so a surface that
    unmounts takes its Observer, its tweens and its listeners with it.
 
-   [ATMOS 3] onChoose IS THE FIRST OF TWO ADDITIONS ([ATMOS 4] is the second). The resource's titles are links — the active one lets its
+   [ATMOS 3] onChoose IS THE FIRST OF FOUR ADDITIONS ([ATMOS 4], [ATMOS 5] and [ATMOS 6] are the others). The resource's titles are links — the active one lets its
    href through and any other jumps to it. Here a title is a choice rather than a destination, so the
    active title reports the index instead of navigating. Everything about how the slider MOVES is
    untouched; this only says what a committed selection means. */
@@ -76,6 +76,34 @@ export function initLayeredSlider(root, options) {
 
     if (totalEl) totalEl.textContent = String(count).padStart(2, '0');
 
+    /* [ATMOS 6] THE COUNT MOVES THROUGH A MASK, AS PART OF THE SLIDE (15.09.26, by request). The
+       number on screen leaves upward and the next rises in from below, inside a clipped cell.
+
+       IT IS NOT A TWEEN OF ITS OWN, and two versions that were are why. As a 0.4s swap it read as
+       bouncy on both curves it was tried on (the hover swap's --ease-fold, then the copy
+       confirmation's --ease-entrance) and never kept time with the photographs: late when it waited
+       for their midpoint, early when it answered the press. So every number is a line in the cell,
+       and render() places each one from `progress` exactly as it places the photographs and the bar
+       ([ATMOS 5]): one line height per slide of distance from the slide being shown. The number
+       therefore moves on the slide's own curve and second, a swipe moves it as far as the images, and
+       a jump of several slides rolls through the numbers the photographs pass.
+
+       Going back mirrors it, as the photographs mirror: the number drops and the previous one comes
+       down from above. Lines other than the one being shown are hidden from assistive tech. */
+    const pad = (n) => String(n).padStart(2, '0');
+    const countLines = [];
+    if (currentEl) {
+      currentEl.textContent = '';
+      for (let i = 0; i < count; i++) {
+        const line = document.createElement('span');
+        line.className = 'layered-slider__count-line';
+        line.textContent = pad(i + 1);
+        line.setAttribute('aria-hidden', 'true');
+        currentEl.appendChild(line);
+        countLines.push(line);
+      }
+    }
+
     let titleStep = 0;
     let maskStep = 0;
     const measure = () => {
@@ -120,13 +148,50 @@ export function initLayeredSlider(root, options) {
 
         const maskItem = maskItems[i];
         if (maskItem) gsap.set(maskItem, { x: offset * maskStep });
+
+        // [ATMOS 6] The count: one line height per slide of distance, on the slide's own progress.
+        if (countLines[i]) gsap.set(countLines[i], { yPercent: offset * 100 });
+      }
+
+      /* [ATMOS 5] WITH AUTOPLAY OFF, THE BAR SAYS WHERE YOU ARE (15.09.26, by request).
+
+         The resource's bar is the autoplay timer, and the phone's chooser runs with autoplay 0, so it
+         sat empty for good: a track with nothing on it. So when there is no timer, the fill reports
+         position instead: one step of the track per slide, solid white, the whole track at the last.
+
+         It is driven from `progress`, the number the slides themselves are drawn from, not from the
+         index. That keeps it on the slide's own curve and second, and a swipe moves it as far as it
+         moves the photographs.
+
+         THE WRAP DOES NOT RUN BACKWARDS. From the last slide to the first, a width that simply
+         shrank to one step would read as travelling back through every palette. Instead the full bar
+         leaves to the right, then the first step enters from the left, and going the other way the
+         same numbers play in reverse. The wrap spends count/(count+1) of its length leaving: a full
+         width against one step, so both edges move at one speed and it reads as one bar travelling.
+
+         Drawn as a translate plus a scale from the left edge, both compositor properties, inside the
+         track's overflow:hidden. */
+      if (fill && !autoTween) {
+        const p = ((progress % count) + count) % count;
+        let from = 0, to;
+        if (p <= count - 1) {
+          to = (p + 1) / count;
+        } else {
+          const t = p - (count - 1);
+          const leave = count / (count + 1);
+          if (t < leave) { from = t / leave; to = 1; }
+          else { to = ((t - leave) / (1 - leave)) / count; }
+        }
+        gsap.set(fill, { xPercent: from * 100, scaleX: to - from, transformOrigin: '0% 50%' });
       }
 
       if (centeredIndex !== activeIndex) {
         const previousIndex = activeIndex;
         activeIndex = centeredIndex;
         setActive(previousIndex, centeredIndex);
-        if (currentEl) currentEl.textContent = String(centeredIndex + 1).padStart(2, '0');
+        // [ATMOS 6] Only the number being shown is exposed.
+        if (countLines[previousIndex]) countLines[previousIndex].setAttribute('aria-hidden', 'true');
+        if (countLines[centeredIndex]) countLines[centeredIndex].removeAttribute('aria-hidden');
         if (typeof opts.onIndex === 'function') opts.onIndex(centeredIndex);
       }
     };
