@@ -972,11 +972,19 @@ export const persistenceMethods = {
   /* THE ENTRY ACT, and the jump home for a case swap. Through Lenis when it is there, natively when
      it is not — `_lenis` is armed asynchronously with up to 40 retries and is never created at all
      under reduced motion, so a call site that assumes it exists is a control that does nothing on
-     the two occasions it matters most. Same guard aboutDock uses for its anchors. */
+     the two occasions it matters most. Same guard aboutDock uses for its anchors.
+
+     ONE SECOND ON EASE.fold, THE CHOOSER'S SLIDE (15.09.26, by request). With no duration Lenis
+     falls back to its lerp, 0.22 of the remaining distance per frame, and from the landing's Explore
+     that is a 1266px throw with its peak speed on the first frame: measured at 390x844, half the way
+     in 51ms, 90% in 168ms. It read as the page being yanked. The chooser's photographs travel on
+     layeredSlider.js's transitionDuration of 1 and EASE.fold, and this now travels on the same pair,
+     so every move on the phone's story has one character: the case swap and the colour pick come
+     through here too. */
   scrollStoryTo(sel) {
     const el = document.querySelector(sel);
     if (!el) return;
-    if (this._lenis && this._lenis.scrollTo) { try { this._lenis.scrollTo(el, { offset: 0 }); return; } catch (e) { } }
+    if (this._lenis && this._lenis.scrollTo) { try { this._lenis.scrollTo(el, { offset: 0, duration: 1, easing: this.EASE.fold }); return; } catch (e) { } }
     try { el.scrollIntoView({ behavior: this._reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
   },
   beginStory() { this.scrollStoryTo('[data-story-ch="image"]'); },
