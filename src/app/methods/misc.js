@@ -19,7 +19,7 @@ export const miscMethods = {
     if (!app) return;
     const on = !this.state.landingDismissed && !this.state.narrow && !isDoc(this.state.route);
     [].forEach.call(app.children, (el) => {
-      if (el.matches('[data-landing],[data-logo],[data-load-wrap],[data-wipe],.skip-link,[role="status"]')) return;
+      if (el.matches('[data-landing],[data-logo],[data-load-wrap],.skip-link,[role="status"]')) return;
       try {
         if (on) el.setAttribute('inert', '');
         else if (!this._bgInertOn) el.removeAttribute('inert');
@@ -316,7 +316,7 @@ export const miscMethods = {
     const guardOn = () => {
       const app = document.querySelector('[data-app]'); if (!app) return;
       [].forEach.call(app.children, (el) => {
-        if (el === lightbox || el.matches('[role="status"],[data-load-wrap],[data-wipe]') || el.hasAttribute('inert')) return;
+        if (el === lightbox || el.matches('[role="status"],[data-load-wrap]') || el.hasAttribute('inert')) return;
         try { el.setAttribute('inert', ''); S.inerted.push(el); } catch (e) { }
       });
     };

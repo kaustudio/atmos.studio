@@ -1580,41 +1580,6 @@ function MobileShareView({ ms }) {
 const visuallyHidden = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
 const liveRegionStyle = visuallyHidden;
 
-/* Curved-wipe transition layer. Caps are transient motion shape — the one sanctioned curved
-   exception; never a persistent border-radius on UI.
-
-   Rendered by every route, not just the tool. It used to serve one handoff (Get Started); it now
-   also covers the swap to privacy and terms, and a route that did not render it would be a route
-   the wipe could not leave — wipe.js resolves its layer with a querySelector and falls back to an
-   instant swap when there is none. */
-/* THE COVER, and it is rendered by PaletteApp rather than from inside these branches — see the note
-   on its render(). It used to sit in each branch's child list, which is what destroyed it mid-wipe:
-   React reconciles unkeyed children by index, and this element was index 2 of the document branch
-   against index 6 of the tool branch. Crossing that boundary unmounted the layer the running timeline
-   was animating and mounted a fresh, display:none one in its place, so the cover vanished in a single
-   frame and the whole reveal half played on detached nodes. One render site, one node, every route. */
-export function WipeLayer() {
-  return (
-    <div data-wipe="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:160;pointer-events:none;overflow:hidden;display:none')}>
-      <div data-wipe-panel="1" style={sx('position:absolute;inset:0;background:var(--ground);will-change:transform')}>
-        {/* THE CAPS OVERLAP THE PANEL BY 2PX. Butted exactly at 100%, the seam between two boxes of
-            the same colour showed as a hairline the whole way up the screen: the panel travels on a
-            fractional transform, the cap scales on another, and where the two anti-aliased edges met
-            the page underneath bled through one pixel wide. Nothing is drawn there now — the cap sits
-            under the panel's edge, and its own origin moves with it so the curve still grows from the
-            same line. */}
-        <div data-wipe-cap-top="1" style={sx('position:absolute;left:-8%;bottom:calc(100% - 2px);width:116%;height:15vh;background:var(--ground);border-radius:50% 50% 0 0;transform:scaleY(0);transform-origin:bottom center')}></div>
-        <div data-wipe-cap-bottom="1" style={sx('position:absolute;left:-8%;top:calc(100% - 2px);width:116%;height:15vh;background:var(--ground);border-radius:0 0 50% 50%;transform:scaleY(1);transform-origin:top center')}></div>
-        <div style={sx('position:absolute;inset:0;display:flex;align-items:center;justify-content:center')}>
-          <div style={sx('overflow:hidden;padding:8px 6px')}>
-            <img data-wipe-word="1" src="/assets/atmos-gallery-logo-white.svg" alt="Atmos Gallery" style={sx('display:block;height:clamp(29px,4.81vw,53px);width:auto;transform:translateY(120%)')} />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* FIRST IN THE TAB ORDER, ON EVERY BRANCH. Rendered ahead of each return's live region rather than
    once at the top, because this render is five separate returns — the tool, the three phone surfaces
    and the document routes — and a landmark link that exists on only some of them is worse than none:

@@ -1,6 +1,7 @@
-// Curved-wipe transitions between the landing and the tool (both directions) and between the four
-// routes, with rAF-stall pumps and watchdogs so a throttled frame can never strand the covering
-// layer or lock the app.
+// The masked-window transition between the landing and the tool (both directions) and between the
+// four routes: the page that is leaving scales up and dims underneath, and the page that is arriving
+// rises from below inside a rounded window that opens to the full screen. With rAF-stall pumps and
+// watchdogs so a throttled frame can never strand the ghost or lock the app. See _wipeCover.
 import { routeFor, pathFor, isDoc, applyHead, routeName } from '../routes.js';
 
 export const wipeMethods = {
@@ -90,16 +91,12 @@ export const wipeMethods = {
     });
   },
   showIntroAgain() {
-    this._wipeRunning = false;
+    this._wipeRunning = false; this._wipePending = false; this._wipeOnMount = null;
     if (this._wipeClearGuards) { try { this._wipeClearGuards(); } catch (e) { } this._wipeClearGuards = null; }
-    // fully reset the wipe layer in case a prior transition was interrupted (kill its timeline,
-    // hide the panel, clear transforms) — so returning to the landing can never inherit a stuck cover.
-    const g = window.gsap, layer = document.querySelector('[data-wipe]');
+    // fully reset the transition in case a prior one was interrupted (kill its timeline, drop the
+    // ghost, put the window back in flow) — so returning to the landing can never inherit a stuck cover.
     if (this._wipeTl) { try { this._wipeTl.kill(); } catch (e) { } this._wipeTl = null; }
-    if (layer) {
-      layer.style.display = 'none';
-      if (g) { const q = (s) => layer.querySelector(s); try { g.set([q('[data-wipe-panel]'), q('[data-wipe-cap-top]'), q('[data-wipe-cap-bottom]'), q('[data-wipe-word]')].filter(Boolean), { clearProps: 'transform' }); } catch (e) { } }
-    }
+    this._wipeTeardownDom();
     this._resetIntroState(() => {
       // L1: focus follows the action — retry until the conditional render has remounted the CTA.
       // Found by [data-glass-cta], NOT by its aria-label. The label was the selector until the
@@ -112,12 +109,11 @@ export const wipeMethods = {
       let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0);
     });
   },
-  /* Focus waits on the sentinel PaletteApp renders next to the cover (see its render note), never on
-     the cover: the cover is aria-hidden, and a focused descendant of an aria-hidden element is either
-     refused by the browser or hidden from assistive technology — both were happening, one per
-     browser. The layer is only the fallback for a document that somehow has no sentinel. */
-  _parkFocus(layer) {
-    const park = document.querySelector('[data-focus-park]') || layer;
+  /* Focus waits on the sentinel PaletteApp renders beside the window (see its render note). Nothing
+     else is safe to hold it: the ghost is aria-hidden and inert, and a focused descendant of an
+     aria-hidden element is either refused by the browser or hidden from assistive technology. */
+  _parkFocus() {
+    const park = document.querySelector('[data-focus-park]');
     if (!park) return;
     try { park.setAttribute('tabindex', '-1'); park.focus({ preventScroll: true }); } catch (e) { }
   },
@@ -160,11 +156,20 @@ export const wipeMethods = {
     if (this._wipePump) { clearInterval(this._wipePump); this._wipePump = null; }
     this._wipePumpOwns = false;
   },
-  // Recover from BOTH stuck shapes: running with no timeline, and running with a timeline that
-  // already finished/was killed (onComplete missed under a throttled frame).
+  /* Recover from BOTH stuck shapes: running with no timeline, and running with a timeline that
+     already finished or was killed (onComplete missed under a throttled frame). Not while a cover is
+     PENDING: between _wipeCover raising the ghost and the commit calling back there is no timeline
+     yet by design (see open()), and a second gesture landing in that gap must be refused, not read
+     as a stall — the watchdog covers the case where the callback never comes.
+
+     `parent`, NOT isActive(). A timeline is only active once the ticker has rendered it, and the
+     route swap is a long task: measured, a second click 50ms after play() found the timeline still
+     un-ticked, read it as stuck, killed it and started a second gesture over the first. GSAP drops a
+     killed timeline from its parent, and the root timeline drops a finished one, so a null parent
+     is exactly "dead", from the first millisecond, whatever the ticker has managed. */
   _wipeRecoverStuck() {
     const tl = this._wipeTl;
-    const stuck = this._wipeRunning && (!tl || !tl.isActive());
+    const stuck = this._wipeRunning && !this._wipePending && (!tl || !tl.parent || tl.progress() >= 1);
     if (stuck) {
       this._wipeRunning = false;
       if (tl) { try { tl.kill(); } catch (e) { } }
@@ -172,174 +177,64 @@ export const wipeMethods = {
       if (this._wipeClearGuards) { try { this._wipeClearGuards(); } catch (e) { } } this._wipeClearGuards = null;
       this._wipeClearPump();
       if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; }
-      const layer = document.querySelector('[data-wipe]'); if (layer) layer.style.display = 'none';
+      this._wipeTeardownDom();
     }
   },
-  // Logo / menu return path: the SAME curved-wipe handoff as Get Started, in reverse — cover the tool,
-  // swap to the landing behind the cover, reveal. Falls back to the instant showIntroAgain reset.
+  /* THE TWO LANDING GESTURES, ON THE SHARED COVER. Both used to carry a full copy of the panel
+     timeline — the same choreography as navigateTo, written out three times, which is how three
+     transitions that are nearly the same become three that are visibly different six months later
+     (the argument _wipeCover's header makes). They now hand the cover only what is genuinely their
+     own: what to swap behind the ghost, what to arm, what to release, and where focus lands. */
+
+  // Logo / menu return path: the tool leaves, the landing arrives in the window. Falls back to the
+  // instant showIntroAgain reset when there is nothing to animate with.
   returnToIntro() {
     this._wipeRecoverStuck();
     if (!this.state.landingDismissed || this._wipeRunning) return;
-    const g = window.gsap, layer = document.querySelector('[data-wipe]');
-    if (this._reduce || !g || !layer) { this.showIntroAgain(); return; }
-    this._wipeRunning = true;
-    const panel = layer.querySelector('[data-wipe-panel]');
-    const capT = layer.querySelector('[data-wipe-cap-top]');
-    const capB = layer.querySelector('[data-wipe-cap-bottom]');
-    const word = layer.querySelector('[data-wipe-word]');
-    layer.style.display = 'block';
-    layer.style.pointerEvents = 'auto';
-    const inertEls = [document.querySelector('[data-app]')].filter(Boolean);
-    inertEls.forEach((el) => { try { el.setAttribute('inert', ''); } catch (e) { } });
-    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; document.querySelectorAll('[data-app],[data-landing]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); this._syncAppInert(true); };
-    this._wipeClearGuards = clearGuards;
-    this._parkFocus(layer);
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
-    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
-    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
-    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
-    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
-    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
-    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
-    g.set(word, { y: 0, yPercent: 120 });
-    const parts = [document.querySelector('header'), document.querySelector('main')].filter(Boolean);
-    let swapped = false;
-    // arm the statement lines the moment the landing mounts behind the cover — same reason as the
-    // loader: the panel must never uncover text already sitting at its final position
-    const doSwap = () => { if (swapped) return; swapped = true; this._resetIntroState(() => { try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { } this._landingTextArm(g); }); };
-    const focusCta = () => { let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0); };
-    const tl = g.timeline({ paused: true, onComplete: () => { if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; } layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null; g.set([panel, capT, capB, word], { clearProps: 'transform' }); this._wipeRunning = false; this._wipeTl = null; focusCta(); } });
-    this._wipeWatchdog = setTimeout(() => {
-      this._wipeWatchdog = null;
-      if (!this._wipeRunning) return;
-      try { if (this._wipeTl) { this._wipeTl.kill(); } } catch (e) { }
-      this._wipeTl = null; this._wipeRunning = false;
-      layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null;
-      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
-      try { g.set(parts, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the tool frozen dim
-      if (!swapped) doSwap();
-      try { this._landingTextReveal(g); } catch (e) { }   // killed timeline must not strand armed lines
-      focusCta();
-    }, 4000);
-    this._wipeTl = tl;
-    // 1 — COVER: panel rises over the tool; the tool drifts up slightly for depth
-    tl.to(panel, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);
-    tl.to(capT, { scaleY: 1, duration: 0.8, ease: this.EASE.entrance }, 0);
-    if (parts.length) tl.to(parts, { y: '-6vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
-    // 2 — BRAND beat
-    tl.to(word, { yPercent: 0, duration: 0.55, ease: this.EASE.entrance }, 0.6);
-    tl.call(doSwap, null, 1.0);       // 3 — swap to the landing behind the cover
-    tl.to({}, { duration: 0.45 }, '>');
-    // 4 — REVEAL onto the landing
-    tl.to(word, { yPercent: -130, duration: 0.6, ease: this.EASE.exit }, '>-0.05');
-    tl.to(panel, { yPercent: -100, duration: 0.9, ease: this.EASE.entrance }, '<');
-    tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
-    tl.call(() => this._landingTextReveal(g), null, '<+0.2');   // statement lines rise as the cover lifts
-    // built paused: a fresh unpaused timeline inserted against a SLEEPING ticker inherits a stale
-    // parent playhead — wake the clock FIRST, then pin the playhead to 0.
-    try { g.ticker.wake(); } catch (e) { }
-    tl.play(0);
-    this._wipeArmStallPump(g);
+    const g = window.gsap;
+    if (this._reduce || !g || !this._windowEl()) { this.showIntroAgain(); return; }
+    this._wipeCover({
+      // Arm the statement lines the moment the landing mounts, before the window opens on it — the
+      // same reason as the loader: the window must never open onto text already sitting at its
+      // final position.
+      commit: (after) => this._resetIntroState(() => { this._landingTextArm(g); after(); }),
+      reveal: () => this._landingTextReveal(g),
+      reduced: () => { },
+      // Found by [data-glass-cta], NOT by its aria-label: the label is copy and moved once already
+      // (WCAG 2.5.3, `Get started` → `Get Started`), which silently broke a selector that read it.
+      focusTarget: () => document.querySelector('button[data-glass-cta]'),
+    });
   },
   getStarted() {
     this._wipeRecoverStuck();
     if (this.state.landingDismissed || this._wipeRunning) return;
+    const g = window.gsap;
+    // 'palette-generator/landing' is PERMANENT dismissal, not session-scoped: '1' survives reloads so
+    // a returning visitor lands straight in the tool. Reversible — see _resetIntroState.
     const persist = (afterCb) => {
-      try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { } this.killOrbit();
-      // Here rather than in doSwap, so the reduced-motion path above — which persists and returns
-      // without ever building a timeline — starts at the top too. Ahead of afterCb because the
-      // arming that follows it measures the copy it is about to raise.
+      try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { }
+      // After the snapshot (the cover takes it before commit), so the field is still alive to be
+      // copied into the ghost; before the tool arrives, so no context is held open behind it.
+      this.killOrbit();
+      // The landing covers the tool rather than replacing it, so the offset left behind here was
+      // invisible until now. Spend it before the window opens on the tool.
       this.setState({ landingDismissed: true }, () => { this._scrollToTop(); if (afterCb) afterCb(); });
     };
-    const focusChrome = () => { requestAnimationFrame(() => { const f = document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'); if (f) try { f.focus(); } catch (e) { } }); };
-    const g = window.gsap;
-    const layer = document.querySelector('[data-wipe]');
-    const landing = document.querySelector('[data-landing]');
-    // reduced motion / no gsap → instant swap, no panel
-    if (this._reduce || !g || !layer) { persist(focusChrome); return; }
-    this._wipeRunning = true;
-    const panel = layer.querySelector('[data-wipe-panel]');
-    const capT = layer.querySelector('[data-wipe-cap-top]');
-    const capB = layer.querySelector('[data-wipe-cap-bottom]');
-    const word = layer.querySelector('[data-wipe-word]');
-    layer.style.display = 'block';
-    // M1: while the wipe covers the screen it must actually block input — pointer AND keyboard —
-    // so nothing beneath (landing pre-swap, tool post-swap) can be activated invisibly.
-    layer.style.pointerEvents = 'auto';
-    const inertEls = [document.querySelector('[data-app]'), landing].filter(Boolean);
-    inertEls.forEach((el) => { try { el.setAttribute('inert', ''); } catch (e) { } });
-    const clearGuards = () => { this._wipeClearPump(); layer.style.pointerEvents = 'none'; inertEls.forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); const app = document.querySelector('[data-app]'); if (app) try { app.removeAttribute('inert'); } catch (e) { }  this._syncAppInert(true); };
-    this._wipeClearGuards = clearGuards;
-    // L1: park focus on the transition layer so it isn't stranded on an unmounting control
-    this._parkFocus(layer);
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
-    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
-    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
-    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
-    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
-    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
-    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
-    g.set(word, { y: 0, yPercent: 120 });
-    // behind-the-cover swap: kill orbit + flip to the tool while fully hidden, then rise the app in
-    let swapped = false;
-    const clearParts = () => { try { g.set([document.querySelector('header'), document.querySelector('main')].filter(Boolean), { clearProps: 'transform,opacity' }); } catch (e) { } };
-    // instant=true (watchdog/fallback path): mount the tool plain — never start a rise tween on a
-    // possibly-starved rAF; a from-tween that can't tick leaves the whole tool frozen dim at 0.4.
-    const doSwap = (instant) => {
-      if (swapped) return; swapped = true;
-      // the cover's landing drift (y −12vh, opacity .5) exists only to sell the hand-off. On desktop
-      // the surface unmounts here and takes the transform with it; on a small screen it STAYS mounted
-      // as the gate, so clear it at the swap or the copy is left off-centre, dim, and out of the
-      // ring the engine centred on it.
-      try { if (landing) g.set(landing, { clearProps: 'transform,opacity' }); } catch (e) { }
-      persist(() => {
-        clearParts();   // clear any block transform a previous, interrupted run may have left behind
-        // The tool arrives here exactly as it does under the page loader: its own copy rises out of
-        // the masks, rather than the whole page block sliding up as one slab. Same destination, same
-        // arrival — the handoff and a cold load into the tool must not look like two different
-        // products. Armed behind the cover; the timeline reveals it as the panel's edge clears it.
-        if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }   // starved rAF: nothing to tween, just be there
+    this._wipeCover({
+      commit: persist,
+      // The tool arrives here exactly as it does under the page loader: its own copy rises out of
+      // the masks inside the window, rather than simply being there when it opens. instant=true is
+      // the starved-rAF path — be there, plainly.
+      arm: (instant) => {
+        if (instant) { this._dropLinesReveal(g); this._listRowsReveal(); return; }
         this._dropRevealed = false;
         this._dropLinesArm();
         this._listRowsArm();
-      });
-    };
-    const tl = g.timeline({ paused: true, onComplete: () => { if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; } layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null; g.set([panel, capT, capB, word], { clearProps: 'transform' }); this._wipeRunning = false; this._wipeTl = null; focusChrome(); } });
-    // Watchdog failsafe: if the timeline stalls (throttled rAF in a backgrounded/embedded frame), the
-    // M1 input guards would otherwise lock the whole app. setTimeout fires even when rAF doesn't —
-    // force-finish the swap and clear every guard rather than ever leaving the UI inert.
-    this._wipeWatchdog = setTimeout(() => {
-      this._wipeWatchdog = null;
-      if (!this._wipeRunning) return;
-      try { if (this._wipeTl) { this._wipeTl.kill(); } } catch (e) { }
-      this._wipeTl = null; this._wipeRunning = false;
-      layer.style.display = 'none'; clearGuards(); this._wipeClearGuards = null;
-      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
-      try { if (landing) g.set(landing, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the landing frozen dim
-      // the tool must come up even if the cover never played — plain, no tween. If the swap already
-      // armed the dropzone copy, force it visible rather than leaving it parked below its masks.
-      if (!swapped) doSwap(true); else { clearParts(); try { this._dropLinesReveal(g); this._listRowsReveal(); } catch (e) { } }
-      focusChrome();
-    }, 4000);
-    this._wipeTl = tl;
-    // 1 — COVER: panel rises from below with a curved leading edge; landing drifts up for depth
-    tl.to(panel, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);
-    tl.to(capT, { scaleY: 1, duration: 0.8, ease: this.EASE.entrance }, 0);
-    if (landing) tl.to(landing, { y: '-12vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
-    // 2 — BRAND beat: wordmark rises into view from its clip (after the cover lands), held briefly
-    tl.to(word, { yPercent: 0, duration: 0.55, ease: this.EASE.entrance }, 0.6);
-    tl.call(doSwap, null, 1.0);       // 3 — invisible teardown + state flip, behind the cover
-    tl.to({}, { duration: 0.45 }, '>');  // hold so the mark can be read
-    // 4 — REVEAL: wordmark exits up through its clip; panel continues up with the curved trailing edge
-    tl.to(word, { yPercent: -130, duration: 0.6, ease: this.EASE.exit }, '>-0.05');
-    tl.to(panel, { yPercent: -100, duration: 0.9, ease: this.EASE.entrance }, '<');
-    tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
-    // dropzone copy rises just behind the panel's trailing edge — same offset the loader's fold uses
-    tl.call(() => { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }, null, '<+0.15');
-    // built paused: wake the clock first, then pin the playhead to 0.
-    try { g.ticker.wake(); } catch (e) { }
-    tl.play(0);
-    this._wipeArmStallPump(g);
+      },
+      reveal: () => { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); },
+      reduced: () => { },
+      focusTarget: () => document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'),
+    });
   },
 
   /* ===== route swap: /, /about, /privacy, /terms =====
@@ -354,25 +249,15 @@ export const wipeMethods = {
 
      The choreography is returnToIntro's, beat for beat, because it is the same gesture and should
      not read as a second one. What differs is only what happens behind the cover. */
-  /* WHAT DRIFTS BEHIND THE COVER, in two groups, because a transform is not safe on every one of them.
+  /* WHAT FADES ON THE SHORT CROSSING. Only _wipeQuick reads this now, and only for opacity.
 
-     NEVER [data-app] ITSELF, always its children. A transform makes an element the containing block
-     for its position:fixed descendants, so moving the app root would re-resolve `inset:0` on the
-     cover — and on every drawer, the brand mark and the landing stage — against a document-tall box.
-     That is the fault this function has always existed to avoid; it used to express it as "the cover's
-     siblings", which stopped being the same set the moment the cover moved out to PaletteApp.
-
-     The SAME hazard applies one level down, and About is where it finally bit. Its <main> is an
-     ancestor of the section dock (position:fixed) and of three ScrollTrigger pins, which pin as fixed
-     on a body scroller. Tweening y on it re-resolved all four against a 31,820px box: measured at
-     scrollY 6000, the dock went from 951px to 27,367px and the pinned rail from 0 to -25,881px — the
-     section a reader was looking at left the screen a full 0.8s before the cover arrived to hide it.
-
-     So a content root that owns viewport-anchored children declares `data-holds-fixed` and takes the
-     dim WITHOUT the shift. Opacity is safe — measured, the dock does not move under opacity:.5 alone,
-     because only the transform establishes the containing block — so the two groups still dim on one
-     clock and the gesture reads the same. Everything with nothing fixed underneath it keeps the full
-     6vh of parallax, which is every element on the tool and both legal documents. */
+     NEVER [data-app] ITSELF, always its children, and never a transform on any of them: a transform
+     makes an element the containing block for its position:fixed descendants, so moving a content
+     root re-resolves every drawer, the brand mark, About's section dock and its three ScrollTrigger
+     pins against a document-tall box. Measured at scrollY 6000 on /about, the dock went from 951px to
+     27,367px. Opacity is safe — only the transform establishes the containing block — which is why
+     the full gesture never touches the live page at all: it scales a fixed, viewport-sized SNAPSHOT
+     (see _snapshotPage) and leaves the real document exactly where it is. */
   _routeDrifters() {
     const app = document.querySelector('[data-app]');
     const shift = [], dim = [];
@@ -393,14 +278,14 @@ export const wipeMethods = {
     this._wipeRecoverStuck();
     if (this._wipeRunning) return;
 
-    /* WHICH GESTURE. The curved wipe and its brand beat are the site's way of saying "you are
-       somewhere else now", and they stay for the crossings where that is true: the tool or the
-       landing on one side, a document on the other. Two crossings never earned it. Privacy to terms
-       is one sentence's link between two statements that share a masthead, and Back and Forward are
-       the browser's own gesture, which a reader expects answered rather than performed — measured
-       before this branch, each cost the same 2.4s of inert screen as landing → tool. They take a
-       short crossfade instead (_wipeQuick: DUR.fast out, DUR.state in) and keep everything else the
-       cover guarantees: the inert guard, the parked focus, the watchdog, the announced destination. */
+    /* WHICH GESTURE. The masked window is the site's way of saying "you are somewhere else now",
+       and it stays for the crossings where that is true: the tool or the landing on one side, a
+       document on the other. Two crossings never earned it. Privacy to terms is one sentence's link
+       between two statements that share a masthead, and Back and Forward are the browser's own
+       gesture, which a reader expects answered rather than performed — and a pop restores a scroll
+       offset, which a window that opens on the top of a page cannot show. They take a short
+       crossfade instead (_wipeQuick: DUR.fast out, DUR.state in) and keep everything else the cover
+       guarantees: the inert guard, the parked focus, the watchdog, the announced destination. */
     const quick = !push || (isDoc(from) && isDoc(next));
     /* WHERE THE READER WAS. A pushed navigation records the departing page's offset on the entry it
        is leaving, and a pop reads the destination's back off its own. Every arrival used to be forced
@@ -430,6 +315,8 @@ export const wipeMethods = {
     this._wipeCover({
       quick,
       commit,
+      // A document is lazy; the window waits for it to mount in flow. The tool is never lazy.
+      awaitMount: isDoc(next),
       // The tool's own arrival, when it is the destination: its copy rises out of its masks exactly
       // as it does under the loader and after Get Started, rather than the whole page block sliding
       // up as one slab. instant=true is the starved-rAF path — be there, plainly.
@@ -459,36 +346,106 @@ export const wipeMethods = {
      was fine while a route change was the only thing in the product big enough to deserve it — and it
      stopped being true when the phone story gained a cycle of its own: the takeover offers another
      palette, a picker takes the choice, and the story restarts from 1.1 telling the same eight
-     chapters about a different photograph. That is a new document by every measure a reader has. It
-     was arriving on a local crossfade, so the one gesture this site uses to say "you are somewhere
-     else now" was missing from the one place on the phone where it is most true.
+     chapters about a different photograph. That is a new document by every measure a reader has.
 
      The alternative was a second timeline shaped like this one, which is how two transitions that are
-     nearly the same become two transitions that are visibly different six months later. The file
-     already made this argument once: "Shared rather than copied: the exits were consolidated into
-     _exitTween." So the mechanism moves here whole — the panel, the caps, the brand beat, the drift,
-     the inert guard, the focus hand-off, the 4s watchdog and the stall pump — and the caller supplies
-     only the three things that are genuinely its own:
+     nearly the same become two transitions that are visibly different six months later. So the
+     mechanism lives here whole — the snapshot, the window, the inert guard, the focus hand-off, the
+     4s watchdog and the stall pump — and the caller supplies only the things that are genuinely its
+     own:
 
-       commit(afterCb)  swap the content while the panel covers the screen
+       commit(afterCb)  swap the content while the ghost covers the screen
        arm(instant)     park the destination's reveals, called inside commit's callback
-       reveal()         release them, called as the panel's trailing edge clears
+       reveal()         release them, called as the window opens
        reduced()        what arrival means when there is no animation to arrive with
+       focusTarget()    where focus lands, when the default (the destination's <main>) is wrong
 
-     navigateTo passes its isDoc branching through these and is otherwise unchanged, so /about and
-     /privacy swap on exactly the timeline they did before. */
+     THE GESTURE. The page that is leaving scales up (1 → 1.2) and drifts up 10vh while a black veil
+     over it reaches 20%: it recedes, the way a surface does when something comes forward in front of
+     it. The page that is arriving rises from half a screen below inside a window clipped to a rounded
+     rectangle at the centre of the screen — inset(50% round 3em) — that opens to the full viewport as
+     it lands. 1.2s, all four movements on one curve (EASE.fold, the arrival curve the overlays
+     already share), and no brand beat: the mark was the old panel's reason to hold the screen for
+     0.45s, and a window that shows the destination from its first frame has nothing to hold for.
+
+     TWO PAGES ON SCREEN AT ONCE, in an app where a route swap is a setState. The departing page and
+     the arriving one never coexist in the DOM — AppView returns one of them — so "the current page
+     underneath" is a SNAPSHOT: _snapshotPage clones [data-app] into a fixed, viewport-sized host,
+     scrolls the host to where the reader was, and copies every canvas's pixels across (a cloned
+     canvas is blank). The clone is inert, aria-hidden and pointer-transparent, and it is the only
+     thing that gets transformed, which is what keeps the live document's fixed descendants where
+     they belong (see _routeDrifters). The arriving page is the live [data-app], inside the
+     [data-page-window] wrapper PaletteApp renders around AppView on every route; the wrapper becomes
+     position:fixed, inset:0, overflow:clip for the length of the gesture and returns to flow after,
+     so nothing the arriving page owns is ever moved or cloned.
+
+     ORDER MATTERS. The window is set fixed and pushed down AFTER commit's callback, not before: a
+     document route creates its ScrollTriggers at mount, and a mount inside a wrapper translated 50vh
+     would measure every start 50vh late. Belt and braces, finish() refreshes ScrollTrigger and
+     resizes Lenis once the wrapper is back in flow — a lazy chunk can land mid-gesture. */
+  _windowEl() { return document.querySelector('[data-page-window]'); },
+
+  /* THE SNAPSHOT. Everything a reader can see of the departing page, frozen, in a box that scrolls
+     to where they were rather than offsetting the clone: overflow:hidden makes the host a scroll
+     container, so position:sticky inside the clone resolves against it exactly as it did against the
+     viewport, and the host's transform makes it the containing block for the clone's fixed children
+     (the landing, the mark, the dock) so they land where they were too. ids are stripped so no
+     getElementById in a running module can find a copy; [data-app] is renamed so no querySelector can.
+
+     THE FIELD IS RENDERED ONCE MORE before it is copied. Its drawing buffer is valid only between
+     renderer.render() and the end of the task (preserveDrawingBuffer is off, deliberately — see
+     nebulaField), so a drawImage from a click handler reads an empty canvas. renderStill puts a frame
+     in the buffer in this task; the copy that follows reads it. */
+  _snapshotPage() {
+    const app = document.querySelector('[data-app]');
+    if (!app) return null;
+    const host = document.createElement('div');
+    host.setAttribute('data-page-ghost', '1');
+    host.setAttribute('aria-hidden', 'true');
+    host.setAttribute('inert', '');
+    host.style.cssText = 'position:fixed;inset:0;z-index:159;overflow:hidden;pointer-events:none;background:var(--surface);will-change:transform;transform:translate3d(0,0,0);transform-origin:50% 50%;';
+    const clone = app.cloneNode(true);
+    clone.removeAttribute('data-app'); clone.setAttribute('data-ghost-app', '1');
+    clone.querySelectorAll('[id]').forEach((el) => { try { el.removeAttribute('id'); } catch (e) { } });
+    try { if (this._nebula) this._nebula.renderStill(this._orbit ? this._orbit.rot : 0); } catch (e) { }
+    const srcCv = app.querySelectorAll('canvas'), dstCv = clone.querySelectorAll('canvas');
+    srcCv.forEach((src, i) => {
+      const dst = dstCv[i]; if (!dst) return;
+      try {
+        dst.width = src.width; dst.height = src.height;
+        const c = dst.getContext('2d');
+        if (c && src.width && src.height) c.drawImage(src, 0, 0);
+      } catch (e) { }
+    });
+    const veil = document.createElement('div');
+    veil.style.cssText = 'position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:2147483000;';
+    host.appendChild(clone); host.appendChild(veil);
+    const scrollY = window.scrollY || 0;
+    document.body.appendChild(host);
+    try { host.scrollTop = scrollY; } catch (e) { }
+    return { host, veil };
+  },
+  // Drop the ghost and put the window back in flow. Idempotent; every exit path lands here.
+  _wipeTeardownDom() {
+    document.querySelectorAll('[data-page-ghost]').forEach((el) => { try { el.remove(); } catch (e) { } });
+    const win = this._windowEl();
+    if (win) { try { win.removeAttribute('style'); } catch (e) { } }
+  },
+
   _wipeCover(opts) {
     const g = window.gsap;
-    const layer = document.querySelector('[data-wipe]');
+    const win = this._windowEl();
     const commit = opts.commit;
     const arm = opts.arm || function () { };
     const reveal = opts.reveal || function () { };
     const reduced = opts.reduced || function () { };
+    // Down for the length of this cover; release() raises it. Read by registerPageReveal.
+    this._wipeReleased = false;
     /* THE ARMED STORY IS RELEASED HERE, NOT BY EACH CALLER, and that is a bug fix.
 
        _syncStory holds the phone story's page reveal instead of playing it whenever a cover is up, so
-       the copy does not finish arriving behind an opaque panel. Whoever raised the cover has to let it
-       go. chooseStoryCase does. navigateTo did NOT: its reveal branches on isDoc(next), and the phone
+       the copy does not finish arriving behind the ghost. Whoever raised the cover has to let it go.
+       chooseStoryCase does. navigateTo did NOT: its reveal branches on isDoc(next), and the phone
        story lives at '/', which is the tool's route — so it released _dropLinesReveal and
        _listRowsReveal, the desktop tool's own arrivals, and the story stayed armed for good. Measured
        after navigating /about -> /: all seven section headings and every [data-reveal] block sitting
@@ -499,36 +456,33 @@ export const wipeMethods = {
        and the failure mode is a blank page. _playStoryReveal is a no-op unless something is actually
        armed, so calling it on every path costs nothing and cannot double-play. */
     const release = () => {
+      this._wipeReleased = true;
       try { reveal(); } catch (e) { }
       try { this._playStoryReveal(); } catch (e) { }
     };
     /* WHERE FOCUS LANDS, when the destination is not a page. The default below is right for a route:
        the new document's <main>, named and at the top. It is wrong for a surface that arrives as a
        DIALOG — the picker is rendered inside [data-app], so focusing [data-app] main would put the
-       keyboard on the story the dialog is covering, which is aria-hidden and inert underneath it.
-       A caller that knows better returns its own element. */
+       keyboard on the story the dialog is covering, which is aria-hidden and inert underneath it —
+       and for the two landing gestures, which hand focus to a control (the chrome's first control,
+       the landing's CTA). A caller that knows better returns its own element. */
     const pickTarget = opts.focusTarget || function () {
       const app = document.querySelector('[data-app]');
       return (app && app.querySelector('main')) || app;
     };
 
-    /* WHERE FOCUS LANDS. Nowhere, until now: the cover takes focus while the swap happens (so it is
-       never stranded on a control that is unmounting), and nothing ever handed it on — so every route
-       change dropped the keyboard to <body> and the next Tab started again from the top of the
-       document. Both of the other wipes already close this loop, getStarted through focusChrome and
-       returnToIntro through focusCta; this one simply never did.
-
-       The destination's <main> is the right target rather than its first control: these are pages you
-       arrive at, not dialogs, and it puts a screen reader at the top of the new content with the
-       landmark named. tabindex -1 makes it programmatically focusable without joining the tab order.
-       Retried on the same 60ms cadence as the element belongs to a route that has only just been
-       rendered. */
+    /* The cover takes focus while the swap happens (so it is never stranded on a control that is
+       unmounting), and this hands it on: without it every route change dropped the keyboard to <body>
+       and the next Tab started again from the top of the document. tabindex -1 makes a landmark
+       programmatically focusable without joining the tab order — and is only written onto something
+       that is not focusable already, because it would take a button OUT of the tab order. Retried on
+       a 60ms cadence as the element belongs to a route that has only just been rendered. */
     const focusDestination = () => {
       let tries = 0;
       const grab = () => {
         const target = pickTarget();
         if (target) {
-          try { target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); } catch (e) { }
+          try { if (target.tabIndex < 0) target.setAttribute('tabindex', '-1'); target.focus({ preventScroll: true }); } catch (e) { }
           if (document.activeElement === target) return;
         }
         if (++tries < 12) setTimeout(grab, 60);
@@ -540,125 +494,147 @@ export const wipeMethods = {
     // arrives correctly, it simply arrives without the gesture — which is what reduced motion asks
     // for, and the only honest fallback when there is nothing to animate with. Focus still moves:
     // asking for less motion is not asking to be left on <body>.
-    if (this._reduce || !g || !layer) { this._arrivingByWipe = false; commit(() => { reduced(); try { this._playStoryReveal(); } catch (e) { } focusDestination(); }); return; }
+    if (this._reduce || !g || !win) { this._arrivingByWipe = false; this._wipeReleased = true; commit(() => { reduced(); try { this._playStoryReveal(); } catch (e) { } focusDestination(); }); return; }
 
-    this._wipeRunning = true;
+    this._wipeRunning = true; this._wipePending = false;
     // Tells the arriving document route to ARM its reveals and wait rather than play them on mount.
-    // Without it the hero cascade runs behind an opaque panel and the cover lifts on copy that has
-    // already finished arriving — the page appears to be simply there, which is the fault this whole
-    // change exists to fix. About takes it on exactly the same terms the two statements do, which is
+    // Without it the hero cascade runs while the window is still a slot at the centre of the screen
+    // and the window opens on copy that has already finished arriving — the page appears to have
+    // simply been there. About takes it on exactly the same terms the two statements do, which is
     // what makes /about ↔ /privacy read as one gesture rather than as two products.
     this._arrivingByWipe = !opts.quick;
-    // The short crossing. Everything above this line is shared; everything below is the panel's.
+    // The short crossing. Everything above this line is shared; everything below is the window's.
     if (opts.quick) { this._wipeQuick({ commit, arm, release, focusDestination }); return; }
 
-    const panel = layer.querySelector('[data-wipe-panel]');
-    const capT = layer.querySelector('[data-wipe-cap-top]');
-    const capB = layer.querySelector('[data-wipe-cap-bottom]');
-    const word = layer.querySelector('[data-wipe-word]');
-    layer.style.display = 'block';
-    layer.style.pointerEvents = 'auto';
+    // The ghost first, while the departing page is still the live one: from here the reader is
+    // looking at the snapshot, and everything the commit does to the document happens behind it.
+    this._wipeTeardownDom();
+    const ghost = this._snapshotPage();
     const app = document.querySelector('[data-app]');
     if (app) { try { app.setAttribute('inert', ''); } catch (e) { } }
     const clearGuards = () => {
       this._wipeClearPump();
-      layer.style.pointerEvents = 'none';
       document.querySelectorAll('[data-app]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } });
       this._syncAppInert(true);
     };
     this._wipeClearGuards = clearGuards;
-    // L1: park focus on the transition layer so it isn't stranded on a control that is unmounting.
-    this._parkFocus(layer);
+    // L1: park focus on the sentinel so it isn't stranded on a control that is unmounting.
+    this._parkFocus();
 
-    g.set(panel, { yPercent: 100 }); g.set(capT, { scaleY: 0 }); g.set(capB, { scaleY: 1 });
-    // y:0 FIRST. The wordmark carries a baked transform:translateY(120%) in its inline style
-    // (WipeLayer in AppView), and GSAP parses that computed matrix as a PIXEL y — so setting
-    // yPercent alone stacks a second 120% on top of it and the tween below, which only drives
-    // yPercent to 0, leaves the mark one full height BELOW its clip. The brand beat then holds
-    // for 0.45s on an empty panel. Zero the pixel offset and re-express it as the percentage the
-    // timeline actually animates — the same normalisation, for the same reason, as loader.js enter().
-    g.set(word, { y: 0, yPercent: 120 });
-    const parts = this._routeDrifters();
-
-    let swapped = false;
-    const doSwap = (instant) => {
-      if (swapped) return; swapped = true;
-      commit(() => {
-        try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }
-        arm(instant);
-      });
+    const settle = () => {
+      // The document is back in flow at the top; anything that measured it through the window
+      // re-measures now. Both are no-ops for a page that owns neither.
+      try { if (window.ScrollTrigger) window.ScrollTrigger.refresh(); } catch (e) { }
+      try { if (this._lenis) this._lenis.resize(); } catch (e) { }
     };
-
     const finish = () => {
       if (this._wipeWatchdog) { clearTimeout(this._wipeWatchdog); this._wipeWatchdog = null; }
-      layer.style.display = 'none';
+      this._wipeTeardownDom();
       clearGuards(); this._wipeClearGuards = null;
-      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
-      this._wipeRunning = false; this._wipeTl = null; this._arrivingByWipe = false;
-      // Belt and braces. release() runs as the panel lifts, but _syncStory can arm AFTER that if a
+      this._wipeRunning = false; this._wipePending = false; this._wipeTl = null; this._arrivingByWipe = false; this._wipeOnMount = null;
+      settle();
+      // Belt and braces. release() runs as the window opens, but _syncStory can arm AFTER that if a
       // late commit rebuilds the surface while the flag is still up. This is the last moment the flag
       // is true, so it is the last chance to notice. Idempotent, as above.
       try { this._playStoryReveal(); } catch (e) { }
       focusDestination();
     };
 
-    const tl = g.timeline({ paused: true, onComplete: finish });
-    // Watchdog failsafe: if the timeline stalls (throttled rAF in a backgrounded tab), the inert
-    // guard would otherwise lock the whole document. setTimeout fires even when rAF does not —
-    // force-finish the swap and clear every guard rather than leaving the UI unreadable and inert.
+    let swapped = false, opened = false;
+    const open = () => {
+      if (opened || !this._wipeRunning) return; opened = true;
+      // The window: fixed, viewport-sized, clipped to a rounded slot at its centre, half a screen
+      // down. Set only now, after the destination has rendered and measured itself in flow.
+      g.set(win, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100%', overflow: 'clip', zIndex: 160, yPercent: 50, willChange: 'transform, clip-path', clipPath: 'inset(50% round 3em)' });
+      const tl = g.timeline({ paused: true, onComplete: finish });
+      this._wipeTl = tl;
+      const ease = this.EASE.fold;
+      // The ghost recedes: up, larger, and under a veil — all three on the window's clock.
+      if (ghost) {
+        tl.to(ghost.veil, { opacity: 0.2, duration: 1.2, ease }, 0);
+        tl.to(ghost.host, { y: '-10vh', scale: 1.2, duration: 1.2, ease }, 0);
+      }
+      // The window lands a beat before it has fully opened, so the last of the clip clears a page
+      // that has already stopped moving.
+      tl.to(win, { yPercent: 0, duration: 1.0, ease }, 0);
+      tl.to(win, { clipPath: 'inset(0% round 0em)', duration: 1.2, ease }, 0);
+      // The destination's own copy rises inside the window as it opens: early enough to be seen
+      // arriving through the slot, late enough that the slot is already something to see it in.
+      tl.call(release, null, 0.2);
+      // built paused: a fresh unpaused timeline inserted against a SLEEPING ticker inherits a stale
+      // parent playhead — wake the clock FIRST, then pin the playhead to 0.
+      try { g.ticker.wake(); } catch (e) { }
+      tl.play(0);
+      this._wipePending = false;
+      this._wipeArmStallPump(g);
+    };
+    /* THE WINDOW WAITS FOR THE PAGE TO BE THERE. The two document routes are lazy, and React mounts a
+       lazy page in a later task even when its chunk is already loaded — so commit's callback fires
+       on the Suspense hole, and the page used to mount a few hundred milliseconds later INSIDE the
+       fixed, clipped, transformed window. Measured in WebKit: About's 72 ScrollTrigger creations and
+       two refreshes cost ~330ms of main thread on a cold load in flow, and 1,036ms in one frame when
+       they ran inside the window — a stall a quarter of the way through the gesture. In flow, before
+       the window is set, the same work costs what it costs on a cold load and finishes before
+       anything moves. The page announces its mount through registerPageReveal (the same call the
+       release relies on); the wait is capped so a chunk that never lands cannot hold the gesture. */
+    const waitMount = () => {
+      let done = false;
+      const go = () => {
+        if (done) return; done = true;
+        this._wipeOnMount = null; clearTimeout(cap);
+        // One frame, so the mount's own layout is settled before the window's first transform.
+        requestAnimationFrame(() => open());
+      };
+      const cap = setTimeout(go, 600);
+      this._wipeOnMount = go;
+    };
+    const doSwap = (instant) => {
+      if (swapped) return; swapped = true;
+      commit(() => {
+        arm(instant);
+        if (instant) return;
+        if (opts.awaitMount && !this._pageReveal) waitMount(); else open();
+      });
+    };
+
+    // Watchdog failsafe: if the timeline stalls (throttled rAF in a backgrounded tab), or the commit
+    // never calls back, the inert guard would otherwise lock the whole document. setTimeout fires
+    // even when rAF does not — force-finish the swap and clear every guard rather than leaving the
+    // UI unreadable and inert.
     this._wipeWatchdog = setTimeout(() => {
       this._wipeWatchdog = null;
       if (!this._wipeRunning) return;
       try { if (this._wipeTl) this._wipeTl.kill(); } catch (e) { }
-      this._wipeTl = null; this._wipeRunning = false;
-      layer.style.display = 'none';
+      this._wipeTl = null; this._wipeRunning = false; this._wipePending = false; this._wipeOnMount = null;
+      this._wipeTeardownDom();
       clearGuards(); this._wipeClearGuards = null;
-      try { g.set([panel, capT, capB, word], { clearProps: 'transform' }); } catch (e) { }
-      try { g.set(parts.all, { clearProps: 'transform,opacity' }); } catch (e) { }   // never leave the page frozen dim
       this._arrivingByWipe = false;
+      settle();
       // Through the caller's own reveal, not _playPageReveal directly: on the tool route that call
       // released a document controller belonging to a page that is no longer mounted, so the arriving
       // copy stayed parked. reveal() is what each caller already says its arrival means.
       if (!swapped) doSwap(true); else release();
-      focusDestination();   // a killed timeline must not strand focus on the cover either
+      focusDestination();   // a killed timeline must not strand focus on the sentinel either
     }, 4000);
-    this._wipeTl = tl;
 
-    // 1 — COVER: panel rises over the page; the page drifts up slightly for depth
-    tl.to(panel, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);
-    tl.to(capT, { scaleY: 1, duration: 0.8, ease: this.EASE.entrance }, 0);
-    // The page drifts up and dims; a root that owns fixed children only dims — see _routeDrifters.
-    if (parts.shift.length) tl.to(parts.shift, { y: '-6vh', opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
-    if (parts.dim.length) tl.to(parts.dim, { opacity: 0.5, duration: 0.8, ease: this.EASE.entrance }, 0);
-    // 2 — BRAND beat
-    tl.to(word, { yPercent: 0, duration: 0.55, ease: this.EASE.entrance }, 0.6);
-    tl.call(doSwap, null, 1.0);       // 3 — swap the route behind the cover
-    tl.to({}, { duration: 0.45 }, '>');   // hold so the mark can be read
-    // 4 — REVEAL onto whatever arrived
-    tl.to(word, { yPercent: -130, duration: 0.6, ease: this.EASE.exit }, '>-0.05');
-    tl.to(panel, { yPercent: -100, duration: 0.9, ease: this.EASE.entrance }, '<');
-    tl.to(capB, { scaleY: 0, duration: 0.9, ease: this.EASE.entrance }, '<');
-    // The destination's own copy rises just behind the panel's trailing edge — the same offset the
-    // loader's fold and Get Started both use, so all three arrivals share one rhythm.
-    tl.call(release, null, '<+0.15');
-    // built paused: wake the clock first, then pin the playhead to 0.
-    try { g.ticker.wake(); } catch (e) { }
-    tl.play(0);
-    this._wipeArmStallPump(g);
+    // Swap now, behind the ghost. The window opens from commit's callback — see open(). Pending
+    // until it does, so a second gesture in the gap is refused rather than mistaken for a stall.
+    this._wipePending = true;
+    doSwap(false);
   },
 
-  /* THE CROSSFADE, for the crossings that do not earn the panel — see navigateTo. The departing
+  /* THE CROSSFADE, for the crossings that do not earn the window — see navigateTo. The departing
      content fades on DUR.fast, the route swaps, the arriving content fades in on DUR.state while its
      own copy rises out of its masks (the tool's drop lines and rows through arm/release; a document
      plays its own reveal on mount, which is why _arrivingByWipe is false here). Guards, watchdog,
-     stall pump and focus hand-off are the panel's, so the two gestures fail the same way. */
+     stall pump and focus hand-off are the window's, so the two gestures fail the same way. */
   _wipeQuick(ctx) {
     const g = window.gsap;
     const app = document.querySelector('[data-app]');
     if (app) { try { app.setAttribute('inert', ''); } catch (e) { } }
     const clearGuards = () => { this._wipeClearPump(); document.querySelectorAll('[data-app]').forEach((el) => { try { el.removeAttribute('inert'); } catch (e) { } }); this._syncAppInert(true); };
     this._wipeClearGuards = clearGuards;
-    this._parkFocus(null);
+    this._parkFocus();
     const parts = this._routeDrifters();
     let swapped = false;
     const doSwap = () => {
@@ -701,9 +677,20 @@ export const wipeMethods = {
     this._wipeArmStallPump(g);
   },
 
-  // A document route hands its reveal controller up on mount and takes it back on unmount, so the
-  // timeline above has something to release without reaching into the component. Both LegalPage and
-  // AboutPage use it; there is only ever one of them mounted, so one slot is enough.
-  registerPageReveal(controller) { this._pageReveal = controller; },
+  /* A document route hands its reveal controller up on mount and takes it back on unmount, so the
+     timeline above has something to release without reaching into the component. Both LegalPage and
+     AboutPage use it; there is only ever one of them mounted, so one slot is enough.
+
+     AND A CONTROLLER THAT ARRIVES AFTER THE RELEASE PLAYS AT ONCE. The two routes are a lazy chunk,
+     prefetched on load but not guaranteed: measured, an /about reached before the prefetch landed
+     mounted its page after the window's 0.2s release had already fired, registered a controller
+     nobody would ever play, and sat with its hero at opacity 0. The old panel hid the same race
+     behind a full second of cover; the window shows the page from its first frame, so the slot has
+     to answer for itself. play() is idempotent (pageReveal), so the early case cannot double-fire. */
+  registerPageReveal(controller) {
+    this._pageReveal = controller;
+    if (controller && this._wipeOnMount) this._wipeOnMount();   // the window was waiting for this mount
+    if (controller && this._wipeReleased) this._playPageReveal();
+  },
   _playPageReveal() { const c = this._pageReveal; if (c) { try { c.play(); } catch (e) { } } },
 };

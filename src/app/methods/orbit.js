@@ -849,7 +849,7 @@ export const orbitMethods = {
                         ticker, and update() — the only thing that calls renderer.render — stops.
                         Measured: 10 setRamp calls, ZERO renders. The dissolve was written into a
                         texture nobody drew, for 0.8s, on the same frames _shareIn's entrance needs.
-       chooseStoryCase  runs entirely underneath [data-wipe], alongside buildStoryMasks (15-34ms),
+       chooseStoryCase  runs entirely behind the transition's ghost, alongside buildStoryMasks (15-34ms),
                         ScrollTrigger.refresh and lenis.scrollTo — the busiest frames the phone has,
                         and the wipe exists precisely so nobody watches them.
        setStoryCase     the field is lit and rendering, and the reader is at chapter 7 being scrolled

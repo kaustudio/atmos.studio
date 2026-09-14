@@ -6,6 +6,63 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-14 — The page transition is a window, not a panel
+
+The site's one gesture for "you are somewhere else now" was a curved panel in `--ground` that rose
+over the page, held the wordmark for 0.45s, and lifted onto the destination: 2.4s of opaque screen
+per crossing, and the same beat whether a reader was leaving the landing, the tool or a document.
+It was a cover. It said that something happened; it did not show what.
+
+The replacement is Osmo's masked window, adapted rather than pasted. The page that is leaving
+scales from 1 to 1.2 and drifts up 10vh under a black veil that reaches 20%: it recedes. The page
+that is arriving rises from half a screen below inside a window clipped to `inset(50% round 3em)`
+at the centre of the screen, which opens to the full viewport as it lands. 1.2s, every movement on
+`EASE.fold` (0.625, 0.05, 0, 1 — the resource's own curve, and already the arrival curve the
+overlays share), and the destination's copy rises inside the window from 0.2s so it is seen arriving
+through the slot rather than sitting there when it opens. No brand beat: the mark was the panel's
+reason to hold the screen, and a window that shows the destination from its first frame has nothing
+to hold for.
+
+**What the adaptation had to solve.** Barba keeps two containers in the DOM; here a route swap is a
+setState and AppView returns one tree, so "the current page underneath" does not exist to animate.
+It is a snapshot: `_snapshotPage` clones `[data-app]` into a fixed, viewport-sized host, scrolls the
+host to where the reader was (a scroll container, so `position:sticky` resolves as it did against
+the viewport), copies every canvas's pixels across after asking the field for one more frame (a
+cloned canvas is blank, and the field's buffer only holds a frame inside the task that rendered
+it), and strips ids so nothing running can find a copy. The snapshot is the only thing transformed.
+The live document is never moved — a transform on a content root re-resolves every fixed descendant
+against a document-tall box, which is the fault `_routeDrifters` was written to avoid — so the
+arriving page is the live `[data-app]` inside a `[data-page-window]` wrapper that PaletteApp
+renders above every branch, set fixed and clipped for 1.2s and cleared after. The window is pushed
+down only after the destination has rendered in flow, because a document route measures its
+ScrollTriggers at mount and a mount inside a wrapper translated 50vh measures every start 50vh late;
+`finish()` refreshes ScrollTrigger and resizes Lenis anyway, for the chunk that lands mid-gesture.
+
+**What stayed.** The Back/Forward and privacy ↔ terms crossings keep their short crossfade
+(`_wipeQuick`): a pop restores a scroll offset, which a window that opens on the top of a page
+cannot show, and the reasoning that they are the browser's gesture rather than the site's still
+holds. The inert guard, the parked focus, the announced destination, the 4s watchdog and the stall
+pump are unchanged. Reduced motion swaps outright, as before.
+
+**Two things the window exposed that the panel had been hiding.** A second gesture 50ms into the
+first found the timeline un-ticked (the swap is a long task), read `isActive() === false` as stuck,
+killed it and started over the top; the stuck check now reads the timeline's `parent`, which GSAP
+nulls the moment a timeline is killed or finishes. And a document whose lazy chunk landed after the
+0.2s release registered a reveal controller nobody would play; `registerPageReveal` now plays a
+controller that arrives after the release. Both races existed under the panel, behind a full second
+of cover.
+
+**And one the panel had been paying for.** React mounts a lazy route in a later task even when its
+chunk is loaded, so About was mounting a few hundred milliseconds after the commit — inside the
+fixed, clipped, transformed window. WebKit charged 1,036ms in one frame for its 72 ScrollTrigger
+creations and two refreshes there, against ~330ms for the same work in flow on a cold load; Chrome
+144ms. The window now waits for the page to announce its mount (`registerPageReveal`, capped at
+600ms) and opens one frame later, so the mount runs in flow before anything moves: WebKit 237ms
+before the gesture starts and 60fps through it, Chrome 93ms. Measured with Playwright's Chrome and
+WebKit; Playwright's Firefox build does not launch on this machine, so Firefox is unmeasured.
+
+---
+
 ## 2026-09-02 — The grid card is the photograph; the readout opens beside it
 
 The spatial grid's tile was the list row's whole content model stacked into a 300×463 box — a

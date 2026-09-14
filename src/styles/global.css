@@ -990,7 +990,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* value→Copied text swap: masked line reveal (two identical keyframes so the swap back restarts it) */
 @keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
 @keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
-@media (prefers-reduced-motion: reduce){ [data-logo],[data-wipe-word]{animation:none!important} }
+@media (prefers-reduced-motion: reduce){ [data-logo]{animation:none!important} }
 /* ===== .glass-cta — THE ACTION ON A SCREEN THAT IS NOT THE TOOL ================================
 
    ONE CONTROL, STATED ONCE. This figure already existed three times, hand-copied: `glassCta` in
@@ -2134,10 +2134,10 @@ button[data-row-cell] .tswap{flex:none}
 
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
    at its designed weight, not thickened by subpixel rendering. Scoped to the dark theme and the
-   always-dark surfaces (wipe, loader), NOT the light theme — antialiased thins dark-on-light
+   always-dark surface (the loader), NOT the light theme — antialiased thins dark-on-light
    body copy and costs reading contrast there. */
 :root[data-theme="dark"] body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-[data-wipe], [data-load-wrap] { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+[data-load-wrap] { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 /* Hide scrollbar (Osmo) — the bar, never the overflow: page and drawer regions stay fully
    scrollable by wheel, touch and keyboard; the drawers keep their edge-fade cue. */
 html, body { scrollbar-width: none; }
