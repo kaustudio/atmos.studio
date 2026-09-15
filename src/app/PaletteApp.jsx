@@ -372,8 +372,12 @@ export default class PaletteApp extends React.Component {
      there is nothing to read, and the phone falls through to the gate exactly as it stands today.
      That is the same `feed.length > 0` guard `gateHasExample` already applies to the gate's one act,
      and it keeps the storage-blocked case no worse than it is now rather than turning it into eight
-     blank chapters. */
-  _mobileStory() { return !!(this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare() && !this._mobileList()); }
+     blank chapters.
+
+     Never on a document route, for the reason _landingUp gives: _syncStory finds its root with a
+     document-wide querySelector, and on /about the only [data-mobile-story] left is the one inside
+     the departing page's snapshot. */
+  _mobileStory() { return !!(!isDoc(this.state.route) && this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare() && !this._mobileList()); }
   /* THE CASE THE STORY TELLS. A DIFFERENT EXAMPLE ON EVERY LOAD (15.09.26, by request), the way the
      desktop landing already rolls a different palette per arrival (_fieldPalette in orbit.js). It
      was Dry Season, always, so every visit on a phone told the same story about the same flower.
@@ -401,8 +405,16 @@ export default class PaletteApp extends React.Component {
      not change the answer, because they cover the stage rather than replacing it. _landingLit is "can
      anybody see it", which is what the drift should actually be spending frames on: a formation
      integrating its angles behind an opaque panel is work for nobody, and one that was TORN DOWN
-     there is a gate that comes back empty. Parked, not killed. */
-  _landingUp() { return (!this.state.landingDismissed || this.state.narrow); }
+     there is a gate that comes back empty. Parked, not killed.
+
+     AND NOT ON A DOCUMENT ROUTE, where it was answering "up" for a stage AppView does not render.
+     That used to cost only a wasted retry loop: componentDidUpdate called initOrbit on /about, which
+     looked for [data-orbit] every 100ms for five seconds and found nothing. Under the masked-window
+     transition it found the departing page's snapshot — a clone of the landing, [data-orbit] and all
+     — and rebuilt the field inside it with a freshly rolled palette, so the example a reader was
+     leaving changed colour while it receded. The stage is not in the document on these routes, so
+     this says so. */
+  _landingUp() { return !isDoc(this.state.route) && (!this.state.landingDismissed || this.state.narrow); }
   _landingLit() { return this._landingUp() && !this._mobileShare() && !this._mobileList(); }
   // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
   // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is

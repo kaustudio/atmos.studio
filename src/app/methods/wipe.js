@@ -389,8 +389,22 @@ export const wipeMethods = {
      to where they were rather than offsetting the clone: overflow:hidden makes the host a scroll
      container, so position:sticky inside the clone resolves against it exactly as it did against the
      viewport, and the host's transform makes it the containing block for the clone's fixed children
-     (the landing, the mark, the dock) so they land where they were too. ids are stripped so no
-     getElementById in a running module can find a copy; [data-app] is renamed so no querySelector can.
+     (the landing, the mark, the dock) so they land where they were too — once _ghostPinFixed has
+     undone the host's scroll for them. ids are stripped so no getElementById in a running module can
+     find a copy; [data-app] is kept, for the stylesheets, and see below for why that is safe.
+
+     AND EVERY DATA ATTRIBUTE THE STYLESHEETS DO NOT USE IS STRIPPED, because ids were never the
+     only way in. This app finds its surfaces by data attribute from the document: the landing's
+     engine looks up [data-orbit] and its floor, bloom and grain; the tool's arrival asks whether
+     [data-land-line] is on the page. Whenever the live element had gone and the copy was still on
+     screen, the copy answered. Measured leaving the landing for /about, before this: the engine
+     built a second WebGL field inside the ghost, ~440 mutations in 1.5s, and a newly rolled palette
+     in three rounds of four — the example the reader was looking at changed while it receded. And
+     Get Started found the ghost's landing lines, took the landing to be still up, and skipped
+     parking the tool's copy, which sat in place and then jumped down to rise. What CSS selects on
+     stays, so the copy looks exactly the same; what exists only for JavaScript to find goes. The
+     set is read off the live stylesheets (_ghostCssAttrs), so a new hook needs no entry here and a
+     new rule cannot lose its styling.
 
      THE FIELD IS RENDERED ONCE MORE before it is copied. Its drawing buffer is valid only between
      renderer.render() and the end of the task (preserveDrawingBuffer is off, deliberately — see
@@ -404,29 +418,57 @@ export const wipeMethods = {
        DOM and invisible. Cloning and painting it anyway was the largest single cost of the Get
        Started click: measured as Interaction to Next Paint, 88–136ms with the full clone against
        48ms with no snapshot at all, and the paint of that first ghost frame is what the reader is
-       waiting on. With the landing up, the snapshot is the landing and the mark, nothing else. */
+       waiting on. With the landing up, the snapshot is the landing and the mark, nothing else.
+
+       NOT ON A PHONE. There the landing is not a cover but the ground floor: the story, the example
+       list and the share view all stand over it, and it is up on every one of them. Cloning only the
+       landing there swapped the page the reader was on — the foot of the story, say — for the colour
+       field and its "Based on" thumbnail in the first frame of the gesture. */
     const landing = app.querySelector('[data-landing]');
-    const landingUp = !!landing && !this.state.landingDismissed;
+    const landingUp = !!landing && !this.state.landingDismissed && !this.state.narrow;
     const host = document.createElement('div');
     host.setAttribute('data-page-ghost', '1');
     host.setAttribute('aria-hidden', 'true');
     host.setAttribute('inert', '');
     host.style.cssText = 'position:fixed;inset:0;z-index:159;overflow:hidden;pointer-events:none;background:var(--surface);will-change:transform;transform:translate3d(0,0,0);transform-origin:50% 50%;';
-    let clone, source;
+    // pairs: each live subtree and its copy, in the same shape, for the fixed-element pass below.
+    let clone, source, pairs;
     if (landingUp) {
       // The same box the app root would give it, so the fixed landing inside resolves the same way.
       source = document.createElement('div');
-      source.appendChild(landing.cloneNode(true));
+      const landingCopy = landing.cloneNode(true);
+      source.appendChild(landingCopy);
+      pairs = [[landing, landingCopy]];
       const mark = app.querySelector(':scope > [data-logo]');
-      if (mark) source.appendChild(mark.cloneNode(true));
+      if (mark) { const markCopy = mark.cloneNode(true); source.appendChild(markCopy); pairs.push([mark, markCopy]); }
       clone = source;
       source = landing;
     } else {
       clone = app.cloneNode(true);
       source = app;
+      pairs = [[app, clone]];
     }
-    clone.removeAttribute('data-app'); clone.setAttribute('data-ghost-app', '1');
-    clone.querySelectorAll('[id]').forEach((el) => { try { el.removeAttribute('id'); } catch (e) { } });
+    /* [data-app] STAYS ON THE COPY. It used to be renamed, so no querySelector could find it — but
+       the phone's stacking and allow-list rules are scoped to it ("[data-app]:not(.doc-route) >
+       .site-foot" is what lifts the footer above the landing), and without it the footer's copy fell
+       behind the landing's the moment the landing's copy was put back where it belongs (see
+       _ghostPinFixed): the foot of the story became the colour field. A single querySelector still
+       finds the live root, which always precedes the ghost in the document; the two document-wide
+       querySelectorAll calls, the inert guards' clear, run after the ghost has been removed. The
+       landing-only snapshot's wrapper takes it too, so both copies match the same rules. */
+    if (landingUp) clone.setAttribute('data-app', '1');
+    const keep = this._ghostCssAttrs();
+    const scrub = (el) => {
+      if (el.id) el.removeAttribute('id');
+      const at = el.attributes;
+      for (let i = at.length - 1; i >= 0; i--) {
+        const n = at[i].name;
+        if (n.startsWith('data-') && !keep.has(n)) el.removeAttribute(n);
+      }
+    };
+    try { scrub(clone); clone.querySelectorAll('*').forEach(scrub); } catch (e) { }
+    // After the scrub, which would otherwise take this too.
+    clone.setAttribute('data-ghost-app', '1');
     try { if (this._nebula) this._nebula.renderStill(this._orbit ? this._orbit.rot : 0); } catch (e) { }
     /* AT HALF RESOLUTION. The copy is drawn under a veil, scaled up 1.2x and gone in 1.2s; a
        full-DPR copy of the field costs a second upload of a 2880x1800 texture in the click's own
@@ -449,7 +491,81 @@ export const wipeMethods = {
     const scrollY = window.scrollY || 0;
     document.body.appendChild(host);
     try { host.scrollTop = scrollY; } catch (e) { }
+    // After the scroll, and by the offset the host actually took: a snapshot with nothing in flow
+    // (the landing and the mark) cannot scroll at all, and its fixed copies are already in place.
+    try { this._ghostPinFixed(pairs, host.scrollTop); } catch (e) { }
     return { host, veil };
+  },
+  /* FIXED ELEMENTS STAY WHERE THEY WERE ON SCREEN.
+
+     The host's transform makes it the containing block for every position:fixed copy inside it,
+     and the host is also the scroller. A fixed box resolved against a scroll container is placed in
+     its CONTENT, so it scrolls with the page: every fixed copy ended up exactly the host's scroll
+     offset above where the reader saw it. At the top of a page that offset is zero and nothing
+     showed. Deep in /about it was the whole screen — measured at 9000px, the pinned "01 Hue" slide
+     and the section dock were both gone from the first frame of the gesture, and the ghost differed
+     from the page it was copied from by 83%.
+
+     So each copy of an element the browser lays out against the viewport is moved back down by that
+     offset, ahead of whatever transform it already had. Its descendants move with it and are
+     skipped. A fixed element under a transformed, filtered or contained ancestor is left alone,
+     because that ancestor was already its containing block on the live page and it scrolled there
+     too. Only runs when the page is scrolled; the read is one computed position per element. */
+  _ghostPinFixed(pairs, dy) {
+    if (!(dy > 0) || !pairs) return;
+    const againstViewport = (el) => {
+      for (let a = el.parentElement; a && a !== document.documentElement; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        if (cs.transform !== 'none' || cs.filter !== 'none' || cs.perspective !== 'none'
+          || (cs.backdropFilter && cs.backdropFilter !== 'none')
+          || /transform|filter|perspective/.test(cs.willChange)
+          || /paint|layout|strict|content/.test(cs.contain)) return false;
+      }
+      return true;
+    };
+    pairs.forEach(([src, dst]) => {
+      const S = [src].concat([].slice.call(src.querySelectorAll('*')));
+      const D = [dst].concat([].slice.call(dst.querySelectorAll('*')));
+      if (S.length !== D.length) return;
+      for (let i = 0; i < S.length; i++) {
+        const cs = getComputedStyle(S[i]);
+        if (cs.position !== 'fixed') continue;
+        if (againstViewport(S[i])) {
+          const t = cs.transform;
+          // Transitions off first: the skip link eases its transform, and a copy that slides into
+          // place is the very movement this pass exists to prevent.
+          D[i].style.transition = 'none';
+          D[i].style.transform = 'translateY(' + dy + 'px)' + (t && t !== 'none' ? ' ' + t : '');
+        }
+        i += S[i].querySelectorAll('*').length;
+      }
+    });
+  },
+  /* THE DATA ATTRIBUTES THE STYLESHEETS SELECT ON — the ones the snapshot must keep. Read from
+     document.styleSheets, walking into @media, @supports and nested rules, and cached against the
+     sheet count: the set only changes when a stylesheet is added. Every sheet on this site is
+     same-origin, so cssRules is readable; one that is not is skipped rather than guessed at. */
+  _ghostCssAttrs() {
+    const sheets = document.styleSheets;
+    const sig = sheets.length;
+    if (this._ghostAttrs && this._ghostAttrsSig === sig) return this._ghostAttrs;
+    const keep = new Set();
+    const re = /\[\s*(data-[\w-]+)/g;
+    const walk = (rules) => {
+      for (let i = 0; i < rules.length; i++) {
+        const r = rules[i];
+        if (r.selectorText) { re.lastIndex = 0; let m; while ((m = re.exec(r.selectorText))) keep.add(m[1].toLowerCase()); }
+        if (r.cssRules && r.cssRules.length) walk(r.cssRules);
+        if (r.styleSheet) { try { walk(r.styleSheet.cssRules); } catch (e) { } }
+      }
+    };
+    for (let i = 0; i < sheets.length; i++) {
+      let rules = null;
+      try { rules = sheets[i].cssRules; } catch (e) { }
+      if (rules) walk(rules);
+    }
+    this._ghostAttrs = keep; this._ghostAttrsSig = sig;
+    return keep;
   },
   // Drop the ghost and put the window back in flow. Idempotent; every exit path lands here.
   _wipeTeardownDom() {
