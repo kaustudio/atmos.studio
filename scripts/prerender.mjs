@@ -43,6 +43,8 @@ const ROUTES = {
     scope: 'about-route',
     title: 'Atmos Gallery | How Images Become Colour Palettes',
     description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
+    // <meta name="description"> only; `description` stays on the og:/twitter: pair. See HEAD in routes.js.
+    searchDescription: 'Learn how Atmos Gallery extracts five colours from an image, describes their properties, checks contrast between pairs and suggests possible design roles.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
@@ -60,6 +62,7 @@ const ROUTES = {
     scope: 'legal-route',
     title: 'Atmos Gallery | Privacy and Image Processing',
     description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values for naming, which starts as soon as you choose an image.',
+    searchDescription: 'Learn how Atmos Gallery processes images, stores palettes in your browser and uses Anthropic for naming and Vercel analytics only with your permission.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'PrivacyPolicy',
@@ -89,6 +92,7 @@ const ROUTES = {
     scope: 'legal-route',
     title: 'Atmos Gallery | Terms of Use',
     description: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of colour and contrast readings.',
+    searchDescription: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of extracted colours and contrast results.',
     ld: {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
@@ -185,7 +189,7 @@ for (const [route, meta] of Object.entries(ROUTES)) {
   );
 
   html = swapTag(html, /<title>[\s\S]*?<\/title>/, `<title>${meta.title}</title>`, '<title>', route);
-  html = swapTag(html, /<meta name="description" content="[^"]*"\s*\/>/, `<meta name="description" content="${meta.description}" />`, 'the description', route);
+  html = swapTag(html, /<meta name="description" content="[^"]*"\s*\/>/, `<meta name="description" content="${meta.searchDescription}" />`, 'the description', route);
   html = swapTag(html, /<link rel="canonical" href="[^"]*"\s*\/>/, `<link rel="canonical" href="${url}" />`, 'the canonical', route);
   html = swapTag(html, /<meta property="og:title" content="[^"]*"\s*\/>/, `<meta property="og:title" content="${meta.title}" />`, 'og:title', route);
   html = swapTag(html, /<meta property="og:description" content="[^"]*"\s*\/>/, `<meta property="og:description" content="${meta.description}" />`, 'og:description', route);

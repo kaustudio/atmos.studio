@@ -87,29 +87,38 @@ export function isDoc(route) {
      - scripts/prerender.mjs carries the other three, written into dist/about.html, dist/privacy.html
        and dist/terms.html for readers and crawlers with no JavaScript.
    Nothing enforces either agreement, so an edit here is an edit in two files. */
+/* TWO DESCRIPTIONS PER ROUTE. `searchDescription` is <meta name="description"> alone — the snippet
+   under a search result. `description` feeds og:description and twitter:description — the text on a
+   share card. They were one field, which made it impossible to tune the search snippet without
+   rewriting every share card on the site at the same moment; they are written for different readers
+   in different places, so they are allowed to differ. */
 export const HEAD = {
   [ABOUT]: {
     title: 'Atmos Gallery | How Images Become Colour Palettes',
     path: '/about',
     description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
+    searchDescription: 'Learn how Atmos Gallery extracts five colours from an image, describes their properties, checks contrast between pairs and suggests possible design roles.',
     ogType: 'article',
   },
   [APP]: {
     title: 'Atmos Gallery | Image Colour Palette Generator',
     path: '/',
     description: 'Atmos Gallery reads a colour palette from an image, checks WCAG contrast for every pair and exports Figma variables, design tokens, CSS, Tailwind and ASE.',
+    searchDescription: 'Atmos Gallery extracts five colours from an image, checks WCAG contrast and exports palettes for Figma, CSS, Tailwind, design tokens and ASE.',
     ogType: 'website',
   },
   [PRIVACY]: {
     title: 'Atmos Gallery | Privacy and Image Processing',
     path: '/privacy',
     description: 'Atmos Gallery extracts palettes on your device, stores them in your browser and sends a small thumbnail and hex values for naming, which starts as soon as you choose an image.',
+    searchDescription: 'Learn how Atmos Gallery processes images, stores palettes in your browser and uses Anthropic for naming and Vercel analytics only with your permission.',
     ogType: 'article',
   },
   [TERMS]: {
     title: 'Atmos Gallery | Terms of Use',
     path: '/terms',
     description: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of colour and contrast readings.',
+    searchDescription: 'Atmos Gallery terms cover image rights, palette ownership, browser storage, shared links and the limits of extracted colours and contrast results.',
     ogType: 'article',
   },
 };
@@ -135,7 +144,7 @@ export function applyHead(route) {
     document.title = h.title;
     var canonical = document.head.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', url);
-    meta('meta[name="description"]', h.description);
+    meta('meta[name="description"]', h.searchDescription);
     meta('meta[property="og:title"]', h.title);
     meta('meta[property="og:description"]', h.description);
     meta('meta[property="og:url"]', url);
