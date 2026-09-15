@@ -82,6 +82,13 @@
    the --nav-top band. The bar carries no shadow, so its own box is all there is to clear; the 2px is
    for the hairline's antialiasing on a fractional transform. */
 .doc-head[data-nav-hidden="1"]{transform:translateY(calc(-100% - var(--nav-top) - 2px))}
+/* THE PHONE'S FRONT PAGE FLOATS THE SAME BAR (DocHead's `floating`). Fixed rather than sticky: the
+   story's first screen is a transparent hole onto the colour field, and a bar in the flow would push
+   that hole 72px down. Same box as .glass-bar's float, stated as insets. z-index 155 is the place the
+   wordmark held in the phone's ladder (gate 150, footer 151, story 152, picker 153, scrim 154), so it
+   floats over the story and the image chooser exactly as the mark did, inside the top band the
+   chooser already keeps clear for it. */
+.doc-head.doc-head--float{position:fixed;top:var(--nav-top);left:var(--page-gutter);right:var(--page-gutter);margin:0;z-index:155}
 .doc-head__mark{grid-column:2;display:flex}
 /* display:flex on the switch's track too, as on the mark's: an inline wrapper hands the button a line
    box, and the strut under its baseline sat the switch 3.5px high in the bar — unnoticed on a flat

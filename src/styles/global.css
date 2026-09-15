@@ -2226,8 +2226,11 @@ a.button-006{text-decoration:none;}
          which is itself exempt one line up, so painting it out left the mark exempt and its ground
          gone. It failed silently in the way this note keeps warning about: the element rendered,
          resolved its gradient, and measured 0px tall.
-     None of the four is a piece of the tool, so none of them is what this rule is defending. */
-  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not([data-mark-scrim]):not(.skip-link):not(.site-foot){display:none!important}
+       · .doc-head — the floating bar the phone's front page wears since 15.09.26 (DocHead's
+         `floating`, in place of the lone wordmark). Painted out here it rendered, ran its hide on
+         scroll, and measured 0x0: the same silent failure, a third time.
+     None of these is a piece of the tool, so none of them is what this rule is defending. */
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not([data-mark-scrim]):not(.skip-link):not(.site-foot):not(.doc-head){display:none!important}
   /* AND BEING ON THE ALLOW-LIST IS ONLY HALF OF BEING VISIBLE. The rule above stops the footer
      being painted out; it does not put it anywhere a reader can see it, and for a while it was not.
 
@@ -2604,6 +2607,13 @@ html.lenis,html.lenis body{height:auto}
 }
 /* The pane's blur and tint, restated against the same number. -webkit- first, standard last — the
    order the build keeps; see .button-006. */
+/* A GLASS CHIP: a floating label with no action, over something that moves (today the grid view's
+   "Drag or scroll to explore"). The bar's recipe at the size of a control: the glass pane, the 12%
+   hairline, a pill, and the 32px height of the close mark it shares the field with. Its padding is
+   --row-inset, the inset a surface gives its content, which is the bar's padding too. The label is
+   the label voice: --fs-label, capitals, flat tracking, muted. */
+.glass-chip{display:inline-flex;align-items:center;height:32px;padding:0 var(--row-inset);border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);border-radius:var(--radius-pill);isolation:isolate}
+.glass-chip__label{position:relative;z-index:1;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;line-height:1}
 .consent > .glass-effect{
   --glass-tint:color-mix(in srgb, var(--surface) calc(70% * var(--consent-glass, 1)), transparent);
   -webkit-backdrop-filter:blur(calc(.75em * var(--consent-glass, 1)));

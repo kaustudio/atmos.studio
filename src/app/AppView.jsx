@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
-import { B006, B006Text, GlassEffect, NavNewPalette, TextSwap, ThemeSwitch } from './chrome.jsx';
+import { B006, B006Text, DocHead, GlassEffect, NavNewPalette, TextSwap, ThemeSwitch } from './chrome.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
 
    Imported statically, these dragged about.html (89KB, injected verbatim as a string), about.css,
@@ -2158,18 +2158,15 @@ export default function AppView({ vals }) {
         <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} quiet />}
-        {/* Decorative here, as it is on the gate: the story IS the start screen, so there is nowhere
-            for the mark to lead. It becomes a button on the two surfaces above this one. */}
-        {/* NO MarkScrim HERE, and the reason is the surface underneath. This hero is a hole onto
-            the colour field, which is a soft wash rather than a photograph — the backdrop difference
-            was designed for and handles on the gate already. A --surface band over it would veil the
-            top of the brand's arrival to solve a legibility problem this surface does not have. By
-            the time a photograph DOES pass under the mark, heroExit has scrubbed the mark to zero.
-            (It was briefly rendered here to keep the mark at one child index across the three phone
-            branches. That argument was wrong: this branch draws the mark as a <div role="img"> and
-            the two above draw it as a <button>, so React remounts it on the type change whatever
-            the index is.) */}
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        {/* THE NEW BAR, ON THE PHONE'S FRONT PAGE TOO (15.09.26, by request). This was the one phone
+            surface with no bar: a decorative wordmark floated alone at the top, and the hero scrubbed
+            it away at the first flick because it printed over the chapters. The documents' masthead
+            takes its place, as it stands on /about on a phone: the theme switch and the mark in the
+            glass pane, floating over the field, leaving on the way down and coming back on the way up,
+            which answers the same problem the scrub did. heroExit's [data-logo] now matches nothing
+            here, which it is written to tolerate; the field's mark clearing (_markBox) likewise finds
+            no mark and clears nothing, the pane being the mark's ground now. */}
+        <DocHead vals={vals} floating onField />
         <MobileStory st={vals.mobileStory} />
         {/* THE ONLY WAY OFF THIS PAGE ON A PHONE. The foot is rendered by the document routes and,
             in the tool, by the upload stage — and the mobile story is neither, so the phone homepage
@@ -3279,7 +3276,9 @@ function FeedSection({ vals }) {
           </>)}
 
           {vals.universeReduced && (
-            <div data-lenis-prevent="1" style={sx('position:absolute;top:56px;left:0;right:0;bottom:0;overflow:auto;padding:24px')}>
+            /* Reduced motion's plain grid scrolls under the bar and the close row like everything else,
+               and starts clear of both: the bar, the air, the 32px close row, the air again. */
+            <div data-lenis-prevent="1" style={sx('position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;padding:calc(var(--nav-top) * 3 + var(--nav-h) + 32px) var(--page-gutter) var(--page-gutter)')}>
               <div style={sx('display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;max-width:1200px;margin:0 auto')}>
                 {vals.feedNodes.map((c, ci) => (
                   <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onClick={c.onClick} style={sx('position:relative;display:block;text-align:left;width:100%;background:var(--surface-raised);border:1px solid var(--line);padding:0;margin:0;cursor:pointer;font:inherit;overflow:hidden')}>
@@ -3303,8 +3302,13 @@ function FeedSection({ vals }) {
             </div>
           )}
 
-          {/* universe chrome (fixed above the field) */}
-          <div data-universe-chrome="1" style={sx('position: absolute; top: 0; left: 0; right: 0; height: 56px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
+          {/* UNIVERSE CHROME, UNDER THE FLOATING BAR (15.09.26, by request). The bar floats over the field
+              now (header 95, this stage 90), and this row used to be the stage's top 56px, which put
+              the close mark exactly under the bar's right end. It stands below the bar instead, the
+              same air under it as over it (--nav-top), with its right edge on the bar's right edge,
+              the grid's outer line: still the top-right corner where a full-screen view's close is
+              looked for, and the stage's own, not a control added to the site's bar. */}
+          <div data-universe-chrome="1" style={sx('position: absolute; top: calc(var(--nav-top) * 2 + var(--nav-h)); left: 0; right: 0; height: 32px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
             {/* The app's close mark, at the 32px circle every other surface uses, with the same one
                 deviation: --surface behind it, because this one floats over a live WebGL field too.
@@ -3313,7 +3317,12 @@ function FeedSection({ vals }) {
           </div>
 
           {vals.universeEngine && (
-            <span data-universe-chrome="1" aria-hidden="true" style={sx('position:absolute;left:20px;bottom:18px;z-index:5;font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface-muted);background:color-mix(in srgb, var(--surface-raised) 88%, transparent);padding:5px 9px;border:1px solid var(--line);pointer-events:none')}>Drag or scroll to explore</span>
+            /* THE HINT IS A GLASS CHIP (15.09.26, by request: match the design system). It was a plate of
+               its own: 88% surface under a --line stroke, tracked out at .06em, 20 and 18px off the
+               corner. It takes the system's pieces now: the bar's glass (the field pans behind it,
+               which is what glass is for), a pill, the flat tracking every label keeps, and the page
+               gutter off both edges, so it stands on the grid's outer lines like the bar. */
+            <div data-universe-chrome="1" aria-hidden="true" className="glass-chip" style={sx('position:absolute;left:var(--page-gutter);bottom:var(--page-gutter);z-index:5;pointer-events:none')}><GlassEffect /><span className="glass-chip__label">Drag or scroll to explore</span></div>
           )}
         </div>
 

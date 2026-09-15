@@ -299,7 +299,12 @@ export function docLinkHandler(vals) {
    of JSX and a second set of class names for one object — which is the shape every drift on this site
    has started as. Styles are in doc.css beside the route's own base rules; scripts/prerender.mjs
    restates this markup for the no-JS floor and has to be kept in step with it. */
-export function DocHead({ vals }) {
+/* `floating` and `onField` are the phone's front page (15.09.26, by request: the new bar was missing
+   there). The story is a full-screen hole onto the colour field, so the bar cannot stand in the flow
+   above it the way it does over a document; it floats fixed on the same lines instead, and over the
+   field it takes the landing's thinner light-mode pane. Everything else, the hide on the way down
+   included, is this masthead exactly. */
+export function DocHead({ vals, floating, onField }) {
   /* The bar leaves on the way down and comes back on the way up — see methods/docHeadHide.js for
      why that is here rather than on the app's header, and why it is a transition rather than a
      tween. Mounted from DocHead itself, not from the two pages that render it, so the behaviour
@@ -309,7 +314,7 @@ export function DocHead({ vals }) {
   useEffect(() => initDocHeadHide(barRef.current), []);
 
   return (
-    <div className="doc-head glass-bar" ref={barRef}>
+    <div className={'doc-head glass-bar' + (floating ? ' doc-head--float' : '')} {...(onField ? { 'data-on-landing': '1' } : {})} ref={barRef}>
       <GlassEffect />
       <span className="doc-head__theme"><ThemeSwitch vals={vals} /></span>
       <span className="doc-head__mark">

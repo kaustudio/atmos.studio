@@ -76,7 +76,7 @@ export const wipeMethods = {
     // open a card → logo → Get Started.
     this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
     clearTimeout(this._closeGuard);
-    if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
+    if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.documentElement.style.overflow = ''; } catch (e) { } }
     // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
     // alone it would fire after the wipe and pull the reader back into the view they just left.
     this._viewClosing = false; this._viewPending = null;

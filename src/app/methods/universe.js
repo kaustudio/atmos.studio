@@ -70,7 +70,13 @@ export const universeMethods = {
     this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate any pending close completion
     this.killSpatial();
     this._lenisStop();                                   // the universe's Observer owns the wheel
-    try { document.body.style.overflow = 'hidden'; } catch (e) { }
+    /* THE LOCK IS ON <html>, NOT <body> (15.09.26). With Lenis stopped the root carries overflow:clip,
+       and overflow on the body then stops propagating to the viewport and makes the body a scroll
+       container of its own: the floating bar, sticky inside it, came loose and scrolled away with
+       the page, so it floated over the grid only when the grid was opened from the top of the page.
+       Locked on the root, the viewport is still the bar's scroller and the bar stays where it
+       floats, above the field, from wherever the grid is opened. */
+    try { document.documentElement.style.overflow = 'hidden'; } catch (e) { }
     this._bloomNext = true;                              // play the radial assembly bloom on this entrance
     this.setState({ feedView: 'grid', announce: 'Spatial grid view. Drag to pan the field. Press a card to open it. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
   },
@@ -79,7 +85,7 @@ export const universeMethods = {
   // re-render first and only then emptied.
   _enterList() {
     this._lenisStart();
-    try { document.body.style.overflow = ''; } catch (e) { }
+    try { document.documentElement.style.overflow = ''; } catch (e) { }
     this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => /grid/i.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
   },
   // Open: the universe layer fades in and the tile field assembles from the viewport centre; close

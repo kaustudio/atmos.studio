@@ -150,6 +150,8 @@ export function initHeroExit(root) {
      mark rather than stay behind as a permanent veil holding ground for something no longer drawn.
      Matching nothing costs nothing; the two are one object and should never disagree about whether
      it is up. */
+  /* ON THE PHONE'S FRONT PAGE THIS NOW MATCHES NOTHING (15.09.26): the story wears the floating bar
+     instead of a lone wordmark, and the bar leaves on the way down by itself (docHeadHide). */
   const mark = document.querySelectorAll('[data-logo], [data-mark-scrim]');
   if (mark.length) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
 

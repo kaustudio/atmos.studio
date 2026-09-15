@@ -122,6 +122,30 @@ unchanged through the whole exit. The press also stopped setting `pointer-events
 hover at once, and the hover label rolled back down through the fade, showing two copies of the words.
 The click guard already ignores a second press, and a reversal mid-exit still turns round in place.
 
+**The grid view's close stands under the bar.** The bar at z-index 95 floats over the grid's
+full-screen stage at 90, and the stage's close sat in its top 56px, exactly under the bar's right end.
+It now stands one `--nav-top` below the bar, 104px from the top, with its right edge on the bar's
+right edge. That keeps it in the top-right corner, where a full-screen view's close is looked for, and
+it stays the stage's own control rather than one added to the site's bar. The reduced-motion grid
+starts clear of both. The bar only floated over the grid when it was opened from the top: the grid's
+scroll lock set `overflow: hidden` on `<body>`, which with Lenis stopped made the body a scroll
+container, so the sticky bar scrolled away with the page. The lock is on `<html>` now, and the bar
+stays at 24px from wherever the grid opens.
+
+**The grid's hint is a glass chip.** "Drag or scroll to explore" was a plate of its own, 88% surface
+under a `--line` stroke, tracked at .06em, 20 and 18px off the corner. It is now `.glass-chip`: the
+bar's glass pane and 12% hairline in a 32px pill with `--row-inset` padding, the label voice with flat
+tracking, and a page gutter off both edges.
+
+**The phone's front page wears the bar.** It was the one phone surface without it: a lone wordmark
+floated at the top and the hero faded it out at the first scroll, because it printed over the chapters.
+The documents' masthead now floats there, `DocHead` with `floating` and `onField`. It is fixed rather
+than in the flow, so the full-screen opening isn't pushed down, uses the landing's thinner light-mode
+glass over the colour field, and takes the wordmark's 155 in the phone's stacking order. It hides on
+the way down and returns on the way up, as on /about. The small-screen gate's allow-list had to name
+`.doc-head`, or the bar rendered at 0x0. The example list and the shared palette view on a phone keep
+their wordmark buttons.
+
 **On the landing it is live.** The desktop landing drops from z-index 150 to 90 and the bar sits at
 95. At 150 the landing would have covered what the bar opens: Restore's dialog is 126 and a notice is
 128. The phone's ladder is built on the landing at 150 and is unchanged. `_syncAppInert` exempts

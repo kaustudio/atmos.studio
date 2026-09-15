@@ -915,7 +915,7 @@ export default class PaletteApp extends React.Component {
     if (this._mq && this._onMq) { try { if (this._mq.removeEventListener) this._mq.removeEventListener('change', this._onMq); else this._mq.removeListener(this._onMq); } catch (e) { } this._mq = null; this._onMq = null; }
     if (this._rmq && this._onRmq) { try { if (this._rmq.removeEventListener) this._rmq.removeEventListener('change', this._onRmq); else this._rmq.removeListener(this._onRmq); } catch (e) { } this._rmq = null; this._onRmq = null; }
     this.stopCanvas(); this.killSpatial(); this.killOrbit();
-    try { document.body.style.overflow = ''; } catch (e) { }
+    try { document.documentElement.style.overflow = ''; } catch (e) { }
     if (this._t) clearInterval(this._t);
     if (this._end) clearTimeout(this._end);
     if (this._onKey) document.removeEventListener('keydown', this._onKey);
