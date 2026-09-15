@@ -344,11 +344,23 @@
    Here the grid is inside a chapter, and two-up keeps the set on one screen while the swatch still
    clears the width it needs to read as a colour.
 
+   THE PICKER'S HALF OF THIS RULE WAS DEAD UNTIL 2026-09-15, and it read as working because its
+   sibling was. `[data-story-picks]` is (0,1,0), the same as about.css's `.about-roles`, and about.css
+   comes later in main-*.css — so its `(max-width:560px)` one-column rule won on every phone and the
+   picker stood as five full-width cells, almost 700px of them under a photograph you have to keep in
+   view to see what a tap lit. `[data-story-panel] .about-roles` is (0,2,0) and was always two-up, which is
+   why nothing looked wrong in 2.1. Scoped under [data-mobile-story] it is (0,2,0) too, the same
+   answer as the surface's transparency above: state the exception instead of winning on order.
+
+   AN ODD COUNT KEEPS ITS HOLE. The facts panel lets a last odd row span both columns; a swatch must
+   not, because this list runs largest share to smallest, so a spanning cell would draw the smallest
+   colour at twice the size of the rest — directly after the chapter showing the real proportions.
+
    There is no `:disabled` rule because there is no disabled control: a swatch with no locatable
    region renders as a plain div rather than a dead button (see the note in AppView). That is what
    keeps `[data-ix]:disabled`'s opacity:.42 off a cell whose swatch is a real palette colour — /about
    states the rule as "NO OPACITY… that is not a tint". */
-[data-story-picks],
+[data-mobile-story] [data-story-picks],
 [data-story-panel] .about-roles{
   grid-template-columns:repeat(2, minmax(0, 1fr));
   list-style:none;

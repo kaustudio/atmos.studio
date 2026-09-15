@@ -6,6 +6,27 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-15 — On a phone, the colour picker under the photograph is two-up
+
+**Two columns, so the photograph and the whole set share a screen.** On the phone's "See Where Each
+Colour Comes From", a tap lights that colour's region in the photograph above. In one column the five
+cells ran almost 700px under the picture, so every tap meant scrolling up to see what it lit and down
+again for the next. Two-up, at 390x844, the photograph (269px) and all five cells (416px) are on screen
+together. The cell is unchanged: How it Works' Suggested Roles card, in the same two-up grid the
+phone's own Role panel already uses.
+
+**It was meant to be two-up all along; the rule lost on order.** `[data-story-picks]` has the same
+specificity as about.css's `.about-roles`, and about.css comes later in the bundle, so its one-column
+rule for screens up to 560px won. The picker's rule is now scoped under `[data-mobile-story]`, which
+states the exception instead of depending on stylesheet order. That is the same fix the story's
+transparent ground uses.
+
+**An odd count keeps its hole.** The facts panel lets a last odd row span both columns. A swatch must
+not, because the list runs from largest share to smallest. A spanning cell would draw the smallest
+colour at twice the size of the others, right after the chapter that shows the real proportions.
+
+---
+
 ## 2026-09-15 — How it Works 4.1 is a hero text on the gallery's pin
 
 **The heading is gone and the paragraph is the section's hero text.** "Different Images. Different
