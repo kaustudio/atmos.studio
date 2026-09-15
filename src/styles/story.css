@@ -1143,6 +1143,9 @@
   pointer-events:auto;
 }
 .layered-slider__nav-icon{ display:block; width:100%; height:100% }
+/* A title's lines are block masks once split ([ATMOS 8] in methods/layeredSlider.js), and the item
+   around them shrinks to the longest one; nowrap keeps a line from breaking again at its own width. */
+.layered-slider__text-title .reveal-line{ white-space:nowrap }
 
 /* No JS: the slider never lays out, so the strip would stack every title on one spot. Showing the
    first alone is the honest floor — one image, named, with the way out still on screen. */

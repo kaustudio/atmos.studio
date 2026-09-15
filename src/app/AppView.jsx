@@ -1385,8 +1385,10 @@ function MobileStory({ st }) {
       {/* ===== THE IMAGE CHOOSER — Osmo Supply's Layered Image Slider =====
 
           Opened by the close's one act. The resource's mechanics and data-attributes are kept: a
-          centred strip of titles, the masked frame whose photographs slide by the frame's own width,
-          the counter, the autoplay bar and the two nav buttons. The module
+          centred strip of titles, the masked frame, the counter, the autoplay bar and the two nav
+          buttons. The photographs no longer slide side by side: each arriving one is uncovered over
+          the last by an edge crossing the screen ([ATMOS 7] in methods/layeredSlider.js), and the
+          palette names rise through the site's line masks rather than sliding past ([ATMOS 8]). The module
           (methods/layeredSlider.js) supplies the swipe through Observer.
 
           THE FRAME IS THE WHOLE SCREEN, by request (15.09.26). It was the resource's small frame at

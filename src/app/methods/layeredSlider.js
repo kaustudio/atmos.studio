@@ -1,9 +1,10 @@
 /* Osmo Supply — Layered Image Slider.
 
    THE MECHANIC IS THE RESOURCE'S, UNCHANGED. One instance per `[data-layered-slider-init]`; the
-   backgrounds crossfade on `1 - distance`; the titles lay out as a centred strip stepped by
+   backgrounds crossfade on `1 - distance`; the titles (until [ATMOS 8]) lay out as a centred strip stepped by
    `max(root.clientWidth * titleGap, widestTitle + titleSpacing)`; the mask items slide by the frame's
-   own width; `wrap()` keeps the strip infinite in both directions; `[data-active]` moves across the
+   own width (until [ATMOS 7], which masks them over each other instead); `wrap()` keeps the strip
+   infinite in both directions; `[data-active]` moves across the
    background, title and mask together; the counter pads to two digits; the autoplay bar scales on X
    and calls `goTo(1)` when it fills; Observer supplies the swipe with `dragMinimum:10`,
    `tolerance:25` and `lockAxis:true`; and every `data-` attribute keeps its name. The tuning
@@ -26,10 +27,14 @@
    and re-inits over itself; that is kept, and the caller is handed the teardown so a surface that
    unmounts takes its Observer, its tweens and its listeners with it.
 
-   [ATMOS 3] onChoose IS THE FIRST OF FOUR ADDITIONS ([ATMOS 4], [ATMOS 5] and [ATMOS 6] are the others). The resource's titles are links — the active one lets its
+   [ATMOS 3] onChoose IS THE FIRST OF SIX ADDITIONS ([ATMOS 4] to [ATMOS 8] are the others; [ATMOS 7]
+   changes how the photographs move, from sliding side by side to masking over each other, and
+   [ATMOS 8] how the titles do, from a sliding strip to the site's masked line reveal). The resource's titles are links — the active one lets its
    href through and any other jumps to it. Here a title is a choice rather than a destination, so the
    active title reports the index instead of navigating. Everything about how the slider MOVES is
    untouched; this only says what a committed selection means. */
+
+import { splitLines } from './maskLines.js';
 
 function noop() { }
 
@@ -53,6 +58,7 @@ export function initLayeredSlider(root, options) {
 
     const backgrounds = [].slice.call(el.querySelectorAll('[data-layered-slider-bg]'));
     const maskItems = [].slice.call(el.querySelectorAll('[data-layered-slider-mask-item]'));
+    const maskImgs = maskItems.map((item) => item.querySelector('img'));
     const maskFrame = el.querySelector('[data-layered-slider-mask]');
     const fill = el.querySelector('[data-layered-slider-fill]');
     const currentEl = el.querySelector('[data-layered-slider-current]');
@@ -73,6 +79,29 @@ export function initLayeredSlider(root, options) {
     const backgroundZoom = 0;
     const titleGap = 0.5;
     const titleSpacing = 40;
+    // [ATMOS 7] How far a photograph drifts while an edge crosses it, as a share of the frame.
+    const MASK_DRIFT = 0.25;
+    /* [ATMOS 8] THE TITLES ARRIVE THROUGH THE SITE'S LINE MASKS (15.09.26, by request). The resource's
+       titles are a horizontal strip that slides a title's width per slide, with neighbours at 40%.
+       Over photographs that now mask over each other, a strip of words sliding past read as the one
+       thing still shunting sideways. So every title is split into the same per-line masks the rest of
+       the site reveals copy through (splitLines, .reveal-mask / .reveal-line), the titles stack on one
+       spot, and each line moves in Y inside its mask: the title being left rises out through the
+       first TITLE_OUT of a slide, the one arriving rises in through the last TITLE_IN, overlapping in
+       the middle where the photographs' edge is fastest, its lines a TITLE_STAGGER apart as the
+       site's reveals are. Placed from `progress`, like the photographs, the counter and the bar, so it
+       runs on the slide's own curve and second, and going back is the same thing in reverse: the
+       title drops out and the previous one comes down into place. LINE_CLEAR is further than the
+       reveal's 110 because a line leaving UPWARD has its descenders to clear, not its ascenders. */
+    const TITLE_OUT = 0.6;
+    const TITLE_IN = 0.6;
+    const TITLE_STAGGER = 0.13;
+    const LINE_CLEAR = 125;
+    let titleSplits = [];
+    const splitTitles = () => {
+      titleSplits.forEach((sp) => { if (sp) { try { sp.restore(); } catch (e) { } } });
+      titleSplits = titles.map((item) => splitLines(item.querySelector('.layered-slider__text-title') || item));
+    };
 
     if (totalEl) totalEl.textContent = String(count).padStart(2, '0');
 
@@ -140,14 +169,53 @@ export function initLayeredSlider(root, options) {
           });
         }
 
+        // [ATMOS 8] stacked on one spot; only the centred title takes a tap, and only the two in play show.
         gsap.set(titles[i], {
-          x: offset * titleStep,
-          opacity: i === centeredIndex ? 1 : 0.4,
-          pointerEvents: 'auto',
+          x: 0,
+          opacity: 1,
+          pointerEvents: i === centeredIndex ? 'auto' : 'none',
+          visibility: offset > -1 && offset < 1 ? 'visible' : 'hidden',
         });
+        const split = titleSplits[i];
+        if (split && split.lines.length) {
+          const lines = split.lines, n = lines.length, span = 1 + TITLE_STAGGER * (n - 1);
+          const leaving = offset <= 0;
+          const phase = leaving
+            ? clamp(0, 1, -offset / TITLE_OUT)
+            : clamp(0, 1, (TITLE_IN - offset) / TITLE_IN);
+          for (let j = 0; j < n; j++) {
+            const t = clamp(0, 1, phase * span - j * TITLE_STAGGER);
+            gsap.set(lines[j], { yPercent: leaving ? -LINE_CLEAR * t : LINE_CLEAR * (1 - t) });
+          }
+        }
 
+        /* [ATMOS 7] THE PHOTOGRAPHS MASK OVER EACH OTHER (15.09.26, by request). The resource slides
+           its mask items by the frame's width, which in a small frame reads as a window passing along
+           a strip; at full screen it read as two photographs shunting side by side with a seam
+           between them. Now the arriving photograph is uncovered OVER the one being left: its mask
+           item travels in from the right edge and clips it, while the photograph inside counter-moves
+           so it only drifts, a quarter of the frame, and the one underneath drifts the same quarter
+           the same way as it is covered. So an edge sweeps across a picture that stays put.
+           STILL A FUNCTION OF `progress`, like everything else render() draws, so a jump of several
+           slides uncovers each photograph it passes, and going back plays the same thing in reverse:
+           the top photograph's edge withdraws to the right and the previous one drifts back beneath
+           it. Transforms only; the item's own overflow:hidden is the mask. At most two are visible:
+           the one arriving (0 < offset < 1) on top, the one shown or leaving (-1 < offset <= 0) under
+           it; the rest are hidden rather than parked where a stray edge could show them. */
         const maskItem = maskItems[i];
-        if (maskItem) gsap.set(maskItem, { x: offset * maskStep });
+        if (maskItem) {
+          const img = maskImgs[i];
+          if (offset > 0 && offset < 1) {
+            gsap.set(maskItem, { x: offset * maskStep, zIndex: 3, visibility: 'visible' });
+            if (img) gsap.set(img, { x: -offset * maskStep * (1 - MASK_DRIFT) });
+          } else if (offset <= 0 && offset > -1) {
+            gsap.set(maskItem, { x: 0, zIndex: 2, visibility: 'visible' });
+            if (img) gsap.set(img, { x: offset * maskStep * MASK_DRIFT });
+          } else {
+            gsap.set(maskItem, { x: 0, zIndex: 1, visibility: 'hidden' });
+            if (img) gsap.set(img, { x: 0 });
+          }
+        }
 
         // [ATMOS 6] The count: one line height per slide of distance, on the slide's own progress.
         if (countLines[i]) gsap.set(countLines[i], { yPercent: offset * 100 });
@@ -300,13 +368,17 @@ export function initLayeredSlider(root, options) {
       c.addEventListener('pointerleave', onLeave);
     });
 
-    const onResize = () => { measure(); render(state.progress); };
+    // [ATMOS 8] a new width or a late font can move a title's line breaks, so the lines are re-cut.
+    const onResize = () => { measure(); splitTitles(); render(state.progress); };
     window.addEventListener('resize', onResize);
     if (document.fonts) document.fonts.ready.then(onResize);
 
+    // Live before the split: until then the no-JS rule keeps every title but the first display:none,
+    // and a line cannot be measured in a box that has no layout.
+    el.setAttribute('data-layered-live', '1');
+    splitTitles();
     render(0);
     startAutoplay();
-    el.setAttribute('data-layered-live', '1');
 
     const api = {
       goTo,
@@ -329,6 +401,8 @@ export function initLayeredSlider(root, options) {
           c.removeEventListener('pointerenter', onEnter);
           c.removeEventListener('pointerleave', onLeave);
         });
+        titleSplits.forEach((sp) => { if (sp) { try { sp.restore(); } catch (e) { } } });
+        titleSplits = [];
         try { el.removeAttribute('data-layered-live'); } catch (e) { }
         el._layeredSlider = null;
       },

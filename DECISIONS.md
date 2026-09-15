@@ -146,6 +146,18 @@ the way down and returns on the way up, as on /about. The small-screen gate's al
 `.doc-head`, or the bar rendered at 0x0. The example list and the shared palette view on a phone keep
 their wordmark buttons.
 
+**On a phone, the example chooser's photographs mask over each other.** They used to slide side by
+side by the frame's width, which at full screen read as two pictures shunting past with a seam between
+them. Now the arriving photograph is uncovered over the one being left by an edge sweeping in from the
+right. Each photograph drifts a quarter of the frame the same way, so an edge crosses a picture that
+stays put. Going back plays it in reverse, and a jump of several slides uncovers each one it passes.
+It is still drawn from the slider's one progress value, with transforms only, and reduced motion swaps
+instantly (`[ATMOS 7]` in `methods/layeredSlider.js`). The palette names follow the same rule: they were a strip sliding a
+title's width per slide, and now they rise through the site's line masks (`[ATMOS 8]`). The title being
+left rises out over the first 60% of a slide, and the next rises in over the last 60%, its lines 13%
+apart. Going back, the title drops out and the previous one comes down. The lines are re-cut when the
+width or fonts change.
+
 **On the landing it is live.** The desktop landing drops from z-index 150 to 90 and the bar sits at
 95. At 150 the landing would have covered what the bar opens: Restore's dialog is 126 and a notice is
 128. The phone's ladder is built on the landing at 150 and is unchanged. `_syncAppInert` exempts
