@@ -112,7 +112,7 @@ function token(name, fallback) {
    [ATMOS 4], carried over the day this module took the closing statement on /about, which is set as
    two sentences on two lines with a break in the markup. textContent drops the break and runs the
    sentences together; walking childNodes rebuilds it, and the spoken label crosses it with a space. */
-function splitChars(el) {
+export function splitChars(el) {
   const original = el.innerHTML;
   const prevLabel = el.getAttribute('aria-label');
   const nodes = [].slice.call(el.childNodes);
@@ -174,6 +174,7 @@ export function initStickyTitle(root) {
   const splits = [];
   const live = [];
   const tinted = [];
+  const afters = [];
 
   wraps.forEach((wrap) => {
     /* [ATMOS 8] IDEMPOTENT. A wrap that is already live is skipped rather than given a second
@@ -213,6 +214,20 @@ export function initStickyTitle(root) {
        consumer, and it silently refused the phone story's close. `< 1` is the honest floor: nothing
        to reveal is nothing to do. */
     if (headings.length < 1) return;
+    /* [ATMOS 13] TWO THINGS A WRAP MAY STATE, both added for /about's close (15.09.26, by request).
+       data-sticky-start replaces the resource's 'top 40%' for this wrap alone. The close takes 'top top':
+       it slides up under the gallery's pin (aboutRail.js [ATMOS 5]), and starting at 40% meant its
+       statement began assembling while its sticky container was still rising, so the first words
+       appeared low and travelled up into place. At 'top top' the container is already standing when
+       the first character arrives, so the statement assembles where it sits.
+       [data-sticky-title="after"] marks what follows the statement: the close's Explore Atmos. The page
+       reveal used to bring it in as the section entered, which put the button on screen before the
+       sentence it answers had begun. Here it rides the master timeline: a short fade and rise that starts
+       with the word named by data-sticky-after-word (the close's is "Discover"), or after the last
+       heading when none is named, followed by a hold. Its floor is parked at build time for the reason
+       [ATMOS 10] gives. Unset, neither changes anything. */
+    const start = wrap.getAttribute('data-sticky-start') || 'top 40%';
+    const after = [].slice.call(wrap.querySelectorAll('[data-sticky-title="after"]'));
 
     // [ATMOS 2] The stacking is CSS's, but only from here on.
     wrap.setAttribute('data-sticky-live', '1');
@@ -221,7 +236,7 @@ export function initStickyTitle(root) {
     const masterTl = gsap.timeline({
       scrollTrigger: {
         trigger: wrap,
-        start: 'top 40%',
+        start: start,
         end: 'bottom bottom',
         scrub: true,
         invalidateOnRefresh: true,
@@ -244,6 +259,7 @@ export function initStickyTitle(root) {
     const fadeOutDuration = 0.7;
     const overlapOffset = 0.15;
 
+    let cueHeading = null;
     headings.forEach((heading, index) => {
       const split = splitChars(heading);
       if (!split) return;
@@ -326,6 +342,7 @@ export function initStickyTitle(root) {
          named. */
       masterTl.set(split.chars, { autoAlpha: 0 }, 0);
 
+      if (index === headings.length - 1) cueHeading = { split, tl: headingTl };
       if (index === 0) {
         masterTl.add(headingTl);
       } else {
@@ -346,6 +363,26 @@ export function initStickyTitle(root) {
       }
     });
 
+    if (after.length) {
+      gsap.set(after, { autoAlpha: 0, y: 12 });
+      afters.push(after);
+      /* WHEN IT STARTS. After the last heading has resolved, unless it names a cue: data-sticky-after-word
+         on the follow-on starts it with the first character of that word in the last heading (by
+         request: Explore Atmos begins to appear as "Discover" begins to fade in). The reveal spreads the
+         characters' starts evenly over revealDuration, so a character's start is simply its share of
+         that span from the heading's own start on the master timeline. */
+      let at = '>';
+      const cue = (after[0].getAttribute('data-sticky-after-word') || '').trim();
+      if (cue && cueHeading) {
+        const chars = cueHeading.split.chars;
+        const idx = chars.findIndex((c) => c.parentNode && c.parentNode.firstChild === c && c.parentNode.textContent.trim() === cue);
+        if (idx >= 0) at = cueHeading.tl.startTime() + revealDuration * (chars.length > 1 ? idx / (chars.length - 1) : 0);
+      }
+      masterTl.fromTo(after, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.35, ease: 'none', immediateRender: false }, at);
+      // And a hold at the very end, so the whole close is there while the section still stands, rather
+      // than completing in the same frame the sticky container lets go and the page carries it away.
+      masterTl.to({}, { duration: 0.35 }, masterTl.duration());
+    }
     if (masterTl.scrollTrigger) triggers.push(masterTl.scrollTrigger);
     triggers.push({ kill: () => { try { masterTl.kill(); } catch (e) { } } });
 
@@ -382,7 +419,7 @@ export function initStickyTitle(root) {
     const colourTl = gsap.timeline({
       scrollTrigger: {
         trigger: wrap,
-        start: 'top 40%',
+        start: start,
         end: 'bottom bottom',
         scrub: true,
         invalidateOnRefresh: true,
@@ -433,6 +470,8 @@ export function initStickyTitle(root) {
     splits.length = 0;
     live.forEach((w) => { try { w.removeAttribute('data-sticky-live'); w.removeAttribute('data-st-active'); } catch (e) { } });
     live.length = 0;
+    afters.forEach((a) => { try { gsap.killTweensOf(a); gsap.set(a, { clearProps: 'opacity,visibility,transform' }); } catch (e) { } });
+    afters.length = 0;
     // The ground and the ink are written inline by the scrub, so an unmount that left them behind
     // would hand the next route a section painted whatever colour the last scroll position was.
     tinted.forEach((w) => { try { gsap.set(w, { clearProps: 'backgroundColor,color' }); } catch (e) { } });

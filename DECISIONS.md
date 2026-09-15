@@ -6,6 +6,60 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-15 — How it Works 4.1 is a hero text on the gallery's pin
+
+**The heading is gone and the paragraph is the section's hero text.** "Different Images. Different
+Palettes." added nothing the photographs do not say. The paragraph, "The examples below are palettes
+drawn from different photographs…", now assembles character by character with the Sticky Title Scroll
+Effect's reveal, then fades out from the end as the first photograph flies in over it.
+
+**It is one pinned run, not a takeover followed by a gallery.** The rail already pinned the section
+while its cards flew across. The statement uses that same pin: the track's lead-in grows by
+`--rail-lead` (70vh), and the statement assembles on the empty stage before the first card, in place of
+the heading, the prose and the margin that used to sit before the pin. The reveal is drawn from the
+rail's own ScrollTrigger progress, with `splitChars` shared from `aboutStickyTitle.js`. Reduced motion
+and no JavaScript show it as a paragraph above a scrollable row.
+
+**The close starts assembling as the last photographs leave.** This mirrors the statement giving way as
+they arrive. While the scene is live, the close is pulled up under the end of the rail's pin
+(`[data-rail-handoff]`), so its sticky title runs over the last stretch of the travel. The rail's stage
+stays in front, so the cards pass over the words. The stage and its pin spacer take no pointer events,
+so Explore Atmos stays clickable; the spacer, which ScrollTrigger gives the stage's z-index, is selected
+with `:has()`. Reduced motion keeps the close after the rail as before.
+
+**How far it underlaps is measured, so no revealed word is ever under a photograph.** A first cut
+pulled it up by the close's whole height, and the statement started while the last cards still covered
+most of it. Now the rail computes `--handoff-overlap` so the reveal starts when the last card's right
+edge clears the statement's left edge, using layout without the card's drift, which errs late. It is
+re-measured on every `refreshInit`, because a phone's cards are a much larger share of its width.
+Measured, with no revealed character under a card at any of the four sizes:
+  size        starts, before the pin ends   completes, after
+  1440x900    0.6 screens                   0.5 screens
+  1920x1080   0.7 screens                   0.4 screens
+  1024x768    0.5 screens                   0.7 screens
+  390x844     0.2 screens                   1.0 screens
+
+**The statement assembles where it stands, and Explore Atmos arrives last.** Two opt-in hooks were added
+to `aboutStickyTitle.js`, and only the close uses them. `data-sticky-start="top top"` starts the close's
+reveal once its sticky container is already in place; at the resource's `top 40%` the first words
+appeared low and travelled up. `[data-sticky-title="after"]` moves the button off the page reveal, which
+showed it as the section entered, before the sentence had begun. It now rides the statement's own
+scrub: a fade and 12px rise that begins with the first letter of the word named by
+`data-sticky-after-word`, "Discover", then a short hold once everything has resolved, so the close is
+fully there while the section still stands. The rail's overlap reads the close's start line, so the
+reveal still begins as the last card clears the first word. Measured at 1440x820 and on a phone: the words start
+with no card over them, "Discover" and the button begin in the same frame 168px in, the button is
+fully there by about 330px, the sentence by about 630px, and all of it holds for about 200px before the
+section moves on. Reduced motion
+shows the button as before.
+
+**Colour was tried on it and reverted, by request.** The same afternoon the stage carried a gradient
+built from the photographs' own palettes, and the close was painted to match, first with a coral button
+and then a filled one. All of it was undone: the scene, the close and its quiet glass button keep the
+page's natural light and dark colours, and the section's spacing is what it was.
+
+---
+
 ## 2026-09-15 — Explore Atmos starts over, and large text grows
 
 **Explore Atmos lands on the default state.** The button at the close of /about crossed straight back

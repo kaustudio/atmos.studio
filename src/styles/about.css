@@ -1084,7 +1084,6 @@
    nothing, on top of whatever margin it already had. It is deliberately the between-sections beat
    rather than the within-section one, because crossing from reading into an effect is a bigger
    boundary than crossing between two paragraphs. */
-.about-sec--gallery > .about-grid{margin-bottom:var(--band-gap)}
 /* And a settle on the way out, so the next heading is not the first thing after the travel stops. */
 .about-rail{margin-bottom:var(--band-gap)}
 /* DOUBLE on the way IN, because this is the boundary where one effect releases the scroll and another
@@ -1312,6 +1311,54 @@
 @media (max-width:900px){
   .about-rail__track{padding-inline:140vw}
 }
+/* [ATMOS 4] THE STATEMENT'S LEAD-IN. The leading pad grows by --rail-lead while the scene is live, so
+   the pin opens on an empty stage for that much scroll and the statement assembles in it (the trailing
+   pad is untouched). The cards' drift windows are measured from each card's own position, so a longer
+   lead moves when the first card arrives and nothing about how it moves. 70vh is one statement's worth
+   of reading, and it replaces the heading, the prose and the band of margin the section used to spend
+   before the pin, so the scene costs about what the old lead-in did. */
+.about-rail{--rail-lead:70vh}
+.about-rail[data-rail-scene] .about-rail__track{padding-left:calc(110vw + var(--rail-lead));position:relative;z-index:1}
+@media (max-width:900px){
+  .about-rail[data-rail-scene] .about-rail__track{padding-left:calc(140vw + var(--rail-lead))}
+}
+/* The statement. Unset, it is the section's hero text above a horizontally scrollable row: the floor
+   for no JavaScript and reduced motion. Live, it stands centred on the pinned stage behind the track,
+   eight of the page's columns wide as the takeover's statements are (the whole column on a phone), in
+   the page's own ink. */
+.about-route .about-rail__statement{
+  margin:0 auto;padding:var(--band-gap) var(--page-gutter) 0;
+  max-width:calc((100% - 2 * var(--page-gutter) - 11 * var(--grid-gutter)) / 12 * 8 + 7 * var(--grid-gutter) + 2 * var(--page-gutter));
+  font-size:var(--fs-statement);font-weight:500;line-height:1.12;
+  letter-spacing:var(--track-statement);text-wrap:balance;text-align:center;
+  color:var(--on-surface);
+}
+.about-rail__statement [data-st-word]{display:inline-block}
+.about-rail__statement [data-st-char]{display:inline-block}
+.about-route .about-rail[data-rail-scene] .about-rail__statement{
+  position:absolute;top:50%;left:50%;z-index:0;
+  width:calc((100% - 2 * var(--page-gutter) - 11 * var(--grid-gutter)) / 12 * 8 + 7 * var(--grid-gutter));
+  max-width:none;padding:0;transform:translate(-50%,-50%);
+  color:inherit;pointer-events:none;
+}
+@media (max-width:820px){
+  .about-route .about-rail[data-rail-scene] .about-rail__statement{width:calc(100% - 2 * var(--page-gutter))}
+}
+.about-rail[data-st-active] .about-rail__statement [data-st-char]{will-change:opacity}
+/* [ATMOS 5] THE CLOSE STARTS AS THE LAST PHOTOGRAPHS LEAVE. While the scene is live the close is pulled up
+   under the end of the rail's pin by --handoff-overlap plus the two bands that settle the travel (the
+   pin's margin and the section's padding). The rail measures the overlap so the statement starts
+   assembling the moment the last card has cleared its first word, the mirror of 4.1's statement giving
+   way as the cards arrive; 200svh, the whole close, is only the fallback before it has measured. The rail's stage stays in front, which is what puts the cards
+   over the words, and takes no pointer events, so Explore Atmos underneath is clickable the whole
+   time; the cards carry no controls. Without the scene neither rule applies and the close follows the
+   travel as it did. */
+.about-rail[data-rail-live]{z-index:2;pointer-events:none}
+/* And its pin's spacer, which ScrollTrigger wraps round the stage and hands the stage's z-index: left to
+   take the pointer, it sat over Explore Atmos for the whole of the close and the button could not be
+   pressed. Selected through :has() because the wrapper is ScrollTrigger's to create and recreate. */
+.pin-spacer:has(> .about-rail[data-rail-live]){pointer-events:none}
+.about-end[data-rail-handoff-live]{margin-top:calc(-1 * var(--handoff-overlap, 200svh) - 2 * var(--band-gap));z-index:1}
 .about-rail__card{
   position:relative;flex:none;
   width:var(--rail-card);aspect-ratio:3/4;

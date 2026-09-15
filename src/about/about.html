@@ -599,22 +599,14 @@
      instead of listed. Deliberately carries no [data-reveal]: these cards have their own motion and a
      block cannot be both held for a cascade and driven by a pin. -->
 
-<!-- THE GALLERY, AS A SHELF. Eight palettes is more than a column wants and exactly what a rail is
-     for: the section pins and the row travels, and each card drifts and levels out as it crosses the
-     middle. The close follows the photographs directly. -->
+<!-- 4.1 IS ONE SCENE (15.09.26, by request): the statement, the shelf and a colour journey on one pin.
+     The heading is gone and the paragraph is the section's hero text, assembled character by
+     character as the stage pins (the Sticky Title Scroll Effect's reveal, methods/aboutStickyTitle.js,
+     driven here by the rail's own scroll, methods/aboutRail.js [ATMOS 4]), and fades from the end as
+     the photographs start to fly across, in the page's own colours. One pinned run rather than a
+     takeover and a gallery back to back: the statement spends the rail's lead-in instead of adding a
+     section of its own. -->
 <section id="eight-images-eight-systems" class="about-sec about-sec--gallery" data-sec data-rule>
-  <div class="about-grid">
-    <div class="about-col">
-      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">4.1</span>Different Images. Different Palettes.</h2>
-      <!-- ONE PARAGRAPH WHERE THERE WERE TWO SECTIONS, by request (14.09.26). 4.2 ("One Image. A Palette
-           to Explore.") sat after the rail with a paragraph of its own; its heading is gone and the two
-           paragraphs were joined here and tightened, so the whole of it is read before the photographs.
-           Its fragment moved onto the paragraph, so a link to #one-image-complete-system still lands
-           on it. -->
-      <p id="one-image-complete-system" data-reveal>The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
-    </div>
-  </div>
-
   <!-- EAGER, BUT LAST IN THE QUEUE. Every card here is below the fold, and none of them may be
        loading="lazy": the track is moved with a transform, so a card scrolled into view horizontally
        is not what the browser's lazy heuristic is watching for, and a card that arrives blank at the
@@ -627,6 +619,9 @@
        container (object-fit:cover), so the attributes never change what is drawn; they give the
        browser the aspect ratio before the bytes arrive. -->
   <div class="about-rail" data-rail>
+    <!-- Without the scene (no JavaScript, reduced motion) this is an ordinary statement above a
+         horizontally scrollable row; the fragment #one-image-complete-system still lands on it. -->
+    <p id="one-image-complete-system" class="about-rail__statement" data-rail-statement>The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
     <div class="about-rail__track" data-rail-track>
 
       <article class="about-rail__card" data-rail-card>
@@ -751,7 +746,7 @@
      centred in its own column, and a pill floating over it would be the one place on /about where
      navigation competes with the thing being offered. The number is the percentage of the viewport
      from the bottom at which this block counts as arrived — see the dock's own note on hide zones. -->
-<section class="about-end" data-sec data-sticky-title="wrap" data-section-dock-hide="22">
+<section class="about-end" data-sec data-sticky-title="wrap" data-sticky-start="top top" data-section-dock-hide="22" data-rail-handoff>
   <!-- A TAKEOVER, LIKE THE STORY'S OWN CLOSE. Three boxes: this wrap, two viewports tall; a sticky
        container one viewport tall; the centred column inside it. The extra viewport IS the scrub —
        see about.css .about-end and aboutStickyTitle.js. No data-sticky-arc: one statement on the
@@ -786,7 +781,11 @@
 
          data-focus="chrome" stays and is still load-bearing: the global `:focus{outline:none}` reset
          leaves the page's only action with no focus ring at all without it. -->
-    <p class="about-end__act" data-reveal><a class="about-cta" href="/" data-about-cta data-open-create data-focus="chrome"><span class="tswap"><span class="tswap__a">Explore Atmos</span><span class="tswap__b" aria-hidden="true">Explore Atmos</span></span></a></p>
+    <!-- data-sticky-title="after", not data-reveal (15.09.26, by request): the button arrives on the
+         statement's own scrub instead of as the section enters, beginning with the word the cue names,
+         so it appears as "Discover" does and never before the sentence has begun. aboutStickyTitle.js
+         [ATMOS 13]. -->
+    <p class="about-end__act" data-sticky-title="after" data-sticky-after-word="Discover"><a class="about-cta" href="/" data-about-cta data-open-create data-focus="chrome"><span class="tswap"><span class="tswap__a">Explore Atmos</span><span class="tswap__b" aria-hidden="true">Explore Atmos</span></span></a></p>
   </div>
   </div>
 </section>
