@@ -10,15 +10,26 @@ export const miscMethods = {
      screen changes until the window opens on the tool.
      Below the supported width there is no tool to open, so it is the front page, which is also what
      the link's href says for a new tab or a reader with no JavaScript. */
+  /* AND IT ARRIVES AT THE START, NOT WHERE THE READER LEFT OFF (15.09.26, by request). The crossing
+     used to keep the tool exactly as it was, so a palette opened before the detour, or a colour chosen
+     in the phone's story, was what the window opened on. Explore Atmos means begin, so it takes the
+     default state Get Started lands on (_resetToolState in methods/wipe.js), plus the phone story's
+     own selections: the chosen colour, the tab, the chooser, and the case, back to the example this
+     visit rolled. sharedView goes with `current`, for the reason doReset gives. One commit, then the
+     crossing, and all of it behind the page the reader is still looking at: none of it is on /about. */
   openCreate() {
     if (this._wipeRunning) return;
-    if (this.state.narrow) { this.navigateTo('/'); return; }
+    const start = { sharedView: false, storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyPicker: false };
+    // A case the reader chose has masks built for that photograph; buildStoryMasks compares ids and
+    // builds the rolled example's set, or does nothing when they already match.
+    const recast = this.state.storyCaseId !== null;
+    const go = () => { if (recast) this.buildStoryMasks(); this.navigateTo('/'); };
+    if (this.state.narrow) { this._resetToolState(start, go); return; }
     // Persisted even when the state already reads dismissed: a visit that STARTED on /about is let
     // past the landing in state only (see the initial state in PaletteApp), so without this a reload
     // of the tool put the landing back in front of it.
     try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { }
-    if (this.state.landingDismissed) { this.navigateTo('/'); return; }
-    this.setState({ landingDismissed: true }, () => this.navigateTo('/'));
+    this._resetToolState(Object.assign(start, { landingDismissed: true }), go);
   },
   /* THE LANDING IS A COVER, SO WHAT IT COVERS IS INERT. The stage is position:fixed over the tool,
      not instead of it, and the tool stayed in the tab order underneath: measured on a first visit,
@@ -26,8 +37,8 @@ export const miscMethods = {
      → every library row, all of them under the field with no ring anyone could see. The wipes
      already inert [data-app] for the length of the transition; this holds the same guard for as
      long as the landing is up, and lifts it the moment the landing goes.
-     The children rather than [data-app] itself, because the landing, the mark, the loader and the
-     skip link are all children too and must stay live. Left alone while a wipe runs — the wipe owns
+     The children rather than [data-app] itself, because the landing, the mark, the loader, the
+     floating header and the skip link are all children too and must stay live. Left alone while a wipe runs — the wipe owns
      the guards then and calls this from its own clearGuards — and never lifted while a modal holds
      the landmarks (see _bgInert), which would otherwise undo that dialog's own guard. */
   _syncAppInert(force) {
@@ -37,7 +48,8 @@ export const miscMethods = {
     if (!app) return;
     const on = !this.state.landingDismissed && !this.state.narrow && !isDoc(this.state.route);
     [].forEach.call(app.children, (el) => {
-      if (el.matches('[data-landing],[data-logo],[data-load-wrap],.skip-link,[role="status"]')) return;
+      // [data-float-nav]: the header floats over the landing and is meant to be used there.
+      if (el.matches('[data-landing],[data-logo],[data-load-wrap],[data-float-nav],.skip-link,[role="status"]')) return;
       try {
         if (on) el.setAttribute('inert', '');
         else if (!this._bgInertOn) el.removeAttribute('inert');

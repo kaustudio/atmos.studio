@@ -92,8 +92,9 @@ const EASE = {
 
 /* Anchor jumps land here rather than flush under the masthead. about.css already gives
    section[id] a scroll-margin-top for native jumps; Lenis does not read scroll-margin, so the same
-   air has to be stated as an offset. The 64px is .doc-head's height (doc.css). */
-const JUMP_OFFSET = 96;
+   air has to be stated as an offset: the floating masthead's footprint — --nav-top 24 plus --nav-h 56
+   (global.css) — and 32 of air. */
+const JUMP_OFFSET = 112;
 
 export function initSectionDock(root, options) {
   const opts = options || {};

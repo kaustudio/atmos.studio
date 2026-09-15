@@ -48,7 +48,27 @@ export const wipeMethods = {
     // file menu's 'Show intro again' both route here, which writes '0' and shows the landing again.
     try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { }
     this._orbitRetry = 0;
-    // the landing unmounts the detail overlay outright (overlay: null below) without going through
+    // the landing re-seeds per visit (the wheel's rotation, the baked OKLCH ramp and the floor's
+    // hexes are cleared in killOrbit). Tear down explicitly rather than relying on getStarted having
+    // done it: killOrbit is idempotent, and it is the only thing that releases the field's context.
+    this.killOrbit();
+    // the tool behind the landing returns to its default state — Get Started must always land on
+    // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
+    this._resetToolState({ landingDismissed: false, announce: 'Intro will show again.' }, () => {
+      // The landing covers the tool, it does not replace it, so the offset left behind here is
+      // invisible until Get Started uncovers it again. Spend it now, while the cover is down.
+      this._scrollToTop();
+      setTimeout(() => this.initOrbit(), 0);
+      if (afterCb) afterCb();
+    });
+  },
+  /* THE TOOL'S DEFAULT STATE, SAID ONCE. Get Started always lands on 'Drop a reference', never a
+     left-open grid view, overlay, drawer or result, and since 15.09.26 so does Explore Atmos at the
+     close of /about (openCreate in methods/misc.js), which used to cross straight back into whatever
+     the reader had left open. Two callers, one definition, so the two cannot drift; `extra` is each
+     caller's own part of the same commit. Palettes, projects and theme are never touched. */
+  _resetToolState(extra, afterCb) {
+    // the reset unmounts the detail overlay outright (overlay: null below) without going through
     // _finishOverlayClose — force the same teardown deletePalette does. Otherwise a close reversal
     // still in flight fires onReverseComplete onto the landing, announcing over 'Intro will show
     // again.' and focusing a detached tile, which steals focus from the CTA showIntroAgain is
@@ -56,12 +76,6 @@ export const wipeMethods = {
     // open a card → logo → Get Started.
     this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
     clearTimeout(this._closeGuard);
-    // the landing re-seeds per visit (the wheel's rotation, the baked OKLCH ramp and the floor's
-    // hexes are cleared in killOrbit). Tear down explicitly rather than relying on getStarted having
-    // done it: killOrbit is idempotent, and it is the only thing that releases the field's context.
-    this.killOrbit();
-    // the tool behind the landing returns to its default state — Get Started must always land on
-    // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
     if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.body.style.overflow = ''; } catch (e) { } }
     // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
     // alone it would fire after the wipe and pull the reader back into the view they just left.
@@ -76,19 +90,12 @@ export const wipeMethods = {
     if (this.state.tagMenuOpen) { try { this._finishTagClose(); } catch (e) { } }
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
-    this.setState({
-      backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, landingDismissed: false,
+    this.setState(Object.assign({
+      backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
       feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
-      announce: 'Intro will show again.',
-    }, () => {
-      // The landing covers the tool, it does not replace it, so the offset left behind here is
-      // invisible until Get Started uncovers it again. Spend it now, while the cover is down.
-      this._scrollToTop();
-      setTimeout(() => this.initOrbit(), 0);
-      if (afterCb) afterCb();
-    });
+    }, extra), afterCb);
   },
   showIntroAgain() {
     this._wipeRunning = false; this._wipePending = false; this._wipeOnMount = null;
@@ -418,7 +425,8 @@ export const wipeMethods = {
        DOM and invisible. Cloning and painting it anyway was the largest single cost of the Get
        Started click: measured as Interaction to Next Paint, 88–136ms with the full clone against
        48ms with no snapshot at all, and the paint of that first ghost frame is what the reader is
-       waiting on. With the landing up, the snapshot is the landing and the mark, nothing else.
+       waiting on. With the landing up, the snapshot is the landing, the mark and the floating header
+       standing on it, nothing else.
 
        NOT ON A PHONE. There the landing is not a cover but the ground floor: the story, the example
        list and the share view all stand over it, and it is up on every one of them. Cloning only the
@@ -441,6 +449,10 @@ export const wipeMethods = {
       pairs = [[landing, landingCopy]];
       const mark = app.querySelector(':scope > [data-logo]');
       if (mark) { const markCopy = mark.cloneNode(true); source.appendChild(markCopy); pairs.push([mark, markCopy]); }
+      // And the floating header, which stands on the landing now. Last, so the canvas copy below
+      // still pairs the landing's canvases with its own; the header draws none.
+      const nav = app.querySelector(':scope > [data-float-nav]');
+      if (nav) { const navCopy = nav.cloneNode(true); source.appendChild(navCopy); pairs.push([nav, navCopy]); }
       clone = source;
       source = landing;
     } else {

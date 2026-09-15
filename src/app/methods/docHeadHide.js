@@ -1,9 +1,9 @@
 /* THE MASTHEAD, GETTING OUT OF THE WAY — /about, /privacy, /terms.
 
    Scroll down and the bar leaves; scroll back up and it returns. It is the only chrome on these
-   three routes, and they are the pages people READ rather than operate: a 64px band pinned over a
-   column of prose is 64px of the screen spent on a wordmark and a theme switch for the whole length
-   of a long document. Going up is the gesture that means "I want to get somewhere", so that is when
+   three routes, and they are the pages people READ rather than operate: a bar pinned over a column
+   of prose is 80px of the screen — its 56 and the air it floats in — spent on a wordmark and a theme
+   switch for the whole length of a long document. Going up is the gesture that means "I want to get somewhere", so that is when
    the way back appears.
 
    NOT ON THE TOOL. This is wired into DocHead, which is rendered by exactly these three routes (see
@@ -60,7 +60,7 @@ export function initDocHeadHide(bar) {
   };
 
   /* A HIDDEN BAR STILL HOLDS TWO FOCUSABLE CONTROLS. Tab reaches the theme switch and the mark
-     whether or not they are on screen, and a focus ring drawn 64px above the viewport is the
+     whether or not they are on screen, and a focus ring drawn above the viewport is the
      textbook 2.4.11 failure. Anything inside the bar taking focus brings it back. */
   const onFocusIn = () => setHidden(false);
 

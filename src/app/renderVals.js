@@ -268,11 +268,11 @@ export const renderValsMethods = {
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
           rows, textOn,
           matrixColsStyle: { display: 'flex', flexDirection: 'column', width: '100%' },
-          sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400 },
+          sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
-          setNormal: () => this.setState({ contrastLarge: false }), setLarge: () => this.setState({ contrastLarge: true }),
+          setNormal: () => this.setContrastSize(false), setLarge: () => this.setContrastSize(true),
           normalStyle: segBtn(!s.contrastLarge), largeStyle: segBtn(s.contrastLarge),
           normalPressed: s.contrastLarge ? 'false' : 'true', largePressed: s.contrastLarge ? 'true' : 'false',
           togglePass: () => this.setState((st) => ({ contrastPassOnly: !st.contrastPassOnly })),
@@ -815,7 +815,7 @@ export const renderValsMethods = {
         // already filed read as a second copy.
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
-        assignLabel: 'Add to projects',
+        assignLabel: 'Add to Projects',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
@@ -1819,6 +1819,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,
       reset: () => this.doReset(),
+      newPalette: () => this.newPalette(),
       // landing stage (first-visit brand arrival)
       // the landing surface doubles as the small-screen surface — on phones it is always up, with
       // the gate copy in place of the statement + CTA (the tool needs room a phone hasn't got)
@@ -1926,10 +1927,16 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // the utility tier's muted ink and 15% edge; that tier is gone (it could not hold 4.5:1 once
       // its own hover tint darkened the ground under it), so these take what everything else takes.
       // The demotion from "New generation" is carried by fill: that one is filled, these are not.
-      tier3BtnStyle: this.monoLabel('var(--fs-label)', 'var(--track-flat)', {
-        display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 'var(--btn-pad-sm)',
-        background: 'none', border: '1px solid var(--action-line)',
+      // 15.09.26, by request: standalone text links in the floating bar — Medium and their authored case,
+      // like the landing CTAs, at --fs-detail (12), with no border and no padding. The target is widened invisibly instead; see the
+      // note beside [data-float-nav] [data-tier3-action] in global.css. line-height 1.25 rather than 1:
+      // the text swap's mask clips to the line box, and Neue Montreal's ascent and descent are 1.2em,
+      // so at 1 the descender of the p in Back Up was cut off.
+      tier3BtnStyle: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', {
+        display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 0,
+        background: 'none', border: 'none',
         color: 'var(--on-surface)', cursor: 'pointer',
+        fontWeight: 500, lineHeight: 1.25, textTransform: 'none',
       }),
       // the library panel: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
@@ -2400,12 +2407,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       onDragLeave: (e) => { e.preventDefault(); this.setState({ dragOver: false }); },
       onGridKey: (e) => this.onGridKey(e),
       fileRef: this.fileRef, canvasRef: this.canvasRef, resultRef: this.resultRef, progRef: this.progRef, gridRef: this.gridRef,
-      dropStyle: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)' },
+      dropStyle: { position: 'relative', display: 'flex', borderRadius: 'var(--radius-dropzone)', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)' },
       // ===== nav controls: theme toggle + contrast checker =====
       isDark: s.theme === 'dark' ? 'true' : 'false',
-      themeLabel: s.theme === 'dark' ? 'Dark' : 'Light',
-      switchTrackBg: s.theme === 'dark' ? 'var(--on-surface)' : 'var(--line-strong)',
-      switchDotX: s.theme === 'dark' ? 'translateX(14px)' : 'translateX(0px)',
       toggleTheme: () => this.toggleTheme(),
       // ===== routing =====
       route: s.route,
@@ -2489,7 +2493,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       assignDisabled: !filedCur,
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: 'Add to projects',
+      assignLabel: 'Add to Projects',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
       // React drops a value when a rerender mixes the `border` shorthand with one of its parts,

@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
-import { B006, B006Text, GlassEffect, TextSwap, ThemeSwitch } from './chrome.jsx';
+import { B006, B006Text, GlassEffect, NavNewPalette, TextSwap, ThemeSwitch } from './chrome.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
 
    Imported statically, these dragged about.html (89KB, injected verbatim as a string), about.css,
@@ -562,7 +562,7 @@ function ValueRow({ v, showCaveat }) {
 // Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
 // the user to supply the verb; in a row of six that is six subjects and no route.
 const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check contrast</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
 );
 // EXPORT'S CHEVRON IS GONE. It was there to promise a chooser — press this and you will be asked
 // something — and that promise is the one thing this control did not need to make: what opens is a
@@ -653,7 +653,7 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
       /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
       <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
         <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-        <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+        <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
           <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
             <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Copy palette</span>
@@ -1708,6 +1708,11 @@ function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = tru
    refusal rather than reporting it, so a declined visitor sees the two answers as they first did.
    aria-pressed states the standing answer either way, and a close appears that keeps it. The close is never offered before an answer exists, so dismissing can never
    be mistaken for one. */
+/* THE BANNER'S BUTTON TYPE: --fs-body, 13px (by request, 15.09.26 — two pixels up from --fs-label's
+   11, which lands exactly on a step of the scale). button-006 writes its size inline, so the three
+   buttons hand it this style rather than a stylesheet shouting over an inline value. Weight and case
+   are in global.css (.consent .button-006[data-emphasis]). The label rows are 16px, one line of 13. */
+const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
 export function ConsentBanner({ vals }) {
   const choice = vals.consentChoice;
   const act = (value, label, aria, emphasis, onClick) => (
@@ -1716,7 +1721,8 @@ export function ConsentBanner({ vals }) {
       {...(choice ? { 'aria-pressed': choice === value } : null)}
       onClick={onClick}
       aria-label={aria}
-      label={<span style={sx('display:flex;align-items:center;gap:6px;height:14px')}>{value === 'granted' && choice === value && <IconCheck />}<B006Text>{label}</B006Text></span>}
+      style={CONSENT_BTN_TYPE}
+      label={<span style={sx('display:flex;align-items:center;gap:6px;height:16px')}>{value === 'granted' && choice === value && <IconCheck />}<B006Text>{label}</B006Text></span>}
     />
   );
   return (
@@ -1735,8 +1741,8 @@ export function ConsentBanner({ vals }) {
         {/* Outlined like Decline, by request, and still a link: it goes somewhere rather than deciding
             anything, so it is an <a> with a real address drawn as the secondary tier. */}
         <span className="consent__more">
-          <B006 href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics"
-            label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Learn more</B006Text></span>} />
+          <B006 href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics" style={CONSENT_BTN_TYPE}
+            label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Learn More</B006Text></span>} />
         </span>
       </div>
       {/* The toast's dismiss, drawn the same: a 30px outlined disc whose glyph swaps under its mask. In
@@ -1788,8 +1794,14 @@ function LandingStage({ vals, covered, quiet }) {
         /* height:100dvh for the same reason the two phone surfaces carry it: this block is centred
            in its own box, and a box that runs to the LARGE viewport's bottom centres the gate copy
            below the middle of what the reader can actually see — and pushes the ring formation,
-           which is solved around that centre, off with it. */
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Larger screen recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:150;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+           which is solved around that centre, off with it.
+           z-index 90 ON A DESKTOP, 150 ON A PHONE. The desktop landing covers the tool, and the tool's
+           floating header now stands on it at 95 — and everything the header can open (Restore's
+           dialog at 126, a notice at 128) has to arrive in front of the landing too, which at 150 it
+           could not. Nothing else sits between the page and 100 on that branch. The phone's ladder
+           (the story at 152, its footer at 151, the share view and the list tying at 150) is built on
+           this stage at 150 and is left exactly as it was. */
+        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Larger screen recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:' + (vals.narrow ? 150 : 90) + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* THE FIELD (decorative). Two elements and nothing else in the markup: the air, and the
               stage the engine appends its canvas to. Where a hundred and sixteen orb tiles used to
               be — each with a float wrapper, a clip and five shading layers — there is one painted
@@ -2086,6 +2098,11 @@ export default function AppView({ vals }) {
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         <React.Suspense fallback={<DocFallback />}>{legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}</React.Suspense>
         <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        {/* Back Up and Restore stand in this masthead too (DocHead), so what Restore opens and reports
+            through has to be here as well — the tool's return is not mounted on a document. */}
+        <RestoreDialog vals={vals} />
+        <NoticeLayer vals={vals} />
+        <ToastLayer vals={vals} />
         {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
@@ -2258,12 +2275,14 @@ export default function AppView({ vals }) {
 
       {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
           composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
+      {/* ON THE FLOATING BAR'S CENTRE LINE: --nav-mark-top, on this branch only. logoStyle's 18.5
+          is the phone's band and stays theirs; the desktop bar floats lower now (global.css). */}
       {vals.showLogoDecor && (
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
+        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, top: 'var(--nav-mark-top)', pointerEvents: 'none' }}></div>
       )}
       {vals.showLogoButton && (
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
-          style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
+          style={{ ...logoStyle, top: 'var(--nav-mark-top)', border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
       )}
 
       {/* click-to-zoom lightbox: fixed overlay the zoomed reference image FLIPs into */}
@@ -2284,7 +2303,16 @@ export default function AppView({ vals }) {
           surface that is supposed to be barely there. The fill is what separates the bar from what
           scrolls beneath it. Removing it also hands the pane the last pixel: inset:0 resolves
           against the padding box, so the glass now fills all 64px rather than stopping at 63. */}
-      <header className="glass-bar" style={sx('display:flex;align-items:center;justify-content:space-between;height:64px;padding:0 var(--page-gutter);position:sticky;top:0;z-index:10')}>
+      {/* IT FLOATS, AND IT STAYS UP ON THE LANDING. The box — sticky at --nav-top, a gutter in from
+          either side so its ends sit on the grid's outer lines, the stadium and its shadow — is
+          .glass-bar's, shared with the documents' masthead (global.css). What is this bar's own is
+          the flex row and the height it stands at: 95, over the desktop landing (90, see
+          LandingStage) and under everything that covers the page on purpose — the palette overlay
+          (100), the dialogs (126), the notice (128), the drawers and the toast. So on the landing the
+          switch, Back up and Restore all work, and what Restore opens still arrives in front of it.
+          data-float-nav is what _syncAppInert exempts, so the landing's guard leaves it live.
+          data-on-landing thins its pane over the field in light mode — see the rule in global.css. */}
+      <header className="glass-bar" data-float-nav="1" {...(vals.showLanding ? { 'data-on-landing': '1' } : {})} style={sx('display:flex;align-items:center;justify-content:space-between;z-index:95')}>
         <GlassEffect />
         {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
             nothing about the palette, the archive or the work, yet it was the first thing every
@@ -2313,25 +2341,17 @@ export default function AppView({ vals }) {
             under a button called Back up it would read as one; it is also the brand mark's job, and
             the mark carries the same aria-label and calls the same returnToIntro() on every screen
             this menu appears on. One act, one door. */}
-        <div style={sx('display:flex;align-items:center;gap:14px')}>
-          {vals.canReset && (<>
-            {/* "New generation" named the machinery. What the button makes is a palette, and the
-                rest of the app has spent five rounds learning to say so: the Library holds palettes,
-                and Add to project files one. */}
-            {/* B006Text, LIKE EVERY OTHER LABEL IN THIS FAMILY — and its absence here was not
-                cosmetic. The note beside the swap-only rule in global.css takes the hover FILL off
-                every button-006 on one stated premise: "every button-006 carries .b006-swap, the
-                label that rises through a mask on hover". This label did not carry it, so the
-                premise was false for the masthead's primary act — no fill, no swap, nothing. The
-                same note calls that out in advance: a control that acknowledges nothing is worse
-                than one that acknowledges twice. Measured on the result stage: 6 of 9 button-006
-                controls had .b006-swap, and the 3 without it were this one and the shared pair. */}
-            <B006 data-emphasis="primary" onClick={vals.reset} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>New palette</B006Text></span>} />
-            {/* No rule between New palette and the library pair any more (removed by request,
-                02.09.26): the gap carries the grouping on its own. */}
-          </>)}
+        {/* 12 BETWEEN EVERY LINK IN THE BAR, by request (15.09.26): New Palette to the pair, and Back Up
+            to Restore — it was 14 and 8. */}
+        <div style={sx('display:flex;align-items:center;gap:12px')}>
+          {/* "New generation" named the machinery. What the button makes is a palette, and the rest of
+              the app has spent five rounds learning to say so: the Library holds palettes, and Add to
+              project files one. On the create page in every state and off the landing, and it
+              always starts a palette — see NavNewPalette. No rule between it and the library pair
+              (removed by request, 02.09.26): the gap carries the grouping on its own. */}
+          <NavNewPalette show={!vals.showLanding} onPress={vals.newPalette} />
           {vals.showProjectsBar && (
-            <div style={sx('display:flex;align-items:center;gap:8px')}>
+            <div style={sx('display:flex;align-items:center;gap:12px')}>
               {/* ONE ACT, NO MENU. This was a disclosure: a trigger carrying aria-haspopup and a
                   chevron, opening a two-item menu whose items were "Back up this project" and "Back
                   up whole library". Removed by request — a menu is the right shape when a choice has
@@ -2345,7 +2365,7 @@ export default function AppView({ vals }) {
                   activeScopeLabel are all still there and are now uncalled — so restoring the menu is
                   markup rather than a feature. That file is left alone deliberately; it carries
                   another branch's work at the moment. */}
-              <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back up</TextSwap></button>
+              <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back Up</TextSwap></button>
               <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" data-tier3-action="" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
               <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
             </div>
@@ -2486,7 +2506,7 @@ export default function AppView({ vals }) {
                 the weight difference used to say, position and the hairline now say instead.
 
                 One 8px rhythm across the whole row, matching the archive header's bar. */}
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
+            <div data-palette-acts="" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
                   gives: first in the sequence and available, organise then validate then output.
                   It held the second tier here only because one creative act stood ahead of it, and
@@ -2695,113 +2715,8 @@ export default function AppView({ vals }) {
       <AssignDialog vals={vals} />
       <RestoreDialog vals={vals} />
 
-      {/* 158, ABOVE THE PANEL THAT RAISES IT. At 130 the toast sat under the library panel (156)
-          and under a project export stacked on it (157), so deleting a project from the Projects tab
-          put the confirmation, and the only route back from it, behind the surface you were standing
-          on. A status you cannot see is not a status, and an Undo you cannot reach is a deletion
-          without one. Still below the wipe (160), the lightbox (170) and the loader (190): those are
-          whole-screen states, and a bar reporting one act does not outrank them. */}
-      {vals.hasToast && (
-        <div style={sx('position:fixed;left:0;right:0;bottom:28px;z-index:158;display:flex;justify-content:center;pointer-events:none')}>
-          {/* A STADIUM, LIKE EVERY OTHER FLOATING SURFACE THE TOOL PUTS OVER THE STAGE. It was the
-              last square bar left: it arrives over a result view whose actions, traits and badges
-              are all pills, and a hard-cornered plate reads as a different system rather than as
-              the same one speaking. The corner clamps to half the bar's height, so it stays a
-              stadium whatever the message length does to its width.
-              8px ALL ROUND, 16 ON THE LEADING EDGE. The trailing side is 8 because what sits there
-              is a bordered control that carries its own inset; the leading side holds bare text
-              against the widest point of a 24px arc, and 8px of it read as the sentence crowding
-              the curve. padding-inline-start, not padding-left: the asymmetry is about the reading
-              edge, so it should follow the reading direction rather than the screen's. */}
-          <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;box-shadow:0 14px 36px rgba(0,0,0,.24);pointer-events:auto')}>
-            {/* No capitalize transform: it Title-Cased whole sentences ("Dry Season Deleted"). The
-                label arrives as a natural sentence — the palette's own name keeps its case, the
-                verb stays lowercase — and a status line is prose, not a button. */}
-            <span style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap")}>{vals.toastLabel}</span>
-            {/* THREE ONE-OFFS, ALL REPLACED BY THE TOKEN THAT ALREADY MEANT THEM. The tracking was
-                a literal .12em — the last uppercase label in the app not set from --track-flat,
-                which is 0 — so this one control was spaced differently from every other label
-                beside it. The padding was 7px 13px, one pixel off --btn-pad-sm (7px 12px), which is
-                the definition of a decision nobody could repeat. And the corner is the pill the
-                rest of this bar now takes.
-                THE CAPS COME FROM [data-ix] AND NOTHING ELSE. A sentence-case exception for this
-                bar was tried and reverted: the drawer earns one because it is a sheet you read, and
-                a toast is a line of prose with an act at the end of it — the act is chrome and
-                speaks like chrome. Nothing here declares a transform, which is the point: the
-                attribute that says "this is a control" is what says how a control speaks.
-
-                AND THEN THE WORD WENT TOO. It was the app's one bordered control with a JS hover
-                of its own — an HBtn whose styleHover inverted the whole button to a filled black
-                plate — which is a louder event than any other act gets, on the one control that
-                appears unannounced over whatever you were reading. It briefly took the masked text
-                swap instead, and now it takes no text at all: an arrow turning back on itself,
-                drawn at the same 30px circle as the dismiss beside it, so the pair reads as two
-                answers to one sentence rather than as a label and a glyph.
-                A GLYPH HAS TO CARRY ITS NAME. aria-label states the act and title hands the word to
-                a pointer, which is the same bargain the row actions and the library trigger take.
-                The two names are written as a pair — "Undo the deletion" against "Dismiss, keep the
-                deletion" — so a reader hears the choice, not two unrelated verbs. */}
-            {/* TWO CONTROLS, ONE GROUP, AND THE GAPS SAY SO. The bar used to space everything at
-                16px, which put the same distance between the message and its way out as between the
-                two acts — three items in a row rather than a sentence and the pair that answers it.
-                8px inside the group against 16 to the message: the ratio the rest of the app uses
-                to mean "these belong together, that is something else". */}
-            <div style={sx('display:flex;align-items:center;gap:8px;flex:none')}>
-              <button type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete} aria-label="Undo the deletion" title="Undo"
-                style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconUndo /></TextSwap></button>
-              {/* The toast no longer times out (it holds an action — see the note in overlays.js),
-                  so letting the undo go needs a control of its own. Icon-only, so it carries a name;
-                  a 30px square clears the 24px hit floor. */}
-              <button type="button" data-ix="press" data-focus="chrome" aria-label="Dismiss, keep the deletion" onClick={vals.onDismissToast} style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* THE LAST SQUARE THING ANCHORED TO THIS CORNER. The toast six lines up is a stadium with
-          two 30px circles in it; this sat beside it as a hard-cornered plate, and the two are the
-          same object to a reader — a bar that arrives bottom-left and says what just happened.
-          One of them reporting in a different shape is the dialect the corner pass exists to end.
-
-          18px OF FLANK, NOT 13, AND THAT IS THE STADIUM'S CHARGE RATHER THAN A LOOK. A pill's
-          corner curves away from its own content, so type set at a square box's padding reads as
-          crowding an edge that is no longer there. The project rows made this correction first
-          (14 → 18, see optStyle) and the toast and the fields each needed it after; 13 → 18 is the
-          same figure for the same reason, and it is now the number this family uses.
-
-          A DISMISS, NOW THAT SOME OF THESE STOP EXPIRING. The toast carried one because it holds an
-          undo; this one carries one because the error-class notices — a file that could not be read,
-          storage that is full, a live reading that did not come back — no longer time out (showNotice
-          `sticky`), and a message that neither leaves nor can be sent away is a wall. The timed ones
-          keep their five seconds but hold while hovered or focused, so looking at a notice is enough
-          to keep it. role follows the kind: alert for the ones that stay, status for the ones that pass. */}
-      {vals.hasNotice && (
-        <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:9px 18px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
-          {/* A DOT, NOW THAT IT SITS IN A PILL. It was a 6px square, which the house rule allows —
-              square is still the default and this is a mark, not a control sized by a label. It is
-              also the only other shape inside a stadium, and a hard corner nested in a round one
-              reads as the two being unrelated, which is the argument the radius block makes about
-              every other pair of nested boxes here. It carries no meaning to lose: aria-hidden, no
-              state, no variants. A bullet is what it always was; this draws it as one. */}
-          <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;border-radius:var(--radius-pill);background:var(--on-surface-muted)')}></span>
-          {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
-              They sit in the same corner, take the same --surface-raised plate, the same
-              --line-strong edge, the same pill and the same shadow — and then set their text three
-              different ways: --fs-label against the toast's --fs-body, a hand-set .01em against its
-              --track-flat, and --on-surface-muted against its --on-surface. Two objects that agree
-              about every other property and disagree about the type read as one of them being
-              slightly broken rather than as a hierarchy.
-
-              The literal goes with it. --track-flat is 0 and its declaration calls itself the single
-              source for flat tracking; .01em beside it was the same drift as the six .06em sites
-              still outstanding elsewhere. */}
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
-          {/* THE WAY OUT. An error-class notice no longer expires (see showNotice), so it needs one;
-              a timed one gets the same control because hover and focus hold it, and a held notice
-              is one the reader has decided to deal with. Same 28px disc the toast’s Dismiss uses. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissNotice} aria-label="Dismiss notice" title="Dismiss" style={sx('flex:none;width:28px;height:28px;margin-inline-start:2px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer;padding:0')}><span aria-hidden="true" style={sx('font-size:12px;line-height:1')}>✕</span></button>
-        </div>
-      )}
+      <ToastLayer vals={vals} />
+      <NoticeLayer vals={vals} />
 
       {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
     </div>
@@ -3549,7 +3464,9 @@ function ContrastDrawer({ vals }) {
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
           </div>
-          <div data-cx-sample="1" data-cx-cell="sample" style={contrast.sampleStyle}>The quick brown fox jumps over the lazy dog</div>
+          {/* The words have a box of their own so their size can step while the sample's box
+              extends around them (_growSample in methods/overlays.js). */}
+          <div data-cx-sample="1" data-cx-cell="sample" style={contrast.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
         </div>
       </div>
     </div>
@@ -3611,7 +3528,7 @@ function DetailOverlay({ vals }) {
               before copying. (No Share here: the overlay has no shareable URL, so that group is a
               trio, not four. The hairline that used to divide it from Filing went on 02.09.26, on
               both surfaces.) */}
-          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+          <div data-palette-acts="" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             {/* Filing leads here, as it does on the result view: the act that is first in the
                 sequence and available — organise, then validate, then output. */}
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
@@ -4060,7 +3977,7 @@ function LibraryDrawer({ vals }) {
                 figure the rows below use too, so every piece of text inside a control on this
                 surface starts on the same column. (The toast keeps 16: it is a 48px bar with a
                 deeper arc and a leading inset chosen for it by hand.) */}
-            <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
             {/* Filled --on-surface, unlike the toast's outlined pair: this is the one act on the tab
                 that commits something, and fill is how this system says primary. A GLYPH CARRIES ITS
                 NAME: aria-label states the act, title hands the word to a pointer, and the swap runs
@@ -4068,18 +3985,6 @@ function LibraryDrawer({ vals }) {
             <button type="button" data-manage-add="1" data-ix="cta" data-focus="chrome" onClick={vals.manage.onCreate} aria-label="Create project" title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
         </div>
-
-        {/* The empty state is the one place a folder can be explained without the explanation
-            becoming permanent furniture: it is gone the moment there is a project to look at.
-            THREE SENTENCES, THREE JOBS, NO CLAUSES. It ran as one 27-word sentence with an em dash
-            holding the last third on, and the dash was doing the work a full stop does: "what is a
-            project FOR" is the question, so the answer gets its own sentence instead of being
-            appended to the instructions. "Name one above" over "Create one above" because the field
-            it points at asks for a name, and "from any row" drops the detail view, which is the
-            second place you can do it rather than a thing you need telling. */}
-        {vals.manage.empty && (
-          <div data-tg-sec="1" style={sx("padding:16px var(--page-gutter) 26px;font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>No projects yet. Name one above, then move palettes in from any row. A project exports as one set of tokens.</div>
-        )}
 
         {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
             as a whole. The count sits INSIDE the name field (see the note on manageView.count) and
@@ -4235,7 +4140,7 @@ function ExportDialog({ vals }) {
     // Every other route into this surface stacks exactly where it did.
     <div style={{ ...sx('position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px'), zIndex: ex.stacked ? 157 : 125 }}>
       <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{ex.kicker}</span>
@@ -4430,7 +4335,7 @@ function AssignDialog({ vals }) {
               two. It gains the aria-label the panel's field already had, so the name is on the
               control and not only above it. */}
           <div style={sx('position:relative;display:flex')}>
-            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
+            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} aria-label={assign.createAria} title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
           {/* THE COMMIT PAIR. The picker is a draft now (see pickAssign), so it needs a way to say
@@ -4475,6 +4380,130 @@ function AssignDialog({ vals }) {
 // Nothing is signalled by colour: the situation is a sentence, the numbers are a ruled readout in
 // the same label:value grammar as the result view's metadata, and the routes are labelled buttons
 // that also differ in fill.
+
+/* THE TOAST AND THE NOTICE, AS COMPONENTS (15.09.26). They were written inline in the tool's return, which
+   was their only home while nothing that reports through them could happen anywhere else. Back Up and
+   Restore now stand in the documents' masthead too, and Restore reports through the notice (a file that
+   could not be read, the summary once it lands), so both branches render these. Lifted verbatim. */
+function ToastLayer({ vals }) {
+  return (
+    <>
+          {/* 158, ABOVE THE PANEL THAT RAISES IT. At 130 the toast sat under the library panel (156)
+              and under a project export stacked on it (157), so deleting a project from the Projects tab
+              put the confirmation, and the only route back from it, behind the surface you were standing
+              on. A status you cannot see is not a status, and an Undo you cannot reach is a deletion
+              without one. Still below the wipe (160), the lightbox (170) and the loader (190): those are
+              whole-screen states, and a bar reporting one act does not outrank them. */}
+          {vals.hasToast && (
+            <div style={sx('position:fixed;left:0;right:0;bottom:28px;z-index:158;display:flex;justify-content:center;pointer-events:none')}>
+              {/* A STADIUM, LIKE EVERY OTHER FLOATING SURFACE THE TOOL PUTS OVER THE STAGE. It was the
+                  last square bar left: it arrives over a result view whose actions, traits and badges
+                  are all pills, and a hard-cornered plate reads as a different system rather than as
+                  the same one speaking. The corner clamps to half the bar's height, so it stays a
+                  stadium whatever the message length does to its width.
+                  8px ALL ROUND, 16 ON THE LEADING EDGE. The trailing side is 8 because what sits there
+                  is a bordered control that carries its own inset; the leading side holds bare text
+                  against the widest point of a 24px arc, and 8px of it read as the sentence crowding
+                  the curve. padding-inline-start, not padding-left: the asymmetry is about the reading
+                  edge, so it should follow the reading direction rather than the screen's. */}
+              <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;box-shadow:0 14px 36px rgba(0,0,0,.24);pointer-events:auto')}>
+                {/* No capitalize transform: it Title-Cased whole sentences ("Dry Season Deleted"). The
+                    label arrives as a natural sentence — the palette's own name keeps its case, the
+                    verb stays lowercase — and a status line is prose, not a button. */}
+                <span style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap")}>{vals.toastLabel}</span>
+                {/* THREE ONE-OFFS, ALL REPLACED BY THE TOKEN THAT ALREADY MEANT THEM. The tracking was
+                    a literal .12em — the last uppercase label in the app not set from --track-flat,
+                    which is 0 — so this one control was spaced differently from every other label
+                    beside it. The padding was 7px 13px, one pixel off --btn-pad-sm (7px 12px), which is
+                    the definition of a decision nobody could repeat. And the corner is the pill the
+                    rest of this bar now takes.
+                    THE CAPS COME FROM [data-ix] AND NOTHING ELSE. A sentence-case exception for this
+                    bar was tried and reverted: the drawer earns one because it is a sheet you read, and
+                    a toast is a line of prose with an act at the end of it — the act is chrome and
+                    speaks like chrome. Nothing here declares a transform, which is the point: the
+                    attribute that says "this is a control" is what says how a control speaks.
+
+                    AND THEN THE WORD WENT TOO. It was the app's one bordered control with a JS hover
+                    of its own — an HBtn whose styleHover inverted the whole button to a filled black
+                    plate — which is a louder event than any other act gets, on the one control that
+                    appears unannounced over whatever you were reading. It briefly took the masked text
+                    swap instead, and now it takes no text at all: an arrow turning back on itself,
+                    drawn at the same 30px circle as the dismiss beside it, so the pair reads as two
+                    answers to one sentence rather than as a label and a glyph.
+                    A GLYPH HAS TO CARRY ITS NAME. aria-label states the act and title hands the word to
+                    a pointer, which is the same bargain the row actions and the library trigger take.
+                    The two names are written as a pair — "Undo the deletion" against "Dismiss, keep the
+                    deletion" — so a reader hears the choice, not two unrelated verbs. */}
+                {/* TWO CONTROLS, ONE GROUP, AND THE GAPS SAY SO. The bar used to space everything at
+                    16px, which put the same distance between the message and its way out as between the
+                    two acts — three items in a row rather than a sentence and the pair that answers it.
+                    8px inside the group against 16 to the message: the ratio the rest of the app uses
+                    to mean "these belong together, that is something else". */}
+                <div style={sx('display:flex;align-items:center;gap:8px;flex:none')}>
+                  <button type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete} aria-label="Undo the deletion" title="Undo"
+                    style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconUndo /></TextSwap></button>
+                  {/* The toast no longer times out (it holds an action — see the note in overlays.js),
+                      so letting the undo go needs a control of its own. Icon-only, so it carries a name;
+                      a 30px square clears the 24px hit floor. */}
+                  <button type="button" data-ix="press" data-focus="chrome" aria-label="Dismiss, keep the deletion" onClick={vals.onDismissToast} style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+                </div>
+              </div>
+            </div>
+          )}
+    </>
+  );
+}
+function NoticeLayer({ vals }) {
+  return (
+    <>
+          {/* THE LAST SQUARE THING ANCHORED TO THIS CORNER. The toast six lines up is a stadium with
+              two 30px circles in it; this sat beside it as a hard-cornered plate, and the two are the
+              same object to a reader — a bar that arrives bottom-left and says what just happened.
+              One of them reporting in a different shape is the dialect the corner pass exists to end.
+
+              18px OF FLANK, NOT 13, AND THAT IS THE STADIUM'S CHARGE RATHER THAN A LOOK. A pill's
+              corner curves away from its own content, so type set at a square box's padding reads as
+              crowding an edge that is no longer there. The project rows made this correction first
+              (14 → 18, see optStyle) and the toast and the fields each needed it after; 13 → 18 is the
+              same figure for the same reason, and it is now the number this family uses.
+
+              A DISMISS, NOW THAT SOME OF THESE STOP EXPIRING. The toast carried one because it holds an
+              undo; this one carries one because the error-class notices — a file that could not be read,
+              storage that is full, a live reading that did not come back — no longer time out (showNotice
+              `sticky`), and a message that neither leaves nor can be sent away is a wall. The timed ones
+              keep their five seconds but hold while hovered or focused, so looking at a notice is enough
+              to keep it. role follows the kind: alert for the ones that stay, status for the ones that pass. */}
+          {vals.hasNotice && (
+            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:9px 18px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
+              {/* A DOT, NOW THAT IT SITS IN A PILL. It was a 6px square, which the house rule allows —
+                  square is still the default and this is a mark, not a control sized by a label. It is
+                  also the only other shape inside a stadium, and a hard corner nested in a round one
+                  reads as the two being unrelated, which is the argument the radius block makes about
+                  every other pair of nested boxes here. It carries no meaning to lose: aria-hidden, no
+                  state, no variants. A bullet is what it always was; this draws it as one. */}
+              <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;border-radius:var(--radius-pill);background:var(--on-surface-muted)')}></span>
+              {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
+                  They sit in the same corner, take the same --surface-raised plate, the same
+                  --line-strong edge, the same pill and the same shadow — and then set their text three
+                  different ways: --fs-label against the toast's --fs-body, a hand-set .01em against its
+                  --track-flat, and --on-surface-muted against its --on-surface. Two objects that agree
+                  about every other property and disagree about the type read as one of them being
+                  slightly broken rather than as a hierarchy.
+
+                  The literal goes with it. --track-flat is 0 and its declaration calls itself the single
+                  source for flat tracking; .01em beside it was the same drift as the six .06em sites
+                  still outstanding elsewhere. */}
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
+              {/* THE WAY OUT. An error-class notice no longer expires (see showNotice), so it needs one;
+                  a timed one gets the same control because hover and focus hold it, and a held notice
+                  is one the reader has decided to deal with. Same 28px disc the toast’s Dismiss uses. */}
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissNotice} aria-label="Dismiss notice" title="Dismiss" style={sx('flex:none;width:28px;height:28px;margin-inline-start:2px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer;padding:0')}><span aria-hidden="true" style={sx('font-size:12px;line-height:1')}>✕</span></button>
+            </div>
+          )}
+    </>
+  );
+}
+
 function RestoreDialog({ vals }) {
   if (!vals.hasRestore) return null;
   const r = vals.restore;

@@ -500,6 +500,31 @@ export const pipelineMethods = {
       else go();
     } catch (e) { go(); }
   },
+  /* NEW PALETTE, THE BAR'S FILLED ACTION, ON THE CREATE PAGE IN EVERY STATE (15.09.26, by request).
+     It used to exist only while there was something to reset. Now it always starts a palette: from a
+     result, an error or a generation still running it runs the reset back to the dropzone, as it did;
+     on the dropzone itself it opens the file picker, the same act as "Start here" (onBrowse). The input
+     is clicked inside the press, because a picker opened any later than the gesture is refused.
+     FROM ANYWHERE DOWN THE LIBRARY it also brings the page back to the top, where both of those happen.
+     The bar floats, so the button is in reach far down the list, and a reset that plays out above the
+     viewport is a press that looks dead. Same glide as the return to a row. */
+  /* ONE RESET PER PRESS. The button used to leave on the press, and that was its double-click guard:
+     a second click landed on nothing. It stays now, so a second click would start doReset again
+     halfway through the first: two sinks on the same bands and two commits, the dropzone's arrival
+     restarted mid-rise. The lock holds until the reset has landed, and a timer on doReset's own
+     guard length lets go regardless, so the button can never be left dead. */
+  newPalette() {
+    if (this._npLock) return;
+    if (this.state.stage === 'upload') { if (this.fileRef.current) this.fileRef.current.click(); }
+    else {
+      this._npLock = true;
+      clearTimeout(this._npLockT);
+      const free = () => { this._npLock = false; clearTimeout(this._npLockT); };
+      this._npLockT = setTimeout(free, this.DUR.reveal * 1000 + 260);
+      this.doReset({ after: free });
+    }
+    if (window.scrollY > 1) this._glideToY(0);
+  },
   /* CLOSE, as distinct from New palette — reached by Escape in the result stage (PaletteApp). A
      masthead close mark stood beside New palette for a day and was removed by request. A palette
      opened from a library row leaves by the same exit New palette runs (doReset's sink and the
@@ -523,14 +548,19 @@ export const pipelineMethods = {
     const HEAD = 96;   // the sticky masthead, and a breath under it
     const y = Math.max(0, anchor.getBoundingClientRect().top + window.scrollY - HEAD);
     const hit = row ? row.querySelector('[data-row-hit]') : null;
-    const land = () => { if (hit) try { hit.focus({ preventScroll: true }); } catch (e) { } };
+    this._glideToY(y, () => { if (hit) try { hit.focus({ preventScroll: true }); } catch (e) { } });
+  },
+  // The glide itself, shared with New Palette's return to the top: through Lenis when it owns the
+  // page, on the reveal's length and curve; instant under reduced motion.
+  _glideToY(y, land) {
+    const done = land || (() => { });
     const g = window.gsap;
-    if (this._reduce) { try { this._scrollToY(y); } catch (e) { window.scrollTo(0, y); } land(); return; }
+    if (this._reduce) { try { this._scrollToY(y); } catch (e) { window.scrollTo(0, y); } done(); return; }
     try {
-      if (this._lenis) { this._lenis.scrollTo(y, { duration: this.DUR.reveal, force: true, onComplete: land }); return; }
-      if (g && g.plugins && g.plugins.scrollTo) { g.to(window, { scrollTo: { y, autoKill: false }, duration: this.DUR.reveal, ease: this.EASE.entrance, onComplete: land }); return; }
+      if (this._lenis) { this._lenis.scrollTo(y, { duration: this.DUR.reveal, force: true, onComplete: done }); return; }
+      if (g && g.plugins && g.plugins.scrollTo) { g.to(window, { scrollTo: { y, autoKill: false }, duration: this.DUR.reveal, ease: this.EASE.entrance, onComplete: done }); return; }
     } catch (e) { }
-    window.scrollTo(0, y); land();
+    window.scrollTo(0, y); done();
   },
   /* THE UPLOAD SURFACE ARRIVES the way it does on the very first visit: the dropzone rises and
      fades in, and "Start here" with its two lines comes up through the same line masks the landing

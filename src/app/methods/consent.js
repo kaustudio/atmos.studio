@@ -45,7 +45,7 @@ export const consentMethods = {
       const el = document.getElementById('analytics');
       if (!el) return false;
       const wrap = document.querySelector('[data-toc-wrap]');
-      const offset = parseInt(wrap && wrap.getAttribute('data-toc-offset'), 10) || 88;
+      const offset = parseInt(wrap && wrap.getAttribute('data-toc-offset'), 10) || 104;
       if (this._lenis && this._lenis.scrollTo) {
         try { this._lenis.scrollTo(el, this._reduce ? { offset: -offset, immediate: true } : { offset: -offset, duration: 1, easing: this.EASE.fold }); return true; } catch (err) { }
       }

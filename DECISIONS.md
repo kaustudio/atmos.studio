@@ -6,6 +6,147 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-15 — Explore Atmos starts over, the palette's actions take the bar's type, and large text grows
+
+**Explore Atmos lands on the default state.** The button at the close of /about crossed straight back
+into whatever the tool held, so a palette opened before the detour was what the window opened on, and
+on a phone so was the colour chosen in the story's fourth chapter. It now resets first, in one commit
+behind the page the reader is still looking at. The tool part is exactly Get Started's reset, which
+now lives in one place, `_resetToolState`, so the two entry points cannot drift apart. The phone story
+also clears its chosen colour, tab and chooser, and returns to the example this visit rolled, with its
+masks rebuilt for it. Measured: a result on desktop comes back as the dropzone, and on a phone a
+chosen swatch and a chosen example both come back as the story's opening state.
+
+**The action row under a palette is set like the bar's links.** Add to Projects, Check Contrast,
+Copy, Export and Share are Medium, authored in Title Case with no uppercase transform, at their
+original `--fs-label`, 11px. The analytics banner's 13px was tried on them and reverted by request.
+The weight and case are scoped to this row by `[data-palette-acts]`, and the fullscreen detail's
+row takes it too, because the two rows are deliberately identical. Every other button keeps the
+tiers' regular 400 and the capitals.
+
+**The Copy and Export dialogs have 18px corners,** `--radius-surface`. The Recognise, Add to projects
+and Restore dialogs share the same frame and are still square.
+
+**Large text grows into place in the contrast checker.** Choosing Large used to swap the best-pair
+sample from 15px to 24px in one frame, one line to two, with an opacity dip over the jump. Now the
+sample's box extends to its new height while the words grow, both on `DUR.fold` and `EASE.fold`, the
+tokens the Normal / Large marker slides on. Normal runs the same way back. The real font size eases
+continuously through every fractional value between 15 and 24px. Two earlier cuts were rejected: scaling
+the large layout down put the words in their new line breaks at the press, which read as a jump, and
+whole-pixel steps moved in nine visible steps. The text reflows as type does, and `text-wrap: pretty`
+keeps "lazy dog" together, so it breaks onto two lines once, at about 21.75px, instead of dropping
+"dog" and then "lazy". The weight moves from Regular to Medium halfway, the fastest moment of the curve.
+The box's height eases separately. Measured: 56 distinct sizes in 480ms, never more than 0.85px a
+frame, the box at most 5px a frame, the words inside its edges throughout, a reversal mid-flight turns
+round in place, nothing is left inline at rest, and reduced motion stays instant.
+
+---
+
+## 2026-09-15 — The top bar floats, on the grid, and stands on the landing
+
+**Decision:** the tool's header and the documents' masthead are one floating bar. It stands
+`--nav-top` (the page gutter) off the top of the screen and a gutter in from either side, so its ends
+sit on the grid's outer lines — measured at 24 and 1416 on a 1440 window, the same two lines the
+dropzone and the library are laid on. It is 56px at every width, with fully round ends
+(`--radius-pill`). The geometry is on `.glass-bar`, which the prerendered masthead also wears, so no
+markup changed.
+
+**The controls in it are bare, by request.** The theme switch has no word and no ring: a 32×18 track
+in the navigation's glass (the surface at 70%, a 12px blur, the 12% hairline) with a 12px knob that
+is ink in light and light in dark. Position carries the state, and the knob is 14–15.6:1 against
+the track over every example field. Its old off state was #d5d5d0 under a --surface knob, 1.4:1,
+which would not have been legible without the word beside it. Back Up and Restore have no border —
+transparent in every state, so the press tint keeps its stadium and nothing moves. That is a
+conscious departure from 2026-07-27's "the control edge is 3:1": in the bar, the label, its position,
+the hover swap and the focus ring say "control". The links are set like the landing's calls to
+action at Medium, with the case authored as Title Case in the source (Back Up, Restore, New Palette)
+and no uppercase transform. Their size is `--fs-detail`, 12px: they matched the CTAs' 14 first and
+were taken down to 12 by a later request. The `[data-ix]` tier's forced uppercase takes an exception in the
+bar. Tracking stays flat. Back Up and Restore are standalone text with no padding either, so their
+12px gap is the gap between the words. The target is widened invisibly instead, by an `::after` 8px
+above and below and 6px to each side, so neighbours meet without overlapping. They answer press, and
+hover under reduced motion, with muted ink rather than a tint plate. The switch lost its side padding
+for the same reason. The bar's padding, `--nav-inset`, is 16px by request, taken from `--row-inset`,
+the inset a surface gives its content; it was a gutter less the hairline, 23px. The track and the last
+word now sit 17px from the bar's outer edge. The analytics banner's buttons take the links' weight and
+case too, 500 with Accept, Decline and Learn More authored in title case, at `--fs-body` (13px),
+two pixels up from their old 11 and exactly a step of the scale.
+
+**Back Up and Restore are on every page the bar is on.** The documents' masthead carries them in its
+third track, with the same handlers, style and file input as the tool's bar. They are hidden below the
+tool's own width, where the library they act on is offered nowhere else and there is no room beside
+the centred mark. Because Restore opens a dialog and reports through the notice, `RestoreDialog`, the
+notice and the toast render on the document routes too; the latter two were lifted verbatim into
+`NoticeLayer` and `ToastLayer`. `_bgInert` now names its landmarks (`[data-float-nav]`, `.doc-head`,
+`main`, the recent strip, the footer) instead of querying `header`, which on a document could match the
+dialog's own header and inert its Close. New Palette's sides are 2px in from the primary tier's
+1.35em, in the bar only.
+
+**A layout shift the float introduced, and its fix.** The prerendered document wrapper is a bare
+block, so the masthead's 24px top margin collapsed through it into `<body>`. The body stood 24px down
+until hydration made the wrapper a flex column: a 0.017 shift on every cold /about. doc.css now gives
+`[data-app].doc-route` the same flex column, and cold loads of all three documents measure 0 again.
+
+**Corners, by request.** The bar tried 24, 12, 16 and 18 in one sitting, and then went back to fully
+round, `--radius-pill`, like the pills inside it. At 56px the ends are 28px half-circles, and with the
+16px padding the switch's round end sits within 2px of concentric with the bar's. The 18px stayed as a
+token, `--radius-surface`, worn by the Copy and Export dialogs. The tool's dropzone wore it too, until
+it was asked for 12px, which went on a token of its own, `--radius-dropzone`, since no radius in the
+list was 12. The list now holds four designed radii: pill, dock, surface and dropzone.
+
+**New Palette is on the create page in every state, and off the landing.** It used to show only when
+there was something to reset, and pressing it took it away. Now it always starts a palette. From a
+result, an error or a generation in flight it runs the reset back to the dropzone. On the dropzone
+it opens the file picker, the same act as "Start here". From far down the Library it also glides the
+page back to the top, or the reset would play out above the viewport and the press would look dead.
+A lock holds until the reset lands, so a double click resets once; the button used to leave on the
+press, and that was its only guard. It stands down on the landing, where the landing's own buttons are
+the calls to action.
+
+**It arrives and leaves through a blur as the landing goes and comes back.** The exit keeps the button
+mounted until the fade is done. It uses Web Animations, which a transition snapshot does not copy.
+When the create page itself arrives, on the first load or crossing back from a document, the button is
+simply part of that page and does not fade on its own. Under reduced motion it simply comes and goes.
+
+**It leaves the way the analytics banner closes.** The first cut blurred to 10px over `--dur-swap` on
+`--ease-fold`, and it popped. It now takes the banner's close figures exactly: opacity to 0 while the
+blur grows to 6px, over `--dur-state`, on `--ease-exit`. It arrives the way the banner arrives, the same
+blur resolving on `--ease-entrance`. The banner also drops its box 16px; the button does not, because a
+control that moves inside a fixed bar reads as a jump. Sampled side by side, the two exits track each
+other to within a frame and are fully dissolved at 236ms and 250ms.
+
+**Only the words blur, never the pill.** Even at 6px, a blur on the whole button spread its solid fill
+past its own edge, so the pill read as swelling on its way out; that was the pop, reported the second
+time as a scale-up. The button now only fades, and the blur sits on the label text, which the button's
+own layers clip to the pill's shape. Slowed frames in both themes show the pill's edge and size
+unchanged through the whole exit. The press also stopped setting `pointer-events: none`. That dropped
+hover at once, and the hover label rolled back down through the fade, showing two copies of the words.
+The click guard already ignores a second press, and a reversal mid-exit still turns round in place.
+
+**On the landing it is live.** The desktop landing drops from z-index 150 to 90 and the bar sits at
+95. At 150 the landing would have covered what the bar opens: Restore's dialog is 126 and a notice is
+128. The phone's ladder is built on the landing at 150 and is unchanged. `_syncAppInert` exempts
+`[data-float-nav]`, and the landing's transition snapshot includes the bar.
+
+**The glass matches the analytics banner, and has no shadow.** Both use the same recipe. On the landing
+in light mode, the bar rendered at luminance 225 over the pale top of the field and read as milk,
+against the banner's 212 over the darker corner. So on the landing, in light mode only, the pane is
+40% of the surface rather than 70%. Worst label contrast over all eight example fields is 7.6:1.
+Elsewhere the bar sits on the page's own surface, where 70% keeps scrolling swatches from being read
+through the chrome. Dark mode keeps 70%. The shadow came off by request, which also took Get Started
+from 88–96ms to 32–40ms of interaction latency: a large blurred shadow was being painted in the
+transition's first frame.
+
+**What moved with it:** the fixed mark centres on the bar through `--nav-mark-top`, on the tool branch
+only; the phone keeps its 18.5px band. The legal contents' sticky offset, heading scroll margins and
+`data-toc-offset` (104), and /about's dock jump offset (112) now read the bar's footprint rather than
+64px. The masthead's theme switch was 3.5px high in its bar, as it had been in the old one, from the
+line box under an inline wrapper; `display:flex` centres it. A 48px phone bar and a smaller phone
+wordmark were tried while the switch still carried its word, which made it 88px wide, and were
+removed when the word went.
+
+---
+
 ## 2026-09-15 — Analytics waits for consent
 
 **Decision:** Web Analytics and Speed Insights run only after a visitor allows them. A banner asks

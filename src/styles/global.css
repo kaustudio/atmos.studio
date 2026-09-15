@@ -503,6 +503,17 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      than assuming this figure travels. */
   --radius-pill:999px;
   --radius-dock:20px;
+  /* --radius-surface is the THIRD designed radius, and it joins the list the way the note above asks:
+     the corner a large rectangular surface takes (15.09.26, by request). 18px, worn by the Copy and
+     Export dialogs (their frames in AppView). It is a length for the reason --radius-dock is one: the
+     figure is chosen, not "fully round". The floating top bar wore it too, after 24, 12 and 16 in the
+     same sitting, until it was asked to be fully round like the controls inside it (--radius-pill),
+     and the dropzone wore it until it was asked for 12 (below). */
+  --radius-surface:18px;
+  /* --radius-dropzone is the FOURTH, the tool's dropzone alone, 12px (15.09.26, by request): "Start
+     here" came down from the surfaces' 18 while the dialogs kept it, so the two corners are two
+     tokens. No radius in the list was 12. A length, for the same reason as the two above it. */
+  --radius-dropzone:12px;
   /* --radius-dock-row is the dock's INNER corner: the travelling active marker and the hover tint on
      each row, and it says FULLY ROUND rather than naming a length. It was 12, then 18, both of them
      --radius-dock minus the inset — and both were really asking for a stadium and getting one by
@@ -560,6 +571,22 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --page-gutter:24px;         /* the margin, every document, chrome and content alike */
   --grid-cols:12;
   --grid-gutter:24px;
+  /* ===== the floating nav =====
+     The top bar floats: it stands --nav-top off the top of the screen and, by its margins, one
+     --page-gutter in from either side, so its two ends sit on the grid's outer lines exactly where
+     the content below starts and stops. --nav-top IS the gutter rather than a figure of its own —
+     the same air above the bar as beside it, and the same figure /about's dock floats off the
+     bottom by — so it steps down to 16 with the gutter on a phone.
+     --nav-inset is the bar's own padding, 16px (15.09.26, by request), and it is --row-inset rather
+     than a figure of its own: the inset a surface gives its content, which is what the bar is. It was
+     a gutter less the hairline, so the content sat exactly 24px in, and 12 before that, while the
+     controls were outlined pills. The track and the last word now sit 17px from the bar's outer
+     edge, the hairline included. --nav-mark-top centres the fixed wordmark on the bar (the tool and the landing
+     draw the mark outside it, see logoStyle in AppView). */
+  --nav-top:var(--page-gutter);
+  --nav-h:56px;
+  --nav-inset:var(--row-inset);
+  --nav-mark-top:calc(var(--nav-top) + (var(--nav-h) - var(--logo-h)) / 2);
   /* ===== archive list rhythm =====
      The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
      of whatever the widest row happened to contain. Naming it here keeps the scan rhythm in one
@@ -1359,7 +1386,56 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    a lone [data-theme-switch] — so the emphasis block further down won on document order and the
    switch kept the 48% edge while the two buttons beside it went to 32%. Naming both attributes takes
    this to (0,3,0) and settles it by specificity rather than by position in the file. */
-.button-006[data-theme-switch][data-emphasis]{--button-006-line:var(--masthead-line);--button-006-line-hover:var(--masthead-line)}
+/* NO EDGE ANY MORE (15.09.26, by request): the switch stands alone in the bar, a bare track and knob,
+   so all three of its line tokens are transparent — rest, hover and press. The note above explains
+   why both attributes are named; the reason still holds for the specificity. What the ring used to
+   say, "this is a control", the track now says by being one (see .theme-switch__track below).
+   No side padding either, for the links' reason: it belonged to the outlined pill. The bar's inset now
+   places the track, the vertical padding keeps the target 34px tall, and the track is 32 wide. */
+.button-006[data-theme-switch][data-emphasis]{--button-006-line:transparent;--button-006-line-hover:transparent;--button-006-line-press:transparent;--button-006-padding:0.75em 0}
+/* THE TRACK IS GLASS, AND THE KNOB CARRIES THE STATE.
+
+   The track wears the navigation's glass (by request, 15.09.26): the recipe the bar, the analytics
+   banner and the landing's How it Works all share — the page's own surface at 70% over a 12px blur,
+   no saturate(), and one hairline of ink at 12%. -webkit- first and standard last, for the reason
+   .glass-cta records: the other order loses the unprefixed property in the build.
+
+   32x18 AND A 12px KNOB, sitting 2px inside the 1px hairline — 3px from the outside — and travelling
+   14px. The knob is --on-surface in both themes, so it is ink in light and light in dark: the one
+   mark on the switch that is never close to what is behind it. Measured over all eight landing
+   fields it is 9.5–11:1 against the glass in light mode, and the same ink scale in dark. Position is
+   the state (start for light, end for dark), as it is on every switch; the hairline is the glass's,
+   not an edge the state depends on.
+
+   ONE TRACK ON SCREEN. button-006 renders its label twice — the hover layer sits exactly on the
+   default one — and two translucent panes stacked compound into a heavier pill with a doubled
+   hairline, so the hover layer's copy is hidden. The pointer is answered by the track that is seen.
+
+   UNDER THE POINTER A TENTH OF INK GOES INTO THE PANE — the answer the landing's glass actions give
+   under reduced motion and on press — colour, never geometry. The same on press. The focus ring is
+   button-006's own, around the whole target. */
+.theme-switch__row{display:flex;align-items:center;height:18px}
+.theme-switch__track{
+  position:relative;display:block;flex:none;width:32px;height:18px;
+  border-radius:var(--radius-pill);
+  background-color:color-mix(in srgb, var(--surface) 70%, transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
+  transition:background-color var(--dur-chrome) var(--ease-standard),border-color var(--dur-chrome) var(--ease-standard);
+}
+.theme-switch__dot{
+  position:absolute;left:2px;top:2px;width:12px;height:12px;
+  border-radius:var(--radius-pill);
+  background-color:var(--on-surface);
+  transition:transform var(--dur-chrome) var(--ease-standard),background-color var(--dur-chrome) var(--ease-standard);
+}
+[data-theme-switch][aria-checked="true"] .theme-switch__dot{transform:translateX(14px)}
+[data-theme-switch] .button-006__hover .theme-switch__track{visibility:hidden}
+.button-006[data-theme-switch][data-emphasis] .button-006__bg.is--hover{opacity:0}
+@media (hover:hover){
+  [data-theme-switch]:hover:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+}
+[data-theme-switch]:active:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
 /* BACK UP AND RESTORE, the masthead's other two acts, take the same corner as the switch beside
    them. They are the only consumers of renderVals' tier3BtnStyle, and that object sets no radius —
    so this needs no !important: the blanket border-radius:0 they were inheriting is a TYPE selector,
@@ -1368,7 +1444,54 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 
    THE THREE OF THEM ARE ONE ROW, which is the whole argument for including these two. The switch
    rounded on its own would have been one pill between two square boxes in the same masthead. */
-[data-tier3-action]{border-radius:var(--radius-pill);border-color:var(--masthead-line)!important}
+/* STANDALONE TEXT (15.09.26, by request): no border and no padding. The border and the padding were
+   the outlined button's; with the outline gone they only held the words apart from their neighbours
+   and from the end of the bar, and the bar's own inset and its 12px gap do that now. The inline style
+   says border:none and padding:0 (tier3BtnStyle); the radius stays for the focus ring's corner.
+   A CONSCIOUS DEPARTURE from 2026-07-27's "the control edge is 3:1": in the floating bar the label's
+   position, its size, the hover swap and the focus ring say "control" without an outline.
+
+   THE TARGET IS WIDENED, NOT PADDED. Bare 14px text is a 17px-tall target; ::after takes it out 8px
+   above and below, to 33, and 6px either side — half the 12px gap, so neighbours meet without
+   overlapping. Nothing is drawn.
+
+   NO TINT PLATE. The [data-ix="press"] tier paints a background on hover and press, and with no
+   padding that plate would hug the letters. So the answer is the ink instead, which is colour and
+   never geometry: the label swap under a pointer where motion is welcome, and --on-surface-muted on
+   press, and on hover when motion is reduced. */
+[data-tier3-action]{border-radius:var(--radius-pill);position:relative}
+[data-tier3-action]::after{content:'';position:absolute;inset:-8px -6px}
+[data-tier3-action][data-ix]:hover:not(:disabled),
+[data-tier3-action][data-ix]:active:not(:disabled){background:none!important}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  [data-tier3-action][data-ix]:hover:not(:disabled){color:var(--on-surface-muted)!important}
+}
+/* !important for the reason the [data-ix] tiers use it: the ink is set inline (tier3BtnStyle). */
+[data-tier3-action][data-ix]:active:not(:disabled){color:var(--on-surface-muted)!important}
+/* THE NAV'S LINKS SET LIKE THE LANDING'S CALLS TO ACTION (by request, 15.09.26): Medium, the weight
+   Create and How it Works stand at. Their size came down from the CTAs' 14 to --fs-detail, 12, by a
+   later request the same day. And their CASE, because a 14px Medium label in
+   capitals is not the same voice at all: like .glass-cta, the labels carry their own title case in the
+   source and nothing transforms them. [data-ix] forces uppercase with !important for the whole tier
+   (see the top of this file), so this states the exception at higher specificity, the way the
+   library's tabs state theirs. Tracking stays flat: controls keep --track-flat.
+   Back Up and Restore take the size and weight inline (tier3BtnStyle); New Palette is button-006,
+   whose size is inline in its component, so AppView hands that one instance its own style. */
+/* .glass-bar rather than [data-float-nav]: the documents' masthead carries the same two links. */
+.glass-bar [data-tier3-action][data-ix]{text-transform:none!important}
+/* New Palette is in the documents' masthead too, so the filled button takes the bar's type in either bar. */
+[data-float-nav] .button-006[data-emphasis],
+.glass-bar .button-006[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
+/* New Palette's sides, 2px in from the primary tier's 1.35em (18.9px at 14px) — by request, and only here:
+   every other primary button keeps --action-primary-padding. The em half stays, so it still scales. */
+.glass-bar .button-006[data-emphasis="primary"]{--button-006-padding:0.75em calc(1.35em - 2px)}
+/* THE PALETTE'S ACTION ROW IS SET LIKE THE BAR'S LINKS (15.09.26, by request): Medium, and Title Case
+   authored in the source with no uppercase transform (Add to Projects, Check Contrast, Copy, Export,
+   Share), at the row's own --fs-label size; the banner's 13px was tried and reverted by request. Both
+   rows that carry it take it, the result view's and
+   the fullscreen detail's, because that row is deliberately the same on both surfaces, weights
+   included (see DetailOverlay). Every other B006 keeps the tiers' regular 400 and the capitals. */
+[data-palette-acts] .button-006[data-emphasis]{text-transform:none;font-weight:500}
 
 /* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================
    The projects rail and its chips, Manage Projects, the list/grid/3D rail and its buttons, Filter,
@@ -1681,10 +1804,10 @@ button[data-row-cell] .tswap{flex:none}
   [data-tier3-action][data-ix]:hover:not(:disabled),
   [data-tier3-action][data-ix]:active:not(:disabled){
     background:none!important;
-    border-color:var(--masthead-line)!important;
   }
-  /* The switch answers through tokens rather than selectors — same gate, same reason. */
-  .button-006[data-theme-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:var(--masthead-line)}
+  /* The switch answers through tokens rather than selectors — same gate, same reason. It has no label
+     to swap any more, so under the pointer it answers with its own track (see .theme-switch__track). */
+  .button-006[data-theme-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:transparent}
   .button-006[data-theme-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
 }
 .button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
@@ -2261,9 +2384,8 @@ html.lenis,html.lenis body{height:auto}
 
    WHAT IT NEEDS FROM ITS HOST, and the only thing this file adds:
      · a containing block — inset:0 resolves against the nearest positioned ancestor. Both bars that
-       wear this are already position:sticky, so .glass-bar deliberately sets NO position: a
-       `position:relative` here would win over .doc-head's `position:sticky` on source order and
-       quietly unstick the masthead.
+       wear this are position:sticky, and since the bars began to float that is stated on .glass-bar
+       itself (see the float note below). Never position:relative here: it would unstick both.
      · no opaque background of its own — a backdrop-filter with var(--surface) painted over it
        blurs a backdrop nobody can see. Both bars dropped theirs (AppView's header inline style,
        .doc-head in doc.css); the tint they lose is what .glass-effect__fill gives back.
@@ -2274,13 +2396,57 @@ html.lenis,html.lenis body{height:auto}
    The demo's .demo-element is not here. That rule sized the resource's 15em pill — it is the
    harness, not the effect, and the host on this site is the bar. */
 .glass-bar > *:not(.glass-effect){position:relative;z-index:1}
-/* ONE HAIRLINE, MIXED RATHER THAN TOKENED. --line and --line-strong are both opaque, and an opaque
-   rule under a pane that is 30% see-through is the heaviest thing in the bar — that is the edge
-   that came off in the first place. A mix of the ink at 12% carries the same weight in both themes
-   (dark ink on the light surface, light ink on the dark one) and stays translucent, so it reads as
-   the pane's own boundary rather than as a rule drawn beneath it. Stated here rather than on either
-   bar, because both wear it and one of them sets its box inline. */
-.glass-bar{border-bottom:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent)}
+/* THE BAR FLOATS, and every figure it floats by is a token (see --nav-top in :root).
+
+   It used to run edge to edge under the top of the screen with one hairline along its foot. Now it
+   stands off the top and in from both sides by the page gutter, so its ends land on the grid's outer
+   lines — the same two lines the content below is laid on. Both bars that wear this class take it
+   from here, the tool's header and the documents' masthead, and the prerendered masthead with them
+   (scripts/prerender.mjs restates the class, not the geometry). position:sticky is stated HERE now,
+   because both bars are sticky and the offset is the float's: they ride --nav-top rather than 0.
+
+   ITS ENDS ARE FULLY ROUND, --radius-pill (15.09.26, by request), like the pills inside it. It spent
+   the afternoon on --radius-surface's 18px, after 24, 12 and 16; the dialogs keep that figure, and
+   the dropzone has its own 12. At 56px tall the ends resolve to a 28px half-circle, which clears everything the bar
+   holds: with the 16px padding the switch's round end sits within 2px of concentric with it.
+
+   ONE HAIRLINE, MIXED RATHER THAN TOKENED, and all the way round now that the bar has four edges
+   instead of a foot. --line and --line-strong are both opaque, and an opaque rule around a pane that
+   is 30% see-through is the heaviest thing on it — that is the edge that came off in the first place.
+   A mix of the ink at 12% carries the same weight in both themes and stays translucent, so it reads
+   as the pane's own boundary rather than as a rule drawn around it.
+
+   NO SHADOW (removed by request, 15.09.26). The float is the air around the bar, its hairline and
+   its pane — the same three things the analytics banner's glass is made of. */
+.glass-bar{
+  position:sticky;top:var(--nav-top);
+  margin:var(--nav-top) var(--page-gutter) 0;
+  height:var(--nav-h);
+  padding:0 var(--nav-inset);
+  border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
+  border-radius:var(--radius-pill);
+}
+/* ON THE LANDING, IN LIGHT MODE, THE PANE IS THINNER — 40% of the surface rather than 70%.
+
+   The bar and the analytics banner are the same recipe to the last token, and on the landing they
+   did not look it: measured in light mode, the bar rendered at luminance 225 over the pale top of the
+   field and read as milk, while the banner rendered at 212 over the darker, vignetted corner and
+   read as frosted glass. A 70% surface tint over a light backdrop can only ever be near-white. At 40%
+   the field's own colour comes through the way it does behind the banner.
+
+   Only here, because only here is a light field the backdrop. Over the tool and the documents the bar
+   sits on the page's own surface, where any tint of that surface is the surface; and when rows of
+   swatches scroll under it, 70% is what keeps a palette from being read through the chrome (the note
+   on .glass-effect). Dark mode keeps 70%: its field is dark behind the bar, and nothing there was
+   too anything.
+
+   LEGIBILITY WAS MEASURED, NOT ASSUMED: the three labels in the bar against what is rendered behind
+   them, over all eight example fields. The worst is 7.6:1 (Frozen Slate), against 10.7:1 at 70%.
+   data-on-landing is set by AppView while the landing is up; a CSS-selected attribute, so the
+   transition's snapshot keeps it and the bar leaving the landing does not change in the copy. */
+:root:not([data-theme="dark"]) .glass-bar[data-on-landing] > .glass-effect{
+  --glass-tint:color-mix(in srgb, var(--surface) 40%, transparent);
+}
 
 /* THE EFFECT IS TWO THINGS: A TINT OF THE MODE'S OWN SURFACE, AND A BLUR.
 
@@ -2472,6 +2638,12 @@ html.lenis,html.lenis body{height:auto}
    wrapper adds is the push to the far end. A wrapper rather than a class on the button, because B006
    owns its className. */
 .consent__more{display:inline-flex;margin-inline-start:auto}
+/* THE BANNER'S BUTTONS SET LIKE THE BAR'S LINKS (by request, 15.09.26): Medium, and the case their labels
+   carry in the source rather than capitals — Accept, Decline, Learn More — with flat tracking, which
+   button-006 already states inline. The SIZE is theirs: --fs-body, 13px, set inline by ConsentBanner
+   (two pixels up from --fs-label, by a later request the same day). (0,3,0) outranks both the untiered
+   uppercase on .button-006 and the emphasis tiers' weight. */
+.consent .button-006[data-emphasis]{text-transform:none;font-weight:500}
 /* Reopened, the close sits in the top corner, 12px in, level with the sentence's first line — which
    gives up the width the disc needs so the two never touch. */
 .consent__close{position:absolute;top:12px;inset-inline-end:12px;z-index:1}

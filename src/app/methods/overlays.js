@@ -699,7 +699,72 @@ export const overlayMethods = {
       }
     }
     const sum = root.querySelector('[data-cx-summary]'); if (sum) g.fromTo(sum, { opacity: 0.35 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
-    if (oLarge !== nLarge) { const smp = root.querySelector('[data-cx-sample]'); if (smp) g.fromTo(smp, { opacity: 0.3 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' }); }
+    if (oLarge !== nLarge) this._growSample(root);
+  },
+  /* LARGE TEXT GROWS INTO PLACE (15.09.26, by request). The sample used to swap sizes in one frame and
+     dip its opacity to cover the jump: 15px to 24px, one line to two, its box 46px taller at once. Now
+     the box extends to its new height while the words grow, on DUR.fold and EASE.fold, the tokens the
+     Normal / Large marker above already slides on, so the press, the marker and the sample are one
+     movement. Back to Normal runs the same way in reverse.
+
+     THE REAL FONT SIZE, EASED CONTINUOUSLY, by request, after two other cuts. Scaling the large
+     layout down and letting it go put the words in their new line breaks the moment Large was pressed,
+     which read as a jump to the large size. Stepping the size a whole pixel at a time fixed the reflow
+     but moved in nine visible steps. The size now passes through every fractional value between the
+     two, so the growth is one smooth sequence and the text still reflows the way type does: one line
+     while it fits, two once it does not. The box's height eases separately beside it, so the extension
+     stays smooth when the line breaks. The sample wraps with text-wrap:pretty (sampleStyle), which
+     keeps a last word from standing alone: plain wrapping dropped "dog" at 21.75px and then "lazy"
+     after it in the slow end of the curve, two hops; now "lazy dog" moves down once, together.
+
+     THE WEIGHT CHANGES HALFWAY. Large is set in Medium and Normal in Regular, and there is no weight
+     between the two faces to pass through. Changed on the press it read as part of a jump; at the end
+     it would read as a late pop. So the words keep the weight they had until the size is halfway, the
+     fastest moment of the fold, and take the new one there.
+
+     The size, weight and height on screen are read at the press (setContrastSize), before the state
+     changes them, which is also how a reversal mid-flight turns round in place. Reduced motion never
+     reaches here: animateContrastDelta returns first, and the size just changes. */
+  setContrastSize(large) {
+    const next = !!large;
+    if (!!this.state.contrastLarge === next) return;
+    this._cxSampleFirst = null;
+    const box = !this._reduce && window.gsap && document.querySelector('[data-contrast-dialog] [data-cx-sample]');
+    const words = box && box.querySelector('[data-cx-sample-text]');
+    if (box && words) {
+      const cs = getComputedStyle(words);
+      this._cxSampleFirst = { h: box.getBoundingClientRect().height, px: parseFloat(cs.fontSize) || 15, weight: cs.fontWeight };
+    }
+    this.setState({ contrastLarge: next });
+  },
+  _growSample(root) {
+    const g = window.gsap, first = this._cxSampleFirst;
+    this._cxSampleFirst = null;
+    const box = root.querySelector('[data-cx-sample]'), words = box && box.querySelector('[data-cx-sample-text]');
+    if (!g || !box || !words || !first) return;
+    // A reversal mid-flight: stop the running pair and measure the new layout clean.
+    g.killTweensOf(box, 'height,overflow');
+    if (this._cxWordsTw) { this._cxWordsTw.kill(); this._cxWordsTw = null; }
+    box.style.height = ''; box.style.overflow = ''; words.style.fontSize = ''; words.style.fontWeight = '';
+    const h1 = box.getBoundingClientRect().height;
+    const px1 = parseFloat(getComputedStyle(words).fontSize) || first.px;
+    const D = this.DUR.fold, E = this.EASE.fold;
+    g.fromTo(box, { height: first.h, overflow: 'hidden' }, { height: h1, duration: D, ease: E, clearProps: 'height,overflow' });
+    // A proxy, so the size and the weight are written together from one value. Inline for the length
+    // of the move only; at the end the words inherit the box's size and weight again.
+    const size = { px: first.px };
+    const span = px1 - first.px;
+    let held = first.weight !== getComputedStyle(words).fontWeight;
+    words.style.fontSize = first.px + 'px';
+    if (held) words.style.fontWeight = first.weight;
+    this._cxWordsTw = g.to(size, {
+      px: px1, duration: D, ease: E,
+      onUpdate: () => {
+        words.style.fontSize = size.px.toFixed(2) + 'px';
+        if (held && (!span || (size.px - first.px) / span >= 0.5)) { held = false; words.style.fontWeight = ''; }
+      },
+      onComplete: () => { words.style.fontSize = ''; words.style.fontWeight = ''; this._cxWordsTw = null; },
+    });
   },
   /* The count at whatever the panel is currently set to. contrastSummary below is the palette's AA
      METRIC — a fixed property of the palette at 4.5, which is what the library column, the badge and

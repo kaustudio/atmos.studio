@@ -677,7 +677,10 @@ export const persistenceMethods = {
   _bgInert(on) {
     const app = document.querySelector('[data-app]');
     if (!app) return;
-    ['header', 'main', 'section[data-recent]', '.site-foot'].forEach((sel) => {
+    // The bars by name rather than 'header': a dialog carries a <header> of its own, and on a document
+    // route (where Restore now opens too) the first header in the app could be the dialog's, inerting
+    // its own close. [data-float-nav] is the tool's bar; .doc-head is the documents' masthead.
+    ['[data-float-nav]', '.doc-head', 'main', 'section[data-recent]', '.site-foot'].forEach((sel) => {
       const el = app.querySelector(sel);
       if (!el) return;
       if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert');

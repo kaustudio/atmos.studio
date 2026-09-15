@@ -54,6 +54,131 @@ export function B006({ label, hover, btnRef, href, ...props }) {
   );
 }
 
+/* NEW PALETTE IS ON THE CREATE PAGE IN EVERY STATE, OFF THE LANDING, AND IN THE DOCUMENTS' MASTHEAD
+   (15.09.26, by request). Here in chrome.jsx because both bars carry it: AppView's header, and DocHead
+   below, where it opens the create page in its default state (openCreate, the same act as Explore
+   Atmos at the close of /about).
+
+   It used to exist only while there was something to reset (`canReset`, every stage but the
+   dropzone), and the press itself took it away. Now it always starts a palette, the reset from a
+   result and the file picker on the dropzone (newPalette in methods/pipeline.js), so no press removes
+   it. The one place it stands down is the landing, whose own buttons are the calls to action there.
+
+   IT ARRIVES AND LEAVES THROUGH A BLUR as the landing goes and comes back (first asked for when the
+   button vanished instantly). The exit outlives the state change: the button stays mounted, fades to
+   nothing while its words blur, and only then unmounts. The arrival is the same blur resolving,
+   because nothing on this site simply appears. NOT WHEN IT MOUNTS PRESENT: the first load and the
+   crossing back from a document are the create page arriving, and the button arrives with that page,
+   so a fade of its own would be a second, later arrival inside the first.
+
+   AS QUIET AS THE ANALYTICS BANNER CLOSING (by request: the first cut, a 10px blur over 400ms on
+   --ease-fold, popped). The banner's words and buttons fade out while blurring to 6px, over
+   DUR.state, on EASE.exit, and come back the same way on EASE.entrance (_consentTurn in
+   methods/consent.js); these are those figures, read from the CSS tokens so the two languages
+   cannot drift. What the banner adds — a 16px drop of its container — is left out: in a fixed bar a
+   button that moves is a jump, not a close.
+
+   THE WORDS BLUR, NEVER THE PILL (by request again: it should not pop or scale up, it should just
+   fade). A blur on the whole button spread its solid fill past its own edge, so even at 6px the pill
+   read as swelling on its way out, and as shrinking into place on its way in. Now the button only
+   fades, and the blur is on .button-006__text, the words, which the layer around them clips to the
+   pill (overflow hidden, the pill's own radius): the silhouette never changes size. Nor does the
+   exit take the pointer away: pointer-events:none dropped :hover the moment it was set, and the hover
+   label rolled back down through the fade, two copies of the words at once.
+
+   Web Animations rather than a CSS keyframe on an attribute: an animation is not copied by cloneNode,
+   so a page-transition snapshot taken mid-flight shows the button at rest instead of replaying it.
+   Under reduced motion it simply goes, and simply comes. */
+function navMotion() {
+  const cs = getComputedStyle(document.documentElement);
+  const ms = (name, fallback) => { const v = cs.getPropertyValue(name).trim(); const n = parseFloat(v); if (isNaN(n)) return fallback; return v.endsWith('ms') ? n : n * 1000; };
+  let reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { }
+  return {
+    reduce, outMs: ms('--dur-state', 240), inMs: ms('--dur-state', 240),
+    easeOut: cs.getPropertyValue('--ease-exit').trim() || 'ease-in',
+    easeIn: cs.getPropertyValue('--ease-entrance').trim() || 'ease-out',
+  };
+}
+const NAV_GONE_BLUR_PX = 6;
+const navBlur = (px) => 'blur(' + px + 'px)';
+export function NavNewPalette({ show, onPress }) {
+  const ref = React.useRef(null);
+  const anims = React.useRef([]);
+  const leaving = React.useRef(false);
+  const [present, setPresent] = React.useState(!!show);
+  // What `present` was on the last pass, so only a real false → true plays the arrival. A ref rather
+  // than a first-run flag, because StrictMode runs a mount's effects twice.
+  const wasPresent = React.useRef(present);
+
+  const stop = () => { anims.current.forEach((a) => { try { a.cancel(); } catch (e) { } }); anims.current = []; };
+  // Opacity on the button; blur on its words, both copies B006 renders (resting and hover). Every
+  // target starts from where it is on screen, read BEFORE the running motion is cancelled, so a
+  // reversal turns round in place. `fromGone` is the mount, which has nothing on screen to read.
+  const play = (el, arriving, fromGone) => {
+    const m = navMotion();
+    const words = [].slice.call(el.querySelectorAll('.button-006__text'));
+    const opacity = fromGone ? 0 : +getComputedStyle(el).opacity;
+    const blurs = words.map((w) => {
+      if (fromGone) return navBlur(NAV_GONE_BLUR_PX);
+      const f = getComputedStyle(w).filter;
+      return f === 'none' ? navBlur(0) : f;
+    });
+    stop();
+    // Held at the end only on the way out, where the unmount follows. An arrival lets go, so a
+    // settled button carries no animated filter at all.
+    const opts = { duration: arriving ? m.inMs : m.outMs, easing: arriving ? m.easeIn : m.easeOut, fill: arriving ? 'none' : 'forwards' };
+    const a = [el.animate([{ opacity }, { opacity: arriving ? 1 : 0 }], opts)];
+    words.forEach((w, n) => a.push(w.animate([{ filter: blurs[n] }, { filter: navBlur(arriving ? 0 : NAV_GONE_BLUR_PX) }], opts)));
+    anims.current = a;
+    return Promise.all(a.map((x) => x.finished));
+  };
+  const leave = () => {
+    if (leaving.current) return;
+    leaving.current = true;
+    const el = ref.current;
+    if (!el || !el.animate || navMotion().reduce) { stop(); setPresent(false); return; }
+    play(el, false, false).then(() => { if (leaving.current) setPresent(false); }, () => { });
+  };
+
+  React.useEffect(() => {
+    if (show) {
+      if (leaving.current && present && ref.current) {
+        // Back before it had gone: turn round from wherever the exit had reached.
+        leaving.current = false;
+        const el = ref.current;
+        if (el.animate && !navMotion().reduce) play(el, true, false).catch(() => { });
+        else stop();
+      } else if (!present) {
+        leaving.current = false;
+        setPresent(true);
+      }
+    } else if (present) {
+      leave();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
+
+  // The arrival, before the first paint of the mounted button, so it is never on screen at rest first.
+  React.useLayoutEffect(() => {
+    const was = wasPresent.current;
+    wasPresent.current = present;
+    if (!present) return undefined;
+    const el = ref.current;
+    if (!was && el && el.animate && !navMotion().reduce) play(el, true, true).catch(() => { });
+    return stop;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [present]);
+
+  if (!present) return null;
+  return (
+    <B006 btnRef={ref} data-emphasis="primary"
+      onClick={() => { if (!leaving.current) onPress(); }}
+      style={sx("font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat)")}
+      label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>New Palette</B006Text></span>} />
+  );
+}
+
 /* THE GLASS, as seven stacked layers (Osmo Supply — Glass Effect / Background).
    Ported verbatim: the class names are the resource's, the order is the resource's, and every layer
    is load-bearing. `__fill` is the tint, `__fill-burn` deepens it through colour-burn, the two
@@ -80,16 +205,20 @@ export function GlassEffect() {
   );
 }
 
-function themeSwitchLabel(vals) {
+function themeSwitchLabel() {
   return (
-    <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
-      {/* THE TRACK AND THE DOT BOTH TAKE --radius-pill, which is a stadium on the 28x14 track and a
-          circle on the 10x10 dot — the token means "fully round", so one figure serves both and
-          neither needs 50% or a length. A switch that reads as a pill is the physical object this
-          control has always been drawing; it was square only because the system was. */}
-      <span aria-hidden="true" style={{ ...sx('position:relative;display:inline-block;width:28px;height:14px;flex:none;border-radius:var(--radius-pill);transition:background var(--dur-chrome) var(--ease-standard)'), background: vals.switchTrackBg }}>
-        <span style={{ ...sx('position:absolute;left:2px;top:2px;width:10px;height:10px;background:var(--surface);border-radius:var(--radius-pill);transition:transform var(--dur-chrome) var(--ease-standard)'), transform: vals.switchDotX }}></span>
-      </span><B006Text>{vals.themeLabel}</B006Text>
+    /* THE SWITCH STANDS ALONE: a track and a knob, no word beside them and no ring around them
+       (15.09.26, by request). What the word used to carry, the control now carries in its own
+       shape — position AND fill both change with the state, so neither is the only cue:
+         light  an outlined track, --on-surface-muted at 1.5px, with an ink knob at the start
+         dark   a filled --on-surface track with a --surface knob at the end
+       Colours, states and the hover live in global.css (.theme-switch__track), keyed off the
+       button's own aria-checked, so there is one source for what "on" looks like. The name a
+       screen reader hears is still the button's aria-label; the state is aria-checked. */
+    <span className="theme-switch__row">
+      <span aria-hidden="true" className="theme-switch__track">
+        <span className="theme-switch__dot"></span>
+      </span>
     </span>
   );
 }
@@ -111,8 +240,9 @@ export function ThemeSwitch({ vals }) {
       aria-checked={vals.isDark}
       onClick={vals.toggleTheme}
       aria-label="Dark theme"
-      title="Light / dark"
-      label={themeSwitchLabel(vals)}
+      /* The pointer's version of the name, now that nothing is written beside the track. */
+      title="Dark theme"
+      label={themeSwitchLabel()}
     />
   );
 }
@@ -187,6 +317,28 @@ export function DocHead({ vals }) {
           <span className="mark" role="img" aria-label="Atmos Gallery"></span>
         </a>
       </span>
+      {/* BACK UP AND RESTORE, ON EVERY PAGE THE BAR IS ON (by request, 15.09.26): the same two links, the
+          same handlers and the same style as the tool's bar, in the third track the grid always had.
+          Not below the tool's own width (vals.narrow): the library they act on is the tool's, and a
+          phone is offered the tool nowhere else either — and at a phone's width there is no room for
+          them beside the centred mark. Not in the prerendered masthead, for the switch's reason: a
+          control that does nothing without a script is worse than none. The file input is the tool's
+          ref; only one of the two bars is ever mounted. */}
+      {/* NEW PALETTE LEADS THE TRACK, AS IT DOES IN THE TOOL'S BAR (by request, 15.09.26). Here it
+          opens the create page in its default state: openCreate resets what the tool was holding and
+          crosses to it, the same act as Explore Atmos. Unlike Back Up and Restore it needs no library,
+          so it stands whether or not there is anything to back up. Not below the tool's width, for
+          the same reason as the pair: there is no create page there to open. */}
+      {!vals.narrow && (
+        <span className="doc-head__acts">
+          <NavNewPalette show onPress={vals.openCreate} />
+          {vals.showProjectsBar && (<>
+            <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back Up</TextSwap></button>
+            <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
+            <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
+          </>)}
+        </span>
+      )}
     </div>
   );
 }
