@@ -510,10 +510,11 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      same sitting, until it was asked to be fully round like the controls inside it (--radius-pill),
      and the dropzone wore it until it was asked for 12 (below). */
   --radius-surface:18px;
-  /* --radius-dropzone is the FOURTH, the tool's dropzone alone, 12px (15.09.26, by request): "Start
-     here" came down from the surfaces' 18 while the dialogs kept it, so the two corners are two
-     tokens. No radius in the list was 12. A length, for the same reason as the two above it. */
-  --radius-dropzone:12px;
+  /* --radius-dropzone is the FOURTH, the tool's dropzone alone, 28px (15.09.26, by request): "Start
+     here" left the surfaces' 18 for 12, then went to 28, while the dialogs kept 18, so the two
+     corners are two tokens. 28 is the curve the top bar's ends make at their 56px height, so the
+     dropzone's corners bend like the bar above it. A length, for the same reason as the two above. */
+  --radius-dropzone:28px;
   /* --radius-dock-row is the dock's INNER corner: the travelling active marker and the hover tint on
      each row, and it says FULLY ROUND rather than naming a length. It was 12, then 18, both of them
      --radius-dock minus the inset — and both were really asking for a stadium and getting one by
@@ -1485,13 +1486,6 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* New Palette's sides, 2px in from the primary tier's 1.35em (18.9px at 14px) — by request, and only here:
    every other primary button keeps --action-primary-padding. The em half stays, so it still scales. */
 .glass-bar .button-006[data-emphasis="primary"]{--button-006-padding:0.75em calc(1.35em - 2px)}
-/* THE PALETTE'S ACTION ROW IS SET LIKE THE BAR'S LINKS (15.09.26, by request): Medium, and Title Case
-   authored in the source with no uppercase transform (Add to Projects, Check Contrast, Copy, Export,
-   Share), at the row's own --fs-label size; the banner's 13px was tried and reverted by request. Both
-   rows that carry it take it, the result view's and
-   the fullscreen detail's, because that row is deliberately the same on both surfaces, weights
-   included (see DetailOverlay). Every other B006 keeps the tiers' regular 400 and the capitals. */
-[data-palette-acts] .button-006[data-emphasis]{text-transform:none;font-weight:500}
 
 /* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================
    The projects rail and its chips, Manage Projects, the list/grid/3D rail and its buttons, Filter,
@@ -2407,7 +2401,7 @@ html.lenis,html.lenis body{height:auto}
 
    ITS ENDS ARE FULLY ROUND, --radius-pill (15.09.26, by request), like the pills inside it. It spent
    the afternoon on --radius-surface's 18px, after 24, 12 and 16; the dialogs keep that figure, and
-   the dropzone has its own 12. At 56px tall the ends resolve to a 28px half-circle, which clears everything the bar
+   the dropzone has its own 28, the same curve as these ends. At 56px tall the ends resolve to a 28px half-circle, which clears everything the bar
    holds: with the 16px padding the switch's round end sits within 2px of concentric with it.
 
    ONE HAIRLINE, MIXED RATHER THAN TOKENED, and all the way round now that the bar has four edges

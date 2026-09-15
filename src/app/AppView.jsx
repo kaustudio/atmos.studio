@@ -562,7 +562,7 @@ function ValueRow({ v, showCaveat }) {
 // Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
 // the user to supply the verb; in a row of six that is six subjects and no route.
 const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check contrast</B006Text></span>
 );
 // EXPORT'S CHEVRON IS GONE. It was there to promise a chooser — press this and you will be asked
 // something — and that promise is the one thing this control did not need to make: what opens is a
@@ -2506,7 +2506,7 @@ export default function AppView({ vals }) {
                 the weight difference used to say, position and the hairline now say instead.
 
                 One 8px rhythm across the whole row, matching the archive header's bar. */}
-            <div data-palette-acts="" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
+            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
                   gives: first in the sequence and available, organise then validate then output.
                   It held the second tier here only because one creative act stood ahead of it, and
@@ -3528,7 +3528,7 @@ function DetailOverlay({ vals }) {
               before copying. (No Share here: the overlay has no shareable URL, so that group is a
               trio, not four. The hairline that used to divide it from Filing went on 02.09.26, on
               both surfaces.) */}
-          <div data-palette-acts="" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             {/* Filing leads here, as it does on the result view: the act that is first in the
                 sequence and available — organise, then validate, then output. */}
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />

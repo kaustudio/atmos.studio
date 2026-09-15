@@ -815,7 +815,7 @@ export const renderValsMethods = {
         // already filed read as a second copy.
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
-        assignLabel: 'Add to Projects',
+        assignLabel: 'Add to projects',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
@@ -2493,7 +2493,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       assignDisabled: !filedCur,
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: 'Add to Projects',
+      assignLabel: 'Add to projects',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
       navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
       // React drops a value when a rerender mixes the `border` shorthand with one of its parts,

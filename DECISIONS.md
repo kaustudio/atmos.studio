@@ -6,7 +6,7 @@ doesn't know it was ever made.
 
 ---
 
-## 2026-09-15 — Explore Atmos starts over, the palette's actions take the bar's type, and large text grows
+## 2026-09-15 — Explore Atmos starts over, and large text grows
 
 **Explore Atmos lands on the default state.** The button at the close of /about crossed straight back
 into whatever the tool held, so a palette opened before the detour was what the window opened on, and
@@ -17,12 +17,10 @@ also clears its chosen colour, tab and chooser, and returns to the example this 
 masks rebuilt for it. Measured: a result on desktop comes back as the dropzone, and on a phone a
 chosen swatch and a chosen example both come back as the story's opening state.
 
-**The action row under a palette is set like the bar's links.** Add to Projects, Check Contrast,
-Copy, Export and Share are Medium, authored in Title Case with no uppercase transform, at their
-original `--fs-label`, 11px. The analytics banner's 13px was tried on them and reverted by request.
-The weight and case are scoped to this row by `[data-palette-acts]`, and the fullscreen detail's
-row takes it too, because the two rows are deliberately identical. Every other button keeps the
-tiers' regular 400 and the capitals.
+**The action row under a palette keeps its original type.** Add to projects, Check contrast, Copy,
+Export and Share tried the bar's links' voice the same day, Medium in Title Case and then the banner's
+13px, and all of it was reverted by request. They stay uppercase, regular and `--fs-label`, 11px,
+like every other action button.
 
 **The Copy and Export dialogs have 18px corners,** `--radius-surface`. The Recognise, Add to projects
 and Restore dialogs share the same frame and are still square.
@@ -91,8 +89,9 @@ until hydration made the wrapper a flex column: a 0.017 shift on every cold /abo
 round, `--radius-pill`, like the pills inside it. At 56px the ends are 28px half-circles, and with the
 16px padding the switch's round end sits within 2px of concentric with the bar's. The 18px stayed as a
 token, `--radius-surface`, worn by the Copy and Export dialogs. The tool's dropzone wore it too, until
-it was asked for 12px, which went on a token of its own, `--radius-dropzone`, since no radius in the
-list was 12. The list now holds four designed radii: pill, dock, surface and dropzone.
+it was asked for 12px and then 28px, on a token of its own, `--radius-dropzone`. 28 is the curve the
+bar's own ends make at 56px, so the dropzone's corners bend like the bar above it. The list now holds
+four designed radii: pill, dock, surface and dropzone.
 
 **New Palette is on the create page in every state, and off the landing.** It used to show only when
 there was something to reset, and pressing it took it away. Now it always starts a palette. From a
