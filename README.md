@@ -123,9 +123,10 @@ processors and transfers, retention, rights. It is deliberately short, and it is
   named a given palette is now stated in the interface, as `Name from` in the result view's
   *Reading* group — the tool's only in-app disclosure that naming can leave the device, and the
   reason the `fallback` flag has to keep round-tripping through `validateFeed`.
-- Palettes live in localStorage only, under `palette-generator/*`. No cookies at all, which is why
-  there is no consent banner. The Library heading's marker says so on screen, and says what ends it.
-- Analytics is Vercel Web Analytics + Speed Insights, both cookieless.
+- Palettes live in localStorage only, under `palette-generator/*`. No cookies at all. The Library
+  heading's marker says so on screen, and says what ends it.
+- Analytics is Vercel Web Analytics + Speed Insights, both cookieless, and neither runs until the
+  visitor allows it: the answer is read at send time, so declining later stops both at once.
 
 Terms are `src/legal/terms.html`. Both are hand-authored HTML fragments rather than JSX — a clause
 should be reviewable as prose — injected by `src/app/LegalPage.jsx` and shared with
@@ -169,12 +170,13 @@ copy must change in the same commit**:
    size, adding anything to the payload beyond `{ image, swatches }`, or changing recipient means
    `src/legal/privacy.html` changes in the same commit.
 6. **"no cookies at all"** — verified by measurement, not assumption: `document.cookie` is empty on
-   every page. Client storage is five keys — `palette-generator/feed` (the user's own archive),
-   `/derived`, `/landing`, `/pagesize` and `/loader-session`. The privacy page names the prefix
-   rather than enumerating them; add a key outside that prefix and it needs saying. This is also
-   why there is no consent banner. Any
-   non-essential third party — ads, a pixel, a hosted font, an embedded video — makes the claim false
-   and makes consent legally required.
+   every page. Client storage is six keys — `palette-generator/feed` (the user's own archive),
+   `/derived`, `/landing`, `/pagesize`, `/analytics-consent` and `/loader-session`. The privacy page
+   names the prefix rather than enumerating them; add a key outside that prefix and it needs saying.
+   Having no cookies no longer decides the banner question: since 2026-09-15 both analytics products
+   wait for consent (`src/lib/consent.js`), asked once by a banner and again from Privacy Settings
+   in the footer. Any non-essential third party — ads, a pixel, a hosted font, an embedded video —
+   makes the claim false and needs the same consent before it loads.
 
 ## Layout
 

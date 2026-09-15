@@ -2507,6 +2507,13 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // alert for a notice that stays until dismissed, status for one that passes — see showNotice
       noticeRole: s.noticeSticky ? 'alert' : 'status',
       dismissNotice: () => this._dismissNotice(), holdNotice: () => this._holdNotice(), releaseNotice: () => this._releaseNotice(),
+      // analytics consent — the banner, the two answers, and the doors back to it (methods/consent.js).
+      // openConsent takes a click from a React control or the element itself from docLinkHandler, and
+      // hands on whichever control opened it so focus can go back there.
+      consentOpen: !!s.consentOpen, consentChoice: s.consent, analyticsOn: s.consent === 'granted',
+      allowAnalytics: () => this.chooseConsent('granted'), declineAnalytics: () => this.chooseConsent('denied'),
+      closeConsent: () => this.dismissConsent(), learnAboutAnalytics: (e) => this.learnAboutAnalytics(e),
+      openConsent: (x) => this.openConsent(x && x.currentTarget ? x.currentTarget : x),
       // per-swatch colour harmonies
       harmony, hasHarmony: !!s.harmony, closeHarmony: () => this.closeHarmony(), trapHarmony: (e) => this.trapHarmony(e),
       // token export

@@ -1,8 +1,8 @@
 <header class="legal-hero">
   <div class="legal-hero__inner">
     <h1>Privacy</h1>
-    <p class="legal-hero__sub">Atmos Gallery runs in your browser. Your images are read on your device, your palettes are never held on a server, and a shared link tells us nothing about who opened it.</p>
-    <p class="legal-hero__meta">Last updated: 12 September 2026 · Data controller: KauStudio ApS</p>
+    <p class="legal-hero__sub">Atmos Gallery extracts colours from your images on your device and saves your palettes in your browser. A smaller copy of your image is sent to Anthropic to generate a palette name and description. No account is required.</p>
+    <p class="legal-hero__meta">Last updated: 15 September 2026 · Data controller: KauStudio ApS</p>
   </div>
 </header>
 
@@ -17,29 +17,40 @@
   </aside>
 
   <div data-toc-content class="toc-article">
-    <h2>Your images are read on your device</h2>
-    <p>The palette is extracted on your own machine: the image is read into a canvas, clustered in OKLCH, and discarded. The full-size image is never uploaded.</p>
-    <!-- The 960 px figure is makeThumb's ceiling in pipeline.js (320 px times a device pixel ratio
-         capped at 3). If that changes, this sentence is wrong the same day. -->
-    <p>One thing does leave, and it leaves automatically: choosing an image starts the naming, so you are not asked first. Open whatever file you like, at any resolution. What gets sent is a downscaled copy of it, around 960 px on its longest edge, together with the hex values and their shares. Nothing goes with it: no filename, no account, no identifier. We don&rsquo;t keep it, and Anthropic doesn&rsquo;t train on it. If that call fails the palette is named locally instead, but the thumbnail has still been sent.</p>
+    <h2>Colours are extracted on your device</h2>
+    <p>Atmos extracts the palette on your device. It first calculates the five colours and their proportions.</p>
+    <p>Once the palette is ready, a smaller copy of the image is automatically sent to Anthropic with the HEX values and colour proportions to generate a name and description. The original image is not uploaded.</p>
+    <p>If naming is unsuccessful, Atmos uses a locally generated name instead. A failed request does not necessarily mean that no data was sent.</p>
 
     <h2>Your palettes stay in your browser</h2>
     <p>Your library lives in this browser&rsquo;s local storage, under first-party keys. There is no server holding it and no account attached to it. Clearing your browser data deletes it, so if a palette matters to you, use Back up to keep a copy on your own disk.</p>
 
-    <h2>Share links carry the palette itself</h2>
-    <p>A shared link encodes the palette in the part of the address after the <code>#</code>, which browsers never send to the server. Until 31 August 2026 our analytics reported the whole address, fragment included, so opening a shared link recorded the palette it carried. It recorded the palette, never who opened it. We now cut the fragment before anything is sent.</p>
+    <h2>How shared links work</h2>
+    <p>The palette is stored in the shared link itself, after the <code>#</code> symbol. Your browser uses it to display the palette. This part of the link is not included in the page request and is removed from the address sent to our analytics.</p>
 
-    <h2>What we can see</h2>
-    <p>No accounts, no ads, <strong>no cookies at all</strong>. The site runs on Vercel, which keeps standard access logs: your IP address and user-agent, as any web server must. Vercel Web Analytics and Speed Insights measure visit counts and loading speed. Both are cookieless, neither identifies you or follows you to other sites, and a tracker blocker stops both without changing how the tool works. We rely on <strong>legitimate interests</strong> for that. Interpretation is different: it happens because you asked for a palette to be read.</p>
+    <h2>Website hosting and analytics</h2>
+    <p>Atmos Gallery has no accounts or advertising.</p>
+    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics to measure visits and Speed Insights to understand loading speed and website performance. Neither uses cookies.</p>
+    <!-- data-consent-open is picked up by docLinkHandler in chrome.jsx and opens the analytics banner.
+         Analytics cannot run without JavaScript, so the href has nothing to fall back to. -->
+    <p>We use this information to operate and improve the website. Hosting relies on legitimate interests as our legal basis, and analytics on your consent, which you can change at any time in <a href="#analytics" data-consent-open>Privacy settings</a>.</p>
 
-    <h2>Where it goes, and for how long</h2>
-    <!-- Vercel's Data Processing Addendum binds by its own terms only on Pro and Enterprise, and the
-         project is on Pro. Dropping back to Hobby would make the sentence below false. -->
-    <p>Two processors, both in the United States and both under a written agreement: <strong>Vercel Inc.</strong> hosts the site, <strong>Anthropic PBC</strong> performs the reading. Those transfers rely on the EU-U.S. Data Privacy Framework and the Standard Contractual Clauses. There is no one else. We keep nothing ourselves: Vercel discards its logs within a day, and Anthropic publishes its retention at <a href="https://privacy.claude.com">privacy.claude.com</a>. Your palettes last as long as you keep them.</p>
+    <!-- id="analytics" is the banner's Learn more target (/privacy#analytics), stated here rather than
+         left to the table of contents so the address also works on the prerendered page. The quoted
+         names are the banner's accept button and the footer's Privacy Settings; rename them together. -->
+    <h2 id="analytics">Analytics</h2>
+    <p>With your permission, we use Vercel Web Analytics and Speed Insights to understand how often Atmos Gallery is visited and how the site performs.</p>
+    <p>These tools may collect information about the page visited, browser and device type, approximate location, visit time and loading performance. They do not set cookies or track you across other websites.</p>
+    <p>Analytics are disabled until you choose &ldquo;Accept&rdquo;. You can change or withdraw your choice at any time through &ldquo;<a href="#analytics" data-consent-open>Privacy settings</a>&rdquo;.</p>
+
+    <h2>How your data is used</h2>
+    <p>Atmos Gallery does not require an account. Your palettes are saved in your browser, not on our servers.</p>
+    <p>When you choose an image, a smaller copy is sent to Anthropic with the palette&rsquo;s colour values and proportions to generate a name and description.</p>
+    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics and Speed Insights to measure visits and loading performance.</p>
 
     <h2>Your rights</h2>
-    <p>We hold no file on you. Nothing we process carries a name or an account, and what exists is short lived: our host&rsquo;s access logs, for about a day, and the thumbnail on its way to be read.</p>
-    <p>The rights the GDPR gives you still apply: a copy, a correction, deletion, and an objection to anything we base on legitimate interests. Write to <a href="mailto:hello@kau.studio">hello@kau.studio</a>. In most cases the answer will be that there is nothing to find, because we cannot tie a request to a log entry without more about you than you should have to hand over. You can also complain to <a href="https://www.datatilsynet.dk">Datatilsynet</a>, the Danish Data Protection Agency.</p>
+    <p>Your rights under data protection law also apply to personal data processed by our service providers on our behalf.</p>
+    <p>You can complain to a data protection authority, including <a href="https://www.datatilsynet.dk">Datatilsynet</a>, the Danish Data Protection Agency.</p>
 
     <h2>Who we are</h2>
     <p>

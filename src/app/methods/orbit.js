@@ -1229,7 +1229,9 @@ export const orbitMethods = {
   _reflectCtas() {
     const f = this._nebula; if (!f || !f.sampleAt) return;
     const st = this._reflect || (this._reflect = { els: [], n: 0, theme: null, cfg: null });
-    if (--st.n <= 0) { st.n = 30; st.els = [...document.querySelectorAll('[data-landing] .glass-cta')]; }
+    // The landing's acts and the phone story's opening act: the front page's controls, both standing
+    // over the field.
+    if (--st.n <= 0) { st.n = 30; st.els = [...document.querySelectorAll('[data-landing] .glass-cta, .story-hero__act .glass-cta')]; }
     if (!st.els.length) return;
     // The four dials live in CSS with the fills they answer to; re-read only when the theme moves,
     // because getComputedStyle on the root is a style flush and this runs on a ticker.
@@ -1237,12 +1239,17 @@ export const orbitMethods = {
     if (theme !== st.theme || !st.cfg) {
       const cs = getComputedStyle(document.documentElement);
       const num = (n, d) => { const v = parseFloat(cs.getPropertyValue(n)); return isFinite(v) ? v : d; };
-      st.cfg = { L: num('--cta-reflect-l', 0.93), gain: num('--cta-reflect-chroma', 2.6),
-                 cmax: num('--cta-reflect-cmax', 0.08), alpha: num('--cta-edge-a', 0.3),
+      // The resting edge the tint grows out of is the glass's own hairline: the page ink at
+      // --cta-reflect-base-a. Read from --on-surface so it re-themes with the pane it sits on.
+      const ink = (cs.getPropertyValue('--on-surface') || '').trim();
+      const alpha = num('--cta-reflect-a', num('--cta-edge-a', 0.3));
+      st.cfg = { L: num('--cta-reflect-l', 0.93), Lp: num('--cta-reflect-l-primary', num('--cta-reflect-l', 0.93)),
+                 gain: num('--cta-reflect-chroma', 2.6), cmax: num('--cta-reflect-cmax', 0.08), alpha,
+                 baseA: num('--cta-reflect-base-a', alpha), base: /^#[0-9a-f]{6}$/i.test(ink) ? hexToRgb(ink) : [255, 255, 255],
                  reach: num('--cta-reflect-reach', 0.18), knee: num('--cta-reflect-knee', 0.035) };
       st.theme = theme;
     }
-    const { L: targetL, gain, cmax, alpha: edgeAlpha, reach, knee } = st.cfg;
+    const { L: targetL, Lp: primaryL, gain, cmax, alpha: edgeAlpha, baseA, base, reach, knee } = st.cfg;
     const vw = window.innerWidth || 1, vh = window.innerHeight || 1;
     const K = 0.34;             // lerp toward the new sample, per readback
     for (const el of st.els) {
@@ -1285,15 +1292,26 @@ export const orbitMethods = {
       // Nothing to say: no gas, or gas with no colour in it. Removing the property rather than
       // writing a colourless one is what lets --cta-edge's own fallback in global.css apply.
       if (c < 0.0015 || prev.cov < 0.0015) { el.style.removeProperty('--cta-reflect'); continue; }
-      /* MIXED FROM WHITE, NOT WRITTEN FLAT, and the alpha never moves. The edge is the boundary in
-         dark and its strength is what carries WCAG 1.4.11, so --cta-edge-a is the one number this
-         must not touch — only the hue inside it changes. `m` is how much gas there is, and it drives
-         the mix rather than the alpha: no gas gives back exactly the pure white of --cta-edge, so
-         the ramp's bottom is continuous with the untinted rim instead of stepping to a grey. */
-      const g = hexToRgb(gamutMap(targetL, ca, cb));
+      /* GROWN OUT OF THE HAIRLINE, NOT WRITTEN FLAT. Since 15.09.26 these controls wear the
+         masthead's glass, whose resting edge is the page ink at 12% — so `m`, how much gas there is,
+         carries colour AND alpha from that hairline to the tint: no gas gives back exactly the rest
+         edge global.css falls back to, and the ramp's bottom is continuous with it rather than
+         stepping. The edge no longer carries WCAG 1.4.11 for these (the label on the page's own
+         surface does), which is what frees the alpha to move.
+         THE LIGHTNESS FOLLOWS THE FILL, not only the theme. A rim reads by standing off what it
+         borders: the glass is the page's colour, the filled Create is its ink, so the primary act
+         takes --cta-reflect-l-primary. An attribute read, deliberately — a computed style per
+         control on a ticker would be a style flush ten times a second.
+         AND ITS ALPHA DOES NOT RAMP. The primary rim starts from the page ink, which is its own fill,
+         so at no gas it is already invisible against the pill; ramping the alpha as well kept the
+         tint under the threshold of seeing through the thin gas the hole actually has. Only its
+         colour moves. The glass rim does need the ramp, or no gas would draw a heavy ink outline. */
+      const primary = el.getAttribute('data-emph') === 'primary';
+      const g = hexToRgb(gamutMap(primary ? primaryL : targetL, ca, cb));
       const m = Math.min(1, prev.cov / knee);
-      const mix = (v) => Math.round(255 + (v - 255) * m);
-      el.style.setProperty('--cta-reflect', 'rgba(' + mix(g[0]) + ',' + mix(g[1]) + ',' + mix(g[2]) + ',' + edgeAlpha + ')');
+      const mix = (v, b) => Math.round(b + (v - b) * m);
+      const a = primary ? edgeAlpha : baseA + (edgeAlpha - baseA) * m;
+      el.style.setProperty('--cta-reflect', 'rgba(' + mix(g[0], base[0]) + ',' + mix(g[1], base[1]) + ',' + mix(g[2], base[2]) + ',' + a.toFixed(3) + ')');
     }
   },
   /** Drop every tint this wrote. The field going away must not leave a colour behind on a control

@@ -6,6 +6,39 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-15 — Analytics waits for consent
+
+**Decision:** Web Analytics and Speed Insights run only after a visitor allows them. A banner asks
+once, after the page has arrived; Privacy Settings in the footer and links in the privacy
+statement ask again. **Supersedes the "Still deliberately absent: a cookie banner" paragraph of the
+2026-07-26 Speed Insights entry**, left in place so this reads as a reversal.
+
+**Why:** requested because the site runs both products. Neither sets a cookie, and the banner does
+not pretend otherwise — it asks about measurement, not cookies. Having no cookies had been read as
+having nothing to ask; that reading was the open ePrivacy question in the privacy review, and asking
+closes it without needing an answer to it.
+
+**How it holds:** the answer is `palette-generator/analytics-consent`. Each `<Analytics />` and the
+one `<SpeedInsights />` mount only when it is `granted`, and both `beforeSend`s read storage again
+per event and return null otherwise — neither SDK removes its script on unmount, so withdrawing
+mid-visit is stopped at send time, not by unmounting (`src/lib/consent.js`).
+
+**The cost, accepted:** visit counts and field vitals now come only from visitors who allow them,
+so both dashboards undercount from this date. A visit that allows partway through is not lost: its
+page view is sent on the click, and Speed Insights still reports that page's FCP, LCP and TTFB from
+the browser's buffered entries — measured against the production build with Vercel's production
+scripts, which also ignore any browser reporting `navigator.webdriver`, so an automated check has
+to clear that flag to see anything sent.
+
+**Found on the way:** Speed Insights was sending the share link's fragment — the whole palette —
+with every vital, because its SDK reports `location.href` with only the pathname rewritten; its
+`beforeSend` now cuts the fragment as Web Analytics' already did. And `LegalPage` rebuilt its whole
+statement on every re-render (a new `dangerouslySetInnerHTML` object each time, the fault AboutPage
+had already fixed), which emptied the table of contents whenever the theme changed — and would have
+done it on every first visit once the banner arrived.
+
+---
+
 ## 2026-09-14 — The page transition is a window, not a panel
 
 The site's one gesture for "you are somewhere else now" was a curved panel in `--ground` that rose

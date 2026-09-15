@@ -29,12 +29,13 @@ something only a browser can discover.
 - **Free.** No account, no payment, no trial.
 - **Desktop.** A narrow viewport shows a read-only view of a shared palette rather than the tool.
 - **The image stays local.** Palette extraction runs on the visitor's machine and the full-size image
-  is never uploaded. One exception, stated because it is the only one: naming and describing a
-  palette sends a ~320 px thumbnail and the hex values to Anthropic's API, and falls back to a local
-  reading if that is unavailable. Shared links carry the palette in the URL fragment, which browsers
-  never transmit to a server.
+  is never uploaded. One exception, stated because it is the only one: when an image is chosen, a
+  smaller copy is automatically sent to Anthropic's API with the palette's colour values and
+  proportions to generate a name and description, and the palette is named locally if that is
+  unavailable. Shared links carry the palette in the URL fragment, which browsers never transmit to
+  a server.
 - **No cookies.** The site sets none. Measurement is Vercel Web Analytics and Speed Insights, both
-  cookieless and aggregated.
+  cookieless and aggregated, and neither runs until a visitor allows it.
 - **Colour readings are interpretations, not measurements**, and are not colour-managed. They should
   not be relied on for print production, brand matching or any colour-critical work.
 

@@ -217,7 +217,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      a corner case. They are outlined circles on --action-line: the same object as the drawer's Done
      and the library trigger above, one size down. */
   [data-toast] [data-ix]:hover:not(:disabled),
-  [data-toast] [data-ix]:active:not(:disabled){
+  [data-toast] [data-ix]:active:not(:disabled),
+  /* The analytics banner's close is the toast's dismiss again, on the same surface recipe. */
+  [data-consent] [data-ix]:hover:not(:disabled),
+  [data-consent] [data-ix]:active:not(:disabled){
     background:none!important;
     border-color:var(--action-line)!important;
   }
@@ -836,7 +839,18 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      of the gas is far less saturated than the gas looks, and without it the rim reads white.
      --cta-reflect-cmax is the ceiling that gain runs into, and it is the chroma the boundary sweep
      was actually run at — moving it invalidates that sweep. */
-  --cta-reflect-l:.93;
+  /* RETUNED 15.09.26 FOR THE GLASS THE FRONT PAGE'S ACTS WEAR NOW (see the block after .glass-cta).
+     The .93 above was a near-white rim on a dark scrim; on a pane of the page's own near-white a
+     near-white rim is invisible, so light paints the tint at .62 and dark keeps .93 in its own block.
+     The rim grows out of the glass's hairline — the page ink at --cta-reflect-base-a — toward the
+     tint at --cta-reflect-a as the gas thickens (orbit.js _reflectCtas). The filled Create borders
+     its ink rather than the page, so it takes its own lightness, standing off the fill the other way.
+     These are look figures, set by eye on the landing; the contrast sweep recorded above was run
+     against the old scrim and no longer describes these controls. */
+  --cta-reflect-l:.62;
+  --cta-reflect-l-primary:.82;
+  --cta-reflect-a:.5;
+  --cta-reflect-base-a:.12;
   --cta-reflect-chroma:2.6;
   --cta-reflect-cmax:.08;
   /* HOW FAR OUT THE GLASS LOOKS FOR ITS COLOUR, as a fraction of the viewport. These controls stand
@@ -983,6 +997,11 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --cta-fill-emph-hover:rgb(255 255 255 / .30);
   --cta-fill-emph-press:rgb(255 255 255 / .34);
   --cta-edge-a:.36;
+  /* The front page's glass rim in dark: near-white tint on the dark pane, and a darker one standing
+     off the near-white filled Create. See the retune note in the light block. */
+  --cta-reflect-l:.93;
+  --cta-reflect-l-primary:.42;
+  --cta-reflect-a:.4;
   color-scheme:dark;
 }
 html,body{background:var(--surface);transition:background var(--dur-chrome) var(--ease-standard)}
@@ -1140,6 +1159,69 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 .glass-cta:active:not(:disabled){ background-color:var(--cta-fill-press) }
 .glass-cta[data-emph="primary"]:active:not(:disabled){ background-color:var(--cta-fill-emph-press) }
 @media (prefers-reduced-motion:reduce){ .glass-cta{transition:none} }
+/* ===== THE FRONT PAGE'S ACTIONS WEAR THE MASTHEAD'S GLASS (15.09.26, by request) ==================
+   Create and How it Works on the landing, the phone gate's act beside them in [data-landing], and
+   the phone story's opening act: the actions a first visit meets over the field. They take the pane
+   the masthead and the analytics banner wear (.glass-effect) — the page's own surface at 70% over a
+   12px blur (the .75em that pane computes to), no saturate(), a hairline of ink at 12%, and the ink
+   as the label. The pill, padding, type and label swap of .glass-cta above are unchanged, and so is
+   every other surface that uses it.
+
+   WHAT THIS SETS ASIDE, so it reads as a decision rather than drift: the black/white scrim ramps and
+   the contrast sums argued for them, the 50px saturating blur, the field-tinted rim (orbit.js still
+   writes --cta-reflect on the landing's two; this border-color does not read it), and the scrim's
+   emphasis step. The label carries the contrast now: --on-surface on a pane of --surface is the
+   page's own text contrast, whatever the gas does behind it.
+
+   CREATE IS FILLED, NOT GLASS, by request — the app's primary tier, the same tokens the analytics
+   banner's Accept takes through button-006: --on-surface as the fill and the edge, --surface as the
+   label, so black in light and inverting on dark as every filled action does. A pane of the page's
+   own colour has no deeper version of itself to give the lead act, so emphasis steps out of the glass
+   rather than into a heavier pane. No blur under it: an opaque fill has nothing to show through.
+
+   HOVER IS THE LABEL SWAP, as it is for button-006: the pane holds still under the pointer. Where the
+   swap does not run — touch, or reduced motion — a tenth of ink goes into the pane on press and, under
+   reduced motion, on hover, so the control still answers. Every selector here is written after the
+   rules it overrides, at equal or higher specificity: the primary tier's hover and press are (0,4,0),
+   and so are these. */
+[data-landing] .glass-cta,
+.story-hero__act .glass-cta{
+  background-color:color-mix(in srgb, var(--surface) 70%, transparent);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  /* THE RIM STILL TAKES THE FIELD'S COLOUR, by request: orbit.js writes --cta-reflect here, grown out
+     of this same hairline, which is also what shows wherever there is no gas to reflect. */
+  border-color:var(--cta-reflect, color-mix(in srgb, var(--on-surface) 12%, transparent));
+  color:var(--on-surface);
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover),
+             color var(--dur-chrome) var(--ease-button-hover);
+}
+@media (hover:hover){
+  [data-landing] .glass-cta:hover:not(:disabled),
+  .story-hero__act .glass-cta:hover:not(:disabled){background-color:color-mix(in srgb, var(--surface) 70%, transparent)}
+}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  [data-landing] .glass-cta:hover:not(:disabled),
+  .story-hero__act .glass-cta:hover:not(:disabled){background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+}
+[data-landing] .glass-cta:active:not(:disabled),
+.story-hero__act .glass-cta:active:not(:disabled){background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+/* CREATE, FILLED — the primary tier's tokens (see the note above). One step more specific than every
+   glass rule above at each state, so it wins without reordering them. The rim keeps its reflection,
+   at the lightness orbit.js paints the primary act, and falls back to the fill's own edge. */
+[data-landing] .glass-cta[data-emph="primary"]{
+  background-color:var(--action-primary-surface);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  border-color:var(--cta-reflect, var(--action-primary-line));
+  color:var(--action-primary-ink);
+}
+@media (hover:hover){
+  [data-landing] .glass-cta[data-emph="primary"]:hover:not(:disabled){background-color:var(--action-primary-surface)}
+}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  [data-landing] .glass-cta[data-emph="primary"]:hover:not(:disabled){background-color:var(--action-primary-hover)}
+}
+[data-landing] .glass-cta[data-emph="primary"]:active:not(:disabled){background-color:var(--action-primary-press)}
 /* 36px is the figure /about and /404 present their one action at, and it is a POINTER figure — both
    of those are read on a desktop as often as not. The gate is the one surface on this site that is
    only ever reached by a thumb, and 36 is under the 44 touch wants (WCAG 2.5.8 asks 24, which both
@@ -1704,6 +1786,8 @@ button[data-row-cell] .tswap{flex:none}
    strength claims an emphasis it cannot honour (contrast is disabled whenever the palette has no
    pair to check); the tiers only stay readable if unavailability is legible too. */
 .button-006:disabled{opacity:.42;cursor:default;}
+/* B006 drawn as a link (its href prop) keeps a button's face: no UA underline under the label. */
+a.button-006{text-decoration:none;}
 /* ===== emphasis variants — the three action tiers, expressed ONLY as remapped button-006
    properties. Nothing about the masked text swap or the focus ring is
    restated, so every tier inherits the same motion and the same keyboard affordance: a quiet
@@ -2315,3 +2399,80 @@ html.lenis,html.lenis body{height:auto}
   inset: 0;
   box-shadow: inset 0 0 1.75em var(--glass-clamp);
 }
+
+/* ===== THE ANALYTICS BANNER (ConsentBanner in AppView) ==========================================
+   Classes rather than sx(), for the footer's reason: the link needs :hover and a hover media query,
+   which an inline style cannot state.
+
+   BOTTOM RIGHT, because every other corner and the centre are spoken for. The notice and the
+   landing's credit hold bottom left, the toast and /about's section dock hold the bottom centre,
+   and the drawers all open from the right edge but are modal, so they are never what a reader is
+   in the middle of when this arrives. On a phone the width runs out first and the banner spans the
+   gutters instead.
+
+   z-index 165: ABOVE THE WIPE, below the lightbox and the loader. A route change moves the page
+   window (160) and a snapshot (159) over everything the page owns, and this is not the page's; under
+   them it would vanish at every navigation and cut back in when the cover cleared, which is an
+   appearance this system does not allow. The lightbox (170) and the loader (190) are whole-screen
+   states and still outrank it — and the loader never shares the screen with it anyway, because the
+   question waits for the loader to finish (see methods/consent.js). */
+.consent{
+  position:fixed;
+  right:var(--page-gutter);
+  bottom:calc(var(--page-gutter) + env(safe-area-inset-bottom, 0px));
+  z-index:165;
+  box-sizing:border-box;
+  width:min(380px, calc(100vw - 2 * var(--page-gutter)));
+  display:flex;flex-direction:column;gap:14px;
+  /* 18 on the reading edge, the figure this family uses where prose meets a curved corner — see the
+     notice in AppView. */
+  padding:16px;padding-inline-start:18px;
+  /* THE MASTHEAD'S GLASS, by request: the same .glass-effect pane (GlassEffect, first child) — the
+     page's own surface at 70% over a .75em blur — so nothing opaque is painted here, or the blur
+     would sit under a fill nobody could see through. The edge is the pane's hairline, the ink mixed
+     at 12%, for the reason .glass-bar gives: an opaque --line-strong around a see-through pane is the
+     heaviest thing on it. The corner passes to the pane through its border-radius:inherit. The
+     shadow stays: this pane floats over the page rather than closing off its top.
+     --consent-glass SCALES ALL FOUR, 1 at rest and unset outside a transition. It is how the banner
+     arrives and leaves without an opacity of its own, which would switch the blur off mid-fade — see
+     _consentTurn in methods/consent.js. */
+  background:transparent;
+  color:var(--on-surface);
+  border:1px solid color-mix(in srgb, var(--on-surface) calc(12% * var(--consent-glass, 1)), transparent);
+  border-radius:var(--radius-dock);
+  box-shadow:0 14px 36px rgba(0,0,0,calc(.24 * var(--consent-glass, 1)));
+}
+/* The pane's blur and tint, restated against the same number. -webkit- first, standard last — the
+   order the build keeps; see .button-006. */
+.consent > .glass-effect{
+  --glass-tint:color-mix(in srgb, var(--surface) calc(70% * var(--consent-glass, 1)), transparent);
+  -webkit-backdrop-filter:blur(calc(.75em * var(--consent-glass, 1)));
+  backdrop-filter:blur(calc(.75em * var(--consent-glass, 1)));
+}
+/* For the length of a transition only: the fill's theme crossfade and the close's interaction
+   contract would each ease towards a value GSAP has already moved on from. */
+.consent[data-glass-anim] .glass-effect__fill,
+.consent[data-glass-anim] [data-ix]{transition:none}
+/* ABOVE THE PANE. The glass is absolute and first, so the rest would paint under it; z-index lifts
+   them, and each states its own position rather than one :not(.glass-effect) rule handing out
+   position:relative — that would outrank the close's position:absolute and pull it back into the
+   row, the trap /about's dock records for the same pane. */
+.consent__text,.consent__row{position:relative;z-index:1}
+.consent__text{
+  margin:0;
+  font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);
+  color:var(--on-surface);text-wrap:pretty;
+}
+/* The two answers stay a group at 8px, as the toast's pair does, and lead the row from the reading
+   edge the sentence starts on. Learn more is pushed to the far end: it goes somewhere, they decide
+   something. It wraps rather than overflows if a narrow screen ever runs out of row. */
+.consent__row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+.consent__acts{display:flex;align-items:center;gap:8px}
+/* Learn more is an outlined button now, so its type, hover and focus are button-006's own; all this
+   wrapper adds is the push to the far end. A wrapper rather than a class on the button, because B006
+   owns its className. */
+.consent__more{display:inline-flex;margin-inline-start:auto}
+/* Reopened, the close sits in the top corner, 12px in, level with the sentence's first line — which
+   gives up the width the disc needs so the two never touch. */
+.consent__close{position:absolute;top:12px;inset-inline-end:12px;z-index:1}
+.consent[data-closable] .consent__text{padding-inline-end:36px}

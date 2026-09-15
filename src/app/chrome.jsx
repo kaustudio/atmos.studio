@@ -41,12 +41,16 @@ export function TextSwap({ children }) {
 // spans are load-bearing: they are the two copies of the label the hover swap slides between, each
 // clipped by its own layer. `hover` gives the second copy different words; omitted, both spans hold
 // the same label and the swap reads as the line refreshing itself.
-export function B006({ label, hover, btnRef, ...props }) {
+// `href` draws the same button as a link, for an act that goes somewhere: a real address a middle
+// click or a new tab can follow, with the look, swap and focus ring unchanged — they key off the
+// class, not the element.
+export function B006({ label, hover, btnRef, href, ...props }) {
+  const Tag = href ? 'a' : 'button';
   return (
-    <button type="button" data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
+    <Tag {...(href ? { href } : { type: 'button' })} data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
       <span className="button-006__hover"><span className="button-006__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button-006__bg is--hover"></span></span>
       <span className="button-006__default"><span aria-hidden="true" className="button-006__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button-006__bg is--default"></span></span>
-    </button>
+    </Tag>
   );
 }
 
@@ -134,6 +138,10 @@ export function ThemeSwitch({ vals }) {
 export function docLinkHandler(vals) {
   return (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    // The privacy statement's door back to the analytics question. Injected HTML cannot carry an
+    // onClick, so it is marked with an attribute and opened from here; its href is only a fallback.
+    const consent = e.target && e.target.closest ? e.target.closest('[data-consent-open]') : null;
+    if (consent && vals.openConsent) { e.preventDefault(); vals.openConsent(consent); return; }
     const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
     let url;

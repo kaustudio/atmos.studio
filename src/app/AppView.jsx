@@ -35,6 +35,7 @@ import { isDoc, isLegal, pathFor } from './routes.js';
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
 // do inside the tool", and a single custom event makes that false. See DECISIONS.md.
 import { Analytics } from '@vercel/analytics/react';
+import { whenAllowed } from '../lib/consent.js';
 
 /* THE FRAGMENT NEVER LEAVES, and without this it did. A share link carries the whole palette in
    #p= (lib/share.js), and the SDK's own payload is location.href ENTIRE: read the shipped script and
@@ -44,11 +45,17 @@ import { Analytics } from '@vercel/analytics/react';
    link therefore posted that palette's name, descriptors, rationale and swatches to Vercel, which
    is also what made "opening one tells us nothing" false on the privacy page.
    beforeSend can rewrite the url before anything is sent, so the fragment is cut here rather than
-   trusted not to matter. Applied at every call site below; a new one must carry it too. */
+   trusted not to matter. Applied at every call site below through sendPageview; a new one must
+   carry it too. */
 const stripFragment = (event) => {
   try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
   catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
 };
+/* AND NOTHING AT ALL WITHOUT CONSENT. Each call site mounts the component only once the visitor has
+   allowed analytics, and this gate covers the other direction: the SDK's script stays on the page
+   after its component unmounts, so a visitor who withdraws is stopped here, per event, by reading
+   the stored answer at send time. See lib/consent.js. */
+const sendPageview = whenAllowed(stripFragment);
 
 // style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
 // stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
@@ -1615,7 +1622,7 @@ function SkipLink() {
    breakpoint. The landing no longer draws a footer at all (see the tombstone in LandingStage), so
    the prop went with it and the credit carries its own three lines of layout instead. If something
    ever needs a cell at the head of this row again, that is the shape it had. */
-function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
+function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = true }) {
   const Root = landmark ? 'footer' : 'div';
   const link = (href, label) => (
     <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
@@ -1659,10 +1666,84 @@ function SiteFooter({ route, onNavigate, brand = true, landmark = true }) {
           {link('/about', 'How it Works')}
           {link('/privacy', 'Privacy')}
           {link('/terms', 'Terms')}
+          {/* THE WAY BACK TO THE ANALYTICS QUESTION, on every page that has a footer. Withdrawing has
+              to be as easy as allowing was, and the banner only asks once, so the answer needs a
+              standing door. A button among links because it opens something rather than going
+              somewhere; site-foot.css gives it the links' type, target and swap so the row stays one
+              row. The privacy statement carries a second door for the surfaces with no footer. */}
+          {onConsent && <button type="button" className="site-foot__consent" onClick={onConsent}><TextSwap>Privacy Settings</TextSwap></button>}
         </nav>
         <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
       </div>
     </Root>
+  );
+}
+
+/* THE ANALYTICS QUESTION. Web Analytics and Speed Insights set no cookies, so this does not say
+   cookies: it asks whether the two may measure at all, and neither mounts until the answer is yes
+   (the call sites here, SpeedInsights in PaletteApp, the send-time gate in lib/consent.js).
+
+   Rendered by PaletteApp, OUTSIDE the page window and ahead of it, rather than by any of this file's
+   returns. Outside, because the question outlives a route change: a wipe moves and clips
+   [data-page-window], and the banner must neither travel with the departing page nor be rebuilt on
+   the arriving one. Ahead, so it is the first thing a keyboard or a screen reader meets.
+
+   THE TOAST'S SURFACE, THE DOCK'S CORNER. --surface-raised, --line-strong and the toast's shadow,
+   because this is the same floating object as the toast and the notice: something that arrives over
+   the page, says one thing and asks for an answer. The stadium does not survive two lines of prose
+   and a row of acts, so the corner is --radius-dock, the system's other designed radius and the one
+   its only other multi-row floating panel already takes; the acts inside stay pills, as the dock's
+   rows do.
+
+   ACCEPT IS THE FILLED TIER, DECLINE THE OUTLINED ONE, by request: primary is --on-surface ink, the
+   system's black, and it inverts on the dark theme as every other filled action does. Decline keeps
+   the full outlined button rather than shrinking to a link, so saying no stays one press of the same
+   size as saying yes.
+
+   Reopened with analytics on, Accept takes the check the Copied state uses — a glyph beside the word,
+   holding still while the word swaps. Only Accept: a tick beside Decline read as approving the
+   refusal rather than reporting it, so a declined visitor sees the two answers as they first did.
+   aria-pressed states the standing answer either way, and a close appears that keeps it. The close is never offered before an answer exists, so dismissing can never
+   be mistaken for one. */
+export function ConsentBanner({ vals }) {
+  const choice = vals.consentChoice;
+  const act = (value, label, aria, emphasis, onClick) => (
+    <B006
+      data-emphasis={emphasis}
+      {...(choice ? { 'aria-pressed': choice === value } : null)}
+      onClick={onClick}
+      aria-label={aria}
+      label={<span style={sx('display:flex;align-items:center;gap:6px;height:14px')}>{value === 'granted' && choice === value && <IconCheck />}<B006Text>{label}</B006Text></span>}
+    />
+  );
+  return (
+    <div data-consent="1" className="consent" role="region" aria-label="Analytics consent" tabIndex={-1} data-focus="card" {...(choice ? { 'data-closable': '' } : null)}>
+      {/* The masthead's pane, first so everything after it paints above — see .consent in global.css. */}
+      <GlassEffect />
+      <p className="consent__text">We’d like to use Vercel Web Analytics and Speed Insights to understand visits and site performance.</p>
+      {/* THE ANSWERS LEAD, on the reading edge under the sentence they answer, and the way to read more
+          trails them. "Accept" is named in the privacy statement's Analytics section, which quotes it
+          — rename the two together. */}
+      <div className="consent__row">
+        <div className="consent__acts">
+          {act('granted', 'Accept', 'Accept analytics', 'primary', vals.allowAnalytics)}
+          {act('denied', 'Decline', 'Decline analytics', 'secondary', vals.declineAnalytics)}
+        </div>
+        {/* Outlined like Decline, by request, and still a link: it goes somewhere rather than deciding
+            anything, so it is an <a> with a real address drawn as the secondary tier. */}
+        <span className="consent__more">
+          <B006 href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics"
+            label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Learn more</B006Text></span>} />
+        </span>
+      </div>
+      {/* The toast's dismiss, drawn the same: a 30px outlined disc whose glyph swaps under its mask. In
+          the corner rather than the row, so a reopened banner keeps its row on one line at a phone's
+          width. */}
+      {choice && (
+        <button type="button" className="consent__close" data-ix="press" data-focus="chrome" onClick={vals.closeConsent} aria-label="Close, keep your current choice" title="Close"
+          style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+      )}
+    </div>
   );
 }
 
@@ -2001,8 +2082,8 @@ export default function AppView({ vals }) {
         <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         <React.Suspense fallback={<DocFallback />}>{legal ? <LegalPage vals={vals} /> : <AboutPage vals={vals} />}</React.Suspense>
-        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        <Analytics beforeSend={stripFragment} />
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
   }
@@ -2036,7 +2117,7 @@ export default function AppView({ vals }) {
         <MarkScrim />
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileExampleList ml={vals.mobileList} />
-        <Analytics beforeSend={stripFragment} />
+        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
   }
@@ -2077,8 +2158,8 @@ export default function AppView({ vals }) {
             the two statements specifically, a route that has to exist. MobileStory is itself a
             .doc-route, and site-foot.css is scoped to nothing above .site-foot, so it lands here
             styled exactly as it does on /about. */}
-        <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        <Analytics beforeSend={stripFragment} />
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
   }
@@ -2097,7 +2178,7 @@ export default function AppView({ vals }) {
         <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
-        <Analytics beforeSend={stripFragment} />
+        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
   }
@@ -2148,7 +2229,7 @@ export default function AppView({ vals }) {
           <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, pointerEvents: 'none' }}></div>
         )}
         <LogoLoader show={vals.showLoader} />
-        <Analytics beforeSend={stripFragment} />
+        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
   }
@@ -2600,8 +2681,8 @@ export default function AppView({ vals }) {
           landmark off, so this is one nav row and not a second document ending. The upload state
           keeps the full footer, being the end of that composition rather than a strip under it. */}
       {vals.isUpload
-        ? <SiteFooter route={vals.route} onNavigate={vals.navigate} />
-        : <SiteFooter route={vals.route} onNavigate={vals.navigate} brand={false} landmark={false} />}
+        ? <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        : <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} brand={false} landmark={false} />}
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />
@@ -2719,7 +2800,7 @@ export default function AppView({ vals }) {
         </div>
       )}
 
-      <Analytics beforeSend={stripFragment} />
+      {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
     </div>
   );
 }

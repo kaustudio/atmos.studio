@@ -2,8 +2,10 @@
 // The design comp was authored against a React-compatible component API, so the logic ports
 // near-verbatim; it is organised here as a class core plus prototype method groups.
 import React from 'react';
-import AppView from './AppView.jsx';
+import AppView, { ConsentBanner } from './AppView.jsx';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { readConsent, whenAllowed, withoutFragment } from '../lib/consent.js';
+import { consentMethods } from './methods/consent.js';
 import * as C from '../lib/color.js';
 import * as X from '../lib/exporters.js';
 import * as I from '../lib/interpret.js';
@@ -36,6 +38,11 @@ import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initLayeredSlider } from './methods/layeredSlider.js';
 import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
+
+// Speed Insights' beforeSend: nothing without analytics consent, and never the share link's fragment.
+// Module scope, so the component is handed one function for its whole life rather than a new one
+// per render.
+const sendVital = whenAllowed(withoutFragment);
 
 /* ===== THE SUPPORTED MINIMUM WIDTH ==========================================================
    1024px, NAMED AND STATED ONCE. The gate used to ask "is this a phone" — `max-width:720px` — and
@@ -220,6 +227,9 @@ export default class PaletteApp extends React.Component {
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, exportSemantic: false, notice: null,
+    // The visitor's answer on analytics — 'granted', 'denied', or null for not yet asked — and whether
+    // the banner that asks is on screen. See methods/consent.js.
+    consent: readConsent(), consentOpen: false,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A document route arrives past them for a different reason: there is no tool on it to introduce.
     landingDismissed: (this._shared || isDoc(this._entryRoute)) ? true : this._landingDismissed(),
@@ -436,6 +446,7 @@ export default class PaletteApp extends React.Component {
     safe(() => requestAnimationFrame(() => { this._updateProjPill(); this._syncProjSteps(); }), 'projpill');
     safe(() => this._initLoader(), 'loader');
     safe(() => this._syncAppInert(), 'inert');   // the landing covers the tool; what it covers is inert
+    safe(() => this._syncConsent(), 'consent');   // arms the analytics question once there is no loader to wait for
     // Light on the tool, the reader's own appearance on a legal route — see _entryTheme.
     const theme = this.state.theme;
     try { document.documentElement.setAttribute('data-theme', theme); } catch (e) { }
@@ -586,6 +597,7 @@ export default class PaletteApp extends React.Component {
     this._syncStory();
     this._syncPicker();
     this._syncAppInert();
+    this._syncConsent();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
@@ -879,6 +891,8 @@ export default class PaletteApp extends React.Component {
     if (this._loaderT2) { clearTimeout(this._loaderT2); this._loaderT2 = null; }
     this._loaderRescue = null;
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
+    if (this._consentT) { clearTimeout(this._consentT); this._consentT = null; }
+    if (this._consentLearnT) { clearTimeout(this._consentLearnT); this._consentLearnT = null; }
     if (this._dropRevealT) { clearTimeout(this._dropRevealT); this._dropRevealT = null; }
     if (this._listRevealT) { clearTimeout(this._listRevealT); this._listRevealT = null; }
     if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }
@@ -915,17 +929,25 @@ export default class PaletteApp extends React.Component {
      arriving page rises inside it without anything the page owns being moved or cloned. The
      departing page is a snapshot the same method appends to <body> — see _snapshotPage. */
   render() {
+    const vals = this.renderVals();
     return (
       <>
-        <div data-page-window="1"><AppView vals={this.renderVals()} /></div>
+        {/* THE ANALYTICS QUESTION, outside the window and ahead of it — see ConsentBanner in AppView.
+            The falsy slot keeps the children below at the same index whether it is up or not. */}
+        {vals.consentOpen && <ConsentBanner vals={vals} />}
+        <div data-page-window="1"><AppView vals={vals} /></div>
         {/* SPEED INSIGHTS, ONCE, WITH THE ROUTE NAMED. It used to be rendered inside each of AppView's
             six returns, at a different child index in each — so every crossing between a document
             and the tool unmounted the instance that owned the script, and the new one could not tell
             the script anything. A client-side swap never changes the document the script was loaded
             with either, so every vital was filed under "Unknown" and the dashboard could not say
             which page a slow LCP or a long interaction belonged to. One instance here, outside every
-            branch, whose route prop follows the state; the component writes it onto the script. */}
-        <SpeedInsights route={pathFor(this.state.route)} />
+            branch, whose route prop follows the state; the component writes it onto the script.
+            ONLY ONCE ANALYTICS IS ALLOWED, and sendVital holds every vital to the same answer at the
+            moment it would be sent, for a visitor who withdraws with the script already loaded. It
+            also cuts the share link's fragment, which this SDK reports along with the rest of the
+            address — see lib/consent.js. */}
+        {this.state.consent === 'granted' && <SpeedInsights route={pathFor(this.state.route)} beforeSend={sendVital} />}
         {/* WHERE FOCUS WAITS DURING A TRANSITION. The wipes used to park it on the cover itself,
             which is aria-hidden — Chrome refused the attribute with a console warning on every route
             change ("Blocked aria-hidden on an element because its descendant retained focus"), and
@@ -950,5 +972,6 @@ Object.assign(
   loaderMethods,
   shareMethods,
   miscMethods,
+  consentMethods,
   renderValsMethods,
 );

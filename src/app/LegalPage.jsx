@@ -27,7 +27,12 @@ import termsHtml from '../legal/terms.html?raw';
 import '../styles/doc.css';
 import '../styles/legal.css';
 
-const BODY = { privacy: privacyHtml, terms: termsHtml };
+/* HOISTED, FOR THE REASON ABOUTPAGE GIVES AT ITS OWN ABOUT_HTML. React 19 compares
+   dangerouslySetInnerHTML by object identity, so `{ __html: ... }` written inline in render() rewrote
+   the whole statement on every re-render — the theme switch, or the analytics banner arriving on a
+   first visit — and left the table of contents built against detached headings: an empty list and
+   no heading ids. One stable object per route, so a re-render leaves the document alone. */
+const BODY = { privacy: { __html: privacyHtml }, terms: { __html: termsHtml } };
 
 export default class LegalPage extends React.Component {
   rootRef = React.createRef();
@@ -105,7 +110,7 @@ export default class LegalPage extends React.Component {
             <main> rather than a div, for the reason spelled out in AboutPage: the tool has a main
             landmark and these documents had none, so landmark navigation had nothing to skip the
             masthead with on the pages most likely to be read with a screen reader. */}
-        <main id="main" key={route} ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={{ __html: BODY[route] || BODY[PRIVACY] }} />
+        <main id="main" key={route} ref={this.rootRef} onClick={this._onClick} dangerouslySetInnerHTML={BODY[route] || BODY[PRIVACY]} />
       </>
     );
   }
