@@ -2475,6 +2475,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          navigate(), because navigate() being a plain onClick handler is what makes every link in JSX
          a real address with a router in front of it. */
       navigateTo: (p) => this.navigateTo(p),
+      // /about's closing act: the tool on a desktop-wide window, the front page below it (misc.js).
+      openCreate: () => this.openCreate(),
       openContrast: () => this.openContrast(),
       openExport: () => this.openExport(this.contrastPalette()),
       contrastDisabled: !this.contrastPalette(),

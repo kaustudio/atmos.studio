@@ -2,6 +2,24 @@
 import { isDoc } from '../routes.js';
 
 export const miscMethods = {
+  /* EXPLORE ATMOS, FROM THE CLOSE OF /about — straight into the tool, by request. The reader has just
+     been told how it works, so the act lands them where it works: the landing is dismissed on the way,
+     persisted exactly as Create persists it (and just as reversible — the wordmark brings it back),
+     and the crossing is the ordinary route change, which arms the tool's own arrival. Set before the
+     crossing rather than inside it, because the landing is not on /about to be covered: nothing on
+     screen changes until the window opens on the tool.
+     Below the supported width there is no tool to open, so it is the front page, which is also what
+     the link's href says for a new tab or a reader with no JavaScript. */
+  openCreate() {
+    if (this._wipeRunning) return;
+    if (this.state.narrow) { this.navigateTo('/'); return; }
+    // Persisted even when the state already reads dismissed: a visit that STARTED on /about is let
+    // past the landing in state only (see the initial state in PaletteApp), so without this a reload
+    // of the tool put the landing back in front of it.
+    try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { }
+    if (this.state.landingDismissed) { this.navigateTo('/'); return; }
+    this.setState({ landingDismissed: true }, () => this.navigateTo('/'));
+  },
   /* THE LANDING IS A COVER, SO WHAT IT COVERS IS INERT. The stage is position:fixed over the tool,
      not instead of it, and the tool stayed in the tab order underneath: measured on a first visit,
      Tab went Skip link → Create → Learn More → Toggle dark theme → Back up → Restore → the dropzone

@@ -142,6 +142,10 @@ export function docLinkHandler(vals) {
     // onClick, so it is marked with an attribute and opened from here; its href is only a fallback.
     const consent = e.target && e.target.closest ? e.target.closest('[data-consent-open]') : null;
     if (consent && vals.openConsent) { e.preventDefault(); vals.openConsent(consent); return; }
+    // /about's closing act opens the tool rather than the front page; its href stays / for everything
+    // a router does not take. See openCreate in methods/misc.js.
+    const create = e.target && e.target.closest ? e.target.closest('[data-open-create]') : null;
+    if (create && vals.openCreate) { e.preventDefault(); vals.openCreate(); return; }
     const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
     if (!a || a.hasAttribute('download') || (a.target && a.target !== '_self')) return;
     let url;
