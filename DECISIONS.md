@@ -6,6 +6,27 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — Every dialog has the same corners and the same controls
+
+**The 18px corner (`--radius-surface`) is on all five dialogs.** Copy and Export had it; Add to
+Projects, Restore from a File and the already-extracted notice now do too.
+
+**Restore and the already-extracted notice use the same controls as the rest.** They were the last two
+dialogs with a square "Cancel" in the header and full-width square buttons, one filled and one
+outlined. Now they use the app's close mark (the 32px circle with the press tier's hover and press)
+and a right-aligned pair of button-006 pills under the rule, like the project picker's Cancel and
+Confirm:
+- Restore: Cancel, then the filled Add to Library. There is still no footer when nothing in the file
+  is new, and the close mark is the way out.
+- Already extracted: Extract Again Anyway, then the filled Open Existing Palette.
+
+Their opening lines are set in `--fs-detail` and the notes under the pair in `--fs-fine`, the sizes the
+copy and export dialogs use. Checked in both themes: both pairs fit on one row, hover works, and
+keyboard focus shows the button-006 ring on the pills and the chrome ring on the close mark.
+Cancel and the close mark both close without adding anything.
+
+---
+
 ## 2026-09-16 — The phone's example chooser has a parallax between its photographs
 
 **By request: a slight parallax, so the photograph moves as it changes.** The chooser's mask transition

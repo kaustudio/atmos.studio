@@ -504,8 +504,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --radius-pill:999px;
   --radius-dock:20px;
   /* --radius-surface is the THIRD designed radius, and it joins the list the way the note above asks:
-     the corner a large rectangular surface takes (15.09.26, by request). 18px, worn by the Copy and
-     Export dialogs (their frames in AppView). It is a length for the reason --radius-dock is one: the
+     the corner a large rectangular surface takes (15.09.26, by request). 18px, worn by the dialogs
+     (their frames in AppView): Copy and Export first, then Add to Projects, Restore from a File and
+     the already-extracted notice (16.09.26, by request). It is a length for the reason --radius-dock is one: the
      figure is chosen, not "fully round". The floating top bar wore it too, after 24, 12 and 16 in the
      same sitting, until it was asked to be fully round like the controls inside it (--radius-pill),
      and the dropzone wore it until it was asked for 12 (below). */

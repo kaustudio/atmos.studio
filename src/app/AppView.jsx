@@ -4182,30 +4182,43 @@ function RecogniseDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRecognise} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
             <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</h2>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Cancel</TextSwap></button>
+          {/* THE APP'S ONE CLOSE MARK (16.09.26, by request: this dialog and the restore dialog were
+              the last two still spelling "Cancel" in a square box). The 32px circle the copy, export
+              and project dialogs use, with the press tier's hover and press. It still means cancel:
+              closeRecognise keeps the existing palette and creates nothing. */}
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          {/* --fs-detail, the size the copy and export dialogs set their opening line in. */}
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* the palette itself, drawn as the archive draws it — so the claim can be checked, not just read */}
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
             {r.strip.map((b, i) => (<span key={i} style={b.style}></span>))}
           </span>
           <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
         </div>
-        <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-          <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.recogniseOpen} aria-label={r.openAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}><TextSwap>Open existing palette</TextSwap></button>
-          {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
-              second run of the same image returns the same colours — this adds a separate entry,
-              it does not produce a different palette. Step D is what makes variations genuinely
-              differ (seed = content hash + variation index); the label can promise that then. */}
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={sx('width:100%;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Extract again anyway</TextSwap></button>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so this adds a second entry with the same colours.</span>
+        {/* THE PAIR, AS THE PROJECT PICKER SETS ITS OWN (16.09.26, by request). Two full-width slabs
+            stood here, a filled square and an outlined one, the last of their kind in a dialog.
+            button-006 at the app's two emphases now, right-aligned under the rule: the filled tier
+            for the act this dialog recommends, the unfilled one for the other way, in the order the
+            picker's Cancel and Confirm take. The note stays under the pair it explains, in
+            --fs-fine, the size the export dialog's switch explains itself in. */}
+        <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
+          <div style={sx('display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
+            {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
+                second run of the same image returns the same colours — this adds a separate entry,
+                it does not produce a different palette. Step D is what makes variations genuinely
+                differ (seed = content hash + variation index); the label can promise that then. */}
+            <B006 onClick={vals.recogniseVariation} aria-label={r.variationAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Extract again anyway</B006Text></span>} />
+            <B006 data-emphasis="primary" onClick={vals.recogniseOpen} aria-label={r.openAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Open existing palette</B006Text></span>} />
+          </div>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so extracting again adds a second entry with the same colours.</span>
         </div>
       </div>
     </div>
@@ -4218,7 +4231,7 @@ function AssignDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeAssign} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Add to projects" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Add to projects" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Add to projects</span>
@@ -4472,17 +4485,19 @@ function RestoreDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
             <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
           </div>
-          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} style={sx('flex:none;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>{r.cancelLabel}</button>
+          {/* The app's one close mark, as on the recognise dialog above (16.09.26). Its label still
+              says which outcome it is: cancel, or close when there was nothing to add. */}
+          <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* Four numbers are not a sentence. Uppercase muted term, full-ink tabular value, a
               hairline under each row — so a count reads here exactly as it reads on the result
               view's metadata readout, and the two surfaces share one way of stating a figure. */}
@@ -4499,14 +4514,18 @@ function RestoreDialog({ vals }) {
             ))}
           </dl>
         </div>
-        {/* One act, one button. Cancel lives in the header, as it does above; the backdrop and
-            Escape are dismissal, not a second control. When nothing in the file is new there is no
-            act left to offer, so the footer carries no button at all rather than one that would
-            commit nothing — an affordance for a non-act is worse than an absence. */}
+        {/* THE COMMIT PAIR, the project picker's (16.09.26, by request): Cancel and the filled Add to
+            Library, button-006 at the app's two emphases, right-aligned under the rule, where a full-
+            width square slab stood. Cancel is the header's close mark said in words, as the picker's
+            is. When nothing in the file is new there is no act left to offer, so there is no footer
+            at all rather than a pair that would commit nothing; the close mark is the way out. */}
         {r.hasAct && (
-          <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px')}>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={sx('width:100%;background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}><TextSwap>Add to library</TextSwap></button>
-            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-label);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
+          <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
+            <div style={sx('display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
+              <B006 onClick={vals.closeRestore} aria-label={r.cancelAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>{r.cancelLabel}</B006Text></span>} />
+              <B006 data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Add to library</B006Text></span>} />
+            </div>
+            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
           </div>
         )}
       </div>
