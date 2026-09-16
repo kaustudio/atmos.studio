@@ -597,11 +597,11 @@ export default class PaletteApp extends React.Component {
 
   componentDidUpdate() {
     const s = this.state;
-    this._updateProjPill();
-    // Same commit as the pill, for the same reason: both are measurements of a row whose contents
-    // the render has just changed. _syncProjSteps sets state only when a boolean actually flips,
-    // so calling it from here cannot loop.
-    this._syncProjSteps();
+    // The rail's pill and step buttons, re-measured only when the row has actually changed: both
+    // are layout reads, and this runs on every commit. See _syncProjRow in methods/misc.js.
+    // _syncProjSteps sets state only when a boolean actually flips, so calling it from here cannot
+    // loop.
+    this._syncProjRow();
     /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
        on screen and torn down when anything covers it, so its triggers can never be left measuring
        chapters that are no longer in the document — the failure aboutStack records, where one
@@ -906,6 +906,11 @@ export default class PaletteApp extends React.Component {
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
     if (this._consentT) { clearTimeout(this._consentT); this._consentT = null; }
     if (this._consentLearnT) { clearTimeout(this._consentLearnT); this._consentLearnT = null; }
+    if (this._projRowRO) { this._projRowRO.disconnect(); this._projRowRO = null; }
+    if (this._textRevealCancel) this._textRevealCancel();
+    if (this._engageOff) this._engageOff();
+    if (this._wipeBeginFloor) { clearTimeout(this._wipeBeginFloor); this._wipeBeginFloor = null; }
+    if (this._openT) { clearTimeout(this._openT); this._openT = null; }
     if (this._dropRevealT) { clearTimeout(this._dropRevealT); this._dropRevealT = null; }
     if (this._listRevealT) { clearTimeout(this._listRevealT); this._listRevealT = null; }
     if (this._listAnchorT) { clearTimeout(this._listAnchorT); this._listAnchorT = null; }

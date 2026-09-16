@@ -1831,8 +1831,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          what the tool actually does, in the same breath as showing it.
          Resolved through the same two sources orbit.js picks from, so the id can never name a
          palette the credit cannot draw — the live archive first, the seed table as the floor.
-         `image` resolves through exampleUrl, which only ever returns one of our own bundled assets:
-         no string out of storage or off a share link can reach an <img src> (see pipeline.js's H1).
+         `image` resolves through exampleThumbUrl, which only ever returns one of our own bundled
+         assets: no string out of storage or off a share link can reach an <img src> (see
+         pipeline.js's H1). It is the small cut, not the original: see EXAMPLE_THUMB there.
          null whenever there is nothing to credit, and the block is not rendered. */
       landingCredit: (() => {
         /* Gated on the stage being in the document, not just on the id. killOrbit deliberately
@@ -1843,7 +1844,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         const id = s.fieldPalId; if (!id || !this._landingUp()) return null;
         const pool = (s.feed || []).filter((p) => p.example === true);
         const p = (pool.length ? pool : (this._seedPool || [])).find((x) => x.id === id);
-        const image = p ? this.exampleUrl(p) : '';
+        const image = p ? this.exampleThumbUrl(p) : '';
         return p && image ? { name: p.name, image } : null;
       })(),
       showLoader: s.showLoader,

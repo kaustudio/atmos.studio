@@ -8,22 +8,56 @@ import { PRIVACY } from '../routes.js';
    headline, and a document route opens on its own hero cascade; a banner rising in the same breath
    would be a second thing arriving while the first is still speaking. 1.2s clears the landing's
    reveal (DUR.reveal plus the line stagger) with a beat to spare. A wipe or the loader still running
-   when the beat is up pushes the question back rather than posing it under a cover. */
+   when the beat is up pushes the question back rather than posing it under a cover.
+
+   AND NOT BEFORE THE READER HAS DONE ANYTHING (16.09.26). Asked unprompted, the banner's sentence
+   was the largest thing the page ever painted, and it painted 4.7s in (7s on a slow link), so every
+   first visit that waited for it reported that as the page's Largest Contentful Paint, and those are
+   exactly the visits that then press Accept and start sending. Speed Insights scored the front page
+   poor for it. Five other arrivals were tried and measured (painted off-screen first, painted tiny
+   first, its own compositor layer, a compositor-only fade); Chrome counted the sentence in every one
+   that let it repaint. What it does not do is choose a largest paint after the reader's first
+   click, key, wheel or touch: that is the metric's own rule, not a quirk of one release. So the
+   question waits for one of those, and then keeps the beat and the cover rule above. A reader who
+   never touches the page is never asked, and nothing is measured for them. */
 const CONSENT_BEAT_MS = 1200;
 const CONSENT_RETRY_MS = 400;
+// The inputs that end Chrome's largest-paint window. A mouse move does not, so it is not here.
+const ENGAGE_EVENTS = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
 
 export const consentMethods = {
   // Called from componentDidMount and componentDidUpdate. Arms once per visit, and only while there is
   // no answer: a visitor who has chosen is never asked again, and one who has not is asked once.
   _syncConsent() {
     const s = this.state;
-    if (s.consent || s.consentOpen || s.showLoader || this._consentT || this._consentAsked) return;
+    if (s.consent) return;
+    this._watchEngagement();
+    // Waiting means the beat has passed and the first input will ask; nothing to arm meanwhile.
+    if (s.consentOpen || s.showLoader || this._consentT || this._consentAsked || this._consentWaiting) return;
     this._consentT = setTimeout(() => this._askConsent(), CONSENT_BEAT_MS);
+  },
+  // From mount, so a press during the loader already counts. Captured and passive: it only listens.
+  _watchEngagement() {
+    if (this._engaged || this._engageOff) return;
+    const on = () => {
+      this._engaged = true;
+      off();
+      // Asked a retry's length later, so a press that starts a crossing is seen running first.
+      if (this._consentWaiting && this._alive) {
+        this._consentWaiting = false;
+        clearTimeout(this._consentT);
+        this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS);
+      }
+    };
+    const off = () => { ENGAGE_EVENTS.forEach((t) => window.removeEventListener(t, on, true)); this._engageOff = null; };
+    ENGAGE_EVENTS.forEach((t) => window.addEventListener(t, on, { capture: true, passive: true }));
+    this._engageOff = off;
   },
   _askConsent() {
     this._consentT = null;
     if (!this._alive || this.state.consent || this.state.consentOpen) return;
     if (this.state.showLoader || this._wipeRunning) { this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS); return; }
+    if (!this._engaged) { this._consentWaiting = true; return; }
     this._consentAsked = true;
     // No focus move: the question arrives unprompted, and taking focus from whatever the reader is
     // doing would make it modal in all but name. It is first in the document instead, so the next

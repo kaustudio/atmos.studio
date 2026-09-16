@@ -1953,7 +1953,9 @@ function LandingStage({ vals, covered, quiet }) {
             {vals.landingCredit && (
               <div data-land-credit="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 var(--page-gutter) 26px')}>
                 <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;width:clamp(56px, (100vw - 2 * var(--page-gutter) - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols), 96px);aspect-ratio:3/2;background:var(--surface-raised)')}>
-                  <img src={vals.landingCredit.image} alt="" decoding="async" fetchPriority="low" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
+                  {/* No fetchPriority="low": this is the landing's largest early paint, so a low
+                      priority only queued it behind everything else. The file is the small cut. */}
+                  <img src={vals.landingCredit.image} alt="" decoding="async" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
                   <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
                 </span>
                 {/* 12px flat is the register the footer's meta row used to set at this corner of the

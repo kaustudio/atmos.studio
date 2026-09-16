@@ -587,6 +587,28 @@ export const wipeMethods = {
   },
 
   _wipeCover(opts) {
+    /* AFTER THE PRESS HAS PAINTED. The snapshot, the inert guard and the route swap are one long task
+       (about 130ms of a 4x-throttled How it Works click), and run inside the click they kept the
+       browser from showing anything until all of it was done: Get Started and How it Works were the
+       slowest interactions Speed Insights recorded. The ghost is a copy of the page as it stands, and
+       the page does not change in one frame, so the window's work waits for the frame that shows the
+       press, then runs exactly as before. The guard goes up now: running and pending, which
+       _wipeRecoverStuck reads as busy, so a second gesture in the gap is refused. The timeout is the
+       floor for a tab that stops painting in between; the watchdog takes over once the cover begins.
+       Reduced motion and the short crossing keep their own synchronous paths below. */
+    if (!opts.afterPaint && !opts.quick && !this._reduce && window.gsap && this._windowEl()) {
+      this._wipeRunning = true; this._wipePending = true;
+      let begun = false;
+      const begin = () => {
+        if (begun) return; begun = true;
+        clearTimeout(this._wipeBeginFloor); this._wipeBeginFloor = null;
+        if (!this._alive) { this._wipeRunning = false; this._wipePending = false; return; }
+        this._wipeCover(Object.assign({}, opts, { afterPaint: true }));
+      };
+      this._wipeBeginFloor = setTimeout(begin, 250);
+      requestAnimationFrame(() => setTimeout(begin, 0));
+      return;
+    }
     const g = window.gsap;
     const win = this._windowEl();
     const commit = opts.commit;

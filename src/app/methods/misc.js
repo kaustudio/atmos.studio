@@ -207,6 +207,39 @@ export const miscMethods = {
       });
     } catch (e) { }
   },
+  /* ONLY WHEN THE ROW HAS CHANGED. componentDidUpdate used to place the pill and re-read the step
+     buttons' scroll extents on every commit, and both are layout reads. The app commits on hover,
+     and a palette opened from the library paid for one of these reflows inside its click (about
+     16ms on a 4x-throttled CPU) although nothing on the rail had moved.
+     What can move the pill is a short list: which chip is pressed, what the chips say (a count or
+     a name changes a width), and a chip changing size without a commit (fonts arriving, a
+     truncation, the rail being shown). The first two are read here without asking for layout, as
+     attributes and text. The third is a ResizeObserver on the chips, which reports after layout
+     rather than forcing one. The group itself needs no second observer for the steps:
+     _syncProjSteps already watches it. A group that was replaced counts as a change, so a
+     remounted rail is always measured. */
+  _syncProjRow() {
+    try {
+      const groups = [...document.querySelectorAll('[data-proj-group]')];
+      let key = '';
+      groups.forEach((grp) => {
+        key += '|';
+        grp.querySelectorAll('[data-proj-chip]').forEach((c) => { key += (c.getAttribute('aria-pressed') === 'true' ? '*' : '') + c.textContent + '\n'; });
+      });
+      const seen = this._projRowGroups || [];
+      if (key === this._projRowKey && groups.length === seen.length && groups.every((grp, i) => grp === seen[i])) return;
+      this._projRowKey = key;
+      this._projRowGroups = groups;
+      this._updateProjPill();
+      this._syncProjSteps();
+      if (!window.ResizeObserver) return;
+      // Reads before writes: the steps measure the row, then the pill is written.
+      if (!this._projRowRO) this._projRowRO = new ResizeObserver(() => { this._syncProjSteps(); this._updateProjPill(); });
+      this._projRowRO.disconnect();
+      // border-box: the pill covers the whole chip, and a padding change moves nothing in the content box.
+      groups.forEach((grp) => grp.querySelectorAll('[data-proj-chip]').forEach((c) => this._projRowRO.observe(c, { box: 'border-box' })));
+    } catch (e) { }
+  },
 
   /* ===================== THE PROJECT RAIL'S STEP BUTTONS =====================
 

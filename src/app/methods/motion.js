@@ -253,6 +253,25 @@ export const motionMethods = {
   // reusing the shared reveal — the same surface a freshly generated palette occupies.
   loadIntoResult(p, rowEl) {
     if (this.state.stage === 'result' && this.state.current && this.state.current.id === p.id) { if (rowEl && rowEl.focus) try { rowEl.focus(); } catch (e) { } return; }
+    /* AFTER THE PRESS HAS PAINTED. Rendering the result is the heaviest commit in the app (about 50ms
+       of a 4x-throttled click), and inside the click it held the frame that shows the press. The row
+       is already lit under the pointer, so that frame goes first and the palette follows on the next
+       task, one frame later than it did. A second row pressed in the gap wins: the token drops the
+       first. The timeout is the floor for a tab that stops painting in between. */
+    const token = (this._openToken = (this._openToken || 0) + 1);
+    let ran = false;
+    const run = () => {
+      if (ran || token !== this._openToken) return;
+      ran = true;
+      clearTimeout(this._openT); this._openT = null;
+      if (!this._alive) return;
+      this._loadIntoResultNow(p, rowEl);
+    };
+    this._openT = setTimeout(run, 250);
+    requestAnimationFrame(() => setTimeout(run, 0));
+  },
+  _loadIntoResultNow(p, rowEl) {
+    if (this.state.stage === 'result' && this.state.current && this.state.current.id === p.id) return;
     this._fromRects = null;
     // Where this palette came from, so Close (pipeline.js closeResult) can put the reader back on
     // the row rather than at the top of an empty stage. Only a row activation sets it; a generated
@@ -645,8 +664,6 @@ export const motionMethods = {
     if (this._reduce) { g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: .4, ease: 'none' }); return; }
     const split = all.filter((el) => el.hasAttribute('data-split'));
     const fx = all.filter((el) => !el.hasAttribute('data-split'));
-    g.from(fx, { y: 14, opacity: 0, duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: delay });
-    split.forEach((el) => this._maskLineReveal(el, delay));
     // The metrics readout assembles as a sequence, from the same two primitives the page already
     // owns: every [data-meta-line] rule draws left→right (the loader bar's scaleX-from-origin-0
     // draw), and every [data-meta-split] text rises through the same masked line reveal as the
@@ -655,8 +672,41 @@ export const motionMethods = {
     // eleven separate events). Rules lead by a breath; the words rise into ruled space.
     const metaLines = [...root.querySelectorAll('[data-meta-line]')];
     const metaSplits = [...root.querySelectorAll('[data-meta-split]')];
-    if (metaLines.length) g.from(metaLines, { scaleX: 0, transformOrigin: '0% 50%', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: delay + 0.1, clearProps: 'transform' });
-    metaSplits.forEach((el, i) => this._maskLineReveal(el, delay + 0.16 + i * (this.DUR.stagger * 0.5)));
+    /* AFTER THE CLICK HAS PAINTED, NOT BEFORE IT. Each line split measures its own line breaks, and
+       each measurement is a forced layout. With the name, the use line and ten readout texts, that
+       was about 35ms of a palette opened from the library on a 4x-throttled CPU, all of it spent
+       before the browser could show that the click had landed, and it is why the library row was
+       the worst interaction Speed Insights recorded. Nothing here is due on screen before `delay`,
+       so the splits and tweens wait for the next paint.
+       The hiding cannot wait. Everything the reveal moves is parked with a bare style write, which
+       asks nothing of layout, so the frame the click paints never shows the text whole. Unparking
+       and the tweens' from-states then land in one task, so there is no frame between them either.
+       The delay is shortened by however long the wait took, so the text still meets the bands on
+       the same beat. A second reveal before the first has run releases the first's elements
+       before parking them again, so a stale 'hidden' is never what gets restored. */
+    if (this._textRevealCancel) this._textRevealCancel();
+    const parked = split.concat(fx, metaLines, metaSplits);
+    const was = parked.map((el) => el.style.visibility);
+    parked.forEach((el) => { el.style.visibility = 'hidden'; });
+    const unpark = () => parked.forEach((el, i) => { el.style.visibility = was[i]; });
+    const asked = performance.now();
+    let frame = 0, timer = 0, safety = 0, settled = false;
+    const stop = () => { settled = true; this._textRevealCancel = null; cancelAnimationFrame(frame); clearTimeout(timer); clearTimeout(safety); unpark(); };
+    const run = () => {
+      if (settled) return;
+      stop();
+      if (!root.isConnected) return;
+      const d = Math.max(0, delay - (performance.now() - asked) / 1000);
+      g.from(fx, { y: 14, opacity: 0, duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: d });
+      split.forEach((el) => this._maskLineReveal(el, d));
+      if (metaLines.length) g.from(metaLines, { scaleX: 0, transformOrigin: '0% 50%', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: d + 0.1, clearProps: 'transform' });
+      metaSplits.forEach((el, i) => this._maskLineReveal(el, d + 0.16 + i * (this.DUR.stagger * 0.5)));
+    };
+    // A frame callback runs before that paint, so the task it posts is the first one after it. The
+    // timeout is the floor for a tab that stops painting in between: the text still arrives.
+    frame = requestAnimationFrame(() => { timer = setTimeout(run, 0); });
+    safety = setTimeout(run, 500);
+    this._textRevealCancel = () => { if (!settled) stop(); };
   },
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then

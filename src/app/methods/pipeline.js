@@ -254,6 +254,25 @@ export const pipelineMethods = {
     const k = p && p.example === true && p.exampleKey;
     return (typeof k === 'string' && Object.prototype.hasOwnProperty.call(this.EXAMPLE_SRC, k)) ? this.EXAMPLE_SRC[k] : '';
   },
+  /* THE SAME EIGHT, CUT TO THE LANDING CREDIT'S BOX. That box is at most 96x64 and was drawing the
+     900px originals, up to 93 KB each, so on a slow connection the front page's largest early paint
+     arrived at 4.1s. These are the centre 3:2 crop object-fit: cover shows, at 288x192 (three
+     times the box), 2 to 8 KB each. Same lookup as exampleUrl, so the H1 invariant holds; a key
+     with no cut here falls back to the original rather than to nothing. */
+  EXAMPLE_THUMB: {
+    'profile-ember': '/assets/examples/thumbs/profile-ember.webp',
+    'tulip': '/assets/examples/thumbs/tulip.webp',
+    'courtyard': '/assets/examples/thumbs/courtyard.webp',
+    'poppy': '/assets/examples/thumbs/poppy.webp',
+    'radish': '/assets/examples/thumbs/radish.webp',
+    'stride': '/assets/examples/thumbs/stride.webp',
+    'court': '/assets/examples/thumbs/court.webp',
+    'profile-sky': '/assets/examples/thumbs/profile-sky.webp',
+  },
+  exampleThumbUrl(p) {
+    const k = p && p.example === true && p.exampleKey;
+    return (typeof k === 'string' && Object.prototype.hasOwnProperty.call(this.EXAMPLE_THUMB, k)) ? this.EXAMPLE_THUMB[k] : this.exampleUrl(p);
+  },
   seedObj(s) {
     const swatches = s.sw.map((e, i) => { const rgb = this.hexToRgb(e[0]); const lab = this.rgb2oklab(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255); return { sid: i, hex: e[0], weight: e[1], L: lab.L, a: lab.a, b: lab.b }; });
     // id follows the generated form (hash + variation) rather than a name, so a seed and a re-read
@@ -493,9 +512,17 @@ export const pipelineMethods = {
            rises while the palette's tail is still leaving. The bands' onComplete and the guard
            timer stay as the fallbacks they were. */
         const total = this.DUR.reveal * 0.8 + this.DUR.stagger * (bands.length - 1);
+        /* INSIDE THE PRESS'S HALF SECOND. The swap shortens the page, because the result is taller
+           than the dropzone, and that pulls the Library up into view. A layout shift more than 500ms
+           after the input that caused it counts against the page, and at 0.8 of the exit five bands
+           put the swap at about 560ms: the returning reader's only layout shift (0.068, the whole
+           Library section) was this one. So the cut is capped at 380ms, and the root's fade keeps its
+           proportions to the cut, so the stage is still transparent when it unmounts. With more
+           bands the sink simply has less of its tail left to show. */
+        const cut = Math.min(total * 0.8, 0.38);
         g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger, onComplete: go });
-        g.to(root, { opacity: 0, duration: total * 0.3, ease: this.EASE.exit, delay: total * 0.5 });
-        g.delayedCall(total * 0.8, go);
+        g.to(root, { opacity: 0, duration: cut * 0.375, ease: this.EASE.exit, delay: cut * 0.625 });
+        g.delayedCall(cut, go);
       }
       else go();
     } catch (e) { go(); }
