@@ -894,9 +894,9 @@ function MobileStory({ st }) {
 
           So three blocks lost the attribute: 1.3's figure (the swatch picks), 2.1's figure (the
           segmented group) and 3.2's actions. They are visible from the start now, which is the floor
-          this surface is built on anyway — the section's own rule and heading still animate, and
+          this surface is built on anyway — the section's heading still animates, and
           nothing that can be pressed is ever mid-rewrite when a thumb lands on it. */}
-        {/* THE PROLOGUE. The one screen with no section rule and no number: it is the arrival, and
+        {/* THE PROLOGUE. The one screen with no number: it is the arrival, and
             /about's hero carries neither either. The landing's colour field shows through from the
             stage below — the only place on this surface where something sits behind the words, and
             it is the brand's own field rather than a photograph. */}
@@ -967,7 +967,9 @@ function MobileStory({ st }) {
             its own frame. Here the case is introduced the way a reading is introduced — by name, and
             by what it is a photograph OF — which is also what lets 1.3's reveal land rather than
             repeat. The page is ~450px shorter for it. */}
-        <section id="story-image" data-story-ch="image" data-sec data-rule className="about-sec about-grid">
+        {/* NO SECTION RULES ON THIS SURFACE (16.09.26, by request, as on /about): no section here carries
+            data-rule, so about.css draws no hairline at a chapter's top. */}
+        <section id="story-image" data-story-ch="image" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Start With the Whole Image</h2>
             <p data-reveal>{st.name} is a palette of five colours drawn from this image. Explore their proportions, properties and contrast to understand how they relate.</p>
@@ -976,7 +978,7 @@ function MobileStory({ st }) {
         </section>
 
         {/* 1.2 — THE STRUCTURE, as /about's weight figure: a bar of true shares, numbers in the key. */}
-        <section id="story-structure" data-story-ch="structure" data-sec data-rule className="about-sec about-grid">
+        <section id="story-structure" data-story-ch="structure" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>A Palette Is More Than a List of Colours</h2>
             <p data-reveal>Each colour holds a share of the frame. These are the real proportions.</p>
@@ -1016,7 +1018,7 @@ function MobileStory({ st }) {
 
         {/* 1.3 — WHERE THE COLOUR LIVES. The two stacked photographs live HERE, inside a bounded
             figure, because here they are the subject — a colour's region cut out of its own picture. */}
-        <section id="story-where" data-story-ch="where" data-sec data-rule className="about-sec about-grid">
+        <section id="story-where" data-story-ch="where" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>See Where Each Colour Comes From</h2>
             <p data-reveal>
@@ -1065,7 +1067,7 @@ function MobileStory({ st }) {
         </section>
 
         {/* 2.1 — CHARACTER, ROLE AND CONTRAST. Three /about figures behind one segmented group. */}
-        <section id="story-relationships" data-story-ch="relationships" data-sec data-rule className="about-sec about-grid">
+        <section id="story-relationships" data-story-ch="relationships" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Character, Role and Contrast</h2>
             <p data-reveal>Explore the palette through its visual character, suggested roles and measured contrast between colours.</p>
@@ -1197,7 +1199,7 @@ function MobileStory({ st }) {
         </section>
 
         {/* 2.2 — THE READING. */}
-        <section id="story-interpretation" data-story-ch="interpretation" data-sec data-rule className="about-sec about-grid">
+        <section id="story-interpretation" data-story-ch="interpretation" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>What Atmos Says About This Palette</h2>
             {/* data-reveal, NOT data-highlight-text — and the paragraph this replaces argued the
@@ -1237,7 +1239,7 @@ function MobileStory({ st }) {
             carries data-reveal: the rail splits the statement itself, and a block holding a control must
             never be rewritten (see the note at the top of <main>). Reduced motion and no JavaScript get the
             statement above a row that scrolls sideways, as on /about. */}
-        <section id="story-gallery" data-story-ch="gallery" data-sec data-rule className="about-sec about-sec--gallery">
+        <section id="story-gallery" data-story-ch="gallery" data-sec className="about-sec about-sec--gallery">
           <div className="about-rail" data-rail="1">
             <p className="about-rail__statement" data-rail-statement="1">The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
             <div className="about-rail__track" data-rail-track="1">
@@ -1289,7 +1291,7 @@ function MobileStory({ st }) {
             act are [data-sticky-title="after"] cued on "Discover", so they arrive with that word rather
             than standing there while the sentence is still being written. That is an opacity and a small
             rise, never a rewrite, so the button keeps its handler throughout. */}
-        <section id="story-handoff" data-story-ch="handoff" data-sec data-rule
+        <section id="story-handoff" data-story-ch="handoff" data-sec
           data-sticky-title="wrap" data-sticky-start="top top" data-rail-handoff="1" className="story-cta">
           <div className="story-cta__container">
             <div className="story-cta__inner">{/* NO data-sec-head, AND THAT IS THE WHOLE BUG.

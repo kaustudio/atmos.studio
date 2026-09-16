@@ -45,6 +45,15 @@ beat has already passed, and still never under the loader or a crossing.
 
 ---
 
+## 2026-09-16 — The phone story has no section rules either
+
+**Removed by request, after /about's.** The story's seven chapters no longer carry `data-rule`, so no
+hairline is drawn at a chapter's top on a phone. Nothing else changes: the rule is still drawn for any
+section that opts in (`.about-sec[data-rule]::before`), and none does now. The tables and cells inside
+the chapters keep their own borders.
+
+---
+
 ## 2026-09-16 — The bar's right end, the phone's logo and first drag, and no rules on How it Works
 
 **The top bar's right end is padded 24px, its left end 16px.** By request, right side only. The token is

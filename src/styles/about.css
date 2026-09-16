@@ -338,9 +338,9 @@
 .about-sec{position:relative;--rule:1;padding-block:var(--band-gap);row-gap:var(--block-gap)}
 /* Full bleed, like the app's header border: the rule is chrome, so it runs edge to edge rather than
    stopping at the reading column.
-   ONLY WHERE A SECTION ASKS FOR IT, [data-rule] (16.09.26). /about's sections no longer carry the
-   attribute, by request, so How it Works has no section rules; the phone story's sections still do.
-   The figure dividers (.about-divider) are a separate primitive and stay. */
+   ONLY WHERE A SECTION ASKS FOR IT, [data-rule] (16.09.26). No section carries the attribute now, by
+   request: How it Works lost its section rules first and the phone story followed the same day. The
+   rule stays as the opt-in. The figure dividers (.about-divider) are a separate primitive and stay. */
 .about-sec[data-rule]::before,.about-stack[data-rule]::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:var(--line-strong);
