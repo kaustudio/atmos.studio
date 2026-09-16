@@ -27,8 +27,9 @@
    and re-inits over itself; that is kept, and the caller is handed the teardown so a surface that
    unmounts takes its Observer, its tweens and its listeners with it.
 
-   [ATMOS 3] onChoose IS THE FIRST OF SIX ADDITIONS ([ATMOS 4] to [ATMOS 8] are the others; [ATMOS 7]
-   changes how the photographs move, from sliding side by side to masking over each other, and
+   [ATMOS 3] onChoose IS THE FIRST OF SEVEN ADDITIONS ([ATMOS 4] to [ATMOS 9] are the others; [ATMOS 7]
+   changes how the photographs move, from sliding side by side to masking over each other, [ATMOS 9]
+   gives those two a parallax, and
    [ATMOS 8] how the titles do, from a sliding strip to the site's masked line reveal). The resource's titles are links — the active one lets its
    href through and any other jumps to it. Here a title is a choice rather than a destination, so the
    active title reports the index instead of navigating. Everything about how the slider MOVES is
@@ -79,8 +80,19 @@ export function initLayeredSlider(root, options) {
     const backgroundZoom = 0;
     const titleGap = 0.5;
     const titleSpacing = 40;
-    // [ATMOS 7] How far a photograph drifts while an edge crosses it, as a share of the frame.
-    const MASK_DRIFT = 0.25;
+    /* [ATMOS 7] How far a photograph drifts while an edge crosses it, as a share of the frame.
+       [ATMOS 9] AND A PARALLAX BETWEEN THE TWO (16.09.26, by request: "a slight parallax, subtle
+       movement to the image"). Both photographs drifted the same quarter at the same rate, so on the
+       phone they read as one strip shifting under the edge, with no depth in it. Now they move at
+       different rates, as layers at two distances do: the arriving photograph drifts further
+       (IN_DRIFT) and settles from a slight zoom (IN_ZOOM) as its edge crosses, and the one being
+       covered drifts less (OUT_DRIFT), as the layer further back. Slight on purpose: 58px of travel
+       under the covering edge on a 390px screen, 117 on the arriving side, and a 10% zoom that is
+       spent by the time the photograph is whole. Every value stays a function of the slide's offset,
+       so a swipe scrubs it and going back plays it in reverse. */
+    const IN_DRIFT = 0.3;
+    const OUT_DRIFT = 0.15;
+    const IN_ZOOM = 0.1;
     /* [ATMOS 8] THE TITLES ARRIVE THROUGH THE SITE'S LINE MASKS (15.09.26, by request). The resource's
        titles are a horizontal strip that slides a title's width per slide, with neighbours at 40%.
        Over photographs that now mask over each other, a strip of words sliding past read as the one
@@ -205,15 +217,18 @@ export function initLayeredSlider(root, options) {
         const maskItem = maskItems[i];
         if (maskItem) {
           const img = maskImgs[i];
+          /* [ATMOS 9] Coverage holds at every offset: the arriving photograph only ever grows past its
+             frame, and the gap the covered one leaves at its right edge (|offset| x OUT_DRIFT of the
+             frame) is always inside the arriving item, whose edge is |offset| of the frame in. */
           if (offset > 0 && offset < 1) {
             gsap.set(maskItem, { x: offset * maskStep, zIndex: 3, visibility: 'visible' });
-            if (img) gsap.set(img, { x: -offset * maskStep * (1 - MASK_DRIFT) });
+            if (img) gsap.set(img, { x: -offset * maskStep * (1 - IN_DRIFT), scale: 1 + IN_ZOOM * offset });
           } else if (offset <= 0 && offset > -1) {
             gsap.set(maskItem, { x: 0, zIndex: 2, visibility: 'visible' });
-            if (img) gsap.set(img, { x: offset * maskStep * MASK_DRIFT });
+            if (img) gsap.set(img, { x: offset * maskStep * OUT_DRIFT, scale: 1 });
           } else {
             gsap.set(maskItem, { x: 0, zIndex: 1, visibility: 'hidden' });
-            if (img) gsap.set(img, { x: 0 });
+            if (img) gsap.set(img, { x: 0, scale: 1 });
           }
         }
 

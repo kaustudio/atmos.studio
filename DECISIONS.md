@@ -6,6 +6,18 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — The phone's example chooser has a parallax between its photographs
+
+**By request: a slight parallax, so the photograph moves as it changes.** The chooser's mask transition
+already drifted both photographs, but by the same quarter of the screen at the same rate, so they read
+as one strip shifting under the edge. Now the arriving photograph drifts further (30%) and settles from
+a 10% zoom, and the one being covered drifts less (15%), like layers at two distances
+(`layeredSlider.js` [ATMOS 9]). At 390px that is about 117px against 58px. It is still drawn from the
+slide's offset, so a swipe scrubs it and going back reverses it. Measured over a whole transition,
+no frame exposes an edge of either photograph.
+
+---
+
 ## 2026-09-16 — The analytics question waits for the reader's first input
 
 **Decision:** the banner still asks once, after the page has arrived and never under the loader or a
