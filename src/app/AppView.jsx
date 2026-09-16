@@ -235,7 +235,8 @@ const IconUndo = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 
    metrics, its own optical size and whatever the label voice does to it. The toast's dismiss uses
    this now; the remaining literals are the ones sitting INSIDE a chip beside its label, where a
    glyph in the text stream is the right object. */
-const IconClose = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>);
+// data-icon="close" is how global.css finds a close mark (16.09.26): the swap alone answers its hover.
+const IconClose = ({ size = 12 }) => (<svg data-icon="close" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>);
 const IconChevron = ({ size = 9 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M12 14.708L6.692 9.4l.708-.708l4.6 4.6l4.6-4.6l.708.708z"></path></svg>);
 const IconContrast = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2S2 6.48 2 12s4.48 10 10 10m1-17.93c3.94.49 7 3.85 7 7.93s-3.05 7.44-7 7.93z"></path></svg>);
 /* EXPORT, AT THE SAME WEIGHT AS THE FOLDER AND THE BIN. It sits directly beside both — the project
@@ -4472,7 +4473,7 @@ function NoticeLayer({ vals }) {
               {/* THE WAY OUT. An error-class notice no longer expires (see showNotice), so it needs one;
                   a timed one gets the same control because hover and focus hold it, and a held notice
                   is one the reader has decided to deal with. Same 28px disc the toast’s Dismiss uses. */}
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissNotice} aria-label="Dismiss notice" title="Dismiss" style={sx('flex:none;width:28px;height:28px;margin-inline-start:2px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer;padding:0')}><span aria-hidden="true" style={sx('font-size:12px;line-height:1')}>✕</span></button>
+              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.dismissNotice} aria-label="Dismiss notice" title="Dismiss" style={sx('flex:none;width:28px;height:28px;margin-inline-start:2px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer;padding:0')}><TextSwap><IconClose /></TextSwap></button>
             </div>
           )}
     </>

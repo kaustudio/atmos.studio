@@ -1725,11 +1725,19 @@ button[data-row-cell] .tswap{flex:none}
      press, text-bearing (Back up, Restore, Clear filters, Cancel, Extract again anyway): the label
      rises through the mask, and that is loud enough to be the entire acknowledgement.
 
-     press, icon-only (28 of them: every drawer's close mark, the page and project steppers, a row's
-     delete and folder marks): fill kept. `:has(.tswap__a)` is what separates them — an icon-only
-     button either carries no swap at all, or carries one whose .tswap__a holds a single <svg>, and
-     both fall outside the selector. Structural, so a new icon button is classified correctly the
-     moment it is written, with nothing to remember to tag.
+     press, icon-only (the page and project steppers, a row's delete and folder marks): fill kept.
+     `:has(.tswap__a)` is what separates them — an icon-only button either carries no swap at all, or
+     carries one whose .tswap__a holds a single <svg>, and both fall outside the selector. Structural,
+     so a new icon button is classified correctly the moment it is written, with nothing to remember
+     to tag.
+
+     EXCEPT THE CLOSE MARK (16.09.26, by request: "the icon mask animation is enough"). Every close
+     and dismiss mark in the app — the dialogs, the drawers, the detail view, the grid, the banner,
+     the toast and the notice — is a press-tier circle whose swap holds IconClose, and it no longer
+     paints a fill on hover or press; the × sliding under its mask is the answer, and the border still
+     strengthens. Found by the glyph (svg[data-icon="close"], set in IconClose), so it is structural
+     too: a new close mark built the same way is covered the moment it is written. /about's feature
+     pills carry the same mark and the same rule in about.css.
 
      icon (the slider chevrons and the two toggletip marks): fill kept, tier-wide. These are the
      standalone marks — no word anywhere in them — so the 16%/28% tint on line 264 stands as their
@@ -1747,6 +1755,8 @@ button[data-row-cell] .tswap{flex:none}
      does not run, so the fill has to come back. */
   [data-ix="press"]:has(.tswap__a):not(:has(.tswap__a > svg:only-child)):hover:not(:disabled),
   [data-ix="press"]:has(.tswap__a):not(:has(.tswap__a > svg:only-child)):active:not(:disabled){background:transparent!important}
+  [data-ix="press"]:has(.tswap__a > svg[data-icon="close"]:only-child):hover:not(:disabled),
+  [data-ix="press"]:has(.tswap__a > svg[data-icon="close"]:only-child):active:not(:disabled){background:transparent!important}
 }
 
 /* THE CHIP'S TRUNCATION SURVIVES THE SWAP. ch.labelStyle (renderVals.js) truncates a project name

@@ -6,6 +6,28 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — A close mark's hover is its icon, not a fill
+
+**By request: no hover fill on close buttons; the icon's mask animation is enough.** This reverses the
+earlier call that icon-only press buttons keep their 16% fill. Every close and dismiss mark now paints
+no fill on hover or press, and only the × sliding through its mask answers, with the border still
+strengthening. That covers the five dialogs, the drawers, the palette detail, the grid view, the
+analytics banner, the toast and the notice. The rule is structural: a press-tier button whose swap
+holds `svg[data-icon="close"]`, the attribute `IconClose` now carries, so a new close mark built the
+same way is covered automatically. Other icon-only buttons (steppers, a row's actions) keep their fill.
+
+**The two stragglers got the mark.** The notice's Dismiss was a bare "✕" character with no swap, and
+/about's feature-pill close was two CSS-drawn lines. Both now use the `IconClose` glyph in the masked
+swap. The pill close keeps its opaque plate over the photograph, and the plate no longer tints. It is
+also fully round now (`--radius-pill`, by request), where it was the one square copy of the mark.
+
+**Still gated.** On a touchscreen and under reduced motion the swap does not run, so the fill comes
+back there, as it does for the text buttons. Checked in Chrome: the export, library, notice and banner
+closes have no fill with the swap running and the 16% fill under reduced motion, and a row's action
+button keeps its fill.
+
+---
+
 ## 2026-09-16 — Every dialog has the same corners and the same controls
 
 **The 18px corner (`--radius-surface`) is on all five dialogs.** Copy and Export had it; Add to

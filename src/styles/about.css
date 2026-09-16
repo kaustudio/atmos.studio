@@ -1777,9 +1777,12 @@
 .pills__visual-item img,.pills__cover img{width:100%;height:100%;object-fit:cover;display:block}
 .pills__visual-item[data-active="true"]{clip-path:inset(0%)}
 
+/* FULLY ROUND, --radius-pill (16.09.26, by request): the app's close mark is a circle, and this was
+   the one square copy of it. */
 .pills__close{
   position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;padding:0;
-  border:1px solid var(--line);background:var(--surface);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line);border-radius:var(--radius-pill);background:var(--surface);color:var(--on-surface);cursor:pointer;
   opacity:0;pointer-events:none;
   transition:opacity var(--dur-state) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover)
 }
@@ -1791,11 +1794,13 @@
   .pills__close:hover{background:color-mix(in srgb,var(--on-surface) 16%,var(--surface))}
 }
 .pills__close:active{background:color-mix(in srgb,var(--on-surface) 24%,var(--surface))}
-.pills__close::before,.pills__close::after{
-  content:'';position:absolute;left:50%;top:50%;width:11px;height:1px;background:var(--on-surface)
+/* THE MARK'S SWAP IS ITS HOVER NOW (16.09.26, by request), as it is for every close mark in the app
+   (global.css, the close-mark rule). The × was two ruled pseudo-elements; it is the app's IconClose
+   glyph in the masked swap now, so where the swap runs, the plate stays the plate. The fills above are
+   the floor for a touchscreen and for reduced motion, where the swap does not run. */
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .pills__close:hover,.pills__close:active{background:var(--surface)}
 }
-.pills__close::before{transform:translate(-50%,-50%) rotate(45deg)}
-.pills__close::after{transform:translate(-50%,-50%) rotate(-45deg)}
 [data-feature-pills-active="true"] .pills__close{opacity:1;pointer-events:auto}
 
 /* Under 900px the visual stops earning its quarter of the row: it would leave the pills too narrow
