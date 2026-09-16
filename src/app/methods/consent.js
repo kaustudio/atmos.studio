@@ -14,9 +14,9 @@ import { PRIVACY } from '../routes.js';
    was the largest thing the page ever painted, and it painted 4.7s in (7s on a slow link), so every
    first visit that waited for it reported that as the page's Largest Contentful Paint, and those are
    exactly the visits that then press Accept and start sending. Speed Insights scored the front page
-   poor for it. Five other arrivals were tried and measured (painted off-screen first, painted tiny
-   first, its own compositor layer, a compositor-only fade); Chrome counted the sentence in every one
-   that let it repaint. What it does not do is choose a largest paint after the reader's first
+   poor for it. Four other arrivals that kept the timing were tried and measured (painted off-screen
+   first, painted tiny first, its own compositor layer, a compositor-only fade); Chrome counted the
+   sentence in every one as soon as it repainted. What it does not do is choose a largest paint after the reader's first
    click, key, wheel or touch: that is the metric's own rule, not a quirk of one release. So the
    question waits for one of those, and then keeps the beat and the cover rule above. A reader who
    never touches the page is never asked, and nothing is measured for them. */

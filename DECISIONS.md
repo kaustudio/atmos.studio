@@ -6,6 +6,45 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — The analytics question waits for the reader's first input
+
+**Decision:** the banner still asks once, after the page has arrived and never under the loader or a
+crossing, but only after the reader has clicked, pressed a key, turned the wheel or touched the
+screen. **Amends the timing in the 2026-09-15 entry "Analytics waits for consent"**; the rest of that
+entry stands.
+
+**Why:** asked unprompted, the banner's sentence was the largest thing the landing and the tool ever
+painted, and it arrived about 4.7s after load (7s on a slow connection). Speed Insights only starts
+after Accept, so most first-visit samples came from readers who had waited for the banner, and each
+of them reported its arrival as the page's Largest Contentful Paint. Speed Insights scored / at 84,
+with an LCP of 4.17s, while the page's own content paints in under a second. Chrome stops choosing a
+largest paint at the first click, key, wheel or touch (a mouse move does not end it), so a question
+that waits for one of those can never be the paint it picks.
+
+**Tried first:** the old arrival and four alternatives that kept its timing, all measured in the app:
+the first frame painted below the viewport, the first frame at 5% scale, the words on their own
+compositor layer, and a compositor-only fade. Chrome counted the sentence in all five, at the first
+repaint that showed it. Test pages outside the app did not reproduce this, so an arrival that passes
+in isolation proves nothing here.
+
+**The cost, accepted:** a reader who never touches the page is never asked, and nothing is measured
+for them. A reader who does is asked on the same beat as before, or 400ms after that input if the
+beat has already passed, and still never under the loader or a crossing.
+
+**Two timings moved in the same change (1d3f8cb):**
+
+- **A palette closes inside the press.** doReset swapped back to the dropzone at 0.8 of its exit,
+  about 560ms with five bands, and the Library section rising back into view that late counted as a
+  layout shift (0.068 per close). Chrome ignores a shift within 500ms of an input, so the swap is
+  capped at 380ms and the result's fade keeps its proportions to the cut.
+- **A crossing, and a palette opened from the library, start after the press has painted.**
+  `_wipeCover` raises its guards in the click, then takes the snapshot and swaps on the next task;
+  `loadIntoResult` renders on the next task, and the later of two quick presses wins. The window is
+  otherwise unchanged (1.2s, ghost gone at about 1.7s), and the palette arrives one frame later. With
+  the CPU slowed 4x, How it Works went from about 100ms to 32ms, and Create from 104ms to 28ms.
+
+---
+
 ## 2026-09-16 — The phone story has no chapter dock
 
 **Removed by request.** The phone story carried /about's anchor dock: the glass pill at the foot of
