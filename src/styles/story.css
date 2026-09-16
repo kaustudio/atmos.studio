@@ -382,51 +382,38 @@
 
 /* ===== THE GALLERY RAIL ===================================================================== */
 
-/* `.about-rail` without [data-rail-live] is ALREADY an ordinary horizontal scroller — about.css
-   defines that as the no-JS floor for the pinned desktop gallery, and it is exactly the shape a thumb
-   wants. So the phone takes that floor as its finished state rather than inventing a fourth card
-   design. What is left is the part a phone needs and a fallback did not: the row bleeds to both edges
-   while its first card still stands on the gutter, and it snaps.
+/* /about's 4.1 SCENE IS THE STORY'S GALLERY (16.09.26, by request). The markup is /about's rail — the
+   stage, its statement, its track and cards — and methods/aboutRail.js drives it exactly as it does
+   there. about.css carries the scene's layout and names this surface where a rule was scoped to /about.
+   What is left here is the one real difference: these cards are buttons that open an example.
 
-   scroll-padding is what makes those two compatible. `scroll-snap-align:start` aligns a card to the
-   SCROLLPORT's edge, which is outside the padding — without it the row silently scrolls itself one
-   gutter on arrival and parks the first card flush against the screen.
+   It replaces two galleries, both gone: a native row that snapped ([data-story-rail]), and Osmo
+   Supply's Horizontal Scrolling Sections, two cards to a screen after a heading and a sentence
+   (.story-horizontal, methods/horizontalScroll.js). Without the scene (reduced motion, no JavaScript)
+   this is /about's own floor: the statement above a row that scrolls sideways.
 
-   The 6px of block padding is the focus ring's room: `overflow-x:auto` computes `overflow-y` to auto
-   as well, so the track clips vertically and an outset ring on a card would be cut off. The negative
-   margin gives the space back so nothing below moves. */
-[data-story-rail]{
-  grid-column:1 / -1;
-  height:auto;
-  overflow:visible;
-  padding-block:0;
-}
-[data-story-rail] .about-rail__track{
-  width:auto;
-  margin:0;
-  padding:6px var(--page-gutter);
-  margin-inline:calc(-1 * var(--page-gutter));
-  margin-block:-6px;
-  overflow-x:auto;
-  overscroll-behavior-x:contain;
-  scroll-snap-type:x mandatory;
-  scroll-padding-inline:var(--page-gutter);
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  list-style:none;
-}
-[data-story-rail] .about-rail__track::-webkit-scrollbar{ display:none }
-[data-story-rail] .about-rail__card{
-  width:var(--rail-card);
-  scroll-snap-align:start;
+   THE STAGE LETS THE POINTER THROUGH AND THE CARDS TAKE IT BACK. about.css gives the live stage and
+   its pin spacer pointer-events:none, so the close underneath can be pressed while the last photographs
+   pass over it. /about's cards carry nothing to press; these do. */
+[data-mobile-story] .about-rail[data-rail-live] .about-rail__card{ pointer-events:auto }
+/* A <span> stack inside a button rather than /about's <article> + <h3>: a heading inside a control is
+   not a heading, and nesting anything focusable inside it would be worse. */
+[data-mobile-story] .about-rail__card{
   padding:0;
   cursor:pointer;
+  text-align:left;
   -webkit-tap-highlight-color:transparent;
 }
-/* The card's content is a <span> stack inside a button rather than /about's <article> + <h3>: a
-   heading inside a control is not a heading, and nesting anything focusable inside it would be worse.
-   The name keeps the rail's own ink through the shared rule in about.css. */
-[data-story-rail] .about-rail__content{ text-align:left }
+/* The name is set as /about's card heading is (`[data-mobile-story] h3` in about.css), since it cannot
+   be one. */
+[data-mobile-story] .about-rail__name{
+  display:block;
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-subtitle);
+  font-weight:500;
+  line-height:1.25;
+  letter-spacing:var(--track-title);
+}
 
 /* A CARD WITH NO PHOTOGRAPH IS NOT A DARK CARD. `.about-rail__content` sets `color:#fff` over a
    gradient that ends at 72% black — which is legible over a picture and is exactly 1.05:1 over
@@ -434,20 +421,10 @@
    has one, so this is the guard for a case that arrives without, not a live failure; it is here
    because white-on-white is the kind of thing that ships silently and is unreadable rather than
    merely ugly. Without a picture the card drops the scrim and takes the surface's own ink. */
-[data-story-rail] .about-rail__card:not(:has(img)) .about-rail__content{
+[data-mobile-story] .about-rail__card:not(:has(img)) .about-rail__content{
   background:none;
   color:var(--on-surface);
 }
-[data-story-rail] .about-rail__card:not(:has(img)) .about-rail__strip{
-  border-color:var(--line);
-}
-[data-story-rail] .about-rail__name{
-  display:block;
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-body);
-  font-weight:500;
-}
-
 /* ===== THE HANDOFF'S ACTIONS ================================================================ */
 
 /* They clear the home indicator. This is the first surface on the site to put a control near the
@@ -468,145 +445,8 @@
   padding-bottom:calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
-/* ===== REDUCED MOTION ======================================================================= */
+/* ===== THE RAIL CARD ======================================================================= */
 
-/* The global floor in global.css collapses every transition and animation, and every reveal module
-   returns an inert controller under this preference — so nothing is hidden and nothing is armed. What
-   is left to say is the one thing a duration cannot express: the gallery's snap is a scroll behaviour
-   rather than an animation, and a mandatory snap under a reader who asked for less motion is the
-   viewport moving on its own. */
-@media (prefers-reduced-motion:reduce){
-  [data-story-rail] .about-rail__track{ scroll-snap-type:none }
-}
-
-/* ===== THE HORIZONTAL TURN ================================================================== */
-
-/* Osmo Supply's Horizontal Scrolling Sections, carrying the gallery. The module pins this wrapper and
-   translates the panels; everything here is the layout that makes that possible, and the floor for
-   when it does not run.
-
-   THE FLOOR IS A ROW THAT SCROLLS ITSELF. Without [data-horizontal-live] — no GSAP, no ScrollTrigger,
-   or a reader who asked for less motion — this is an ordinary overflow-x row with snap, which is what
-   the gallery was before and is a perfectly good gallery. The pinned version is an enhancement on top
-   of a working set, never the only way to reach the cards.
-
-   `flex:none` on the panels is the resource's own requirement: a flex row will otherwise collapse
-   them to fit and there is nothing left to translate. */
-.story-horizontal{
-  display:flex;
-  flex-flow:row;
-  width:100%;
-  /* Only when the module is NOT driving it — a pinned wrapper must not clip or scroll itself. */
-  overflow-x:auto;
-  overscroll-behavior-x:contain;
-  scroll-snap-type:x mandatory;
-  scroll-padding-inline:var(--page-gutter);
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  padding:6px var(--page-gutter);
-  margin-block:-6px;
-  margin-inline:calc(-1 * var(--page-gutter));
-}
-.story-horizontal::-webkit-scrollbar{ display:none }
-.story-horizontal[data-horizontal-live]{
-  overflow:hidden;
-  scroll-snap-type:none;
-  /* THE BAND IS SIZED BY ITS CARDS, NOT BY THE VIEWPORT, and that follows from going two up.
-
-     100svh was right while a card filled the screen. Two to a row halves their width and with it their
-     height — 253px in an 812px box — so the same rule now centres a short row inside a tall empty
-     frame: 294px of nothing above the cards and as much below, in the approach AND in the pinned
-     state. Reported as people thinking the site had ended, and the vertical half of that is this.
-
-     Sized to the row plus a band on each side instead. The clamp keeps it from collapsing onto the
-     cards on a short screen and from re-inflating on a tall one. */
-  min-height:clamp(340px,56svh,520px);
-  align-items:center;
-  /* THE LEAD IN AND THE LEAD OUT, AND THIS IS mwg_001's OWN NUMBER.
-
-     The row used to begin flush with the left edge, which meant the first card was already sitting in
-     the frame before the section had taken the scroll — the reader met a card rather than watching one
-     arrive. The source does not work that way and the difference is entirely here, in one CSS
-     declaration rather than anything in its script:
-
-         .mwg_effect001 .cards { padding: 0 120vw }        and 140vw under 900px
-
-     At x:0 the leading pad holds the first card a full screen and a half to the RIGHT of the viewport,
-     so the row enters from outside it; the trailing pad gives the last card the same room to leave by.
-     140vw is the source's own phone value and it is load bearing twice over — the card drift's trigger
-     starts at `left 120%`, so a lead-in shorter than 120vw makes that start unreachable, ScrollTrigger
-     clamps the negative range, and the first card arrives with its tilt already spent. Measured before
-     this: card one entered at -1 degree instead of its own 5 to 10, and sat static for the whole
-     approach. 140 clears 120 with room.
-
-     The gutter these two lines replaced was doing the opposite job — keeping the first card off the
-     edge of a screen it could not be scrolled away from — and it is not needed once the card is not
-     there to begin with. */
-  padding-inline:0;
-  margin-inline:0;
-}
-/* ON THE PANELS, NOT THE WRAP, and that distinction is a real bug rather than a preference.
-
-   The source puts `padding: 0 120vw` on its own row because there the row is a separate element from
-   the pinned container. Here the wrap IS both, and it carries `width:100%` under border-box — so
-   140vw of inline padding does not sit inside a 375px box, it forces the used width out to 1050 and
-   the wrap overflows the page it is supposed to sit in. `overflow:hidden` does not save it: that
-   clips the CONTENTS, while the element's own border box still takes part in layout and drags the
-   document's scroll width with it. It reads as fine in a preview whose window happens to be wider
-   than the viewport it is emulating, and it is a sideways-scrolling page on the phone this is for.
-
-   Margins on the first and last panel put the same distance in the same place without touching the
-   wrap's own box: the wrap stays exactly one viewport wide, its overflow:hidden clips the row that
-   now genuinely overflows it, and rowWidth() adds these two figures back (see [ATMOS 8]). */
-/* 110vw IN AND 120vw OUT, NOT THE SOURCE'S SYMMETRIC 140, because the two ends do different jobs.
-
-   mwg_001 holds its row a screen and a half off each edge because its row IS the section: a full
-   screen with a `Scroll` prompt in the middle and nothing else, so an empty frame reads as an
-   invitation. Here the row follows a heading and a sentence, and an empty frame after a sentence
-   reads as the end of the document. Measured at 140: 1070px — 1.32 screens — between the lead
-   leaving the viewport and the first card appearing. Reported as people thinking the site had ended,
-   which is exactly what a screen and a third of nothing after a paragraph means.
-
-   Most of that screen and a third was vertical rather than horizontal, and the band's own height fixed
-   it (see min-height above). What is left to the pad is the horizontal wait, and 110vw is the smallest
-   lead in that still keeps the row OUTSIDE the frame at rest: the first card sits at 412 on a 375
-   screen, so it is genuinely off-stage and genuinely arrives, but only 37px of travel brings it in
-   rather than 150. Paired with the pin now engaging centre to centre, the heading is still on screen
-   when the first card enters.
-
-   THE EXIT IS NOT THE ENTRANCE. A short lead out does not shorten a wait, it parks cards in front of
-   the closing statement — measured at 60vw, the row stopped with the last card's right edge at 147,
-   still in frame as 3.2 arrived, which is the fault [ATMOS 6] exists to prevent. 120vw is what carries
-   it past the left edge, and it is also what the drift's `end:'right -20%'` needs: the last card's
-   right reaches exactly -20vw there, so its counter-move completes instead of being clamped.
-
-   THE DRIFT'S TRIGGER MOVES WITH THE LEAD IN. mwg_001's `padding: 0 120vw` and its `start:'left 120%'`
-   are one decision written in two places: the pad exists so the first card's own drift range can begin
-   at zero rather than being clamped, and a lead in shorter than the trigger's start reintroduces
-   exactly the flat, inert first card that [ATMOS 6] and [ATMOS 9] were about. So those two scale
-   together — 110vw here, `left 110%` in horizontalScroll.js — and neither may be edited alone. */
-.story-horizontal[data-horizontal-live] .story-hpanel:first-child{ margin-inline-start:110vw }
-.story-horizontal[data-horizontal-live] .story-hpanel:last-child{ margin-inline-end:120vw }
-.story-hpanel{
-  flex:none;
-  width:var(--rail-card);
-  scroll-snap-align:start;
-  display:flex;
-}
-/* TWO CARDS TO A SCREEN, which is what makes the row a COMPARISON.
-
-   It was min(70vw, 280px): one card filling the screen with the edge of the next just showing. That
-   is a carousel, and a carousel shows you one thing at a time. This section's whole argument is that
-   the same process returns a different system for a different photograph, and an argument about
-   difference needs two of them in the frame at once.
-
-   Exactly 50vw, so two panels fill the viewport and no third is half in. The 8px inline padding stays
-   inside that half, so the visible card is 50vw minus 16 and the gutter between two cards is the
-   16 their paddings make together. */
-.story-horizontal[data-horizontal-live] .story-hpanel{
-  width:50vw;
-  padding-inline:8px;
-}
 /* THE CARD'S GEOMETRY LIVES HERE, NOT IN about.css, AND THAT IS THE WHOLE OF A REAL BUG.
 
    This surface borrows about.css's rail-card component, which is fine for what it looks like and
@@ -649,15 +489,6 @@
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-}
-.story-horizontal .about-rail__card{
-  width:100%;
-  padding:0;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-@media (prefers-reduced-motion:reduce){
-  .story-horizontal{ scroll-snap-type:none }
 }
 
 /* THE RAIL CARD'S META KEEPS THE CARD'S INK, NOT THE LABEL'S.
@@ -937,17 +768,10 @@
 }
 .story-cta .about-sec__num{ margin-bottom:0 }
 
-/* THE GALLERY IS GONE BEFORE THIS ARRIVES, AND THE RUN ITSELF NOW DOES IT.
-
-   This carried a full viewport of padding, bought to guarantee that the pinned cards had released
-   before the close could appear. That was the right guarantee reached the wrong way: it separated
-   the two sections with a screen of nothing while the cards were still parked in frame at the end of
-   their own run.
-
-   The travel does the work instead — the row translates its full scrollWidth, so the last panel
-   clears the left edge under its own movement (see [ATMOS 6] in methods/horizontalScroll.js). The
-   pinned screen is empty by the time it releases, so the ordinary band gap is all the separation the
-   close needs, and the section is shorter than it was with the padding. */
+/* THE GALLERY'S SETTLE. The rail's trailing pad carries the last photograph off the left edge, and
+   the close is pulled up under the end of that travel by the rail itself ([ATMOS 5] in
+   methods/aboutRail.js). This band and the rail's own margin are the settle about.css subtracts along
+   with the measured overlap, so they stay one --band-gap each, as on /about. */
 [data-story-ch="gallery"]{ padding-bottom:var(--band-gap) }
 
 /* ===== THE IMAGE CHOOSER ==================================================================== */
@@ -1196,10 +1020,10 @@
    two cannot drift. It also gives the strip two edges it can be read against, which is what the
    outer border was reaching for and missing.
 
-   SCOPED TO THIS ROW. `.about-rail__strip` is /about's, and about.html carries eight of them at
-   desktop width where the strip sits in a taller card with room to be inset. This is the phone's
-   3.1 rail only. */
-.story-horizontal .about-rail__strip{
+   SCOPED TO THIS SURFACE. `.about-rail__strip` is /about's, and about.html carries eight of them at
+   desktop width where the strip sits in a taller card with room to be inset. On the phone's story the
+   only strips are the gallery's (3.1), since the gallery became /about's rail. */
+[data-mobile-story] .about-rail__strip{
   --rail-pad:clamp(14px,1.2vw,22px);
   height:20px;
   margin-top:12px;
@@ -1213,7 +1037,7 @@
 /* The no-photograph fallback takes the surface's own hairline, for the reason the rule above
    `.about-rail__content` states: without a picture the card drops the scrim and its white would be
    white on white. */
-.story-horizontal .about-rail__card:not(:has(img)) .about-rail__strip{
+[data-mobile-story] .about-rail__card:not(:has(img)) .about-rail__strip{
   border-top-color:var(--line);
   background:var(--line);
 }

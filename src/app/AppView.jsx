@@ -1279,36 +1279,31 @@ function MobileStory({ st }) {
           </div>
         </section>
 
-        {/* 3.1 — MORE ATMOSPHERES, AND THE ONE PLACE THE PAGE TURNS SIDEWAYS.
+        {/* 3.1 — HOW IT WORKS' 4.1, ON THE PHONE (16.09.26, by request: exploring an example mirrors that
+            scene, copy included).
 
-            Osmo Supply's Horizontal Scrolling Sections (methods/horizontalScroll.js). Seven cases
-            read as seven full screens of vertical scroll in a story that was already long; pinned and
-            translated they are one screen that moves sideways under the thumb — the same content, a
-            fraction of the column, and the one moment in the story where the page does something the
-            reader did not expect.
+            One pinned scene, built by /about's own module (methods/aboutRail.js). There is no heading: the
+            statement assembles as hero text on the empty stage, fades from its end as the first photograph
+            flies in, and the photographs cross the screen with the rail's drift. The close below is the
+            rail's [data-rail-handoff], so "Start with an image" starts assembling as the last one leaves.
+            This replaces Osmo Supply's Horizontal Scrolling Sections, which carried the same seven cases two
+            to a screen after the old heading and sentence.
 
-            It earns the surprise rather than spending it: a gallery is the one section here that is a
-            SET rather than an argument, and a set laid across is a set you compare. The chapters
-            either side stay vertical, so this reads as a turn rather than as a gimmick.
-
-            No `data-horizontal-scroll-disable`: the resource's opt-outs exist to spare small screens
-            a desktop effect, and this surface IS the small screen — disabling it here would disable
-            it everywhere. The wrapper sits outside `.about-grid`, because a pinned element inside a
-            grid track is pinned to the track rather than to the viewport. */}
+            THE CARDS STAY BUTTONS, because here they open that example. The live stage lets the pointer
+            through to the close under it, and the cards take it back (story.css). Nothing in the scene
+            carries data-reveal: the rail splits the statement itself, and a block holding a control must
+            never be rewritten (see the note at the top of <main>). Reduced motion and no JavaScript get the
+            statement above a row that scrolls sideways, as on /about. */}
         <section id="story-gallery" data-story-ch="gallery" data-sec data-rule className="about-sec about-sec--gallery">
-          <div className="about-grid">
-            <div className="about-col">
-              <h2 data-sec-head>Different Images. Different Palettes.</h2>
-              <p data-reveal>Explore another example to see how a different image changes the colours, proportions and contrast.</p>
-            </div>
-          </div>
-
-          <div className="story-horizontal" data-horizontal-scroll-wrap>
-            {st.cases.map((c) => (
-              <div key={c.key} className="story-hpanel" data-horizontal-scroll-panel>
-                <button type="button" className="about-rail__card" data-story-case="1" data-ix="press" data-focus="value"
+          <div className="about-rail" data-rail="1">
+            <p className="about-rail__statement" data-rail-statement="1">The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
+            <div className="about-rail__track" data-rail-track="1">
+              {st.cases.map((c) => (
+                <button key={c.key} type="button" className="about-rail__card" data-rail-card="1" data-story-case="1" data-ix="press" data-focus="value"
                   onClick={c.onOpen} aria-label={c.aria}>
-                  {c.hasImage && <img src={c.image} alt="" loading="lazy" decoding="async" />}
+                  {/* Not lazy, as on /about: the stage clips its row, so a lazy photograph would only be asked
+                      for once it was already on screen. Low priority keeps it behind the story's own. */}
+                  {c.hasImage && <img src={c.image} alt="" fetchPriority="low" decoding="async" />}
                   <span className="about-rail__content">
                     <span className="about-rail__meta"><span>{c.note}</span></span>
                     <span>
@@ -1321,8 +1316,8 @@ function MobileStory({ st }) {
                     </span>
                   </span>
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </section>
 
@@ -1343,9 +1338,16 @@ function MobileStory({ st }) {
             wrap opts out and keeps the surface colour.
 
             The wrapper is taller than the sticky container on purpose — that difference IS the scrub
-            distance, and with them equal the effect has nowhere to run. */}
+            distance, and with them equal the effect has nowhere to run.
+
+            AND IT CLOSES AS /about DOES (16.09.26). [data-rail-handoff] pulls it up under the end of the
+            gallery's pin by a measured overlap, so the statement starts assembling as the last photograph
+            clears its first word; data-sticky-start="top top" has it assemble in place. The lead and the
+            act are [data-sticky-title="after"] cued on "Discover", so they arrive with that word rather
+            than standing there while the sentence is still being written. That is an opacity and a small
+            rise, never a rewrite, so the button keeps its handler throughout. */}
         <section id="story-handoff" data-story-ch="handoff" data-sec data-rule
-          data-sticky-title="wrap" className="story-cta">
+          data-sticky-title="wrap" data-sticky-start="top top" data-rail-handoff="1" className="story-cta">
           <div className="story-cta__container">
             <div className="story-cta__inner">{/* NO data-sec-head, AND THAT IS THE WHOLE BUG.
 
@@ -1364,8 +1366,8 @@ function MobileStory({ st }) {
                   two surfaces end on the same sentence (by request). The split keeps the <br> and
                   writes the sentence onto the heading as its aria-label — see aboutStickyTitle.js. */}
               <h2 data-sticky-title="heading" className="story-cta__title">Start with an image.<br />Discover its palette.</h2>
-              <p className="story-cta__lead">{st.handoffLine}</p>
-              <div className="story-actions">
+              <p className="story-cta__lead" data-sticky-title="after" data-sticky-after-word="Discover">{st.handoffLine}</p>
+              <div className="story-actions" data-sticky-title="after" data-sticky-after-word="Discover">
                 {/* THE SUFFIX NAMED A SURFACE THIS DOES NOT OPEN. It read "open the example
                     palettes", and Example Palettes is a real, differently-titled screen on this
                     site — the one the share view's `See All Examples` goes to. This control calls

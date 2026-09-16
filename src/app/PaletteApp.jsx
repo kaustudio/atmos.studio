@@ -32,7 +32,7 @@ import { initDividers } from './methods/aboutDividers.js';
 import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
 import { initSectionDock } from './methods/aboutDock.js';
-import { initHorizontalScroll } from './methods/horizontalScroll.js';
+import { initHorizontalRail } from './methods/aboutRail.js';
 import { initToggleSwitch } from './methods/toggleSwitch.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initLayeredSlider } from './methods/layeredSlider.js';
@@ -809,8 +809,10 @@ export default class PaletteApp extends React.Component {
     /* THE PIN GOES FIRST. It is the only thing on this surface that changes the document's height —
        ScrollTrigger inserts a spacer the length of the horizontal travel — so anything built before
        it would have measured a page that is about to be a different one. Same reason AboutPage builds
-       its three pins ahead of everything else. */
-    this._storyKills.push(initHorizontalScroll(root));
+       its three pins ahead of everything else. It is /about's 4.1 rail since 16.09.26, and it also
+       moves the close up under its own end ([data-rail-handoff]), which is one more reason the sticky
+       title below must be built after it: it measures the close where the rail has put it. */
+    this._storyKills.push(initHorizontalRail(root));
     this._storyReveal = initPageReveal(root, {
       motion,
       hero,

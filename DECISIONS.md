@@ -6,6 +6,35 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — On a phone, exploring an example ends with How it Works' 4.1 scene
+
+**The story's gallery is the same scene as How it Works 4.1.** The old heading ("Different Images.
+Different Palettes.") and its sentence are gone. In their place is /about's statement, word for word:
+"The examples below are palettes drawn from different photographs. Compare their colours, proportions
+and contrast, then try your own image in the desktop tool." It assembles on the empty stage, fades from
+its end as the first photograph arrives, and the seven other examples fly across with the rail's drift.
+It is the same markup and the same module (`initHorizontalRail`), so the two surfaces cannot drift
+apart. It replaces Osmo Supply's Horizontal Scrolling Sections (two cards to a screen), whose module and
+styles were removed.
+
+**The cards still open their example.** Here they are buttons, so the story hands them the pointer back
+from the stage, which otherwise lets taps through to the close underneath.
+
+**The close is handed off as on /about.** "Start with an image. Discover its palette." starts
+assembling, in place, as the last photograph clears its first word. The story's own line and its
+Explore Another Example button arrive with "Discover", as Explore Atmos does on /about. They are faded,
+never rewritten, so the button keeps working throughout.
+
+**The chapter label follows the handoff.** A section pulled up under the gallery's pin now counts as
+current when its statement starts. Before this, the story's label read "Your Own Image" while two
+photographs were still crossing, and /about's dock hid over its last cards.
+
+**Checked** in Chrome at 390x844, 320x640 and, for /about, 1440x900. No revealed letter is ever under a
+photograph, a card tapped mid-flight opens its example, and Explore Another Example opens the chooser.
+Reduced motion shows the statement above a row that scrolls sideways, and there were no console errors.
+
+---
+
 ## 2026-09-16 — While the landing is up, the create page under it holds still and is not drawn
 
 **What was wrong.** The desktop landing is a fixed cover over the create page, not a replacement for

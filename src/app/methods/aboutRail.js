@@ -10,6 +10,10 @@
    grid they were three cards and an implication, and as a rail they are the whole shelf, read the way
    you would read a shelf.
 
+   Since 16.09.26 it carries the phone story's gallery too: the same scene, with the same statement and
+   the close handed off the same way (_syncStory in PaletteApp). There the cards are buttons that open
+   an example, and story.css hands them the pointer back from the stage.
+
    THE MECHANIC IS THE SOURCE'S, UNCHANGED. Every number below is mwg_001's own: the 120vw pad, the
    travel measured as the track's own clientWidth minus a viewport, the 'left 120%' / 'right -20%'
    card window, and the per-card drift drawn from Math.random() in the ranges the source states. An
@@ -108,7 +112,9 @@ export function initHorizontalRail(root) {
   const lastCard = cards[cards.length - 1];
   const placeHandoff = () => {
     if (!handoff) return;
-    const line = handoff.querySelector('.about-end__line');
+    // The close's statement, by its role rather than its class: /about's .about-end__line and the phone
+    // story's .story-cta__title are both the wrap's sticky-title heading.
+    const line = handoff.querySelector('[data-sticky-title="heading"]');
     const d = distance();
     if (!line || !lastCard || !d) return;
     const vw = window.innerWidth, vh = window.innerHeight;

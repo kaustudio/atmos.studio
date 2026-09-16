@@ -73,7 +73,15 @@
    marker to 0.78 on every hop. global.css: "There is no --press-scale. A press changes the control's
    colour, never its geometry." That rule was written about buttons, but a marker that squashes as it
    moves is the same idea failing in the same way, and this is the only surface on the site that
-   would have done it. */
+   would have done it.
+
+   [ATMOS 10] A SECTION HANDED OFF UNDER A PIN ARRIVES WHEN ITS STATEMENT STARTS (16.09.26). The
+   gallery rail pulls the close up under the end of its own travel ([data-rail-handoff-live], see
+   aboutRail.js [ATMOS 5]), so the close's top edge is on screen while the last photographs are still
+   crossing. Read by its box, the close became the current section there: the phone story's label read
+   "Your Own Image" over the gallery, and /about's dock hid over it. Such a section counts from 'top top'
+   instead, which is where its statement starts assembling, and the section before it runs until then,
+   so the two meet in both scroll directions. */
 
 function noop() { }
 
@@ -387,11 +395,14 @@ export function initSectionDock(root, options) {
       }, dur(DUR.fold) * 1000 + 60);
     }
 
+    // [ATMOS 10]
+    const handedOff = (el) => !!el && el.hasAttribute('data-rail-handoff-live');
     sections.forEach((section, i) => {
+      const next = sections[i + 1];
       teardown.push(ScrollTrigger.create({
         trigger: section,
-        start: 'top 45%',
-        end: 'bottom 45%',
+        start: handedOff(section) ? 'top top' : 'top 45%',
+        ...(handedOff(next) ? { endTrigger: next, end: 'top top' } : { end: 'bottom 45%' }),
         onToggle: (self) => {
           if (self.isActive) setActive(i, self.direction !== -1);
         },
@@ -440,7 +451,7 @@ export function initSectionDock(root, options) {
       const line = 100 - gsap.utils.clamp(0, 100, Number.isNaN(offset) ? 10 : offset);
       return ScrollTrigger.create({
         trigger: zone,
-        start: 'top ' + line + '%',
+        start: handedOff(zone) ? 'top top' : 'top ' + line + '%',
         end: 'bottom top',
         onToggle: updateHidden,
       });
