@@ -56,6 +56,36 @@ export const miscMethods = {
       } catch (e) { }
     });
   },
+  /* AND WHAT IT COVERS HOLDS STILL, UNPAINTED (16.09.26). Inert was half of covering. The tool under
+     the landing is a whole page, 1611px of it at 1440x900, and nothing stopped the wheel scrolling
+     it: measured, a flick on the landing moved the hidden page 711px while the stage stood still.
+     Chrome showed nothing of that. Safari did, through the floating bar: the bar is glass, and the
+     create page sliding along under it came through the blur and the landing's 40% tint, the one
+     translucent thing on the front page. It also left the tool 711px down for Create to arrive on,
+     which _scrollToTop was only mopping up afterwards.
+
+     So while the landing is up, Lenis is stopped, which takes the wheel's default and puts
+     `lenis-stopped`'s overflow:clip on the root, and the root carries [data-landing-cover]. global.css
+     turns that into the same lock for a reader without Lenis (reduced motion) and into
+     visibility:hidden on the page's three in-flow regions. Hidden rather than display:none, so the
+     tool keeps the layout it is revealed in and nothing reflows at the crossing.
+
+     NOT SKIPPED DURING A WIPE, unlike the inert guard above. The cover's commit is where the landing
+     leaves or arrives, and the window opens on the tool straight after it; a tool still hidden then
+     would rise as an empty page. The departing page's ghost carries [data-ghost-app], which the rule
+     excludes, so the tool's copy stays painted while the landing arrives behind it.
+
+     The grid holds the same lock and the two never overlap: feedView starts as 'list', and
+     _resetToolState closes the grid before the landing returns. The check on release keeps that
+     true if it ever changes. */
+  _syncLandingCover() {
+    const on = !this.state.landingDismissed && !this.state.narrow && !isDoc(this.state.route);
+    if (on === !!this._coverOn) return;
+    this._coverOn = on;
+    try { if (on) document.documentElement.setAttribute('data-landing-cover', ''); else document.documentElement.removeAttribute('data-landing-cover'); } catch (e) { }
+    if (on) this._lenisStop();
+    else if (this.state.feedView !== 'grid') this._lenisStart();
+  },
   // Lenis smooth scroll (vendored). Integration contract with the existing motion system:
   //  - driven by the GSAP ticker (one clock; no second rAF loop)
   //  - skipped under prefers-reduced-motion (native scroll is the floor)
@@ -77,7 +107,9 @@ export const miscMethods = {
       this._lenis = new window.Lenis({ lerp: 0.22 });
       this._lenisRaf = (time) => { try { this._lenis.raf(time * 1000); } catch (e) { } };
       g.ticker.add(this._lenisRaf);
-      if (this.state.feedView === 'grid') this._lenis.stop();
+      // Lenis can arm after the landing has already asked for the lock (it waits for the vendored
+      // script), so it starts stopped when either owner is holding it.
+      if (this.state.feedView === 'grid' || this._coverOn) this._lenis.stop();
     };
     arm();
   },

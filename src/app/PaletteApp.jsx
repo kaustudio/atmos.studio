@@ -458,6 +458,7 @@ export default class PaletteApp extends React.Component {
     safe(() => requestAnimationFrame(() => { this._updateProjPill(); this._syncProjSteps(); }), 'projpill');
     safe(() => this._initLoader(), 'loader');
     safe(() => this._syncAppInert(), 'inert');   // the landing covers the tool; what it covers is inert
+    safe(() => this._syncLandingCover(), 'cover');   // ...and holds still, unpainted (methods/misc.js)
     safe(() => this._syncConsent(), 'consent');   // arms the analytics question once there is no loader to wait for
     // Light on the tool, the reader's own appearance on a legal route — see _entryTheme.
     const theme = this.state.theme;
@@ -609,6 +610,7 @@ export default class PaletteApp extends React.Component {
     this._syncStory();
     this._syncPicker();
     this._syncAppInert();
+    this._syncLandingCover();
     this._syncConsent();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
@@ -916,6 +918,8 @@ export default class PaletteApp extends React.Component {
     if (this._rmq && this._onRmq) { try { if (this._rmq.removeEventListener) this._rmq.removeEventListener('change', this._onRmq); else this._rmq.removeListener(this._onRmq); } catch (e) { } this._rmq = null; this._onRmq = null; }
     this.stopCanvas(); this.killSpatial(); this.killOrbit();
     try { document.documentElement.style.overflow = ''; } catch (e) { }
+    try { document.documentElement.removeAttribute('data-landing-cover'); } catch (e) { }
+    this._coverOn = false;
     if (this._t) clearInterval(this._t);
     if (this._end) clearTimeout(this._end);
     if (this._onKey) document.removeEventListener('keydown', this._onKey);

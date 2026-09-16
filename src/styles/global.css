@@ -2366,6 +2366,21 @@ html.lenis,html.lenis body{height:auto}
    scaffold and the phone's list and share views all take it, and the phone pair had already been
    patching around it with an inline copy. */
 [data-lenis-prevent]{overscroll-behavior:contain}
+/* THE LANDING HOLDS THE PAGE UNDER IT STILL, AND UNPAINTED (16.09.26). [data-landing-cover] is on the
+   root for exactly as long as the desktop landing is up (_syncLandingCover in methods/misc.js, which
+   also stops Lenis). The covered tool used to scroll under the stage: nothing showed in Chrome, but
+   in Safari the create page moved along under the floating bar's glass.
+   · overflow:hidden is the lock for a reader without Lenis. With Lenis, its stopped rule above puts
+     clip on the root; on the root the two mean the same, and both let _scrollToY's programmatic
+     scroll through.
+   · visibility, not display, so the tool keeps the layout it is revealed in. Only the three in-flow
+     regions: everything else in the frame is either on the landing (bar, mark, loader) or arrives
+     over it (Restore's dialog, notices, toasts), and an allow-list here would be one more list a new
+     surface has to remember to join (see the gate's note above).
+   · :not([data-ghost-app]), because the departing page's snapshot is a copy of [data-app] too. On
+     the way back to the landing it has to stay painted while the landing arrives behind it. */
+html[data-landing-cover]{overflow:hidden}
+html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent],.site-foot){visibility:hidden}
 
 /* ===== DISCLOSURE CHEVRONS ====================================================================
    Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no

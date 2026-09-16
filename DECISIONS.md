@@ -6,6 +6,35 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — While the landing is up, the create page under it holds still and is not drawn
+
+**What was wrong.** The desktop landing is a fixed cover over the create page, not a replacement for
+it, and nothing stopped the wheel from scrolling the page underneath. A flick on the landing moved the
+hidden page 711px. Chrome showed nothing of it. Safari did: the floating bar is glass (a blur and, on
+the landing, a 40% tint), and the create page could be seen sliding along under it. It also left the
+tool scrolled down for Create to arrive on.
+
+**What it does now.** While the desktop landing is up, the root carries `data-landing-cover`
+(`_syncLandingCover` in `methods/misc.js`):
+- Lenis is stopped, which blocks the wheel and puts `overflow:clip` on the root.
+- `overflow:hidden` locks the page for readers without Lenis (reduced motion).
+- The page's three in-flow regions (`main`, the library and the footer) are `visibility:hidden`. They
+  keep their layout, so nothing reflows when the landing leaves.
+
+The bar, the mark, the loader, dialogs, notices and the analytics banner are untouched. The lock lifts
+at the transition's commit, so the window opens on a page that is drawn. The departing page's snapshot
+is excluded from the rule, so it stays drawn while the landing comes back.
+
+**Not on a phone.** There the landing is the ground under the story, and the story has to scroll.
+
+**Checked** in Chrome and in Playwright's WebKit. The wheel and paging keys on the landing leave the
+page at 0. Create, the wordmark's return, How it Works and Back all lock and release it correctly,
+with no blank frame in either transition. Reduced motion locks without Lenis, the consent banner stays
+visible, and the phone's story still scrolls. Playwright's WebKit draws no backdrop blur, so what the
+glass shows in Safari itself was not checked from here.
+
+---
+
 ## 2026-09-15 — On a phone, the colour picker under the photograph is two-up
 
 **Two columns, so the photograph and the whole set share a screen.** On the phone's "See Where Each
