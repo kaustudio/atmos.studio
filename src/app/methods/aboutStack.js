@@ -6,10 +6,10 @@
    the transform on the card, and the two ScrollTriggers are the effect's own — one for the recede,
    one for the fade a little later.
 
-   On /about it carries the three cards of "One model, read three ways" — hue from Cut Limestone,
-   lightness from Sable & Bracken, chroma from Coral. Three cuts through one model, taken from three
-   different photographs, and a card that recedes under the one arriving over it is a reading giving
-   way to the next reading.
+   On /about it carries the three cards of 2.2, "Reading the Shape of a Palette": hue from Dry Season,
+   lightness from Frozen Slate, chroma from Garnet, three of 4.1's eight examples. Three cuts through
+   one model, taken from three different photographs, and a card that recedes under the one arriving
+   over it is a reading giving way to the next reading.
 
    THE MECHANIC IS THE SOURCE'S, UNCHANGED — and restoring that is the whole of this file's recent
    history. An earlier pass merged the two ScrollTriggers into one scrubbed timeline on the slide and

@@ -1215,7 +1215,9 @@
 /* Each card carries a different palette, so each card has to say WHICH. Set in the page's label
    voice, in the card's TEXT colour rather than its mark colour: the mark is sized for the numeral,
    which is display type held to 3 to 1, and this label is ten pixels. Measured at 3.74 to 1 against
-   Cut Limestone's ground before the swap, which is short of the 4.5 that small text needs. */
+   Cut Limestone's ground before the swap, which is short of the 4.5 that small text needs. The cards
+   carry 4.1's examples now (16.09.26) and it still holds: Dry Season's mark is 3.63 on its ground and
+   Garnet's is 3.17. */
 .about-route .about-stack__ref{margin:0;color:var(--r-text)}
 /* Full strength, for the reason spelled out on .about-stack__d below: a tint on a palette colour is
    a contrast cut, and at --fs-label it is the smallest text on the card. */
@@ -1260,8 +1262,8 @@
 }
 /* NO OPACITY. It was .72, and on a card whose two colours are a real palette rather than a token
    that is not a tint, it is a contrast cut: composited, it took four of the five cards' descriptions
-   to 1.51–4.13 against their own grounds, below what body copy needs. Card 03's pair is 4.51 at full
-   strength, so ANY reduction breaks it — there is no safe value, only no value.
+   to 1.51–4.13 against their own grounds, below what body copy needs. Card 03 is Garnet's now
+   (16.09.26): 5.28 at full strength, under 4.5 from .89 down, and 3.41 at the old .72.
    The hierarchy it was buying is still there, carried by size and tracking, which cost no contrast. */
 .about-route .about-stack__d{
   margin:0;max-width:52ch;
