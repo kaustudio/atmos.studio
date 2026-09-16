@@ -830,10 +830,11 @@ function MobileExampleList({ ml }) {
    to — see src/styles/story.css for the layout argument.
 
    IT IS /about's PAGE, AT ONE COLUMN. Not a surface that resembles it: the same section element, the
-   same grid, the same reading column, the same figures, the same anchor dock, and — the part that
-   matters most and was hardest to see — the same MOTION MODULES. initPageReveal, initCascade,
-   initDividers and initSectionDock are all root-scoped, so they run over this markup exactly as they
-   run over /about's. There is no second reveal engine and no second set of tokens to drift.
+   same grid, the same reading column, the same figures, and — the part that matters most and was
+   hardest to see — the same MOTION MODULES. initPageReveal, initCascade, initDividers and the gallery
+   rail are all root-scoped, so they run over this markup exactly as they run over /about's. There is
+   no second reveal engine and no second set of tokens to drift. (/about's anchor dock is the one
+   piece it does not share since 16.09.26.)
 
    NO PHOTOGRAPH BEHIND THE WORDS. The first pass hung a fixed image behind the whole surface with a
    gradient scrim over it, and copy on top. Three things were wrong with that and only the first was
@@ -853,67 +854,9 @@ function MobileStory({ st }) {
   return (
     <div data-mobile-story="1" className="doc-route">
 
-      {/* THE ANCHOR DOCK, /about's own — same markup, same module, same glass pane. It is the one
-          affordance a scrolling story of this length was missing: seven chapters is more than a
-          reader can hold, and the dock says both where you are and what is left. */}
-      <nav data-section-dock-init aria-label="Chapters of this story" className="section-dock">
-        <div data-section-dock-pill className="section-dock__pill">
-          <div className="glass-effect" aria-hidden="true">
-            <div className="glass-effect__fill"></div>
-            <div className="glass-effect__fill-burn"></div>
-            <div className="glass-effect__highlight-soft"></div>
-            <div className="glass-effect__highlight-strong"></div>
-            <div className="glass-effect__edge-light"></div>
-            <div className="glass-effect__edge-dark"></div>
-            <div className="glass-effect__inner-glow"></div>
-          </div>
-          <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="story-dock-list" data-ix="cell" data-focus="value" className="section-dock__toggle">
-            <span data-section-dock-label-wrap className="section-dock__label-wrap">
-              <span className="section-dock__label">
-                <span className="section-dock__link-num">1.1</span>
-                <span>The Whole Image</span>
-              </span>
-            </span>
-            <span className="section-dock__caret" aria-hidden="true"></span>
-          </button>
-          <div data-section-dock-list id="story-dock-list" className="section-dock__list">
-            <div data-section-dock-indicator className="section-dock__indicator"></div>
-            <ul className="section-dock__items">
-              <li data-dock-group className="section-dock__group">
-                <button type="button" data-dock-group-toggle aria-expanded="true" aria-controls="story-dock-g1" data-ix="cell" data-focus="value" className="section-dock__group-head">
-                  <span className="section-dock__link-num">1</span><span>The Image</span>
-                  <span className="section-dock__chev" aria-hidden="true"></span>
-                </button>
-                <ul id="story-dock-g1" data-dock-sub className="section-dock__sub">
-                  <li><a data-active data-section-dock-link href="#story-image" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.1</span><span>The Whole Image</span></a></li>
-                  <li><a data-section-dock-link href="#story-structure" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.2</span><span>The Proportions</span></a></li>
-                  <li><a data-section-dock-link href="#story-where" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">1.3</span><span>Where Colours Come From</span></a></li>
-                </ul>
-              </li>
-              <li data-dock-group className="section-dock__group">
-                <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="story-dock-g2" data-ix="cell" data-focus="value" className="section-dock__group-head">
-                  <span className="section-dock__link-num">2</span><span>The Palette</span>
-                  <span className="section-dock__chev" aria-hidden="true"></span>
-                </button>
-                <ul id="story-dock-g2" data-dock-sub className="section-dock__sub">
-                  <li><a data-section-dock-link href="#story-relationships" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.1</span><span>Character, Role and Contrast</span></a></li>
-                  <li><a data-section-dock-link href="#story-interpretation" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">2.2</span><span>What It Says</span></a></li>
-                </ul>
-              </li>
-              <li data-dock-group className="section-dock__group">
-                <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="story-dock-g3" data-ix="cell" data-focus="value" className="section-dock__group-head">
-                  <span className="section-dock__link-num">3</span><span>Onward</span>
-                  <span className="section-dock__chev" aria-hidden="true"></span>
-                </button>
-                <ul id="story-dock-g3" data-dock-sub className="section-dock__sub">
-                  <li><a data-section-dock-link href="#story-gallery" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.1</span><span>Other Examples</span></a></li>
-                  <li><a data-section-dock-link href="#story-handoff" data-ix="cell" data-focus="value" className="section-dock__link"><span className="section-dock__link-num">3.2</span><span>Your Own Image</span></a></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+      {/* NO CHAPTER DOCK (16.09.26, by request). This surface carried /about's anchor dock, the glass
+          pill at the foot of the screen that named the current chapter and opened into the list. The
+          phone story no longer has it; /about keeps its own. The chapters keep their ids. */}
 
       {/* KEYED ON THE CASE, and this is the fix for a bug that only appears when the story re-tells
           itself about a different image.

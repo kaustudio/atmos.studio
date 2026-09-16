@@ -31,7 +31,6 @@ import { initPageReveal } from './methods/pageReveal.js';
 import { initDividers } from './methods/aboutDividers.js';
 import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
-import { initSectionDock } from './methods/aboutDock.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
 import { initToggleSwitch } from './methods/toggleSwitch.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
@@ -794,9 +793,8 @@ export default class PaletteApp extends React.Component {
     };
 
     /* ORDER, for the reason AboutPage states it: anything that measures the document must do so after
-       whatever changes its height. Nothing here pins, so the only real dependency is that the dock
-       goes LAST — it holds a trigger against every section plus one spanning the run, so it wants a
-       document that has stopped moving. */
+       whatever changes its height. Here that is the gallery's pin, so the rail goes first (below).
+       There is no anchor dock to build last any more: the story's was removed on 16.09.26. */
     const groups = [].slice.call(root.querySelectorAll('[data-sec]')).map((sec) => ({
       heading: sec.querySelector('[data-sec-head]'),
       blocks: [].slice.call(sec.querySelectorAll('[data-reveal]')),
@@ -846,7 +844,6 @@ export default class PaletteApp extends React.Component {
        now, and the module commits no React state of its own, so it cannot re-enter. Same call
        AboutPage makes, with the motion object already built above. */
     this._storyKills.push(initCascade(root, motion));
-    this._storyKills.push(initSectionDock(root, { lenis: this._lenis }));
 
     /* The reveal is ARMED, not played — the contract AboutPage and LegalPage both describe. The note
        that used to sit here said the split existed "so a future wiped arrival can hold it behind the

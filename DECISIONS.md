@@ -6,6 +6,15 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-16 — The phone story has no chapter dock
+
+**Removed by request.** The phone story carried /about's anchor dock: the glass pill at the foot of
+the screen that named the current chapter ("2.1 Character, Role and Contrast") and opened into the
+list. Its markup and its setup in `_syncStory` are gone. /about keeps its dock, including the handoff
+rule added the same day. The story's chapters keep their ids.
+
+---
+
 ## 2026-09-16 — On a phone, exploring an example ends with How it Works' 4.1 scene
 
 **The story's gallery is the same scene as How it Works 4.1.** The old heading ("Different Images.

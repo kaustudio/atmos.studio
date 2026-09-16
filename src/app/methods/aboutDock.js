@@ -78,8 +78,9 @@
    [ATMOS 10] A SECTION HANDED OFF UNDER A PIN ARRIVES WHEN ITS STATEMENT STARTS (16.09.26). The
    gallery rail pulls the close up under the end of its own travel ([data-rail-handoff-live], see
    aboutRail.js [ATMOS 5]), so the close's top edge is on screen while the last photographs are still
-   crossing. Read by its box, the close became the current section there: the phone story's label read
-   "Your Own Image" over the gallery, and /about's dock hid over it. Such a section counts from 'top top'
+   crossing. Read by its box, the close became the current section there: /about's dock hid over the
+   last photographs, and the phone story's dock (since removed) read "Your Own Image" over its gallery.
+   Such a section counts from 'top top'
    instead, which is where its statement starts assembling, and the section before it runs until then,
    so the two meet in both scroll directions. */
 

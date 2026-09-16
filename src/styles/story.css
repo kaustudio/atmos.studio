@@ -130,12 +130,13 @@
      property and collapses them again. The rungs are 8 / 9 / 10 in global.css. */
 }
 
-/* THE REMAP IS ON main, NOT ON THE SURFACE, and the anchor dock is why.
+/* THE REMAP IS ON main, NOT ON THE SURFACE, and the anchor dock was why while the story had one
+   (it was removed on 16.09.26).
 
    Declared on [data-mobile-story] it reached the dock too, and the dock's row numbers are sized in
    --fs-micro — so /about's dock and this one were setting the same component's numbering at two
-   different sizes. The dock is a sibling of <main>, so scoping the remap to the story's prose leaves
-   it reading the untouched ladder and the two docks are one component again.
+   different sizes. The dock was a sibling of <main>, so scoping the remap to the story's prose left
+   it reading the untouched ladder. Anything else that sits beside <main> gets the same answer.
 
    Everything the remap is FOR is inside main: the weights key's OKLCH readout, the role cells' hex
    and note, the checks' verdicts. */
