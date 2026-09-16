@@ -304,7 +304,10 @@ export function docLinkHandler(vals) {
    above it the way it does over a document; it floats fixed on the same lines instead, and over the
    field it takes the landing's thinner light-mode pane. Everything else, the hide on the way down
    included, is this masthead exactly. */
-export function DocHead({ vals, floating, onField }) {
+/* `onMark` replaces the mark's route change where "/" is the page already on screen: the phone's
+   front page, whose mark goes back to the start instead (returnToStoryStart in persistence.js).
+   A modified click still opens "/" in a new tab, as the link does everywhere. */
+export function DocHead({ vals, floating, onField, onMark }) {
   /* The bar leaves on the way down and comes back on the way up — see methods/docHeadHide.js for
      why that is here rather than on the app's header, and why it is a transition rather than a
      tween. Mounted from DocHead itself, not from the two pages that render it, so the behaviour
@@ -318,7 +321,10 @@ export function DocHead({ vals, floating, onField }) {
       <GlassEffect />
       <span className="doc-head__theme"><ThemeSwitch vals={vals} /></span>
       <span className="doc-head__mark">
-        <a href="/" onClick={vals.navigate} aria-label="Atmos Gallery" data-focus="chrome">
+        <a href="/" onClick={onMark ? (e) => {
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault(); onMark();
+        } : vals.navigate} aria-label="Atmos Gallery" data-focus="chrome">
           <span className="mark" role="img" aria-label="Atmos Gallery"></span>
         </a>
       </span>

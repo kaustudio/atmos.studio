@@ -163,9 +163,9 @@
    word is apparatus in front of an opening. */
 /* TALLER THAN A SCREEN, AND THE DIFFERENCE IS THE DISSOLVE.
 
-   The hero is 200svh: the inner sticks for the first screen, and the remaining screen is the travel
-   the fade and blur run over (methods/heroExit.js). Nothing exits upward — the copy holds centred in
-   the viewport and stops being there.
+   The hero is 150svh (200 until 16.09.26, see below): the inner sticks for the first screen, and the
+   remaining half screen is the travel the fade and blur run over (methods/heroExit.js). Nothing exits
+   upward — the copy holds centred in the viewport and stops being there.
 
    AND THE DISSOLVE OVERLAPS THE ARRIVAL RATHER THAN PRECEDING IT. At 150svh the fade finished at
    333px and chapter 1.1 only began to appear at 406 — two events back to back with a gap between
@@ -179,14 +179,22 @@
    extends underneath it.
 
    Section order does the compositing: the chapters come after the hero in the DOM and carry
-   var(--surface), so 1.1 paints over the dissolving block with no z-index needed. */
+   var(--surface), so 1.1 paints over the dissolving block with no z-index needed.
+
+   150svh NOW, AND 1.1 RISES FROM THE FIRST PIXEL (16.09.26, by request: dragging instead of pressing
+   the hero's button "goes very slow"). The drag itself was never slow — measured, the page follows
+   the finger 1:1 — but at 200svh the first 422px of it (390x844) moved nothing: the copy held and
+   faded, and 1.1's edge only crossed the bottom of the screen after half a screen of thumb. With the
+   box at 150svh and the same half-screen pull, 1.1's top rests on the bottom edge, so any drag lifts
+   it at once, and the dissolve (heroExit.js reads the box, so its tail is half a screen now) finishes
+   as 1.1 reaches the copy. The button's glide to 1.1 is shorter by the same half screen. */
 .story-hero{
   position:relative;
   background:transparent;
-  min-height:200svh;
+  min-height:150svh;
   padding-block:0;
 }
-/* The overlap. Half a screen, which is the whole second half of the hero's sticky travel. */
+/* The overlap. Half a screen, which is the whole of the hero's sticky travel. */
 [data-story-ch="image"]{ margin-top:-50svh }
 /* Sticky rather than fixed. A fixed child resolves against the nearest transformed ancestor, and
    anything that transforms <main> — the block entrance this surface used to arrive on, or any future

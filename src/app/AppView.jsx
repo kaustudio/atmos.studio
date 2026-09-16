@@ -2115,7 +2115,9 @@ export default function AppView({ vals }) {
             which answers the same problem the scrub did. heroExit's [data-logo] now matches nothing
             here, which it is written to tolerate; the field's mark clearing (_markBox) likewise finds
             no mark and clears nothing, the pane being the mark's ground now. */}
-        <DocHead vals={vals} floating onField />
+        {/* onMark (16.09.26): on this page "/" is the page itself, so the mark's link went nowhere. It
+            goes back to the start of the story instead — see returnToStoryStart. */}
+        <DocHead vals={vals} floating onField onMark={vals.returnToStoryStart} />
         <MobileStory st={vals.mobileStory} />
         {/* THE ONLY WAY OFF THIS PAGE ON A PHONE. The foot is rendered by the document routes and,
             in the tool, by the upload stage — and the mobile story is neither, so the phone homepage

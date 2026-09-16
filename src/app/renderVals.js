@@ -2225,6 +2225,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // The phone's own way home for the brand mark — see returnToGateOnPhone in persistence.js for
       // why the two surfaces cannot share the tool's routine.
       returnToGate: () => this.returnToGateOnPhone(),
+      // The same mark on the phone's front page, where "/" is the page it is on: back to its start.
+      returnToStoryStart: () => this.returnToStoryStart(),
       // on phones the wordmark rides at the top exactly as it does on desktop, and stays decorative:
       // there is no tool behind the small-screen surface to hand a "back to the start" button to
       showLogoButton: !!s.landingDismissed && !s.narrow,

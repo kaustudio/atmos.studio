@@ -583,10 +583,15 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      a gutter less the hairline, so the content sat exactly 24px in, and 12 before that, while the
      controls were outlined pills. The track and the last word now sit 17px from the bar's outer
      edge, the hairline included. --nav-mark-top centres the fixed wordmark on the bar (the tool and the landing
-     draw the mark outside it, see logoStyle in AppView). */
+     draw the mark outside it, see logoStyle in AppView).
+     --nav-inset-end is the RIGHT end's padding, a gutter: 24px on a desktop (16.09.26, by request,
+     right side only). The words there sit beside a round end, where 16px read cramped; the switch on
+     the left is round itself and keeps 16. It steps down to 16 with the gutter on a phone, where
+     that end of the bar holds nothing. */
   --nav-top:var(--page-gutter);
   --nav-h:56px;
   --nav-inset:var(--row-inset);
+  --nav-inset-end:var(--page-gutter);
   --nav-mark-top:calc(var(--nav-top) + (var(--nav-h) - var(--logo-h)) / 2);
   /* ===== archive list rhythm =====
      The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
@@ -2434,7 +2439,7 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   position:sticky;top:var(--nav-top);
   margin:var(--nav-top) var(--page-gutter) 0;
   height:var(--nav-h);
-  padding:0 var(--nav-inset);
+  padding:0 var(--nav-inset-end) 0 var(--nav-inset);
   border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
   border-radius:var(--radius-pill);
 }

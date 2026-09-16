@@ -45,6 +45,32 @@ beat has already passed, and still never under the loader or a crossing.
 
 ---
 
+## 2026-09-16 — The bar's right end, the phone's logo and first drag, and no rules on How it Works
+
+**The top bar's right end is padded 24px, its left end 16px.** By request, right side only. The token is
+`--nav-inset-end`, which is `--page-gutter`: 24 on a desktop, 16 on a phone, where that end holds
+nothing. The tool's bar takes it as padding. The documents' masthead centres its wordmark in a
+three-track grid, where uneven padding would move the mark 4px, so it keeps even padding and moves its
+actions in by the difference. Measured: the last action ends 24px inside the hairline on the landing,
+the tool and /about, and /about's mark sits exactly on the bar's centre.
+
+**On the phone's front page, the logo goes back to the start.** It was a link to "/", which on a phone
+is the story itself, so pressing it did nothing, even over the example chooser. Now
+(`returnToStoryStart`) it runs the site's transition and returns to the first screen as a visit starts:
+the chooser closed, the example the visit rolled (with the field and its credit), no colour picked, the
+first tab, and the top of the page. A reader already there gets at most a glide up.
+
+**Dragging past the story's opening screen starts moving at once.** The drag was never slow; the page
+follows the finger 1:1. But the hero was 200svh, so the first 422px of a drag (at 390x844) only faded
+the copy in place, and 1.1 appeared after that. At 150svh, with the same half-screen overlap, 1.1 rests
+on the bottom edge and rises from the first pixel, and the dissolve finishes as it reaches the copy.
+
+**How it Works has no section rules.** /about's sections no longer carry `data-rule`, and the hairline
+is drawn only where a section asks for it (`.about-sec[data-rule]::before`). The phone story keeps its
+rules, and the two figure dividers on /about (`.about-divider`) are a separate element and stay.
+
+---
+
 ## 2026-09-16 — The phone story has no chapter dock
 
 **Removed by request.** The phone story carried /about's anchor dock: the glass pill at the foot of

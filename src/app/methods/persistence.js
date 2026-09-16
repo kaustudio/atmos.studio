@@ -1142,6 +1142,57 @@ export const persistenceMethods = {
     });
   },
 
+  /* THE MARK GOES HOME ON THE STORY TOO (16.09.26, by request: after Explore Another Example the logo
+     in the bar did not take the reader back). The phone's front page wears the documents' masthead,
+     whose mark is a link to "/", and on a phone "/" is this page, so navigateTo's same-route guard
+     swallowed the press. Measured over the open chooser: the mark was on top, hit-tested and took the
+     tap, and nothing happened. It was the same after a case swap and anywhere down the page.
+
+     So here the mark goes back to the first screen, in the state a visit starts in: the chooser
+     closed, the example this visit rolled (with the field taking its palette back), no colour
+     picked, the first reading tab, and the top of the page. That is what the desktop mark does for
+     its landing and what Explore Atmos does for the tool. It runs behind the site's transition, as a
+     case swap does, and the story is rebuilt under the cover even when the case is unchanged: the
+     tab's pill is placed by its module at build (toggleSwitch.js [ATMOS 2]), and a rebuilt story
+     arrives on its own reveal, as a re-told one does. A reader already on the first screen in that
+     state only gets the glide up, or nothing. */
+  returnToStoryStart() {
+    if (this._wipeRunning || this._pickerClosing) return;
+    const s = this.state;
+    const y = window.scrollY || 0;
+    if (!s.storyPicker && !s.storyCaseId && s.storySwatch == null && s.storyTab === 'weight' && y <= window.innerHeight) {
+      if (y > 1) this._glideToY(0);
+      return;
+    }
+    const recast = !!s.storyCaseId;
+    const rolled = this._storyDefaultId && this._examples().find((p) => p.id === this._storyDefaultId);
+    // Before the cover, for showExample's reason: the field crossfades while it is still lit.
+    if (recast && rolled) this.setFieldPalette(rolled);
+    this._wipeCover({
+      commit: (after) => {
+        this._storyKey = null;   // rebuild the story under the cover, case change or not (see above)
+        this.setState(Object.assign({
+          storyPicker: false,
+          storyCaseId: null,
+          storySwatch: null,
+          storyTab: 'weight',
+          announce: 'Back to the start.',
+        }, recast ? { storyMasks: null } : null), () => {
+          if (recast) this.buildStoryMasks();
+          // The top, through Lenis, then a refresh: chooseStoryCase's order and its reasons.
+          try {
+            if (this._lenis) this._lenis.scrollTo(0, { immediate: true, force: true });
+            else window.scrollTo(0, 0);
+          } catch (e) { try { window.scrollTo(0, 0); } catch (_) { } }
+          try { if (window.ScrollTrigger) window.ScrollTrigger.refresh(); } catch (e) { }
+          after();
+        });
+      },
+      reveal: () => this._playStoryReveal(),
+      reduced: () => this._playStoryReveal(),
+    });
+  },
+
   /* THE MARK GOES HOME, from either phone surface, in one step.
 
      NOT showIntroAgain(), which is what the mark calls in the tool. That routine is written for a
