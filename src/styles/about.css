@@ -301,9 +301,11 @@
    aboutFlip.js moves the photograph between them as you scroll. Both are drawn as plates whether or
    not that happens: --surface-raised with a hairline, so the empty destination reads as a frame
    waiting rather than a hole — which is what it is for most of the scroll and all of a no-JS render.
-   Square, as photographs and their frames are across the site; the designed corners belong to
-   controls and floating surfaces (global.css, the --radius-* block). */
-.about-plate{position:relative;background:var(--surface-raised);border:1px solid var(--line-strong)}
+   THE CORNER (17.09.26, by request): --radius-surface, the corner How it Works' photo cards and
+   Start here take. One figure for a photograph that travels between two sizes — 448x252 in the hero
+   and 1392x783 below it — because Flip animates the box, and a corner that changed with it would be
+   a second thing moving. */
+.about-plate{position:relative;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-surface)}
 /* ONCE THE FLIP IS RUNNING, THE FRAMES ARE NOT THERE. The plates are drawn — raised surface, hairline
    — so that a destination with nothing in it yet is a frame rather than a hole. That is the right
    answer for a page where the photograph never moves, and the wrong one for this page: the reader
@@ -333,12 +335,12 @@
    of their own, so paint order is DOM order and the destination — later in the document — draws
    straight over the photograph arriving inside it. 3 clears both plates and stays under the orb
    canvas (5) and the masthead (20). */
-.about-plate__target{position:absolute;inset:0;z-index:3;overflow:hidden;will-change:transform,width,height}
+.about-plate__target{position:absolute;inset:0;z-index:3;overflow:hidden;border-radius:var(--radius-surface);will-change:transform,width,height}
 .about-plate__img{display:block;width:100%;height:100%;object-fit:cover}
 /* The house image treatment: an inset ring rather than a border, so the outline cannot shift the
    picture inside a box whose size is being animated. */
 .about-plate__target::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
+  content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   box-shadow:inset 0 0 0 1px var(--img-outline);
 }
 

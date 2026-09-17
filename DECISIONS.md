@@ -83,6 +83,30 @@ global.css. It is the same row on the result stage and on the fullscreen detail,
 card's foot takes it too ("Open Detail", whose accessible name now opens with the visible label,
 SC 2.5.3).
 
+**The landing's credit, How it Works' photograph, and where a palette's source sits (by request).**
+- The landing's thumbnail takes `--radius-swatch` (3px): it is 56 to 96px wide, where Start here's
+  proportion gives about 4px. Its inset ring takes the corner with it. The line under it is the
+  buttons' type, `--fs-body` at Medium with flat tracking, where it was a 12px regular line.
+- How it Works' hero photograph takes `--radius-surface` (28px), on the plate and on the travelling
+  target, so the corner holds at both its sizes (448×252 in the hero, 1392×783 below it). One figure
+  rather than two, because Flip animates the box and a corner changing with it would be a second
+  thing moving.
+- A generated palette's reference image moves above the readout's hairline, onto the row with the
+  name it came from. It keeps its 156×104, its right edge, its fade and its click-to-zoom.
+
+**The landing's statement reads at its own heading's size (by request).** The h1 has carried
+`--fs-landing` (40px at any width the landing appears at) while both of its lines overrode it with
+`--fs-statement` (32px), so the statement read at 32 and the 40 set the line-height of nothing. The
+lines inherit now, which is the next rung up and the size the loader's count beside it already uses.
+At 40 the first sentence takes two lines, so the statement is three lines where it was two.
+
+**A document's copy is still arriving when the window has opened (by request).** The page transition
+released a document's reveal 0.2s in: measured, the hero's four masked lines finished at 1.27s
+against a window that finishes opening at 1.45s, so the page had stopped moving before the
+transition ended. `_wipeCover` takes the beat from its caller now (`revealAt`), and a document route
+passes 0.65: the lines start at about 1.1s, inside the opening slot, and land at 1.73s. The tool
+keeps 0.2, where what it releases is one drop rather than a cascade.
+
 **The harmonies drawer speaks like the other controls (by request).** Its seven model pills take the
 segmented control's type — `--fs-body` at Medium, in the case their labels are written in — where they
 were `--fs-fine` at 400 in capitals (`toggleStyle`, whose only consumer they are). `data-hx-cell` joins

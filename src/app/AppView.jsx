@@ -1702,9 +1702,15 @@ function LandingStage({ vals, covered, quiet }) {
               </div>
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; max-width: 606px')}>
+                {/* ONE SIZE, THE ONE THE HEADING ALREADY DECLARES (17.09.26, by request: "increase
+                    the font-size to the nearest token"). The h1 has carried --fs-landing while both
+                    of its lines overrode it with --fs-statement, so the statement read at 32px and
+                    the 40px on the heading only ever set the line-height of nothing. The lines
+                    inherit now: 40px, the next rung up, and the size the loader's count beside it
+                    has always used. */}
                 <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-landing);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:23ch;text-wrap:balance")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 580px')}>Colour Read from Light and Atmosphere.</span></span>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In Seconds.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface)')}>Colour Read from Light and Atmosphere.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent)')}>In Seconds.</span></span>
                 </h1>
                 {/* TWO ACTS NOW, AND THE TIER FINALLY HAS ITS PAIR. Was an HBtn carrying
                     glassCta/glassCtaHover/glassCtaActive — three style objects and two pieces of
@@ -1815,17 +1821,20 @@ function LandingStage({ vals, covered, quiet }) {
                 reader saying the name twice. */}
             {vals.landingCredit && (
               <div data-land-credit="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 var(--page-gutter) 26px')}>
-                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;width:clamp(56px, (100vw - 2 * var(--page-gutter) - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols), 96px);aspect-ratio:3/2;background:var(--surface-raised)')}>
+                {/* A CORNER FOR ITS SIZE (17.09.26, by request): --radius-swatch, the site's smallest,
+                    on a thumbnail 56 to 96px wide. Start here's proportion gives about 4px at this
+                    height; 3 is the figure the system already has. The ring below takes it too. */}
+                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;border-radius:var(--radius-swatch);width:clamp(56px, (100vw - 2 * var(--page-gutter) - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols), 96px);aspect-ratio:3/2;background:var(--surface-raised)')}>
                   {/* No fetchPriority="low": this is the landing's largest early paint, so a low
                       priority only queued it behind everything else. The file is the small cut. */}
                   <img src={vals.landingCredit.image} alt="" decoding="async" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
-                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
+                  <span style={sx('position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
                 </span>
-                {/* 12px flat is the register the footer's meta row used to set at this corner of the
-                    screen, kept now that the row has gone so the caption still reads as chrome
-                    rather than as copy. The name takes full ink and the preposition does not: the
-                    palette is the information here, and "Based on" is the grammar around it. */}
-                <div style={sx("font-family:'Neue Montreal';font-size:12px;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>
+                {/* THE BUTTONS' TYPE (17.09.26, by request): --fs-body at Medium with flat tracking,
+                    as the app's buttons read, where this was a 12px regular line borrowed from the
+                    footer's old meta row. The name still takes full ink and "Based on" does not: the
+                    palette is the information here, and the preposition is the grammar around it. */}
+                <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>
                   Based on <span style={sx('color:var(--on-surface)')}>{vals.landingCredit.name}</span>
                 </div>
               </div>
@@ -2398,6 +2407,18 @@ export default function AppView({ vals }) {
                     had in its old position. */}
                 <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
+              {/* THE REFERENCE IMAGE SITS ABOVE THE RULE (17.09.26, by request). It stood at the right
+                  end of the readout below, inside the data block; the palette's source belongs with
+                  the name it came from, on the row above the hairline that opens the readout. Still
+                  156×104, still right-aligned, still the y-fade (data-fx) and click-to-zoom it had. */}
+              <div data-fx="1" style={sx('flex:none')}>
+                {vals.result.hasRef && vals.result.refImageNode}
+                {vals.result.noRef && (
+                  <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
+                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
+                  </div>
+                )}
+              </div>
               {/* THE RIGHT-HAND COLUMN IS GONE WITH THE LINE IT HELD. It was a fixed 360px holding
                   one right-aligned paragraph — composeUse()'s recommendation — which has moved into
                   the reading's old slot on the left. An empty 360px column would keep reserving a
@@ -2460,19 +2481,6 @@ export default function AppView({ vals }) {
                   </dl>
                 </div>
               ))}
-              {/* the reference image, moved down from the rationale column into this row: it is
-                  provenance — the palette's source datum — so it belongs with the data. Pushed to
-                  the row's right edge (the same right margin the rationale keeps above), sized
-                  156×104 so it sits level with the columns beside it. data-fx keeps the y-fade it
-                  had in its old home; click-to-zoom unchanged. */}
-              <div data-fx="1" style={sx('flex:none;margin-inline-start:auto')}>
-                {vals.result.hasRef && vals.result.refImageNode}
-                {vals.result.noRef && (
-                  <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>No reference</span>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}

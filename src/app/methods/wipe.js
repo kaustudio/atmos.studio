@@ -337,6 +337,9 @@ export const wipeMethods = {
           this._playPageReveal();
         }
       },
+      // A document's own copy starts later, so its cascade is still arriving when the window has
+      // finished opening (17.09.26, by request); the tool keeps the loader's and Get Started's beat.
+      revealAt: isDoc(next) ? 0.65 : 0.2,
       // The destination's own copy rises just behind the panel's trailing edge — the same offset the
       // loader's fold and Get Started both use, so all three arrivals share one rhythm.
       reveal: () => {
@@ -739,9 +742,15 @@ export const wipeMethods = {
       // that has already stopped moving.
       tl.to(win, { yPercent: 0, duration: 1.0, ease }, 0);
       tl.to(win, { clipPath: 'inset(0% round 0em)', duration: 1.2, ease }, 0);
-      // The destination's own copy rises inside the window as it opens: early enough to be seen
-      // arriving through the slot, late enough that the slot is already something to see it in.
-      tl.call(release, null, 0.2);
+      /* The destination's own copy rises inside the window as it opens: early enough to be seen
+         arriving through the slot, late enough that the slot is already something to see it in.
+
+         A DOCUMENT HOLDS LONGER (17.09.26, by request). At 0.2 the hero's four masked lines were
+         measured finishing at 1.27s against a window that finishes opening at 1.45s, so the page
+         had stopped moving before the transition ended and the arrival was over before the reader
+         could look at it. The caller passes its own beat (revealAt); the tool keeps 0.2, where the
+         copy it releases is one drop rather than a cascade. */
+      tl.call(release, null, opts.revealAt != null ? opts.revealAt : 0.2);
       // built paused: a fresh unpaused timeline inserted against a SLEEPING ticker inherits a stale
       // parent playhead — wake the clock FIRST, then pin the playhead to 0.
       try { g.ticker.wake(); } catch (e) { }
