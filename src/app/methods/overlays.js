@@ -48,16 +48,16 @@ export const overlayMethods = {
     const chrome = [...root.querySelectorAll('[data-ochrome]')];
     const tl = g.timeline({ paused: true, onReverseComplete: () => this._finishOverlayClose() });
     // reduced-motion (or no bands): a single two-step opacity fade — forward on open, reverse on close
-    if (this._reduce || !bands.length) { tl.from(root, { opacity: 0, duration: .2, ease: 'none' }, 0); this._ovTl = tl; return; }
+    if (this._reduce || !bands.length) { tl.from(root, { opacity: 0, duration: this.DUR.fast, ease: 'none' }, 0); this._ovTl = tl; return; }
     // the signature band wipe — the result stage's own (motion.js animateBands), and now the open
     // card's strip in the field: each band wiped up from its foot, left to right, on the reveal
     // duration and the stage's stagger. It was a scaleY from the bottom edge for a while: the same
     // direction, but a squash rather than an uncovering, and the one place a palette arrived by a
     // different mechanic from the other two doors.
-    tl.from(root, { opacity: 0, duration: .18, ease: 'none' }, 0);   // backdrop first in / last out
-    tl.from(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath' }, .08);
+    tl.from(root, { opacity: 0, duration: this.DUR.fast, ease: 'none' }, 0);   // backdrop first in / last out
+    tl.from(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath' }, this.DUR.overlayBlock);
     // chrome (header, footer, value rows) fades in a beat after — colour leads; on reverse it exits first
-    if (chrome.length) tl.from(chrome, { opacity: 0, duration: .4, ease: this.EASE.entrance, stagger: .02 }, this.DUR.reveal * 0.45);
+    if (chrome.length) tl.from(chrome, { opacity: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: this.DUR.overlayStep }, this.DUR.reveal * 0.45);
     this._ovTl = tl;
   },
   closeOverlay() {
@@ -272,8 +272,8 @@ export const overlayMethods = {
     const g = window.gsap;
     const D = this.DUR.overlay, E = this.EASE.overlay, F = E;
     if (this._reduce) {
-      if (backdrop) tl.from(backdrop, { opacity: 0, duration: .12, ease: 'none' }, 0);
-      tl.from(root, { opacity: 0, duration: .12, ease: 'none' }, 0);
+      if (backdrop) tl.from(backdrop, { opacity: 0, duration: this.DUR.micro, ease: 'none' }, 0);
+      tl.from(root, { opacity: 0, duration: this.DUR.micro, ease: 'none' }, 0);
       return tl;
     }
     const secs = secSel ? [...root.querySelectorAll(secSel)] : [];
@@ -693,8 +693,10 @@ export const overlayMethods = {
       for (let i = 0; i < sw.length; i++) for (let j = 0; j < i; j++) {
         const r = this.contrastRatio(sw[i].hex, sw[j].hex);
         if ((r >= oth) !== (r >= nth)) {
-          const cell = root.querySelector('[data-cx-cell="' + i + '-' + j + '"]'); const mark = cell && cell.querySelector('[data-cx-mark]');
-          if (mark) g.fromTo(mark, { opacity: 0 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
+          // the number answers the change (the ✓/✕ mark it used to pulse went on 17.09.26); the
+          // cell's fill eases on its own transition
+          const cell = root.querySelector('[data-cx-cell="' + i + '-' + j + '"]'); const num = cell && cell.querySelector('[data-cx-num]');
+          if (num) g.fromTo(num, { opacity: 0 }, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
         }
       }
     }
@@ -948,7 +950,7 @@ export const overlayMethods = {
   },
   openTagFilter() {
     this._tagBack = document.activeElement; this._tgDone = false;
-    this.setState({ tagMenuOpen: true, tagQuery: '', announce: 'Manage Library opened. Press Escape to close, or click anywhere outside it.' }, () => {
+    this.setState({ tagMenuOpen: true, announce: 'Manage Library opened. Press Escape to close, or click anywhere outside it.' }, () => {
       // Bound HERE and not inside the rAF below. The press that opened the panel cannot be the one
       // that closes it, because this runs off `click` — the last event of that gesture, long after
       // its pointerdown — so the next pointerdown is genuinely a new one. The rAF would also have
@@ -999,7 +1001,7 @@ export const overlayMethods = {
     const drawer = document.querySelector('[data-library-dialog]');
     const panel = drawer && drawer.querySelector('[data-library-panel]');
     if (!panel || !panel.querySelector('[data-sec]')) return;
-    const motion = { duration: this.DUR.reveal, stagger: 0.09, ease: this.EASE.entrance };
+    const motion = { duration: this.DUR.reveal, stagger: this.DUR.line, ease: this.EASE.entrance, rule: this.DUR.overlay };
     const groups = [...panel.querySelectorAll('[data-sec]')].map((sec) => {
       const rows = [...sec.querySelectorAll('[data-sec-row]')];
       return {
@@ -1040,28 +1042,11 @@ export const overlayMethods = {
     if (head && !this._reduce) tl.from(head, { opacity: 0, duration: this.DUR.overlayArrive * 0.55, ease: this.EASE.overlay, clearProps: 'opacity' }, this.DUR.overlay * 0.16);
     this._tgTl = tl;
   },
-  // SHOW ALL / SHOW FEWER on the character traits. Not toggleFold: that tweens the height of one
-  // element open and shut, and here the list is already on screen and simply gets longer — folding
-  // it would collapse the six rows you can see in order to re-reveal them with the rest.
-  // So the rows that ARRIVE are the only thing that moves, on the same stagger the drawer's cells
-  // use when it opens. Collapsing needs no motion of its own: the rows leave with the state, and
-  // there is nothing to watch travel.
-  toggleFacetAll() {
-    const opening = !this.state.facetAllOpen;
-    const before = document.querySelectorAll('[data-facet-char] [data-tg-cell][aria-pressed]').length;
-    this.setState((st) => ({ facetAllOpen: !st.facetAllOpen }), () => {
-      const g = window.gsap;
-      if (!opening || !g || this._reduce) return;
-      const rows = [...document.querySelectorAll('[data-facet-char] [data-tg-cell][aria-pressed]')].slice(before);
-      if (rows.length) g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
-    });
-  },
   /* THE TAB SWITCH, and the arrival that comes with it. The panel is already on screen, so its own
      entrance timeline is spent; without this the second tab would simply BE there between two
      frames, which in this app reads as a bug rather than as a change. So the incoming blocks run
-     the drawer's own stagger again — the same duration, easing and step toggleFacetAll uses when
-     the trait list grows, because it is the same event: content arriving inside a panel that is
-     already open.
+     the drawer's own stagger again, because it is the same event as the panel's own arrival:
+     content arriving inside a panel that is already open.
 
      The pill under the tabs is a CSS transition on --dur-fold and travels on its own; only what it
      reveals is scripted here.
@@ -1075,13 +1060,10 @@ export const overlayMethods = {
     const said = tab === 'projects'
       ? 'Projects tab, ' + (n === 1 ? '1 project' : n + ' projects') + '.'
       : 'Filter tab.';
-    // The Filter tab's ⓘ closes with the tab it explains. It is a toggletip — dismissed by a press
-    // anywhere, including one on the tab strip — and leaving the flag set would bring the sheet
-    // back unasked the next time that tab came round.
     // The Filter tab's reveal modules hold triggers against nodes this state change unmounts, so
     // they go before the render and come back after it (see _syncLibraryReveal).
     this._killLibraryReveal();
-    this.setState({ libraryTab: tab, filterInfoOpen: false, announce: said }, () => {
+    this.setState({ libraryTab: tab, announce: said }, () => {
       const g = window.gsap;
       if (!g || this._reduce) return;
       const panel = document.querySelector('[data-library-panel]');
@@ -1131,16 +1113,12 @@ export const overlayMethods = {
     clearTimeout(this._tgGuard);
     this._unbindFacetOutside();   // belt and braces: every teardown path leaves the document clean
     const back = this._tagBack; this._tgTl = null;
-    // facetAllOpen resets with the panel, exactly as tagQuery does: both are ways of looking at the
-    // trait list rather than filter state, and a panel that reopens twenty rows deep because of
-    // something you did last time is a panel that reopens differently every time.
     // Committed BEFORE the state that unmounts the fields, and only ever with a value that differs.
     try { this._commitProjectNames(); } catch (e) { }
-    // libraryTab resets with the panel, exactly as tagQuery and facetAllOpen do above: a surface
-    // that reopens on the tab you happened to leave it on is a surface that opens differently every
-    // time. Back to NULL rather than to 'filter' — that is the difference between "open where the
+    // libraryTab resets with the panel: a surface that reopens on the tab you happened to leave it
+    // on is a surface that opens differently every time. Back to NULL rather than to 'filter' — that is the difference between "open where the
     // work is" and "open on Filter and then argue with the library about it" (see libTab).
-    this.setState({ tagMenuOpen: false, tagQuery: '', facetAllOpen: false, libraryTab: null, announce: 'Manage Library closed.' }, () => {
+    this.setState({ tagMenuOpen: false, libraryTab: null, announce: 'Manage Library closed.' }, () => {
       // Focus returns to the library trigger — but only when the user did not put it somewhere else
       // themselves. Clicking outside IS choosing where focus goes next, and yanking it back to a
       // button they just clicked away from would undo their own move.
@@ -1221,50 +1199,15 @@ export const overlayMethods = {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-export-dialog]');
         if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
-        try { this.buildExportTimeline(); if (this._exTl) this._exTl.play(0); this._revealDrawerText('[data-export-dialog]'); } catch (e) { }
+        // THE DIALOGS' ARRIVAL (17.09.26, audit F1). This played a timeline of its own on the
+        // overlay curve, 0.8s with a staggered list, while the other four dialogs arrive on
+        // _dialogIn's 0.24s: two arrivals for one kind of surface. It takes theirs now.
+        this._dialogIn('[data-export-dialog]');
       });
     });
   },
-  // ONE reversible timeline — same class of surface as contrast/harmony (play on open, reverse on
-  // close), on the same band and curve. It is a centred dialog rather than a drawer, so it cannot
-  // go through _drawerIn: it grows from its own centre instead of sliding from an edge. Everything
-  // after that first tween keeps the shared schedule — items begin at 0.45 of the panel's travel,
-  // on the same step, so a dialog and a drawer are recognisably the same system.
-  buildExportTimeline() {
-    this._exTl = null;
-    const g = window.gsap, root = document.querySelector('[data-export-dialog]');
-    const backdrop = document.querySelector('[data-ex-backdrop]');
-    if (!g || !root) return;
-    const D = this.DUR.overlay, E = this.EASE.overlay;
-    const items = [...root.querySelectorAll('[data-ex-item]')];
-    const tl = g.timeline({ paused: true, onReverseComplete: () => this._finishExportClose(this._exKeep) });
-    if (this._reduce) { if (backdrop) tl.from(backdrop, { opacity: 0, duration: .12, ease: 'none' }, 0); tl.from(root, { opacity: 0, duration: .12, ease: 'none' }, 0); this._exTl = tl; return; }
-    if (backdrop) tl.from(backdrop, { opacity: 0, duration: D, ease: E }, 0);
-    tl.from(root, { opacity: 0, y: 12, scale: 0.98, duration: D, ease: E, transformOrigin: 'center center' }, 0);
-    // The dialog itself fades — it has no edge to slide from, so the fade IS its arrival — and its
-    // contents fade in behind it on the shared block schedule, like every other overlay's.
-    //
-    // ON THE CELL SCHEDULE, not the section one. The format list is five leaf choices — the same
-    // kind of thing as a drawer's rows — and it was being timed as though each were a section: the
-    // coarse `overlayStep * 2` beat, starting at D * 0.45. That is the "third of the panel later"
-    // the cells comment above argues against, and this call site was never brought onto that fix.
-    // The list read slow for it, and it read slow in a way nothing else here does: five items on a
-    // doubled step is 320ms of pure stagger, and the last one landed at ~1.24s.
-    // Matching the cells exactly — D * 0.32 and one step — brings the last item in at ~0.98s and,
-    // more to the point, means the export list and every drawer row arrive on ONE beat. That is
-    // also why they fade rather than wipe: the beat is only shared if the mechanic is.
-    // transition:none for the duration — see the note in _drawerIn. These items are buttons, and a
-    // button's own opacity transition would damp every step of this stagger by 280ms.
-    // Controls, so they fade — see the note in _drawerIn. Every item in this list is a button
-    // with a word on it, which is the exact case the horizontal wipe is wrong for.
-    tl.set(items, { transition: 'none' }, 0);
-    tl.from(items, { opacity: 0, duration: this.DUR.overlayArrive, ease: E, stagger: this.DUR.overlayItem, clearProps: 'opacity,transition' }, D * 0.32);
-    this._drawRules(tl, [...root.querySelectorAll('[data-ov-rule]')], D * 0.4);
-    this._exTl = tl;
-  },
   closeExport(keepAnnounce) {
     this._exKeep = !!keepAnnounce;
-    if (!this._exTl) { this._finishExportClose(this._exKeep); return; }
     // Same exit contract as the drawers, on the geometry it arrived with: it grows from its centre
     // rather than sliding from an edge, so it leaves the same way. Which means the same curves too —
     // overlayExit on the geometry, overlayFadeOut on the scrim — or the sentence above is a claim the
@@ -1273,7 +1216,6 @@ export const overlayMethods = {
       const g = window.gsap, root = document.querySelector('[data-export-dialog]');
       const back = document.querySelector('[data-ex-backdrop]');
       const done = () => this._finishExportClose(this._exKeep);
-      if (this._exTl) this._exTl.kill();
       if (this._reduce || !g || !root) { done(); return; }
       const t = g.timeline({ onComplete: done });
       if (back) t.to(back, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0);
@@ -1285,7 +1227,7 @@ export const overlayMethods = {
   _finishExportClose(keepAnnounce) {
     if (this._exDone) return; this._exDone = true;
     clearTimeout(this._exGuard);
-    const back = this._exportBack; this._exTl = null;
+    const back = this._exportBack;
     const patch = { exportOpen: false, exportPalette: null, exportProject: null };
     if (!keepAnnounce) patch.announce = 'Export options closed.';
     this.setState(patch, () => { if (back && back.focus) try { back.focus(); } catch (e) { } this._exportBack = null; });

@@ -33,18 +33,16 @@ export const shareMethods = {
   // and never seen. The confirmation (what just happened) belongs there, where the ✓ Copied swap
   // already says the same thing visually.
   //
-  // What the link IS goes through showNotice, which is visible. A share link is a snapshot sealed
-  // into the URL fragment: it carries the swatches, the name and the note, and deliberately not the
-  // id, the time, the project or the reference image (encodeShare, lib/share.js). It cannot be
-  // recalled, updated or restored — which is exactly the confusion a link that looks permanent
-  // invites, and the reason the audit asked for it to be said at the moment the link is made. The
-  // library's own copy is a backup file, and that is a different button entirely.
+  // A share link is a snapshot sealed into the URL fragment: it carries the swatches, the name and
+  // the note, and deliberately not the id, the time, the project or the reference image (encodeShare,
+  // lib/share.js). The notice that said so when the link was made ("A share link is a snapshot, not
+  // a backup…") went on 17.09.26, by request: the button's own Copied state confirms the copy. A
+  // palette that cannot be shared still says so.
   shareCurrent(pal) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
     this.copy(url, 'pal-share', 'Share link copied to your clipboard.');
-    this.showNotice('A share link is a snapshot, not a backup. It can’t be recalled or restored.');
   },
 
   // Viewing a shared palette writes NOTHING to the recipient's archive. This is the only path that

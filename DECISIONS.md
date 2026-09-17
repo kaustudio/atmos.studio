@@ -6,6 +6,421 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-17 — The audit's fifth round: the lows, no standing sentences, round filter rows
+
+**No standing sentences, and no toggletips (by request, audit H5).**
+- Four panels printed a sentence under their title: the shared-link strip, No palette matches,
+  Nothing here yet, and Manage Library's Nothing to filter yet. Round five moved each into a
+  toggletip; on review the toggletips were removed too, so each panel now has its title alone. The
+  strip's title is "Shared with you".
+- This is the second time toggletips were taken out (the Library heading's storage marker and
+  Manage Library's ⓘ went earlier). Don't reintroduce them. The component, its state, the tip
+  helpers in persistence.js and the 24px hit-area rule are deleted.
+
+**A corner is sized for its box (by request).** Start here and the error panel are 420px tall and
+keep 28px (`--radius-surface`). "Nothing here yet" and "No palette matches" (radius issue R1) are
+the same dashed panel but 162 and 166px tall, and 28px read too strong at that height, so they take
+`--radius-card` (12px). They were fully round (A8), then 28px. Don't give a box the corner of the box
+beside it; pick the corner for its own size.
+
+**How it Works' pair matrix pills speak like the phone story's verdict chips (by request, H6).**
+`--fs-body`, Medium, flat, in Title Case (Body Text at AA, Large Text and UI at AA, No WCAG Contrast
+Role), where they were uppercase at `--fs-fine`. 3.3's checks use the same pills (`.about-checks__verdict`)
+where they were plain uppercase labels; the old `.about-checks__use` rule is gone.
+
+**The corner-radius issue (a separate artifact).** Five findings changed something:
+- **R1:** see the dashed panels above.
+- **R3, the cards:** the grid view's cards and How it Works' gallery cards (desktop and phone). The
+  corner is further down.
+  - The grid's white caption band is gone. The photograph runs to the edge, and the name sits on its
+    foot over a progressive blur and a dark tint (`TILE_FADE` in AppView, and `.about-rail__fade` /
+    `__tint` in about.css). The tint is deep enough for white type on High Key.
+  - Names are one step larger: 20px on the grid, 24px in the gallery. The reduced-motion grid and
+    the list row stay at 13px, because a larger name truncated there.
+  - /about's cards lose the "Body text AA / Large text and UI AA" line; the phone keeps its
+    "Warm · Dark" line.
+  - The blur is two blurred copies of the photograph, not `backdrop-filter`. On the grid's moving
+    field, `backdrop-filter` measured p95 16.7ms against 8.8ms. The engine fades the copies with the
+    caption when a card opens, and the photograph no longer moves (the hero's `bottom` stays 0).
+- **R5, the role tiles:** How it Works 3.1 and the phone take `--radius-card` (12px, new). 28px was
+  "too intense". The swatch takes the same corner less its 8px inset (4px), with 20px under the copy.
+- **Kept, by request:** R2 (the feature pills' 20px), R4 (the library list's square rows), R6 (the
+  contents' tint and rule) and R8 (the transition window's 3em).
+- **R7, one token:** `--radius-dropzone` is merged into `--radius-surface`, so the dialogs,
+  drawers, banner, Start here and the error panel share one 28px token.
+- **R9:** the analytics banner keeps its 28px (by request). The share notice ("A share link is a
+  snapshot, not a backup…") is removed, because the Share button's Copied state confirms the copy.
+  The notice bar stays for errors and the other confirmations (the user chose this).
+- **R10, the contrast checker (by request):**
+  - The matrix's ✓/✕ marks are gone ("they ruin the layout").
+  - A pass sits on a 14% ink fill with its ratio in Medium ink. A fail has no fill and a muted
+    Regular ratio. That is two cues, fill and weight, and the fill eases when a toggle moves a
+    verdict.
+  - The drawer's chips, text-on-colour rows and sample take `--radius-swatch` (3px, new).
+  - The same 3px is on the swatch strip on How it Works' photo cards. The phone's strip runs edge to
+    edge, so the card's corner shapes it.
+- **R3, the corner (by request):**
+  - The grid view's cards (300×344) and the reduced-motion grid's cards take `--radius-card`, 12px,
+    the figure approved for them. 28px was put on them by mistake with the note below and taken off.
+  - How it Works' photo cards (374×499 on the desktop, 280×373 on the phone) take
+    `--radius-surface`, 28px. 12px was "too subtle" at that size. The figure is not approved yet.
+  - When a grid card opens, the two corners it shares with its panel go square.
+  - The grid cards have no stroke (by request): the box has no border and no fill, so the photograph
+    is the card's edge. The open panel keeps its hairline and is invisible until it starts to slide,
+    because a hairline under the photograph would show at its anti-aliased edge. The hover ring now
+    sits on the photograph's edge. How it Works' photo cards still have their 1px stroke.
+
+**Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
+"Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
+same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
+The name now centres on the close mark, and the line is one step larger, `--fs-body` (13px, was
+`--fs-detail`). The other four dialogs keep their eyebrows, which name the action.
+
+**The project rail's arrows are a pill (by request, C11).** "Full radius on both sides": the
+straight hairline between the chips and the arrows is gone.
+- The pair is its own pill. It sits on the rail's edge (-1px on three sides) with the page colour
+  under it, so the rail's line is drawn once and only the round left end is new.
+- It reaches 18px back over the scroller, so chips slide under the round end. The scroller pads its
+  end by 18px (20 with its own 2) while the arrows show, so the rail's width doesn't change when
+  they fold in or out.
+- `_projStepsOverlap` (misc.js) removes those 18px from the view that stepping and
+  select-to-reveal measure, so a chip never stops under the pill.
+
+**Manage Library's filter rows are Add to Projects' rows (by request, Q4).**
+- A raised stadium with a hairline edge, 11px by 18px of padding, 6px apart, white on hover and
+  keyboard focus, and the edge in ink while the filter is on.
+- The pill is there from the drawer's first frame, and only its contents arrive (by request: the
+  rows must not fade in, and the plate's wipe read as one). The label and count rise through their
+  line masks as before. The tick box rises through its own clip on the same beat: pageReveal's
+  `data-reveal-rise` moves a wordless block's child instead of fading the block. Tick boxes keep
+  their shape with `--radius-tick` (3px).
+- **Why a tick could show empty:** `splitLines` (maskLines.js) rewrote `innerHTML` even when an
+  element had no words to split, which replaced React's tick box with an inert copy. It now returns
+  without touching the element. A split element that holds React-managed elements *and* text still
+  gets a copy back on restore, so keep split targets to text.
+- The arrow keys in the filter groups looked for the traits list's rows and did nothing. They now
+  step through `[data-sec-row]`.
+
+**The big calls to action keep their voice (by request, Q7).** The landing's Create and How it
+Works, How it Works' Explore Atmos and the 404's button stay Medium, 14px, with statement tracking.
+global.css now lists the three voices a control may use besides the uppercase default, beside the
+uppercase rule.
+
+**The unreachable character traits section is deleted (audit H3, E9).** That covers the search,
+Most used / A–Z, the trait rows, Show All / Show Fewer, their state (`tagQuery`, `tagSort`,
+`facetAllOpen`, `charOpen`) and the per-render counting that only they read. Filtering by a trait
+is still reached from a palette's own tags. Also deleted:
+- 17 unused style objects in renderVals.
+- `@keyframes hue` and `blink`, the `lift` tier and `[data-disc-chev]`.
+- The phone story's `--fs-nano`/`--fs-micro` remap, which fed nothing.
+
+**Also:**
+- **Icon buttons:** 32px for the row actions, pager and project steps. The row's action column is
+  70px and the folder sits at `+ 38px`.
+- **Chooser arrows:** kept as drawn. The `IconChevron` swap from this round was reverted, by request.
+  The chooser still opens on the story's own (random) example, but `goToIndex(at, true)` lands there
+  instantly, behind the page transition. A played slide change used to show through the opening
+  window.
+- **Row scale:** `commitSelected`, the row's 0.98 → 1 scale, is removed.
+- **Tokens for chrome colours:** `--mark-gradient`, `--lightbox-scrim` (written as `rgba()` so GSAP
+  can tween it), `--ground-ink` and `--on-photo`. The page transition's veil is `--scrim`.
+- **Transition corner:** `--radius-window` (3em) holds the slot's corner, and wipe.js reads it.
+- **Fallback eases:** the GSAP names nearest each token: `expo.out`, `power4.out`, `power3.inOut`,
+  `power2.out`. GSAP can't read a `cubic-bezier()` string.
+- **Durations:** `DUR.focus` (0.9s) is new.
+- **Tracking:** the 15 `-.01em` sites read `--track-title`.
+- **How it Works matrix:** takes the status tokens. The tinted rules are gone, and the no-role
+  class is `is--none`.
+- **Comments:** those that still described a square system are corrected.
+- **H1 (raw spacing):** no change. No raw padding equals a padding token.
+
+Checked with before and after captures in Chrome at 1440×900 and 390×844. The zoom backdrop and the
+page transition were checked in the page; no console errors.
+
+---
+
+## 2026-09-17 — The audit's fourth round: 28px modals, the banner's voice on the toggles, no dock
+
+**Modals take the corner the nav bar and the create container share (by request).**
+`--radius-surface` is 28px: the floating bar is a 56px stadium, so its ends turn on 28, and the
+dropzone is set at 28. The dialogs, the drawers' free corners and the analytics banner read the
+token. The toast and notice stay fully round.
+
+**The segmented controls speak like the analytics banner's buttons (by request).**
+- `viewToggleOptStyle` is 13px Medium, with the capitals lifted in global.css. Everything built on
+  it moves together: List / Grid, the scope chips (All, Unfiled, projects), the library panel's
+  Filter / Projects, the page sizes and the contrast checker's rails.
+- Passing Only follows, to stay in voice with the rails beside it.
+- They are Medium in both states, so selection still doesn't change the weight (Q6).
+- Not moved: the harmony methods and Most used / A–Z (`toggleStyle`), and the phone story's toggle.
+- **The counts sit on the label's baseline** (All, Unfiled, the project chips, the Projects tab).
+  - Why: centred, the 11px count's foot was about 1px above the 13px word's baseline, with its top
+    level with the ascenders, so it read as stuck to the top.
+  - How: `align-items: baseline` on the chips and tabs.
+  - What that took: the chip's label span lost its overflow clip, because a clipping flex item's
+    baseline is its bottom edge, and the tab's swap got a plain wrapper for the same reason. Long
+    project names still truncate: the ellipsis comes from the `[data-proj-chip] .tswap` rules.
+
+**The section anchor dock is removed from How it Works, and so from the site (by request).**
+- Its markup is gone from about.html, along with the `data-section-dock-hide` attribute.
+- `aboutDock.js` and its mount in AboutPage are gone.
+- Its styles are gone, with `--radius-dock-row` and the dock's case exemption.
+- `--radius-dock` stays: How it Works' feature pills use it.
+
+**Follow-ups the same day (by request).**
+- **The contrast checker's rails:** at 13px, the segmented control's 7px block padding made a 29.5px
+  button in the rails' fixed 27px track, and the labels sat 1.25px low. The rail buttons now have no
+  block padding, so the grid stretches them to the track and the labels centre.
+- **Dialog buttons:** the three dialog button pairs take the banner's voice, the outlined one first,
+  as on the banner: Restore, Add to Projects and Already Extracted. They were one object before this
+  and stay one.
+- **Restore:** loses "Nothing is replaced…" and its footnote "New palettes go to the top…". Its line
+  remains only when nothing in the file is new, because then it explains why there is no act.
+- **Add to Projects:** the "Added" marks lose their check mark.
+
+**Also:**
+- **Harmony button:** a bare glyph with no edge, and the requested icon (a disc in a broken ring).
+  Hover is the library rows' folder-and-bin answer: a round 16% tint, from the swatch's ink.
+- **Notice:** takes the toast's padding, 8px, with 16px on the leading edge.
+- **Analytics banner:** its Accept shows no check mark when reopened.
+
+Checked with before and after captures in Chrome at 1440×900; no console errors.
+
+---
+
+## 2026-09-17 — The audit's third round: the banner's voice, and some reversals
+
+**The analytics banner's buttons are the model for the in-page acts (by request).** The following use
+`CONSENT_BTN_TYPE`, Medium, Title Case, and a filled button beside an outlined one where there are
+two:
+- the create page's error panel (A2)
+- the library's "No palette matches" pair, Remove Last Filter and Clear Filters (A3)
+- the shared-link strip, Save to Library and Make Your Own (A8)
+
+The containers carry `data-voice="banner"`, and one rule in global.css supplies the weight and case.
+The same text style (13px, Medium, Title Case) is on How it Works' feature pill labels (A4, which
+also answers the audit's Q8) and on the phone story's contrast verdicts (A5: Body Text at AA, Large
+Text at AA, Decorative Only).
+
+**Reversed on review, so don't bring these back:**
+- **A1:** the harmony button has no fill: a full-strength 1px edge and glyph in the swatch's own ink
+  (`onColor()`), with the icon tier's 16% and 28% tints. The solid disc lasted one round.
+- **A2:** the error panel is text only: the "!" is gone, ring and all.
+- **C9:** the toast and notice are fully round again, and the notice has no leading dot. They keep
+  the surface shadow and the page gutter.
+- **G3:** the Viewing label and the harmony badge are 8px again (`--fs-nano`); the 11px lasted one
+  round.
+
+**Also:**
+- **A8:** the in-page panels are fully round (`--radius-pill`), not 18px: the shared-link strip and
+  both library empty states.
+- **E3:** Add to Projects' Confirm has no check mark.
+
+Checked with before and after captures in Chrome at 1440×900 and 390×844; no console errors.
+
+---
+
+## 2026-09-17 — The audit's medium findings, and three high ones revised
+
+**Three high findings revised on review.**
+- **A1:** the harmony button is a solid disc: black on a light swatch, white on a dark one (the
+  swatch's `onColor()`), with the glyph in the other colour. Hover and press mix the fill 16% and 28%
+  toward the glyph.
+- **A2:**
+  - The error panel's "!" has no ring. It is set at the title's size and weight, because bare at the
+    old size it read as a stray character.
+  - Its button is set like the analytics banner's (13px, Medium, Title Case: "Choose Another Image").
+  - The decode-failure title reads "This image could not be loaded".
+- **A7:** the skip link takes the banner buttons' type, and reads "Skip to Main Content".
+
+**The phone's example view and example list are gone (C5, by request).** So are their ways in:
+- the gate's `Explore an Example`
+- `See All Examples`
+- the list rows
+- `exampleView` / `exampleList` and every method around them
+- `MarkScrim`
+- the `HBtn` wordmarks on those branches
+
+A shared link keeps its read-only view (asked and answered), without example browsing, under the
+documents' masthead (`DocHead floating`). The masthead sits at the same child index as it does in the
+story branch. The wordmark and Escape both return to the story and clear the hash.
+
+**Floating surfaces (asked and answered, Q1 and Q2).**
+- 18px (`--radius-surface`) on the toast, the notice, the analytics banner (was 20px), the library
+  panel and both drawers. The panel and drawers round only their two free corners.
+- One `--shadow-surface`, the dialogs' own, on every solid floating surface.
+- Glass takes no shadow: the banner and How it Works' dock lost theirs. The dock's shadow was mixed
+  from the ink, so it was a pale halo in dark mode.
+- One `--glass-blur` (12px) replaces 12px, .75em and 18px. The How it Works and 404 buttons now write
+  `-webkit-backdrop-filter` first, so Firefox keeps the blur.
+
+**Interaction.**
+- A `mark` tier for controls that are artwork or display type: the wordmark button, the reference
+  image and the chooser's titles. They go to 82% on hover and 72% on press, through `filter` rather
+  than `opacity`, because the wipe and the loader tween the wordmark's opacity.
+- The wordmark hides while the palette detail is open (`data-detail-open` on the tool's root).
+- The harmony swatches take the cell tier. Their colour moved to a wrapper, which also carries the
+  drawer's reveal hooks.
+- Add to Projects rows take the export rows' press and label swap.
+- The page-size options swap their label.
+- "Copied" eases in the Copy dialog and on the phone.
+- Hovers on How it Works, the 404 page and the legal pages only apply on pointer devices.
+- Filter chips wear `IconClose` in the swap (by request).
+- The toast and banner closes are 28px.
+- The toast and notice sit on the page gutter.
+
+**Scale.**
+- Motion:
+  - Export arrives through `_dialogIn` like the other four dialogs.
+  - `--dur-overlay-out` is .62s, what the code runs.
+  - The zoom, detail, grid close, loader and extraction bar run on named steps: `DUR.line`,
+    `DUR.extract`, `EASE.progress`.
+  - The CSS scale gained `--dur-drift`, `--dur-pulse` and `--ease-ambient`.
+- Type:
+  - Eight display tokens (`--fs-hero` … `--fs-fit`) carry today's heading sizes unchanged (asked and
+    answered, Q3).
+  - Tracking sits on the steps.
+  - The Viewing label and the harmony badge are 11px. The EXAMPLE chip stays at 8px, by earlier
+    request.
+  - Selected controls stay Regular (Q6); the Privacy contents are unchanged (A6).
+- Chips and the phone:
+  - The trait chips are one chip: `--btn-pad-chip` in a 26px box.
+  - The phone's segmented control is the desktop's: action-line edge, 2px padding, ink marker.
+  - Phones under 560px draw every wordmark at 126×20 through the logo tokens.
+
+**Not changed:** G5, the 404's 16px line, is no longer on screen; the sentence is read to screen
+readers only.
+
+Checked in Chrome at 1440×900 and 390×844, with before and after captures from one script, plus the
+Export dialog, the harmony model switch, the wordmark's return after the detail, and the phone
+shared link's wordmark and Escape exits. No console errors. Not checked in Safari, in Firefox, or on
+a real touch device.
+
+---
+
+## 2026-09-17 — The reading is paced by the work and by the photograph
+
+**The four status lines are four real steps now, and each is on screen long enough to read.** They
+were cosmetic: a 620ms timer changed the line whatever the work was doing, the bar ran a fixed 7.5s
+tween, and a 1.3s minimum let the result arrive before the third line. All the real extraction had
+already run before the stage appeared. The user asked for all four thoughts to be present, for the
+stage to feel like processing, and for the time to be real rather than the same for every image.
+
+**Each line is its own work.** Reading light makes the display thumbnail (the full photograph drawn
+down and encoded). Sampling the field turns every kept pixel into OKLab. Grouping the colours runs
+k-means, builds the swatches and the local reading, and sends the live reading. Naming the mood waits
+for the live reading. The recognition gate still runs first, on the 72x72 buffer and its hash, so a
+known image never opens the stage. The palette comes out identical: same bytes, same order, same
+functions.
+
+**A line ends when its work is done and it has been up for its thought, whichever is later.** A
+thought is `DUR.think` (0.75s), stretched by the picture where the real cost depends on it: Reading
+light by pixel count (log-scaled, 0.82x for a screenshot up to 1.7x), Grouping by how far apart the
+colours are (0.8x for a flat grey up to 1.5x). With the local reading, measured with the natural end
+included: a 0.4MP screenshot reaches the result in 3.8s, and a busy 24MP photograph in 4.6s. A single
+floor had given every image 4.1-4.8s. The live reading adds its own real time and nothing else.
+
+**The bar follows the steps**, filling each step's stretch over its thought and creeping during the
+live reading. Each new line rises in through the copy confirmation's mask (`val-mask`, `--dur-swap`).
+
+## 2026-09-17 — An atmosphere while the photograph is read
+
+**The processing stage shows a small, colourless version of the landing's field.** It is the same
+volume (`nebulaField.js`) and the same turning disc with its eye, about 270px across, floating where
+the ruled 380x250 box used to be. `procField.js` owns it. It never touches the landing's palette,
+wheel, memos or ticker, and `orbit.js` is unchanged.
+
+**How it got here, all by request, with recordings compared at each step.** The first build filled the
+box with the extracted palette's gas, and it was too strong. Blends of that gas over the old blobs were
+either too faint to recognise or still a colour field in a box. The brief became: not tied to a
+container, smaller, with a natural end; and no colour, because while the reading runs the tool does
+not know the image's colours yet. From three neutral candidates the user picked the smaller, lighter
+one, and kept the natural end.
+
+**It lives on its own.** The slot keeps its size so the stage does not move, but it has no ground, clip
+or rule. The disc thins out at its own rim (eye 48x28, rim 2.8 of it), and its canvas overhangs the
+slot by 24px so perspective never clips the far side.
+
+**It has no colour.** Its ramp is the landing's tonal ladder with the hue removed: greys solved against
+`--surface`, so it is a shade of the page in both themes. `tone` 0.2 and `toneSlope` 0.25 keep it to
+the near half of the ladder, so the rim stays a mid grey on light and a soft grey on dark. Colour
+arrives with the result.
+
+**It ends.** When the reading is done the turn eases to rest, the gas dissolves and the bar completes
+over `DUR.settle` (0.7s, a new named step), and only then does the result take the stage (`_procClose`,
+called from `commitGenerated`). This does not run under reduced motion or in a hidden document, and a
+timer backstops the ticker. Once the close has begun, a field still being built stays out of sight,
+because a first build that landed mid-close faded in and was then cut off by the commit.
+
+**The old drawing is gone, and a neutral floor replaces it.** The photograph's blur and the five
+palette-coloured multiply blobs went with the box. The 2D canvas now draws neutral blobs turning round
+a soft ellipse of the same footprint. It shows only where the field cannot: no WebGL 2, a first build
+slower than 600ms, or a lost context. When the field is expected, the stage starts empty and the disc
+arrives from nothing.
+
+**Its own tempo.** 60 seconds a turn and noise churning 1.6x faster, because the landing's 105 seconds
+barely moves in a beat of one to nine seconds. The disc is still rigid.
+
+**Paid once, and off the first frame.** One field serves the whole session: the canvas moves into
+each new slot, and the 4x32 ramp is rebuilt only when the theme changes. The chunk is fetched on
+intent (hover, drag or browse on the dropzone). From a click, tap or Enter it is asked for after the
+next paint, because the first ask makes a WebGL 2 test context (5-6ms at 1x, 12-29ms at 4x) that
+otherwise counted against the interaction. The build waits for the stage's first paint, and the
+shader links through the field's own `compile()`, which polls with a guard so a field destroyed
+mid-link ends the poll instead of throwing inside three. First build: 20-30ms of main thread, with the
+disc on 100-150ms after the drop.
+
+**A leak went with it.** `startCanvas` scheduled two rAF chains and `stopCanvas` could cancel only one,
+so every generation left a loop drawing into a detached canvas. It is now one chain with a switch.
+
+## 2026-09-17 — The audit's high findings: round controls, focus rings that show, and a 3:1 edge
+
+**From the design-system audit of 17 Sept: every high finding but A6.** The Privacy and Terms
+contents marker stays as it is, by request.
+
+**The controls that were still square are round.** The harmony buttons on the result stage and in the
+palette detail are 28px circles (the detail's was 26px), with the icon in the hover swap and the chrome
+focus ring. Their own `[data-info]` transition now lists the shared properties on the shared timings,
+so their tint no longer jumps (audit E1). The error state takes the dropzone's 28px corner, its "!" is
+round, and its button is the filled button-006 pill. The "No palette matches" buttons and the skip
+link are pills. The phone story's verdict chips are pills with the matrix's 12px sides.
+
+**How it Works' feature pills round on `--radius-dock`, not `--radius-pill`.** The box morphs from a
+one-line pill into a card holding a paragraph. The pill token would make a lozenge when it opens. The
+dock's 20px clamps to a stadium while the box is shut and is a 20px corner when it's open, which is
+why the dock uses it.
+
+**Focus rings that never painted now do.** The wordmark button masks itself to the logo, and a mask
+clips the element's own outline. So its ring is a separate element beside it (`LogoRing`,
+`[data-logo-ring]`), shown by `button[data-logo]:focus-visible + [data-logo-ring]`, and added to the
+phone's allow-list. The ring is 4px wider than the mark on each side, because the artwork runs to its
+box's right edge and the curve touched the "y". The 404 wordmark link takes `data-focus="chrome"`
+with the same 4px (padding, taken back out with a negative margin, so the mark doesn't move). The
+phone story's gallery cards use `data-focus="card"`: the `value` token is an inset shadow, and the
+photograph painted over it.
+
+**The 404 button's edge is `--action-line`, and How it Works' Explore Atmos moved with it.** The 404
+button's 15% edge was about 1.5:1 against the page. Explore Atmos used 36% in both themes, and a code
+note says the two buttons match. 36% is 3.6:1 in dark but measured 2.5:1 in light, which is why the
+token is 48% in light. Both buttons are now 3.4:1 in light and 3.6:1 in dark, with hover and press on
+`--action-line-hover` and `--action-line-press`. For Explore Atmos, hover is unchanged and the press
+edge is 72% instead of 82%. Their hover and press fills still differ (16/24 on the 404, 12/18 on How
+it Works).
+
+**The image zoom's close button is the app's close mark.** `misc.js` builds the swap and the
+`data-icon="close"` glyph by hand, so the close-mark rule removes the fill. On the black backdrop,
+its edge and × are white (`--cta-ink`) and strengthen on hover and press. On touch and under reduced
+motion, the fill comes back in white.
+
+**The Copy dialog's rows tint on hover and focus**, through the same `rowTintOn`/`rowTintOff` that
+Export's rows use.
+
+Checked in Chrome at 1440×900 and 390×844, with before and after captures of each state (hover forced
+through DevTools, focus reached by pressing Tab). The 404 page and Explore Atmos were also checked in
+dark mode. Not checked in Safari.
+
+---
+
 ## 2026-09-16 — A close mark's hover is its icon, not a fill
 
 **By request: no hover fill on close buttons; the icon's mask animation is enough.** This reverses the

@@ -9,9 +9,10 @@
 
    The surface is built from /about's components — `.about-sec`, `.about-grid`, `.about-col`,
    `.about-figure`, `.about-weights` + `.about-weights__key`, `.about-role`, `.about-thresholds`,
-   `.about-checks`, `.about-rail`, `.section-dock` — and driven by /about's own modules:
-   initPageReveal, initCascade, initDividers, initGlobalParallax, initHighlightText and
-   initSectionDock all take a root, so they run over this markup exactly as they run over that page's.
+   `.about-checks`, `.about-rail` — and driven by /about's own modules: initPageReveal, initCascade,
+   initDividers, initGlobalParallax and initHighlightText all take a root, so they run over this
+   markup exactly as they run over that page's. (The section dock was one of both lists until it
+   left the story, and then the site, on 17.09.26.)
    about.css is already in this route's bundle (AppView imports AboutPage, which imports it) and its
    component rules are written unscoped, so this markup reaches the same declarations. Nothing here is
    a copy of anything there; where a rule WAS route-scoped, the scope was widened to name this surface
@@ -114,36 +115,11 @@
   --measure:38em;
   --rail-card:min(72vw, 280px);
 
-  /* THE SMALLEST TWO STEPS EACH MOVE UP A RUNG, on this surface only.
-
-     /about makes this move for itself (`--fs-nano:var(--fs-label)`) and states the reason: --fs-nano
-     is 8px, "the smallest thing drawn", and on a desktop swatch it is a technical readout you lean in
-     for — but "on a phone held at arm's length it is not a size, it is a texture". That remap is
-     scoped to `.about-route`, so borrowing that page's components brought its 8px annotations here
-     without the correction that makes them readable. This surface has the stronger claim: /about is
-     read on a desktop as often as not, and this one is only ever reached by a thumb.
-
-     BOTH STEPS MOVE, not just the smaller. Remapping only --fs-nano onto --fs-label collapsed it onto
-     --fs-micro's neighbour, so the OKLCH readout came out the same size as the hex it annotates and
-     the key's hierarchy disappeared. Each moves up one rung instead, keeping the gap. Written as the
-     ladder's own values rather than var() references: a var() chain resolves against the REMAPPED
-     property and collapses them again. The rungs are 8 / 9 / 10 in global.css. */
 }
 
-/* THE REMAP IS ON main, NOT ON THE SURFACE, and the anchor dock was why while the story had one
-   (it was removed on 16.09.26).
-
-   Declared on [data-mobile-story] it reached the dock too, and the dock's row numbers are sized in
-   --fs-micro — so /about's dock and this one were setting the same component's numbering at two
-   different sizes. The dock was a sibling of <main>, so scoping the remap to the story's prose left
-   it reading the untouched ladder. Anything else that sits beside <main> gets the same answer.
-
-   Everything the remap is FOR is inside main: the weights key's OKLCH readout, the role cells' hex
-   and note, the checks' verdicts. */
-[data-mobile-story] main{
-  --fs-nano:0.5625rem;   /* 9 — was 8, the value of --fs-micro */
-  --fs-micro:0.625rem;   /* 10 — was 9, the value of --fs-label */
-}
+/* The story remapped --fs-nano and --fs-micro up a rung inside main, for /about components it
+   borrowed at 8 and 9px. Nothing inside it reads either step any more, so the remap went on
+   17.09.26 (audit H3). */
 
 /* Anchor jumps land with air above them rather than flush under the fixed wordmark — the same rule
    /about gives its own sections, at the same figure. */
@@ -280,7 +256,7 @@
      section heading has stopped being a hero — below about 360px the sentence takes its third line
      back, which is the right trade. 44px is --fs-display, the ladder's top rung and this heading's
      original size, reached at 629px where it sets two lines comfortably. */
-  font-size:clamp(24px, 7vw, 44px);
+  font-size:var(--fs-story-hero);
   line-height:1.08;
   letter-spacing:var(--track-statement);
   /* AND A CAP FOR THE OTHER END. The clamp holds two lines up the phone range and then loses them
@@ -418,7 +394,8 @@
 [data-mobile-story] .about-rail__name{
   display:block;
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-subtitle);
+  /* One step up (17.09.26, radius issue R3, by request), as /about's card name. */
+  font-size:var(--fs-title);
   font-weight:500;
   line-height:1.25;
   letter-spacing:var(--track-title);
@@ -434,6 +411,8 @@
   background:none;
   color:var(--on-surface);
 }
+[data-mobile-story] .about-rail__card:not(:has(img)) .about-rail__fade,
+[data-mobile-story] .about-rail__card:not(:has(img)) .about-rail__tint{display:none}
 /* ===== THE HANDOFF'S ACTIONS ================================================================ */
 
 /* They clear the home indicator. This is the first surface on the site to put a control near the
@@ -482,6 +461,7 @@
   flex:none;
   aspect-ratio:3/4;
   overflow:hidden;
+  border-radius:var(--radius-surface);
 }
 [data-mobile-story] .about-rail__card img{
   position:absolute;
@@ -497,8 +477,9 @@
   height:100%;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
+  justify-content:flex-end;
 }
+[data-mobile-story] .about-rail__meta{margin-bottom:auto}
 
 /* THE RAIL CARD'S META KEEPS THE CARD'S INK, NOT THE LABEL'S.
 
@@ -532,21 +513,26 @@
    transition — which is this site's `--dur-fold` and `--ease-fold` to three decimal places, so the
    two are quoted as tokens rather than as literals and the resource's feel is unchanged.
 
-   WHAT CHANGES, and why: `border-radius` goes to 0 (the house has one radius rule — zero, with the
-   wipe caps as the only sanctioned curve now that the orb bodies are gone), the greys become surface tokens so
-   the control themes, and the 1.5em padding comes down to a 44px min-height, which is the touch
-   target this surface is built to rather than the resource's desktop proportion. */
+   WHAT CHANGES, and why: the corners are the app's (global.css rounds [data-toggle-init] and its
+   marker and buttons), the colours are tokens so the control themes, and the 1.5em padding comes
+   down to a 44px min-height, which is the touch target this surface is built to rather than the
+   resource's desktop proportion.
+
+   THE DESKTOP'S SEGMENTED CONTROL SINCE 17.09.26 (audit C7): the --action-line edge, 2px of padding,
+   no fill of its own, and an ink marker with the selected label in the surface colour — the List /
+   Grid toggle's recipe. It was a lighter edge, 4px, an 8% ground and a marker in the surface colour:
+   the same control drawn inside out. The 44px stays: a phone is thumbed, not pointed at. */
 .toggle-switch{
   --toggle-count:3;
-  --toggle-padding:4px;
+  --toggle-padding:2px;
   position:relative;
   display:inline-grid;
   grid-auto-columns:1fr;
   grid-template-columns:repeat(var(--toggle-count, 2), 1fr);
   width:100%;
   padding:var(--toggle-padding);
-  background:color-mix(in srgb, var(--on-surface) 8%, var(--surface));
-  border:1px solid var(--line);
+  background:transparent;
+  border:1px solid var(--action-line);
 }
 .toggle-switch__bg{
   position:absolute;
@@ -555,7 +541,7 @@
   left:var(--toggle-padding);
   width:calc((100% - 2 * var(--toggle-padding)) / var(--toggle-count, 2));
   transform:translateX(calc(var(--toggle-active, 0) * 100%));
-  background:var(--surface);
+  background:var(--on-surface);
   transition:transform var(--dur-fold) var(--ease-fold);
 }
 .toggle-switch__btn{
@@ -577,7 +563,7 @@
   transition:color var(--dur-state) var(--ease-standard);
   -webkit-tap-highlight-color:transparent;
 }
-.toggle-switch__btn[data-toggle-active]{ color:var(--on-surface) }
+.toggle-switch__btn[data-toggle-active]{ color:var(--surface) }
 /* The panel is a figure under a control, not a caption on it — it takes the block gap the rest of
    the surface uses between a thing and the thing it belongs to. Lost when the old segmented
    group's rules were removed with the control they belonged to.
@@ -606,7 +592,7 @@
    the stylesheet cannot know. */
 .toggle-switch:not([data-toggle-live]) .toggle-switch__bg{ display:none }
 .toggle-switch:not([data-toggle-live]) .toggle-switch__btn[data-toggle-active]{
-  background:var(--surface);
+  background:var(--on-surface);
 }
 @media (prefers-reduced-motion:reduce){
   .toggle-switch__bg{ transition:none }
@@ -788,8 +774,8 @@
 /* Osmo Supply's Layered Image Slider, carrying the choice at the end of the story. The resource's
    own layout is kept — a centred title strip, the masked frame, the overlay with its counter and
    nav — except that the frame is the whole screen now (see its rule), and what changes otherwise is
-   what always changes when this system takes a resource in: zero radius, the site's tokens, and the
-   type on the ladder.
+   what always changes when this system takes a resource in: the site's corners (square photographs,
+   round controls), the site's tokens, and the type on the ladder.
 
    IT COVERS, IT DOES NOT REPLACE. Fixed and full-screen above the story so the eight chapters keep
    their scroll position and their built masks while the reader looks. z-index 153: over the story's
@@ -955,11 +941,11 @@
    keep every number the same width, so the cell never changes size as they pass. */
 [data-layered-slider-current]{ display:inline-grid; overflow:hidden; vertical-align:top }
 .layered-slider__count-line{ grid-area:1 / 1; display:block }
-.layered-slider__progress{ width:96px; height:2px; overflow:hidden; background:rgb(255 255 255 / .25) }
+.layered-slider__progress{ width:96px; height:2px; overflow:hidden; background:color-mix(in srgb, var(--on-photo) 25%, transparent) }
 /* A POSITION BAR, not the resource's autoplay timer: the chooser runs with autoplay off, so the
    module fills this to the slide being shown ([ATMOS 5] in methods/layeredSlider.js). The scale3d(0)
    below is only its state before the module draws it. */
-.layered-slider__progress-inner{ width:100%; height:100%; background:#fff; transform-origin:0%; transform:scale3d(0,1,1) }
+.layered-slider__progress-inner{ width:100%; height:100%; background:var(--on-photo); transform-origin:0%; transform:scale3d(0,1,1) }
 .layered-slider__overlay-btm{ display:flex; align-items:center; justify-content:center; width:100% }
 /* The row itself passes presses through; only the two buttons take them (see .layered-slider__nav-button). */
 .layered-slider__nav{ display:flex; align-items:center; justify-content:space-between; width:100%; gap:8px; pointer-events:none }
@@ -981,8 +967,8 @@
   border-radius:var(--radius-pill);
   padding:12px;
   background:none;
-  border:1px solid rgb(255 255 255 / .3);
-  color:#fff;
+  border:1px solid color-mix(in srgb, var(--on-photo) 30%, transparent);
+  color:var(--on-photo);
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   pointer-events:auto;

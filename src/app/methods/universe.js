@@ -114,8 +114,8 @@ export const universeMethods = {
     const land = this._exitFloor('u', 0.5, finish);
     const tl = this._uCloseTl = g.timeline({ defaults: { ease: this.EASE.exit }, onComplete: land });
     if (chrome.length) tl.to(chrome, { opacity: 0, y: -6, duration: this.DUR.state }, 0);
-    if (plane) tl.to(plane, { scale: 0.985, duration: 0.45, transformOrigin: 'center center' }, 0);
-    tl.to(layer, { opacity: 0, duration: 0.45 }, 0.05);
+    if (plane) tl.to(plane, { scale: 0.985, duration: this.DUR.swap, transformOrigin: 'center center' }, 0);
+    tl.to(layer, { opacity: 0, duration: this.DUR.swap }, this.DUR.stagger);
   },
   killSpatial() {
     this._spatialLive = false;
@@ -396,12 +396,15 @@ export const universeMethods = {
             // frame — the two cannot come apart, because there is only one box.
             if (open.panel) {
               // the card's corner is the cell's corner plus half the gutter cellMatrix takes back
-              // the panel's INNER box: the panel is the card's border box, slid by its width less
-              // one pixel (renderVals panelStyle), and the content sits inside its hairlines
-              const px = q.tl.x + mid.x + GAP / 2 + 1 + (open.portrait ? 0 : (open.w - 1) * slide);
-              const py = q.tl.y + mid.y + GAP / 2 + 1 + (open.portrait ? (open.h - 1) * slide : 0);
+              // the panel's WHOLE box: the panel is the card's box, slid by its width less one pixel
+              // (renderVals panelStyle). The content covers the panel's hairlines rather than sitting
+              // inside them (17.09.26): the card has no stroke, so the strip at the head has to start
+              // on the photograph's top edge, and it is clipped to the panel's outer corners
+              // (global.css [data-upanel-side]) so a square strip cannot cover a round corner.
+              const px = q.tl.x + mid.x + GAP / 2 + (open.portrait ? 0 : (open.w - 1) * slide);
+              const py = q.tl.y + mid.y + GAP / 2 + (open.portrait ? (open.h - 1) * slide : 0);
               open.panel.style.left = px.toFixed(2) + 'px'; open.panel.style.top = py.toFixed(2) + 'px';
-              open.panel.style.width = (open.w - 2).toFixed(2) + 'px'; open.panel.style.height = (open.h - 2).toFixed(2) + 'px';
+              open.panel.style.width = open.w.toFixed(2) + 'px'; open.panel.style.height = open.h.toFixed(2) + 'px';
             }
             drift(cd, q, 1 - k);
             continue;
@@ -578,14 +581,15 @@ export const universeMethods = {
     const cd = this._uCards.find((c) => c.el === el); if (!cd) return;
     const g = window.gsap, wrapper = document.querySelector('[data-universe-status]'), panel = document.querySelector('[data-universe-panel]');
     if (!wrapper || !panel) return;
-    const V = this._uView, TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, CAP = UNIVERSE_TILE.CAP, GP = UNIVERSE_OPEN.gap;
+    const V = this._uView, TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, GP = UNIVERSE_OPEN.gap;
     const vw = wrapper.clientWidth, vh = wrapper.clientHeight, portrait = vh > vw;
     const share = portrait ? UNIVERSE_OPEN.sharePortrait : UNIVERSE_OPEN.share;
     const B = Math.round(Math.min(Math.min(vw, vh) * share, (Math.max(vw, vh) * UNIVERSE_OPEN.pairMax - GP) / 2));
     const cx = vw / 2, cy = vh / 2;
     const cardX = Math.round(portrait ? cx - B / 2 : cx - B - GP / 2), cardY = Math.round(portrait ? cy - B - GP / 2 : cy - B / 2);
     const isOrig = el.getAttribute('tabindex') !== '-1' && !el.hasAttribute('aria-hidden');
-    const hero = el.querySelector('[data-tile-hero]'), cap = el.querySelector('[data-tile-caption]'), ring = el.querySelector('[data-ring]');
+    const cap = el.querySelector('[data-tile-caption]'), ring = el.querySelector('[data-ring]');
+    const fades = [...el.querySelectorAll('[data-tile-fade]')];
     this._uOpenCard = { el, cd, p, isOrig, from: document.activeElement, portrait, B };
     // the render's view of the open card: the box as cell corners about the stage centre, grown by
     // half a gutter because cellMatrix takes half a gutter back
@@ -593,6 +597,7 @@ export const universeMethods = {
     open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.panel = panel; open.portrait = portrait;
     open.box = { l: cardX - V.mid.x - V.GAP / 2, t: cardY - V.mid.y - V.GAP / 2, r: cardX + B - V.mid.x + V.GAP / 2, b: cardY + B - V.mid.y + V.GAP / 2 };
     el.setAttribute('data-universe-open', portrait ? 'portrait' : 'landscape'); el.style.zIndex = '4';
+    panel.setAttribute('data-upanel-side', portrait ? 'portrait' : 'landscape');
     el.style.setProperty('--sx', portrait ? '0' : '1'); el.style.setProperty('--sy', portrait ? '1' : '0');
     if (this._uRender) this._uRender();   // the card's own dim is written before it lifts above the shade — no pop
     if (ring) g.set(ring, { opacity: 0 });
@@ -625,8 +630,9 @@ export const universeMethods = {
       if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } }
       const tl = this._uOpenTl = g.timeline({ defaults: { ease: this.EASE.fold, duration: this.DUR.fold } });
       tl.to(open, { k: 1, w: B, h: B }, 0);
-      if (hero) tl.to(hero, { bottom: 0 }, 0);
+      // The photograph already fills the card (17.09.26); the caption and its blur and tint go.
       if (cap) tl.to(cap, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit }, 0);
+      if (fades.length) tl.to(fades, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit }, 0);
       // the contents land once the panel is all but out (fold is past 0.95 by three quarters of
       // its time) — the reference delays its lightbox for the same reason
       const AT_IN = this.DUR.fold * 0.75;
@@ -642,8 +648,9 @@ export const universeMethods = {
     this._uClosing = true;
     // the detail overlay freezes the loop while it is up; the close needs the loop to fold the card back
     if (this._frozen && this._ticker) { g.ticker.add(this._ticker); this._frozen = false; }
-    const el = o.el, TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, CAP = UNIVERSE_TILE.CAP, open = this._uOpenK;
-    const hero = el.querySelector('[data-tile-hero]'), cap = el.querySelector('[data-tile-caption]');
+    const el = o.el, TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, open = this._uOpenK;
+    const cap = el.querySelector('[data-tile-caption]');
+    const fades = [...el.querySelectorAll('[data-tile-fade]')];
     const parts = [...panel.querySelectorAll('[data-upanel-part]')];
     panel.style.pointerEvents = 'none';
     // Focus goes back to the card, decided NOW while the element is still what it was. A clone
@@ -678,8 +685,8 @@ export const universeMethods = {
     const tl = this._uOpenTl = g.timeline({ defaults: { ease: this.EASE.fold }, onComplete: this._exitFloor ? this._exitFloor('ut', AT + this.DUR.fold + 0.4, finish) : finish });
     tl.to(parts, { opacity: 0, y: 4, duration: this.DUR.fast, ease: this.EASE.exit, stagger: 0.02 }, 0);
     tl.to(open, { k: 0, w: TW, h: TH, duration: this.DUR.fold }, AT);
-    if (hero) tl.to(hero, { bottom: CAP, duration: this.DUR.fold }, AT);
     if (cap) tl.to(cap, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }, AT + this.DUR.fold * 0.55);
+    if (fades.length) tl.to(fades, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }, AT + this.DUR.fold * 0.55);
   },
   // The instant path: a rebuild, a resize, a teardown. Puts every style the open wrote back to its
   // rest value in one frame, releases the hold, and drops the panel's content.
@@ -692,9 +699,9 @@ export const universeMethods = {
     if (o && g) {
       const el = o.el; el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : '';
       el.style.width = UNIVERSE_TILE.W + 'px'; el.style.height = UNIVERSE_TILE.H + 'px'; el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');
-      const hero = el.querySelector('[data-tile-hero]'), cap = el.querySelector('[data-tile-caption]');
-      if (hero) g.set(hero, { bottom: UNIVERSE_TILE.CAP });
+      const cap = el.querySelector('[data-tile-caption]');
       if (cap) g.set(cap, { opacity: 1 });
+      g.set(el.querySelectorAll('[data-tile-fade]'), { opacity: 1 });
     }
     this._uOpenCard = null; this._uClosing = false; this._frozen = false;
     this._uViewClose(true, true);

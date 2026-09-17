@@ -144,15 +144,10 @@ export function initHeroExit(root) {
      autoAlpha, so it ends hidden rather than transparent: a fixed layer at opacity 0 still takes the
      tap that belongs to the chapter under it, and this one is a button. Scrubbed like everything else
      here, so scrolling back to the top brings it with the hero it left with. */
-  /* [data-mark-scrim] is in this selector deliberately, even though the story branch no longer
-     renders one: it is the fixed --surface band the wordmark differences against on the phone (see
-     MarkScrim in AppView), and if a surface running this hero ever grows one it must leave with the
-     mark rather than stay behind as a permanent veil holding ground for something no longer drawn.
-     Matching nothing costs nothing; the two are one object and should never disagree about whether
-     it is up. */
   /* ON THE PHONE'S FRONT PAGE THIS NOW MATCHES NOTHING (15.09.26): the story wears the floating bar
      instead of a lone wordmark, and the bar leaves on the way down by itself (docHeadHide). */
-  const mark = document.querySelectorAll('[data-logo], [data-mark-scrim]');
+  // [data-mark-scrim] left this selector with the scrim itself (17.09.26): no phone surface draws one.
+  const mark = document.querySelectorAll('[data-logo]');
   if (mark.length) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
 
   const trigger = tl.scrollTrigger;

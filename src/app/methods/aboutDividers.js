@@ -25,7 +25,10 @@ export function initDividers(root, options) {
   try { gsap.registerPlugin(ScrollTrigger); } catch (e) { return noop; }
 
   const motion = (options && options.motion) || {};
-  const ease = motion.ease || 'power3.out';
+  // The app hands in maskMotion; the fallbacks are its values (17.09.26, audit F4): entrance's
+  // nearest GSAP name, and DUR.overlay for the draw, which pageReveal's rules use too.
+  const ease = motion.ease || 'expo.out';
+  const drawFor = motion.rule || 0.8;
   const lines = [].slice.call(root.querySelectorAll('[data-divider]'));
   if (!lines.length) return noop;
 
@@ -40,7 +43,7 @@ export function initDividers(root, options) {
       drawn = true;
       gsap.to(el, {
         '--rule': 1,
-        duration: 0.8,
+        duration: drawFor,
         ease,
         onComplete: () => el.style.removeProperty('--rule'),
       });

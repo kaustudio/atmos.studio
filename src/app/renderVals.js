@@ -131,6 +131,15 @@ const MEAS_CHIPS = (self, s, focusBack) => {
 };
 
 export const renderValsMethods = {
+  /* THE HARMONY BUTTON IS A BARE GLYPH, LIKE THE LIBRARY ROW'S FOLDER AND BIN (17.09.26, audit A1,
+     fourth round, by request): no edge and no fill at rest, the glyph in the swatch's own AA ink
+     (`on`, onColor(): black on a light swatch, white on a dark one), and on hover the row icons'
+     answer: a round 16% tint of that ink (the icon tier's, which is the press tier's 16% taken from
+     the swatch's ink rather than the page's), with the glyph sliding through its mask. The rounds
+     before were a faint edge, a solid disc and a full-strength edge. */
+  _infoBtnStyle(on) {
+    return { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 0, borderRadius: 'var(--radius-pill)', color: on, cursor: 'pointer', padding: 0 };
+  },
   renderVals() {
     const s = this.state;
     /* THIS WAS CALLED `mono`, AND NOTHING IN THIS APP HAS EVER BEEN MONOSPACE. The alias is from a
@@ -145,12 +154,12 @@ export const renderValsMethods = {
     const w = (b) => this.swatchGrow(b);   // one rule for a swatch's share, shared with the 3D card (pipeline.js)
     /* THE TRAIT PILL — the detail overlay's footer traits, and the one place the word "pill" in this
        file finally means the shape as well as the role. It rounds with the result stage's own trait
-       chips, which are the same object one surface over; the 11px inset stays, because at a 26px
-       height the arc's widest point is at the text's own centre line and 11 clears it. */
+       chips, which are the same object one surface over — and since 17.09.26 (audit C6) it is drawn
+       the same way too: --btn-pad-chip in a 26px box, where it was 8px 11px and stood 29px tall. */
     // --fs-label, as the list view's tags: the traits are the same words on every surface and they
     // take the same size on every surface. (Raised to --fs-lead for an hour on 02.09.26; reverted
     // the same day as inconsistent with the list.)
-    const pill = { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', borderRadius: 'var(--radius-pill)', padding: '8px 11px', lineHeight: 1 };
+    const pill = { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', borderRadius: 'var(--radius-pill)', padding: 'var(--btn-pad-chip)', minHeight: '26px', display: 'inline-flex', alignItems: 'center', lineHeight: 1 };
     const busy = s.stage === 'processing';
 
     // ===== contrast checker view (computed from sRGB relative luminance — WCAG, not OKLCH L) =====
@@ -160,7 +169,8 @@ export const renderValsMethods = {
       if (cp) {
         const sw = cp.swatches, N = sw.length, aaa = s.contrastLens === 'AAA';
         const th = CONTRAST_MIN(aaa, s.contrastLarge);
-        const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', border: '1px solid color-mix(in srgb, var(--on-surface) 20%, transparent)' } });
+        // The swatch corner on every colour sample in this panel (17.09.26, by request).
+        const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', border: '1px solid color-mix(in srgb, var(--on-surface) 20%, transparent)', borderRadius: 'var(--radius-swatch)' } });
         /* THE SUMMARY USED TO ANSWER A QUESTION NOBODY HAD ASKED. It read `summary.aa` from
            contrastSummary(), which counts pairs at a hard-coded 4.5 — the AA/normal threshold — so
            selecting AAA moved the matrix, moved the minimum, and left the sentence above them both
@@ -174,17 +184,17 @@ export const renderValsMethods = {
         const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map(chip) }];
         sw.forEach((rb, i) => {
           const cells = sw.map((cb, j) => {
-            if (j >= i) return { blank: true, key: '', ratio: '', glyph: '', numStyle: {}, glyphStyle: {}, style: { flex: 1, minWidth: 0, height: '34px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)' } };
+            if (j >= i) return { blank: true, key: '', ratio: '', numStyle: {}, style: { flex: 1, minWidth: 0, height: '34px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)' } };
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
             pairTotal++; if (pass) passCount++;
             return {
-              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th), glyph: pass ? '✓' : '✕',
+              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th),
               /* EACH CELL SAYS WHAT IT MEASURED. Visually a cell is legible from its row and column
                  chips; read aloud it was the bare number "10.3", with the two colours it compares
                  sitting in a header the reader passed several rows ago and a verdict carried only by
                  an aria-hidden glyph. So the cell carries the whole statement — both hex values, the
-                 ratio, and whether it meets the criterion currently selected — and the number and
-                 glyph go aria-hidden so it is said once rather than twice. It is rebuilt on every
+                 ratio, and whether it meets the criterion currently selected — and the number goes
+                 aria-hidden so it is said once rather than twice. It is rebuilt on every
                  render, so switching level or text size rewrites every description with it. */
               aria: rb.hex.toUpperCase() + ' and ' + cb.hex.toUpperCase() + '. Contrast ratio '
                 + RATIO_TEXT(r, th) + ' to 1. ' + (pass ? 'Meets ' : 'Does not meet ') + criterion + '.',
@@ -198,18 +208,21 @@ export const renderValsMethods = {
                  that ARE the reading — the ratio and the mark — carry the dim instead. The hidden
                  description is left alone: a filter is a visual narrowing, and quieting a pair is
                  not a reason to make its sentence harder for a screen reader to reach. */
-              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 6%, transparent)' : 'transparent' },
+              /* PASS AND FAIL WITHOUT A MARK (17.09.26, by request: the ✓ and ✕ "ruin the layout").
+                 The verdict is the ground and the figure: a pass sits on a 14% ink fill in Medium ink,
+                 a fail on nothing in muted Regular. The fill was 6% beside the mark and could not carry
+                 the verdict alone. Two cues, fill and weight, so it is not colour alone (SC 1.4.1),
+                 and the number is still the reading. The fill eases when a toggle moves the verdict. */
+              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'transparent', transition: 'background-color var(--dur-state) var(--ease-standard)' },
               /* --fs-detail and --fs-fine, off the tokens this cell used to borrow. --fs-label is
-                 defined as "uppercase labels" and this is a number; --fs-nano is defined as
-                 "decorative glyphs" and this glyph is the only non-colour statement of pass or fail
-                 in the cell. Both sat under --fs-fine, which global.css names the smallest READABLE
-                 size, so the checker's own fifteen measurements were the smallest type on the
-                 surface. AG-03 asked for compared values at 12-13px for the same reason.
+                 defined as "uppercase labels" and this is a number. It sat under --fs-fine, which
+                 global.css names the smallest READABLE size, so the checker's own fifteen
+                 measurements were the smallest type on the surface. (The ✓/✕ mark under it went on
+                 17.09.26; its weight now carries the verdict with the fill.) AG-03 asked for compared values at 12-13px for the same reason.
                  tabular-nums because these are the one changing metric in the app that lacked it:
                  every cell rewrites on an AA/AAA or Normal/Large toggle and on every palette, and
                  they read down a column. */
-              numStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', lineHeight: 1, color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', opacity: dim ? 0.22 : 1 },
-              glyphStyle: { fontSize: 'var(--fs-fine)', lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', opacity: dim ? 0.22 : 1 },
+              numStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', opacity: dim ? 0.22 : 1 },
             };
           });
           rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
@@ -218,8 +231,7 @@ export const renderValsMethods = {
           const on = this.onColor(b.hex); const r = this.contrastRatio(b.hex, on);
           return {
             hex: b.hex.toUpperCase(), onLabel: on === '#000000' ? 'Black text' : 'White text', ratio: r.toFixed(1),
-            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: b.hex, color: on, padding: '10px 12px', minWidth: 0 },
-            nameStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: '.02em' },
+            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: b.hex, color: on, padding: '10px 12px', minWidth: 0, borderRadius: 'var(--radius-swatch)' },
             metaStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', opacity: 0.85, whiteSpace: 'nowrap' },
           };
         });
@@ -237,8 +249,8 @@ export const renderValsMethods = {
            10 is the size every other button label in the app is set at. --cx-control-h with flex
            centring rather than tuned padding: at 10px the padding alone builds a 28px box, and
            chasing 33 with a half-pixel of padding is how two controls end up almost aligned. */
-        const segOn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
-        const segOff = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
+        const segOn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', textTransform: 'none', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--on-surface)', background: 'var(--on-surface)', color: 'var(--surface)' };
+        const segOff = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 'var(--cx-control-h)', fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', textTransform: 'none', padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid var(--action-line)', background: 'none', color: 'var(--on-surface)' };
         /* THE TWO PAIRS BECOME RAILS, the same object as the library panel's tabs and the feed's
            List / Grid / 3D: one bordered box, a travelling --on-surface pill inside it, and two
            transparent buttons over the top. They were two adjacent bordered buttons with the
@@ -256,7 +268,11 @@ export const renderValsMethods = {
           transform: 'translateX(' + (second ? 100 : 0) + '%)', background: 'var(--on-surface)',
           transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)',
         });
-        const segBtn = (active) => this.viewToggleOptStyle(active, { fontSize: 'var(--fs-fine)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' });
+        // NO BLOCK PADDING, AND THE TRACK'S HEIGHT (17.09.26, by request: "not centrally aligned").
+        // The rails are a fixed --cx-control-h, and at 13px the segmented control's 7px padding made a
+        // 29.5px button in a 27px track: it hung over the bottom and its label sat 1.25px low. With no
+        // block padding the grid stretches the button to the track and the flex centre does the rest.
+        const segBtn = (active) => this.viewToggleOptStyle(active, { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px' });
         cx = {
           lensPill: segPill(aaa), sizePill: segPill(s.contrastLarge),
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
@@ -268,7 +284,7 @@ export const renderValsMethods = {
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
           rows, textOn,
           matrixColsStyle: { display: 'flex', flexDirection: 'column', width: '100%' },
-          sampleStyle: { background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
+          sampleStyle: { borderRadius: 'var(--radius-swatch)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
@@ -276,7 +292,7 @@ export const renderValsMethods = {
           normalStyle: segBtn(!s.contrastLarge), largeStyle: segBtn(s.contrastLarge),
           normalPressed: s.contrastLarge ? 'false' : 'true', largePressed: s.contrastLarge ? 'true' : 'false',
           togglePass: () => this.setState((st) => ({ contrastPassOnly: !st.contrastPassOnly })),
-          passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: 'Passing only',
+          passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: 'Passing Only',
         };
       }
     }
@@ -294,8 +310,6 @@ export const renderValsMethods = {
         const on = this.onColor(b.hex);
         const fmt = this.swatchFormats(b.hex);
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
-        const hoverBg = on === '#000000' ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.16)';
-        const cavBorder = on === '#000000' ? 'rgba(0,0,0,.32)' : 'rgba(255,255,255,.42)';
         const rowBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on };
         const values = ['hex', 'rgb', 'cmyk', 'hsl'].map((key) => {
           const f = fmt[key];
@@ -306,12 +320,10 @@ export const renderValsMethods = {
             valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' var(--dur-swap) var(--ease-entrance) both' },
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy),
-            rowStyle: rowBase, rowHover: { background: hoverBg },
+            rowStyle: rowBase,
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
             labelStyle: this.monoLabel('var(--fs-fine)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
-            valueStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
         });
@@ -322,7 +334,10 @@ export const renderValsMethods = {
           values,
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
-          infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
+          /* ROUND, AND ONE SIZE ON BOTH SURFACES (17.09.26, audit A1). This was the last square icon
+             control: every other icon-only button is a circle. 28px here and in the detail overlay,
+             which drew it at 26. A solid disc since the same day's second round — see _infoBtnStyle. */
+          infoBtnStyle: this._infoBtnStyle(on),
           style: { flexGrow: w(b), flexBasis: 0, minWidth: '190px', height: '340px', background: b.hex, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', willChange: 'opacity' },
           bandRingStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 1 },
           /* THE SHARE IS A FIGURE, NOT A LABEL, and it had been dressed as one. Three things moved
@@ -355,7 +370,7 @@ export const renderValsMethods = {
       // 156×104 (same 3:2), sized to sit level with the metadata columns it now shares a row
       // with — the subtle enlargement the move down bought; click-to-zoom still carries the
       // full-size view, so the thumbnail only has to identify, not exhibit
-      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', border: '1px solid var(--line-strong)' } })) : null;
+      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', border: '1px solid var(--line-strong)' } })) : null;
       // The metadata cluster — restored to the detail pane. It used to live ONLY in the list's
       // inline expansion; Phase 1 removed that expansion on the contract that this panel is the one
       // detail surface, but these five values (hue/chroma/lightness/temperature/archetype) were
@@ -569,15 +584,6 @@ export const renderValsMethods = {
             return { text: tags[i], on, pressed: on ? 'true' : 'false', aria: (on ? 'Remove the ' + tags[i].toLowerCase() + ' filter' : 'Filter to ' + tags[i].toLowerCase() + ' palettes'), onClick: () => this.setFacet(key, band) };
           });
         })(),
-        tagOff: { color: 'var(--on-surface-muted)', fontWeight: 400 },
-        tagOn: { color: 'var(--on-surface)', fontWeight: 500 },
-        // the tag buttons ride ABOVE the row's stretched activation surface; everything else is
-        // reachable through it. data-ix="press" gives them the shared hover/press tint spectrum.
-        // 4px/8px, not 3px/6px: the hover tint sat almost on the glyphs. Still well inside the
-        // row's 24px content box, so --row-list-height is untouched.
-        // 24px floor: WCAG 2.5.8's AA target baseline. The chip was 18px tall, and it repeats
-      // thirty-odd times down a list, so it was the app's most-repeated undersized target.
-      tagBtnBase: { position: 'relative', zIndex: 2, minHeight: '24px', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', background: 'none', border: 0, padding: 'var(--btn-pad-chip)', margin: 0, cursor: busy ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap' },
         // the row's one main action, stretched over the whole row: focus tints the row it covers
         onHitFocus: (e) => this.rowTintOn(e.currentTarget.closest('[data-row]')),
         onHitBlur: (e) => this.rowTintOff(e.currentTarget.closest('[data-row]')),
@@ -649,7 +655,13 @@ export const renderValsMethods = {
     // transform-origin at the corner: the engine's matrix3d maps the box from its top-left.
     // overflow VISIBLE on the engine tile, because the panel slides out of it; the hero clips its own
     // photograph, and nothing else in the card reaches its edge.
-    const cardBox = (isCur) => ({ position: 'absolute', top: '0', left: '0', width: UTW + 'px', height: UTH + 'px', display: 'block', textAlign: 'left', background: 'var(--surface-raised)', border: '1px solid var(--line)', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', overflow: 'visible', transformOrigin: '0 0' });
+    // THE CARD CORNER (17.09.26, radius issue R3, by request): --radius-card, 12px, on the box, the
+    // photograph, the dim, the ring and the sliding panel. 12 is the figure approved for these
+    // cards; How it Works' larger photo cards take 28. global.css squares the two corners that meet
+    // when a card is open (data-universe-open).
+    // NO STROKE AROUND THE PHOTOGRAPH (17.09.26, by request): the box has no border and no fill, so
+    // the picture is the card's edge. The panel and the ring keep the box's size (inset 0).
+    const cardBox = (isCur) => ({ position: 'absolute', top: '0', left: '0', width: UTW + 'px', height: UTH + 'px', display: 'block', textAlign: 'left', background: 'transparent', border: '0', borderRadius: 'var(--radius-card)', padding: 0, margin: 0, cursor: 'pointer', font: 'inherit', overflow: 'visible', transformOrigin: '0 0' });
     const feedNodes = scoped.map((p, idx) => {
       const isCur = p.id === curId;
       const hasImage = this.hasImg(p);
@@ -691,41 +703,40 @@ export const renderValsMethods = {
         onBlur: (e) => this.stackLeave(e.currentTarget),
         tileAbs: cardBox(isCur),
         tileFlow: Object.assign(cardBox(isCur), { position: 'relative', width: '100%', overflow: 'hidden', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)' }),
-        // The sliding panel: the card's border box (inset -1px of the inner, which sits inside the
-        // card's own 1px border, so the panel IS the card's box). It slides by its width less ONE
-        // pixel, so its leading hairline lands on the card's trailing one and the pair shares one
-        // rule. (Less two put it a pixel inside the card and left the content a pixel over the far
+        // The sliding panel: the card's box (inset 0 of the inner, which fills the borderless card,
+        // so the panel IS the card's box). It slides by its width less ONE pixel, so its leading
+        // hairline lands under the photograph's last column and the picture meets the panel's
+        // surface. (Less two put it a pixel inside the card and left the content a pixel over the far
         // edge — measured, 04.09.26.) --slide is the reference's clamp of the open scalar;
-        // --sx/--sy pick the axis.
-        panelStyle: { position: 'absolute', inset: '-1px', background: 'var(--surface-raised)', border: '1px solid var(--line)', pointerEvents: 'none', transform: 'translate(calc((100% - 1px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 1px) * var(--slide, 0) * var(--sy, 0)))' },
-        // The photograph fills the card down to the caption. `bottom` is what the open tween moves
-        // (to 0): the image takes the whole box while the caption fades, and the panel carries the
-        // name from there.
-        heroWrapStyle: { position: 'absolute', top: '0', left: '0', right: '0', bottom: CAP + 'px', overflow: 'hidden', background: 'var(--line)' },
+        // --sx/--sy pick the axis. It is invisible while it is home (--slide 0): the card has no
+        // stroke now, and a hairline under the photograph would show at its anti-aliased edge.
+        panelStyle: { position: 'absolute', inset: '0', opacity: 'min(1, calc(var(--slide, 0) * 1000))', background: 'var(--surface-raised)', border: '1px solid var(--line)', borderRadius: 'var(--radius-card)', pointerEvents: 'none', transform: 'translate(calc((100% - 1px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 1px) * var(--slide, 0) * var(--sy, 0)))' },
+        // THE PHOTOGRAPH FILLS THE CARD (17.09.26, radius issue R3, by request): the caption band
+        // and its white ground went, and the name sits on the picture's foot over a progressive blur
+        // and a dark tint (AppView TILE_FADE). The open tween no longer moves anything here.
+        heroWrapStyle: { position: 'absolute', top: '0', left: '0', right: '0', bottom: '0', overflow: 'hidden', background: 'var(--line)', borderRadius: 'var(--radius-card)' },
         heroFallback: { position: 'absolute', inset: '0', background: 'linear-gradient(135deg, ' + stops + ')', backgroundSize: '220% 220%', animation: this._reduce ? 'none' : 'gradient-drift ' + (10 + (idx % 4)) + 's ease-in-out infinite', animationDelay: (idx * -2.1) + 's' },
         // drawn at 1.1 so the engine's 12px drift toward the cursor never shows an edge (the
         // reference's own margin); the engine writes the translate, this is only the rest state
-        imgStyle: { width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center', transform: 'scale(1.1)', willChange: 'transform' },
-        dimStyle: { position: 'absolute', inset: '0', background: 'var(--surface-raised)', opacity: 'var(--dim, 0)', pointerEvents: 'none', zIndex: 2 },
-        /* THE CAPTION IS THE CARD'S FOOT: the identity line on the surface, under a hairline — the
-           list row's first column, not a scrim over the photograph. The reference floats its caption
-           on a gradient into the image; that puts white type on a picture whose lightness this tool
-           does not control (High Key is a pale field), and this app already turned its own hero fade
-           off once for the same reason. The surface puts the name on a ground that is right in both
-           themes by construction. The current palette keeps its white ground and its ink-coloured
-           rule, exactly as the row marks it. */
-        captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', height: CAP + 'px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '0 ' + UNIVERSE_TILE_INSET + 'px', background: isCur ? 'var(--surface-white)' : 'var(--surface-raised)', borderTop: '1px solid ' + (isCur ? 'var(--on-surface)' : 'var(--line)'), zIndex: 1 },
+        imgStyle: { position: 'relative', width: '100%', height: '100%', display: 'block', backgroundImage: 'url(' + this.dispUrl(p) + ')', backgroundSize: 'cover', backgroundPosition: 'center', transform: 'scale(1.1)', willChange: 'transform' },
+        dimStyle: { position: 'absolute', inset: '0', background: 'var(--surface-raised)', opacity: 'var(--dim, 0)', pointerEvents: 'none', zIndex: 2, borderRadius: 'var(--radius-card)' },
+        /* THE CAPTION IS ON THE PHOTOGRAPH (17.09.26, radius issue R3, by request). It was the card's
+           foot: the identity line on the surface under a hairline, because white type on a picture
+           whose lightness this tool does not control failed on pale fields (High Key). The picture
+           now runs to the edge and the name sits on its foot, over a progressive blur and a dark tint
+           strong enough for white type on the palest example (AppView TILE_FADE; the user chose the
+           tint). The current card is still named, by its Viewing mark. */
+        captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', height: CAP + 'px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '0 ' + UNIVERSE_TILE_INSET + 'px', zIndex: 1 },
         // 14px row gap, 16 column, 14 inset: the rhythm the card's block settled on (the pair inside
         // a row is 4, so the gap between rows has to stay well above it or the grouping inverts). The
         // reduced-motion card draws this directly; the open panel pads its body instead and keeps
         // only the top here — see universePanel below.
         cardMetricsStyle: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 16px', padding: UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px ' + UNIVERSE_TILE_INSET + 'px' },
-        // The ring is the hover, and it is a hairline in the press tier's hover ink, drawn ON the
-        // card's own hairline (inset -1px reaches the border from inside the inner box) — so the
-        // pointer strengthens the edge the card already has, colour only, as every [data-ix]
-        // control does. It was boxShadow:'none' for a while: an element whose opacity was tweened
+        // The ring is the hover, and it is a hairline in the press tier's hover ink, drawn on the
+        // photograph's edge (inset 0: the card has had no stroke of its own since 17.09.26) — an
+        // edge that appears under the pointer, colour only, as every [data-ix] control does. It was boxShadow:'none' for a while: an element whose opacity was tweened
         // on every hover and drew nothing at either end.
-        ringStyle: { position: 'absolute', inset: '-1px', boxShadow: 'inset 0 0 0 1px var(--action-line-hover)', opacity: 0, pointerEvents: 'none', zIndex: 3 },
+        ringStyle: { position: 'absolute', inset: '0', boxShadow: 'inset 0 0 0 1px var(--action-line-hover)', opacity: 0, pointerEvents: 'none', zIndex: 3, borderRadius: 'var(--radius-card)' },
         strip: p.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
       };
     });
@@ -762,8 +773,6 @@ export const renderValsMethods = {
         const on = on2.call(this, b.hex);
         const fmt = this.swatchFormats(b.hex);
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
-        const hoverBg = on === '#000000' ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.16)';
-        const cavBorder = on === '#000000' ? 'rgba(0,0,0,.32)' : 'rgba(255,255,255,.42)';
         const values = ['hex', 'rgb', 'cmyk', 'hsl'].map((key) => {
           const f = fmt[key]; const copied = s.copied === 'ov-' + key + '-' + i;
           return {
@@ -773,12 +782,9 @@ export const renderValsMethods = {
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy),
             rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on },
-            rowHover: { background: hoverBg },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
             labelStyle: this.monoLabel('var(--fs-fine)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
-            caveatStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.05em', textTransform: 'uppercase', color: on, opacity: 0.62, border: '1px solid ' + cavBorder, padding: '1px 4px', whiteSpace: 'nowrap', flex: 'none' },
-            valueStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
             iconWrapStyle: { flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '14px', height: '14px', color: on, opacity: copied ? 1 : 0.5 },
           };
         });
@@ -797,7 +803,8 @@ export const renderValsMethods = {
           weightStyle: { fontFamily: sans, fontSize: 'var(--fs-title)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '16px 14px 0' },
           onHarmony: () => this.openHarmony(b.hex),
           harmonyAria: 'Colour harmonies for ' + fmt.hex.display,
-          infoBtnStyle: { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '26px', height: '26px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid color-mix(in srgb, ' + on + ' 15%, transparent)', color: on, cursor: 'pointer', padding: 0 },
+          // The result stage's harmony button, exactly: round, 28px (see the note there).
+          infoBtnStyle: this._infoBtnStyle(on),
           valuesWrap: { display: 'flex', flexDirection: 'column', width: '100%' },
           values,
         };
@@ -858,12 +865,14 @@ export const renderValsMethods = {
           aria: 'Copy ' + c.hex + (c.base ? ', the source colour' : '')
             + (c.mapped ? ', adjusted to fit sRGB' : ''),
           onCopy: () => this.copy(c.hex, 'hx-' + active.id + '-' + ci, 'Copied ' + c.hex),
-          style: { flex: 1, minWidth: 0, height: '104px', background: c.hex, border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', padding: '9px 10px', cursor: 'pointer', position: 'relative' },
-          hover: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.35)' : 'brightness(0.88)' }, active: { filter: this.lumHex(c.hex) < 0.08 ? 'brightness(1.5)' : 'brightness(0.82)' },
+          // The colour on the wrapper, the button transparent over it: data-ix="cell" tints the
+          // button's own background from its ink (see the markup in AppView).
+          wrapStyle: { flex: 1, minWidth: 0, display: 'flex', background: c.hex },
+          style: { flex: 1, minWidth: 0, height: '104px', background: 'transparent', border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', padding: '9px 10px', cursor: 'pointer', position: 'relative' },
           // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
           // colour the harmony can produce rather than on most of them.
           badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '2px 6px', whiteSpace: 'nowrap' },
-          hexStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: '.02em', color: on, whiteSpace: 'nowrap' },
+          hexStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: on, whiteSpace: 'nowrap' },
         };
       });
       const mappedCount = active.cells.filter((c) => c.mapped).length;
@@ -952,8 +961,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           mk('css', 'CSS custom properties', 'css'),
           mk('ase', 'Adobe swatches', 'ase'),
         ],
-        toggleTrackStyle: { position: 'relative', display: 'inline-block', width: '34px', height: '18px', flex: 'none', background: semantic ? 'var(--on-surface)' : 'var(--line-strong)', transition: 'background var(--dur-fast) var(--ease-standard)', cursor: 'pointer' },
-        toggleDotStyle: { position: 'absolute', left: '2px', top: '2px', width: '14px', height: '14px', background: 'var(--surface)', transform: semantic ? 'translateX(16px)' : 'translateX(0px)', transition: 'transform var(--dur-fast) var(--ease-standard)' },
         semanticTrackBg: semantic ? 'var(--on-surface)' : 'var(--line-strong)',
         semanticDotX: semantic ? 'translateX(14px)' : 'translateX(0px)',
         semanticLabel: semantic ? 'On' : 'Off',
@@ -971,7 +978,12 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     // The scope chips ARE view-toggle options — same segmented control, same states — and were a
     // hand-copy of that builder down to a truncated transition that left their background tint
     // cutting. Only the row layout differs, so only the row layout is stated.
-    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '7px', maxWidth: '100%' });
+    /* THE COUNT SITS ON THE LABEL'S BASELINE (17.09.26, by request: "the number should be centrally
+       aligned, it sticks to the top"). Centred boxes put the 11px count's baseline 0.8-1.25px above the
+       13px label's, with its top level with the ascenders, so it hung from the top of the line. On a
+       shared baseline it sits where a number in the same line of text would, and reads as centred on
+       the word. See labelStyle for the clip this needed moved. */
+    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'baseline', gap: '7px', maxWidth: '100%' });
     /* ONE NAME CANNOT TAKE THE WHOLE ROW. A project name may be 60 characters, and at 10px that is
        a 294px chip — two of them and the scope group is 693px wide before All and Unfiled have had
        a turn. The cap is stated in `ch` rather than px so it stays a CHARACTER budget: it tracks
@@ -979,7 +991,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
        Truncation hides content, so the full name stays reachable two ways — the aria-label has
        always carried it, and `title` now carries it for a pointer. */
     const CHIP_CHARS = 26;
-    const labelStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, maxWidth: CHIP_CHARS + 'ch' };
+    // No overflow clip on this span (17.09.26): a flex item that clips has its baseline taken from its
+    // bottom edge, which dropped the count below the word. The ellipsis never came from here anyway —
+    // the swap's inline-block sat between this span and the text — it comes from the
+    // [data-proj-chip] .tswap rules in global.css, capped by this span's max-width.
+    const labelStyle = { whiteSpace: 'nowrap', minWidth: 0, maxWidth: CHIP_CHARS + 'ch' };
     // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
     // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
     // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
@@ -1050,14 +1066,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
        and not the raw flag, so the strip can never disagree with the body under it. */
     const canFilter = tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0;
     const libTab = s.libraryTab || (canFilter ? 'filter' : 'projects');
-    const tagCounts = new Map();
-    tagPool.forEach((p) => { new Set(p.descriptors.map((d) => d.toLowerCase())).forEach((d) => tagCounts.set(d, (tagCounts.get(d) || 0) + 1)); });
-    // Tags combine with AND, so every count shown is the count YOU WOULD GET — the size of the
-    // current result set narrowed by that tag, not the tag's standalone total. That keeps the
-    // Phase 4.5 promise intact under multi-select: an option that would empty the list has no
-    // information scent, so it is not offered at all. Selected tags always stay listed (they are
-    // how you get back out), and a tag on every remaining palette is dropped for the old reason —
-    // it partitions nothing.
     // Each group counts against the OTHER groups' filters but not its own — the standard faceted
     // convention. Counting a group against itself would make every unselected option read zero the
     // moment you picked something in that group.
@@ -1069,95 +1077,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       && (skip === 'a11y' || this.matchesA11y(p, activeA11y))
       && (skip === 'light' || this.matchesLight(p, activeLight))
       && (skip === 'temp' || this.matchesTemp(p, activeTemp)));
-    const tagBase = others('tags');
     const a11yBase = others('a11y');
-    const withTag = (d) => tagBase.filter((p) => p.descriptors.some((x) => x.toLowerCase() === d));
-    // Two different facts were being answered with the same silence. A tag that would empty the
-    // list and a tag that is true of EVERYTHING here are both unpickable, but they mean opposite
-    // things, and hiding both taught the user nothing either time. Zero stays hidden: an option
-    // that leads nowhere is noise, and its absence costs nothing because it was never true of
-    // anything you can see. Universal is now SHOWN and disabled, because "every palette here is
-    // warm" is a real description of the current view — arguably the most useful sentence the
-    // panel can say — and silently dropping it made the vocabulary look smaller than it is and
-    // left tags vanishing for no stated reason.
-    const universalTag = (d) => activeTags.indexOf(d) < 0 && tagBase.length > 0 && withTag(d).length === tagBase.length;
-    const facetQuery = (s.tagQuery || '').trim().toLowerCase();
-    const facetRanked = [...tagCounts.keys()]
-      .filter((d) => activeTags.indexOf(d) >= 0 || withTag(d).length > 0)
-      .filter((d) => !facetQuery || d.indexOf(facetQuery) >= 0)
-      // count-first for discovery, A–Z for known-item lookup; count order keeps the alphabetical
-      // tiebreak so equal-sized tags never shuffle between renders. Universal tags sort last in
-      // both orders: they describe the view but cannot act on it, so they must not head a list
-      // whose purpose is choosing — their count is the maximum, so they would otherwise sort first.
-      .sort((a, b) => (universalTag(a) - universalTag(b)) || (s.tagSort === 'alpha' ? 0 : withTag(b).length - withTag(a).length) || a.localeCompare(b))
-      .map((d) => {
-        const active = activeTags.indexOf(d) >= 0;
-        const count = active ? tagBase.length : withTag(d).length;
-        // The strip shows ONE member palette, drawn the way the archive draws it, and the row names
-        // which one. It used to pool every swatch of every member and sample that by lightness —
-        // and that pooling destroyed the very properties most tags name. Half the taxonomy's
-        // dimensions (hue, contrast, dominance) are relations WITHIN a palette, so a set assembled
-        // ACROSS members is a synthetic object that satisfies no tag's definition. Measured: the
-        // seven MONOCHROME palettes each span ≤28° of hue, inside the sans bucket's [0,30); their
-        // pooled swatches span 47°, which this app's own resolver calls 'analogous'. The strip
-        // labelled MONOCHROME was, by our own numbers, not monochrome. No sampling rule fixes that;
-        // only showing a real member does, because a member satisfies the predicate by definition.
-        const exemplar = (() => {
-          const mem = tagPool.filter((p) => p.descriptors.some((x) => x.toLowerCase() === d));
-          if (!mem.length) return null;
-          // The most TYPICAL member: each palette's area-weighted centre in OKLab, then the member
-          // nearest the tag's own centre. Deterministic, needs no per-tag knowledge (so it works
-          // the same for a computed facet and for an interpretive word), and because two tags have
-          // different member sets they usually resolve to different exemplars on their own.
-          const mid = (p) => { let L = 0, a = 0, b = 0, t = 0; p.swatches.forEach((x) => { const q = x.weight || 1; L += x.L * q; a += x.a * q; b += x.b * q; t += q; }); return t ? [L / t, a / t, b / t] : [0, 0, 0]; };
-          const cs = mem.map(mid);
-          const c0 = cs.reduce((m, c) => [m[0] + c[0] / cs.length, m[1] + c[1] / cs.length, m[2] + c[2] / cs.length], [0, 0, 0]);
-          let best = 0, bd = Infinity;
-          cs.forEach((c, i) => { const dd = (c[0] - c0[0]) ** 2 + (c[1] - c0[1]) ** 2 + (c[2] - c0[2]) ** 2; if (dd < bd) { bd = dd; best = i; } });
-          return mem[best];
-        })();
-        // Area-weighted, the same value shape the archive card's strip uses, so one palette renders
-        // identically wherever it appears — and so the dominance dimension reads truthfully too,
-        // which equal-width sampling flattened away.
-        const strip = exemplar ? exemplar.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })) : [];
-        // Named at EVERY count, not just at one or two members (F4). The name was previously
-        // conditional, so a row's anatomy changed with its size — the same column held information
-        // on some rows and nothing on others, and you could not tell which kind of row you were
-        // reading until you had read it. It also now has a second job: it says WHICH palette the
-        // strip is, so the strip cannot be misread as a summary of all members. Two tags that
-        // resolve to the same exemplar therefore repeat honestly rather than puzzlingly.
-        const exemplarName = exemplar ? exemplar.name : '';
-        // A disabled row must say WHY, and must not say it in colour alone. The reason takes the
-        // flexible text column: on a row you cannot pick, why-it-is-inert outranks the name of a
-        // sample you cannot select. Anatomy is unchanged either way — same five slots, one state.
-        const disabled = universalTag(d);
-        return {
-          key: d, label: d, count: String(count), active, pressed: active ? 'true' : 'false',
-          strip, exemplarName, disabled,
-          reason: disabled ? 'on every palette here' : '',
-          aria: disabled
-            ? d + ' is on every one of these ' + count + ' palettes, so it cannot narrow them further'
-            : (active ? 'Remove the ' + d + ' filter' : (activeTags.length ? 'Narrow to ' + d + ' as well' : 'Filter to ' + d + ' palettes'))
-              + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (exemplarName ? ', for example ' + exemplarName : ''),
-          // applying does NOT close the drawer: the list re-filters live behind it, so the drawer
-          // works like the contrast lens toggles — a place to try slices, not a one-shot picker
-          onPick: disabled ? () => {} : () => this.setActiveTag(d),
-        };
-      });
-    // SIX, THEN THE REST. The list is the interpretive layer and it was the tallest thing in the
-    // panel — three measured groups of three rows each, then twenty of these, which ranks by height
-    // the exact way the Character disclosure exists to avoid.
-    //
-    // The cut is off the ranked order, so it is the six most useful under whichever sort is on. Two
-    // things are never cut: a SELECTED trait (it is how you get back out, and hiding it would strand
-    // a chip with no row) and a search result set (you asked for those by name, and a search that
-    // silently truncates is a search that lies).
-    const FACET_LEAD = 6;
-    const facetCut = !s.facetAllOpen && !facetQuery && facetRanked.length > FACET_LEAD;
-    const facetOptions = facetCut
-      ? facetRanked.filter((o, i) => i < FACET_LEAD || o.active)
-      : facetRanked;
-    const facetHidden = facetRanked.length - facetOptions.length;
     // One removable chip per selected tag, in the order they were picked, so the narrowing reads as
     // a sentence you can dismantle from either end. The count on the LAST chip is the live result
     // size; earlier chips show what the selection was worth at that point, which is why only the
@@ -1382,9 +1302,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         fileName: r.fileName,
         nothingNew, hasAct: !nothingNew,
         // Stated in words. Nothing here is carried by colour or by an icon alone.
-        line: nothingNew
-          ? 'Everything in this file is already in your library. Adding it would change nothing.'
-          : 'Nothing is replaced. Anything already in your library is left exactly as it is.',
+        // One line, and only when it explains why there is no act (17.09.26, by request: "Nothing is
+        // replaced…" went; the counts and the two buttons say the rest).
+        line: nothingNew ? 'Everything in this file is already in your library. Adding it would change nothing.' : '',
         rows: [
           { label: 'Palettes', value: r.newPalettes + ' new of ' + r.palettes },
           { label: 'Projects', value: r.newProjects + ' new of ' + r.projects },
@@ -1573,7 +1493,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
                    left is decoration, which has no requirement because it carries no information.
                    The band above it stays named for large TEXT alone even though 3:1 is also the
                    non-text figure; the two criteria share a number and nothing else. See lib/wcag.js. */
-                use: ratio >= 4.5 ? 'Body text at AA' : ratio >= 3 ? 'Large text at AA' : 'Decorative only',
+                use: ratio >= 4.5 ? 'Body Text at AA' : ratio >= 3 ? 'Large Text at AA' : 'Decorative Only',
                 // NAMED, not left to two colour chips. The chips are decoration beside this.
                 pair: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase(),
                 aria: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase() + ', '
@@ -1737,61 +1657,21 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
               background: b.hex, color: on, border: 'none', cursor: 'pointer',
               fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
             },
-            hexStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-lead)', letterSpacing: '.02em', textTransform: 'uppercase' },
+            hexStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-lead)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase' },
             // The showcase's copy of the same figure — same decision as the result stage's band
             // label, see the note there. This one had the worse veil of the two at 0.75.
             metaStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', display: 'inline-flex', alignItems: 'center', gap: '6px' },
           };
         }),
-        // Only the example can be left — a shared link has nowhere to go back TO, and a control
-        // that appears for one arrival and not the other is why the two flags are separate.
-        canLeave: !!s.exampleView,
         // THE PICTURE THE PALETTE CAME FROM. dispUrl resolves a seeded example's key against the
         // bundled EXAMPLE_SRC map and returns '' for anything else, so no stored or shared string
         // can ever reach this src — the same invariant the desktop reference image rides.
         image: this.dispUrl(p), hasImage: this.hasImg(p),
-        onSeeAll: () => this.openExampleList(),
-        // `inList` and `onLeave` are gone with the foot's second act (see the note in
-        // MobileShareView). inList existed only to relabel that button and to hide `See All
-        // Examples`; onLeave was closeExampleOnPhone(), which the masthead's own mark reaches
-        // through returnToIntro(). The list surface below still has its own ml.onLeave.
-        // Nothing under an example. The line explaining that this ships with the app was telling
-        // someone who had just pressed "Try an example" what they had pressed. A shared link is a
-        // different arrival — that reader did not choose this surface and did not come for the
-        // product, so it keeps the one sentence that says where the tool actually lives. (They are
-        // not stranded on it: the mark above leaves this surface on either arrival now — see
-        // returnToGateOnPhone, where the shared path also drops the hash and the palette.)
-        footLine: s.exampleView ? '' : 'Open Atmos Gallery on a wider screen to read your own image.',
-      };
-    }
-
-    /* THE EXAMPLE LIST — the phone's version of the Library list, and deliberately the same object:
-       a strip you recognise the palette by, its name, and the first two traits. Built only when it
-       is on screen; it reads the same seeded records the archive does. */
-    let mobileList = null;
-    if (this._mobileList()) {
-      const ex = this._examples();
-      mobileList = {
-        count: ex.length,
-        onLeave: () => this.closeExampleList(),
-        rows: ex.map((p) => {
-          const tot = p.swatches.reduce((a, x) => a + (x.weight || 0), 0) || 1;
-          return {
-            key: p.id,
-            name: p.name,
-            traits: this.paletteTags(p),
-            onOpen: () => this.openExampleById(p.id),
-            // The photograph, resolved the same way the palette view resolves its own: a seeded
-            // example's key against the bundled map, '' for anything else. The list was showing the
-            // swatch strip alone, which is the palette without the thing it was read FROM.
-            image: this.dispUrl(p), hasImage: this.hasImg(p),
-            aria: 'Open ' + p.name + '. ' + this.tagsSpoken(p) + '.',
-            strip: p.swatches.map((b, i) => ({
-              key: i,
-              style: { flexGrow: this.swatchGrow(b), flexBasis: 0, minWidth: '2px', background: b.hex },
-            })),
-          };
-        }),
+        // A shared link is the only arrival now (the example view went on 17.09.26, audit C5), and
+        // that reader did not choose this surface or come for the product, so the foot says where the
+        // tool actually lives. The masthead's mark leaves this surface: see returnToGateOnPhone, where
+        // the shared path also drops the hash and the palette.
+        footLine: 'Open Atmos Gallery on a wider screen to read your own image.',
       };
     }
 
@@ -1806,12 +1686,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
 
     return {
       showMobileShare: !!mobileShare, mobileShare,
-      showMobileList: !!mobileList, mobileList,
       showMobileStory: !!mobileStory, mobileStory,
-      // THE GATE'S TWO ACTS. Offered only where they are true: the example needs a palette in the
-      // archive to show, and both are meaningless on a screen wide enough to run the tool.
-      gateHasExample: (s.feed || []).length > 0,
-      gateExample: () => this.openExampleOnPhone(),
+      // The gate's `Explore an Example` (gateHasExample / gateExample) went with the phone's example
+      // view on 17.09.26 (audit C5); the story is how a phone sees the examples.
       // gateCopyLink / gateLinkCopied went with the `Save for Desktop` button (see the tombstone in
       // AppView's gate). copySiteLink() and the 'gate-link' copy key are still in persistence.js.
 
@@ -1859,9 +1736,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // shared micro-interaction handlers (one signature across the whole UI). The m* quartet that
       // sat here went with the dead GSAP press system — see the tombstone in methods/motion.js.
       dimEnter: (e) => this.dimEnter(e), dimLeave: (e) => this.dimLeave(e),
-      uploadHover: { background: 'color-mix(in srgb, var(--on-surface) 4%, var(--surface-white))' },
       // dropzone hover tint — JS-driven; leave restores the explicit defaults (never clears inline styles)
-      dropEnter: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
+      // Every way toward a file also asks for the processing atmosphere's chunk (procField.js), so
+      // three is usually here before the picture is. Deferred past the paint wherever the event counts
+      // toward responsiveness (a tap reaches this as a compatibility mouseover); drags ask directly.
+      dropEnter: (e) => { this._procFieldIntent(); if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
       // palette-level copy
       // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of
@@ -1872,6 +1751,14 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          Copy is no longer a dropdown — see CopyControl in AppView — so the two surfaces have to be
          the same surface rather than two that resemble each other. */
       copyItemStyle: itemBase,
+      // The export rows' hover and focus tint, for the copy rows (17.09.26, audit C1): the two lists
+      // are one object and now answer a pointer the same way.
+      copyRowTint: {
+        onEnter: (e) => this.rowTintOn(e.currentTarget),
+        onLeave: (e) => this.rowTintOff(e.currentTarget),
+        onFocus: (e) => this.rowTintOn(e.currentTarget),
+        onBlur: (e) => this.rowTintOff(e.currentTarget),
+      },
       copyMenuOpen: !!s.copyMenuOpen,
       toggleCopyMenu: () => { if (this.state.copyMenuOpen) this.closeCopyMenu(); else this.openCopyMenu(); },
       closeCopyMenu: () => this.closeCopyMenu(),
@@ -1888,8 +1775,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       isSharedView: !!s.sharedView,
       onSaveShared: () => this.saveShared(),
       onMakeOwn: () => this.makeOwnFromShared(),
-      copyLabelStyle: this.monoLabel('var(--fs-label)', '.12em', { color: 'var(--on-surface-muted)' }),
-      deferNoteStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: '.02em', color: 'var(--on-surface-muted)', marginLeft: 'auto' },
       // feed states + view toggle
       // The cold-start empty state is only cold start. Filtered-to-nothing is a different message
       // with a different way out, and showing "Palettes you generate collect here" to someone
@@ -1910,7 +1795,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // than a bordered button's, because it is now a view of a surface rather than a way into one.
       /* THE STEP PAIR. No border of its own: the rail already draws one, and the hairline in the
          JSX separates the pair from the chips — a second box inside the box would read as another
-         scope. Square by construction (a fixed 30px, not padding), because a chevron has no width
+         scope. Square by construction (a fixed 32px, not padding), because a chevron has no width
          of its own to pad and two arrows of different widths beside each other look broken.
 
          Disabled reads as the app's disabled reads — [data-ix]:disabled, the same rule every other
@@ -1969,7 +1854,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // null, and a press on the tab already showing would otherwise re-announce and re-run the
         // arrival of a panel that did not change.
         onClick: () => { if (libTab !== t.key) this.setLibraryTab(t.key); },
-        style: this.viewToggleOptStyle(libTab === t.key, { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '7px' }),
+        // The count on the label's baseline, as on the scope chips (see chipStyle).
+        style: this.viewToggleOptStyle(libTab === t.key, { display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '7px' }),
         countStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: libTab === t.key ? 'var(--surface)' : 'var(--on-surface-muted)' },
       })),
       // Left/Right across the pair, the same two lines the feed's view toggle takes: a segmented
@@ -1990,38 +1876,26 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // reopen), so it has to carry the close itself. See _facetOutside.
       openFacet: () => { if (this.state.tagMenuOpen) this.closeTagFilter(); else this.openTagFilter(); },
       closeFacet: () => this.closeTagFilter(),
-      tagQuery: s.tagQuery || '', onTagQuery: (e) => this.setState({ tagQuery: e.target.value }),
-      hasTagQuery: !!(s.tagQuery || '').trim(),
-      clearTagQuery: () => this.setState({ tagQuery: '' }, () => { const i = document.querySelector('[data-facet-search]'); if (i) try { i.focus(); } catch (e) { } }),
       // The panel covers the right of the list, so it states the result size itself rather than
       // making you close it to find out. aria-live=polite on the element (see AppView) announces
       // each change without interrupting whatever the user is doing.
       //
-      // scopedNow, not tagBase. tagBase is the facet-counting base — the result with the TAG group
-      // lifted out, which is the right denominator for a trait row's count and the wrong number
-      // entirely for a header that says how many palettes match. With a trait applied the two
-      // differ, and the panel was quietly reporting the larger one.
+      // scopedNow, not the tag group's counting base (which went with the traits list on 17.09.26):
+      // that base lifts the TAG group out, the wrong number for a header that says how many
+      // palettes match. With a trait applied the two differ.
       // One key, not two: `matchCount` sat beside this with no consumer at all.
       // Same sentence the bar states, so the panel and the row it sits over never disagree.
       matchLabel: appliedRaw.length
         ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
         : tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's'),
-      // sort the facet list: discovery (count) vs known-item lookup (A–Z)
-      tagSort: s.tagSort || 'count',
-      sortByCount: () => this.setState({ tagSort: 'count' }),
-      sortByAlpha: () => this.setState({ tagSort: 'alpha' }),
-      // toggleStyle is shared with the harmony drawer (result stage), so its uppercase micro voice
-      // stays; the filter drawer is library-owned chrome and overrides to the library's control
-      // voice locally — same component, section-appropriate clothes.
-      sortCountStyle: this.toggleStyle((s.tagSort || 'count') === 'count'),
-      sortAlphaStyle: this.toggleStyle(s.tagSort === 'alpha'),
-      // roving arrow traversal inside the option list — Down/Up step, Home/End jump. Typing stays
-      // with the search field, which is where focus lands on open.
+      // roving arrow traversal inside a filter group — Down/Up step, Home/End jump. The rows are
+      // data-sec-row since the section reveal; this still looked for the traits list's data-tg-cell
+      // and found nothing, so the arrows did nothing (fixed 17.09.26 with audit H3).
       onFacetListKey: (e) => {
         const nav = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
         if (nav.indexOf(e.key) < 0) return;
         const list = e.currentTarget;
-        const opts = [...list.querySelectorAll('[data-tg-cell][aria-pressed]')].filter((b) => !b.disabled && b.offsetParent !== null);
+        const opts = [...list.querySelectorAll('[data-sec-row][aria-pressed]')].filter((b) => !b.disabled && b.offsetParent !== null);
         if (!opts.length) return;
         e.preventDefault();
         const i = opts.indexOf(document.activeElement);
@@ -2032,17 +1906,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         else n = opts.length - 1;
         if (opts[n]) opts[n].focus();
       },
-      facetOptions, facetEmpty: facetOptions.length === 0,
-      // NO SILENT TRUNCATION. The control states how many rows are being withheld, so a short list
-      // is legibly a short list rather than the whole vocabulary.
-      facetAllOpen: !!s.facetAllOpen,
-      facetMore: (facetHidden > 0 || (s.facetAllOpen && !facetQuery && facetRanked.length > 6)) ? {
-        label: s.facetAllOpen ? 'Show Fewer' : 'Show All · ' + facetHidden,
-        aria: s.facetAllOpen
-          ? 'Show only the most useful character traits'
-          : 'Show all character traits, ' + facetHidden + ' more',
-        onToggle: () => this.toggleFacetAll(),
-      } : null,
       // the in-drawer clear: focus moves to the search field after, because the clear row itself
       // disappears with the state it clears — focus must never die with the control that held it
       // ONE clear-all, living in the panel beside the facets it clears. The header's separate
@@ -2059,11 +1922,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       } : null,
       appliedTags, hasAppliedTags: appliedTags.length > 0,
       measuredGroups, hasMeasured: measuredGroups.length > 0,
-      // Character is a DISCLOSURE now, not a peer of the measured groups.
-      charOpen: !!s.charOpen,
-      toggleChar: () => this.toggleFold('charOpen', '[data-facet-char]'),
-      charLabel: 'Character traits',
-      charAria: (s.charOpen ? 'Hide' : 'Show') + ' character traits, which are interpretations rather than measurements',
       // ===== the filter row's own state, kept visible OUTSIDE the overlay =====
       //
       // A NUMBER ON THE TRIGGER. The word said nothing about whether anything was filtered; the
@@ -2130,59 +1988,13 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
       filteredEmpty: scopedNow === 0 && appliedTags.length > 0,
       a11yOptions, hasA11yOptions: a11yOptions.length > 0,
-      // The three definitions, for the panel's ⓘ. On demand, in one place, rather than as a
-      // standing line under every row — the affordance-over-copy rule, and the reason the group's
-      // old right-hand hint column was removed in the first place.
-      a11yDefs: ['flexible', 'limited', 'none'].map((v) => ({ key: v, label: A11Y_LABEL[v], text: A11Y_DEFINITION[v] })),
-      // The combine rule and the three accessibility states used to stand as a paragraph over
-      // the groups. It is the panel's own instruction manual, read once and then scrolled past
-      // forever, so it moves to the same 16px tip the Library heading uses: available on the
-      // title it belongs to, absent from every visit that does not need it.
-      filterInfoOpen: !!s.filterInfoOpen,
-      toggleFilterInfo: () => this.toggleTip('filterInfoOpen', '[data-tip="filters"]'),
-      filterInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('filterInfoOpen', '[data-tip="filters"]'); } },
+      // The panel's ⓘ and the Library heading's storage marker, both removed by request, read state
+      // that went with them on 17.09.26 (filterInfoOpen, a11yDefs, storeInfo); the three definitions
+      // a11yDefs carried are still on every Text usability row, in its title and accessible name.
 
       activeTags, activeA11y,
       showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
-      // WHERE THE LIBRARY LIVES — carried by a marker, not by a sentence.
-      //
-      // This began as a standing line beside the heading ("Saved in this browser. Clearing browser
-      // data deletes it."). It was accurate and it was too much: a permanent two-sentence
-      // explanation next to a one-word heading, read once and then merely occupying the page. The
-      // rule this repo works to is that an affordance should carry the fact and copy should be
-      // what you get when you ask for it — the same move the AA column already makes with its ⓘ,
-      // which is why this is that ⓘ and not a new kind of thing.
-      //
-      // Gated with the control bar below: an empty library has nothing to lose, and the cold-start
-      // empty state a few lines down already speaks for that case.
-      //
-      // TWO STATES, ONE ELEMENT. When the storage probe fails — private browsing, a locked-down
-      // profile, a full disk — makeStore() returns available:false and persist() silently does
-      // nothing (writePayload). That is not background information to be filed behind an ⓘ, so the
-      // marker changes glyph and accessible name to say something is wrong, and the panel says
-      // what. Never colour alone: the glyph and the name both carry it. _store() memoises onto
-      // this.store, so asking per render costs a property read.
-      storeInfoOpen: !!s.storeInfoOpen,
-      toggleStoreInfo: () => this.toggleTip('storeInfoOpen', '[data-tip="store"]'),
-      storeInfoKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeTip('storeInfoOpen', '[data-tip="store"]'); } },
-      storeInfo: (s.feed.length > 0 || s.projects.length > 0)
-        ? (this._store().available
-          ? {
-            glyph: 'i', aria: 'Where your palettes are stored',
-            lines: [
-              'Your palettes are saved in this browser, on this machine. There is no account and no server copy.',
-              'Clearing your browser data deletes them. Back up to keep a copy of your own.',
-            ],
-          }
-          : {
-            glyph: '!', aria: 'This browser is not saving your palettes',
-            lines: [
-              'This browser is not letting the library be saved. That usually means private browsing, or storage that is full or blocked.',
-              'Nothing here will survive closing the tab. Back up to keep it.',
-            ],
-          })
-        : null,
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), confirmAssign: () => this.confirmAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
       // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
       // user is being asked about looks the way it looks everywhere else — recognition is the whole
@@ -2191,7 +2003,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       hasRecognise: !!s.recognised,
       recognise: s.recognised ? {
         name: s.recognised.palette.name,
-        when: this.relTime(s.recognised.palette.time),
         count: s.recognised.count,
         // Stated in words, never by colour or icon alone (SC 1.4.1).
         line: s.recognised.count === 1
@@ -2199,7 +2010,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           : 'You extracted this image before. Your Library already holds ' + s.recognised.count + ' palettes from it.',
         strip: s.recognised.palette.swatches.map((b) => ({ style: { flexGrow: w(b), flexBasis: 0, minWidth: 0, background: b.hex } })),
         openAria: 'Open the existing palette ' + s.recognised.palette.name,
-        variationAria: 'Extract this image again anyway, adding a second entry with the same colours and keeping ' + s.recognised.palette.name,
+        variationAria: 'Extract this image again, adding a second entry with the same colours and keeping ' + s.recognised.palette.name,
       } : null,
       closeRecognise: () => this.closeRecognised(),
       recogniseOpen: () => this.recogniseOpen(),
@@ -2306,13 +2117,12 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // vocabulary the view toggle and the project chips already use) and each states its NEXT
       // action, so the label is never a lie about what activating it will do.
       showSortHeader: s.feed.length > 0 && s.feedView === 'list',
-      // the ⓘ toggletip on the header: the denominator and the badge vocabulary, explained ONCE
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [
         // No widths here any more: the header sits on --row-grid, the same template the rows use,
         // so each label is sized by the track it lands in. Each right-aligns over the values it
-        // sorts. 'aa' shares its track with the ⓘ that explains the badge.
+        // sorts. (The ⓘ that shared 'aa''s track to explain the badge was removed by request.)
         // Sentence case, like every other control: these were Title Case while a transform was
         // uppercasing them and the source case never showed. "AA" stays capital because it is the
         // WCAG level, not a word.
@@ -2382,7 +2192,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
             padding: '6px',
             border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer',
             color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
-            fontWeight: active ? 500 : 400, whiteSpace: 'nowrap',
+            // Regular in both states (17.09.26, audit G4, by request): the chevron and the ink say
+            // which column sorts; controls do not change weight.
+            fontWeight: 400, whiteSpace: 'nowrap',
           }),
         };
       }),
@@ -2403,14 +2215,14 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // overlay
       overlay, hasOverlay: !!s.overlay, closeOverlay: () => this.closeOverlay(),
       overlayRef: this.overlayRef, overlayBandsRef: this.overlayBandsRef, trapFocus: (e) => this.trapFocus(e),
-      onBrowse: () => { if (this.fileRef.current) this.fileRef.current.click(); },
+      onBrowse: () => { this._procFieldIntent(); if (this.fileRef.current) this.fileRef.current.click(); },
       onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.handleIncoming(f); e.target.value = ''; },
       onDrop: (e) => { e.preventDefault(); this.setState({ dragOver: false }); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.handleIncoming(f); },
-      onDragOver: (e) => { e.preventDefault(); if (!this.state.dragOver) this.setState({ dragOver: true }); },
+      onDragOver: (e) => { e.preventDefault(); if (!this.state.dragOver) { this._procFieldPrefetch(); this.setState({ dragOver: true }); } },
       onDragLeave: (e) => { e.preventDefault(); this.setState({ dragOver: false }); },
       onGridKey: (e) => this.onGridKey(e),
       fileRef: this.fileRef, canvasRef: this.canvasRef, resultRef: this.resultRef, progRef: this.progRef, gridRef: this.gridRef,
-      dropStyle: { position: 'relative', display: 'flex', borderRadius: 'var(--radius-dropzone)', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)' },
+      dropStyle: { position: 'relative', display: 'flex', borderRadius: 'var(--radius-surface)', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', width: '100%', minHeight: '420px', padding: '40px', background: s.dragOver ? 'var(--surface-white)' : 'var(--surface-raised)', border: '1px ' + (s.dragOver ? 'solid' : 'dashed') + ' ' + (s.dragOver ? 'var(--on-surface)' : 'var(--line-strong)'), cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)', transition: 'background var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)' },
       // ===== nav controls: theme toggle + contrast checker =====
       isDark: s.theme === 'dark' ? 'true' : 'false',
       toggleTheme: () => this.toggleTheme(),
@@ -2430,8 +2242,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          is blank — which is precisely what happened. */
       maskMotion: {
         duration: this.DUR ? this.DUR.reveal : 0.62,
-        stagger: 0.09,
-        ease: this.EASE ? this.EASE.entrance : 'power3.out',
+        stagger: this.DUR ? this.DUR.line : 0.09,
+        rule: this.DUR ? this.DUR.overlay : 0.8,
+        // The fallbacks are the GSAP names nearest each token (17.09.26, audit F4): GSAP does not
+        // read a cubic-bezier() string, and power3.out was a different curve from entrance's expo.
+        ease: this.EASE ? this.EASE.entrance : 'expo.out',
       },
 
       /* THE COLOUR DEMONSTRATIONS' OWN ARRIVAL — a separate object from maskMotion, and the two must
@@ -2454,8 +2269,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          it is written only onto sets that opted in and cleared the moment it lands — nothing holds a
          filter, or a will-change for one, at rest. */
       focusMotion: {
-        duration: 0.9,
-        ease: this.EASE ? this.EASE.reveal : 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+        duration: this.DUR ? this.DUR.focus : 0.9,
+        ease: this.EASE ? this.EASE.reveal : 'power2.out',
         blur: 9,
       },
       // True only while a wiped route swap is in flight, so a document route that mounts behind the
@@ -2498,10 +2313,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to projects',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
-      navBtnStyle: { display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: '1px solid var(--action-line)', padding: 'var(--btn-pad-sm)', fontFamily: 'Neue Montreal', fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', cursor: 'pointer', lineHeight: 1, transition: 'background var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard),opacity var(--dur-micro) var(--ease-standard)' },
-      // React drops a value when a rerender mixes the `border` shorthand with one of its parts,
-      // so a hover state that touches the border swaps the WHOLE shorthand, never borderColor alone.
-      navBtnHover: { background: 'var(--surface-raised)', border: '1px solid var(--on-surface)' },
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast
       /* The toast says "<name> deleted" for a palette, whose name is the thing you would look for
@@ -2529,7 +2340,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       export: exportView, hasExport: !!exportView,
       closeExport: () => this.closeExport(), trapExport: (e) => this.trapExport(e),
       toggleExportSemantic: () => this.setState((st) => ({ exportSemantic: !st.exportSemantic })),
-      pill, result, procStatus,
+      pill, result, procStatus, procStep: s.procStep,
     };
   },
 };

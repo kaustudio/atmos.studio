@@ -85,7 +85,11 @@ export function splitLines(el) {
 
     wrapWords(el);
     var words = [].slice.call(el.querySelectorAll('[data-w]'));
-    if (!words.length) { el.innerHTML = original; return null; }
+    // NOTHING TO SPLIT, SO NOTHING TO PUT BACK (17.09.26). wrapWords only touches text, so with no
+    // words it changed nothing, and rewriting innerHTML here swapped React's own nodes for inert
+    // copies: Manage Library's tick boxes (a [data-reveal] span holding only FacetMark) stopped
+    // updating after the panel's reveal, so a ticked filter showed an empty box.
+    if (!words.length) return null;
 
     // Group by line box. Read every offsetTop before touching the DOM, so this costs one layout.
     var groups = [], cur = null, top = null;

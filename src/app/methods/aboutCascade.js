@@ -54,7 +54,8 @@
 
 function noop() { }
 
-const FALLBACK = { duration: 0.62, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' };
+// entrance's nearest GSAP name: a cubic-bezier() string is not an ease GSAP reads (17.09.26, audit F4)
+const FALLBACK = { duration: 0.62, ease: 'expo.out' };
 
 /* Read by the trigger AND by the catch-up sweep. One number, for the reason pageReveal.js records at
    length: when the two disagreed about what "due" meant, which of them revealed a block depended on

@@ -165,7 +165,7 @@ export const miscMethods = {
       // Clear of the 36px cover gradient, so the chosen chip never settles under the fade that
       // means "there is more" — and wide enough past it to show the edge of its neighbour.
       const PEEK = 44;
-      const from = grp.scrollLeft, view = grp.clientWidth;
+      const from = grp.scrollLeft, view = grp.clientWidth - this._projStepsOverlap(grp);
       // offsetLeft is content-space (the group is the offsetParent and is position:relative), so it
       // does not move as the group scrolls — the same measure the pill is placed with.
       const left = cur.offsetLeft, width = cur.offsetWidth;
@@ -260,11 +260,19 @@ export const miscMethods = {
      window sits 2px inside it. Without it every forward step lands 2px short and clips a hairline
      off the chip it just delivered. */
   _projGroup() { return document.querySelector('[data-proj-rail] [data-proj-group]'); },
+  // How far the arrows' pill reaches back over the scroller (18px at rest, less while it folds;
+  // AppView, C11). Chips under it are not in view, so stepping and revealing measure without it.
+  _projStepsOverlap(grp) {
+    const steps = document.querySelector('[data-proj-rail] [data-proj-steps]');
+    if (!grp || !steps) return 0;
+    return Math.max(0, grp.getBoundingClientRect().right - steps.getBoundingClientRect().left);
+  },
   stepProjects(dir) {
     try {
       const grp = this._projGroup(); if (!grp) return;
       const PAD = 2;
-      const view = grp.clientWidth, from = grp.scrollLeft, max = grp.scrollWidth - view;
+      const from = grp.scrollLeft, max = grp.scrollWidth - grp.clientWidth;
+      const view = grp.clientWidth - this._projStepsOverlap(grp);
       if (max <= 0) return;
       const chips = [...grp.querySelectorAll('[data-proj-chip]')];
       let target;
@@ -329,7 +337,9 @@ export const miscMethods = {
     const g = window.gsap; const el = document.querySelector('[data-proj-steps]');
     if (this._reduce || !g || !el) { done(); return; }
     g.killTweensOf(el);
-    const w = el.scrollWidth;
+    // the content's width plus the pill's two hairlines (box-sizing is border-box, and scrollWidth
+    // leaves the border out, which ended the fold 2px short of the pill's own width)
+    const w = el.scrollWidth + el.offsetWidth - el.clientWidth;
     if (w <= 0) { done(); return; }
     g.fromTo(el, { width: 0, opacity: 0, overflow: 'hidden' },
       { width: w, opacity: 1, duration: this.DUR.reveal * 0.62, ease: this.EASE.fold, clearProps: 'width,opacity,overflow', onComplete: done });
@@ -388,7 +398,9 @@ export const miscMethods = {
     if (!lightbox) { setTimeout(() => this.initClickZoom(), 200); return; }
     this._czInit = true;
     lightbox.setAttribute('role', 'dialog'); lightbox.setAttribute('aria-modal', 'true'); lightbox.setAttribute('aria-hidden', 'true'); lightbox.setAttribute('aria-label', 'Reference image, enlarged'); lightbox.setAttribute('tabindex', '-1');
-    const backdropColor = 'rgba(0,0,0,0.9)', transparent = 'rgba(0,0,0,0)';
+    // The backdrop's colour is the --lightbox-scrim token (17.09.26, audit H2), authored as rgba() so
+    // GSAP can tween it; the fallback is the same value.
+    const backdropColor = this._cssVar('--lightbox-scrim') || 'rgba(0,0,0,.9)', transparent = 'rgba(0,0,0,0)';
     /* A WAY OUT YOU CAN SEE. The overlay closed on a click anywhere and on Escape, and neither is
        something a control announces: a keyboard user arrived in a dialog with no button in it, and
        the next Tab left it for the theme switch behind. This is the copy dialog's 32px Close, in
@@ -399,8 +411,12 @@ export const miscMethods = {
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button'; closeBtn.setAttribute('data-ix', 'press'); closeBtn.setAttribute('data-focus', 'chrome');
     closeBtn.setAttribute('aria-label', 'Close the enlarged image'); closeBtn.title = 'Close';
-    closeBtn.style.cssText = 'position:absolute;top:24px;right:24px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid rgba(255,255,255,.45);border-radius:var(--radius-pill);padding:0;color:#fff;cursor:pointer';
-    closeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block;flex:none"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>';
+    /* THE APP'S CLOSE MARK, BUILT BY HAND (17.09.26, audit B5): TextSwap's markup and IconClose's glyph,
+       data-icon included, so the close-mark rule treats it as one and the × slides through its mask.
+       Its colours on the black backdrop are global.css's ([data-click-zoom-lightbox] [data-ix]). */
+    closeBtn.style.cssText = 'position:absolute;top:24px;right:24px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border-width:1px;border-style:solid;border-radius:var(--radius-pill);padding:0;cursor:pointer';
+    const closeGlyph = '<svg data-icon="close" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block;flex:none"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>';
+    closeBtn.innerHTML = '<span class="tswap"><span class="tswap__a">' + closeGlyph + '</span><span class="tswap__b" aria-hidden="true">' + closeGlyph + '</span></span>';
     const S = { open: false, anim: false, clone: null, srcDoc: null, scrollY: 0, trigger: null, inerted: [] };
     /* THE PAGE BEHIND IT LEAVES THE TREE. aria-modal is a request; inert is the guarantee, and it is
        what the other dialogs get through _bgInert. That helper inerts the four landmarks inside
@@ -454,11 +470,11 @@ export const miscMethods = {
       const dstRect = S.clone.getBoundingClientRect();
       const flip = computeFlip(srcRect, dstRect);
       const tl = g.timeline({ onComplete: () => { S.anim = false; S.open = true; attach(); } });
-      tl.to(lightbox, { backgroundColor: backdropColor, duration: 0.3, ease: 'none' }, 0);
-      tl.fromTo(S.clone, { x: flip.tx, y: flip.ty, scaleX: flip.scaleX, scaleY: flip.scaleY }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.55, ease: this.EASE.entrance }, 0);
+      tl.to(lightbox, { backgroundColor: backdropColor, duration: this.DUR.chrome, ease: this.EASE.standard }, 0);
+      tl.fromTo(S.clone, { x: flip.tx, y: flip.ty, scaleX: flip.scaleX, scaleY: flip.scaleY }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: this.DUR.reveal, ease: this.EASE.entrance }, 0);
     };
     const cleanup = () => {
-      lightbox.style.display = 'none'; lightbox.style.backgroundColor = '#000000e6';
+      lightbox.style.display = 'none'; lightbox.style.backgroundColor = backdropColor;
       if (S.clone && S.clone.parentNode) S.clone.parentNode.removeChild(S.clone);
       S.clone = null; lightbox.setAttribute('aria-hidden', 'true'); S.srcDoc = null; S.open = false; S.anim = false;
       guardOff();   // before focus returns: focus() on a still-inert trigger is a silent no-op
@@ -478,12 +494,12 @@ export const miscMethods = {
       const currentSrcRect = () => ({ top: S.srcDoc.top - window.scrollY, left: S.srcDoc.left, width: S.srcDoc.width, height: S.srcDoc.height });
       const state = { t: 0 };
       g.to(state, {
-        t: 1, duration: 0.45, ease: this.EASE.exit, onUpdate: () => {
+        t: 1, duration: this.DUR.swap, ease: this.EASE.exit, onUpdate: () => {
           const f = computeFlip(currentSrcRect(), dstRect), t = state.t;
           g.set(S.clone, { x: startX + (f.tx - startX) * t, y: startY + (f.ty - startY) * t, scaleX: startSX + (f.scaleX - startSX) * t, scaleY: startSY + (f.scaleY - startSY) * t });
         }, onComplete: cleanup,
       });
-      g.to(lightbox, { backgroundColor: transparent, duration: 0.3, ease: 'power2.in', delay: 0.18 });
+      g.to(lightbox, { backgroundColor: transparent, duration: this.DUR.chrome, ease: this.EASE.exit, delay: this.DUR.fast });
     };
     const onOverlayClick = () => close();
     const onKeyDown = (e) => {

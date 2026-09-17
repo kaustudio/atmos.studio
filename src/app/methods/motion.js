@@ -53,7 +53,7 @@ export const motionMethods = {
     // no journey — so the front-loading that makes an expo-out wrong for a 500px slide never gets
     // the chance to show. Ours does slide, so the trade is stated plainly in _drawerOut rather than
     // hidden: peak velocity returns to the first frame. That is the accepted cost of one curve.
-    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1), reveal: this.cubicBezier(0.215, 0.61, 0.355, 1) };
+    this.EASE = { standard: this.cubicBezier(0.22, 1, 0.36, 1), entrance: this.cubicBezier(0.16, 1, 0.3, 1), exit: this.cubicBezier(0.4, 0, 1, 1), fold: this.cubicBezier(0.625, 0.05, 0, 1), overlay: this.cubicBezier(0.19, 1, 0.22, 1), reveal: this.cubicBezier(0.215, 0.61, 0.355, 1), progress: this.cubicBezier(0.33, 1, 0.68, 1) };
     /* `reveal` is `entrance` WITHOUT THE FRONT LOADING, and it is used by exactly one thing: the
        focus pull on About's colour demonstrations (renderVals.focusMotion). entrance is an expo-out,
        past 80% of its travel inside the first quarter of its duration — which is what you want from
@@ -129,7 +129,18 @@ export const motionMethods = {
     // confirmation's val-mask keyframes and every hover swap on a button, sort header or footer
     // link. It was `confirm` at 0.38s while the confirmation was its only consumer; the hover swap
     // turned out to be the same motion, and 0.4 is where that stopped reading as snappy.
-    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 0.62, overlayStep: 0.04, overlayItem: 0.05, overlayBlock: 0.08, overlayArrive: 1, reveal: 0.62, stagger: 0.05 };
+    // `line` (the masked-line stagger, which four call sites wrote as 0.09) and `extract` (the
+    // extraction bar's run) joined the scale on 17.09.26 (audit F3), with EASE.progress, the bar's
+    // curve: GSAP's power2.out, restated as the bezier global.css names --ease-progress.
+    // `settle` is the processing atmosphere's natural end (procField.js _procClose): the turn easing
+    // to rest and the gas dissolving once a reading is done. Chosen from recordings on 17.09.26, and
+    // named rather than rounded to overlayOut for the reason swap and fold are.
+    // `think` is the least time one line of the processing stage stays up ("Reading light…" and the
+    // three after it), so each can be read; two of the four stretch it by what the photograph is
+    // (pipeline.js _thought). Same day, same reason.
+    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 0.62, overlayStep: 0.04, overlayItem: 0.05, overlayBlock: 0.08, overlayArrive: 1, reveal: 0.62, stagger: 0.05, line: 0.09, extract: 7.5, settle: 0.7, think: 0.75, focus: 0.9 };
+    // focus (17.09.26, audit F4): the colour demonstrations' blur-to-sharp arrival (renderVals
+    // focusMotion), which was written as 0.9. JS only; no CSS transition runs it.
   },
   /* mEnter / mLeave / mDown / mUp lived here — a GSAP hover-and-press system driven by a
      data-m-y / data-m-scale attribute protocol — and are gone (08.26). Nothing had ever bound them:
@@ -140,11 +151,8 @@ export const motionMethods = {
      is the expo-out that made the old translateY press read as a jump. So the tree held a
      plausible-looking press handler that was both unreachable AND wrong, beside the real one in
      global.css. The next person to grep for "press" would have found two and no way to tell. */
-  // "clicks into place": committed selected state arrives with ease-entrance (settle-with-authority)
-  commitSelected(el) {
-    if (!el || this._reduce || !window.gsap) return;
-    window.gsap.fromTo(el, { scale: 0.98 }, { scale: 1, duration: this.DUR.state, ease: this.EASE.entrance, overwrite: 'auto' });
-  },
+  // commitSelected went on 17.09.26 (audit E8): it scaled the current grid card 0.98 → 1 after a
+  // palette opened, a press that moved geometry. Selection is shown by colour alone.
   // ---- ADDITIVE hover: strengthen ONLY the hovered element's own ring — never dim siblings ----
   dimEnter(e) {
     if (this._reduce || !window.gsap) return; const el = e.currentTarget;
@@ -178,7 +186,12 @@ export const motionMethods = {
      by a layout detail (a gap and a flex, tabular numerals) — and each carried its own truncated
      transition, which is how they all ended up cutting their background tint. One builder, three
      call sites, and the difference stated as the difference. */
-  viewToggleOptStyle(active, extra) { return this.monoLabel('var(--fs-label)', 'var(--track-flat)', Object.assign({ position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)' }, extra || {})); },
+  /* THE SEGMENTED CONTROL SPEAKS LIKE THE ANALYTICS BANNER'S BUTTONS (17.09.26, audits D1 and G4, by
+     request): 13px, Medium, flat, and the labels' own Title Case (the text-transform is lifted in
+     global.css, beside the uppercase rule it overrides). Every toggle built here moves together:
+     List / Grid, All / Unfiled and the project chips, the library panel's Filter / Projects, the
+     page sizes and the contrast checker's two rails. */
+  viewToggleOptStyle(active, extra) { return this.monoLabel('var(--fs-body)', 'var(--track-flat)', Object.assign({ fontWeight: 500, position: 'relative', zIndex: 1, padding: 'var(--btn-pad-sm)', cursor: 'pointer', border: 'none', background: 'transparent', color: active ? 'var(--surface)' : 'var(--on-surface-muted)' }, extra || {})); },
   // STADIUMS, like every other chip and control in the app. The corner is stated here rather than at
   // the call sites for the reason this builder exists at all: its consumers — the harmony drawer's
   // seven methods, the filter panel's sort pair — are one control wearing one shape, and a radius
@@ -186,14 +199,14 @@ export const motionMethods = {
   // The Most used / A–Z pair in the filter panel, and its only consumers. It used to fill with
   // --on-surface when active — the app's CTA treatment — so a SORT STATE was drawn as the strongest
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
-  // and edge now, at one step down in size: still unambiguous (weight, colour AND border all move,
-  // plus aria-pressed), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-fine)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: active ? 500 : 400 }); },
+  // and edge now, at one step down in size: still unambiguous (colour AND border move, plus
+  // aria-pressed; the weight step went on 17.09.26, audit G4), no longer the loudest thing in the panel.
+  toggleStyle(active) { return this.monoLabel('var(--fs-fine)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: 400 }); },
   /* THE PAGER STEPS ON A CHEVRON NOW, so this stopped being a label style. It was monoLabel with
      --btn-pad-sm, which is the right box for the words "Prev" and "Next" and the wrong one for a
      glyph: padding sizes a box around TEXT, and a chevron has no width of its own to pad — the same
      reasoning projStepStyle below already records for the project rail's pair, which this now
-     matches. A fixed 30 square plus --radius-pill is a circle, which is what "full radius" means on
+     matches. A fixed 32 square (30 until 17.09.26, audit C11) plus --radius-pill is a circle, which is what "full radius" means on
      a control whose content is one mark.
      opacity STAYS here where projStepStyle deliberately omits it: these two keep their hairline, so
      the disabled state has an edge to fade as well as a glyph, and 0.35 is the figure this pager has
@@ -201,15 +214,15 @@ export const motionMethods = {
   pageNavStyle(disabled) {
     return {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
-      width: '30px', height: '30px', padding: '0', borderRadius: 'var(--radius-pill)',
+      width: '32px', height: '32px', padding: '0', borderRadius: 'var(--radius-pill)',
       border: '1px solid var(--action-line)', background: 'transparent', color: 'var(--on-surface)',
       cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.35 : 1,
     };
   },
   // The project rail's step buttons, beside pageNavStyle because they are the same idea one row up:
-  // a direction you can go, or one you currently cannot. Square by construction — a fixed 30px
+  // a direction you can go, or one you currently cannot. Square by construction — a fixed 32px
   // rather than padding, because a chevron has no width of its own to pad — and borderless, since
-  // the rail draws the edge and a hairline in the JSX divides the pair from the chips.
+  // the pair's own pill draws the edge (AppView, audit C11).
   //
   // NO opacity HERE, deliberately, where pageNavStyle states its own. [data-ix]:disabled already
   // says what a dead control looks like (.42, eased on the shared chrome transition), and an inline
@@ -218,7 +231,7 @@ export const motionMethods = {
   projStepStyle(disabled) {
     return {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none',
-      width: '30px', padding: '0', background: 'transparent', border: '0',
+      width: '32px', padding: '0', background: 'transparent', border: '0',
       color: 'var(--on-surface)', cursor: disabled ? 'default' : 'pointer',
     };
   },
@@ -652,7 +665,9 @@ export const motionMethods = {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;
     const bands = root.querySelectorAll('[data-band]');
-    if (this._reduce) { g.fromTo(bands, { opacity: 0 }, { opacity: 1, duration: .4, stagger: .03, ease: 'none', clearProps: 'opacity' }); return; }
+    // Reduced motion: one fade on the swap step, every band together (17.09.26, audit F4: it was .4
+    // with a .03 stagger, neither of them named, and a sequence is the thing the preference declines).
+    if (this._reduce) { g.fromTo(bands, { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none', clearProps: 'opacity' }); return; }
     g.set(bands, { clipPath: 'inset(100% 0 0 0)' });                                   // fully clipped, hidden
     g.to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe up from the bottom edge
   },
@@ -661,7 +676,7 @@ export const motionMethods = {
     if (!g || !root || document.hidden) return;
     const all = [...root.querySelectorAll('[data-fx]')];
     const meta = [...root.querySelectorAll('[data-meta]')];
-    if (this._reduce) { g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: .4, ease: 'none' }); return; }
+    if (this._reduce) { g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none' }); return; }
     const split = all.filter((el) => el.hasAttribute('data-split'));
     const fx = all.filter((el) => !el.hasAttribute('data-split'));
     // The metrics readout assembles as a sequence, from the same two primitives the page already
@@ -753,7 +768,7 @@ export const motionMethods = {
 
      Closing runs the other way and outlives the state change: the exit finishes first, and only then
      does React unmount what was tweening. Without that there is nothing left to animate by the time
-     the tween would start — the same reason closeTip works the way it does. */
+     the tween would start — the same reason closeFold works the way it does. */
   // _moreBtnSwap / _readingIn / _readingOut / toggleReading lived here and are gone with the More
   // disclosure they animated (03.08.26). Every trait is on screen now and the reading stands, so
   // there is no state to cross-fade, no box to wipe and no height to collapse — the whole
@@ -806,43 +821,14 @@ export const motionMethods = {
       this._maskLineReveal(el, this.DUR.stagger * (i + 1));
     });
   },
-  _shareIn() {
-    const g = window.gsap;
-    const root = document.querySelector('[data-mobile-share]');
-    if (this._reduce || !g || !root) return;
-    const rows = [...document.querySelectorAll('[data-ms-row]')];
-
-    g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
-    // The block-level fade on head and foot is gone: it was a second entrance competing with the
-    // masks inside it, and a line sliding out of a mask while its own container fades reads as
-    // neither. The surface fade carries the frame; the masks carry the words.
-    this._maskCopyIn(root);
-    if (rows.length) {
-      g.fromTo(rows,
-        { clipPath: 'inset(0 100% 0 0)' },
-        { clipPath: 'inset(0 0% 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger * 2, clearProps: 'clipPath' });
-    }
-
-    this._settleGuard('share', [root].concat(rows), rows.length);
-  },
-  // The list arrives the same way the palette does, one level up: surface, then rows on a stagger.
-  // Its rows slide from the leading edge rather than clip, because a row here is a strip beside a
-  // name — clipping would wipe the name out of existence mid-read, where the palette's rows are
-  // pure colour and have nothing to say until they are whole.
-  _listIn() {
-    const g = window.gsap;
-    const root = document.querySelector('[data-mobile-list]');
-    if (this._reduce || !g || !root) return;
-    g.from(root, { opacity: 0, y: 18, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
-    const rows = [...root.querySelectorAll('[data-ml-row]')];
-    if (rows.length) g.from(rows, { opacity: 0, x: -14, duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, delay: this.DUR.stagger, clearProps: 'transform,opacity' });
-    this._maskCopyIn(root);
-    this._settleGuard('list', [root].concat(rows), rows.length);
-  },
+  /* _shareIn and _listIn — the phone's example view and example list arriving — went with both
+     surfaces on 17.09.26 (audit C5). A shared link's view mounts on the first paint, under the loader,
+     and never had an entrance of its own. */
   /* THE STORY'S OWN ENTRANCE, REMOVED — and the reason is worth keeping.
 
-     It existed because chooseStoryCase called _shareIn(), which was a silent no-op: _shareIn resolves
-     `[data-mobile-share]`, the read-only palette surface, which is not mounted while the story is. It
+     It existed because chooseStoryCase called _shareIn() (since removed), which was a silent no-op:
+     it resolved `[data-mobile-share]`, the read-only palette surface, which is not mounted while the
+     story is. It
      returned at the guard, nothing animated, and the new case replaced the old one between two frames
      — the "page transition doesn't trigger" that was reported. _storyIn was the answer: <main> rose
      and faded in as one block.
@@ -855,7 +841,6 @@ export const motionMethods = {
 
      Anything that needs a story entrance should arm this._storyReveal and release it through
      _playStoryReveal, which is what the wiped path does. */
-  _listOut(cb) { this._exitTween('[data-mobile-list]', cb); },
   // Out is shorter than in and travels the other way, per the house rule that an exit is softer
   // than an entrance. It outlives the state change: React would unmount the surface on the flag,
   // and there would be nothing left to tween.

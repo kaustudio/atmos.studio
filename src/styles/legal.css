@@ -85,7 +85,7 @@
    request. The list under it is a column of section titles beside the sections; it says what it is. */
 .legal-hero h1{
   margin:0;
-  font-size:clamp(38px,5.2vw,58px);font-weight:500;line-height:1.04;
+  font-size:var(--fs-doc-title);font-weight:500;line-height:1.04;
   letter-spacing:var(--track-statement);text-wrap:balance;
 }
 .legal-hero__sub{
@@ -150,10 +150,13 @@
      arriving two different ways. */
   transition:color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard),background-color var(--dur-state) var(--ease-standard),box-shadow var(--dur-state) var(--ease-standard);
 }
-.toc-link:hover{color:var(--on-surface);border-left-color:var(--line-strong)}
+/* Pointer devices only (17.09.26, audit E7); the active marker below is untouched (audit A6). */
+@media (hover:hover){
+  .toc-link:hover{color:var(--on-surface);border-left-color:var(--line-strong)}
+}
 
-/* Active section. A 2px ink rule replaces the hairline — the system has no radius and no accent
-   hue to spend, so weight and ink are what's left to mark position with. */
+/* Active section. A 2px ink rule replaces the hairline — the system has no accent hue to spend,
+   so weight and ink are what's left to mark position with. */
 .toc-link[data-toc-status="active"]{
   color:var(--on-surface);
   font-weight:500;
@@ -174,7 +177,7 @@
 .toc-article h2{
   margin:2.75em 0 .6em;padding-top:1.5em;
   position:relative;--rule:1;
-  font-size:clamp(23px,2.5vw,28px);font-weight:500;line-height:1.15;
+  font-size:var(--fs-doc-heading);font-weight:500;line-height:1.15;
   letter-spacing:var(--track-statement);text-wrap:balance;
   scroll-margin-top:calc(var(--nav-top) + var(--nav-h) + 24px);
 }
@@ -199,7 +202,9 @@
 .toc-article p{margin:0 0 1.25em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
 .toc-article strong{font-weight:500}
 .toc-article a{text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;transition:color var(--dur-state) var(--ease-standard)}
-.toc-article a:hover{color:var(--on-surface-muted)}
+@media (hover:hover){
+  .toc-article a:hover{color:var(--on-surface-muted)}
+}
 /* The global :focus reset takes the ring off every anchor that does not carry data-focus, and these
    are injected HTML that cannot. Underlined at rest, so focus had nothing left to change: measured,
    the focused link's computed style was its unfocused neighbour's. The chrome ring, one step out. */
@@ -208,7 +213,8 @@
 .toc-article ul{margin:0 0 1.25em;padding-left:1.4em}
 .toc-article li{margin-bottom:.6em;font-size:var(--fs-lead);line-height:1.65;letter-spacing:var(--track-body);text-wrap:pretty}
 
-/* Squared, per the system's zero-radius rule — the Osmo original carried a .25em radius here.
+/* Square — the Osmo original carried a .25em radius here; a literal is a sample of text, and samples
+   are square on this site (global.css, the --radius-* block).
 
    NO MONOSPACE. This was ui-monospace,SFMono-Regular,Menlo,monospace, and it was the only place on
    the whole site where a face other than Neue Montreal reached the screen. Four strings render

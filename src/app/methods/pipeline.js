@@ -32,21 +32,36 @@ export const pipelineMethods = {
   // data-image URLs (persisted thumbnails) and session blob: URLs (in-memory objects).
   _safeImageUrl(u) { if (typeof u !== 'string') return null; return (/^data:image\//i.test(u) || /^blob:/.test(u)) ? u : null; },
 
-  // Returns { cents, hash }. The hash is taken over the NORMALISED working buffer — the same 72x72
+  // THE EXTRACTION, IN THE THREE PARTS THE PROCESSING STAGE NAMES (17.09.26). It used to be one
+  // synchronous call returning { cents, hash }; the parts are unchanged and run in the same order on
+  // the same bytes, so a palette comes out identical. What changed is only that the stage can show
+  // each part while it runs (_readPhotograph).
+  //
+  // The buffer and its hash. The hash is taken over the NORMALISED working buffer — the same 72x72
   // RGBA the extraction itself reads — so identity and measurement are computed from exactly the
   // same bytes. Hashing the file instead would make a rename or an EXIF strip look like a new
-  // image, and would tie identity to something extraction never looks at.
-  extract(img) {
-    const k = this.props.swatchCount || 5, W = 72, H = 72;
+  // image, and would tie identity to something extraction never looks at. `n` counts the pixels the
+  // sampling will keep, so a picture with too little colour is refused before the stage opens.
+  _extractBuffer(img) {
+    const W = 72, H = 72;
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0, W, H);
-    const d = ctx.getImageData(0, 0, W, H).data, pts = [];
-    const hash = hashBytes(d);
-    // Fixed stride, raster order, whole buffer — never a sampled subset. Already true before this
-    // deploy; stated here because it is now load-bearing rather than incidental.
+    const d = ctx.getImageData(0, 0, W, H).data;
+    let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] >= 128) n++;
+    return { d, n, hash: hashBytes(d) };
+  },
+  // The sampling. Fixed stride, raster order, whole buffer — never a sampled subset. Already true
+  // before this deploy; stated here because it is now load-bearing rather than incidental.
+  _extractPoints(d) {
+    const pts = [];
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 128) continue; pts.push(this.rgb2oklab(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255)); }
-    if (pts.length < k) return { cents: [], hash };
-    return { cents: this.kmeans(pts, k), hash };
+    return pts;
+  },
+  // The grouping is this.kmeans(pts, k), unchanged.
+  extract(img) {
+    const k = this.props.swatchCount || 5, b = this._extractBuffer(img);
+    if (b.n < k) return { cents: [], hash: b.hash };
+    return { cents: this.kmeans(this._extractPoints(b.d), k), hash: b.hash };
   },
 
   // ---- derived-reading cache, keyed by content hash -------------------------------------------
@@ -106,7 +121,7 @@ export const pipelineMethods = {
 
   processFile(file) {
     const url = URL.createObjectURL(file); const img = new Image();
-    img.onerror = () => { this.showError('We couldn’t open that image', 'The file may be corrupted or in a format the browser can’t decode. Try another image.'); };
+    img.onerror = () => { this.showError('This image could not be loaded', 'The file may be corrupted or in a format the browser can’t decode. Try another image.'); };
     img.onload = () => {
       this._runPipeline(img, { srcUrl: url });         // keep the full-res object URL alive for crisp in-session display
     };
@@ -114,51 +129,162 @@ export const pipelineMethods = {
   },
   _runPipeline(img, opts) {
     opts = opts || {};
-    this._procImg = img;
-    let cents = [], hash = null;
-    try { const r = this.extract(img); cents = r.cents; hash = r.hash; } catch (e) { cents = []; }
-    if (!cents.length) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette. Try a photo with more visible tone and detail.'); return; }
+    const k = this.props.swatchCount || 5;
+    let buf = null;
+    try { buf = this._extractBuffer(img); } catch (e) { buf = null; }
+    if (!buf || buf.n < k) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette. Try a photo with more visible tone and detail.'); return; }
+    const hash = buf.hash;
     // RECOGNITION GATE. Now that identity is content-addressed, an image the archive has already
-    // read is a fact we can state instead of a duplicate we silently manufacture. The extraction
-    // above has already run — it is 5184 pixels and costs nothing — but nothing is committed, so
+    // read is a fact we can state instead of a duplicate we silently manufacture. Only the buffer and
+    // its hash exist at this point — 5184 pixels, costing nothing — and nothing is committed, so
     // stopping here creates no entry. Only opts.deliberate gets past, and the only thing that sets
     // it is the user choosing "create a variation" in the dialog.
     if (hash && !opts.deliberate) {
       const known = (this.state.feed || []).filter((p) => p && p.hash === hash);
       if (known.length) { this.openRecognised(known, img, opts, hash); return; }
     }
-    const thumb = this.makeThumb(img);                // display-sized thumbnail (×DPR) — persisted, survives reload
     const srcUrl = opts.srcUrl || null;                 // full-res object URL — session-only crisp display
     if (srcUrl) { (this._objUrls = this._objUrls || []).push(srcUrl); }   // revoke on eviction/unload, not now
-    const pal = this.buildPalette(cents, thumb, srcUrl, hash); // mock interpretation baked in as the guaranteed baseline
-    const myGen = ++this._genId;                       // invalidate any in-flight interpretation from a prior generate
-    this.setState({ stage: 'processing', imageUrl: this.dispUrl(pal), procStep: 0, pending: pal, announce: 'Generating palette from your image.' });
-    if (this._t) clearInterval(this._t);
-    this._t = setInterval(() => this.setState((st) => ({ procStep: Math.min(st.procStep + 1, 3) })), 620);
-    if (this._end) clearTimeout(this._end);
-    // Completion is driven by the real interpretation lifecycle (live call or its fallback), not a fixed timer.
-    this.runInterpretation(pal, thumb, myGen);
+    const myGen = ++this._genId;                       // invalidate any in-flight reading from a prior generate
+    // `pending` is the reading in progress rather than a palette: there is no palette until the
+    // grouping step has run. Nothing reads it but the stage, for its identity.
+    const job = { gen: myGen, img, buf, hash, srcUrl, k, mp: ((img.naturalWidth || img.width || 0) * (img.naturalHeight || img.height || 0)) / 1e6 };
+    if (this._t) { clearInterval(this._t); this._t = null; }
+    if (this._end) { clearTimeout(this._end); this._end = null; }
+    this.setState({ stage: 'processing', imageUrl: srcUrl, procStep: 0, pending: job, announce: 'Generating palette from your image.' });
+    this._readPhotograph(job);
   },
-  // Live interpretation over the guaranteed local baseline. Whatever resolves first (a valid live
-  // reading, or the timeout → mock) commits the palette. A minimum beat keeps the branded moment
-  // from flashing on a fast response.
-  async runInterpretation(pal, thumb, myGen) {
-    const MIN = this._reduce ? 500 : 1300, TIMEOUT = 9000, started = Date.now();
-    let interp = null, errored = false;
-    try { interp = await this.withTimeout(this.interpretLive(thumb, pal.swatches), TIMEOUT); }
-    catch (e) { interp = null; errored = true; }
-    if (myGen !== this._genId) return;   // superseded by a newer generate (or reset) → drop this result
-    const finalPal = interp
-      ? Object.assign({}, pal, { name: interp.name, descriptors: interp.descriptors, rationale: interp.rationale, archetype: interp.archetype || pal.archetype })
-      : pal;
-    const wait = Math.max(0, MIN - (Date.now() - started));
-    clearTimeout(this._end);
-    this._end = setTimeout(() => this.commitGenerated(finalPal, myGen, !interp, errored), wait);
+
+  /* THE READING, STEP BY STEP (17.09.26, by request: "everything happens too fast … all the thought
+     that the user saw through text needs to be present … the loading should be real, but respect the
+     output so every image doesn't take 5 seconds").
+
+     WHAT IT WAS. Four lines of status on a 620ms timer that knew nothing about the work, a bar on a
+     fixed 7.5s tween, and a 1.3s minimum after which the result replaced the stage. All of the actual
+     extraction had run, synchronously, before the stage was even on screen. Without the live reading
+     the result arrived before the third line; with it, the fourth line sat there for as long as the
+     network took.
+
+     WHAT IT IS. Each line is a step, and each step does its own work while it is showing:
+       0 Reading light         the display thumbnail: the full photograph drawn down and encoded,
+                               which is the one part whose cost follows the photograph's size
+       1 Sampling the field    every kept pixel of the 72x72 buffer into OKLab
+       2 Grouping the colours  k-means, the swatches and the local reading; the live reading is sent
+                               the moment it has what it needs, so the network runs under this line
+       3 Naming the mood       the live reading coming back (or the local one, where there is none)
+     A step ends when its work is done AND it has been on screen for its THOUGHT length, whichever is
+     later, so no line is skipped and no line outstays the work by more than a reading pause.
+
+     THE LENGTH FOLLOWS THE PICTURE, NOT A CLOCK. The work itself is milliseconds on this machine,
+     so a floor is what makes a line readable, and a single floor would give every photograph the
+     same beat. The two steps whose real cost depends on the picture take a floor scaled by the real
+     property that drives it: Reading light by the photograph's pixel count (log-scaled, so a 48MP
+     file reads longer than a screenshot without taking twice as long), Grouping by how far apart the
+     colours it found are (a flat grey resolves quickly, a busy scene takes a beat longer). Both are
+     bounded (THOUGHT.max). The live reading is real time and nothing is added to it.
+
+     THE BAR FOLLOWS THE STEPS (_readBar), and the natural end (procField.js _procClose) takes it to
+     the end once the palette exists. Every step checks that its generation is still the current one,
+     so a reset or a new drop ends the old reading wherever it is. */
+  async _readPhotograph(job) {
+    const stale = () => job.gen !== this._genId;
+    const CANCEL = {};
+    const step = async (i, work) => {
+      if (stale()) throw CANCEL;
+      this.setState({ procStep: i });
+      this._readBar(i, job);
+      const t0 = performance.now();
+      await this._afterPaint();                      // the line is on screen before its work starts
+      if (stale()) throw CANCEL;
+      const out = await work();
+      const rest = this._thought(i, job) * 1000 - (performance.now() - t0);
+      if (rest > 0) await new Promise((r) => setTimeout(r, rest));
+      if (stale()) throw CANCEL;
+      return out;
+    };
+    try {
+      const thumb = await step(0, () => this.makeThumb(job.img));   // display-sized (×DPR), persisted
+      const pts = await step(1, () => this._extractPoints(job.buf.d));
+      let pal = null, reading = null;
+      await step(2, () => {
+        pal = this.buildPalette(this.kmeans(pts, job.k), thumb, job.srcUrl, job.hash);   // the local reading is the baseline
+        job.spread = this._paletteSpread(pal);
+        reading = this._readMood(pal, thumb);
+      });
+      const { interp, errored } = await step(3, () => reading);
+      const finalPal = interp
+        ? Object.assign({}, pal, { name: interp.name, descriptors: interp.descriptors, rationale: interp.rationale, archetype: interp.archetype || pal.archetype })
+        : pal;
+      this.commitGenerated(finalPal, job.gen, !interp, errored);
+    } catch (e) {
+      if (e === CANCEL || stale()) return;
+      this.showError('We couldn’t read this image', 'Something went wrong while reading its colour. Try again, or try another image.');
+    }
+  },
+  // Live interpretation over the guaranteed local baseline. Never rejects: a clean "can't attempt"
+  // is { interp: null }, a genuine failure (or the timeout) is { interp: null, errored: true }.
+  async _readMood(pal, thumb) {
+    try { return { interp: await this.withTimeout(this.interpretLive(thumb, pal.swatches), 9000), errored: false }; }
+    catch (e) { return { interp: null, errored: true }; }
+  },
+  // One painted frame, or a tenth of a second where frames are not being painted (a hidden tab).
+  _afterPaint() {
+    return new Promise((resolve) => {
+      let done = false; const go = () => { if (!done) { done = true; resolve(); } };
+      requestAnimationFrame(() => setTimeout(go, 0));
+      setTimeout(go, 100);
+    });
+  },
+  /* How long step i stays on screen at least, in seconds. See the note above _readPhotograph. */
+  _thought(i, job) {
+    const T = this.THOUGHT, base = this.DUR ? this.DUR.think : 0.75;
+    if (i === 0) return base * Math.min(T.sizeMax, T.sizeBase + T.sizeGain * Math.log2(1 + (job.mp || 0)));
+    if (i === 2) return base * (T.spreadBase + T.spreadGain * Math.min(1, (job.spread || 0) / T.spreadFull));
+    return base;
+  },
+  /* The two stretches, as multiples of DUR.think. Chosen so that the picture decides about a second of
+     the whole: measured with the local reading (the natural end included), a 0.4MP screenshot is on
+     the result in 3.8s and a busy 24MP photograph in 4.6s, where a single floor gave every image 4.1
+     to 4.8s. The live reading adds its own real time to the last step.
+     Reading light: ×0.82 for a 0.1MP screenshot, ×1.16 at 3MP, ×1.47 at 12MP, ×1.64 at 24MP, and no
+     more than ×1.7 however large the file.
+     Grouping: ×0.8 for a palette with no spread at all, up to ×1.5 once its colours sit, on average,
+     spreadFull apart in OKLab. */
+  THOUGHT: {
+    sizeBase: 0.8, sizeGain: 0.18, sizeMax: 1.7,
+    spreadBase: 0.8, spreadGain: 0.7, spreadFull: 0.2,
+  },
+  // How far apart a palette's colours are: the weighted mean OKLab distance of its swatches from
+  // their weighted centre. About 0.02 for a flat grey, 0.15 and up for a busy scene.
+  _paletteSpread(pal) {
+    const sw = (pal && pal.swatches) || [];
+    let W = 0, L = 0, A = 0, B = 0;
+    sw.forEach((s) => { const w = s.weight || 0; W += w; L += w * s.L; A += w * s.a; B += w * s.b; });
+    if (!(W > 0)) return 0;
+    L /= W; A /= W; B /= W;
+    let d = 0; sw.forEach((s) => { d += (s.weight || 0) * Math.hypot(s.L - L, s.a - A, s.b - B); });
+    return d / W;
+  },
+  /* THE BAR FOLLOWS THE STEPS. Each step owns a stretch of it and fills most of that stretch over its
+     own thought, so the bar never runs ahead of the work it reports; the last stretch creeps, because
+     the live reading has no known length. The natural end takes it to the end. Composited scaleX, as
+     before (startCanvas). */
+  _readBar(i, job) {
+    const g = window.gsap, bar = this.progRef.current;
+    if (!g || !bar) return;
+    const AT = [0.22, 0.46, 0.7, 0.86];
+    g.killTweensOf(bar);
+    const ease = this.EASE ? this.EASE.progress : 'power2.out';
+    const tl = g.timeline();
+    tl.to(bar, { scaleX: AT[i], duration: this._thought(i, job), ease, transformOrigin: '0% 50%' });
+    if (i === 3) tl.to(bar, { scaleX: 0.97, duration: 8, ease });
   },
   // noLive = no live reading was applied (can't-attempt OR error) → silent data flag (pal.fallback).
   // errored = a live attempt genuinely failed → the only case that surfaces the unreachable notice.
-  commitGenerated(pal, myGen, noLive, errored) {
+  commitGenerated(pal, myGen, noLive, errored, closed) {
     if (myGen !== this._genId) return;
+    // The atmosphere's natural end runs first and commits when it has settled (procField.js _procClose).
+    if (!closed && this._procClose(() => this.commitGenerated(pal, myGen, noLive, errored, true))) return;
     if (this._t) clearInterval(this._t);
     // fallback = "no live reading applied", for any reason (standalone runtime or error). Silent data honesty:
     // persists (round-trips through validation) and enables a future "Another reading". The notice below is
@@ -421,53 +547,82 @@ export const pipelineMethods = {
     return sw.map((b) => { const share = this.swatchGrow(b) / tot, mid = run + share / 2; run += share; return b.hex + ' ' + Math.round(mid * 100) + '%'; }).join(', ');
   },
 
-  // ================= processing canvas (branded colour-diffusion beat) =================
-  drawCover(ctx, img, W, H) {
-    const ir = img.width / img.height, r = W / H; let w, h, x, y;
-    if (ir > r) { h = H; w = H * ir; x = (W - w) / 2; y = 0; } else { w = W; h = W / ir; x = 0; y = (H - h) / 2; }
-    ctx.drawImage(img, x, y, w, h);
-  },
+  // ================= processing canvas: the atmosphere's floor =================
+  // The 2D beat below is the floor; the landing's field, colourless and floating, arrives over it
+  // (procField.js).
   startCanvas() {
     const cv = this.canvasRef.current, pal = this.state.pending;
     if (!cv || !pal) return;
     const W = 380, H = 250, dpr = Math.min(window.devicePixelRatio || 1, 2);
     cv.width = W * dpr; cv.height = H * dpr;
     const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-    const __SURF__ = (getComputedStyle(document.documentElement).getPropertyValue('--surface') || '').trim() || '#f5f5f3';
-    let off = null;
-    if (this._procImg) { off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'); o.filter = 'blur(24px)'; this.drawCover(o, this._procImg, W, H); o.filter = 'none'; }
-    const blobs = pal.swatches.map((s) => ({ hex: s.hex, x: W * (0.2 + 0.6 * Math.random()), y: H * (0.2 + 0.6 * Math.random()), r: 100 + Math.random() * 70, px: Math.random() * 6.28, py: Math.random() * 6.28, sp: 0.3 + Math.random() * 0.4, rp: Math.random() * 6.28, rs: 0.2 + Math.random() * 0.25 }));
     const reduce = this._reduce;
     /* THE EXTRACTION BAR DRAWS, IT DOES NOT GROW. This was the one bar in the product animating
        `width` — the loader's does scaleX (loader.js), and so do the result's meta rules
-       (motion.js) — and it was also by far the longest-running: seven and a half seconds of layout
-       and paint on every frame, laid over the exact stretch where the extraction worker and this
-       file's own canvas rAF loop are both competing for the thread. scaleX is composited, so the
-       draw costs nothing while the work that matters is happening. Same length, same curve, same
-       92% — a bar that reaches the end before the reading does is a bar that lies. */
-    if (window.gsap && this.progRef.current) { window.gsap.fromTo(this.progRef.current, { scaleX: 0 }, { scaleX: 0.92, duration: (reduce ? 0.8 : 7.5), ease: 'power2.out', transformOrigin: '0% 50%' }); }
+       (motion.js) — and scaleX is composited, so the draw costs nothing while the work that matters
+       is happening. It is filled by the reading itself now (_readBar), step by step, so it starts
+       empty here and never reaches the end before the reading does. */
+    if (window.gsap && this.progRef.current) { window.gsap.killTweensOf(this.progRef.current); window.gsap.set(this.progRef.current, { scaleX: 0, transformOrigin: '0% 50%' }); }
+    /* THE FLOOR (procField.js). Neutral blobs turning inside a soft ellipse the size of the disc: no
+       ground, no photograph and no palette colour, for the same reasons the atmosphere has none. It
+       shows where the field cannot, and `floor.v` is how much of it is drawn: 0 while the field is
+       expected, 1 when it is not or is slow to arrive, and eased between the two by procField.js.
+       `dirty` asks for one repaint of a frame that is otherwise standing still.
+       Until 17.09.26 this was the photograph's blur at 26% under five multiply blobs in the palette's
+       own colours, filling a ruled 380x250 box.
+       ONE CHAIN, WITH A SWITCH. The first call used to schedule a frame and the line after it scheduled
+       a second, so two loops ran from the start and stopCanvas could only cancel whichever had asked
+       last: every generation left one loop behind, drawing into a detached canvas for the rest of the
+       visit. `run.on` ends the chain however many frames are pending. There is no document.hidden
+       check any more either: a hidden page does not run frame callbacks, and the check ended the loop
+       for good the first time one was scheduled while hidden. */
+    const floor = this._procFloor = { v: 0, dirty: true };
+    const run = this._procRun = { on: true };
+    const shape = this._procFloorShape();
+    // Five blobs round a ring the size of the gas, turning at the field's own tempo, so even the floor
+    // has the eye in the middle and reads as the same object.
+    const turn0 = Math.random() * 6.2832, spin = 6.2832 / this._procFloorShape().rotSecs;
+    const blobs = [0, 1, 2, 3, 4].map((i) => ({ g: i % 3, at: turn0 + i * 1.2566, r: 44 + Math.random() * 18, wob: Math.random() * 6.28, rp: Math.random() * 6.28, rs: 0.2 + Math.random() * 0.25 }));
     const t0 = performance.now();
-    const draw = (now) => {
-      const t = reduce ? 0 : (now - t0) / 1000;
+    const paint = (t) => {
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = __SURF__; ctx.fillRect(0, 0, W, H);
-      if (off) { ctx.globalAlpha = 0.26; ctx.drawImage(off, 0, 0); ctx.globalAlpha = 1; }
-      ctx.globalCompositeOperation = 'multiply';
+      // Rounded, because an easing tail reaches values like 3e-7 and addColorStop throws on a colour
+      // written in exponent notation, which would end the chain mid-dissolve.
+      const a = Math.round(50 * floor.v) / 100;
+      if (a <= 0) return;
+      const greys = this._procGreys();
       blobs.forEach((b) => {
-        const ox = reduce ? 0 : Math.cos(t * b.sp + b.px) * 52;
-        const oy = reduce ? 0 : Math.sin(t * b.sp + b.py) * 38;
+        const th = b.at + t * spin, k = 0.62 + (reduce ? 0 : Math.sin(t * 0.5 + b.wob) * 0.06);
+        const x = W / 2 + Math.cos(th) * shape.floorRx * k;
+        const y = H / 2 + Math.sin(th) * shape.floorRy * k;
         const rr = b.r * (reduce ? 1 : (1 + Math.sin(t * b.rs + b.rp) * 0.22));
-        const g = ctx.createRadialGradient(b.x + ox, b.y + oy, 0, b.x + ox, b.y + oy, rr);
-        g.addColorStop(0, this.hexA(b.hex, 0.62)); g.addColorStop(1, this.hexA(b.hex, 0));
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x + ox, b.y + oy, rr, 0, 6.2832); ctx.fill();
+        const g = ctx.createRadialGradient(x, y, 0, x, y, rr);
+        g.addColorStop(0, this.hexA(greys[b.g], a)); g.addColorStop(1, this.hexA(greys[b.g], 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832); ctx.fill();
       });
-      ctx.globalCompositeOperation = 'source-over';
-      if (!document.hidden) this._raf = requestAnimationFrame(draw);
+      // The soft edge: everything outside the disc's footprint thins to nothing, so the floor ends on
+      // its own the way the gas does.
+      ctx.save();
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.translate(W / 2, H / 2); ctx.scale(shape.floorRx, shape.floorRy);
+      const m = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+      m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(0.45, 'rgba(0,0,0,1)'); m.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = m; ctx.fillRect(-W / shape.floorRx, -H / shape.floorRy, 2 * W / shape.floorRx, 2 * H / shape.floorRy);
+      ctx.restore();
+    };
+    const draw = (now) => {
+      if (!run.on) return;
+      if ((!reduce && floor.v > 0) || floor.dirty) { floor.dirty = false; paint(reduce ? 0 : (now - t0) / 1000); }
+      this._raf = requestAnimationFrame(draw);
     };
     draw(t0);
-    if (!document.hidden) this._raf = requestAnimationFrame(draw);
+    this._procFieldStart(pal);
   },
-  stopCanvas() { if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; } },
+  stopCanvas() {
+    if (this._procRun) { this._procRun.on = false; this._procRun = null; }
+    if (this._raf) { cancelAnimationFrame(this._raf); this._raf = null; }
+    this._procFieldStop();
+  },
 
   // ================= interaction =================
   // New Generation is the inverse of the generation reveal: the result recedes DOWNWARD
@@ -479,7 +634,7 @@ export const pipelineMethods = {
        The flag means "the thing in `current` came from a link and is not in your Library", so it is
        only ever true ABOUT `current` — and this line sets `current` to null. Left set it went stale
        in two directions: below the supported minimum `_mobileShare()` reads
-       `(sharedView || exampleView) && current`, so the read-only surface vanished and the story took
+       `sharedView && current` (it also read exampleView until 17.09.26), so the read-only surface vanished and the story took
        its place while the flag insisted a shared palette was still open; on the desktop it survived
        into the NEXT generated palette, which would then be offered a "save this to your Library"
        prompt for a palette the pipeline had already saved. makeOwnFromShared has always cleared it
@@ -542,7 +697,7 @@ export const pipelineMethods = {
      guard length lets go regardless, so the button can never be left dead. */
   newPalette() {
     if (this._npLock) return;
-    if (this.state.stage === 'upload') { if (this.fileRef.current) this.fileRef.current.click(); }
+    if (this.state.stage === 'upload') { this._procFieldIntent(); if (this.fileRef.current) this.fileRef.current.click(); }
     else {
       this._npLock = true;
       clearTimeout(this._npLockT);
@@ -601,7 +756,7 @@ export const pipelineMethods = {
     const g = window.gsap; if (!g || document.hidden) return;
     const zone = document.querySelector('main button[aria-label^="Choose image"]');
     if (!zone) return;
-    if (this._reduce) { g.fromTo(zone, { opacity: 0 }, { opacity: 1, duration: .35, ease: 'none' }); return; }   // opacity crossfade only
+    if (this._reduce) { g.fromTo(zone, { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none' }); return; }   // opacity crossfade only
     g.fromTo(zone, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform' });
     this._dropRevealed = false;
     try { this._dropLinesReveal(g); } catch (e) { }

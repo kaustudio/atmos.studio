@@ -19,6 +19,11 @@
 
 function noop() { }
 
+/* The house scale, mirrored — the arrangement aboutCascade.js and aboutPills.js use (17.09.26, audit F3). The eases stay
+   GSAP's own names: this timeline is scrubbed, so its progress is the scroll's, and the token curves
+   are written for motion that runs in time. */
+const DUR = { fold: 0.5, stagger: 0.05 };
+
 export function initIntervals(root) {
   const gsap = window.gsap;
   const ScrollTrigger = window.ScrollTrigger;
@@ -71,7 +76,7 @@ export function initIntervals(root) {
     tl.to(el, { flexGrow: grow[i], ease: 'power2.inOut' }, 0);
   });
   if (readouts.length) {
-    tl.fromTo(readouts, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, ease: 'none', stagger: 0.06, duration: 0.5 }, 0.08);
+    tl.fromTo(readouts, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, ease: 'none', stagger: DUR.stagger, duration: DUR.fold }, 0.08);
   }
 
   return function destroy() {

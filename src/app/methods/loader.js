@@ -110,18 +110,18 @@ export const loaderMethods = {
         if (phase !== 'FILLING') return; phase = 'EXIT';
         if (this._loaderFill) { try { g.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
         num && (num.textContent = '100'); g.set(bar, { scaleX: 1 });
-        const ex = this._loaderExitEase || (this._loaderExitEase = this.cubicBezier(0.215, 0.61, 0.355, 1));
+        const ex = this.EASE.reveal;   // the same bezier this cached privately until 17.09.26
         const tl = g.timeline({ onComplete: () => { phase = 'GONE'; done(); } });
-        tl.to({}, { duration: 0.2 });                                                           // brief hold at 100
+        tl.to({}, { duration: this.DUR.fast });                                                           // brief hold at 100
         // exit mirrors the entrance: Wordmark → Progress → bar
-        tl.to(logo, { yPercent: -110, duration: 0.6, ease: ex }, 0);                                 // 1. wordmark out the top
-        tl.to(num, { yPercent: -110, duration: 0.6, ease: ex }, 0.15);                               // 2. progress (at 100) follows out the top
-        tl.to(bar, { scaleX: 0, transformOrigin: 'right center', duration: 0.6, ease: ex }, 0.3);      // 3. bar exits to the right
+        tl.to(logo, { yPercent: -110, duration: this.DUR.reveal, ease: ex }, 0);                                 // 1. wordmark out the top
+        tl.to(num, { yPercent: -110, duration: this.DUR.reveal, ease: ex }, this.DUR.fast);                               // 2. progress (at 100) follows out the top
+        tl.to(bar, { scaleX: 0, transformOrigin: 'right center', duration: this.DUR.reveal, ease: ex }, this.DUR.chrome);      // 3. bar exits to the right
         // Was a locally-cached cubicBezier(0.19,1,0.22,1) called _foldEase — which is EASE.overlay,
         // built once in initMotion, under the name of a DIFFERENT token (EASE.fold is the in-out
         // marker curve). Identical value, so the lift is unchanged; it just stops being a second
         // private copy of a curve the system already names.
-        tl.to(bg, { yPercent: -101, duration: 0.95, ease: this.EASE.overlay }, 0.8);   // fold lifts, unchanged
+        tl.to(bg, { yPercent: -101, duration: this.DUR.overlayArrive, ease: this.EASE.overlay }, this.DUR.overlay);   // fold lifts, unchanged
         // the fold is expo-out: it clears the centre of the viewport ~0.1s in, so the lines start
         // rising just behind its trailing edge rather than after a beat of empty landing
         // One arrival, in reading order: the dropzone copy first, the archive a beat behind it, so
@@ -160,10 +160,10 @@ export const loaderMethods = {
         // normalize the baked translateY(110%) — GSAP parses it as a PIXEL y, so zero that and
         // re-express the offset as yPercent, which the entrance and exit tweens actually drive.
         g.set([logo, num], { y: 0, yPercent: 110 });
-        const tl = g.timeline({ delay: 0.25 });
-        tl.to(logo, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0);      // wordmark rises bottom → centre of its mask
-        tl.to(num, { yPercent: 0, duration: 0.8, ease: this.EASE.entrance }, 0.15);    // progress follows
-        tl.call(startFill, null, 0.35);                                          // bar begins just after the progress rise has started
+        const tl = g.timeline({ delay: this.DUR.state });
+        tl.to(logo, { yPercent: 0, duration: this.DUR.overlay, ease: this.EASE.entrance }, 0);      // wordmark rises bottom → centre of its mask
+        tl.to(num, { yPercent: 0, duration: this.DUR.overlay, ease: this.EASE.entrance }, this.DUR.fast);    // progress follows
+        tl.call(startFill, null, this.DUR.swap);                                          // bar begins just after the progress rise has started
       };
       // What RESCUE calls. The job is to hand the run its ENDING, not to cut it off: a fill still
       // crawling is released to finish, an entrance that never got frames is posed so the exit has

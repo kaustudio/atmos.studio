@@ -20,7 +20,7 @@
    legal statements are one column of prose; this page is neither. Its rhythm alternates a wide
    demonstration with a narrow measure, so the reader moves between looking and reading. Everything it
    draws with is still the system's: the ten-step type scale, the tracking scale, the hairline, the
-   zero radius, the two action tiers. No colour on this page is anything but a token or a swatch
+   designed corners (square samples, round controls), the two action tiers. No colour on this page is anything but a token or a swatch
    quoted from a real palette.
 
    EVERY RULE TARGETING A <p> CARRIES THE .about-route PREFIX, and it is not decoration. The base rule
@@ -189,9 +189,8 @@
 /* The label voice — the app's own uppercase chrome label at --fs-label on flat tracking. Nothing
    here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
    consumers until they were removed from the page; the list is what is left. */
-.about-route .about-figure__label,.about-route .about-rail__meta,
-.about-route .about-role__name,.about-route .pills__label,
-.about-route .pills__inner-label,.about-route .about-stack__ref,
+.about-route .about-figure__label,
+.about-route .about-role__name,.about-route .about-stack__ref,
 [data-mobile-story] .about-figure__label,
 [data-mobile-story] .about-role__name{
   font-family:'Neue Montreal',system-ui,sans-serif;
@@ -203,6 +202,15 @@
      has no room between --fs-label and --fs-detail to separate them by size, and a 1px step would
      not read anyway. Brightness does it: the parent is the ink, the children stay muted. */
   color:var(--on-surface);
+}
+
+/* THE FEATURE PILLS SPEAK LIKE THE BANNER'S BUTTONS (17.09.26, audit A4, by request): --fs-body,
+   Medium, flat tracking and the labels' own Title Case, where they were the uppercase label voice
+   above. The pill is a control, and this is the voice the site's pill buttons now share. */
+.about-route .pills__label,.about-route .pills__inner-label{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);text-transform:none;
+  line-height:1.2;color:var(--on-surface);
 }
 
 /* ------------------------------------------------------------- the divider
@@ -256,7 +264,7 @@
    text-wrap:balance therefore stays: it does nothing on the single line and evens the pair below. */
 .about-hero h1{
   margin:0;
-  font-size:clamp(34px, calc(6.28vw - 4px), 86px);font-weight:500;line-height:1.04;
+  font-size:var(--fs-hero);font-weight:500;line-height:1.04;
   letter-spacing:var(--track-display);text-wrap:balance;
 }
 /* THE THESIS LINE — the sentence the product turns on, and the page's second-largest type.
@@ -269,7 +277,9 @@
   /* Held well under --block-gap so the gap down to the image still reads as the bigger
      boundary: at 4vh against a 6.5vh block gap it was 1.63x, which is not a hierarchy. */
   margin:clamp(22px,3vh,38px) 0 0;
-  font-size:20px;font-weight:500;line-height:1.35;letter-spacing:-0.5px;
+  /* --fs-subtitle is the 20px this wrote, and -0.5px was -0.025em, between two steps (17.09.26, audits G1
+     and G2): the statement step. */
+  font-size:var(--fs-subtitle);font-weight:500;line-height:1.35;letter-spacing:var(--track-statement);
   color:color-mix(in srgb,var(--on-surface) 58%,transparent);
   text-wrap:balance;
 }
@@ -291,7 +301,8 @@
    aboutFlip.js moves the photograph between them as you scroll. Both are drawn as plates whether or
    not that happens: --surface-raised with a hairline, so the empty destination reads as a frame
    waiting rather than a hole — which is what it is for most of the scroll and all of a no-JS render.
-   Zero radius, per the system: the only curves on this site are transient motion shape. */
+   Square, as photographs and their frames are across the site; the designed corners belong to
+   controls and floating surfaces (global.css, the --radius-* block). */
 .about-plate{position:relative;background:var(--surface-raised);border:1px solid var(--line-strong)}
 /* ONCE THE FLIP IS RUNNING, THE FRAMES ARE NOT THERE. The plates are drawn — raised surface, hairline
    — so that a destination with nothing in it yet is a frame rather than a hole. That is the right
@@ -349,7 +360,7 @@
 .about-route h2,
 [data-mobile-story] h2{
   margin:0 0 .7em;
-  font-size:clamp(22px,2.6vw,34px);font-weight:500;line-height:1.14;
+  font-size:var(--fs-section);font-weight:500;line-height:1.14;
   letter-spacing:var(--track-statement);text-wrap:balance;
 }
 .about-route h3,
@@ -371,6 +382,10 @@
   font-size:var(--fs-body);line-height:1.65;letter-spacing:var(--track-body);
   color:var(--on-surface-muted);text-wrap:pretty;
 }
+/* A caption can hold paragraphs (3.4's has two, 16.09.26), and they keep the caption's type.
+   `main p` above sets --fs-lead, 15px against this 13, and would otherwise win. Its 1.15em margin
+   stays as the gap between them. */
+.about-route .about-figure figcaption p{font-size:inherit;line-height:inherit;letter-spacing:inherit}
 .about-figure .about-divider{margin-top:22px}
 /* A figure that pairs a photograph with a readout: five columns of image, six of side, one of air. */
 .about-figure--split{grid-column:1 / -1;display:grid;grid-template-columns:5fr 6fr;column-gap:var(--grid-gutter)}
@@ -636,8 +651,8 @@
 
 /* THE COLOUR, PLAIN. These were briefly WebGL orb slots — a lit particle sphere per colour, with this
    rule painting a disc underneath as the no-WebGL floor. The spheres are gone and the swatch is the
-   swatch again: square, because zero radius is the system's own rule and a circle here was only ever
-   the orb's silhouette, and at full strength, because there is no longer anything drawing over it.
+   swatch again: square, because a swatch is a sample and samples are square here, and a circle was
+   only ever the orb's silhouette, and at full strength, because there is no longer anything drawing over it.
 
    The hairline is the page's own swatch idiom — .about-intervals__swatch and .about-axis__step both
    carry it — and it earns its place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
@@ -680,7 +695,7 @@
 }
 .about-route .about-lens__read dd{
   margin:0;font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:clamp(22px,2.6vw,34px);line-height:1.1;letter-spacing:var(--track-statement);
+  font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
 /* One number, so it gets to be the biggest thing in the figure. The unit rides at label size beside
@@ -700,7 +715,7 @@
 .about-route .about-lens__ratio{
   margin:0;align-self:end;
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:clamp(22px,2.6vw,34px);line-height:1.1;letter-spacing:var(--track-statement);
+  font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
 .about-route .about-lens__ratio span{
@@ -881,27 +896,26 @@
   justify-self:start;
 }
 /* Three outcomes, three weights, and no hue carrying the verdict — the page argues that colour must
-   never be the only cue, so the classification is spelled out in words and the fill is only there to
-   rank them. */
-.about-matrix li.is--text .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 20%,transparent);color:var(--on-surface)}
-.about-matrix li.is--large .about-matrix__use{background:color-mix(in srgb,var(--on-surface) 10%,transparent);color:var(--on-surface)}
-.about-matrix li.is--none .about-matrix__use{background:none;color:var(--on-surface-muted)}
+   never be the only cue, so the classification is spelled out in words. The weights are the status
+   tokens below. (Three tinted rules stood here and outranked them, so Body Text at AA drew tinted
+   rather than filled; they went on 17.09.26, audit H6.) */
 /* A STADIUM, not a rectangle. --radius-pill is the token global.css defines for exactly this shape —
    a control or a badge sized by its own label, whose corner is therefore half its height whatever the
-   label says — and it is what .about-cta, the section dock and every tier-3 action on the site
-   already take. These three verdicts are the only labelled chips on the page; square, they read as
-   table cells that happen to be filled, and the fill is the one thing here that is not information.
-   The inline padding goes up with the corner: 8px inside a 999px radius puts the first letter under
-   the curve. */
+   label says — and it is what .about-cta and every tier-3 action on the site already take. Square,
+   these verdicts read as table cells that happen to be filled. The inline padding goes up with the
+   corner: 8px inside a 999px radius puts the first letter under the curve.
+   THE PHONE STORY'S VERDICT CHIPS' TEXT STYLE (17.09.26, audit H6, by request): --fs-body, Medium,
+   flat, and the verdict's own Title Case in about.html, where it was uppercase at --fs-fine. The
+   two chip sets say the same kind of thing and now say it the same way (.about-checks__verdict). */
 .about-route .about-matrix__use,
 [data-mobile-story] .about-matrix__use{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);text-transform:none;
   padding:4px 12px;white-space:nowrap;border-radius:var(--radius-pill);
 }
 .about-matrix .is--text .about-matrix__use{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
 .about-matrix .is--large .about-matrix__use{background:var(--status-limited-surface);color:var(--status-limited-ink);border:1px solid var(--status-limited-line)}
-.about-matrix .is--graphic .about-matrix__use{background:var(--status-none-surface);color:var(--status-none-ink);border:1px solid var(--status-none-line)}
+.about-matrix .is--none .about-matrix__use{background:var(--status-none-surface);color:var(--status-none-ink);border:1px solid var(--status-none-line)}
 
 /* ------------------------------------------------------------- the role grid
 
@@ -927,11 +941,17 @@
   /* 8px by request, flat. It was clamp(16px, 1.6vw, 24px) — 16 up to a 1000px viewport, then scaling
      to 24 by 1500. Halving only the floor would have left the padding at 13.6px on an 850px screen
      and untouched at 24px on a wide one, so the number asked for would not have appeared at any width
-     anyone was looking at. A flat value is the only reading of "16 to 8" that is 8 everywhere. */
-  padding:8px;
+     anyone was looking at. A flat value is the only reading of "16 to 8" that is 8 everywhere.
+     EXCEPT THE FOOT (17.09.26, radius issue R5, by request): 20px under the copy, so the last line
+     has room to breathe inside the rounded corner. */
+  padding:8px 8px 20px;
   background:var(--surface);border:1px solid var(--line);
+  /* The colour card's corner (17.09.26, radius issue R5, by request: 28px first, then "minimize it,
+     it's too intense"), and the swatch inside it the same corner less the 8px it is inset by, so the
+     two curves run parallel: 12 and 4. */
+  border-radius:var(--radius-card);
 }
-.about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px}
+.about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px;border-radius:calc(var(--radius-card) - 8px)}
 .about-route .about-role__name,
 [data-mobile-story] .about-role__name{color:var(--on-surface)}
 .about-role__hex,.about-role__note{
@@ -944,8 +964,9 @@
 
    A working surface drawn in the assigned roles, not a picture of one. The six roles arrive as custom
    properties on the block, so every colour below is the assignment itself and cannot drift from the
-   grid above it. Everything structural — the hairline, the zero radius, the label voice — is still
-   the system's. */
+   grid above it. Its structure is drawn plainly — a hairline, square corners, an uppercase label —
+   so it reads as an interface in general rather than as this site's own, whose controls are round
+   and set in Title Case (corrected 17.09.26, audit H4). */
 .about-ui{
   height:100%;
   padding:clamp(22px,3vw,44px);
@@ -997,17 +1018,18 @@
   display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;
   padding:12px 0;border-bottom:1px solid var(--line);
 }
-.about-route .about-checks__use{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
-  color:var(--on-surface-muted);white-space:nowrap;
-}
 .about-checks__pair{display:flex;align-items:center;gap:10px;min-width:0;font-size:var(--fs-body);letter-spacing:var(--track-body)}
 .about-checks__val{font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat)}
+/* .about-checks__use, 3.3's plain uppercase label, went on 17.09.26 (audit H6, by request): 3.3's
+   verdicts are this pill now, as 3.2's are. */
+/* A pill, like the matrix's verdicts above and the tool's AA badge (17.09.26, audit A5), with the same
+   12px inline padding the matrix gives its chips so the first letter clears the curve. The banner's
+   text style since the third round (by request): --fs-body, Medium, and the verdict's own Title Case
+   from renderVals, where it was uppercase at --fs-fine. */
 .about-checks__verdict{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
-  padding:4px 8px;white-space:nowrap;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);text-transform:none;
+  padding:4px 12px;white-space:nowrap;border-radius:var(--radius-pill);
 }
 .about-checks .is--pass .about-checks__verdict{background:var(--status-flexible-surface);color:var(--status-flexible-ink);border:1px solid var(--status-flexible-line)}
 .about-checks .is--part .about-checks__verdict{background:var(--status-limited-surface);color:var(--status-limited-ink);border:1px solid var(--status-limited-line)}
@@ -1234,7 +1256,7 @@
      clamp(40px, 6.28vw, 86px) against the h1's clamp(34px, calc(6.28vw - 4px), 86px) — identical at
      the cap and four pixels LARGER at every width below it, which put the card numerals above the
      page's own title in the hierarchy. Measured 53px against the h1's 49px. */
-  font-size:clamp(34px, calc(6.28vw - 4px), 86px);font-weight:500;line-height:1;
+  font-size:var(--fs-hero);font-weight:500;line-height:1;
   letter-spacing:var(--track-display);
   font-variant-numeric:tabular-nums;text-transform:none;
 }
@@ -1257,7 +1279,7 @@
 .about-stack__strip > span{flex:1 1 0;min-width:0;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-text) 22%,transparent)}
 .about-route .about-stack__t{
   margin:0;max-width:18ch;
-  font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.06;letter-spacing:var(--track-statement);
+  font-size:var(--fs-chapter);font-weight:500;line-height:1.06;letter-spacing:var(--track-statement);
   text-wrap:balance;
 }
 /* NO OPACITY. It was .72, and on a card whose two colours are a real palette rather than a token
@@ -1376,25 +1398,47 @@
   width:var(--rail-card);aspect-ratio:3/4;
   overflow:hidden;background:var(--surface-raised);
   border:1px solid var(--line-strong);
+  /* the surface corner (17.09.26, radius issue R3, by request: 12px first, "too subtle"); the
+     photograph is clipped to it */
+  border-radius:var(--radius-surface);
 }
 .about-rail__card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .about-rail__content{
   position:relative;z-index:1;height:100%;
-  display:flex;flex-direction:column;justify-content:space-between;
+  /* The name and strip sit at the foot; the phone story's meta line, where there is one, keeps the
+     top (margin-bottom:auto below). */
+  display:flex;flex-direction:column;justify-content:flex-end;
   padding:clamp(14px,1.2vw,22px);
-  /* The cards are photographs and the type sits on them, so the type brings its own ground rather
-     than hoping the picture underneath is dark enough — a scrim that is a gradient, not a flat wash,
-     so the middle of the image stays the image. */
-  /* The top stop is HELD to 12% rather than fading from 0. The meta line sits about 5% down, where a
-     gradient that starts fading at 0 has already dropped to ~47% — measured, that put white 10px
-     text over the lightest card (poppy) at 4.19:1, under AA. Holding the wash flat until the text
-     has cleared costs the picture nothing: the fade still finishes in the same place. */
-  background:linear-gradient(to bottom, color-mix(in srgb,#000 62%,transparent) 0%, color-mix(in srgb,#000 62%,transparent) 12%, transparent 38%, transparent 52%, color-mix(in srgb,#000 72%,transparent) 100%);
   color:#fff;
 }
-.about-route .about-rail__meta{display:flex;justify-content:space-between;gap:12px;margin:0;color:#fff}
+/* THE META LINE KEEPS ITS OWN GROUND, and only the phone story has one now: /about's "Body text AA /
+   Large text and UI AA" line went on 17.09.26 (radius issue R3, by request). The top stop is HELD to
+   12% rather than fading from 0: the meta sits about 5% down, where a gradient that starts fading at 0
+   has already dropped to ~47%, which put white text over the lightest card (poppy) at 4.19:1. */
+.about-rail__meta{margin-bottom:auto}
+.about-rail__content:has(> .about-rail__meta){background:linear-gradient(to bottom, color-mix(in srgb,#000 62%,transparent) 0%, color-mix(in srgb,#000 62%,transparent) 12%, transparent 38%)}
+/* THE FOOT: A PROGRESSIVE BLUR AND A DARK TINT (17.09.26, radius issue R3, by request), as the grid
+   view's cards have. It replaced a plain gradient. Two blurred copies of the photograph (the card
+   carries it as --card-img), masked so the blur grows toward the edge and scaled past the card so
+   their soft edges are clipped, then the tint over them, deep enough at the foot for white type on
+   the palest card. Copies rather than backdrop-filter, which measured as dropped frames on the grid's
+   moving field. */
+.about-rail__fade,.about-rail__tint{position:absolute;inset:0;z-index:0;pointer-events:none}
+.about-rail__fade::before,.about-rail__fade::after{
+  content:'';position:absolute;inset:0;
+  background:var(--card-img) center/cover no-repeat;
+  transform:scale(1.08);
+}
+.about-rail__fade::before{filter:blur(8px);-webkit-mask-image:linear-gradient(to bottom,transparent 50%,#000 76%);mask-image:linear-gradient(to bottom,transparent 50%,#000 76%)}
+.about-rail__fade::after{filter:blur(22px);-webkit-mask-image:linear-gradient(to bottom,transparent 66%,#000 94%);mask-image:linear-gradient(to bottom,transparent 66%,#000 94%)}
+.about-rail__tint{background:linear-gradient(to bottom,transparent 46%,rgb(0 0 0 / .4) 70%,rgb(0 0 0 / .8) 100%)}
+.about-rail__card:not(:has(img)) .about-rail__fade,.about-rail__card:not(:has(img)) .about-rail__tint{display:none}
+/* The name one step up the scale (17.09.26, by request): --fs-title, where /about's card heading
+   (.about-route h3) is --fs-subtitle. */
 .about-rail__content h3,.about-rail__name{color:#fff}
-.about-rail__strip{display:flex;height:16px;margin-top:12px;border:1px solid color-mix(in srgb,#fff 40%,transparent)}
+.about-route .about-rail__content h3{font-size:var(--fs-title)}
+/* the swatch corner on the strip (17.09.26, by request) */
+.about-rail__strip{display:flex;height:16px;margin-top:12px;border:1px solid color-mix(in srgb,#fff 40%,transparent);border-radius:var(--radius-swatch);overflow:hidden}
 .about-rail__strip span{display:block;flex:1}
 /* No effect — no pin, no travel — so the rail becomes an ordinary horizontal scroller rather than a
    row clipped at the viewport edge. A pinned section that cannot animate must not be one you cannot
@@ -1454,7 +1498,7 @@
 .about-end:not([data-sticky-live]) .about-end__container{position:static;height:auto;display:block}
 .about-route .about-end__line{
   margin:0;max-width:18ch;
-  font-size:clamp(28px,4.2vw,58px);font-weight:500;line-height:1.08;
+  font-size:var(--fs-chapter);font-weight:500;line-height:1.08;
   letter-spacing:var(--track-statement);text-wrap:balance;
 }
 .about-route .about-end__act{margin:clamp(30px,4.5vh,48px) 0 0}
@@ -1488,8 +1532,10 @@
   display:inline-flex;align-items:center;justify-content:center;
   padding:var(--cta-pad);border-radius:var(--radius-pill);
   background:color-mix(in srgb,var(--on-surface) 7%,transparent);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid color-mix(in srgb,var(--on-surface) 36%,transparent);
+  /* The glass blur token, -webkit- first and standard last (17.09.26, audit D3): written the other
+     way round the build dropped the standard property, so Firefox drew no blur here. */
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
+  border:1px solid var(--action-line);
   color:var(--on-surface);
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-cta);font-weight:500;
@@ -1507,15 +1553,24 @@
 
    The boundary was the real fault. WCAG 1.4.11 asks 3 to 1 of a control's visual boundary and the
    border measured 1.51 to 1 against the page at rest, so the shape only became visible ON hover,
-   which is backwards — a control has to look like a control before you point at it. 36% clears 3 to 1
-   at rest, and the two states brighten the edge sharply while the fill barely moves. */
-.doc-route .about-cta:hover{
-  background:color-mix(in srgb,var(--on-surface) 12%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 62%,transparent);
+   which is backwards — a control has to look like a control before you point at it. The two states
+   brighten the edge sharply while the fill barely moves.
+
+   THE EDGE IS --action-line SINCE 17.09.26, with its hover and press steps, the same as .nf-cta. The
+   36% this carried in both themes cleared 3 to 1 only in dark (3.6 to 1): in light it measured 2.5 to
+   1 against the page (edge 157 on 245), which is the reason the token is 48% in light and 36% in dark.
+   On this button the token measures 3.4 to 1 in light. Hover is the 62% it already was; press is the
+   token's 72%, down from 82%. */
+/* Pointer devices only (17.09.26, audit E7): on a touchscreen a tap left this hover latched. */
+@media (hover:hover){
+  .doc-route .about-cta:hover{
+    background:color-mix(in srgb,var(--on-surface) 12%,transparent);
+    border-color:var(--action-line-hover);
+  }
 }
 .doc-route .about-cta:active{
   background:color-mix(in srgb,var(--on-surface) 18%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 82%,transparent);
+  border-color:var(--action-line-press);
 }
 
 /* ---------------------------------------------------------------- responsive
@@ -1651,8 +1706,13 @@
 
    The mechanic is the resource's (one open at a time, the box tweened on width and height with
    back.out(2), the visual synced by index, a cover when nothing is open). The dress is the house's:
-   zero radius, hairline borders on --line, the label ladder, and every transition on the DUR/EASE
-   tokens so nothing here appears instantly. */
+   hairline borders on --line, the label ladder, and every transition on the DUR/EASE tokens so
+   nothing here appears instantly.
+
+   ROUND SINCE 17.09.26 (audit A4), on --radius-dock, and for the dock's own reason: this box MORPHS,
+   from a single-line pill to a card holding a paragraph. --radius-pill would be a stadium shut and a
+   lozenge open. The dock's 20px is more than half the shut pill's height, so CSS clamps it to a true
+   stadium there, and it is an ordinary 20px corner on the open card. */
 .about-figure--pills{margin-top:var(--block-gap)}
 
 .pills{
@@ -1687,7 +1747,10 @@
    means before the motion arrives, not because of it. */
 .pills__item{
   position:relative;flex:0 0 auto;width:100%;max-width:100%;
-  background:var(--surface-raised);border:1px solid var(--line)
+  background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-dock);
+  /* The open pill's ground and edge ease in and out on the state timing (17.09.26, audit E7); they
+     switched in one frame while the box around them morphed. */
+  transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)
 }
 /* No overflow:hidden here, and that is the fix rather than an omission: the button's border box
    coincides with the item's, so a ring drawn at the house's 3px offset fell entirely outside the
@@ -1730,7 +1793,10 @@
      moved four millimetres to the right. */
   display:none;align-items:center;justify-content:space-between;gap:12px;width:100%;
   padding:var(--btn-pad-lg);margin:0;border:0;background:none;cursor:pointer;text-align:left;
-  color:var(--on-surface);font:inherit
+  color:var(--on-surface);font:inherit;
+  /* The item's corner, so the press tier's hover tint and the focus ring take the pill's shape
+     rather than drawing a square inside it. */
+  border-radius:var(--radius-dock)
 }
 [data-pills-live] .pills__button{display:flex}
 .pills__item[data-active="true"] .pills__button{opacity:0;pointer-events:none}
@@ -1836,349 +1902,12 @@
   .pills__close{transition:none}
 }
 
-/* ==============================================================================================
-   SECTION ANCHOR DOCK — Osmo Supply, adapted. The mechanic, the class names and the attribute
-   contract are the resource's; src/app/methods/aboutDock.js carries the full list of departures.
-   This file owns three things the resource does not have to think about: a state for readers with
-   no JavaScript, colour and type that come from the system rather than from the resource's own
-   palette, and the box motion — which lives here rather than in GSAP for the reasons aboutPills.js
-   sets out at [ATMOS 10] and which are repeated verbatim in this component.
-
-   WHAT THE SYSTEM CHANGED, against the resource as shipped:
-
-     SQUARE. The resource is built out of radii — a 1.5em pill, 100em rows, a 100em lozenge. Every
-     surface on this site is square and global.css says so in as many words where .glass-effect
-     declines the reference's own 4px. A rounded dock is not a small deviation here; it is the one
-     element on /about that would announce it came from somewhere else.
-
-     THE TYPE IS ON THE SCALE. The resource sizes everything in em off one arbitrary root. Rows take
-     --fs-detail, which the scale defines as "menu items, notes, secondary copy" — this is a menu.
-     The numbers take --fs-micro ("counts, eyebrows, row meta"). Group heads take the uppercase label
-     voice, --fs-label at --track-label, which is what this system uses to name a group of things.
-
-     THE PADDING IS ON THE SCALE. --btn-pad-md for the collapsed face, --btn-pad-sm for the rows:
-     "dense chrome: chips, counts, in-row controls".
-
-     THE ROWS ARE [data-ix="cell"]. The tint, its curve and its duration all arrive from the
-     interaction contract in global.css. They are NOT restated here — an inline transition replaces
-     the contract rather than joining it, so a control carrying both ends up with whichever
-     declaration wins and no way to reason about which.
-   ============================================================================================== */
-
-.section-dock{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-detail);
-  color:var(--on-surface);
-}
-
-/* ---- THE FLOOR: no JavaScript, no [data-dock-live] ------------------------------------------
-   A nav at the end of the document listing every section under its group heading. In flow, nothing
-   fixed, nothing collapsed and nothing hidden — see the note in about.html on why the markup is
-   arranged so this is what falls out rather than something JS has to come back and reveal. */
-.section-dock{
-  display:block;
-  width:100%;
-  margin-block:var(--band-gap) 0;
-  padding-inline:var(--page-gutter);
-}
-/* The pill's face repeats the first row and means nothing standing still, so in flow it is not
-   drawn. The indicator and the glass pane are both apparatus of the live control. */
-.section-dock__toggle,
-.section-dock__indicator,
-.section-dock .glass-effect,
-.section-dock__chev{display:none}
-.section-dock__items,.section-dock__sub{margin:0;padding:0;list-style:none}
-
-/* ---- THE LIVE DOCK -------------------------------------------------------------------------- */
-[data-dock-live].section-dock{
-  /* THE GAP BETWEEN ROWS, and it is one figure because it is one rhythm. 2px was already here,
-     between sibling groups; it is now also what keeps every other adjacent pair apart, so it is
-     named once rather than typed in two rules that could drift.
-
-     IT EXISTS SO TWO STATES CANNOT TOUCH. The rows used to abut exactly — 33px tall on a 33px pitch
-     — which was invisible while they were transparent and stopped being invisible the moment they
-     started drawing rounded backgrounds. Hover a row next to the active one and the two filled
-     shapes met on a shared edge, reading as one lozenge with a colour change in the middle rather
-     than as two rows in two states. 2px is enough because the corners curve away from each other:
-     at --radius-dock-row the shapes are already parting well before their edges would meet. */
-  --dock-row-gap:2px;
-  z-index:100;
-  width:fit-content;
-  margin:0 auto;
-  padding:0;
-  position:fixed;
-  bottom:var(--page-gutter);
-  left:0;
-  right:0;
-}
-
-/* THE PILL IS THE GLASS, and it is round now — --radius-dock, one of the two designed radii the
-   system admits to. The argument for the figure is at that token in global.css; the short version is
-   that shut, the corner clamps to half this pill's 36px row and it is a true stadium — the same
-   object as the glass buttons — while open it is a rounded panel rather than a 132px lozenge. The
-   token is 24px and only the open panel can see that: 18 was already the collapsed ceiling.
-
-   THE CORNER IS FREE HERE because of the overflow below. Every child is clipped to the rounded box —
-   the glass pane takes border-radius:inherit, the travelling indicator is clipped rather than needing
-   a corner of its own, and the focus rings inside are all inset, which a radius does not reach. So
-   this is one declaration and nothing else in the component had to learn about it.
-
-   overflow is load-bearing: the list is laid out at
-   full size from the first frame and would spill out of the box through the whole morph without it.
-   It is also why every control in here takes the inset focus ring — see about.html.
-
-   THE BOX MOTION IS A CSS TRANSITION ON THE HOUSE TOKENS, not a GSAP tween, which is the argument
-   aboutPills.js [ATMOS 10] makes at length for the same resource family and the same kind of box:
-     · --ease-fold at --dur-fold is THE disclosure motion here, and global.css says a disclosure and
-       a moving selection share one motion character. This component is both at once.
-     · the token stays the single source — no JS mirror of four bezier numbers to drift from it
-     · a CSS transition is interruptible mid-flight, which is what a control a reader can hover in
-       and out of six times in a row actually needs; a tween restarts from wherever it was killed
-   The resource's own back.out(1.4) overshoots its final width and springs back. Nothing in this
-   system does that: --ease-fold, --ease-standard and --ease-entrance are all monotonic. */
-[data-dock-live] .section-dock__pill{
-  position:relative;
-  overflow:hidden;
-  border-radius:var(--radius-dock);
-  transition:width var(--dur-fold) var(--ease-fold),height var(--dur-fold) var(--ease-fold);
-  box-shadow:0 1px 2px color-mix(in srgb,var(--on-surface) 8%,transparent),
-             0 8px 24px color-mix(in srgb,var(--on-surface) 12%,transparent);
-}
-/* Not `[data-dock-live] .section-dock .glass-effect` — that asks for a .section-dock INSIDE the
-   element carrying the attribute, and the attribute is on the nav itself, so it matched nothing and
-   the pane stayed display:none. The pill was left with no fill at all: a box-shadow around a hole,
-   with the paragraph behind it reading straight through the rows. A surface reads from its fill. */
-[data-dock-live] .glass-effect{display:block}
-/* The pane is absolute and first, so in-flow siblings would paint under it. One z-index lifts them
-   out — the same rule .glass-bar makes in global.css, restated for this host.
-
-   z-index ONLY, where .glass-bar's version also states position:relative. That extra declaration is
-   free on a bar whose children are all in flow and is not free here: `> *:not(.glass-effect)` is
-   three compound selectors and outspecifies the plain `.section-dock__list` rule below, so the list
-   was handed position:relative, fell back into flow, and the collapsed pill stood 356px tall with
-   the whole list stacked inside it instead of 45px. Each child states its own position instead —
-   both are positioned, which is all z-index needs. */
-[data-dock-live] .section-dock__pill > *:not(.glass-effect){z-index:1}
-[data-dock-live] .section-dock__toggle{position:relative}
-
-[data-dock-live] .section-dock__toggle{
-  display:flex;align-items:center;gap:10px;
-  white-space:nowrap;
-  appearance:none;
-  background-color:transparent;
-  border:none;
-  color:inherit;
-  font:inherit;
-  padding:var(--btn-pad-md);
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-.section-dock__label-wrap{
-  height:calc(var(--fs-detail) * 1.5);
-  display:block;
-  position:relative;
-  overflow:hidden;
-}
-.section-dock__label{line-height:1.5;display:block}
-
-/* The caret, pointing the way the list opens. Turns rather than swaps, which is the argument
-   [data-disc-chev] and [data-sort-chevron] both make in global.css.
-
-   THE NUDGE FOLLOWS THE ROTATION, AND THIS ONE HAD THE WRONG HALF OF THE PAIR. A 5px square with a
-   right and bottom border is an L, and its ink sits down-and-right of the box it is centred in; what
-   that becomes on screen depends entirely on which way the box is then turned. .section-dock__chev
-   below carries both answers, tuned against a row of this same text: rotate(45deg) points the corner
-   DOWN and hangs below the line, so it is lifted -1.5px; rotate(-135deg) points it UP and rides
-   above the line, so it is pushed +0.5px.
-
-   This caret is at -135deg — the point-up case — and was carrying -1px, which is the sign of the
-   point-DOWN correction. So the rotation lifted the ink about a pixel off the text's centre and the
-   translate lifted it another, and the arrow sat visibly high against its own label. It takes the
-   figure its sibling already uses at this rotation, so the two carets in this dock now agree. */
-.section-dock__caret{
-  flex:none;width:5px;height:5px;
-  border-right:1.5px solid currentColor;
-  border-bottom:1.5px solid currentColor;
-  opacity:.45;
-  transform:translateY(.5px) rotate(-135deg);
-  transition:opacity var(--dur-fast) var(--ease-standard);
-}
-[data-dock-live] .section-dock__toggle:hover .section-dock__caret{opacity:.8}
-
-[data-dock-live] .section-dock__list{
-  opacity:0;
-  visibility:hidden;
-  width:max-content;
-  padding:6px;
-  position:absolute;
-  top:0;
-  left:0;
-}
-
-/* THE INDICATOR IS THE INK, and it is the travelling selection marker --ease-fold is named for —
-   global.css folded --ease-pill (the marker behind every segmented toggle) into it precisely so
-   this motion and a disclosure share one curve. The resource paints #161c33 on #e9ecf6, which is
-   its own palette; here the block is --on-surface and the row above it flips to --surface, so the
-   active row reads as inverted type in both modes and needs no light/dark rule of its own. */
-/* THE MARKER TAKES THE ROW CORNER. It is the ACTIVE state — the rows themselves are transparent in
-   live mode ([data-section-dock-link][data-active] below forces that), so this block is the only
-   thing drawing "you are here", and a square slab of --on-surface inside an 18px pill was the state
-   that most obviously had not been told about the corner. --radius-dock-row, so it is the same shape
-   as the hover tint it lands on top of. */
-[data-dock-live] .section-dock__indicator{
-  display:block;
-  border-radius:var(--radius-dock-row);
-  z-index:1;
-  pointer-events:none;
-  background-color:var(--on-surface);
-  position:absolute;
-  top:0;left:0;
-  transition:transform var(--dur-fold) var(--ease-fold),
-             width var(--dur-fold) var(--ease-fold),
-             height var(--dur-fold) var(--ease-fold),
-             opacity var(--dur-state) var(--ease-standard);
-}
-
-/* ---- ROWS ------------------------------------------------------------------------------------ */
-.section-dock__link-num{
-  color:var(--on-surface-muted);
-  margin-right:8px;
-  font-size:var(--fs-fine);
-  line-height:1;
-  letter-spacing:var(--track-flat);
-  font-variant-numeric:tabular-nums;
-  display:inline-block;
-  position:relative;
-  bottom:.5px;
-}
-
-/* NO transition declared here, and none on the group head below. Both carry data-ix="cell", so the
-   tint, its curve and its duration are the interaction contract's — restating any of them here
-   would replace the contract rather than extend it. */
-.section-dock__link{
-  z-index:2;
-  white-space:nowrap;
-  color:inherit;
-  padding:var(--btn-pad-sm);
-  text-decoration:none;
-  display:block;
-  position:relative;
-}
-[data-section-dock-link][data-active]{color:var(--surface)}
-[data-section-dock-link][data-active] .section-dock__link-num{color:color-mix(in srgb,var(--surface) 68%,transparent)}
-/* The active row already reads as inverted against the marker; a hover tint on top of it would be
-   the contract's cell tint fighting the marker underneath for the same pixels. */
-[data-dock-live] [data-section-dock-link][data-active]{background-color:transparent!important}
-
-/* ---- GROUPS ---------------------------------------------------------------------------------- */
-/* The group head is a button, not a link: one that navigated would leave the ten sections outside
-   the current group reachable only by scrolling to them first. See [ATMOS 1] in aboutDock.js.
-
-   IT IS NOT UPPERCASE, and that decides the other two type properties with it. The uppercase label
-   voice was tried here — --fs-label at --track-label, which is how this system names a group of
-   things elsewhere — and the group heads read as SHOUTED rather than as headings. Removing the
-   transform alone would have left two settings behind that only make sense under it:
-
-     · --track-label is defined in global.css as "uppercase labels". A tenth of an em between
-       sentence-case letters is not a label voice, it is loose type. --track-flat is the system's
-       own way of saying flat, and is what the numbers in here already take.
-     · --fs-label is 10px, which works for a group name only while capitals are carrying it. Set in
-       sentence case at 10px above 12px rows, the parent would be the smallest thing in its own
-       group — a hierarchy upside down. It takes --fs-detail now, the same step as the rows it
-       heads, and the distinction is carried by the chevron, the single-digit number and the colour. */
-.section-dock__group-head{
-  display:flex;align-items:center;gap:0;width:100%;
-  appearance:none;background:none;border:none;
-  font-family:inherit;
-  font-size:var(--fs-detail);
-  letter-spacing:var(--track-flat);
-  color:var(--on-surface-muted);
-  text-align:left;white-space:nowrap;
-  padding:var(--btn-pad-sm);
-  cursor:pointer;
-  position:relative;z-index:2;
-  -webkit-tap-highlight-color:transparent;
-}
-/* HOVER AND PRESS ARE BACKGROUNDS, so a radius on the row is all they need — [data-ix="cell"] at
-   the top of global.css paints its tint into this element's own border box. Stated on both kinds of
-   row because the dock has two: the links, and the group heads that open them.
-
-   SCOPED TO [data-dock-live] like everything else in this block. Without JS the dock is a nav in
-   flow with no pill around it — there is no outer corner for these to be concentric with, and a
-   rounded tint on a plain list row would be a shape appearing from nowhere. */
-[data-dock-live] .section-dock__link,
-[data-dock-live] .section-dock__group-head{border-radius:var(--radius-dock-row)}
-[data-dock-live] .section-dock__group[data-open] > .section-dock__group-head{color:var(--on-surface)}
-/* No size override on the group's number. It existed to stop a 9px figure being lost beside a 10px
-   uppercase label; the head is --fs-detail now, so the number sits against it exactly as "3.1" sits
-   against a row — one treatment for every number in the dock. */
-/* The label must not run into the chevron on the widest group name. margin-left:auto puts the whole
-   slack between them, so this only matters when there is none. */
-.section-dock__group-head > span:not(.section-dock__chev):not(.section-dock__link-num){padding-right:20px}
-
-/* The chevron turns; it does not swap. Down while the group is shut, up while it is open.
-   The gap to the label is margin, not padding. Padding on a content-box element sits INSIDE the
-   border box, so border-bottom drew across the content plus the padding — a 5px tick became a 28px
-   diagonal slash leaning out of the top of every group head. */
-[data-dock-live] .section-dock__chev{
-  display:block;
-  flex:none;margin-left:auto;
-  width:5px;height:5px;
-  border-right:1.5px solid currentColor;
-  border-bottom:1.5px solid currentColor;
-  opacity:.6;
-  /* Lifted a pixel: a square rotated 45° hangs below the optical centre of a row of text, because
-     the corner that reads as the point is the bottom one. */
-  transform:translateY(-1.5px) rotate(45deg);
-  transition:transform var(--dur-state) var(--ease-fold);
-}
-[data-dock-live] .section-dock__group[data-open] .section-dock__chev{transform:translateY(.5px) rotate(-135deg)}
-
-/* The height is written in px by the script — the resolved content height or zero — and overflow is
-   what makes that a collapse rather than a pile of rows sitting on the group below. px rather than
-   `auto` because auto is not a value a transition can interpolate toward, and this fold answers to
-   the same token as the pill it lives in. */
-[data-dock-live] .section-dock__sub{
-  overflow:hidden;
-  transition:height var(--dur-fold) var(--ease-fold);
-}
-/* EVERY ADJACENT PAIR, not just the ones that were already spaced. Three boundaries exist in this
-   list and all three can put two states side by side: group beside group (this rule, which is where
-   the 2px came from), the head of an open group beside its own first link, and link beside link.
-   The last two are the sub's children, and margin-TOP on each of them covers both — the first li
-   takes its gap from the head above it, the rest from their siblings.
-
-   Top margins only, deliberately. The sub's open height is read from scrollHeight (aboutDock.js
-   subTarget), and a trailing bottom margin is the one thing scrollHeight is unreliable about across
-   engines; a leading margin pushes content down inside the sub's own overflow:hidden block
-   formatting context, which every engine measures. Nothing in the JS had to change: the indicator
-   is positioned from each link's own offsetTop/offsetHeight, and the pill from list.offsetHeight,
-   so both follow the new pitch on their own. */
-[data-dock-live] .section-dock__group + .section-dock__group{margin-top:var(--dock-row-gap)}
-[data-dock-live] .section-dock__sub > li{margin-top:var(--dock-row-gap)}
-
-/* ---- INSTANT --------------------------------------------------------------------------------- */
-/* Placement that is not a state CHANGE: first paint, a resize, a font landing, or a group being set
-   while the dock is shut and nobody can see it. Without this the indicator would slide in from the
-   corner on load and every rows-rewrap would animate to its new size. */
-[data-dock-instant] .section-dock__pill,
-[data-dock-instant] .section-dock__indicator,
-[data-dock-instant] .section-dock__sub,
-[data-dock-instant] .section-dock__chev{transition:none!important}
-
-/* ---- HIDDEN ---------------------------------------------------------------------------------- */
-/* The attribute is the styling hook the resource documents; the move itself is GSAP's, so this only
-   takes the control out of the tab order and out of the pointer's way once it has gone. */
-[data-dock-live][data-hidden]{pointer-events:none}
+/* THE SECTION ANCHOR DOCK went on 17.09.26, by request ("remove the dock altogether globally"): the
+   pill at the foot of the viewport, its markup in about.html and aboutDock.js. The phone story had
+   already lost it. */
 
 /* ---- NARROW ---------------------------------------------------------------------------------- */
-/* The rows are the longest thing in here and the pill is centred, so what gives is the row padding
-   rather than the layout — the type is already at --fs-detail and the scale has nothing sensible
-   below it for a menu. */
 @media screen and (max-width:560px){
-  [data-dock-live].section-dock{bottom:16px}
-  [data-dock-live] .section-dock__toggle{padding:var(--btn-pad-sm)}
-
   /* ---- 2.1, THE WEIGHTS KEY, AS A FULL WIDTH TALLY ------------------------------------------
      Two faults, and neither is the one it looks like.
 
@@ -2238,14 +1967,3 @@
   .about-route .about-lens__note{max-width:none}
 }
 
-/* ---- REDUCED MOTION -------------------------------------------------------------------------- */
-/* The box, the marker, the fold and the two turns are all this file's own now, so they are this
-   file's to floor. The blanket rule at the top of global.css already flattens transitions to
-   .001ms; this states none so nothing is left mid-interpolation. What GSAP still drives — the label
-   swap and the dock's arrival — is floored inside aboutDock.js, which under this preference also
-   drops the arrival travel entirely rather than making it instant: a fixed surface blinking into
-   existence is "surfaces arrive, never appear" failing at the top of the screen. See [ATMOS 7]. */
-@media (prefers-reduced-motion: reduce){
-  .section-dock__pill,.section-dock__indicator,.section-dock__sub,
-  .section-dock__caret,.section-dock__chev{transition:none}
-}

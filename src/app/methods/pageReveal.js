@@ -46,7 +46,11 @@ import { splitLines } from './maskLines.js';
    would have drifted the moment anyone retuned the app.
 
    Fallbacks exist only so the module is still usable if it is ever called without the app. */
-var FALLBACK = { duration: 0.62, stagger: 0.09, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' };
+// `rule` (17.09.26, audit F3): how long a rule takes to draw. The two draws below wrote 0.8 and 0.9;
+// the app hands in DUR.overlay for both, the hero's included.
+// `ease` is entrance's nearest GSAP name (17.09.26, audit F4): GSAP does not read a cubic-bezier()
+// string, so the one written here fell through to GSAP's own default.
+var FALLBACK = { duration: 0.62, stagger: 0.09, ease: 'expo.out', rule: 0.8 };
 
 /* WHERE A SECTION ARRIVES, as a fraction of the viewport from the top — and the reason it is a
    constant rather than two numbers.
@@ -212,8 +216,19 @@ export function initPageReveal(root, options) {
     starts.end = beat;              // the beat after the last one used, for the next group in a sequence
     if (!fresh.length) return starts;
 
-    var lines = [], plain = [];
-    fresh.forEach(function (el) { var s = splits.get(el); if (s) lines = lines.concat(s.lines); else plain.push(el); });
+    /* RISERS (17.09.26). A block marked data-reveal-rise has no words to split, so rather than fade
+       it moves its first child up through its own box, which clips (overflow:hidden on the block), on
+       the block's beat and the lines' own duration and ease. Manage Library's tick boxes use it, so a
+       filter row's contents all arrive the same way inside a pill that is already there (by request:
+       the rows must not fade in). The child is moved rather than the block, so no node is wrapped or
+       replaced under React. */
+    var lines = [], plain = [], risers = [];
+    fresh.forEach(function (el) {
+      var s = splits.get(el);
+      if (s) lines = lines.concat(s.lines);
+      else if (el.hasAttribute('data-reveal-rise') && el.firstElementChild) risers.push(el);
+      else plain.push(el);
+    });
     // The block is shown now; its lines are parked inside their masks, so there is nothing to see
     // until the tween runs. Both happen before the next paint, so there is no flash.
     g.set(fresh, { opacity: 1 });
@@ -252,6 +267,22 @@ export function initPageReveal(root, options) {
         opacity: 1, duration: MOTION.duration, ease: MOTION.ease, stagger: stepOf,
         clearProps: 'opacity', onComplete: function () { plain.forEach(drop); }
       });
+    }
+    if (risers.length) {
+      var kids = risers.map(function (el) { return el.firstElementChild; });
+      g.killTweensOf(kids);
+      var rt = g.fromTo(kids, { yPercent: 110 }, {
+        yPercent: 0, duration: MOTION.duration, ease: MOTION.ease,
+        stagger: function (i, target) { return (beatOf.get(target.parentNode) || 0) * MOTION.stagger; },
+        clearProps: 'transform', onComplete: function () { risers.forEach(drop); }
+      });
+      // The lines' rAF-stall failsafe, for the same reason: a parked child is invisible until this runs.
+      timers.push(setTimeout(function () {
+        if (rt.progress() >= 1) return;
+        try { rt.kill(); } catch (e) { }
+        try { g.set(kids, { clearProps: 'transform' }); } catch (e) { }
+        risers.forEach(drop);
+      }, 2500));
     }
     return starts;
   }
@@ -303,7 +334,7 @@ export function initPageReveal(root, options) {
     if (!claim(el, 'rule')) return;
     g.to(el, {
       '--rule': 1,
-      duration: 0.8,
+      duration: MOTION.rule || FALLBACK.rule,
       delay: delay || 0,
       ease: MOTION.ease,
       onComplete: function () { el.style.removeProperty('--rule'); drop(el); }
@@ -369,7 +400,7 @@ export function initPageReveal(root, options) {
     if (hero) {
       g.to(hero, {
         '--rule': 1,
-        duration: 0.9,
+        duration: MOTION.rule || FALLBACK.rule,
         ease: MOTION.ease,
         onComplete: function () { hero.style.removeProperty('--rule'); drop(hero); }
       });
@@ -478,8 +509,14 @@ export function initPageReveal(root, options) {
     }
     try { g.killTweensOf(el); } catch (e) { }
     try { g.set(el, { clearProps: 'opacity,transform' }); } catch (e) { }
+    riserChild(el, function (k) { g.killTweensOf(k); g.set(k, { clearProps: 'transform' }); });
     el.style.removeProperty('--rule');
     drop(el);
+  }
+  // A riser's moving part (see revealMasked), handed to fn when there is one.
+  function riserChild(el, fn) {
+    if (!el || !el.hasAttribute || !el.hasAttribute('data-reveal-rise') || !el.firstElementChild) return;
+    try { fn(el.firstElementChild); } catch (e) { }
   }
 
   // Is this element still visually withheld, as the browser currently computes it? Asked of
@@ -509,7 +546,9 @@ export function initPageReveal(root, options) {
     var cs = getComputedStyle(el);
     if (+cs.opacity < 0.99) return true;
     var m = cs.transform;
-    return m !== 'none' && m !== 'matrix(1, 0, 0, 1, 0, 0)';
+    var parked = false;
+    riserChild(el, function (k) { var t = getComputedStyle(k).transform; parked = t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)'; });
+    return parked || (m !== 'none' && m !== 'matrix(1, 0, 0, 1, 0, 0)');
   }
 
   var queued = null;
@@ -566,7 +605,7 @@ export function initPageReveal(root, options) {
     // Anything still parked is about to leave the document with the route, so there is nothing to
     // rescue — but kill its tweens so GSAP is not ticking transforms on detached nodes.
     splits.forEach(function (s) { try { g.killTweensOf(s.lines); } catch (e) { } });
-    pending.slice().forEach(function (el) { try { g.killTweensOf(el); } catch (e) { } });
+    pending.slice().forEach(function (el) { try { g.killTweensOf(el); } catch (e) { } riserChild(el, function (k) { g.killTweensOf(k); }); });
     // Put the markup back on anything caught mid-split. The route is usually being replaced wholesale
     // by React, in which case this is a no-op on detached nodes — but a reveal interrupted on a route
     // that STAYS (a resize, a reduced-motion switch) must not leave a legal paragraph in fragments.

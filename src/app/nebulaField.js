@@ -571,17 +571,23 @@ export function createNebulaField(canvas, ramp, options = {}) {
   /* Render scale. Gas has no edges, so a drawing buffer below the CSS grid costs nothing the eye can
      find, and the march is the whole cost of this surface. DPR is deliberately NOT honoured: a 2x
      display would quadruple a per-pixel raymarch to sharpen something with no sharp part in it. */
-  const SCALES = [0.8, 0.62, 0.46];
+  /* `options.scales` swaps the ladder for a caller whose canvas is small enough that the march is
+     cheap at any scale — the processing frame, 380x250, where 0.8 of a CSS pixel makes the gas read
+     soft on a 2x display and full density costs a fraction of one landing frame. */
+  const SCALES = (options.scales && options.scales.length) ? options.scales : [0.8, 0.62, 0.46];
   let scaleIx = 0;
 
   /* How much of the finest octave this buffer can hold. Both terms matter and they are independent:
      the hole's size sets how many pixels a feature lands on, and the render scale sets how many of
      those are real. A machine the governor has stepped down loses the finest detail rather than
      aliasing it, which is the right way round. 210 is the geometric mean of the hole on a laptop —
-     the size everything above was tuned at — so it is 1 there and falls from there. */
+     the size everything above was tuned at — so it is 1 there and falls from there.
+     The scale is measured against the landing's own 0.8 rather than against SCALES[0], which is the
+     same number on the landing and the honest one for a caller with its own ladder: a 2x buffer
+     really does put twice the pixels on every feature. */
   function refreshDetail() {
     const v = uniforms.uInner.value;
-    const d = (Math.sqrt(v.x * v.y) / 210) * (SCALES[scaleIx] / SCALES[0]);
+    const d = (Math.sqrt(v.x * v.y) / 210) * (SCALES[scaleIx] / 0.8);
     uniforms.uDetail.value = Math.min(1, Math.max(0.25, d));
   }
 
@@ -625,9 +631,32 @@ export function createNebulaField(canvas, ramp, options = {}) {
 
   let disposed = false;
   let tuner = null;
+  const timeScale = options.timeScale > 0 ? options.timeScale : 1;
 
   return {
     resize: applySize,
+    /** Links the program without holding the main thread, where the driver can
+        (KHR_parallel_shader_compile). Resolves when the first render will not stall on it. The landing
+        does not use it; the processing frame does, because its field arrives during the very beat
+        the progress bar and the status line are animating. */
+    compile() {
+      /* three's own compileAsync is this loop without the first line of `check`: it reads the
+         material's program every 10ms, and a field destroyed before the link finishes (a lost context,
+         an unmount) has had that entry removed, so the next read throws inside a timer. The poll here
+         ends with the field instead. */
+      if (disposed) return Promise.resolve();
+      try { renderer.compile(scene, camera); } catch (e) { return Promise.resolve(); }
+      const parallel = renderer.extensions.get('KHR_parallel_shader_compile') !== null;
+      return new Promise((resolve) => {
+        const check = () => {
+          if (disposed) { resolve(); return; }
+          let ready = true;
+          try { const prog = renderer.properties.get(material).currentProgram; ready = !prog || prog.isReady(); } catch (e) { }
+          if (ready) resolve(); else setTimeout(check, 10);
+        };
+        if (parallel) check(); else setTimeout(check, 10);
+      });
+    },
     /** The hole's two radii in CSS pixels, and the rim as a multiple of them. Re-solved by the
         caller per viewport; nothing else about the field is per-viewport at all. */
     setGeom(innerX, innerY, outN) {
@@ -725,7 +754,9 @@ export function createNebulaField(canvas, ramp, options = {}) {
     update(delta, rot) {
       if (disposed) return;
       const dt = Math.min(Math.max(delta, 0), 1 / 30);
-      uniforms.uTime.value += dt;
+      // `timeScale` quickens the churn alone. It is not applied to dt, which the governor reads as a
+      // frame time: a scaled dt would read a healthy frame as a slow one and step the buffer down.
+      uniforms.uTime.value += dt * timeScale;
       uniforms.uRot.value = (rot || 0) * Math.PI / 180;
       govern(dt);
       renderer.render(scene, camera);

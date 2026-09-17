@@ -77,8 +77,10 @@ body{display:flex;flex-direction:column}
 /* The two figures are named because .nf's 100vh split reads them: the band above the 404 has to be
    the band the mark actually occupies, and two literals would agree only until someone edited one. */
 :root{
-  --nf-mark-height:26px;
-  --nf-head-pad:18.5px;
+  /* The wordmark tokens (17.09.26, audit C8), so a phone draws the mark at the size every other page
+     does, and the pad keeps its centre on the app bar's line whatever that size is. */
+  --nf-mark-height:var(--logo-h);
+  --nf-head-pad:calc(31.5px - var(--logo-h) / 2);
   --nf-head-height:calc(var(--nf-head-pad) + var(--nf-mark-height));
 }
 /* The motion tokens this sheet uses are NOT redeclared here. It reads as if they should be — this
@@ -103,19 +105,23 @@ body{display:flex;flex-direction:column}
    over nothing, which is a pale grey wordmark in both themes and invisible in one of them. Raising
    the mark itself leaves the root as that ancestor, so what it differences against is the page: the
    surface, and the particles where they pass beneath it. Hit-testing is unaffected — the span is the
-   topmost thing in the band, it fills the anchor exactly, and the click bubbles to the link. */
+   topmost thing in the band, it fills the anchor but for the 4px each side below, and the click
+   bubbles to the link. */
 .nf-head{
   display:flex;justify-content:center;
   padding:var(--nf-head-pad) var(--page-gutter) 0;
 }
-.nf-head a{display:block;line-height:0}
+/* Fully round, so the chrome focus ring around the mark is a stadium like the app bar's (B2), with the
+   app bar's 4px of air each side: the artwork runs to its box's right edge, and the ring met the y.
+   The negative margin takes the padding back out of the layout, so the mark does not move. */
+.nf-head a{display:block;line-height:0;border-radius:var(--radius-pill);padding-inline:4px;margin-inline:-4px}
 .nf-mark{
-  display:block;width:165px;height:var(--nf-mark-height);
+  display:block;width:var(--logo-w);height:var(--nf-mark-height);
   /* The app's gradient, its 280% frame and its 9s drift, verbatim — one wordmark, one motion, on
      whichever page a visitor is looking at. gradient-drift itself is global.css's. */
-  background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);
+  background:var(--mark-gradient);
   background-size:280% 280%;
-  animation:gradient-drift 9s ease-in-out infinite;
+  animation:gradient-drift var(--dur-drift) var(--ease-ambient) infinite;
   mix-blend-mode:difference;
   -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
   mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
@@ -182,7 +188,7 @@ body{display:flex;flex-direction:column}
    empty line box under the glyphs, and on a page that cannot scroll, that space is taken straight out
    of how wide the 404 is allowed to be. Tightening it is what lets the type fill the width at all. */
 .nf-title{
-  font-size:5rem;font-weight:500;line-height:.74;
+  font-size:var(--fs-fit);font-weight:500;line-height:.74;
   letter-spacing:var(--track-statement);
   transition:opacity var(--dur-reveal) var(--ease-standard);
   /* The clip is about the SCROLLBAR, not the look. line-height:.74 is far tighter than the font's
@@ -226,14 +232,10 @@ body{display:flex;flex-direction:column}
 
 /* The landing's Get Started button, restated. It was copied from `glassCta` in renderVals.js, which
    no longer exists: the three hand-copied versions of this control (here, the landing, and /about's
-   closing action) are `.glass-cta` in src/styles/global.css now. THIS FILE IS THE ONE THAT CANNOT
-   SHARE IT — 404.html is a standalone document that never loads global.css — so the copy below stays,
-   and it is now the only one. Two figures below have DRIFTED from the shared rule and are wrong here:
-   the edge is 15% at rest where the shared control uses 36% (WCAG 1.4.11 asks 3:1 of a control's
-   boundary and 15% measures 1.51:1 — this button is invisible as a control until you point at it),
-   and the label is 14px sentence case on --track-title where the shared one is --fs-body uppercase on
-   --track-flat. Fixing them here is a change to the 404's appearance, so it is left for whoever owns
-   that page; this note is the record that it is a divergence rather than a decision.
+   closing action) are `.glass-cta` in src/styles/global.css now. This file keeps its own copy (it
+   loads global.css through src/notfound/main.js, so the tokens resolve, but not the app's markup).
+   The edge was 15% at rest, which measured 1.51:1 and left the button invisible as a control until you
+   pointed at it; it is --action-line since 17.09.26 (see the rule).
 
    The two easing curves are global.css's --ease-button-hover and --ease-standard, written out because
    this page doesn't load that file. If they are ever retuned there, they are wrong here.
@@ -250,8 +252,13 @@ body{display:flex;flex-direction:column}
   display:inline-flex;align-items:center;
   padding:var(--cta-pad);border-radius:var(--radius-pill);
   background:color-mix(in srgb,var(--on-surface) 7%,transparent);
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
+  /* The control edge, --action-line, and not the 15% this carried: 15% measured 1.51:1 against the
+     page, under the 3:1 WCAG 1.4.11 asks of a control's boundary (17.09.26, audit B4). On this button
+     the token measures 3.4:1 in light and 3.6:1 in dark. Hover and press step up on the same tokens,
+     and .about-cta moved to all three with it. Their hover and press FILLS still differ (16/24 here,
+     12/18 there). */
+  border:1px solid var(--action-line);
   color:var(--on-surface);
   font-size:var(--fs-cta);font-weight:500;line-height:1;
   letter-spacing:var(--track-statement);white-space:nowrap;
@@ -264,13 +271,16 @@ body{display:flex;flex-direction:column}
              border-color var(--dur-chrome) var(--ease-button-hover);
   position:relative;z-index:2;
 }
-.nf-cta:hover{
-  background:color-mix(in srgb,var(--on-surface) 16%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 38%,transparent);
+/* Pointer devices only (17.09.26, audit E7): on a touchscreen a tap left this hover latched. */
+@media (hover:hover){
+  .nf-cta:hover{
+    background:color-mix(in srgb,var(--on-surface) 16%,transparent);
+    border-color:var(--action-line-hover);
+  }
 }
 .nf-cta:active{
   background:color-mix(in srgb,var(--on-surface) 24%,transparent);
-  border-color:color-mix(in srgb,var(--on-surface) 48%,transparent);
+  border-color:var(--action-line-press);
 }
 .nf-cta:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 

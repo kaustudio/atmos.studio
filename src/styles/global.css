@@ -5,7 +5,7 @@
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-/* NATIVE CONTROLS ARRIVE ROUNDED, and this system has no radius anywhere.
+/* NATIVE CONTROLS ARRIVE ROUNDED, and on this site a corner is designed, never inherited.
 
    `appearance:auto` is the default on every button and text field, and what that means is engine
    business: Chromium drops the native chrome the moment an author sets a background, so a control
@@ -16,9 +16,11 @@ html,body{margin:0;padding:0}
 
    It has been fixed one control at a time until now — the section dock's own two state it
    themselves, and the figures each restated it for their own buttons — which is why it kept coming
-   back somewhere else. The rule belongs here, once, beside box-sizing: a square corner is
-   the system's, not each component's, and the comp's own note further down this file ("this system
-   has no radius anywhere") is the thing being enforced.
+   back somewhere else. The rule belongs here, once, beside box-sizing: the platform's corner is
+   cleared from every control, and the corners the site does draw are named at the --radius-* block
+   and set by the components that wear them. (The comp said "this system has no radius anywhere";
+   that stopped being true as the controls and surfaces rounded, 15–17.09.26. Comments corrected
+   17.09.26, audit H4.)
 
    SCOPED TO WHAT IS ACTUALLY IN THE DOCUMENT rather than to every control that exists. `appearance:
    none` erases a checkbox and a radio outright and takes the arrow off a select; there are none of
@@ -41,8 +43,7 @@ input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0;font
    in it. Stated once, here, where the appearance reset for the same four selectors already lives.
    The inline declarations are now redundant rather than wrong; removing them is a separate sweep. */
 body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-@keyframes hue{0%{background:#1a1a1a}18%{background:#c87d3c}36%{background:#7d8d91}54%{background:#9a5128}72%{background:#828f92}90%{background:#cdbfd2}100%{background:#1a1a1a}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+/* @keyframes hue and blink, which nothing animated, went on 17.09.26 (audit H3). */
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 /* focus-visible rings — cannot be expressed inline; keyboard-only, high-contrast, distinct from hover */
 :focus{outline:none}
@@ -50,6 +51,12 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-focus="card"]:focus-visible{outline:3px solid var(--on-surface);outline-offset:3px}
 [data-focus="swatch"]:focus-visible{box-shadow:inset 0 0 0 4px #ffffff,inset 0 0 0 8px #1a1a1a}
 [data-focus="value"]:focus-visible{outline:none;box-shadow:inset 0 0 0 3px #ffffff,inset 0 0 0 6px #1a1a1a}
+/* The wordmark button's ring, drawn by its sibling because the button's own mask clips an outline (see
+   LogoRing in AppView). The chrome ring's figures, fully round, on the mark's box plus 4px each side:
+   the artwork runs to its box's right edge, so on the bare box the stadium's curve met the y's tail.
+   It eases in on --dur-fast like the skip link: a keyboard reader is waiting on it. */
+[data-logo-ring]{position:fixed;top:calc(31.5px - var(--logo-h) / 2);left:0;right:0;margin-inline:auto;width:calc(var(--logo-w) + 8px);height:var(--logo-h);z-index:155;pointer-events:none;border-radius:var(--radius-pill);outline:3px solid var(--on-surface);outline-offset:3px;box-shadow:0 0 0 3px var(--surface);opacity:0;transition:opacity var(--dur-fast) var(--ease-standard)}
+button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 /* THE SKIP LINK. Off-screen until it takes focus, first in the tab order on every route.
 
    It is the one thing a keyboard reader had no substitute for here. The tool opens with 81 focusable
@@ -71,7 +78,12 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   padding:10px 16px;
   background:var(--surface);color:var(--on-surface);
   border:1px solid var(--action-line);
-  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-detail);line-height:1;
+  /* A pill, like every other control (17.09.26, audit A7); its focus ring follows the corner. */
+  border-radius:var(--radius-pill);
+  /* Set like the analytics banner's buttons (by request, the same day): --fs-body, Medium, flat
+     tracking, and the label's own Title Case (AppView's SkipLink) rather than capitals. */
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;
+  letter-spacing:var(--track-flat);text-transform:none;line-height:1;
   text-decoration:none;white-space:nowrap;
   transform:translateY(calc(-100% - 24px));
   transition:transform var(--dur-fast) var(--ease-entrance);
@@ -135,26 +147,23 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    Acronyms are unaffected either way: text-transform cannot reach into a string, so "3D", "AA" and
    "CSS" are whatever the source typed. */
 [data-ix]{text-transform:uppercase!important}
+/* THE SEGMENTED CONTROL AND ITS CHIPS KEEP THEIR OWN CASE (17.09.26, audits D1 and G4, by request):
+   List / Grid, All / Unfiled and the project chips, the library panel's tabs, the page sizes, the
+   contrast checker's rails and its Passing Only. Set like the analytics banner's buttons, 13px
+   Medium, from viewToggleOptStyle; this lifts the capitals the voice above gives every control. */
+[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
-/* THE SECTION DOCK IS EXEMPT ON EVERY ROUTE, and the argument is the one the paragraph above
-   already makes, applied to the place it names.
-
-   That note gives the reason /about opts out: its controls "sit inside running prose and a section
-   dock rather than in a toolbar, and the uppercase voice read as shouting in that setting — which is
-   the argument the dock's own group heads settled first". The dock is named there because the dock
-   is where the argument came from. It just never reached the dock on the routes that are not
-   .about-route, so the same component shouted on one surface and spoke on the other.
-
-   It is a table of contents. Its rows are the names of chapters, and a chapter name is a title —
-   `Character, Role and Contrast`, `The Whole Image`, `Where Colours Come From`. Those strings are
-   authored with the capitals they should have, so `none` prints what was typed. NOT `capitalize`,
-   which would force a capital onto every word and give `Character, Role And Contrast`; the
-   conjunction is lowercase on purpose and only the source knows that.
-
-   Scoped to the dock rather than removed from [data-ix], because the contract is right everywhere
-   else: the segmented controls, the actions and the cells are apparatus and go on speaking in caps.
-   This is the one control on the site that is a list of titles. */
-.section-dock [data-ix]{text-transform:none!important}
+/* The anchor dock's own case exemption went with the dock (17.09.26). */
+/* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").
+   The default is the one above: uppercase, Regular, flat, --fs-label. The exceptions, all authored
+   in Title Case:
+     · the page-scale calls to action: the landing's Create and How it Works (.glass-cta), How it
+       Works' Explore Atmos (.about-cta, about.css) and the 404's button (.nf-cta, notfound.css).
+       Medium, --fs-cta, --track-statement: they are set as statements, one per screen.
+     · the floating bar's links: Medium, --fs-detail, flat.
+     · the banner voice: the analytics banner's buttons and every B006 in a [data-voice="banner"]
+       container, the segmented controls and the library's tabs. Medium, --fs-body, flat.
+   A new control takes the default or one of these, rather than a voice of its own. */
 /* THE FILTER DRAWER, ENTIRELY. This began as an exemption for the Character traits head alone, on
    the argument that a heading is a heading and the option rows below it are labels on controls. The
    rows are exempt now too, and the reason is a fault the narrow version left standing.
@@ -191,7 +200,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
    made the one control the panel is steered by read as quieter than the option rows beneath it.
    (0,3,0), naming the dialog and both attributes, so it outranks the drawer-wide rule on
    specificity rather than on order — the same construction as Done above. */
-[data-library-dialog] [data-lib-tab][data-ix]{text-transform:uppercase!important}
+/* The panel's two tabs were put back into caps here, against the panel's sentence case. They speak
+   like the analytics banner's buttons now (17.09.26, audit D1, by request): see the segmented
+   control's rule under the uppercase voice. */
+[data-library-dialog] [data-lib-tab][data-ix]{text-transform:none!important}
 /* A THIRD EXCEPTION FOR CLEAR FILTER STOOD HERE and went out with the control: the panel's copy of
    the clear-all moved back to the applied-filter row outside, where the chips are. The row out there
    is not in the drawer, so it speaks the app's caps without needing an exception at all. */
@@ -269,13 +281,27 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 [data-ix="cta"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important;border-color:color-mix(in srgb,var(--on-surface) 72%,var(--surface))!important}
 [data-ix="seg"][aria-pressed="false"]:active{background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important}
 [data-ix="icon"]:active:not(:disabled){background:color-mix(in srgb,currentColor 28%,transparent)!important}
-/* HIT AREA — a 24px target on a control that must stay smaller than 24px.
-   WCAG 2.5.8 AA asks for 24x24 CSS px. The two toggletip markers are deliberately 16px of ink: any
-   larger and an optional aside starts competing with the heading it hangs off. So the ink stays and
-   the TARGET grows underneath it, centred, which is the exception the rule is written to allow.
-   Both markers sit alone in their corner, so the extended areas cannot overlap a neighbour's. */
-[data-hit="24"]{position:relative}
-[data-hit="24"]::after{content:'';position:absolute;top:50%;left:50%;width:24px;height:24px;transform:translate(-50%,-50%)}
+/* mark — controls that are artwork or display type rather than a box: the wordmark button, the result
+   stage's reference image, the phone chooser's titles (17.09.26, audit E4). The tiers above tint a
+   background these have none of, so this one answers with the element's own alpha, .82 under a
+   pointer and .72 pressed, eased on the contract's timing. Through filter rather than opacity: the
+   wipe and the loader tween the wordmark's opacity, and a transition on that property would drag
+   every frame of theirs. It keeps its own case — the chooser's titles are palette names. */
+[data-ix="mark"]{transition:filter var(--dur-chrome) var(--ease-button-hover);text-transform:none!important}
+@media (hover:hover){
+  [data-ix="mark"]:hover:not(:disabled){filter:opacity(.82)}
+}
+[data-ix="mark"]:active:not(:disabled){filter:opacity(.72)}
+/* THE WORDMARK STANDS DOWN WHILE THE PALETTE DETAIL IS OPEN (17.09.26, audit C4). The detail is a
+   full-screen sheet whose first row is swatch bands, and the fixed mark printed over them. It fades
+   on the same filter channel as its hover, and is hidden from pointer and keyboard once it has gone;
+   the detail's own close is the way out. AppView sets data-detail-open on the tool's root. */
+[data-app][data-detail-open] > button[data-logo]{filter:opacity(0);visibility:hidden;pointer-events:none;transition:filter var(--dur-chrome) var(--ease-standard),visibility 0s linear var(--dur-chrome)}
+@media (prefers-reduced-motion:reduce){
+  [data-ix="mark"],[data-app][data-detail-open] > button[data-logo]{transition:none}
+}
+/* [data-hit="24"], the 24px target under the 16px toggletip markers, went with the last of them
+   (17.09.26, audit H5, by request). A control under 24px needs its own answer to WCAG 2.5.8. */
 /* cell — value rows & harmony cells; tint from own currentColor */
 /* press — text/icon chrome without its own bg: hover/active tint on the shared 16/24 spectrum */
 @media (hover:hover){
@@ -284,20 +310,57 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 }
 [data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
 [data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important}
-/* lift is GSAP-driven on transform — transition only the shadow/border (style-hover) so CSS never fights the tween */
-[data-ix="lift"]{transition:box-shadow var(--dur-fast) var(--ease-standard),border-color var(--dur-fast) var(--ease-standard)}
-/* ===== the three sanctioned specializations (richer motion the declarative rules above can't express) =====
+/* ===== the two sanctioned specializations (richer motion the declarative rules above can't express) =====
    button-006 — the masked text-swap CTA: the label rises through a mask on hover (own CSS block below).
    rich-tint  — feed rows, universe cards, export items: JS brightness tint for continuous motion.
-   lift       — the hero dropzone only: GSAP-tweened rise + shadow + ring, interruptible. */
+   (A third, lift, was the hero dropzone's GSAP rise; nothing wore it, and its rule went on 17.09.26,
+   audit H3.) */
 /* rich-tint family (feed rows, universe cards, export items) keep the JS tint for motion; unify the active press */
 [data-row],[data-ex-item]{transition:filter var(--dur-micro) var(--ease-standard)}
+/* Add to Projects' rows are export rows that can also be selected (17.09.26, audit E3): the selected
+   edge eases on the state timing beside the press, and the label's swap keeps the row's ellipsis. */
+[data-ex-item][data-assign-row]{transition:filter var(--dur-micro) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
+[data-assign-row] .tswap{max-width:100%}
+[data-assign-row] .tswap__a,[data-assign-row] .tswap__b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* AN OPEN GRID CARD AND ITS PANEL ARE ONE OBJECT (17.09.26, with the card corner): the panel slides out
+   flush against the card, so the two corners where they meet are square and the pair keeps its outer
+   corners. Landscape opens to the right, portrait downward (universe.js openTile sets the attribute).
+   !important because the corners are inline (renderVals cardBox and friends). */
+[data-universe-open="landscape"],
+[data-universe-open="landscape"] [data-tile-hero],
+[data-universe-open="landscape"] [data-tile-dim],
+[data-universe-open="landscape"] [data-ring]{border-top-right-radius:0!important;border-bottom-right-radius:0!important}
+[data-universe-open="landscape"] [data-tile-panel]{border-top-left-radius:0!important;border-bottom-left-radius:0!important}
+[data-universe-open="portrait"],
+[data-universe-open="portrait"] [data-tile-hero],
+[data-universe-open="portrait"] [data-tile-dim],
+[data-universe-open="portrait"] [data-ring]{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}
+[data-universe-open="portrait"] [data-tile-panel]{border-top-left-radius:0!important;border-top-right-radius:0!important}
+/* The open card's content rides the panel's whole box (universe.js render) and takes its outer
+   corners, so the strip at its head is clipped to the round corner instead of covering it. */
+[data-universe-panel]{border-radius:var(--radius-card)}
+[data-universe-panel][data-upanel-side="landscape"]{border-top-left-radius:0;border-bottom-left-radius:0}
+[data-universe-panel][data-upanel-side="portrait"]{border-top-left-radius:0;border-top-right-radius:0}
+/* MANAGE LIBRARY'S FILTER ROWS ARE THOSE ROWS (17.09.26, audit Q4, by request: "round like Add to
+   Projects"). The plate is a layer of its own (AppView SEC_PLATE), there from the panel's first
+   frame (by request: the pill is established and only its contents arrive), with its fill, edge and
+   hover written here: raised at rest, white under the pointer or the keyboard, the edge in ink while
+   the filter is on. A row nothing can
+   narrow (aria-disabled) keeps the plate and answers nothing. The row's content is lifted above the
+   plate, which is positioned and would otherwise paint over it. */
+[data-row-plate]{background:var(--surface-raised);border:1px solid var(--line);transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
+[data-sec-row]>:not([data-row-plate]){position:relative}
+[data-sec-row][aria-pressed="true"]>[data-row-plate]{border-color:var(--on-surface)}
+@media (hover:hover){
+  [data-sec-row]:not([aria-disabled]):hover>[data-row-plate]{background:var(--surface-white)}
+}
+[data-sec-row]:not([aria-disabled]):focus-visible>[data-row-plate]{background:var(--surface-white)}
 [data-row]:active:not(:disabled),[data-feed]:active,[data-ex-item]:active{filter:brightness(.97)}
 @media (prefers-reduced-motion: reduce){
   [data-ix]{transition:none}
   /* The press-geometry override that sat here is gone with the geometry itself: nothing on these
      tiers moves under any preference now, so there is nothing left to neutralise. */
-  [data-row],[data-ex-item]{transition:none}
+  [data-row],[data-ex-item],[data-ex-item][data-assign-row],[data-done-mark],[data-row-plate]{transition:none!important}
   [data-row]:active,[data-feed]:active,[data-ex-item]:active{filter:none}
 }
 
@@ -319,6 +382,10 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   /* the utility-overlay curve — an expo-out with a longer tail than --ease-entrance. Mirrors
      EASE.overlay in methods/motion.js, which documents why it runs in BOTH directions. */
   --ease-overlay:cubic-bezier(0.19,1,0.22,1);
+  /* The extraction bar's curve (EASE.progress; GSAP's power2.out), and the in-out the two ambient
+     loops breathe on, which they wrote as the keyword ease-in-out and ease (17.09.26, audit F3). */
+  --ease-progress:cubic-bezier(0.33,1,0.68,1);
+  --ease-ambient:cubic-bezier(0.42,0,0.58,1);
   /* --ease-overlay runs the WHOLE overlay system — arrival and dismissal, panel and contents.
      Three specialised curves lived here for a day (--ease-overlay-fade-in, a power4 fit for
      arriving fades; --ease-overlay-fade-out, a sine-out for departing ones; --ease-overlay-exit, a
@@ -363,7 +430,19 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
   --dur-fold:.5s;           /* the travelling selection marker — pairs with --ease-fold */
   --dur-reveal:.62s;        /* the app's arrival — bands, masked lines, list cascade */
   --dur-overlay:.8s;        /* utility overlays in */
-  --dur-overlay-out:1s;     /* utility overlays out — longer, per the house rule */
+  /* .62s, the length every exit actually runs (DUR.overlayOut). This said 1s, "longer, per the house
+     rule", while the code ran shorter and nothing read the token (17.09.26, audit F2): a dismissal has
+     already been decided, so nothing waits on it. */
+  --dur-overlay-out:.62s;   /* utility overlays out */
+  --dur-overlay-item:.05s;  /* beat between items inside an overlay (DUR.overlayItem) */
+  --dur-overlay-block:.08s; /* beat between blocks inside an overlay (DUR.overlayBlock) */
+  --dur-overlay-arrive:1s;  /* an overlay's contents arriving (DUR.overlayArrive) */
+  --dur-line:.09s;          /* beat between masked lines (DUR.line) */
+  /* THE SIGNATURE LOOPS AND RUNS, named rather than written in place (17.09.26, audit F3): the
+     extraction bar's fill, the wordmark's gradient drift and the processing dot's pulse. */
+  --dur-extract:7.5s;
+  --dur-drift:9s;
+  --dur-pulse:1.5s;
   --dur-stagger:.05s;       /* beat between siblings in a reveal */
   --dur-overlay-step:.04s;  /* beat between sections inside an overlay */
   /* There is no --press-scale. A press changes the control's colour, never its geometry — see the
@@ -392,6 +471,17 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
 
      Steps are named for the JOB, not the size, so the name survives the number changing. */
   --fs-display:2.75rem;       /* 44 — the palette's name, once per screen */
+  /* THE DISPLAY RUNG, FLUID: the headings of the pages that are not the tool, which set their sizes
+     in place (17.09.26, audit G1, by request). Named with the values they already had, so nothing on
+     screen moved; a new page takes one of these rather than a clamp of its own. */
+  --fs-hero:clamp(34px, calc(6.28vw - 4px), 86px);   /* How it Works: the hero statement, the gallery count */
+  --fs-chapter:clamp(28px, 4.2vw, 58px);             /* How it Works: the stack titles, the closing line */
+  --fs-section:clamp(22px, 2.6vw, 34px);             /* How it Works: figure readouts; the phone story's h2 */
+  --fs-doc-title:clamp(38px, 5.2vw, 58px);           /* Privacy, Terms: the title */
+  --fs-doc-heading:clamp(23px, 2.5vw, 28px);         /* Privacy, Terms: section headings */
+  --fs-story-hero:clamp(24px, 7vw, 44px);            /* the phone story's opening line */
+  --fs-landing:clamp(28px, 4.4vw, 40px);             /* the landing statement, the loader's count */
+  --fs-fit:5rem;                                     /* the 404: where the fit script starts */
   --fs-statement:2rem;        /* 32 — landing statement, the name on a phone */
   --fs-title:1.5rem;          /* 24 — section headings: Library, empty states */
   --fs-subtitle:1.25rem;      /* 20 — dialog and panel titles */
@@ -436,7 +526,7 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      Black in light, white in dark, at a tenth. */
   --img-outline:rgb(0 0 0 / .10);
   /* 8 — THREE DECORATIVE GLYPHS, AND ONE CHIP THAT ASKED FOR IT. The glyphs are the AA badge's ✕,
-     the facet disclosure's ▸ and the contrast matrix's ✓/✕: all aria-hidden, each redundant beside
+     the facet disclosure's ▸ (gone) and the contrast matrix's ✓/✕ (gone, 17.09.26): all aria-hidden, each redundant beside
      a number or label that says the same thing, which is what lets them be this small.
      The EXAMPLE chip is the exception and is recorded rather than folded in. It is an informative
      label — it marks a palette as seeded rather than yours — so AG-03's floor puts it at 11 and it
@@ -463,76 +553,95 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      they are absolutely positioned, so matching the chips beside them costs no row height. */
   --btn-pad-chip:4px 8px;
   /* ===== RADIUS — THE EXCEPTIONS, NAMED =========================================================
-     The rule at the top of this file says this system has no radius anywhere, and enforces
-     border-radius:0 on every control so a browser's own rounded push-button cannot leak in. That
-     rule stands: a square corner is still the default and still the system's.
+     The rule at the top of this file sets border-radius:0 on every native control so a browser's
+     own rounded push-button cannot leak in. That rule stands as the default; every corner the site
+     draws on purpose is DESIGNED rather than inherited, and is named here so the set is countable:
+       --radius-pill      every control, the floating bar, the toast, the notice, the banner's
+                          strips and the filter rows
+       --radius-dock      /about's feature pills
+       --radius-surface   dialogs, drawers, the analytics banner, Start here and the error panel
+                          (both 420px tall), and How it Works' photo cards, desktop and phone
+       --radius-window    the page transition's opening slot
+       --radius-tick      the filter rows' tick boxes
+       --radius-card      How it Works' colour cards (the role tiles), the grid view's cards, and
+                          the two short dashed panels, Nothing here yet and No palette matches
+       --radius-swatch    colour samples in the contrast checker and on the photo cards' strips
+     Photographs outside a card, the palette's bands and the tables stay square: they are samples,
+     not objects. A new corner joins this list rather than writing a figure of its own. (Corrected
+     17.09.26, audit H4.)
 
-     What changed is that there are now two places where a radius is DESIGNED rather than inherited,
-     and the note at .glass-cta said the moment a second one appeared was the moment it stopped being
-     a one-off and needed a token. This is that moment. Stated here, once, so the set is countable —
-     if a third ever appears it joins this list rather than writing a figure of its own.
+     A CORNER IS SIZED FOR ITS BOX (17.09.26, by request). 28px is Start here's corner, sized for
+     its 420px height; the error panel stands in its place at the same size, and How it Works'
+     photo cards are 374px wide. On Nothing here yet (162px tall) the same figure read too strong.
+     A box takes the corner for its own size, not the corner of the box it sits next to.
 
      --radius-pill is a stadium: a control sized by its own label, whose corner is therefore half of
      whatever height it happens to be. 999px rather than a real figure because the shape is "fully
      round" rather than a measurement, so it stays right if the control is ever taller.
 
-     --radius-dock is stated as a LENGTH precisely because that trick fails on a box that MORPHS. The
-     anchor dock is 36px shut and 263px open on /about; --radius-pill would be a true stadium at the
-     first and a 132px lozenge at the second.
-
-     20px, AND IT IS SOLVED FROM THE ROW RATHER THAN CHOSEN. This went 18 → 24 to open the panel's
-     corner up, and 24 was wrong for a reason a screenshot shows faster than a number: the padding
-     around the corner stopped being the padding down the sides. Two rounded boxes only hold an even
-     gap between them when the inner corner is the outer corner less that gap, and the inner corner
-     here is not free — the rows are stadiums, so the top row's corner IS half its own height. A
-     group head is 28px, so it curves at 14 whatever it is asked for, and the container has to answer
-     that: 14 + the 6px the list is inset by = 20. At 24 the container curved away from a row that
-     could not follow it and the gap opened up on the diagonal.
-
-     SHUT, NONE OF THIS IS VISIBLE. The collapsed pill is 36px and clamps to a stadium at anything
-     from 18 up, so it looked identical at 18, at 24 and at 20; every pixel of all of this is in the
-     panel it opens into. Re-solve it if the group head's height changes — that figure, not this one,
-     is what decides it.
-
-     THE TWO SURFACES THAT DRAW THIS DOCK DO NOT AGREE ON THAT ROW, and the figure survives it by
-     accident rather than by design, so it is written down: /about's collapsed pill is 36px and the
-     front page's mobile story is 32px. On the second, 18 is MORE than half the height, and CSS
-     scales overlapping corner radii down proportionally rather than overflowing — so it renders at
-     an effective 16px and is still exactly a stadium. Both surfaces read as a pill shut; only
-     /about's is literally 18. If the dock ever grows a third host, check its collapsed height rather
-     than assuming this figure travels. */
+     --radius-dock is stated as a LENGTH precisely because that trick fails on a box that MORPHS: a
+     pill that opens into a panel would turn into a lozenge. 20px was solved for /about's anchor dock
+     rather than chosen (a 28px row's 14px curve plus the 6px it was inset by, so the gap around the
+     corner matched the gap down the sides). The dock is gone (17.09.26); the figure stays with How
+     it Works' feature pills, the other box that morphs, and should be re-solved from their rows if
+     it is ever retuned. */
   --radius-pill:999px;
+  /* Also the corner of /about's feature pills since 17.09.26: the other box on the site that morphs
+     from a pill into a panel, so the same reasoning holds. */
   --radius-dock:20px;
-  /* --radius-surface is the THIRD designed radius, and it joins the list the way the note above asks:
-     the corner a large rectangular surface takes (15.09.26, by request). 18px, worn by the dialogs
+  /* ONE SHADOW FOR A SOLID SURFACE THAT FLOATS (17.09.26, audit D2, by request): the five dialogs'
+     own, which the library panel, both drawers, the toast and the notice now share, where there were
+     five. Glass takes none (the analytics banner; How it Works' dock, before it was removed) because a
+     pane you can see through reads from its fill, and a shadow under it is a smudge seen through the
+     glass. */
+  --shadow-surface:0 24px 60px rgba(0,0,0,.28);
+  /* ONE BLUR FOR GLASS (17.09.26, audit D3): the masthead's pane, the banner, the theme switch, the
+     landing's buttons, button-006 and the two pages' calls to action, which took 12px, .75em and 18px
+     between them. 12 is the masthead's, the glass most of the site is looking through. */
+  --glass-blur:12px;
+  /* CHROME'S OWN COLOURS, named (17.09.26, audit H2). The wordmark's drifting greys (the app's mark and
+     the 404's); the zoomed image's backdrop, which is black in both themes and is read by misc.js as
+     well as written in AppView, so it is rgba() for GSAP to parse; the loader's ink on --ground; and
+     the white ink laid over photographs in the phone's chooser. */
+  --mark-gradient:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);
+  --lightbox-scrim:rgba(0,0,0,.9);
+  --ground-ink:#ffffff;
+  --on-photo:#ffffff;
+  /* --radius-surface joins the list the way the note above asks: the corner a large rectangular
+     surface takes (15.09.26, by request). 18px at first, worn by the dialogs
      (their frames in AppView): Copy and Export first, then Add to Projects, Restore from a File and
      the already-extracted notice (16.09.26, by request). It is a length for the reason --radius-dock is one: the
      figure is chosen, not "fully round". The floating top bar wore it too, after 24, 12 and 16 in the
      same sitting, until it was asked to be fully round like the controls inside it (--radius-pill),
-     and the dropzone wore it until it was asked for 12 (below). */
-  --radius-surface:18px;
-  /* --radius-dropzone is the FOURTH, the tool's dropzone alone, 28px (15.09.26, by request): "Start
-     here" left the surfaces' 18 for 12, then went to 28, while the dialogs kept 18, so the two
-     corners are two tokens. 28 is the curve the top bar's ends make at their 56px height, so the
-     dropzone's corners bend like the bar above it. A length, for the same reason as the two above. */
-  --radius-dropzone:28px;
-  /* --radius-dock-row is the dock's INNER corner: the travelling active marker and the hover tint on
-     each row, and it says FULLY ROUND rather than naming a length. It was 12, then 18, both of them
-     --radius-dock minus the inset — and both were really asking for a stadium and getting one by
-     accident, because a row is shorter than twice either figure and CSS clamps. Saying
-     --radius-pill states the intent instead of a number that happens to exceed the ceiling: these
-     rows are pills, at 14 on a 28px group head and 16.5 on a 33px link, and they stay pills if a row
-     ever changes height. It is --radius-dock that is now derived from THEM, not the other way
-     round — see that token. Two rounded boxes sharing a centre only look like one object
-     if the inner corner is the outer corner less the gap between them; equal radii read as the inner
-     box bulging, and a square inner box inside a round outer one reads as the two being unrelated,
-     which is what these rows did.
-
-     Collapsed, the toggle fills the pill and needs nothing: it is clipped by the pill's own overflow.
-     It is only open that the rows sit 6px in from that clip and have to state their own corner. */
-  --radius-dock-row:var(--radius-pill);
+     and the dropzone wore it until it was asked for 12 (below).
+     28px SINCE 17.09.26 (by request): every modal takes the corner the floating bar and the create
+     container share, the bar's 56px stadium turning on 28 and the dropzone set at 28. The drawers'
+     free corners and the analytics banner read the token too, so they follow. */
+  --radius-surface:28px;
+  /* --radius-dropzone, the create container's own 28px, was merged into --radius-surface on 17.09.26
+     (radius issue R7, by request): the same corner written twice could only drift. */
+  /* --radius-window: the page transition's opening slot, 3em, which wipe.js reads (17.09.26, audit H7).
+     It was written into the script; it is named here with the other designed corners. */
+  --radius-window:3em;
+  /* --radius-tick: the tick boxes in Manage Library's filter rows, a small corner rather than a
+     circle, which would read as a single choice (17.09.26, audit Q4). */
+  --radius-tick:3px;
+  /* --radius-card: How it Works' colour cards, the role tiles in 3.1 and the phone story (17.09.26,
+     radius issue R5, by request). 28px was "too intense" on a tile this size; 12 keeps a round that
+     reads without competing with the swatch, which takes the same corner less its 8px inset.
+     Also the grid view's cards (300x344, radius issue R3, approved at 12), and Nothing here yet and
+     No palette matches (162 and 166px tall), where 28 read too strong (17.09.26, by request).
+     How it Works' photo cards tried 12 and it was "too subtle" at 374x499: they take
+     --radius-surface. */
+  --radius-card:12px;
+  /* --radius-swatch: a colour sample's corner, 3px (17.09.26, by request): the contrast checker's
+     chips, its text-on-colour rows and its sample, and the swatch strips on How it Works' photo
+     cards. Samples were square; this keeps them reading as samples with the corner the user asked
+     for. */
+  --radius-swatch:3px;
+  /* --radius-dock-row, the anchor dock's inner corner, went with the dock (17.09.26). */
   /* A third family takes no padding token at all: SQUARE icon buttons, sized by width/height and
-     flex-centred, at 16 (a toggletip's "i"), 26 (an inline close) and 30 (a row action). Padding on
+     flex-centred, at 26 (an inline close) and 32 (a row action). Padding on
      those is meaningless — but it must still be written, because a <button> with none inherits the
      UA's 1px 6px, and a control whose geometry comes half from the design and half from the browser
      is the kind of thing that looks fine until a browser changes its mind. */
@@ -627,8 +736,9 @@ body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;
      8px so the two agreed with each other and with nothing else. Values and headers now end on the
      column line. The token survives for the tint, which still wants 8 out and 8 back around a label. */
   --row-cell-inset:8px;
-  /* The two row buttons: 30 + 6 + 30, the pair and the space between them, nothing added. */
-  --row-action-col:66px;
+  /* The two row buttons: 32 + 6 + 32, the pair and the space between them, nothing added (32 since
+     17.09.26, audit C11: the size every other icon-only button takes). */
+  --row-action-col:70px;
   /* The space the buttons need: the pair plus one grid gap. It is the distance the STAMP travels on
      hover, and nothing else in the row moves by it — that is the whole design. Opening the row's
      padding did make room, but it took it out of the identity track, so every metric column slid
@@ -1221,7 +1331,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-landing] .glass-cta,
 .story-hero__act .glass-cta{
   background-color:color-mix(in srgb, var(--surface) 70%, transparent);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
   /* THE RIM STILL TAKES THE FIELD'S COLOUR, by request: orbit.js writes --cta-reflect here, grown out
      of this same hairline, which is also what shows wherever there is no gas to reflect. */
   border-color:var(--cta-reflect, color-mix(in srgb, var(--on-surface) 12%, transparent));
@@ -1359,7 +1469,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      showed; Firefox implements only the standard property, so both of these controls shipped
      with no blur at all there — glass with nothing behind it, which is a flat tint. Verified
      by grepping dist/assets/global-*.css, not by reading the source. */
-  -webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
   -webkit-tap-highlight-color:transparent;isolation:isolate;
 }
 /* NO PRESS GEOMETRY, here or anywhere (08.26). This carried scale:0.955 0.925 on :active — a
@@ -1426,7 +1536,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   position:relative;display:block;flex:none;width:32px;height:18px;
   border-radius:var(--radius-pill);
   background-color:color-mix(in srgb, var(--surface) 70%, transparent);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
   border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
   transition:background-color var(--dur-chrome) var(--ease-standard),border-color var(--dur-chrome) var(--ease-standard);
 }
@@ -1622,7 +1732,8 @@ button[data-row-cell] .tswap{flex:none}
 [data-aa-badge]{border-radius:var(--radius-pill)}
 
 /* THE TWO ROW ACTIONS ARE CIRCLES. Both the folder and the bin carry data-del, so one selector
-   reaches the pair; they are square 30x30, so --radius-pill clamps to 15 and they come out round
+   reaches the pair; they are square 32x32 (30 until 17.09.26, audit C11), so --radius-pill clamps
+   to 16 and they come out round
    rather than stadium-shaped. That is the correct result for an icon-only control — a stadium on a
    square box is a circle, and these are the only round things in the row because they are the only
    ones with no label to give them a length.
@@ -1639,7 +1750,7 @@ button[data-row-cell] .tswap{flex:none}
    A TRANSPARENT BORDER PLUS padding-box, rather than padding: these buttons take their inline style
    from renderVals.js (projStepStyle), which sets padding:0 and border:0, and that file is holding
    another branch's work. box-sizing is border-box globally, so the 2px costs no layout — the button
-   stays 30x31 and only the painted area shrinks. The 12px chevron has 26x27 to sit in.
+   stays 32x33 and only the painted area shrinks. The 12px chevron has 28x29 to sit in.
 
    THE WHOLE TIER IS RESTATED rather than just the clip, and that is not belt-and-braces: the tier
    paints with the `background` SHORTHAND, and a shorthand resets background-clip to border-box.
@@ -1739,7 +1850,7 @@ button[data-row-cell] .tswap{flex:none}
      too: a new close mark built the same way is covered the moment it is written. /about's feature
      pills carry the same mark and the same rule in about.css.
 
-     icon (the slider chevrons and the two toggletip marks): fill kept, tier-wide. These are the
+     icon (the slider chevrons): fill kept, tier-wide. These are the
      standalone marks — no word anywhere in them — so the 16%/28% tint on line 264 stands as their
      only hover, which is what it was written to be.
 
@@ -2078,7 +2189,17 @@ a.button-006{text-decoration:none;}
    correctly on opacity/transform while their hover and press tint cut between two frames. Same
    trap as an inline transition, arrived at through the cascade instead. */
 [data-del]{color:var(--on-surface);opacity:0;pointer-events:none;top:calc(var(--row-list-height) / 2);transform:translate(10px,-50%);transition:opacity var(--dur-fast) var(--ease-standard),transform var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover)}
-/* click-to-zoom lightbox (squared — no radius on trigger or clone) */
+/* THE LIGHTBOX'S CLOSE MARK, on a backdrop that is black in both themes (17.09.26, audit B5). It is the
+   app's close mark (misc.js builds the same swap and glyph), so the close-mark rule takes its fill away
+   where the swap runs. What that rule cannot fix is the press tier's own border, which is the page's
+   ink and vanished on the black: here the edge and the glyph are the CTA's white, strengthening on
+   hover and press, and the fill that returns on touch and under reduced motion is white too. */
+[data-click-zoom-lightbox] [data-ix="press"]{color:var(--cta-ink);border-color:color-mix(in srgb,var(--cta-ink) 45%,transparent)}
+@media (hover:hover){
+  [data-click-zoom-lightbox] [data-ix="press"]:hover:not(:disabled){border-color:color-mix(in srgb,var(--cta-ink) 72%,transparent)!important;background:color-mix(in srgb,var(--cta-ink) 16%,transparent)!important}
+}
+[data-click-zoom-lightbox] [data-ix="press"]:active:not(:disabled){border-color:var(--cta-ink)!important;background:color-mix(in srgb,var(--cta-ink) 24%,transparent)!important}
+/* click-to-zoom lightbox (square, as every photograph is — no radius on trigger or clone) */
 [data-click-zoom] img,img[data-click-zoom]{cursor:zoom-in}
 [data-click-zoom-lightbox]>img{display:block;max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
 /* THE STAMP STEPS ASIDE. One column moves, and only ever this one: the timestamp slides exactly one
@@ -2150,7 +2271,11 @@ a.button-006{text-decoration:none;}
 @media (hover:hover){
   [data-row-wrap][data-lit] [data-del][data-ix="press"]:hover:not(:disabled){background:color-mix(in srgb,var(--surface) 16%,transparent)!important}
 }
-[data-info]{opacity:1;transition:opacity var(--dur-fast) var(--ease-standard)}
+/* The contract's properties restated beside this rule's own (17.09.26): [data-info] and [data-ix] are
+   both (0,1,0) and this one comes later, so a bare `transition:opacity` REPLACED the contract and the
+   harmony button's hover tint and focus ring cut between two frames. The same trap, and the same
+   answer, as [data-del] above. */
+[data-info]{opacity:1;transition:opacity var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard)}
 /* Touch/coarse-pointer: no hover, so the hover-revealed affordances (delete, folder, info/harmony)
    are always visible & tappable — and with the buttons permanently on screen the stamp has to stand
    permanently aside, or they would sit on top of it. Same offset, held rather than animated: this is
@@ -2173,13 +2298,13 @@ a.button-006{text-decoration:none;}
    display:none over a mounted tool was always the weaker guarantee: it measures, it animates, it
    holds a WebGL context and it takes taps, all where nobody can see it.
 
-   Two exceptions are read-only palette surfaces. data-mobile-share is a shared link opened on a
+   One exception is a read-only palette surface. data-mobile-share is a shared link opened on a
    phone, which shows the palette instead of the gate (see MobileShareView): the gate still stands
    for the TOOL — that path never renders this surface — but somebody else's finished palette needs
    no room to work in, and gating it would end the sharing chain at its first hop.
-   data-mobile-list is the example chooser above it, and it is here because it was NOT and the
-   failure was silent in the worst way: the surface mounted, measured, animated and took taps, while
-   this rule painted display:none over it. Everything a console could tell you said it was fine.
+   data-mobile-list, the phone's example list, stood here too until it was removed (17.09.26, audit
+   C5). It was added because it had been missed, and the failure was silent in the worst way: the
+   surface mounted, measured, animated and took taps, while this rule painted display:none over it.
    Any future phone surface has to be named here too — that is the cost of an allow-list, and it is
    the right cost, because the alternative is the tool leaking onto a screen that cannot run it.
 
@@ -2237,16 +2362,16 @@ a.button-006{text-decoration:none;}
          unreachable, which is the worst of the three states.
        · .site-foot — the phone story is the homepage on a phone, and it was the one surface on the
          site with no link to About, Privacy or Terms. Measured: zero of all three.
-       · [data-mark-scrim] — the --surface ground the wordmark differences against on the surfaces
-         that scroll a photograph under it (see MarkScrim in AppView). It is chrome for the mark,
-         which is itself exempt one line up, so painting it out left the mark exempt and its ground
-         gone. It failed silently in the way this note keeps warning about: the element rendered,
-         resolved its gradient, and measured 0px tall.
+       · [data-mark-scrim] stood here as well, the ground under the fixed wordmark on the phone's
+         example view and shared view. Both wear the documents' masthead now (17.09.26, audit C5)
+         and the scrim is gone. Painted out, it had rendered, resolved its gradient and measured
+         0px tall: the silent failure this note keeps warning about.
        · .doc-head — the floating bar the phone's front page wears since 15.09.26 (DocHead's
-         `floating`, in place of the lone wordmark). Painted out here it rendered, ran its hide on
-         scroll, and measured 0x0: the same silent failure, a third time.
+         `floating`, in place of the lone wordmark), and a shared link's view since 17.09.26.
+         Painted out here it rendered, ran its hide on scroll, and measured 0x0: the same silent
+         failure, a third time.
      None of these is a piece of the tool, so none of them is what this rule is defending. */
-  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-list]):not([data-mobile-story]):not([data-load-wrap]):not([data-mark-scrim]):not(.skip-link):not(.site-foot):not(.doc-head){display:none!important}
+  [data-app]:not(.doc-route)>*:not([data-desk-gate]):not([data-logo]):not([data-mobile-share]):not([data-mobile-story]):not([data-load-wrap]):not(.skip-link):not(.site-foot):not(.doc-head){display:none!important}
   /* AND BEING ON THE ALLOW-LIST IS ONLY HALF OF BEING VISIBLE. The rule above stops the footer
      being painted out; it does not put it anywhere a reader can see it, and for a while it was not.
 
@@ -2352,6 +2477,13 @@ a.button-006{text-decoration:none;}
   :root{ --cta-pad:10px 16px }
 }
 
+/* THE NARROW PHONE'S WORDMARK (17.09.26, audit C8): 126×20, the size the documents' masthead stepped
+   down to on its own below 560px (doc.css), which the fixed mark and the 404's never did. Every
+   wordmark reads these two tokens now, so a phone draws one size of it. */
+@media screen and (max-width:560px){
+  :root{ --logo-w:126px; --logo-h:20px }
+}
+
 /* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
    at its designed weight, not thickened by subpixel rendering. Scoped to the dark theme and the
    always-dark surface (the loader), NOT the light theme — antialiased thins dark-on-light
@@ -2398,12 +2530,8 @@ html.lenis,html.lenis body{height:auto}
 html[data-landing-cover]{overflow:hidden}
 html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent],.site-foot){visibility:hidden}
 
-/* ===== DISCLOSURE CHEVRONS ====================================================================
-   Chevrons turn rather than swap. Not GSAP: this is a two-state rotation with no sequencing and no
-   measurement, which is exactly what a transition is for — on the system's own easing token.
-   Worn by the character-traits fold, the facet list's More and the harmony method fold. */
-[data-disc-chev]{ display:inline-block; transition:transform var(--dur-chrome) var(--ease-standard); }
-[data-disc-chev][data-open="1"]{ transform:rotate(90deg); }
+/* [data-disc-chev], the turning disclosure chevron, went on 17.09.26 (audit H3): its last wearer was
+   the unreachable traits list's Show All. */
 /* ===== GLASS EFFECT (Osmo Supply — Glass Effect / Background) ==================================
    Ported verbatim. Every declaration below .glass-bar is the resource's own: the same seven layers,
    the same em-based box-shadows, the same blend modes and the same order. Nothing is retuned to
@@ -2499,9 +2627,9 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    bar that renders somebody's swatches more vivid than they are is not decoration, it is a wrong
    reading of the one value the app exists to report.
 
-   No radius, on purpose and by system: .glass-effect takes border-radius:inherit and every surface
-   on this site is square, so the reference's own .rounded (4px) is the one property of it that does
-   not come across.
+   No radius of its own: .glass-effect takes border-radius:inherit, so each pane wears its host's
+   designed corner (the bar's and the buttons' pill, the banner's surface corner), and the
+   reference's own .rounded (4px) is the one property of it that does not come across.
 
    THE FIVE PARKED LAYERS still render — they are transparent, not removed. The markup is the
    resource's and stays intact (GlassEffect in chrome.jsx, restated in scripts/prerender.mjs), so
@@ -2517,8 +2645,8 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   --glass-clamp: transparent;
   --glass-clamp-blend: normal;
 
-  -webkit-backdrop-filter: blur(.75em);
-  backdrop-filter: blur(.75em);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
   pointer-events: none;
   isolation: isolate;
   color: var(--glass-burn);
@@ -2625,16 +2753,16 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
      page's own surface at 70% over a .75em blur — so nothing opaque is painted here, or the blur
      would sit under a fill nobody could see through. The edge is the pane's hairline, the ink mixed
      at 12%, for the reason .glass-bar gives: an opaque --line-strong around a see-through pane is the
-     heaviest thing on it. The corner passes to the pane through its border-radius:inherit. The
-     shadow stays: this pane floats over the page rather than closing off its top.
+     heaviest thing on it. The corner passes to the pane through its border-radius:inherit, and it
+     is the surfaces' 18px (it was the dock's 20). NO SHADOW since 17.09.26 (audit D2): it is glass,
+     and glass reads from its fill; the one surface shadow is for the solid ones.
      --consent-glass SCALES ALL FOUR, 1 at rest and unset outside a transition. It is how the banner
      arrives and leaves without an opacity of its own, which would switch the blur off mid-fade — see
      _consentTurn in methods/consent.js. */
   background:transparent;
   color:var(--on-surface);
   border:1px solid color-mix(in srgb, var(--on-surface) calc(12% * var(--consent-glass, 1)), transparent);
-  border-radius:var(--radius-dock);
-  box-shadow:0 14px 36px rgba(0,0,0,calc(.24 * var(--consent-glass, 1)));
+  border-radius:var(--radius-surface);
 }
 /* The pane's blur and tint, restated against the same number. -webkit- first, standard last — the
    order the build keeps; see .button-006. */
@@ -2647,8 +2775,8 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
 .glass-chip__label{position:relative;z-index:1;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;line-height:1}
 .consent > .glass-effect{
   --glass-tint:color-mix(in srgb, var(--surface) calc(70% * var(--consent-glass, 1)), transparent);
-  -webkit-backdrop-filter:blur(calc(.75em * var(--consent-glass, 1)));
-  backdrop-filter:blur(calc(.75em * var(--consent-glass, 1)));
+  -webkit-backdrop-filter:blur(calc(var(--glass-blur) * var(--consent-glass, 1)));
+  backdrop-filter:blur(calc(var(--glass-blur) * var(--consent-glass, 1)));
 }
 /* For the length of a transition only: the fill's theme crossfade and the close's interaction
    contract would each ease towards a value GSAP has already moved on from. */
@@ -2678,7 +2806,11 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    button-006 already states inline. The SIZE is theirs: --fs-body, 13px, set inline by ConsentBanner
    (two pixels up from --fs-label, by a later request the same day). (0,3,0) outranks both the untiered
    uppercase on .button-006 and the emphasis tiers' weight. */
-.consent .button-006[data-emphasis]{text-transform:none;font-weight:500}
+/* THE BANNER'S VOICE, WHEREVER IT IS ASKED FOR (17.09.26, by request): the create page's error panel
+   (audit A2), the library's "No palette matches" (A3) and the shared-link strip (A8). Each sets
+   CONSENT_BTN_TYPE inline and carries data-voice="banner"; this rule gives the weight and the case. */
+.consent .button-006[data-emphasis],
+[data-voice="banner"] .button-006[data-emphasis]{text-transform:none;font-weight:500}
 /* Reopened, the close sits in the top corner, 12px in, level with the sentence's first line — which
    gives up the width the disc needs so the two never touch. */
 .consent__close{position:absolute;top:12px;inset-inline-end:12px;z-index:1}

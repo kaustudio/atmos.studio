@@ -91,7 +91,7 @@ export const wipeMethods = {
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState(Object.assign({
-      backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false,
+      backupMenuOpen: false, copyMenuOpen: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
       feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
@@ -482,6 +482,8 @@ export const wipeMethods = {
     // After the scrub, which would otherwise take this too.
     clone.setAttribute('data-ghost-app', '1');
     try { if (this._nebula) this._nebula.renderStill(this._orbit ? this._orbit.rot : 0); } catch (e) { }
+    // The processing stage's atmosphere is the same field, for the same reason (procField.js).
+    try { if (this._proc && this._proc.on) this._proc.f.renderStill(this._proc.rot); } catch (e) { }
     /* AT HALF RESOLUTION. The copy is drawn under a veil, scaled up 1.2x and gone in 1.2s; a
        full-DPR copy of the field costs a second upload of a 2880x1800 texture in the click's own
        frame for a difference nobody can see. The canvas keeps its CSS box, so it covers the same
@@ -498,7 +500,7 @@ export const wipeMethods = {
       } catch (e) { }
     });
     const veil = document.createElement('div');
-    veil.style.cssText = 'position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;z-index:2147483000;';
+    veil.style.cssText = 'position:absolute;inset:0;background:var(--scrim);opacity:0;pointer-events:none;z-index:2147483000;';
     host.appendChild(clone); host.appendChild(veil);
     const scrollY = window.scrollY || 0;
     document.body.appendChild(host);
@@ -721,7 +723,10 @@ export const wipeMethods = {
       if (opened || !this._wipeRunning) return; opened = true;
       // The window: fixed, viewport-sized, clipped to a rounded slot at its centre, half a screen
       // down. Set only now, after the destination has rendered and measured itself in flow.
-      g.set(win, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100%', overflow: 'clip', zIndex: 160, yPercent: 50, willChange: 'transform, clip-path', clipPath: 'inset(50% round 3em)' });
+      // The slot's corner is --radius-window (17.09.26, audit H7), read here because clip-path takes a
+      // length, not a custom property, once GSAP interpolates it.
+      const slotR = this._cssVar('--radius-window') || '3em';
+      g.set(win, { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, width: '100%', overflow: 'clip', zIndex: 160, yPercent: 50, willChange: 'transform, clip-path', clipPath: 'inset(50% round ' + slotR + ')' });
       const tl = g.timeline({ paused: true, onComplete: finish });
       this._wipeTl = tl;
       const ease = this.EASE.fold;

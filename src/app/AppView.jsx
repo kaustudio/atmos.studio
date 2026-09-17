@@ -1,7 +1,7 @@
 // The view — a 1:1 JSX port of the design comp's template. Static inline styles are kept as the
 // original CSS strings (parsed by sx()) so the layout stays byte-faithful; computed styles come
 // from renderVals() untouched. No logic lives here.
-import React, { useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
 import { B006, B006Text, DocHead, GlassEffect, NavNewPalette, TextSwap, ThemeSwitch } from './chrome.jsx';
@@ -57,23 +57,8 @@ const stripFragment = (event) => {
    the stored answer at send time. See lib/consent.js. */
 const sendPageview = whenAllowed(stripFragment);
 
-// style-hover / style-active runtime attributes from the design comp, reproduced as a tiny
-// stateful button (the only pieces of hover styling not covered by the [data-ix] CSS contract).
-function HBtn({ style, styleHover, styleActive, onMouseEnter, onMouseLeave, children, ...props }) {
-  const [h, setH] = useState(false);
-  const [a, setA] = useState(false);
-  const st = { ...style, ...(h ? styleHover : null), ...(a ? styleActive : null) };
-  return (
-    <button
-      {...props}
-      style={st}
-      onMouseEnter={(e) => { setH(true); if (onMouseEnter) onMouseEnter(e); }}
-      onMouseLeave={(e) => { setH(false); setA(false); if (onMouseLeave) onMouseLeave(e); }}
-      onMouseDown={() => setA(true)}
-      onMouseUp={() => setA(false)}
-    >{children}</button>
-  );
-}
+// HBtn, a small stateful button that applied style-hover / style-active objects from JS, went on
+// 17.09.26: its last users (the wordmark, the harmony swatches) take the [data-ix] contract now.
 
 // button-006 — the masked text-swap CTA (chrome in global.css). `label` renders in both layers
 // unless a distinct `hover` node is given.
@@ -117,65 +102,19 @@ const logoStyle = {
 
      The size is a pair of tokens so the phone can step it down without !important overriding an
      inline style, and so the two numbers stay in one place. */
-  ...sx('position:fixed;top:18.5px;left:0;right:0;margin-inline:auto;width:var(--logo-w);height:var(--logo-h);z-index:155;mix-blend-mode:difference;background:linear-gradient(120deg, #ffffff, #c2c2c2, #8a8a8a, #dedede, #a6a6a6, #ffffff);background-size:280% 280%;animation:gradient-drift 9s ease-in-out infinite'),
+  ...sx('position:fixed;top:calc(31.5px - var(--logo-h) / 2);left:0;right:0;margin-inline:auto;width:var(--logo-w);height:var(--logo-h);z-index:155;mix-blend-mode:difference;background:var(--mark-gradient);background-size:280% 280%;animation:gradient-drift var(--dur-drift) var(--ease-ambient) infinite'),
   WebkitMask: LOGO_MASK, mask: LOGO_MASK,
 };
 
-/* THE MARK'S GROUND, for the surfaces that scroll a photograph under it.
-
-   mix-blend-mode:difference is a promise the mark can only keep over a FLAT backdrop. Against
-   --surface it resolves to near-black in light and near-white in dark, which is why it has been
-   right everywhere it has ever been looked at. Against a photograph it resolves to the photograph:
-   measured on the share view's tennis court (avg rgb(97,137,161)), the mark came out rgb(158,118,94)
-   at the gradient's white stops — 1.08:1 against what it sits on — and rgb(41,1,23) at #8a8a8a, or
-   5.04:1. Not a fixed failure but an oscillating one, because that gradient is animated: the mark
-   faded in and out of existence on a 9s loop. On the share view it is also the way home, so this was
-   a CONTROL disappearing, not an ornament.
-
-   THE SCRIM RESTORES THE PREMISE RATHER THAN REPLACING THE MECHANIC. Difference blends against
-   whatever is painted below it in the stacking context; put --surface there and the mark differences
-   against --surface, which is the case it was designed for. Nothing about the mark changes — same
-   mask, same gradient, same animation, same z-index — so there is no second appearance to keep in
-   sync and no second thing to theme.
-
-   64px is the masthead's own height, which is the figure this codebase already uses for "the zone
-   the mark lives in": the desktop draws the mark inside a 64px bar, and the phone's answer had been
-   a 64px SPACER that scrolled away and took the ground with it. This is that spacer made fixed.
-
-   A GRADIENT RATHER THAN A BAND. A hard 64px edge over a full-bleed photograph reads as chrome
-   bolted on top of the picture; a fade reads as the picture arriving out of the surface, which is
-   what the rest of the page already does.
-
-   96px AND A STOP AT 66.6%, WHICH IS THE 64px BAND SOLID PLUS A 32px FADE. The stop has to clear the
-   mark completely or the fix is only half applied: the mark occupies 18.5-42, and the first attempt
-   at 64px-with-a-stop-at-42% put full --surface behind only its top 27px and left the descenders
-   differencing against a half-transparent blend of surface and photograph. It read as a grey smear
-   under the wordmark — the same failure as before, smaller. Solid to 64 puts the whole mark on the
-   backdrop it was drawn for with 22px to spare, and the fade happens entirely below it.
-
-   RENDERED ON ALL THREE PHONE BRANCHES, THOUGH ONLY ONE OF THEM CAN SEE IT.
-     · The share view is the surface this exists for.
-     · The example list never puts an image in the mark's band — the rows are --surface and the 72px
-       thumbnails stop well short of a centred 148.5px mark — so this paints --surface over --surface
-       and is invisible.
-     · The story's sections DO run full-bleed under the mark, but the mark is not there to be hurt by
-       them: heroExit scrubs it to autoAlpha 0 across the hero's exit, so it has left before the
-       first photograph arrives. The scrim leaves with it — heroExit fades both — rather than staying
-       behind as a veil over a mark that is no longer drawn.
-   The uniform render is what keeps the mark at the same child INDEX in each branch. React reconciles
-   unkeyed children by index, and a mark that changed position between branches would be the
-   torn-down-and-rebuilt logo the note in the tool branch exists to warn about.
-
-   NOT ON THE GATE, which is a different branch: its backdrop is the orbit field, the brand's arrival
-   and meant to be seen — and being a flat-ish wash rather than a photograph, it is a backdrop
-   difference already handles.
-
-   data-mark-scrim IS LOAD-BEARING TWICE. It is what heroExit fades, and it is what puts this on the
-   phone rule's allow-list in global.css — without that entry a direct child of [data-app] is painted
-   out, which is exactly what happened first time: the element rendered, carried its gradient, and
-   measured 0px tall. z-index 154: under the mark at 155, over the story at 151 and the share at 150. */
-const MARK_SCRIM = sx('position:fixed;top:0;left:0;right:0;height:96px;z-index:154;pointer-events:none;background:linear-gradient(to bottom, var(--surface) 0%, var(--surface) 66.6%, transparent 100%)');
-const MarkScrim = () => (<div data-mark-scrim="1" aria-hidden="true" style={MARK_SCRIM}></div>);
+/* THE WORDMARK BUTTON'S FOCUS RING (17.09.26, audit B1). The button masks itself to the wordmark, and
+   that mask is what lets its mix-blend-mode difference against the page. A mask also clips the
+   element's own outline, so the data-focus ring never painted: a keyboard reader focused the way home
+   and saw nothing. The mask cannot move to an inner span without losing the blend (a positioned,
+   z-indexed button is a stacking context, and a child would difference against its empty box), so the
+   ring is its own element, the button's next sibling, shown by `button[data-logo]:focus-visible +
+   [data-logo-ring]` in global.css. Same box as the mark; never masked, never hit. `top` follows the
+   button's, which is the tool bar's centre line in the tool and logoStyle's own on a phone. */
+const LogoRing = ({ top }) => (<span data-logo-ring="1" aria-hidden="true" style={top ? { top } : undefined}></span>);
 
 /* ===== ICONS — Material Symbols Light, one variant, no exceptions =====
    Every glyph below is the published path from `material-symbols-light`, taken from the Iconify API
@@ -203,7 +142,9 @@ const IconCopy = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 
 // uppercase labels it sits in. The decorative <path d="M0 0h24v24H0z" fill="none"/> from the source
 // SVG is dropped: it is a transparent 24x24 spacer, and the viewBox already establishes that box.
 const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"></path></svg>);
-const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M8 18q-2.502 0-4.251-1.749T2 12t1.749-4.251T8 6q.906 0 1.736.26t1.525.754q-.194.177-.367.377l-.344.401q-.539-.376-1.186-.584T8 7Q5.925 7 4.463 8.463T3 12t1.463 3.538T8 17q.717 0 1.365-.208q.646-.208 1.185-.584l.344.4q.173.202.367.379q-.695.494-1.525.754Q8.906 18 8 18m8 0q-.906 0-1.735-.26t-1.527-.753q.195-.177.368-.378l.344-.401q.544.377 1.189.584T16 17q2.075 0 3.538-1.463T21 12t-1.463-3.537T16 7q-.717 0-1.362.208t-1.188.584l-.344-.4q-.173-.201-.367-.379q.695-.494 1.525-.753Q15.095 6 16 6q2.502 0 4.251 1.749T22 12t-1.749 4.251T16 18m-4-1.558q-.944-.84-1.472-2T10 12t.528-2.442t1.472-2q.944.84 1.472 2T14 12t-.528 2.442t-1.472 2"></path></svg>);
+/* THE HARMONY GLYPH, by request (17.09.26): a disc inside a broken ring, the colour and the colours
+   around it. Replaced the two overlapping circles. */
+const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m13.76 4.19l.44-1.95c-1.45-.33-3-.32-4.45.01l.45 1.95a8.1 8.1 0 0 1 3.56-.01M20 12c0 1.21-.27 2.38-.79 3.47l1.8.87c.66-1.36.99-2.82.99-4.37h-.2zm-18 .02c0 1.52.34 2.98 1 4.33l1.8-.87a7.96 7.96 0 0 1-.8-3.47H2Zm11.79 7.78l.45 1.95c1.45-.33 2.84-1 4.01-1.93L17 18.26c-.93.75-2.04 1.28-3.2 1.55ZM7 5.76L5.75 4.2c-1.17.94-2.12 2.14-2.77 3.48l1.8.87a8.2 8.2 0 0 1 2.21-2.79Zm11.21-1.6l-1.24 1.57c.94.74 1.71 1.7 2.23 2.78l1.8-.88a10 10 0 0 0-2.79-3.46ZM5.78 19.83c1.17.93 2.56 1.6 4.01 1.93l.44-1.95a8 8 0 0 1-3.21-1.54l-1.25 1.56ZM12 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12"></path></svg>);
 // Sort chevron — drawn at the same 1-unit hairline weight as the rest of the icon set, so it sits
 // in the header without shouting. It points DOWN at rest (descending) and rotates 180° to point up
 // for ascending; the rotation is the state change, so the glyph never swaps out from under the eye.
@@ -374,8 +315,9 @@ const RowMain = ({ c, inv }) => (
           The span survives on purpose. It is the cell's flexible child — it absorbs
           every difference in name length so the identity cell settles without bidding
           on the metric tracks beside it — and that job was never the tags'.
-          renderVals still supplies descriptorParts, tagBtnBase, tagOn and tagOff, now
-          unread: putting the row back is a map(), not a rebuild. */}
+          renderVals still supplies descriptorParts, the tags and their handlers, now
+          unread: putting the row back is a map(), not a rebuild. Their old styles went on
+          17.09.26 (audit H3), so a returning row takes today's control style. */}
       <span aria-hidden="true" style={sx('flex:1;min-width:0')}></span>
       </div>
       {/* the accessibility cluster — verdict first, numbers second. The badge is the
@@ -410,26 +352,39 @@ const RowMain = ({ c, inv }) => (
 // The identity line: name, then the row's two labels — EXAMPLE for the seeded palettes, and the
 // current palette NAMED rather than only dotted. The dot stays beside the word, so the state is
 // carried by shape as well as text and survives a greyscale render (SC 1.4.1).
-const CardIdentity = ({ c }) => (<>
+const EXAMPLE_CHIP = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:2px 6px');
+const EXAMPLE_CHIP_ON_PHOTO = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-photo);border:1px solid color-mix(in srgb, var(--on-photo) 60%, transparent);border-radius:var(--radius-pill);padding:2px 6px');
+// THE GRID CARD'S FOOT (17.09.26, radius issue R3, by request): a progressive blur and a dark tint
+// over the photograph's lower part, under the name. Two copies of the picture, blurred and masked
+// so the blur grows toward the edge (a live backdrop-filter measured p95 16.7ms against 8.8 on the
+// field's drift; copies cost nothing measurable), scaled past the hero so their soft edges are
+// clipped. The tint reaches .82 black at the foot: the palest example (High Key) needs .77 behind
+// white text for 4.5:1.
+const TILE_FADE = {
+  near: sx('position:absolute;inset:0;background:inherit;transform:scale(1.12);filter:blur(6px);-webkit-mask-image:linear-gradient(to bottom,transparent 48%,#000 74%);mask-image:linear-gradient(to bottom,transparent 48%,#000 74%);pointer-events:none'),
+  far: sx('position:absolute;inset:0;background:inherit;transform:scale(1.12);filter:blur(18px);-webkit-mask-image:linear-gradient(to bottom,transparent 64%,#000 92%);mask-image:linear-gradient(to bottom,transparent 64%,#000 92%);pointer-events:none'),
+  tint: sx('position:absolute;inset:0;background:linear-gradient(to bottom,transparent 44%,rgb(0 0 0 / .42) 70%,rgb(0 0 0 / .82) 100%);pointer-events:none'),
+};
+
+const CardIdentity = ({ c, onPhoto }) => {
+  // THE NAME IS LARGER ON THE GRID'S CARDS (17.09.26, radius issue R3, by request): --fs-subtitle,
+  // where it was --fs-body, the list row's size, and in the photograph's ink (--on-photo). The
+  // reduced-motion grid keeps --fs-body: its cards are narrower and share the line with the Example
+  // chip, and at 20px "Scorched Clear Morning" truncated there. The list row keeps --fs-body too.
+  const ink = onPhoto ? 'var(--on-photo)' : 'var(--on-surface)';
+  const nameSize = onPhoto ? 'var(--fs-subtitle)' : 'var(--fs-body)';
+  return (<>
   {/* flex:1 so this row claims the card's full content width. Without it the wrapper is a flex item
       at its intrinsic size — 115px of a 270px row — and the chip's margin-auto below could only
       reach the end of the NAME, which is where it already sat. An auto margin needs spare space to
       push into, and this is what supplies it. */}
-  <span style={sx('display:flex;align-items:baseline;gap:8px;min-width:0;flex:1')}>
-    {/* -0.01em across the card's type, settled by eye: -0.04 read as crushed, -0.02 was still
-        tight. That order is what negative tracking does soonest to UPPERCASE at 11px, and half this
-        card's lines are uppercase. It is --track-title's figure, not borrowed as that token —
-        "title" would be a lie at 11px — so it stays a card-local literal.
-        Seven sites, because the card has two renderings, the engine tile and the reduced-motion
-        grid, and they must not drift. Change all seven or none. */}
-    {/* --fs-body, the list row's size for the same name: the card, the row and the reduced grid are
-        renderings of one identity line and take one size. The OPEN panel is the exception, by
-        request: there the name is the head of a surface rather than a row's first column, so it
+  <span style={sx('display:flex;align-items:' + (onPhoto ? 'center' : 'baseline') + ';gap:8px;min-width:0;flex:1')}>
+    {/* The OPEN panel's name is the head of a surface rather than a row's first column, so it
         takes --fs-title — 24, the scale's heading step — with --track-title, and wraps rather than
         truncates because a heading has the room a row does not. */}
     <span style={c.titleName
       ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);letter-spacing:var(--track-title);line-height:1.15;color:var(--on-surface);text-wrap:balance")
-      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
     {c.isExample && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
@@ -437,15 +392,17 @@ const CardIdentity = ({ c }) => (<>
           where hung off the name it started at a different x on every card.
           The name gets min-width:0 to go with it. Without that a flex item will not shrink below its
           content, so a long name would have pushed the chip back off the edge — the ellipsis it
-          already asks for cannot fire until the item is allowed to be narrower than its text. */
-      <span style={sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:2px 6px')}>Example</span>
+          already asks for cannot fire until the item is allowed to be narrower than its text.
+          On the photograph it takes the photograph's ink, its edge a mix of it. */
+      <span style={onPhoto ? EXAMPLE_CHIP_ON_PHOTO : EXAMPLE_CHIP}>Example</span>
     )}
   </span>
   {c.current && (
-    <span style={sx('display:inline-flex;align-items:center;gap:4px;flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface)')}>
-      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:var(--on-surface);flex:none')} aria-hidden="true"></span>Viewing</span>
+    <span style={sx('display:inline-flex;align-items:center;gap:4px;flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);text-transform:uppercase;color:' + ink)}>
+      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);flex:none;background:' + ink)} aria-hidden="true"></span>Viewing</span>
   )}
 </>);
+};
 
 // The metrics grid. aria-hidden because the card's own aria-label already speaks the full readout;
 // this is the visual layer. AA pairs is the one entry carrying a verdict as well as a number, and
@@ -464,7 +421,7 @@ const CardMetrics = ({ c }) => (
             an informative label, at 8px, at barely half the contrast its own value had. The token
             resolves per theme, which is the entire reason the token exists, and it lands at 5.5:1
             light / 6.5:1 dark. Nothing else about the label changed except the size floor. */}
-        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
+        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
         {/* Value first, badge trailing — the opposite order to the list row, and for the reason the
             row uses its own: put the number where the eye is already reading. The row's values are
             a RIGHT-aligned numeric column, so the badge leads and the count lands on the shared
@@ -477,7 +434,7 @@ const CardMetrics = ({ c }) => (
             glance. At --fs-label they were 10px, a size the ladder reserves for uppercase labels,
             and set in proportional digits so the same figure took a different width on every card
             and no column of them ever lined up. */}
-        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:-0.01em;color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
+        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
           <span style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
           {m.aa && <AaBadge aa={m.aa} />}
         </span>
@@ -525,7 +482,7 @@ const UniversePanel = ({ c }) => (<>
 </>);
 
 // The state marker both facet groups share. Three states, three SHAPES — empty square, filled
-// square with a check, and a bare rule — so the unavailable state is never carried by colour or
+// square with a check (both on --radius-tick since 17.09.26, audit Q4), and a bare rule — so the unavailable state is never carried by colour or
 // dimming alone (SC 1.4.1). A rule rather than a greyed box because a box, however faint, still
 // says "this is a thing you tick"; a rule says the tick is not on offer.
 const FacetMark = ({ active, unavailable }) => (
@@ -534,7 +491,7 @@ const FacetMark = ({ active, unavailable }) => (
         <span style={sx('width:8px;height:1px;background:var(--on-surface-muted)')}></span>
       </span>
     : <span aria-hidden="true" style={{
-      ...sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center'),
+      ...sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-tick)'),
       border: '1px solid ' + (active ? 'var(--on-surface)' : 'color-mix(in srgb, var(--on-surface) 38%, transparent)'),
       background: active ? 'var(--on-surface)' : 'transparent',
       color: 'var(--surface)',
@@ -627,7 +584,7 @@ const copyB006Label = (done) => (
    dialogs for one choice. `owns` settles it at the call site: the overlay takes it whenever it is
    up, the stage takes it otherwise. The one on top was always the right one — the overlay's markup
    comes later — so this changes nothing about which handler runs, only how many sheets exist. */
-function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, itemStyle }) {
+function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, itemStyle, tint }) {
   /* THE FORMAT TAGS ARE GONE. Each row carried its shape on the right — ONE PER LINE against Hex
      list, CUSTOM PROPERTIES against CSS variables — and both were the label again in other words.
      The export dialog's tags stay, and the difference is the point: @THEME · CSS, JSON, ASE name a
@@ -654,11 +611,11 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
       /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
       <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
         <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-        <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+        <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
           <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
             <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Copy palette</span>
-              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{name}</h2>
+              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{name}</h2>
             </div>
             <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close copy options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
           </header>
@@ -688,14 +645,17 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
                  handed focus to the trigger; with the sheet staying up, a keyboard reader was left
                  standing in an open dialog with no focus in it. One rAF after the pick, so it lands
                  behind the textarea's teardown rather than racing it. */
-              <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={(e) => { const el = e.currentTarget; f.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }} aria-label={f.label + (isDone ? ', copied' : '')} style={itemStyle}>
+              <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={(e) => { const el = e.currentTarget; f.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
+                onMouseEnter={tint && tint.onEnter} onMouseLeave={tint && tint.onLeave} onFocus={tint && tint.onFocus} onBlur={tint && tint.onBlur}
+                aria-label={f.label + (isDone ? ', copied' : '')} style={itemStyle}>
                 {/* The label answers the hover; the confirmation does not. A mark that lifts and
                     re-enters while it is saying COPIED would read as the confirmation arriving
                     twice. Same division the scope chips make between their label and their count. */}
                 <span style={sx('text-transform:capitalize;font-size:var(--fs-detail)')}><TextSwap>{f.label}</TextSwap></span>
-                {isDone && (
-                  <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;gap:5px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:.06em;text-transform:uppercase;color:var(--on-surface);white-space:nowrap')}><IconCheck /> Copied</span>
-                )}
+                {/* ALWAYS MOUNTED, AND EASED (17.09.26, audit E6): Add to Projects' "Added" recipe, the
+                    mark sliding 4px in as it fades, on --dur-chrome. It popped in and out with the
+                    render, and carried a .06em of its own where every label is flat. */}
+                <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;gap:5px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: isDone ? 1 : 0, transform: isDone ? 'translateX(0)' : 'translateX(4px)' }}><IconCheck /> Copied</span>
               </button>
               );
             })}
@@ -736,97 +696,8 @@ const shareB006Label = (copied) => (
 
 // Mobile read-only share view. A separate lightweight surface, NOT a responsive port of the tool —
 // it exists so a shared link opened on a phone shows the palette instead of the desktop gate. The
-// tool still gates; this only ever renders somebody else's finished palette.
-/* THE PHONE'S EXAMPLE LIST — the Library list, at a thumb's scale. Deliberately the same object as
-   the desktop row: a strip you recognise the palette by, its name, and its first two traits. It is
-   the level above the palette view, so it owns the trip back to the gate and the palette view owns
-   the trip back to here. */
-function MobileExampleList({ ml }) {
-  return (
-    /* height:100dvh over the inset, per the rule every full-height dialog here states: a fixed box on a
-       phone resolves bottom:0 against the LARGE viewport, so with the URL bar showing its last rows
-       and the way back sit below the fold. overscroll-behavior:contain stops a flick past the end of
-       the list from chaining into the document and dragging the browser chrome with it — the list is
-       the scroller, and nothing behind it should move. data-lenis-prevent is the house contract for
-       an internal scrollport (see misc.js): without it Lenis swallows the wheel and applies it to a
-       document that cannot scroll, so a narrow desktop window could not move this list at all. */
-    <div data-mobile-list="1" role="region" aria-label="Example palettes" data-lenis-prevent="1"
-      style={sx('position:fixed;inset:0;height:100dvh;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
-      {/* clears the fixed logo, exactly as the palette view does */}
-      <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
-
-      <div style={sx('flex:none;padding:22px var(--page-gutter) 18px')}>
-        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;text-wrap:balance")}>Example Palettes</h1>
-        <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:10px 0 0;text-wrap:pretty")}>Read from photographs, the same way the tool reads yours.</p>
-      </div>
-
-      {/* A real ul/li. role="listitem" was on the BUTTON, which overrides the button's own role —
-          the control announced as a list item and stopped saying it could be pressed. The wrapper
-          carries the list semantics (so "8 items" is announced) and the button keeps its own. */}
-      <ul style={sx('flex:none;display:flex;flex-direction:column;width:100%;list-style:none;margin:0;padding:0')}>
-        {ml.rows.map((r) => (
-          <li key={r.key} style={sx('display:flex;width:100%')}>
-          {/* data-ml-row carries the palette's id rather than a bare "1": motion.js only ever tests
-              the attribute's presence, and naming the row is what lets the trip back put focus on
-              the one you opened instead of dropping it on the body. */}
-          <button type="button" data-ml-row={r.key} data-ix="press" data-focus="chrome" onClick={r.onOpen} aria-label={r.aria}
-            style={sx('display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:12px var(--page-gutter);background:none;border:none;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent')}>
-            {/* Photograph over its own palette, in one 72px column. The strip alone said what the
-                colours are; it could not say what they came from, which on a screen selling "read
-                from light and atmosphere" is the more persuasive half. Stacked rather than side by
-                side because a row is 64px and two thumbnails would leave the name nowhere to go. */}
-            <span aria-hidden="true" style={sx('flex:none;display:flex;flex-direction:column;width:72px;gap:2px')}>
-              {/* --img-outline, not a colour-mix off --on-surface. The two are nearly the same
-                  number and not the same idea: --on-surface is #1a1a1a light and #f3f3ef dark, so
-                  mixing off it draws a tinted rim — a warm off-white edge over a photograph in dark,
-                  which is the "dirt on the image edge" an image outline is specifically not meant to
-                  be. The token is pure black and pure white at 10%, it is what /about's figures
-                  already use, and going through it means a retune reaches every picture on the site
-                  rather than the ones that happened to be written by hand. */}
-              {r.hasImage && (
-                <span style={sx('position:relative;display:block;width:100%;height:40px;overflow:hidden;background:var(--surface-raised)')}>
-                  <img src={r.image} alt="" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
-                  <span style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--img-outline)')}></span>
-                </span>
-              )}
-              <span style={sx('display:flex;width:100%;height:' + (r.hasImage ? '6px' : '40px') + ';border:1px solid var(--line)')}>
-                {r.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
-              </span>
-            </span>
-            <span style={sx('flex:1;min-width:0;display:flex;flex-direction:column;gap:4px')}>
-              {/* data-case="own": this row is a control (data-ix="press") and the uppercase label
-                  voice inherits into everything inside it, including this — the palette's NAME, which
-                  the reading invented and the app did not write. The desktop library shows the same
-                  string in its own case because those rows carry no tier, so the one object read two
-                  ways depending on the screen. See the [data-ix] casing block in global.css. */}
-              <span data-case="own" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);color:var(--on-surface);overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.name}</span>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap')}>{r.traits.join(' · ')}</span>
-            </span>
-            <span aria-hidden="true" style={sx('flex:none;display:inline-flex;color:var(--on-surface-muted);transform:rotate(-90deg)')}><IconChevron size={12} /></span>
-          </button>
-          </li>
-        ))}
-      </ul>
-
-      {/* Same hook as the palette view's foot below, holding one act instead of two — which is the
-          whole reason the rule that sizes them is written against :not(:only-child). This button
-          was width:100% and is now sized by its label, matching the gate's lone act rather than
-          spanning a column it has no sibling to share. */}
-      {/* THE BOTTOM INSET IS THE DEVICE'S, NOT A NUMBER THAT LOOKS LIKE IT. This was a flat 34px,
-          which is exactly the home indicator's height on the phones it was tuned on — so it was
-          right there and a guess everywhere else: too much on a device with no inset, and too
-          little the moment the inset is larger or the phone is turned over and the inset moves.
-          It matters more here than almost anywhere, because this row holds the only act on the
-          surface and it is the last thing in a 100dvh scroller.
-          calc(24px + env(...)) is the form story.css already uses for the same edge — same base,
-          same fallback — so the three phone surfaces now clear the hardware the same way. */}
-      <div data-cta-row="1" style={sx('flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:24px var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px))')}>
-        <button type="button" className="glass-cta" data-focus="chrome" onClick={ml.onLeave} aria-label="Back to Start: return to the start screen"><TextSwap>Back to Start</TextSwap></button>
-      </div>
-    </div>
-  );
-}
-
+// tool still gates; this only ever renders somebody else's finished palette. Since 17.09.26 (audit C5)
+// it is ONLY that: the example palettes no longer open here, and there is no example list above it.
 /* THE PHONE'S STORY. Eight chapters that read one photograph, standing where the desktop gate used
    to — see src/styles/story.css for the layout argument.
 
@@ -1235,6 +1106,10 @@ function MobileStory({ st }) {
             This replaces Osmo Supply's Horizontal Scrolling Sections, which carried the same seven cases two
             to a screen after the old heading and sentence.
 
+            THE RING IS THE CARD RING, OUTSIDE THE CARD (17.09.26, audit B3). The inset value ring was
+            painted under the photograph and its scrim, so a focused card looked exactly like a resting
+            one. The grid view's photo cards already use this one.
+
             THE CARDS STAY BUTTONS, because here they open that example. The live stage lets the pointer
             through to the close under it, and the cards take it back (story.css). Nothing in the scene
             carries data-reveal: the rail splits the statement itself, and a block holding a control must
@@ -1245,11 +1120,13 @@ function MobileStory({ st }) {
             <p className="about-rail__statement" data-rail-statement="1">The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
             <div className="about-rail__track" data-rail-track="1">
               {st.cases.map((c) => (
-                <button key={c.key} type="button" className="about-rail__card" data-rail-card="1" data-story-case="1" data-ix="press" data-focus="value"
-                  onClick={c.onOpen} aria-label={c.aria}>
+                <button key={c.key} type="button" className="about-rail__card" data-rail-card="1" data-story-case="1" data-ix="press" data-focus="card"
+                  onClick={c.onOpen} aria-label={c.aria} style={c.hasImage ? { '--card-img': 'url(' + c.image + ')' } : undefined}>
                   {/* Not lazy, as on /about: the stage clips its row, so a lazy photograph would only be asked
                       for once it was already on screen. Low priority keeps it behind the story's own. */}
                   {c.hasImage && <img src={c.image} alt="" fetchPriority="low" decoding="async" />}
+                  {/* the foot's blur and tint, as /about's cards (about.css .about-rail__fade) */}
+                  <span className="about-rail__fade" aria-hidden="true"></span><span className="about-rail__tint" aria-hidden="true"></span>
                   <span className="about-rail__content">
                     <span className="about-rail__meta"><span>{c.note}</span></span>
                     <span>
@@ -1370,7 +1247,7 @@ function MobileStory({ st }) {
                       {/* A button, not the resource's <a>: this commits a choice rather than
                           navigating, so it must not be a link that goes nowhere. data-case="own"
                           because the palette's name is a string the reading invented. */}
-                      <button type="button" className="layered-slider__text-title" data-focus="chrome"
+                      <button type="button" className="layered-slider__text-title" data-ix="mark" data-focus="chrome"
                         data-case="own" aria-label={'Choose ' + c.name}>{c.name}</button>
                     </div>
                   ))}
@@ -1424,16 +1301,11 @@ function MobileShareView({ ms }) {
        the way back out. */
     <div data-mobile-share="1" role="region" aria-label={'Shared palette: ' + ms.name} data-lenis-prevent="1"
       style={sx('position:fixed;inset:0;height:100dvh;z-index:150;overflow-y:auto;overscroll-behavior:contain;background:var(--surface);display:flex;flex-direction:column;-webkit-overflow-scrolling:touch')}>
-      {/* Top padding for the fixed logo, which floats over this surface. It is on the scroller
-          rather than the first child, because the first child is now sometimes a full-bleed image
-          and sometimes the name — padding on whichever happened to be first would come and go. */}
-      <div aria-hidden="true" style={sx('flex:none;height:64px')}></div>
-
-      {/* No wordmark of its own and no "Example palette" eyebrow. This surface used to mint a
-          second, flatter Atmos mark at 104px the moment you opened an example, so the brand changed
-          shape on the way in — the page's real logo is rendered above this one now (see the
-          showMobileShare branch), unchanged from the front page. Top padding clears it: the mark
-          sits at 18.5px and is 26px tall. */}
+      {/* Room for the floating masthead, which sits over this surface (see the showMobileShare
+          branch): its top inset, its height and a block gap under it. A spacer on the scroller rather
+          than padding on the first child, because the first child is sometimes a full-bleed image and
+          sometimes the name. */}
+      <div aria-hidden="true" style={sx('flex:none;height:calc(var(--nav-top) + var(--nav-h) + 8px)')}></div>
       {/* The image the palette was read from. Full-bleed and 4:3 — on a phone a picture inset in
           the gutter reads as an attachment, where this is the evidence for everything under it.
           A 1px inset ring rather than a border: the outline must not shift the picture off the
@@ -1447,7 +1319,7 @@ function MobileShareView({ ms }) {
       )}
 
       <div data-ms-head="1" style={sx('flex:none;padding:22px var(--page-gutter) 22px')}>
-        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
+        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {/* THE SAME CHIP AS THE RESULT STAGE'S, AND IT ROUNDS WITH IT. This is the phone's copy of
             the trait row — same border, same 9% ground, same uppercase label — so a corner changed
             on one and not the other would make one palette look like two products depending on the
@@ -1456,7 +1328,7 @@ function MobileShareView({ ms }) {
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
-              <span key={i} style={sx('font-family:Neue Montreal;font-size:var(--fs-label);padding:var(--btn-pad-chip);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:uppercase;border-radius:var(--radius-pill)')}>{d}</span>
+              <span key={i} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-label);line-height:1;padding:var(--btn-pad-chip);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:uppercase;border-radius:var(--radius-pill)')}>{d}</span>
             ))}
           </div>
         )}
@@ -1489,8 +1361,13 @@ function MobileShareView({ ms }) {
         {ms.rows.map((r) => (
           <button key={r.key} type="button" data-ms-row="1" data-ix="cell" data-focus="value" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
             <span style={r.hexStyle}>{r.hex}</span>
+            {/* Both states stacked in one grid cell and crossfaded (17.09.26, audit E6), where the
+                figure was swapped for the confirmation in one frame. */}
             <span style={r.metaStyle}>
-              {r.copied ? (<><IconCheck />Copied</>) : r.pct}
+              <span style={sx('display:inline-grid')}>
+                <span data-done-mark="1" style={{ gridArea: '1 / 1', justifySelf: 'end', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 0 : 1 }}>{r.pct}</span>
+                <span data-done-mark="1" aria-hidden={!r.copied} style={{ gridArea: '1 / 1', justifySelf: 'end', display: 'inline-flex', alignItems: 'center', gap: '5px', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 1 : 0 }}><IconCheck />Copied</span>
+              </span>
             </span>
           </button>
         ))}
@@ -1503,23 +1380,8 @@ function MobileShareView({ ms }) {
         {ms.footLine && (
           <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         )}
-        {/* ONE WAY ON, AND IT IS NOT A WAY BACK. This held two acts — `See All Examples` and a
-            `Back to Start` / `Back to Examples` that changed label depending on how you arrived.
-            The back half is gone: the fixed Atmos mark at the top of this surface IS the way to the
-            start, it is on every phone screen, and returnToIntro() behind it already clears
-            exampleView, exampleList and current — so the foot was spending a control restating a
-            gesture the masthead offers everywhere. Two ways to do one thing is how they drift.
-
-            `See All Examples` no longer hides when you arrived FROM the list. It was hidden there on
-            the argument that it would send you where you just were — true while a Back button was
-            standing next to it, and the wrong instinct once it is the only act: going back up to the
-            list is exactly what someone at the bottom of an example wants, and it is the same
-            destination whichever way they came in. One act, one label, one destination, always. */}
-        {ms.canLeave && (
-          <div data-cta-row="1" style={sx('display:flex;flex-wrap:wrap;gap:12px;margin-top:18px')}>
-            <button type="button" className="glass-cta" data-focus="chrome" onClick={ms.onSeeAll} aria-label="See All Examples: every example palette"><TextSwap>See All Examples</TextSwap></button>
-          </div>
-        )}
+        {/* No act here. `See All Examples` stood in this foot and led to the example list, which is
+            gone with the example view (17.09.26, audit C5); the masthead's mark is the way back. */}
       </div>
     </div>
   );
@@ -1542,7 +1404,7 @@ const liveRegionStyle = visuallyHidden;
    id is never ambiguous. Styles are in global.css, with the reasoning for the z-index and the
    transform. */
 function SkipLink() {
-  return <a className="skip-link" href="#main" data-focus="chrome">Skip to main content</a>;
+  return <a className="skip-link" href="#main" data-focus="chrome">Skip to Main Content</a>;
 }
 
 /* The site footer, closing the tool and both legal routes — styles from /site-foot.css, which
@@ -1663,6 +1525,8 @@ function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = tru
    buttons hand it this style rather than a stylesheet shouting over an inline value. Weight and case
    are in global.css (.consent .button-006[data-emphasis]). The label rows are 16px, one line of 13. */
 const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
+/* No check mark on Accept when the banner is reopened (17.09.26, by request): the pressed state
+   (aria-pressed, and the filled button) already says which answer stands. */
 export function ConsentBanner({ vals }) {
   const choice = vals.consentChoice;
   const act = (value, label, aria, emphasis, onClick) => (
@@ -1672,7 +1536,7 @@ export function ConsentBanner({ vals }) {
       onClick={onClick}
       aria-label={aria}
       style={CONSENT_BTN_TYPE}
-      label={<span style={sx('display:flex;align-items:center;gap:6px;height:16px')}>{value === 'granted' && choice === value && <IconCheck />}<B006Text>{label}</B006Text></span>}
+      label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{label}</B006Text></span>}
     />
   );
   return (
@@ -1695,12 +1559,12 @@ export function ConsentBanner({ vals }) {
             label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Learn More</B006Text></span>} />
         </span>
       </div>
-      {/* The toast's dismiss, drawn the same: a 30px outlined disc whose glyph swaps under its mask. In
+      {/* The toast's dismiss, drawn the same: a 28px outlined disc whose glyph swaps under its mask. In
           the corner rather than the row, so a reopened banner keeps its row on one line at a phone's
           width. */}
       {choice && (
         <button type="button" className="consent__close" data-ix="press" data-focus="chrome" onClick={vals.closeConsent} aria-label="Close, keep your current choice" title="Close"
-          style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+          style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
       )}
     </div>
   );
@@ -1783,7 +1647,7 @@ function LandingStage({ vals, covered, quiet }) {
                     block instead: the gas still passes through, it just passes through dimmer, and
                     the words keep a ground to sit on. Which is the subject of the product anyway. */}
                 <span aria-hidden="true" style={sx('position:absolute;inset:-56px -40px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
-                <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:-.01em;color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
+                <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:var(--track-title);color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
                   {/* Two masked line-groups, not one wrapping line. It fixes the break where it
                       belongs — subject and copula end the first line at every width, rather than
                       wherever the measure happens to land — and gives each line its own reveal, so
@@ -1822,9 +1686,9 @@ function LandingStage({ vals, covered, quiet }) {
                     itself stays too — orbit.js measures [data-gate-actions] as one of the marks the
                     ring formation has to clear, so it has to be here whether or not it holds two. */}
                 <div data-gate-actions="1" style={sx('position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;align-self:center;margin-top:26px;pointer-events:auto')}>
-                  {vals.gateHasExample && (
-                    <button type="button" className="glass-cta" data-emph="primary" data-focus="chrome" onClick={vals.gateExample} aria-label="Explore an Example: open an example palette, read only"><TextSwap>Explore an Example</TextSwap></button>
-                  )}
+                  {/* `Explore an Example` stood here and opened the phone's example view, which is gone
+                      (17.09.26, audit C5): the story is how a phone sees the examples, and this gate
+                      only stands when there is no story to tell. */}
                   {/* `Save for Desktop` stood here — the quiet second act that copied the site's
                       address to the clipboard so the reader could open it on a machine that can run
                       the tool. Removed by request. Its handler is renderVals' gateCopyLink →
@@ -1832,17 +1696,14 @@ function LandingStage({ vals, covered, quiet }) {
                       it wrote was 'gate-link'. Left in place rather than deleted, because bringing
                       the act back is then a button rather than a feature.
 
-                      WHAT THIS COSTS, so it is a decision and not a surprise: the gate's one action
-                      is now behind `gateHasExample`, which is `feed.length > 0`. An empty feed —
-                      localStorage refused, or the seed failing — leaves the phone a statement, a
-                      sentence and no next move at all, which is the dead end the two acts were
-                      introduced to close. The examples are seeded on first run, so this is the
-                      storage-blocked case rather than the common one. */}
+                      WHAT THIS COSTS, so it is a decision and not a surprise: the gate holds no act
+                      at all now. It only stands when the story cannot — storage refused, or the seed
+                      failing — and there was never an example to open in that case either. */}
                 </div>
               </div>
             ) : (
               <div style={sx('position: relative; display: flex; flex-direction: column; align-items: center; max-width: 606px')}>
-                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:23ch;text-wrap:balance")}>
+                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-landing);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:23ch;text-wrap:balance")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface); font-size:var(--fs-statement); max-width: 580px')}>Colour Read from Light and Atmosphere.</span></span>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent); font-size:var(--fs-statement)')}>In Seconds.</span></span>
                 </h1>
@@ -1991,7 +1852,7 @@ function LandingStage({ vals, covered, quiet }) {
 function LogoLoader({ show }) {
   if (!show) return null;
   return (
-    <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:#ffffff')}>
+    <div data-load-wrap="1" aria-hidden="true" style={sx('position:fixed;inset:0;z-index:190;color:var(--ground-ink)')}>
       <div data-load-bg="1" style={sx('position:absolute;inset:0;background:var(--ground)')}></div>
       <div data-load-container="1" style={sx('position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;height:100%;padding:0 var(--page-gutter);box-sizing:border-box')}>
         <div style={{ width: '100%' }}>
@@ -2005,11 +1866,11 @@ function LogoLoader({ show }) {
               </div>
             </div>
             <div style={sx('flex:none;overflow:hidden')} data-load-numbox="1">
-              <div data-load-num="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:clamp(28px,4.4vw,40px);line-height:1;letter-spacing:var(--track-statement);color:#ffffff;font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
+              <div data-load-num="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-landing);line-height:1;letter-spacing:var(--track-statement);color:var(--ground-ink);font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
             </div>
           </div>
           <div style={sx('margin-top:24px;width:100%;height:3px;overflow:hidden')}>
-            <div data-load-progress="1" style={sx('width:100%;height:100%;background:#ffffff;transform-origin:0% center;transform:scale3d(0,1,1)')}></div>
+            <div data-load-progress="1" style={sx('width:100%;height:100%;background:var(--ground-ink);transform-origin:0% center;transform:scale3d(0,1,1)')}></div>
           </div>
         </div>
       </div>
@@ -2072,32 +1933,10 @@ export default function AppView({ vals }) {
      reachable" the early return was protecting. Its motion is parked while it is covered — see the
      landing lifecycle in PaletteApp's componentDidUpdate — so nothing renders behind an opaque
      panel; it simply resumes from the angle it was left at. */
-  if (vals.showMobileList) {
-    return (
-      /* dvh on the two phone wrappers, where 100vh is a document TALLER than the screen: the surface
-         over it is fixed and holds all the content, so the only thing that height ever produced was
-         a strip of empty page to rubber-band into below the fold. */
-      <div data-app="1" style={sx('min-height:100dvh;display:flex;flex-direction:column;background:var(--surface)')}>
-        <SkipLink />
-        <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
-        {vals.showLanding && <LandingStage vals={vals} covered />}
-        {/* A BUTTON HERE, not the decorative mark. On the gate the mark is an image — there is
-            nowhere for it to lead — but on the two surfaces above the gate it is the way home, the
-            same job it does in the tool. It is also why the foot below carries no `Back to Start`:
-            one gesture, in the one place it sits on every screen. */}
-        {/* Invisible on this surface and rendered for the index alone — see MarkScrim. */}
-        <MarkScrim />
-        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
-        <MobileExampleList ml={vals.mobileList} />
-        {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
-      </div>
-    );
-  }
   /* THE STORY, and it is the one phone branch that does NOT cover the landing.
 
-     The example list and the share view pass `covered`, which sets inert + aria-hidden and — through
-     _landingLit() — parks the orbit ticker, because those two surfaces are opaque and nothing behind
-     them can be seen. The story's first chapter is transparent BY DESIGN: the colour field showing
+     The shared-link view passes `covered`, which sets inert + aria-hidden and — through _landingLit()
+     — parks the orbit ticker, because that surface is opaque and nothing behind it can be seen. The story's first chapter is transparent BY DESIGN: the colour field showing
      through it is the prologue's visual, so the stage has to stay lit, readable and ticking. Passing
      `covered` here would leave chapter 1 as an empty screen over a frozen field.
 
@@ -2140,13 +1979,12 @@ export default function AppView({ vals }) {
         <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
         {vals.showLanding && <LandingStage vals={vals} covered />}
-        {/* The same mark the front page draws, in the same place: fixed, 165x26, the drifting
-            gradient under a difference blend. Opening an example must not change the brand — but it
-            does change what the mark DOES: decorative on the gate, the way home from here. */}
-        {/* The surface MarkScrim exists for: a 4:3 photograph bleeds to both edges and scrolls
-            straight under a mark that stays put the whole way down. */}
-        <MarkScrim />
-        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.returnToGate} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen" style={{ ...logoStyle, border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
+        {/* THE STORY'S BAR, ON A SHARED LINK TOO (17.09.26, audit C5, by request). This was the fixed
+            wordmark over a scrim, the last phone surface without the frosted bar; the example view that
+            shared this surface is gone. The masthead sits at the same child index as it does in the
+            story branch, so crossing from one to the other keeps it mounted. Its mark returns to the
+            start, as the fixed one did. */}
+        <DocHead vals={vals} floating onMark={vals.returnToGate} />
         <MobileShareView ms={vals.mobileShare} />
         {/* mounted on BOTH return paths — a shared link on a phone never reaches the one below */}
         {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
@@ -2205,7 +2043,7 @@ export default function AppView({ vals }) {
     );
   }
   return (
-    <div data-app="1" style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
+    <div data-app="1" {...(vals.hasOverlay ? { 'data-detail-open': '' } : null)} style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
 
       <SkipLink />
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
@@ -2232,12 +2070,18 @@ export default function AppView({ vals }) {
         <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, top: 'var(--nav-mark-top)', pointerEvents: 'none' }}></div>
       )}
       {vals.showLogoButton && (
-        <HBtn type="button" data-logo="1" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
-          style={{ ...logoStyle, top: 'var(--nav-mark-top)', border: 0, padding: 0, cursor: 'pointer' }} styleHover={{ opacity: 0.82 }} />
+        <>
+          {/* data-ix="mark" (17.09.26, audit E4): hover and press from the mark tier in global.css,
+              eased, where an HBtn opacity cut in and out. data-detail-open on the root hides it
+              while the palette detail is open (audit C4). */}
+          <button type="button" data-logo="1" data-ix="mark" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
+            style={{ ...logoStyle, top: 'var(--nav-mark-top)', border: 0, padding: 0, cursor: 'pointer' }} />
+          <LogoRing top="var(--nav-mark-top)" />
+        </>
       )}
 
       {/* click-to-zoom lightbox: fixed overlay the zoomed reference image FLIPs into */}
-      <div data-click-zoom-lightbox="1" style={sx('z-index:170;cursor:zoom-out;background-color:#000000e6;justify-content:center;align-items:center;padding:3em;display:none;position:fixed;inset:0')}></div>
+      <div data-click-zoom-lightbox="1" style={sx('z-index:170;cursor:zoom-out;background-color:var(--lightbox-scrim);justify-content:center;align-items:center;padding:3em;display:none;position:fixed;inset:0')}></div>
 
       <LogoLoader show={vals.showLoader} />
 
@@ -2337,7 +2181,7 @@ export default function AppView({ vals }) {
                 overflow:hidden mask; the spacing lives on the MASK, never on the span, or the
                 translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
-              <div style={sx('overflow:hidden')}><h1 data-drop-line="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;color:var(--on-surface);letter-spacing:-.01em")}>Start here</h1></div>
+              <div style={sx('overflow:hidden')}><h1 data-drop-line="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;color:var(--on-surface);letter-spacing:var(--track-title)")}>Start here</h1></div>
               {/* The lead breaks after "atmosphere" — and the break is a SECOND MASK, not a <br>.
                   One mask holding two lines is a slab: both halves ride up together while the title
                   and the CTA each arrive on their own, which is the one gesture maskLines.js was
@@ -2383,8 +2227,9 @@ export default function AppView({ vals }) {
               /privacy, which the footer links from this same screen.
               WHAT THAT COSTS, so the next person weighing it has the fact and not just the outcome:
               naming is not something the reader opts into. processFile goes straight to
-              _runPipeline and runInterpretation (pipeline.js), so the thumbnail is on its way the
-              moment an image is chosen, and every disclosure therefore arrives after the send. That
+              _runPipeline and _readPhotograph (pipeline.js), which sends the thumbnail as soon as the
+              colours are grouped, a second or two after an image is chosen, so every disclosure
+              still arrives after the send. That
               is a product decision, not an oversight, and it is the reason the privacy page states
               the automatic behaviour in its own first sentence on the subject rather than burying
               it. If a chooser-side note ever returns, it belongs above the button, not under it. */}
@@ -2392,14 +2237,22 @@ export default function AppView({ vals }) {
 
         {vals.isProcessing && (
           <div style={sx('display:flex;flex-direction:column;align-items:center;gap:30px;padding:14px 0 6px')}>
-            <div style={sx('position:relative;width:380px;height:250px;background:var(--surface);overflow:hidden')}>
+            {/* THE ATMOSPHERE'S SLOT, and only a slot (17.09.26). It had a ground, a clip and a 1px rule,
+                and was a picture in a box. The atmosphere lives on the page now: a small, colourless
+                version of the landing's field that ends at its own soft rim, with a canvas that
+                overhangs this box (procField.js). The box keeps its size so the stage does not move. */}
+            <div style={sx('position:relative;width:380px;height:250px')}>
               <canvas ref={vals.canvasRef} aria-hidden="true" style={sx('display:block;width:380px;height:250px')}></canvas>
-              <div style={sx('position:absolute;inset:0;box-shadow:inset 0 0 0 1px var(--line-strong);pointer-events:none')}></div>
             </div>
             <div style={sx('width:380px;display:flex;flex-direction:column;gap:12px')}>
               <div style={sx('display:flex;justify-content:space-between;align-items:center')}>
                 <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
-                  <span style={sx('width:7px;height:7px;background:var(--on-surface);animation:blink 1.5s ease infinite')} aria-hidden="true"></span>{vals.procStatus}</span>
+                  <span style={sx('width:7px;height:7px;background:var(--on-surface);animation:blink var(--dur-pulse) var(--ease-ambient) infinite')} aria-hidden="true"></span>
+                  {/* Each line of the reading rises into place through a mask, the swap the copy
+                      confirmation uses (val-mask), so a new step reads as arriving rather than as the
+                      text changing. Keyed by the step, which replays the rise. The steps are paced by
+                      the work itself (pipeline.js _readPhotograph). */}
+                  <span style={sx('display:inline-block;overflow:hidden')}><span key={vals.procStep} style={sx('display:inline-block;animation:val-mask-a var(--dur-swap) var(--ease-entrance) both')}>{vals.procStatus}</span></span></span>
                 <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); color: var(--on-surface-muted)')}>OKLCH</span>
               </div>
               <div style={sx('height:2px;width:100%;background:var(--line);position:relative')}>
@@ -2415,18 +2268,19 @@ export default function AppView({ vals }) {
           <div ref={vals.resultRef} style={sx('display:flex;flex-direction:column')}>
             {/* Shared-link view: someone else's palette, held in the URL and NOT in this archive.
                 Saving is the visitor's choice, so the strip says what is (not) happening and offers
-                both exits — keep it, or go make one. */}
+                both exits — keep it, or go make one. The sentence saying it is not saved went on
+                17.09.26 (audit H5, by request, with the toggletip that briefly held it): the strip
+                names the state and offers the exits. */}
             {vals.isSharedView && (
-              <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 14px;margin:0 0 18px;border:1px solid var(--line-strong);background:var(--surface-raised)')}>
-                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>A palette someone shared with you. It isn’t saved in this browser unless you save it.</span>
+              <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:10px 10px 10px 22px;margin:0 0 18px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:var(--surface-raised)')}>
+                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface)")}>Shared with you</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-                  {/* The other two that were passing a bare string, and so rendering no swap mask.
-                      Wrapped in the same B006Text every sibling uses, in the same 14px alignment box
-                      the icon-bearing labels carry, so the pair lines up with Add to Project and
-                      Check contrast rather than sitting a pixel off them. No icon, so no icon slot:
-                      the box is here for the baseline, not for a glyph. */}
-                  <B006 onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Save to Library</B006Text></span>} />
-                  <B006 onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Make your own</B006Text></span>} />
+                  {/* THE BANNER'S PAIR (17.09.26, audit A8, by request): set like the analytics
+                      banner's buttons, Save to Library filled as Accept is there. The strip is fully
+                      round, and its padding follows the pill: the text clears the curve, the buttons
+                      sit 10px in from it. */}
+                  <B006 data-emphasis="primary" onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Save to Library</B006Text></span>} />
+                  <B006 data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Make Your Own</B006Text></span>} />
                 </span>
               </div>
             )}
@@ -2435,8 +2289,10 @@ export default function AppView({ vals }) {
                 <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
                   <span data-ring="1" aria-hidden="true" style={b.bandRingStyle}></span>
                   <span data-fx="1" style={b.weightStyle}>{b.weightPct}</span>
-                  <button type="button" data-ix="icon" data-info="1" data-focus="value" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
-                    <IconHarmony />
+                  {/* The outset ring, as every other round control: the inset value ring filled a 28px
+                      circle. The icon rides the hover swap, like the close marks. */}
+                  <button type="button" data-ix="icon" data-info="1" data-focus="chrome" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
+                    <TextSwap><IconHarmony /></TextSwap>
                   </button>
                   <div style={b.valuesWrap}>
                     {b.values.map((v) => (<ValueRow key={v.key} v={v} showCaveat={false} />))}
@@ -2482,7 +2338,7 @@ export default function AppView({ vals }) {
                   02.09.26); the group is still one flex box so it wraps as one. */}
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-                <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} />
+                <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
                 <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
@@ -2497,7 +2353,7 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
-                <h1 data-fx="1" data-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:-.015em;color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</h1>
+                <h1 data-fx="1" data-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</h1>
                 {/* Two traits, then More. Four capitalised pills read as a legend rather than a
                     description, and the remaining ones are one click away with the reading.
 
@@ -2520,7 +2376,7 @@ export default function AppView({ vals }) {
                 {vals.result.hasTraits && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding: 0 8px; border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase; border-radius: var(--radius-pill)')}>{d}</span>
+                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase; border-radius: var(--radius-pill)')}>{d}</span>
                   ))}
                 </div>
                 )}
@@ -2619,13 +2475,16 @@ export default function AppView({ vals }) {
         )}
 
         {vals.isError && (
-          <div role="alert" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;min-height:420px;padding:40px;background:var(--surface-raised);border:1px solid var(--line-strong)')}>
-            <div aria-hidden="true" style={sx('width:42px;height:42px;display:flex;align-items:center;justify-content:center;border:1px solid var(--on-surface);font-family:Neue Montreal;font-size:var(--fs-subtitle);line-height:1;color:var(--on-surface)')}>!</div>
+          /* THE DROPZONE'S SHAPE, AND THE APP'S BUTTON (17.09.26, audit A2). This panel stands where the
+             dropzone was, so it takes the dropzone's corner, and the act is the filled button-006, set
+             like the analytics banner's (by request: CONSENT_BTN_TYPE and the [data-voice="banner"] rule in
+             global.css). Text only: the "!" above the title went, ring and all, by request. */
+          <div role="alert" data-error-panel="1" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;min-height:420px;padding:40px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-surface)')}>
             <div style={sx('text-align:center;max-width:440px')}>
-              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:-.01em")}>{vals.errorTitle}</div>
+              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:var(--track-title)")}>{vals.errorTitle}</div>
               <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
             </div>
-            <button type="button" data-ix="cta" data-focus="chrome" onClick={vals.onBrowse} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);padding:var(--btn-pad-lg);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}><TextSwap>Choose another image</TextSwap></button>
+            <B006 data-emphasis="primary" onClick={vals.onBrowse} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Choose Another Image</B006Text></span>} />
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </div>
         )}
@@ -2793,7 +2652,7 @@ function FeedSection({ vals }) {
           from the row. */}
       <div style={sx('display:flex;align-items:stretch;gap:8px;flex:0 1 auto;min-width:0')}>
       <div data-proj-rail="1" style={sx('display:inline-flex;align-items:stretch;border:1px solid var(--action-line);flex:0 1 auto;min-width:0')}>
-        <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:2px;flex:1 1 auto;min-width:0;overflow-x:auto')}>
+        <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:' + (vals.projSteps.show ? '2px 20px 2px 2px' : '2px') + ';flex:1 1 auto;min-width:0;overflow-x:auto')}>
           <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
           {vals.projectChips.map((ch) => (
             /* The label is its own span so it can be the ONLY part that truncates. As a bare text
@@ -2811,8 +2670,16 @@ function FeedSection({ vals }) {
             arrives after you needed it. The one that cannot act is disabled rather than removed —
             same reading as the pager's Prev at page one, and the pair keeps its width so the chips
             beside it never shift as you step. */}
+        {/* THE ARROWS ARE A PILL OF THEIR OWN (17.09.26, audit C11, by request: "full radius on both
+            sides", where a straight hairline divided them from the chips). The pill lies on the
+            rail's own edge (the -1px on three sides) and paints the page under it, so the rail's
+            line is covered and drawn once, by the pill, and only its round left end is new. It
+            reaches 18px back over the scroller, so the chips pass under that round end rather than
+            stopping at a straight cut; the scroller pads its end by the same 18 (20 with its own 2)
+            while the pair is here, so the rail keeps its width and the last chip still clears the
+            pill. misc.js leaves those 18px out of the view it steps and reveals in. */}
         {vals.projSteps.show && (
-          <div data-proj-steps="1" style={sx('display:flex;align-items:stretch;flex:none;border-inline-start:1px solid var(--action-line)')}>
+          <div data-proj-steps="1" style={sx('position:relative;z-index:1;display:flex;align-items:stretch;flex:none;margin:-1px -1px -1px -18px;border:1px solid var(--action-line);border-radius:var(--radius-pill);background:var(--surface)')}>
             {/* "Previous projects" / "Next projects" — the pager's own two words at the foot of this
                 same list, with this control's noun in place of "page". One vocabulary for one
                 relationship, and no left/right in it: the words survive a mirrored layout even
@@ -2921,10 +2788,13 @@ function FeedSection({ vals }) {
   const filterRow = vals.showProjectsBar && vals.anyFilter && (
     <div role="toolbar" aria-label="Applied filters" aria-controls="library-list" data-filter-toolbar="1" data-applied-filters="1" onKeyDown={vals.toolbarKey} style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px')}>
       {/* One chip per applied filter across every group — accessibility first, matching the panel's
-          group order — each removable on its own, so a narrowing can be undone from either end. */}
+          group order — each removable on its own, so a narrowing can be undone from either end.
+          THE APP'S CLOSE GLYPH, IN THE SWAP (17.09.26, audit C2, by request). The cross was a typed
+          "✕" and nothing moved on hover; it is IconClose now, and the label and the glyph slide
+          through one mask together, the way a button-006 carries its icon inside its label. */}
       {vals.appliedTags.map((t) => (
         <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
-          {t.label}<span aria-hidden="true" style={{ fontSize: 'var(--fs-fine)' }}>✕</span>
+          <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.label}<IconClose size={10} /></span></TextSwap>
         </button>
       ))}
       {/* No aria-label: the visible text is the accessible name, so label-in-name (SC 2.5.3) can
@@ -2945,7 +2815,7 @@ function FeedSection({ vals }) {
           What is left is the name and its marker. The marker is not a control and must never read
           as one: no border tier, no fill, 16px of glyph. See the region comment above. */}
       <div style={sx('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:-.01em; color: var(--on-surface); margin: 0")}>Library</h2>
+        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
         {/* THE STORAGE MARKER STOOD HERE and is removed by request. It was a 16px toggletip beside
             the heading carrying the one fact no control on this page states — where the library
             lives: saved in this browser, on this machine, no account and no server copy, and gone
@@ -2954,8 +2824,8 @@ function FeedSection({ vals }) {
             browsing, a locked-down profile, a full disk) the glyph became ! and the sheet said
             nothing here would survive closing the tab. That signal has no other home in the
             interface — persist() still fails silently — so the failure is now unannounced.
-            renderVals keeps storeInfo, storeInfoOpen, toggleStoreInfo and storeInfoKey, all now
-            unread: putting the marker back is this block, not a rebuild. */}
+            Its unread state went on 17.09.26 (audit H3), and so did the toggletip component the
+            empty states briefly used (audit H5, by request): putting the marker back is a rebuild. */}
       </div>
 
       {/* THE TWO CONTROL BANDS, in every view. They used to be one strip that rode the sort row in
@@ -2989,27 +2859,36 @@ function FeedSection({ vals }) {
           hiding the one they had, which is that the combination is unsatisfiable. Two ways out:
           undo the most recent narrowing, or drop the lot. */}
       {vals.filteredEmpty && (
-        <div role="status" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
+        /* A CORNER FOR ITS HEIGHT (17.09.26, radius issue, by request): --radius-card, 12px, as
+           Nothing here yet. The panel is 166px tall; Start here's 28px is sized for its 420, and on
+           this height it read too strong. It was full round, then 28px (R1). */
+        <div role="status" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-card)')}>
+          {/* The title alone (17.09.26, audit H5, by request): the combining rule stood under it
+              as a sentence, then briefly in a toggletip. */}
           <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>No palette matches every filter</div>
-          <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-align:center;max-width:46ch;text-wrap:pretty")}>Filters combine, so each one you add narrows what is left. Remove the last one, or start again.</div>
-          {/* The section's control voice (Title Case, --fs-detail), not the app's uppercase CTA
-              voice: these act on the same filter state the toolbar above owns, so they wear the
-              toolbar's clothes. No aria-labels — the visible text is the name (SC 2.5.3). */}
+          {/* THE BANNER'S PAIR (17.09.26, audit A3, by request): button-006 set like the analytics
+              banner's, the filled one first as Accept is there. They were the toolbar's small pills.
+              No aria-labels — the visible text is the name (SC 2.5.3). */}
           <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRemoveLast} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Remove last filter</TextSwap></button>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear filters</TextSwap></button>
+            <B006 data-emphasis="primary" onClick={vals.onRemoveLast} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Remove Last Filter</B006Text></span>} />
+            <B006 data-emphasis="secondary" onClick={vals.onClearAll} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Clear Filters</B006Text></span>} />
           </span>
         </div>
       )}
 
+      {/* A CORNER FOR ITS HEIGHT (17.09.26, radius issue, by request): --radius-card, 12px. The
+          same dashed panel as Start here above it, but 162px tall to Start here's 420, so it takes
+          a corner sized for that height: 28px, Start here's, read too strong here. It was full round
+          (A8), then 28px.
+          The title alone (audit H5, by request): "Palettes you generate collect here, newest first"
+          stood under it, then briefly in a toggletip. */}
       {vals.feedEmpty && (
-        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong)')}>
+        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-card)')}>
           <div aria-hidden="true" style={sx('position:relative;width:34px;height:34px')}>
             <div style={sx('position:absolute;left:0;top:0;width:22px;height:22px;border:1px solid var(--line-strong)')}></div>
             <div style={sx('position:absolute;right:0;bottom:0;width:22px;height:22px;border:1px solid var(--on-surface-muted);background:var(--surface-raised)')}></div>
           </div>
           <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing here yet</div>
-          <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>Palettes you generate collect here, newest first.</div>
         </div>
       )}
       <div ref={vals.gridRef} onKeyDown={vals.onGridKey}>
@@ -3135,10 +3014,10 @@ function FeedSection({ vals }) {
                   The hover tint from [data-ix="press"] is deliberately KEPT: these two have no label
                   to swap and no edge left to answer with, so the tint is now the only thing that
                   says the glyph under the pointer is the one that will act. */}
-              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 36px);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
+              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 38px);z-index:6;width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:30px;height:30px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
+              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
@@ -3163,7 +3042,7 @@ function FeedSection({ vals }) {
                 <div data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(3,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
                   <span aria-hidden="true" style={vals.pageTogglePill}></span>
                   {vals.pageSizeOptions.map((o) => (
-                    <button key={o.label} type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={o.pressed} tabIndex={o.tabIndex} onClick={o.onSelect} onKeyDown={vals.pageToggleKey} style={o.style}>{o.label}</button>
+                    <button key={o.label} type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={o.pressed} tabIndex={o.tabIndex} onClick={o.onSelect} onKeyDown={vals.pageToggleKey} style={o.style}><TextSwap>{o.label}</TextSwap></button>
                   ))}
                 </div>
               </div>
@@ -3204,11 +3083,18 @@ function FeedSection({ vals }) {
                           child, so everything else in the card paints over it. */}
                       <span data-tile-panel="1" aria-hidden="true" style={c.panelStyle}></span>
                       <div data-tile-hero="1" style={c.heroWrapStyle} aria-hidden="true">
-                        {c.hasImage && (<span data-tile-img="1" aria-hidden="true" style={c.imgStyle}></span>)}
+                        {/* The two blurred copies ride inside the photograph, so they take the engine's
+                            drift with it; the tint is the hero's. All three fade with the caption when
+                            the card opens (universe.js openTile). */}
+                        {c.hasImage && (<span data-tile-img="1" aria-hidden="true" style={c.imgStyle}>
+                          <span data-tile-fade="1" style={TILE_FADE.near}></span>
+                          <span data-tile-fade="1" style={TILE_FADE.far}></span>
+                        </span>)}
                         {c.noImage && (<span style={c.heroFallback}></span>)}
+                        <span data-tile-fade="1" style={TILE_FADE.tint}></span>
                       </div>
                       <div data-tile-caption="1" style={c.captionStyle}>
-                        <CardIdentity c={c} />
+                        <CardIdentity c={c} onPhoto />
                       </div>
                       {/* the card's own share of the shade — written by the engine while the card is
                           lifted above the shade, so opening never pops it bright (universe.js render) */}
@@ -3235,7 +3121,7 @@ function FeedSection({ vals }) {
             <div data-lenis-prevent="1" style={sx('position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;padding:calc(var(--nav-top) * 3 + var(--nav-h) + 32px) var(--page-gutter) var(--page-gutter)')}>
               <div style={sx('display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;max-width:1200px;margin:0 auto')}>
                 {vals.feedNodes.map((c, ci) => (
-                  <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onClick={c.onClick} style={sx('position:relative;display:block;text-align:left;width:100%;background:var(--surface-raised);border:1px solid var(--line);padding:0;margin:0;cursor:pointer;font:inherit;overflow:hidden')}>
+                  <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onClick={c.onClick} style={sx('position:relative;display:block;text-align:left;width:100%;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-card);padding:0;margin:0;cursor:pointer;font:inherit;overflow:hidden')}>
                     <div style={sx('position:relative;height:170px;width:100%;overflow:hidden;background:var(--line)')} aria-hidden="true">
                       {c.hasImage && (<span aria-hidden="true" style={c.imgStyle}></span>)}
                       {c.noImage && (<span style={c.heroFallback}></span>)}
@@ -3247,7 +3133,7 @@ function FeedSection({ vals }) {
                       <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                         <CardIdentity c={c} />
                       </div>
-                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:-0.01em;text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
+                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{c.descriptors}</span>
                     </div>
                     <CardMetrics c={c} />
                   </button>
@@ -3262,7 +3148,7 @@ function FeedSection({ vals }) {
               same air under it as over it (--nav-top), with its right edge on the bar's right edge,
               the grid's outer line: still the top-right corner where a full-screen view's close is
               looked for, and the stage's own, not a control added to the site's bar. */}
-          <div data-universe-chrome="1" style={sx('position: absolute; top: calc(var(--nav-top) * 2 + var(--nav-h)); left: 0; right: 0; height: 32px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); background: linear-gradient(180deg, #FAF9F500, #00000000); pointer-events: none')}>
+          <div data-universe-chrome="1" style={sx('position: absolute; top: calc(var(--nav-top) * 2 + var(--nav-h)); left: 0; right: 0; height: 32px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); pointer-events: none')}>
             <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
             {/* The app's close mark, at the 32px circle every other surface uses, with the same one
                 deviation: --surface behind it, because this one floats over a live WebGL field too.
@@ -3310,11 +3196,11 @@ function ContrastDrawer({ vals }) {
        dismissed and so is still there when the drawer closes. */
     <div style={sx('position:fixed;inset:0;z-index:157')}>
       <div data-cx-backdrop="1" onClick={vals.closeContrast} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
+      <div data-cx-drawer="1" data-contrast-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Contrast checker for ' + contrast.name} onKeyDown={vals.trapContrast} style={sx('position:absolute;right:0;top:0;bottom:0;width:500px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);border-radius:var(--radius-surface) 0 0 var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-cx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Contrast checker</span>
-            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</h2>
+            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</h2>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" title="Close" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
@@ -3337,8 +3223,8 @@ function ContrastDrawer({ vals }) {
           </div>
           <div data-cx-cell="size" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);height:var(--cx-control-h);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="Text size">
             <span aria-hidden="true" style={contrast.sizePill}></span>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal text</TextSwap></button>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large text</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal Text</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large Text</TextSwap></button>
           </div>
           <button type="button" data-cx-cell="filter" data-ix="seg" data-focus="chrome" onClick={contrast.togglePass} aria-pressed={contrast.passPressed} style={contrast.passStyle}><TextSwap>{contrast.passLabel}</TextSwap></button>
         </div>
@@ -3395,12 +3281,11 @@ function ContrastDrawer({ vals }) {
                   </div>
                   {row.cells.map((cell, ci) => (
                     <div key={ci} data-cx-cell={cell.key} style={cell.style}>
-                      {/* The ratio joins the glyph behind aria-hidden and the whole statement is
-                          carried by the hidden span below it. Read aloud, the visible pair was the
-                          number alone: "10.3", with the two colours it compares in a header several
-                          rows back and the verdict in a glyph screen readers are told to skip. */}
-                      <span aria-hidden="true" style={cell.numStyle}>{cell.ratio}</span>
-                      <span data-cx-mark="1" aria-hidden="true" style={cell.glyphStyle}>{cell.glyph}</span>
+                      {/* The ratio is aria-hidden and the whole statement is carried by the hidden
+                          span below it. Read aloud, the visible number alone was "10.3", with the two
+                          colours it compares in a header several rows back. No ✓/✕ mark since
+                          17.09.26: the fill and the number's weight carry the verdict (renderVals). */}
+                      <span data-cx-num="1" aria-hidden="true" style={cell.numStyle}>{cell.ratio}</span>
                       {cell.aria && <span style={visuallyHidden}>{cell.aria}</span>}
                     </div>
                   ))}
@@ -3444,7 +3329,7 @@ function DetailOverlay({ vals }) {
     <div ref={vals.overlayRef} data-overlay-stage="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
       <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);flex:none')}>
         <div style={sx('display:flex;align-items:baseline;gap:14px;min-width:0')}>
-          <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap")}>{overlay.name}</h2>
+          <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap")}>{overlay.name}</h2>
           <span style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>{overlay.time}</span>
         </div>
         {/* Filing used to stand here, in the chrome, while the result view files from its action
@@ -3469,8 +3354,8 @@ function DetailOverlay({ vals }) {
             <div data-ochrome="1" style={sx('display:flex;flex-direction:column;gap:8px')}>
               <span style={b.weightStyle}>{b.weightPct}</span>
             </div>
-            <button type="button" data-ix="icon" data-info="1" data-focus="swatch" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
-              <IconHarmony size={14} />
+            <button type="button" data-ix="icon" data-info="1" data-focus="chrome" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
+              <TextSwap><IconHarmony /></TextSwap>
             </button>
             <div data-ochrome="1" style={b.valuesWrap}>
               {b.values.map((v) => (<ValueRow key={v.key} v={v} showCaveat={true} />))}
@@ -3497,7 +3382,7 @@ function DetailOverlay({ vals }) {
             <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
               <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
-              <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} />
+              <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
               <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
             </div>
           </div>
@@ -3543,7 +3428,6 @@ function DetailOverlay({ vals }) {
 const OvRule = ({ edge }) => (
   <span data-ov-rule="1" aria-hidden="true" style={sx('position:absolute;left:0;right:0;' + (edge || 'top') + ':-1px;height:1px;background:var(--line);transform-origin:0% 50%;pointer-events:none')}></span>
 );
-const facetLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);text-transform:capitalize;white-space:nowrap;flex:none;font-weight:500');
 // The measured groups' labels arrive already cased — Text-Ready, Limited Text, Dark, Warm — so they
 // are printed as authored. Capitalize exists for the TRAIT rows, whose terms are stored lowercase
 // ('graphic', 'nostalgic') and have no casing of their own; it stays on those and comes off these.
@@ -3551,6 +3435,11 @@ const facetLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);l
 // next label that is not already Title Case would be silently rewritten by a stylesheet.
 // Everything else about the two is identical, which is the point: one row grammar, two casing
 // sources.
+// THE FILTER ROWS ARE ADD TO PROJECTS' ROWS (17.09.26, audit Q4): a raised stadium with a hairline
+// edge, 11px by 18px of inset, 6px apart, the edge going to ink when the row is on. The plate is its
+// own layer, under the row's content, so its hover can ease without touching the row's own box.
+const SEC_ROW = 'position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-radius:var(--radius-pill);padding:11px 18px;font:inherit;';
+const SEC_PLATE = sx('position:absolute;inset:0;border-radius:var(--radius-pill);pointer-events:none');
 const measuredLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;flex:none;font-weight:500');
 
 // ============================== THE LIBRARY PANEL ==============================
@@ -3584,7 +3473,7 @@ function LibraryDrawer({ vals }) {
     // 157 now, above this panel as well (see ContrastDrawer). Still below the wipe (160), lightbox
     // (170) and loader (190), which are whole-screen states that outrank any panel.
     <div style={sx('position:fixed;inset:0;z-index:156;pointer-events:none')}>
-      <div data-library-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Manage Library" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:-18px 0 40px rgba(0,0,0,.10);display:flex;flex-direction:column;overflow-y:auto')}>
+      <div data-library-dialog="1" data-lenis-prevent="1" role="dialog" aria-label="Manage Library" style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;pointer-events:auto;background:var(--surface);border-left:1px solid var(--line-strong);border-radius:var(--radius-surface) 0 0 var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column;overflow-y:auto')}>
         {/* STICKY, and it is the state that makes it necessary rather than the title. The count, the
             applied chips and Clear all are what you consult while choosing, and the Character list
             is long enough that choosing scrolls all three off the top — so the panel answered "did
@@ -3598,7 +3487,7 @@ function LibraryDrawer({ vals }) {
                 was then the whole panel; it is now one of two things this panel does, and it is
                 said by the tab below rather than twice over. */}
             <span style={sx('display:flex;align-items:center;gap:9px;min-width:0')}>
-              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>Manage Library</h2>
+              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>Manage Library</h2>
               {/* THE PANEL'S ⓘ STOOD HERE and is removed by request, as the Library heading's was.
                   It carried two things. The first was the combining rule — pick more than one value
                   in a group to widen, combine groups to narrow — which has no other home in the
@@ -3609,8 +3498,7 @@ function LibraryDrawer({ vals }) {
                   `title` and repeats it in the accessible name ("3 or more colour pairs meet WCAG AA
                   for normal text"), so the words are still one hover away from the row they define
                   rather than two clicks away in a sheet about the panel.
-                  renderVals keeps filterInfoOpen, toggleFilterInfo, filterInfoKey and a11yDefs, all
-                  now unread. */}
+                  Its unread state (filterInfoOpen, a11yDefs) went on 17.09.26, audit H3. */}
             </span>
             {/* THE COUNT IS PRINTED NOW, not only spoken. It was a bare live region on the argument
                 that the list behind is undimmed and can be read directly — true when the panel is
@@ -3667,7 +3555,9 @@ function LibraryDrawer({ vals }) {
           <span aria-hidden="true" style={vals.libTabPill}></span>
           {vals.libTabs.map((t) => (
             <button key={t.key} type="button" data-lib-tab={t.key} data-ix="seg" data-focus="chrome" aria-pressed={t.active} aria-controls="library-panel" aria-label={t.aria} onClick={t.onClick} onKeyDown={vals.libTabKey} style={t.style}>
-              <TextSwap>{t.label}</TextSwap>{t.count && <span style={t.countStyle}>{t.count}</span>}
+              {/* A plain wrapper, so the flex line takes the label's baseline from its text: the swap
+                  clips, and a clipping flex item's baseline is its bottom edge. */}
+              <span><TextSwap>{t.label}</TextSwap></span>{t.count && <span style={t.countStyle}>{t.count}</span>}
             </button>
           ))}
         </div>
@@ -3700,12 +3590,12 @@ function LibraryDrawer({ vals }) {
 
         {/* NOTHING TO FILTER YET is a state this panel could not previously be in: the trigger used
             to require a facet to exist before it appeared at all. It can now be opened for the
-            Projects tab alone, so the Filter tab has to be able to say that there is nothing here
-            and why — a library with no palettes in it has no traits to narrow by. */}
+            Projects tab alone, so the Filter tab has to be able to say that there is nothing here.
+            The why ("filters arrive with the first palette you save") went on 17.09.26, audit H5,
+            by request. */}
         {!vals.showFacet && (
           <div data-tg-sec="1" role="status" style={sx('display:flex;flex-direction:column;gap:8px;padding:20px var(--page-gutter) 26px')}>
             <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing to filter yet</span>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Filters are built from what your palettes are made of, so they arrive with the first one you save.</span>
           </div>
         )}
 
@@ -3720,7 +3610,7 @@ function LibraryDrawer({ vals }) {
              mask, then row by row the mark, label and count rise and the hairline draws, on scroll
              inside the drawer. Not data-tg-sec: the panel's own block fade would otherwise compose
              with the reveal on the same element. */
-          <div data-sec="1" style={sx('padding:18px calc(var(--page-gutter) - 12px) 0')}>
+          <div data-sec="1" style={sx('padding:18px var(--page-gutter) 0')}>
             {/* No eyebrow, no note of its own — both moved into the panel's one paragraph above.
                 The group keeps its name for assistive tech on the role="group" below, which is
                 where it was always doing the load-bearing work. */}
@@ -3731,16 +3621,17 @@ function LibraryDrawer({ vals }) {
                 coverage" named the measurement, which made the group read as a compliance report.
                 Text usability names the QUESTION the group answers — can I set type in this — which
                 is why anyone opens it. */}
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>Text usability</span>
-            <div role="group" aria-label="Filter by text usability" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 18px 8px')}>Text usability</span>
+            <div role="group" aria-label="Filter by text usability" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;gap:6px')}>
               {vals.a11yOptions.map((o) => (
-                <button key={o.key} type="button" data-sec-row="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx('position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid transparent;padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
-                  {/* the row's hairline, drawn rather than present: scaleX on --rule from the left
-                      edge (the section rule's own primitive), defaulting to 1 so no JS, no GSAP and
-                      reduced motion all leave a plain line. Sits where border-bottom did; the border
-                      stays, transparent, so the row's box is unchanged. */}
-                  <span data-row-rule="1" aria-hidden="true" style={sx('position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--line);transform:scaleX(var(--rule,1));transform-origin:0 50%;pointer-events:none')}></span>
-                  <span data-reveal="1" style={sx('display:inline-flex;flex:none')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
+                <button key={o.key} type="button" data-sec-row="1" data-ex-item={o.disabled ? undefined : '1'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx(SEC_ROW + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  {/* the row's plate (17.09.26, audit Q4), there from the first frame: the pill is
+                      established and only its contents arrive (by request: no fade, no wipe). Its
+                      fill, edge and hover are global.css [data-row-plate]. */}
+                  <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
+                  {/* data-reveal-rise: the tick box rises through this box's clip on its row's beat,
+                      as the label and count rise through their line masks (pageReveal.js). */}
+                  <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
                   <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
                   {/* THE COUNT IS A COLUMN AGAIN. It sat against its label — "count belongs to the
                       label, so it sits against it" — and that is true of the pairing and false of
@@ -3780,17 +3671,18 @@ function LibraryDrawer({ vals }) {
             Temperature → Warm still left an interpretive `warm` on offer below, meaning something
             else. A dimension owns its domain words. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
-          <div key={g.id} data-sec="1" style={sx('padding:14px calc(var(--page-gutter) - 12px) 0')}>
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 12px 6px')}>{g.label}</span>
-            <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column')}>
+          <div key={g.id} data-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 18px 8px')}>{g.label}</span>
+            <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;gap:6px')}>
               {g.options.map((o) => (
-                <button key={o.key} type="button" data-sec-row="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx('position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid transparent;padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
-                  {/* the row's hairline, drawn rather than present: scaleX on --rule from the left
-                      edge (the section rule's own primitive), defaulting to 1 so no JS, no GSAP and
-                      reduced motion all leave a plain line. Sits where border-bottom did; the border
-                      stays, transparent, so the row's box is unchanged. */}
-                  <span data-row-rule="1" aria-hidden="true" style={sx('position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--line);transform:scaleX(var(--rule,1));transform-origin:0 50%;pointer-events:none')}></span>
-                  <span data-reveal="1" style={sx('display:inline-flex;flex:none')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
+                <button key={o.key} type="button" data-sec-row="1" data-ex-item={o.disabled ? undefined : '1'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx(SEC_ROW + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  {/* the row's plate (17.09.26, audit Q4), there from the first frame: the pill is
+                      established and only its contents arrive (by request: no fade, no wipe). Its
+                      fill, edge and hover are global.css [data-row-plate]. */}
+                  <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
+                  {/* data-reveal-rise: the tick box rises through this box's clip on its row's beat,
+                      as the label and count rise through their line masks (pageReveal.js). */}
+                  <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
                   <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
                   <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
@@ -3799,104 +3691,12 @@ function LibraryDrawer({ vals }) {
           </div>
         ))}
 
-        {/* THE CHARACTER TRAITS DISCLOSURE WAS HERE and has been removed by request. It was the
-            heading-and-chevron row that opened the interpretive facets — the reading that Graphic
-            and Smouldering are judgements about a palette while lightness and temperature are
-            measurements of it. The drawer now ends after the three measured groups.
-
-            WHAT IS LEFT BEHIND, AND WHY IT IS NOT AN OVERSIGHT: the block below still exists in
-            full — the trait search field, the Most-used / A–Z sort and the tag list — but it is
-            gated on vals.charOpen, and the control that could set that flag was the button removed
-            here. So it renders never. It is left in place rather than deleted for the same reason
-            the backup menu's handlers were: bringing the section back should be a button, not a
-            rebuild, and this is ~360 lines of working UI that nothing else can reach or damage.
-            renderVals still supplies charOpen, toggleChar, charAria and charLabel, now unread.
-
-            Say the word if the whole section should go; it comes out as one contiguous block. */}
-        {vals.charOpen && (<div data-facet-char="1">
-
-        {/* No heading and no explanation over the tag list. The search field, the Count/A–Z toggle
-            and a column of tag rows say what this is without a label on top of them, and the
-            sentence that used to sit here explained a counting rule that the counts demonstrate the
-            first time you read two of them. The group keeps its accessible name (aria-label on the
-            list below), so nothing is lost to a screen reader. */}
-
-        {/* A bordered field, not an underlined line of text — the old styling read as a heading,
-            so the one control you are meant to type into did not look like an input. Clear button
-            appears only when there is something to clear, and hands focus back to the field. */}
-        <div data-tg-sec="1" style={sx('padding:16px var(--page-gutter) 0;display:flex;align-items:center;gap:8px')}>
-          <div style={sx('flex:1;min-width:0;display:flex;align-items:center;gap:6px;border:1px solid var(--action-line);background:var(--surface-raised);padding:0 8px 0 10px')}>
-            {/* Named for its SCOPE. "Search tags" sat inside a panel with four groups in it and
-                read as a search of the filter, or of the Library; it reaches the character traits
-                below and nothing else. */}
-            <input data-facet-search="1" data-focus="field" type="text" value={vals.tagQuery} onChange={vals.onTagQuery} placeholder="Search character traits" aria-label="Search character traits" style={sx('flex:1;min-width:0;background:transparent;border:none;padding:9px 0;font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface)')} />
-            {vals.hasTagQuery && (
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} aria-label="Clear search" style={sx('flex:none;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:none;border:none;padding:0;font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted);cursor:pointer')}>✕</button>
-            )}
-          </div>
-          {/* sort: discovery vs known-item lookup, on the existing segmented toggle style.
-              "Count" named the mechanism and, set in the app's filled toggle beside a plain search
-              field, read as the panel's primary action — a sort state impersonating a CTA. "Most
-              used" names the ordering instead, which is the thing being chosen. */}
-          <div role="group" aria-label="Sort character traits" style={sx('display:flex;align-items:center;gap:6px;flex:none')}>
-            <button type="button" data-ix="seg" data-focus="chrome" aria-pressed={vals.tagSort === 'count'} onClick={vals.sortByCount} style={vals.sortCountStyle}><TextSwap>Most used</TextSwap></button>
-            <button type="button" data-ix="seg" data-focus="chrome" aria-pressed={vals.tagSort === 'alpha'} onClick={vals.sortByAlpha} style={vals.sortAlphaStyle}>A–Z</button>
-          </div>
-        </div>
-
-        <div data-tg-sec="1" role="group" aria-label="Character traits" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;padding:10px calc(var(--page-gutter) - 12px) 26px')}>
-          {vals.facetOptions.map((o) => (
-            <button key={o.key} type="button" data-tg-cell="1" data-ix={o.disabled ? undefined : 'cell'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onPick} style={sx('display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:var(--btn-pad-lg);font:inherit;' + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
-              {/* A checkbox, not a dot that appears. The old marker was invisible when unselected,
-                  so an unpicked row showed nothing where its state should be — the affordance only
-                  existed once you had already used it. This box is always present and states which
-                  of two states it is in: empty outline → filled with a check. Shape, fill AND glyph
-                  all change, so it never rests on colour (SC 1.4.1). aria-pressed on the row button
-                  carries the same fact to assistive tech. */}
-              <FacetMark active={o.active} unavailable={o.disabled} />
-              <span style={facetLabelStyle}>{o.label}</span>
-              {/* Same placement as the measured groups above: a trailing column, on the same inset.
-                  It was parked against the label for a while — the argument being that a number
-                  belongs to its noun — and the argument holds right up until there are eleven of
-                  them and none of them line up. What made the old right-hand column wrong was the
-                  150px colour strip that used to sit between the name and its number; the strip is
-                  gone, so the column is just a column. */}
-              <span style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
-              {/* Checkbox, label, count — the same three things every facet row now shows. An
-                  exemplar name and a 150px colour strip used to sit here: a sample of ONE palette
-                  standing in for a whole tag, which invited the reader to generalise from it, and
-                  a second colour object competing with the swatch strips in the list behind. */}
-            </button>
-          ))}
-          {/* An empty state that says what happened and offers the way out, rather than a dead
-              two-word label. It also covers the non-search case: if a selection has narrowed the
-              archive so far that no further tag would leave anything, the list is empty for a
-              different reason and should say so. */}
-          {vals.facetEmpty && (
-            <div role="status" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 2px')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>
-                {vals.hasTagQuery ? 'No character trait matches “' + vals.tagQuery + '”.' : 'No further trait would narrow this selection.'}
-              </span>
-              {vals.hasTagQuery && (
-                <button type="button" data-ix="press" data-focus="chrome" onClick={vals.clearTagQuery} style={sx('background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear search</TextSwap></button>
-              )}
-            </div>
-          )}
-          {/* A RANKED SHORT SET, then the rest on demand. The full vocabulary turned the interpretive
-              layer into the panel's dominant task — a column of twenty rows under three groups of
-              three, which is a hierarchy stated in height. The first six by the active ordering are
-              where the answer almost always is; Show all is one press away and never hides a
-              SELECTED trait, which stays listed whatever the cut is (see facetOptions). */}
-          {vals.facetMore && (
-            <button type="button" data-tg-cell="1" data-ix="press" data-focus="chrome" aria-expanded={vals.facetAllOpen} aria-label={vals.facetMore.aria} onClick={vals.facetMore.onToggle} style={sx('align-self:flex-start;margin-top:12px;display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid var(--action-line);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}>
-              <span data-disc-chev="1" data-open={vals.facetAllOpen ? '1' : '0'} aria-hidden="true" style={sx('font-size:var(--fs-nano);color:var(--on-surface-muted)')}>▸</span>{vals.facetMore.label}
-            </button>
-          )}
-          {/* Clear all is gone from here. It sat at the bottom of the longest list in the panel, so
-              the control that undoes a narrowing was furthest from the rows that caused it; it is in
-              the sticky header now, beside the count it acts on. */}
-        </div>
-        </div>)}
+        {/* THE CHARACTER TRAITS DISCLOSURE WAS HERE and has been removed by request: the
+            heading-and-chevron row that opened the interpretive facets. The section it opened (the
+            trait search, the Most used / A–Z sort, the trait rows and their Show All) could no
+            longer be reached and still wore the old square style, so it went on 17.09.26 (audit H3
+            and E9) with the state and view-model only it read. Filtering by trait is still reached
+            from a palette's own tags; the applied chips remove it. */}
 
         </>)}
 
@@ -4010,13 +3810,13 @@ function HarmonyDrawer({ vals }) {
        in any window narrower than 1125px; it sat at 120. */
     <div style={sx('position:fixed;inset:0;z-index:157')}>
       <div data-hx-backdrop="1" onClick={vals.closeHarmony} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);display:flex;flex-direction:column;overflow-y:auto')}>
+      <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);border-radius:var(--radius-surface) 0 0 var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Colour harmonies</span>
             <div style={sx('display:flex;align-items:center;gap:11px')}>
               <span aria-hidden="true" style={harmony.swatchStyle}></span>
-              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface)")}>{harmony.hex}</h2>
+              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>{harmony.hex}</h2>
             </div>
           </div>
           {/* Done, not Close. The drawer can act now — Save as palette writes a record — so leaving
@@ -4058,14 +3858,22 @@ function HarmonyDrawer({ vals }) {
             reduced to fit sRGB says MAPPED on the colour it happened to, instead of being covered by
             one methodology sentence true of the whole set. */}
         <div data-hx-sec="1" data-hx-preview="1" style={sx('padding:14px var(--page-gutter) 0')}>
+          {/* THE CELL TIER (17.09.26, audit E2). Each swatch was an HBtn whose hover and press were a
+              brightness filter set from JS, so they cut in with no transition. The colour now sits on
+              a wrapper and the button over it takes data-ix="cell": the tier's 12% and 20% tints of
+              the button's own ink (the swatch's black or white), eased on the contract like the
+              value rows. The drawer's hooks (data-hx-cell, data-ov-band) go on the wrapper, because
+              the band reveal and the model crossfade have to move the colour, not only the words. */}
           <div style={sx('display:flex;gap:1px;width:100%')}>
             {harmony.cells.map((cell, ci) => (
-              <HBtn key={ci} type="button" data-hx-cell="1" data-ov-band="1" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style} styleHover={cell.hover} styleActive={cell.active}>
-                <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
-                  {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
-                </span>
-                <span style={sx('text-transform: uppercase; font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
-              </HBtn>
+              <div key={ci} data-hx-cell="1" data-ov-band="1" style={cell.wrapStyle}>
+                <button type="button" data-ix="cell" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style}>
+                  <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
+                    {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
+                  </span>
+                  <span style={sx('text-transform: uppercase; font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -4102,12 +3910,12 @@ function ExportDialog({ vals }) {
     // 157 — still under the wipe at 160, which outranks every panel in the app.
     // Every other route into this surface stacks exactly where it did.
     <div style={{ ...sx('position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px'), zIndex: ex.stacked ? 157 : 125 }}>
-      <div data-ex-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-ex-backdrop="1" data-modal-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>{ex.kicker}</span>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</h2>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</h2>
           </div>
           {/* The app's one close mark, at the 32px circle the library panel and the project picker
               both use. This was the last surface still spelling the word. */}
@@ -4183,11 +3991,13 @@ function RecogniseDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRecognise} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
-        <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
-          <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Already extracted</span>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</h2>
+      <div data-recognise-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="This image has been extracted before" onKeyDown={vals.trapRecognise} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
+        {/* NO EYEBROW (17.09.26, audit D1, by request): "Already extracted" stood over the name and
+            said what the line under it says. The other dialogs keep theirs, which name the action.
+            With the name alone, the header centres it on the close mark. */}
+        <header style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
+          <div style={sx('display:flex;flex-direction:column;min-width:0')}>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</h2>
           </div>
           {/* THE APP'S ONE CLOSE MARK (16.09.26, by request: this dialog and the restore dialog were
               the last two still spelling "Cancel" in a square box). The 32px circle the copy, export
@@ -4196,13 +4006,14 @@ function RecogniseDialog({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRecognise} aria-label="Keep the existing palette and create nothing" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
-          {/* --fs-detail, the size the copy and export dialogs set their opening line in. */}
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          {/* --fs-body, one step up from the --fs-detail the copy and export dialogs set their opening
+              line in (17.09.26, audit D1, by request): with no eyebrow, this line carries the news. */}
+          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* the palette itself, drawn as the archive draws it — so the claim can be checked, not just read */}
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
             {r.strip.map((b, i) => (<span key={i} style={b.style}></span>))}
           </span>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Saved {r.when}</span>
+          {/* "Saved just now" stood here and went on 17.09.26 (by request). */}
         </div>
         {/* THE PAIR, AS THE PROJECT PICKER SETS ITS OWN (16.09.26, by request). Two full-width slabs
             stood here, a filled square and an outlined one, the last of their kind in a dialog.
@@ -4210,16 +4021,14 @@ function RecogniseDialog({ vals }) {
             for the act this dialog recommends, the unfilled one for the other way, in the order the
             picker's Cancel and Confirm take. The note stays under the pair it explains, in
             --fs-fine, the size the export dialog's switch explains itself in. */}
-        <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
-          <div style={sx('display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
-            {/* "Anyway", not "as a variation". Extraction is deterministic as of this deploy, so a
-                second run of the same image returns the same colours — this adds a separate entry,
-                it does not produce a different palette. Step D is what makes variations genuinely
-                differ (seed = content hash + variation index); the label can promise that then. */}
-            <B006 onClick={vals.recogniseVariation} aria-label={r.variationAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Extract again anyway</B006Text></span>} />
-            <B006 data-emphasis="primary" onClick={vals.recogniseOpen} aria-label={r.openAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Open existing palette</B006Text></span>} />
-          </div>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Extraction is repeatable, so extracting again adds a second entry with the same colours.</span>
+        {/* The note under the pair ("Extraction is repeatable…") went on 17.09.26 (by request); the
+            button's accessible name still says what a second extraction does. */}
+        <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
+          {/* "Extract Again" (17.09.26, by request: "anyway" went). Not "as a variation": extraction is
+              deterministic as of this deploy, so a second run of the same image returns the same
+              colours. This adds a separate entry; it does not produce a different palette. */}
+          <B006 data-emphasis="secondary" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Extract Again</B006Text></span>} />
+          <B006 data-emphasis="primary" onClick={vals.recogniseOpen} aria-label={r.openAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Open Existing Palette</B006Text></span>} />
         </div>
       </div>
     </div>
@@ -4232,11 +4041,11 @@ function AssignDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeAssign} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Add to projects" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Add to projects" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Add to projects</span>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</h2>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</h2>
             {/* "IN COASTAL AND NORDIC" / "NOT IN ANY PROJECT YET" STOOD HERE and is removed by
                 request. It was a role=status line restating membership every time it changed, on
                 the argument that a tick appearing in a list of eight is a change a reader who has
@@ -4256,9 +4065,13 @@ function AssignDialog({ vals }) {
               a reader no state at all — only an aria-label that flipped between "Add" and "Remove",
               which describes the next press rather than the current fact. */}
           {assign.options.map((o) => (
-            <button key={o.key} type="button" role="checkbox" aria-checked={o.checked} data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
-              <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{o.label}</span>
-              <span aria-hidden="true" style={o.markStyle}><IconCheck /> {o.markLabel}</span>
+            /* data-ex-item and the swap (17.09.26, audit E3): the export rows' press feedback and their
+               label swap, so the two lists answer a pointer the same way. data-assign-row carries the
+               ellipsis into the swap and eases the selected edge (global.css). */
+            <button key={o.key} type="button" role="checkbox" aria-checked={o.checked} data-ex-item="1" data-assign-row="1" data-focus="chrome" onClick={o.onPick} onMouseEnter={o.onEnter} onMouseLeave={o.onLeave} onFocus={o.onFocus} onBlur={o.onBlur} aria-label={o.aria} style={o.style}>
+              <span style={sx("min-width:0;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface);white-space:nowrap;overflow:hidden")}><TextSwap>{o.label}</TextSwap></span>
+              {/* The word alone (17.09.26, by request): the check beside it said the same thing. */}
+              <span aria-hidden="true" style={o.markStyle}>{o.markLabel}</span>
             </button>
           ))}
           {/* The empty case, reachable since the Unfiled pseudo-row was removed (renderVals.js).
@@ -4336,9 +4149,10 @@ function AssignDialog({ vals }) {
             field above it, the exact grouping the rule was added to break. Carrying --page-gutter
             itself puts the rule edge to edge and the buttons back on the same inline edge as
             everything above, the same construction the restore dialog's footer uses. */}
-        <div style={sx('display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:18px var(--page-gutter) 22px;border-top:1px solid var(--line)')}>
-          <B006 onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Cancel</B006Text></span>} />
-          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Confirm the projects for ' + assign.name} label={<span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconCheck /></span><B006Text>Confirm</B006Text></span>} />
+        <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:18px var(--page-gutter) 22px;border-top:1px solid var(--line)')}>
+          <B006 data-emphasis="secondary" onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Cancel</B006Text></span>} />
+          {/* No check before Confirm (17.09.26, by request): the word says it; the glyph repeated it. */}
+          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Confirm the projects for ' + assign.name} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Confirm</B006Text></span>} />
         </div>
       </div>
     </div>
@@ -4371,8 +4185,11 @@ function ToastLayer({ vals }) {
               without one. Still below the wipe (160), the lightbox (170) and the loader (190): those are
               whole-screen states, and a bar reporting one act does not outrank them. */}
           {vals.hasToast && (
-            <div style={sx('position:fixed;left:0;right:0;bottom:28px;z-index:158;display:flex;justify-content:center;pointer-events:none')}>
-              {/* A STADIUM, LIKE EVERY OTHER FLOATING SURFACE THE TOOL PUTS OVER THE STAGE. It was the
+            <div style={sx('position:fixed;left:0;right:0;bottom:var(--page-gutter);z-index:158;display:flex;justify-content:center;pointer-events:none')}>
+              {/* FULLY ROUND, THE SURFACE SHADOW, AND THE PAGE GUTTER FROM THE BOTTOM EDGE (17.09.26,
+                  audits D1, D2 and C9, by request): it took 18px for one round and went back to the
+                  stadium; --shadow-surface and --page-gutter stayed. The note below is the stadium's.
+                  A STADIUM, LIKE EVERY OTHER FLOATING SURFACE THE TOOL PUTS OVER THE STAGE. It was the
                   last square bar left: it arrives over a result view whose actions, traits and badges
                   are all pills, and a hard-cornered plate reads as a different system rather than as
                   the same one speaking. The corner clamps to half the bar's height, so it stays a
@@ -4382,7 +4199,7 @@ function ToastLayer({ vals }) {
                   against the widest point of a 24px arc, and 8px of it read as the sentence crowding
                   the curve. padding-inline-start, not padding-left: the asymmetry is about the reading
                   edge, so it should follow the reading direction rather than the screen's. */}
-              <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;box-shadow:0 14px 36px rgba(0,0,0,.24);pointer-events:auto')}>
+              <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;box-shadow:var(--shadow-surface);pointer-events:auto')}>
                 {/* No capitalize transform: it Title-Cased whole sentences ("Dry Season Deleted"). The
                     label arrives as a natural sentence — the palette's own name keeps its case, the
                     verb stays lowercase — and a status line is prose, not a button. */}
@@ -4404,7 +4221,8 @@ function ToastLayer({ vals }) {
                     plate — which is a louder event than any other act gets, on the one control that
                     appears unannounced over whatever you were reading. It briefly took the masked text
                     swap instead, and now it takes no text at all: an arrow turning back on itself,
-                    drawn at the same 30px circle as the dismiss beside it, so the pair reads as two
+                    drawn at the same 28px circle as the dismiss beside it (30 until 17.09.26, audit C3: 28 is
+                    the notice's size, and one close mark has one size), so the pair reads as two
                     answers to one sentence rather than as a label and a glyph.
                     A GLYPH HAS TO CARRY ITS NAME. aria-label states the act and title hands the word to
                     a pointer, which is the same bargain the row actions and the library trigger take.
@@ -4417,11 +4235,11 @@ function ToastLayer({ vals }) {
                     to mean "these belong together, that is something else". */}
                 <div style={sx('display:flex;align-items:center;gap:8px;flex:none')}>
                   <button type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete} aria-label="Undo the deletion" title="Undo"
-                    style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconUndo /></TextSwap></button>
+                    style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconUndo /></TextSwap></button>
                   {/* The toast no longer times out (it holds an action — see the note in overlays.js),
                       so letting the undo go needs a control of its own. Icon-only, so it carries a name;
-                      a 30px square clears the 24px hit floor. */}
-                  <button type="button" data-ix="press" data-focus="chrome" aria-label="Dismiss, keep the deletion" onClick={vals.onDismissToast} style={sx('width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+                      a 28px disc clears the 24px hit floor. */}
+                  <button type="button" data-ix="press" data-focus="chrome" aria-label="Dismiss, keep the deletion" onClick={vals.onDismissToast} style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
                 </div>
               </div>
             </div>
@@ -4432,7 +4250,11 @@ function ToastLayer({ vals }) {
 function NoticeLayer({ vals }) {
   return (
     <>
-          {/* THE LAST SQUARE THING ANCHORED TO THIS CORNER. The toast six lines up is a stadium with
+          {/* The toast's shape, shadow and margin since 17.09.26 (audits D1, D2, C9): fully round,
+              --shadow-surface, and the page gutter from both edges where it stood 20px in. No dot
+              (by request): the text starts the bar. The toast's padding too (by request): 8px
+              round the dismiss and 16px on the reading edge, where it was 9px by 18px. The history:
+              THE LAST SQUARE THING ANCHORED TO THIS CORNER. The toast six lines up is a stadium with
               two 30px circles in it; this sat beside it as a hard-cornered plate, and the two are the
               same object to a reader — a bar that arrives bottom-left and says what just happened.
               One of them reporting in a different shape is the dialect the corner pass exists to end.
@@ -4450,14 +4272,9 @@ function NoticeLayer({ vals }) {
               keep their five seconds but hold while hovered or focused, so looking at a notice is enough
               to keep it. role follows the kind: alert for the ones that stay, status for the ones that pass. */}
           {vals.hasNotice && (
-            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:20px;bottom:20px;z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:9px 18px;max-width:340px;box-shadow:0 10px 28px rgba(0,0,0,.16)')}>
-              {/* A DOT, NOW THAT IT SITS IN A PILL. It was a 6px square, which the house rule allows —
-                  square is still the default and this is a mark, not a control sized by a label. It is
-                  also the only other shape inside a stadium, and a hard corner nested in a round one
-                  reads as the two being unrelated, which is the argument the radius block makes about
-                  every other pair of nested boxes here. It carries no meaning to lose: aria-hidden, no
-                  state, no variants. A bullet is what it always was; this draws it as one. */}
-              <span aria-hidden="true" style={sx('width:6px;height:6px;flex:none;border-radius:var(--radius-pill);background:var(--on-surface-muted)')}></span>
+            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:var(--page-gutter);bottom:var(--page-gutter);z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:8px;padding-inline-start:16px;max-width:340px;box-shadow:var(--shadow-surface)')}>
+              {/* The leading dot went on 17.09.26, by request (audit C9). It was a bullet with no
+                  meaning to lose: aria-hidden, no state, no variants. */}
               {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
                   They sit in the same corner, take the same --surface-raised plate, the same
                   --line-strong edge, the same pill and the same shadow — and then set their text three
@@ -4486,19 +4303,19 @@ function RestoreDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:0 24px 60px rgba(0,0,0,.28);display:flex;flex-direction:column')}>
+      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:-.01em;color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
           </div>
           {/* The app's one close mark, as on the recognise dialog above (16.09.26). Its label still
               says which outcome it is: cancel, or close when there was nothing to add. */}
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          {r.line && <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>}
           {/* Four numbers are not a sentence. Uppercase muted term, full-ink tabular value, a
               hairline under each row — so a count reads here exactly as it reads on the result
               view's metadata readout, and the two surfaces share one way of stating a figure. */}
@@ -4520,13 +4337,15 @@ function RestoreDialog({ vals }) {
             width square slab stood. Cancel is the header's close mark said in words, as the picker's
             is. When nothing in the file is new there is no act left to offer, so there is no footer
             at all rather than a pair that would commit nothing; the close mark is the way out. */}
+        {/* THE BANNER'S PAIR since 17.09.26 (by request): CONSENT_BTN_TYPE, Medium, Title Case, the
+            outlined one first, as on the other two dialogs. The footnote under it ("New palettes go to
+            the top…") went at the same request. */}
         {r.hasAct && (
-          <div style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
+          <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
             <div style={sx('display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
-              <B006 onClick={vals.closeRestore} aria-label={r.cancelAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>{r.cancelLabel}</B006Text></span>} />
-              <B006 data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>Add to library</B006Text></span>} />
+              <B006 data-emphasis="secondary" onClick={vals.closeRestore} aria-label={r.cancelAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{r.cancelLabel}</B006Text></span>} />
+              <B006 data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Add to Library</B006Text></span>} />
             </div>
-            <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>New palettes go to the top of your library. Existing ones keep their place.</span>
           </div>
         )}
       </div>

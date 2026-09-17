@@ -16,6 +16,7 @@ import { motionMethods } from './methods/motion.js';
 import { overlayMethods } from './methods/overlays.js';
 import { universeMethods } from './methods/universe.js';
 import { orbitMethods } from './methods/orbit.js';
+import { procFieldMethods } from './methods/procField.js';
 import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
@@ -180,23 +181,15 @@ export default class PaletteApp extends React.Component {
        overflows or does not depending on name lengths and window width, and the render knows
        neither. Starts closed so the buttons cannot flash in before the first measurement. */
     projStep: { can: false, start: true, end: true },
-    // the tag facet: one disclosure control, closed by default; the query is typeahead state.
-    // tagSort: 'count' serves discovery (what is this Library made of), 'alpha' known-item lookup
-    // (I want GOLDEN) — the two reasons anyone opens a facet list.
-    tagMenuOpen: false, tagQuery: '', tagSort: 'count',
+    // the Library panel, closed by default (its trait search and sort went on 17.09.26, audit H3)
+    tagMenuOpen: false,
     /* WHICH TAB THE LIBRARY PANEL SHOWS — filtering, or the projects the library is divided into.
        NULL IS THE REAL DEFAULT, and it means "the reader has not chosen": renderVals then opens the
        panel where the work is (see libTab — Filter normally, Projects when there is nothing yet to
        filter), and any press replaces it with an answer that is always obeyed. It returns to null
-       on close, exactly as tagQuery and facetAllOpen do, because a surface that reopens in the
-       state you left it in two visits ago is a surface that opens differently every time. */
+       on close, because a surface that reopens in the state you left it in two visits ago is a
+       surface that opens differently every time. */
     libraryTab: null,
-    // character traits, folded away beneath the measured facets
-    charOpen: false,
-    // the Filters panel's combine rule, on the same 16px toggletip as the Library heading
-    filterInfoOpen: false,
-    // the Library heading's storage toggletip — opened and closed through the shared tip helpers
-    storeInfoOpen: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
     // the result view's More: reveals the poetic reading and the traits past the first two
@@ -210,7 +203,7 @@ export default class PaletteApp extends React.Component {
        instead and commits it once, so nothing changes until it is confirmed and Cancel is a real
        way out. null while the dialog is shut; an array of project ids while it is open. */
     assignPending: null,
-    assignPalette: null, backupMenuOpen: false, copyMenuOpen: false, exampleView: false, exampleList: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, backupMenuOpen: false, copyMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or
        arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
@@ -359,24 +352,22 @@ export default class PaletteApp extends React.Component {
   // exception is the whole point: most shared links ARE opened on a phone, so gating them ends the
   // chain at its first hop and sharing never compounds. The tool itself still gates; only somebody
   // else's finished palette comes through.
-  // The read-only phone view now serves two arrivals, not one: a link somebody sent you, and the
-  // example a first-time visitor asks to see from the gate. Same surface, because it answers the
-  // same question — what does this tool produce — and a second one would be a second thing to keep
-  // correct. They stay separate FLAGS though: sharedView means "this palette is not in your
-  // archive", which is false of the example and would put a save prompt on a palette already saved.
-  _mobileShare() { return !!(this.state.narrow && (this.state.sharedView || this.state.exampleView) && this.state.current); }
-  _mobileList() { return !!(this.state.narrow && this.state.exampleList && !this._mobileShare()); }
-  /* THE STORY IS THE PHONE'S GROUND FLOOR, so it answers last: the example list and the share view
-     both stand above it and must win. It also needs a case to tell — with no examples in the feed
-     there is nothing to read, and the phone falls through to the gate exactly as it stands today.
-     That is the same `feed.length > 0` guard `gateHasExample` already applies to the gate's one act,
+  // The read-only phone view serves one arrival: a link somebody sent you. It also served the example
+  // a first-time visitor asked to see from the gate, behind a flag of its own (exampleView), until the
+  // phone's example view and example list were removed on 17.09.26 (audit C5); the story shows the
+  // examples now.
+  _mobileShare() { return !!(this.state.narrow && this.state.sharedView && this.state.current); }
+  /* THE STORY IS THE PHONE'S GROUND FLOOR, so it answers last: the shared-link view stands above it
+     and must win. It also needs a case to tell — with no examples in the feed there is nothing to
+     read, and the phone falls through to the gate exactly as it stands today.
+     That is the same `feed.length > 0` guard the gate's act used to apply,
      and it keeps the storage-blocked case no worse than it is now rather than turning it into eight
      blank chapters.
 
      Never on a document route, for the reason _landingUp gives: _syncStory finds its root with a
      document-wide querySelector, and on /about the only [data-mobile-story] left is the one inside
      the departing page's snapshot. */
-  _mobileStory() { return !!(!isDoc(this.state.route) && this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare() && !this._mobileList()); }
+  _mobileStory() { return !!(!isDoc(this.state.route) && this.state.narrow && this.state.storyOpen && this._storyCase() && !this._mobileShare()); }
   /* THE CASE THE STORY TELLS. A DIFFERENT EXAMPLE ON EVERY LOAD (15.09.26, by request), the way the
      desktop landing already rolls a different palette per arrival (_fieldPalette in orbit.js). It
      was Dry Season, always, so every visit on a phone told the same story about the same flower.
@@ -387,8 +378,9 @@ export default class PaletteApp extends React.Component {
      case asks this method: the field behind chapter 1, the story's masks, the chooser's opening
      slide. So one held id keeps all of them on one palette for the whole visit.
 
-     No storage key: a reload is the new roll, for the reason openExampleOnPhone gives for its
-     cursor. Rolled again only if the held example has since been deleted. */
+     No storage key: a reload is the new roll — the whole point is variety between visits, and a
+     preference to persist and validate would cost more than it buys. Rolled again only if the held
+     example has since been deleted. */
   _storyCase() {
     const ex = this._examples();
     if (!ex.length) return null;
@@ -414,7 +406,7 @@ export default class PaletteApp extends React.Component {
      leaving changed colour while it receded. The stage is not in the document on these routes, so
      this says so. */
   _landingUp() { return !isDoc(this.state.route) && (!this.state.landingDismissed || this.state.narrow); }
-  _landingLit() { return this._landingUp() && !this._mobileShare() && !this._mobileList(); }
+  _landingLit() { return this._landingUp() && !this._mobileShare(); }
   // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
   // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is
   // the ARRIVAL, and a returning visitor arrives just as much as a first-time one; keying it to the
@@ -510,7 +502,6 @@ export default class PaletteApp extends React.Component {
         if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
         if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
         if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
-        if (this.state.exampleView) { e.preventDefault(); this.closeExampleOnPhone(); return; }
         /* THE SHARED ARRIVAL, WHICH THIS LADDER USED TO WALK STRAIGHT PAST. A share link constructs
            at stage 'result', so with no clause of its own Escape fell all the way to the last line
            and called doReset() — on the read-only showcase that dropped the palette, swapped the
@@ -523,7 +514,6 @@ export default class PaletteApp extends React.Component {
            stage, where Escape means what it means everywhere else in the tool and the last line of
            this ladder is the right answer. */
         if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
-        if (this.state.exampleList) { e.preventDefault(); this.closeExampleList(); return; }
         if (this.state.copyMenuOpen) { e.preventDefault(); this.closeCopyMenu(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
@@ -665,7 +655,7 @@ export default class PaletteApp extends React.Component {
        masthead can be thrown with this stage alive behind whatever was covering it. Neither surface
        is rebuilt — the ramp is theme-independent by design, and only the exposure moves. */
     const themeNow = s.theme;
-    if (this._prevFieldTheme !== themeNow) { this._prevFieldTheme = themeNow; if (this._orbit) this.refreshOrbitTheme(); }
+    if (this._prevFieldTheme !== themeNow) { this._prevFieldTheme = themeNow; if (this._orbit) this.refreshOrbitTheme(); this._procFieldTheme(); }
     // spatial grid lifecycle (independent of stage/current — runs on view toggle too)
     const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;
@@ -692,7 +682,6 @@ export default class PaletteApp extends React.Component {
         else if (vis) { this.animateBands(); this.animateText(this._reduce ? 0 : 0.36); }
       } catch (err) { }
       this._fromRects = null;
-      if (window.gsap && !this._reduce && !document.hidden) { requestAnimationFrame(() => { const cur = document.querySelector('button[data-feed][aria-current="true"]'); if (cur) this.commitSelected(cur); }); }
     }
   }
 
@@ -730,14 +719,16 @@ export default class PaletteApp extends React.Component {
     if (!root) return;
     this._pickerRoot = root;
     this._killPicker = initLayeredSlider(root, {
-      ease: this.EASE ? this.EASE.fold : 'power2.out',
+      ease: this.EASE ? this.EASE.fold : 'power3.inOut',
       onChoose: (i) => { try { this.renderVals().mobileStory.picker.onChoose(i); } catch (e) { } },
     });
-    // Open on the case the story is already telling, so the strip does not start somewhere else.
+    // Open on the case the story is already telling, so the strip does not start somewhere else, and
+    // be ON it before anyone sees the chooser: the jump is instant, since this runs behind the page
+    // transition and a played slide change showed through its opening window (17.09.26, by request).
     try {
       const inst = root.querySelector('[data-layered-slider-init]')._layeredSlider;
       const at = this.renderVals().mobileStory.picker.active;
-      if (inst && at > 0) inst.goToIndex(at);
+      if (inst && at > 0) inst.goToIndex(at, true);
     } catch (e) { }
   }
 
@@ -788,8 +779,9 @@ export default class PaletteApp extends React.Component {
     // this does not depend on when the last render happened. One scale, quoted twice, never invented.
     const motion = {
       duration: this.DUR ? this.DUR.reveal : 0.62,
-      stagger: 0.09,
-      ease: this.EASE ? this.EASE.entrance : 'power3.out',
+      stagger: this.DUR ? this.DUR.line : 0.09,
+      rule: this.DUR ? this.DUR.overlay : 0.8,
+      ease: this.EASE ? this.EASE.entrance : 'expo.out',
     };
 
     /* ORDER, for the reason AboutPage states it: anything that measures the document must do so after
@@ -920,7 +912,7 @@ export default class PaletteApp extends React.Component {
     if (this._onModKey) { document.removeEventListener('keydown', this._onModKey, true); document.removeEventListener('pointerdown', this._onModPtr, true); }
     if (this._mq && this._onMq) { try { if (this._mq.removeEventListener) this._mq.removeEventListener('change', this._onMq); else this._mq.removeListener(this._onMq); } catch (e) { } this._mq = null; this._onMq = null; }
     if (this._rmq && this._onRmq) { try { if (this._rmq.removeEventListener) this._rmq.removeEventListener('change', this._onRmq); else this._rmq.removeListener(this._onRmq); } catch (e) { } this._rmq = null; this._onRmq = null; }
-    this.stopCanvas(); this.killSpatial(); this.killOrbit();
+    this.stopCanvas(); this._procFieldDispose(); this.killSpatial(); this.killOrbit();
     try { document.documentElement.style.overflow = ''; } catch (e) { }
     try { document.documentElement.removeAttribute('data-landing-cover'); } catch (e) { }
     this._coverOn = false;
@@ -988,6 +980,7 @@ Object.assign(
   overlayMethods,
   universeMethods,
   orbitMethods,
+  procFieldMethods,
   wipeMethods,
   loaderMethods,
   shareMethods,

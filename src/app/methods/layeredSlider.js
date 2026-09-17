@@ -46,7 +46,8 @@ export function initLayeredSlider(root, options) {
 
   const opts = options || {};
   // See [ATMOS 1]. The resource's 'osmo' ease, as the token that already holds that curve.
-  const EASE = opts.ease || 'power2.out';
+  // The fallback is fold's nearest GSAP name (17.09.26, audit F4); the app hands in EASE.fold.
+  const EASE = opts.ease || 'power3.inOut';
 
   const instances = [];
 
@@ -289,9 +290,20 @@ export function initLayeredSlider(root, options) {
 
     let slideTween = null;
     let current = 0;
-    function goTo(delta) {
+    // `instant`: land on the slide in this frame, with nothing played. The chooser opens this way
+    // on the story's own case (PaletteApp _syncPicker), because it is built behind the page
+    // transition and a slide change played there showed through the opening window (17.09.26, by
+    // request: "the user can't see the transition between images").
+    function goTo(delta, instant) {
       current += delta;
       if (slideTween) slideTween.kill();
+      if (instant) {
+        slideTween = null;
+        state.progress = current;
+        render(current);
+        startAutoplay();
+        return;
+      }
       slideTween = gsap.to(state, {
         progress: current,
         duration: reduced ? 0 : transitionDuration,
@@ -301,9 +313,9 @@ export function initLayeredSlider(root, options) {
       startAutoplay();
     }
 
-    function goToIndex(i) {
+    function goToIndex(i, instant) {
       const delta = wrap(i - current);
-      if (delta !== 0) goTo(delta);
+      if (delta !== 0) goTo(delta, instant);
     }
 
     if (autoplay > 0 && !reduced && fill) {

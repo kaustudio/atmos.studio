@@ -103,8 +103,10 @@
    stylesheet the page reads last. */
 .glass-bar.doc-head{padding-inline-end:var(--nav-inset)}
 .doc-head__acts{grid-column:3;justify-self:end;display:flex;align-items:center;gap:12px;margin-inline-end:calc(var(--nav-inset-end) - var(--nav-inset))}
+/* The wordmark tokens (17.09.26, audit C8), which step down on a phone in global.css — including the
+   126×20 this bar used to set for itself below 560px. */
 .mark{
-  display:block;width:165px;height:26px;background:var(--on-surface);
+  display:block;width:var(--logo-w);height:var(--logo-h);background:var(--on-surface);
   -webkit-mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
   mask:url('/assets/atmos-gallery-logo-black.svg') center/contain no-repeat;
 }
@@ -117,7 +119,6 @@
    perfectly well smaller. */
 @media screen and (max-width:560px){
   .doc-head{column-gap:12px}
-  .mark{width:126px;height:20px}
 }
 
 /* ------------------------------------------------------------ masked reveal

@@ -5,8 +5,10 @@
 // nobody had changed one — and the first change that needed the card taller would have moved the
 // card without moving the cell it sits in, or the reverse.
 //
-// THE CARD IS THE PHOTOGRAPH AND ITS NAME. A square of image over a caption band:
+// THE CARD IS THE PHOTOGRAPH AND ITS NAME. The box is a square plus a caption's height:
 //     H = W + CAP = 300 + 44 = 344
+// Since 17.09.26 (radius issue R3) the photograph fills the whole box and the name sits on its foot,
+// in the bottom CAP of it, over a blur and a tint (AppView TILE_FADE).
 // The strip, the identity block and the eight metric rows that used to stack under a 150px hero
 // (and took the box to 463, a figure that had been wrong once already) have moved into the panel
 // that slides out beside the card when it is pressed — universe.js openTile, AppView's
@@ -17,10 +19,8 @@
 // its panel together never leave the screen, and the panel's content scrolls inside its box rather
 // than growing the box. See openTile for the arithmetic, and UNIVERSE_OPEN below for the shares.
 //
-// CAP is the caption's height, and the hero's foot is derived from it (heroWrapStyle's `bottom`),
-// which is what the open tween moves to 0 so the photograph takes the whole box while the caption
-// fades. Change the caption's type and this is the number to revisit: a 15px name sits centred in
-// 44 with the same air the metrics keep at their sides.
+// CAP is the caption's height: the band the name is centred in. The open tween fades the caption
+// and the blur under it; nothing else in the card moves (the hero's foot was CAP until 17.09.26).
 export const UNIVERSE_TILE = { W: 300, H: 344, CAP: 44 };
 
 // The metrics block's inset — the caption's side padding, and the panel body's. One figure, so the
@@ -29,6 +29,7 @@ export const UNIVERSE_TILE_INSET = 14;
 
 // The open state's shares of the viewport (the reference's own three: lightboxSize,
 // lightboxSizePortrait, lightboxPairMax). No gap between the card and its panel, by request: the
-// panel slides out from under the picture and stops flush against it, the two borders landing on
-// one pixel, so the pair reads as one object with a rule through it. (It was 16 for a day.)
+// panel slides out from under the picture and stops flush against it, so the pair reads as one
+// object. (It was 16 for a day.) Its leading hairline lands under the picture's last column, since
+// the card lost its own stroke (17.09.26).
 export const UNIVERSE_OPEN = { share: 0.7, sharePortrait: 0.8, pairMax: 0.9, gap: 0, dim: 0.4 };

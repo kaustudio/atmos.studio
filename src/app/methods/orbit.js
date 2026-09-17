@@ -780,7 +780,7 @@ export const orbitMethods = {
       return;
     }
     const dur = this.DUR ? this.DUR.overlay : 0.8;
-    const ease = this.EASE ? this.EASE.standard : 'power2.out';
+    const ease = this.EASE ? this.EASE.standard : 'power4.out';
     g.to(cv, { opacity: 1, duration: dur, ease });
     if (floor) g.to(floor, { opacity: 0, duration: dur, ease });
   },
@@ -805,7 +805,7 @@ export const orbitMethods = {
     const g = window.gsap;
     const target = this._floorOpacity();
     if (!g || this._reduce) { floor.style.opacity = String(target); return; }
-    g.to(floor, { opacity: target, duration: this.DUR ? this.DUR.overlay : 0.8, ease: this.EASE ? this.EASE.standard : 'power2.out' });
+    g.to(floor, { opacity: target, duration: this.DUR ? this.DUR.overlay : 0.8, ease: this.EASE ? this.EASE.standard : 'power4.out' });
   },
   /** The theme switch can be reached with the landing still behind it — the logo returns here at any
       time. Both surfaces answer, and neither is rebuilt: the ramp is theme-independent by design. */
@@ -847,7 +847,7 @@ export const orbitMethods = {
      frame, so the gas drained of colour and refilled instead of changing between two frames. It was
      removed because it was never once seen. Instrumented on the live app, per call site:
 
-       showExample      the commit one line later flips _mobileShare, componentDidUpdate parks the
+       showExample      (the phone's example view, removed 17.09.26) the commit one line later flips _mobileShare, componentDidUpdate parks the
                         ticker, and update() — the only thing that calls renderer.render — stops.
                         Measured: 10 setRamp calls, ZERO renders. The dissolve was written into a
                         texture nobody drew, for 0.8s, on the same frames _shareIn's entrance needs.
@@ -943,7 +943,7 @@ export const orbitMethods = {
     const g = window.gsap;
     if (!g || this._reduce || !lines.length) return;
     g.killTweensOf(lines);
-    const tw = g.fromTo(lines, { yPercent: 110 }, { yPercent: 0, duration: this.DUR ? this.DUR.reveal : 0.62, stagger: 0.09, ease: this.EASE ? this.EASE.entrance : 'power3.out', clearProps: 'transform' });
+    const tw = g.fromTo(lines, { yPercent: 110 }, { yPercent: 0, duration: this.DUR ? this.DUR.reveal : 0.62, stagger: this.DUR ? this.DUR.line : 0.09, ease: this.EASE ? this.EASE.entrance : 'expo.out', clearProps: 'transform' });
     // rAF-stall failsafe. Because the lines are PARKED before the cover lifts, a ticker that never
     // wakes (backgrounded tab, throttled frame) would leave them below their masks forever — the
     // reveal is the only thing that brings them back. Static, visible text is the floor: force it.

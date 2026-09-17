@@ -27,7 +27,7 @@ function noop() { }
 
 /* Only reached if the app never handed its own tokens over — AboutPage passes vals.maskMotion, the
    same object the landing, the loader and the legal pages reveal on. */
-const FALLBACK_MOTION = { duration: 0.62, stagger: 0.09, ease: 'cubic-bezier(0.16, 1, 0.3, 1)' };
+const FALLBACK_MOTION = { duration: 0.62, stagger: 0.09, ease: 'expo.out' };   // entrance's GSAP name (audit F4)
 
 export function initFeaturePills(root, motion) {
   const gsap = window.gsap;
@@ -85,8 +85,8 @@ export function initFeaturePills(root, motion) {
        duration swap, and the direction rule — moving FORWARD reveals the incoming panel over the
        stack, moving BACK closes the outgoing one to uncover what is beneath.
 
-       Dropped: `round 0.75em`. Every corner on this site is square, and a rounded clip on one
-       photograph would be the only radius on the page.
+       Dropped: `round 0.75em`. Photographs are square on this site, and a rounded clip on one would
+       be the only rounded photograph on the page.
 
        [ATMOS] The resource's steps are sequential, so everything below the current index has always
        been revealed already. A reader can click these in any order, so the invariant is restored by

@@ -35,10 +35,7 @@
                                      — the hero photograph, as cloth under the pointer
        data-intervals / data-step               — the spacing that is itself a measurement
        data-stack-slide / -wrap / -content      — the falling card stack
-       data-rail / -track / -card               — the pinned horizontal gallery
-       data-section-dock-*                      — the anchor dock at the foot of the viewport
-       data-dock-group / -group-toggle / -sub   — one of its four groups, its head, its sections
-       data-section-dock-hide="n"               — a block the dock gets out of the way for -->
+       data-rail / -track / -card               — the pinned horizontal gallery -->
 
 <header class="about-hero about-grid" data-about-hero>
   <!-- CENTRED, and the only block on the page that is. An opening is an address to the reader; the
@@ -115,7 +112,11 @@
      page has somewhere to belong. The figure is the distinction itself, drawn rather than described:
      one swatch on the left carrying three coordinates, two swatches on the right carrying one ratio.
      A reader who takes nothing else from this section should still leave with "one describes the
-     colour, the other validates the relationship". -->
+     colour, the other validates the relationship".
+
+     BOTH LENSES ARE HIGH KEY. The pair on the right is its background and its PRIMARY, by
+     semanticRoles() (16.09.26): its text is #1B2F0C, so the label no longer calls #3C5E19 the text.
+     The swatch on the left is its accent. -->
 <section id="how-atmos-reads-colour" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.2</span>How Atmos Reads Colour</h2>
@@ -139,7 +140,7 @@
     </div>
     <div class="about-lens">
       <p class="about-figure__label">WCAG contrast</p>
-      <div class="about-lens__art" role="img" aria-label="Two swatches of High Key, the background and the text, measured against each other.">
+      <div class="about-lens__art" role="img" aria-label="Two swatches of High Key, its background and primary colours, measured against each other.">
         <div class="about-lens__body" style="--lens-swatch:#EAE8DD"></div>
         <div class="about-lens__body" style="--lens-swatch:#3C5E19"></div>
       </div>
@@ -501,16 +502,16 @@
        NAMED for a screen reader, as the phone story's are, because two chips tell it nothing. -->
   <figure class="about-figure about-figure--full">
     <ul class="about-matrix" data-cascade>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #361905"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">10.26 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #361905"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">4.92 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #933913"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">4.70 to 1</span><span class="about-matrix__use">Body text at AA</span></li>
-      <li class="is--large"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #A74B1B"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">3.63 to 1</span><span class="about-matrix__use">Large text and UI at AA</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #361905"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.82 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #933913"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">2.25 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#933913 and #361905"><span class="about-key__chip" style="background:#933913"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.18 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #AB8766"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#ab8766"></span></span><span class="about-matrix__val">2.08 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #A74B1B"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">1.74 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #933913"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">1.29 to 1</span><span class="about-matrix__use">No WCAG contrast role</span></li>
+      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #361905"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">10.26 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #361905"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">4.92 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #933913"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">4.70 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--large"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #A74B1B"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">3.63 to 1</span><span class="about-matrix__use">Large Text and UI at AA</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #361905"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.82 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #933913"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">2.25 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#933913 and #361905"><span class="about-key__chip" style="background:#933913"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.18 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #AB8766"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#ab8766"></span></span><span class="about-matrix__val">2.08 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #A74B1B"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">1.74 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #933913"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">1.29 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
     </ul>
     <figcaption data-reveal>Contrast between all ten colour pairs in Dry Season.</figcaption>
   </figure>
@@ -520,11 +521,17 @@
 <!-- SOME IMAGES ALREADY WORK, and that earns its own section rather than a footnote to the one about
      contrast. Frozen Slate clears AA on five of its ten pairs; nothing in the eight-palette gallery
      below reaches more than four. It is the honest answer to "does this ever just come out right",
-     and the one interface on this page a reader can simply read. -->
+     and the one interface on this page a reader can simply read.
+
+     THE FIRST PARAGRAPH SAYS WHAT CAN BE SEEN (16.09.26). It said one clearer blue carried the
+     palette's strongest colour, but the two blues are one hue (261.9° and 262.1°) at one chroma
+     (0.0750 and 0.0748), and only their lightness differs (0.602 and 0.723). Black and near-black
+     hold 29.9% of the image, most of the 31.5% the blues leave. The interface's sample line below
+     said the same thing and changed with it. -->
 <section id="already-contain-relationships" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.3</span>Some Images Already Contain the Required Relationships</h2>
-    <p data-reveal>Cool blue-greys sit at similar visual temperatures, while one clearer blue carries the palette&rsquo;s strongest chromatic note.</p>
+    <p data-reveal>The palette&rsquo;s two blues share one hue and almost the same chroma, and differ only in lightness. Black and near-black fill most of the rest of the image.</p>
     <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
   </div>
 
@@ -540,15 +547,15 @@
       <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text and a blue accent on near-black grounds, every pairing clearing AA." style="--r-bg:#000000;--r-surface:#090606;--r-text:#8CA6D5;--r-primary:#383B49;--r-accent:#6881AE">
         <div class="about-ui__card">
           <p class="about-ui__title">Frozen Slate</p>
-          <p class="about-ui__body">Cool blue-greys at one temperature, with a single clearer blue carrying the chromatic note.</p>
+          <p class="about-ui__body">Two blues of one hue, on black and near-black.</p>
           <p class="about-ui__actions"><span class="about-ui__btn">Primary</span><span class="about-ui__link">Accent</span></p>
         </div>
       </div>
       <ul class="about-checks">
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__use">Body text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__use">Body text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__use">Body text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__use">Meaningful non-text elements at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
       </ul>
       <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least 4.5 to 1. They can support body text at AA when used as foreground and background.</p>
     </div>
@@ -603,7 +610,15 @@
       <span class="about-intervals__swatch" style="background:#d0d2c6"><span class="about-intervals__hex">#D0D2C6</span></span>
     </div>
     <div class="about-divider" data-divider aria-hidden="true"></div>
-    <figcaption data-reveal>Midfield holds three of its five colours inside a lightness span of 0.114, with their hues within 4 degrees of one another. Those two narrow steps are the cluster the palette is built on. A dark blue sits a step of 0.236 below it and a pale neutral a step of 0.244 above, so the row reads as a tight group with a wide interval at either end. Only in the last step does anything but lightness carry weight: chroma falls by 0.038 and the hue turns 121 degrees, to the one colour in Midfield that is not a blue. Evenly spaced swatches would conceal that rhythm. The swatches show the colours. The gaps show how the palette works. These intervals describe the palette&rsquo;s structure. WCAG determines which of them are strong enough to carry text, controls or essential graphics.</figcaption>
+    <!-- THE SUPPLIED CAPTION (16.09.26), in two paragraphs. It replaced one that walked every step in
+         figures; those stay in the readouts above and in the row's label. Checked against the seed:
+         the three blues sit at L 0.510, 0.564 and 0.624, the darker blue at 0.274, and the neutral
+         carries chroma 0.016. Each paragraph is its own reveal block, and about.css keeps them in the
+         caption's type rather than the page's paragraph size. -->
+    <figcaption>
+      <p data-reveal>Midfield contains three blues with similar lightness, alongside a darker blue and a pale neutral. The diagram places the colours in order of lightness. Larger gaps show greater differences.</p>
+      <p data-reveal>Use this view to compare the colours, then check contrast between the pairs you want to use in your design.</p>
+    </figcaption>
   </figure>
 </section>
 
@@ -649,10 +664,10 @@
     <p id="one-image-complete-system" class="about-rail__statement" data-rail-statement>The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
     <div class="about-rail__track" data-rail-track>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/profile-ember.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/profile-ember.webp" alt="A profile in silhouette against a deep red ground, the face lit only along its edge." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 2 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
             <h3>Garnet</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #0F0302, #E12409, #F17645, #AA0906, #540604.">
@@ -662,10 +677,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
-        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/tulip.webp" alt="A tulip field in dry, low-angle light." decoding="async" />
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/tulip.webp)">
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/tulip.webp" alt="A single white tulip on a long stem against a burnt-orange background." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
             <h3>Dry Season</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #A74B1B, #933913, #AB8766, #D5CDBF, #361905.">
@@ -675,10 +690,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/courtyard.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/courtyard.webp" alt="A swimmer crossing a long narrow pool between sunlit ochre concrete walls." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
             <h3>Forged Midfield</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #E2A779, #472F24, #19110E, #685A48, #9C7B60.">
@@ -688,10 +703,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/poppy.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/poppy.webp" alt="A poppy against a bright, washed-out sky." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 4 of 10</span><span>Large text and UI AA, 6 of 10</span></p>
           <div>
             <h3>Scorched Clear Morning</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #E5E9EB, #664515, #C4B07B, #1E1506, #9D7B38.">
@@ -701,10 +716,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/radish.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/radish.webp" alt="A watermelon radish cut across, its green rim and pale centre on a light ground." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 3 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
             <h3>High Key</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #EAE8DD, #B8CD79, #6C9429, #3C5E19, #1B2F0C.">
@@ -714,10 +729,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/profile-sky.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/profile-sky.webp" alt="A profile in silhouette against a clear blue sky, the hair drawn back into a low bun." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 5 of 10</span><span>Large text and UI AA, 5 of 10</span></p>
           <div>
             <h3>Frozen Slate</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #6881AE, #8CA6D5, #000000, #090606, #383B49.">
@@ -727,10 +742,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
-        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/court.webp" alt="A tennis court from above, pale balls scattered on blue ground." decoding="async" />
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/court.webp)">
+        <img fetchpriority="low" width="900" height="1195" src="/assets/examples/court.webp" alt="Two yellow tennis balls on a blue court, seen from above beside a white line." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 1 of 10</span><span>Large text and UI AA, 4 of 10</span></p>
           <div>
             <h3>Midfield</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #547B95, #0A2944, #678DA4, #456B85, #D0D2C6.">
@@ -740,10 +755,10 @@
         </div>
       </article>
 
-      <article class="about-rail__card" data-rail-card>
+      <article class="about-rail__card" data-rail-card style="--card-img:url(/assets/examples/stride.webp)">
         <img fetchpriority="low" width="900" height="1195" src="/assets/examples/stride.webp" alt="A runner mid-stride across sunlit sand, the whole frame pulled sideways by motion blur." decoding="async" />
+        <span class="about-rail__fade" aria-hidden="true"></span><span class="about-rail__tint" aria-hidden="true"></span>
         <div class="about-rail__content">
-          <p class="about-rail__meta"><span>Body text AA, 2 of 10</span><span>Large text and UI AA, 3 of 10</span></p>
           <div>
             <h3>Hard Gunmetal</h3>
             <span class="about-rail__strip" role="img" aria-label="Five swatches: #130E10, #50595B, #717C78, #3E312B, #A6A188.">
@@ -767,11 +782,7 @@
      Here it has structure to hold it: the divider opens the block, the belief states the position,
      the statement turns it into an offer and the button acts on it. Four parts, one centred column,
      one idea — which is also what stops the close being a bare button under a photograph. -->
-<!-- data-section-dock-hide: the anchor dock gets out of the way here. This is the page's only button,
-     centred in its own column, and a pill floating over it would be the one place on /about where
-     navigation competes with the thing being offered. The number is the percentage of the viewport
-     from the bottom at which this block counts as arrived — see the dock's own note on hide zones. -->
-<section class="about-end" data-sec data-sticky-title="wrap" data-sticky-start="top top" data-section-dock-hide="22" data-rail-handoff>
+<section class="about-end" data-sec data-sticky-title="wrap" data-sticky-start="top top" data-rail-handoff>
   <!-- A TAKEOVER, LIKE THE STORY'S OWN CLOSE. Three boxes: this wrap, two viewports tall; a sticky
        container one viewport tall; the centred column inside it. The extra viewport IS the scrub —
        see about.css .about-end and aboutStickyTitle.js. No data-sticky-arc: one statement on the
@@ -814,139 +825,3 @@
   </div>
   </div>
 </section>
-
-<!-- THE SECTION ANCHOR DOCK — Osmo Supply, adapted; the mechanic and every contract below are the
-     resource's, and src/app/methods/aboutDock.js records each departure from it.
-
-     LAST IN THE DOCUMENT ON PURPOSE. Live it is fixed to the foot of the viewport, so where it sits
-     in the markup is invisible; with no JavaScript it is exactly what it reads as here — a nav at the
-     end of a long document listing its twelve sections, which is worth having on its own. That is
-     also why the collapsing and the fixed positioning live behind [data-dock-live] (about.css), an
-     attribute only the script sets. Nothing on this page is hidden by CSS that JS has to come back
-     and reveal.
-
-     OUTSIDE [data-sec]. Every reveal group on this page is a marked section, and a nav that got
-     itself masked and held at opacity 0 waiting for a scroll trigger would be a nav that is missing
-     for the first screen of every section it belongs to.
-
-     THE LABELS ARE SHORT, and deliberately not the h2s. "Some images already contain the required
-     relationships" is a good heading and an impossible row in a pill at the foot of the screen; the
-     dock names the same section in three words. The number is the tie between them, which is what the
-     numbering was added for.
-
-     THEY ARE TITLE CASE, and the four group heads with them. The dock is a control, not a passage
-     of the document: these are the names of destinations, sitting in a list you scan rather than a
-     sentence you read, and title case is what separates a name from a phrase at that size. The h2s
-     they point at stay sentence case, because those ARE the document.
-
-     Short words stay down — "Image to Palette", "The Shape of a Palette", "The Palette in Use" —
-     and the acronyms are left exactly as the page spells them: OKLCH and WCAG are the names of a
-     colour space and a standard, so they are capital in any casing this dock is ever set in.
-
-     NOT uppercase. The group heads briefly took the system's uppercase label voice and it read as
-     shouting at the foot of the screen; about.css records what had to change when the transform
-     came off, since the tracking and the size were both settings that only made sense under
-     capitals. Title case is the middle setting, and it is the one this dock keeps.
-
-     data-ix="cell" ON ALL SEVENTEEN CONTROLS. The row tint, its curve and its duration arrive from
-     the interaction contract in global.css rather than from this component, which is what makes a
-     dock row and a list row in the tool the same object. about.css therefore declares no transition
-     of its own on these — an inline transition REPLACES the contract rather than joining it.
-
-     data-focus="value" RATHER THAN "chrome", on every control in here. The pill carries
-     overflow:hidden — it has to, or the list spills out of its rounded box through the whole morph —
-     and an outline drawn 3px outside a clipped box is a focus ring that is simply not there.
-     [data-focus="value"] is the house's inset ring (global.css) and survives the clip. Omitting the
-     attribute is not an option: the global :focus{outline:none} reset means no attribute is no ring. -->
-<nav data-section-dock-init aria-label="Sections of this page" class="section-dock">
-  <div data-section-dock-pill class="section-dock__pill">
-    <!-- The glass pane, as a plain block rather than chrome.jsx's <GlassEffect />, because this file
-         is HTML. Same seven layers, same class names, same stylesheet — see .glass-effect in
-         global.css. It is first so the controls paint above it, and takes border-radius:inherit so
-         it follows the pill through the morph. -->
-    <div class="glass-effect" aria-hidden="true">
-      <div class="glass-effect__fill"></div>
-      <div class="glass-effect__fill-burn"></div>
-      <div class="glass-effect__highlight-soft"></div>
-      <div class="glass-effect__highlight-strong"></div>
-      <div class="glass-effect__edge-light"></div>
-      <div class="glass-effect__edge-dark"></div>
-      <div class="glass-effect__inner-glow"></div>
-    </div>
-
-    <button type="button" data-section-dock-toggle aria-expanded="false" aria-controls="section-dock-list" data-ix="cell" data-focus="value" class="section-dock__toggle">
-      <span data-section-dock-label-wrap class="section-dock__label-wrap">
-        <!-- One span, holding the starting section. The script clones this as the template for every
-             label change and fills it from the active link, so the structure here is what carries. -->
-        <span class="section-dock__label">
-          <span class="section-dock__link-num">1.1</span>
-          <span>Image to Palette</span>
-        </span>
-      </span>
-      <!-- The affordance, instead of a standing "on this page" label: a caret pointing the way the
-           list opens. It says the pill expands without spending a permanent line of copy saying so. -->
-      <span class="section-dock__caret" aria-hidden="true"></span>
-    </button>
-
-    <div data-section-dock-list id="section-dock-list" class="section-dock__list">
-      <!-- Before the items and below them in z-index, so it sits behind the links rather than over
-           them. The script positions it on the active link and animates it between them. -->
-      <div data-section-dock-indicator class="section-dock__indicator"></div>
-      <ul class="section-dock__items">
-
-        <li data-dock-group class="section-dock__group">
-          <button type="button" data-dock-group-toggle aria-expanded="true" aria-controls="section-dock-g1" data-ix="cell" data-focus="value" class="section-dock__group-head">
-            <span class="section-dock__link-num">1</span>
-            <span>Foundations</span>
-            <span class="section-dock__chev" aria-hidden="true"></span>
-          </button>
-          <ul id="section-dock-g1" data-dock-sub class="section-dock__sub">
-            <li><a data-active data-section-dock-link href="#from-instinct-to-system" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.1</span><span>Image to Palette</span></a></li>
-            <li><a data-section-dock-link href="#how-atmos-reads-colour" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.2</span><span>How Atmos Reads Colour</span></a></li>
-            <li><a data-section-dock-link href="#reading-oklch" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.3</span><span>Reading OKLCH</span></a></li>
-            <li><a data-section-dock-link href="#reading-wcag-contrast" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">1.4</span><span>Reading WCAG Contrast</span></a></li>
-          </ul>
-        </li>
-
-        <li data-dock-group class="section-dock__group">
-          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g2" data-ix="cell" data-focus="value" class="section-dock__group-head">
-            <span class="section-dock__link-num">2</span>
-            <span>The Image</span>
-            <span class="section-dock__chev" aria-hidden="true"></span>
-          </button>
-          <ul id="section-dock-g2" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#more-than-common-colours" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.1</span><span>More Than Common Colours</span></a></li>
-            <li><a data-section-dock-link href="#shape-of-a-palette" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">2.2</span><span>The Shape of a Palette</span></a></li>
-          </ul>
-        </li>
-
-        <li data-dock-group class="section-dock__group">
-          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g3" data-ix="cell" data-focus="value" class="section-dock__group-head">
-            <span class="section-dock__link-num">3</span>
-            <span>The Palette in Use</span>
-            <span class="section-dock__chev" aria-hidden="true"></span>
-          </button>
-          <ul id="section-dock-g3" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#sampled-to-roles" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.1</span><span>Suggested Roles</span></a></li>
-            <li><a data-section-dock-link href="#contrast-creates-hierarchy" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.2</span><span>Contrast Creates Hierarchy</span></a></li>
-            <li><a data-section-dock-link href="#already-contain-relationships" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.3</span><span>Contrast in Practice</span></a></li>
-            <li><a data-section-dock-link href="#the-intervals-matter" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.4</span><span>The Intervals Matter</span></a></li>
-            <li><a data-section-dock-link href="#refine-without-losing" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">3.5</span><span>From Reading to Use</span></a></li>
-          </ul>
-        </li>
-
-        <li data-dock-group class="section-dock__group">
-          <button type="button" data-dock-group-toggle aria-expanded="false" aria-controls="section-dock-g4" data-ix="cell" data-focus="value" class="section-dock__group-head">
-            <span class="section-dock__link-num">4</span>
-            <span>In Practice</span>
-            <span class="section-dock__chev" aria-hidden="true"></span>
-          </button>
-          <ul id="section-dock-g4" data-dock-sub class="section-dock__sub">
-            <li><a data-section-dock-link href="#eight-images-eight-systems" data-ix="cell" data-focus="value" class="section-dock__link"><span class="section-dock__link-num">4.1</span><span>Example Palettes</span></a></li>
-          </ul>
-        </li>
-
-      </ul>
-    </div>
-  </div>
-</nav>

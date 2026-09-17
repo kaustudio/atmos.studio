@@ -32,7 +32,9 @@
 <div class="nf-head">
   <!-- data-logo is the app's own attribute for this wordmark, and it is here for global.css's
        reduced-motion rule, which stops the gradient drift by that attribute — see notfound.css. -->
-  <a href="/" aria-label="Atmos Gallery"><span class="nf-mark" data-logo="1" role="img" aria-label="Atmos Gallery"></span></a>
+  <!-- data-focus="chrome": the global focus reset removed this link's ring, so a keyboard reader
+       focused it and saw nothing (17.09.26, audit B2). The mask is on the span, so the link can draw it. -->
+  <a href="/" aria-label="Atmos Gallery" data-focus="chrome"><span class="nf-mark" data-logo="1" role="img" aria-label="Atmos Gallery"></span></a>
 </div>
 
 <main class="nf">

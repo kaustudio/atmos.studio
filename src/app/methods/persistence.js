@@ -567,7 +567,7 @@ export const persistenceMethods = {
     }, () => { this.persist({ immediate: true }); if (this.state.feedView === 'grid') this.buildUniverse(); this.showNotice(this._importSummary || 'Restore complete.'); });
   },
   // ---- lightweight reversible dialog motion (assign / manage) — fade+slide, tokens, RM-instant ----
-  _dialogIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const root = document.querySelector(sel); if (!root) return; const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); if (bk) g.from(bk, { opacity: 0, duration: .2, ease: 'none' }); g.from(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.state, ease: this.EASE.entrance, transformOrigin: 'center center', clearProps: 'transform' }); },
+  _dialogIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const root = document.querySelector(sel); if (!root) return; const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); if (bk) g.from(bk, { opacity: 0, duration: this.DUR.state, ease: this.EASE.standard }); g.from(root, { opacity: 0, y: 12, scale: 0.98, duration: this.DUR.state, ease: this.EASE.entrance, transformOrigin: 'center center', clearProps: 'transform' }); },
   // Every modal dialog's exit, on the utility-overlay band with the drawers — this is the shared
   // half of the "all five settle in the same time" contract, and it was the one place the number
   // was written twice (.2 for the backdrop, DUR.state for the panel) so the two never quite agreed.
@@ -580,28 +580,8 @@ export const persistenceMethods = {
   // which put peak velocity on the first frame and then spent two thirds of the duration finishing
   // a move nobody could still see.
   _dialogOut(sel, cb) { const g = window.gsap; const root = document.querySelector(sel); if (this._reduce || !g || !root) { cb(); return; } const bk = root.parentElement && root.parentElement.querySelector('[data-modal-backdrop]'); const tl = g.timeline({ onComplete: cb }); if (bk) tl.to(bk, { opacity: 0, duration: this.DUR.overlayOut, ease: this.EASE.overlay }, 0); tl.to(root, { opacity: 0, y: 10, scale: 0.98, duration: this.DUR.overlayOut, ease: this.EASE.overlay, transformOrigin: 'center center' }, 0); },
-  // ---- the toggletip's own beat ----------------------------------------------------------------
-  // A dialog's arrival is an event; a toggletip's is a disclosure, so it moves less and moves
-  // faster — DUR.state in, DUR.micro out, and 6px of travel against the dialog's 12, with no scale.
-  // It enters DOWNWARD from under its marker (y:-6 → 0), so the movement points away from the thing
-  // that opened it and the panel reads as unfolding from the ⓘ rather than appearing beside it.
-  //
-  // Both toggletips share these, which is the point: this app's surfaces arrive rather than appear,
-  // and one that popped instantly while everything around it eased would read as a rendering fault.
-  // Reduced motion and no-GSAP both take the instant path, as everywhere else — _tipOut calls its
-  // callback synchronously in that case, so the close path is identical with and without motion.
-  _tipIn(sel) { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector(sel); if (!el) return; g.from(el, { opacity: 0, y: -6, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
-  _tipOut(sel, cb) { const g = window.gsap; const el = document.querySelector(sel); if (this._reduce || !g || !el) { cb(); return; } g.to(el, { opacity: 0, y: -6, duration: this.DUR.micro, ease: this.EASE.exit, onComplete: cb }); },
-  // One open/close for every toggletip, keyed by its own state flag and its own panel. Closing has
-  // to outlive the state change — React would unmount the panel the instant the flag flips, and
-  // there would be nothing left to tween — so the exit runs first and the flag falls after it.
-  // The _tipClosing guard is what stops a second click during that ~120ms from starting a second
-  // exit on an element already on its way out (which would fire the callback twice and re-open).
-  // NOT inside a requestAnimationFrame, unlike the dialogs. The DOM is already committed in a
-  // setState callback, and gsap.from() sets its start values on the spot — so tweening here means
-  // the panel is never painted at full opacity. Deferred to a frame it was: one frame at opacity 1
-  // landed before the tween began, and the reveal opened with a flash of the thing it was about to
-  // fade in. The dialogs defer because their transition measures layout; this one does not.
+  // The toggletips' open and close (_tipIn, _tipOut, openTip, closeTip, toggleTip) went on 17.09.26:
+  // the last four toggletips were removed by request (audit H5), as the first two had been.
   // ---- disclosures that do not jump ------------------------------------------------------------
   // A fold that only fades leaves everything under it snapping to a new position, which is the
   // "unnecessary position jump" that makes an interface feel unfinished however smooth the fade is.
@@ -655,9 +635,6 @@ export const persistenceMethods = {
     if (this._foldBusy && this._foldBusy[flag]) { this.openFold(flag, sel); return; }
     if (this.state[flag]) this.closeFold(flag, sel); else this.openFold(flag, sel);
   },
-  openTip(flag, sel) { this.setState({ [flag]: true }, () => this._tipIn(sel)); },
-  closeTip(flag, sel) { if (this._tipClosing) return; this._tipClosing = true; this._tipOut(sel, () => { this._tipClosing = false; this.setState({ [flag]: false }); }); },
-  toggleTip(flag, sel) { if (this.state[flag]) this.closeTip(flag, sel); else this.openTip(flag, sel); },
   // The copy menu hands focus back to the control that opened it, on every route out — a pick, an
   // Escape, a click on the backdrop. A menu that closes and leaves focus on the document body sends
   // the next Tab to the top of the page, which is the one place the user was not.
@@ -717,95 +694,10 @@ export const persistenceMethods = {
       this.setState({ copyMenuOpen: false }, () => this._focusCopyTrigger(true));
     });
   },
-  /* THE PHONE'S TWO WAYS OUT. The gate used to be a wall: a sentence saying the tool needs a wider
-     screen, and nothing to do about it. Someone who arrived from a link had to remember to come back
-     later, on a different machine, from memory.
-
-     So: see what it makes, or keep the address. Both are honest on a phone — the first reuses the
-     read-only palette view a shared link already gets, the second puts the URL on the clipboard so
-     the trip to a desktop survives closing the tab. Neither pretends the extractor will run here. */
-  // The eight seeded examples, in library order. One place, because three controls read it.
+  // The eight seeded examples, in library order. One place, because the story, its chooser and the
+  // colour field all read it. (The phone's example view and example list that also read it went on
+  // 17.09.26, audit C5: the story is how a phone sees the examples.)
   _examples() { return (this.state.feed || []).filter((p) => p.example === true); },
-
-  /* A DIFFERENT ONE EACH TIME. The gate used to open feed.find(p => p.example), which is Garnet,
-     always — press it twice and the product looks like it makes one palette. It advances through
-     the list instead, and the first index of a session is random so two visits do not both start
-     at the top. No storage key for it: the whole point is variety within a visit, and a ninth
-     preference to persist and validate would cost more than it buys. */
-  openExampleOnPhone() {
-    const list = this._examples();
-    if (!list.length) return;
-    this._exIdx = (this._exIdx == null)
-      ? Math.floor(Math.random() * list.length)
-      : (this._exIdx + 1) % list.length;
-    this.showExample(list[this._exIdx]);
-  },
-  /* THE LIST'S SCROLL POSITION, held across the trip down to a palette and back. The list is not a
-     layer that stays behind the palette — it unmounts outright (see AppView's early returns), so
-     the browser has no scroller left to restore and every return landed at the top of a list
-     somebody had scrolled halfway down. Captured on the way out, applied on the way back, in the
-     same commit the list remounts in so nothing paints at the wrong offset first. */
-  _holdListScroll() { const el = document.querySelector('[data-mobile-list]'); this._listScroll = el ? el.scrollTop : 0; },
-  /* Focus goes back on the row that was opened, for the same reason the offset does — the row
-     unmounted under the reader's cursor and focus fell to the body, so a keyboard or switch user
-     came back to a list they had to tab into from the top. preventScroll because the offset above
-     has ALREADY put the row where it belongs; letting focus() scroll as well would undo it. */
-  _restoreListScroll() {
-    const el = document.querySelector('[data-mobile-list]'); if (!el) return;
-    if (this._listScroll) el.scrollTop = this._listScroll;
-    const row = this._listRowId && el.querySelector('[data-ml-row="' + this._listRowId + '"]');
-    if (row && row.focus) { try { row.focus({ preventScroll: true }); } catch (e) { } }
-  },
-  /* Opening a NAMED example from the list keeps the cursor in step, so leaving the list and
-     pressing the gate again continues from what you last looked at rather than jumping back.
-
-     A LEVEL CHANGE, so the level being left has to leave. Every other trip between these two
-     surfaces already pairs an exit with an entrance — openExampleList plays _shareOut before the
-     list arrives, closeExampleOnPhone plays it before the list comes back — and this one alone cut
-     straight to showExample. The list vanished in a single frame and the palette then spent
-     DUR.reveal rising out of an empty screen: the surface that was there did not leave, it was
-     deleted, which is the jump. _listClosing is the same guard closeExampleList holds, because two
-     exits of one surface must not overlap whichever way the reader is going. */
-  openExampleById(id) {
-    const list = this._examples();
-    const i = list.findIndex((p) => p.id === id);
-    if (i < 0) return;
-    this._exIdx = i;
-    if (!this.state.exampleList) { this.showExample(list[i]); return; }
-    if (this._listClosing) return;
-    this._listClosing = true;
-    this._listRowId = id;
-    this._holdListScroll();
-    this._listOut(() => { this._listClosing = false; this.showExample(list[i]); });
-  },
-  showExample(ex) {
-    if (!ex) return;
-    /* THE STAGE UNDERNEATH TAKES THE PALETTE WITH IT. The phone does not replace the landing when it
-       opens an example, it covers it (see LandingStage's `covered`) — so the field the reader comes
-       back to is the same one they left, and it now comes back as a reading of the palette they went
-       to look at. See setFieldPalette in methods/orbit.js.
-       BEFORE the setState, not inside its callback, and that is the difference between a dissolve
-       and a cut: _landingLit() is still true here, so the ramp crossfades over the same beat the
-       read-only panel is arriving in. One commit later the stage is covered and the swap would be
-       written straight in, under a panel that has not finished arriving. */
-    this.setFieldPalette(ex);
-    this.setState({ current: ex, exampleView: true, announce: 'Example palette ' + ex.name + ' opened, read only.' }, () => this._shareIn());
-  },
-  closeExampleOnPhone() {
-    if (this._shareClosing) return;
-    this._shareClosing = true;
-    this._shareOut(() => {
-      this._shareClosing = false;
-      // Back goes UP one level, not out: if the list is open behind this palette, that is where it
-      // came from and where it belongs. Leaving straight to the gate from a list you had just
-      // browsed threw away the position you were holding.
-      this.setState({ exampleView: false, announce: this.state.exampleList ? 'Back to the example list.' : 'Returned to the start screen.' }, () => {
-        // Scroll BEFORE the entrance, and outside it: _listIn returns early under reduced motion,
-        // and the position you were holding is not an animation — it is where you were.
-        if (this.state.exampleList) { this._restoreListScroll(); this._listIn(); }
-      });
-    });
-  },
   /* ===== THE PHONE'S STORY ==================================================================
 
      Four acts and a build step. None of them touches the orb formation: the story covers nothing,
@@ -962,7 +854,9 @@ export const persistenceMethods = {
     const p = this._examples().find((x) => x.id === id);
     if (!p) return;
     // The field is the prologue's visual — chapter 1 is transparent onto it — so a story that
-    // changes which palette it is telling has to change which palette the field is. See showExample.
+    // changes which palette it is telling has to change which palette the field is. Before the
+    // setState, not in its callback: the field is still lit here, so the ramp changes on the same
+    // beat as the story rather than one commit later under a surface that has already moved on.
     this.setFieldPalette(p);
     this.setState({ storyCaseId: id, storySwatch: null, storyMasks: null, announce: 'Now exploring ' + p.name + '.' }, () => {
       this.buildStoryMasks();
@@ -975,7 +869,7 @@ export const persistenceMethods = {
   /* THE ENTRY ACT, and the jump home for a case swap. Through Lenis when it is there, natively when
      it is not — `_lenis` is armed asynchronously with up to 40 retries and is never created at all
      under reduced motion, so a call site that assumes it exists is a control that does nothing on
-     the two occasions it matters most. Same guard aboutDock uses for its anchors.
+     the two occasions it matters most. Same guard the /about anchor dock used for its anchors, before it was removed.
 
      ONE SECOND ON EASE.fold, THE CHOOSER'S SLIDE (15.09.26, by request). With no duration Lenis
      falls back to its lerp, 0.22 of the remaining distance per frame, and from the landing's Explore
@@ -1166,7 +1060,7 @@ export const persistenceMethods = {
     }
     const recast = !!s.storyCaseId;
     const rolled = this._storyDefaultId && this._examples().find((p) => p.id === this._storyDefaultId);
-    // Before the cover, for showExample's reason: the field crossfades while it is still lit.
+    // Before the cover, for the reason chooseStoryCase gives: the field changes while it is still lit.
     if (recast && rolled) this.setFieldPalette(rolled);
     this._wipeCover({
       commit: (after) => {
@@ -1193,32 +1087,15 @@ export const persistenceMethods = {
     });
   },
 
-  /* THE MARK GOES HOME, from either phone surface, in one step.
+  /* THE MARK GOES HOME from a shared link on a phone, in one step.
 
      NOT showIntroAgain(), which is what the mark calls in the tool. That routine is written for a
      landing that is NOT on screen — it kills the orb field and re-inits it on the next tick, because
      on a desktop the landing was unmounted and has to be rebuilt. On a phone the landing is always
-     mounted, sitting `covered` under these two surfaces precisely so the formation is never torn
-     down and rebuilt with a visible hole in it while its textures upload. Calling the desktop
-     routine here would reintroduce exactly the fault that design exists to prevent.
+     mounted, sitting `covered` under the shared view precisely so the formation is never torn down
+     and rebuilt with a visible hole in it while its textures upload.
 
-     NOT closeExampleOnPhone() either, which goes UP one level and is right for a control that says
-     "back". The mark is not a back button; it is the way home from anywhere, so it clears the view
-     flags and lands on the gate whichever surface it was pressed from.
-
-     THE SHARED ARRIVAL WAS THE ONE IT COULD NOT LEAVE, and it failed in the worst available way.
-     MobileShareView serves two arrivals behind two separate flags — `exampleView` for one you chose,
-     `sharedView` for one somebody sent you — and this routine cleared the first and never the
-     second. `_mobileShare()` reads `(sharedView || exampleView)`, so on a shared link the mark ran,
-     wrote "Returned to the start screen." into the live region, and left the surface exactly where
-     it was: a focusable control with an aria-label promising a destination, an announcement saying
-     it had arrived, and nothing moved. A screen reader was told the page had changed when it had
-     not, which is worse than a button that visibly does nothing. Measured before the fix at 900px on
-     a real share link — announcement present, `[data-mobile-share]` still mounted, hash still in the
-     address bar.
-
-     THE SHARED CASE TAKES THREE MORE STEPS THAN THE EXAMPLE ONE, and each is a state that would
-     otherwise outlive the surface it belongs to:
+     THREE STATES GO WITH THE SURFACE, and each would otherwise outlive it:
        · the hash — left in place, a reload would reopen a stranger's palette over whatever the
          reader had moved on to. That is the whole reason _clearShareHash exists; saveShared and
          makeOwnFromShared already call it and this is the third way off the surface.
@@ -1226,61 +1103,19 @@ export const persistenceMethods = {
          past the supported minimum would put someone else's palette on the result stage with the
          `sharedView` flag now false, which is the tool saying "this is yours" about a thing it was
          handed by a link.
-       · `stage` — a shared arrival constructs at 'result'. 'upload' is the stage the gate and the
-         story stand in front of, so this lands the same state a first visit has.
-     The example case keeps all three: `current` is deliberately untouched there, because the gate's
-     next press continues from the example you last looked at, which is the cursor openExampleById is
-     careful to keep in step. Neither `_examples()` nor `gateHasExample` reads `current`, so clearing
-     it on the shared path cannot disturb that cursor.
-
-     The exit still plays, and now it plays for both arrivals. Every trip between these surfaces
-     pairs an exit with an entrance, and a surface that is deleted rather than left is the jump this
-     file has already fixed twice — so whichever one is on top leaves the way it would have left
-     anyway. `_shareOut` is the share surface's exit whichever flag put it there. */
+       · `stage` — a shared arrival constructs at 'result'. 'upload' is the stage the story stands in
+         front of, so this lands the same state a first visit has.
+     The exit still plays: a surface that is deleted rather than left is the jump this file has fixed
+     before. (This routine also served the phone's example view and example list until 17.09.26,
+     audit C5, which removed both.) */
   returnToGateOnPhone() {
-    if (this._shareClosing || this._listClosing) return;
-    const wasShared = !!this.state.sharedView;
+    if (this._shareClosing) return;
     const land = () => this.setState(
-      wasShared
-        ? { sharedView: false, exampleView: false, exampleList: false, stage: 'upload', current: null, imageUrl: null, announce: 'Returned to the start screen.' }
-        : { exampleView: false, exampleList: false, announce: 'Returned to the start screen.' },
-      wasShared ? () => this._clearShareHash() : undefined);
-    if (this.state.exampleView || wasShared) {
-      this._shareClosing = true;
-      this._shareOut(() => { this._shareClosing = false; land(); });
-    } else if (this.state.exampleList) {
-      this._listClosing = true;
-      this._listOut(() => { this._listClosing = false; land(); });
-    } else { land(); }
-  },
-  /* Called from two places, and it has to mean the same thing in both: SHOW me the list. From the
-     gate that is one state flip. From an open palette it is a level change, so the palette has to
-     leave first — setting the flag alone armed the list UNDER a surface that stayed on top, which
-     turned one tap into two and made "See all examples" look broken. */
-  openExampleList() {
-    if (this.state.exampleList && !this.state.exampleView) return;
-    // Reached only from OUTSIDE the list (the control is hidden while inList), so this is a fresh
-    // arrival at it and the top is where it belongs — a held offset here would be from some earlier
-    // visit and would read as the list opening halfway down for no reason.
-    this._listScroll = 0; this._listRowId = null;
-    const show = () => this.setState(
-      { exampleView: false, exampleList: true, announce: 'Example palettes, ' + this._examples().length + ' to choose from.' },
-      () => this._listIn());
-    if (this.state.exampleView) {
-      if (this._shareClosing) return;
-      this._shareClosing = true;
-      this._shareOut(() => { this._shareClosing = false; show(); });
-      return;
-    }
-    show();
-  },
-  closeExampleList() {
-    if (this._listClosing) return;
-    this._listClosing = true;
-    this._listOut(() => {
-      this._listClosing = false;
-      this.setState({ exampleList: false, announce: 'Returned to the start screen.' });
-    });
+      { sharedView: false, stage: 'upload', current: null, imageUrl: null, announce: 'Returned to the start screen.' },
+      () => this._clearShareHash());
+    if (!this.state.sharedView) { land(); return; }
+    this._shareClosing = true;
+    this._shareOut(() => { this._shareClosing = false; land(); });
   },
   copySiteLink() {
     const href = (typeof location !== 'undefined' ? location.origin + '/' : 'https://atmos.gallery/');
