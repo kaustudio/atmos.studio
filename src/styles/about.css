@@ -1397,7 +1397,8 @@
   position:relative;flex:none;
   width:var(--rail-card);aspect-ratio:3/4;
   overflow:hidden;background:var(--surface-raised);
-  border:1px solid var(--line-strong);
+  /* No stroke (17.09.26, radius issue R3, by request), as the grid view's cards: the photograph is
+     the card's edge. The phone story's cards take this rule too. */
   /* the surface corner (17.09.26, radius issue R3, by request: 12px first, "too subtle"); the
      photograph is clipped to it */
   border-radius:var(--radius-surface);

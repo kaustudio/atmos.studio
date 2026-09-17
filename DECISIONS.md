@@ -59,16 +59,29 @@ where they were plain uppercase labels; the old `.about-checks__use` rule is gon
   - The drawer's chips, text-on-colour rows and sample take `--radius-swatch` (3px, new).
   - How it Works' photo cards have no swatch strip (by request, R10 and R3): the palette's name
     stands alone on the desktop and the phone. The strip wore the same 3px until it went.
+  - The contrast checker's "Text on each colour" label is gone (by request). The rows still name
+    their colour and the text that reads on it. The 3px corners stay.
 - **R3, the corner (by request):**
   - The grid view's cards (300×344) and the reduced-motion grid's cards take `--radius-card`, 12px,
     the figure approved for them. 28px was put on them by mistake with the note below and taken off.
   - How it Works' photo cards (374×499 on the desktop, 280×373 on the phone) take
     `--radius-surface`, 28px. 12px was "too subtle" at that size. The figure is not approved yet.
   - When a grid card opens, the two corners it shares with its panel go square.
+  - How it Works' photo cards lose their 1px stroke too (by request), on the desktop and the phone,
+    so the photograph is the edge as on the grid. Their corner stays 28px. The error panel keeps
+    28px, the same as Start here (R12, confirmed).
   - The grid cards have no stroke (by request): the box has no border and no fill, so the photograph
     is the card's edge. The open panel keeps its hairline and is invisible until it starts to slide,
     because a hairline under the photograph would show at its anti-aliased edge. The hover ring now
     sits on the photograph's edge. How it Works' photo cards still have their 1px stroke.
+
+**The palette's acts speak in the banner's voice (by request).** Add to Projects, Check Contrast,
+Copy, Export and Share take the dialogs' button type — `--fs-body`, Medium, Title Case, flat
+tracking — where they were the uppercase `--fs-label` voice. The row carries `data-voice="banner"`,
+which is how every other surface asks for that voice, so the case and weight come from one rule in
+global.css. It is the same row on the result stage and on the fullscreen detail, and the open grid
+card's foot takes it too ("Open Detail", whose accessible name now opens with the visible label,
+SC 2.5.3).
 
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the

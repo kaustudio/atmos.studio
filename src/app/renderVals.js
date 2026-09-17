@@ -752,7 +752,8 @@ export const renderValsMethods = {
       panelAria: uOpenP.name + ' palette. ' + uOpenNode.readout,
       cardMetricsStyle: Object.assign({}, uOpenNode.cardMetricsStyle, { padding: UNIVERSE_TILE_INSET + 'px 0 0' }),
       onDetail: () => this.openOverlay(uOpenP, this._uOpenCard ? this._uOpenCard.el : null),
-      detailAria: 'Open ' + uOpenP.name + ' detail',
+      // The visible label is "Open Detail", so the accessible name opens with it (SC 2.5.3).
+      detailAria: 'Open Detail for ' + uOpenP.name,
       onClose: () => this.closeTile(),
       closeAria: 'Close ' + uOpenP.name + ', or press Escape',
     }) : null;
@@ -822,7 +823,7 @@ export const renderValsMethods = {
         // already filed read as a second copy.
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
-        assignLabel: 'Add to projects',
+        assignLabel: 'Add to Projects',
         // Which format was copied, drawn by the view on the trigger that was pressed.
         copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
         /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
@@ -2308,7 +2309,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       assignDisabled: !filedCur,
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
-      assignLabel: 'Add to projects',
+      assignLabel: 'Add to Projects',
       assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast

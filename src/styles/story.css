@@ -385,6 +385,9 @@
    not a heading, and nesting anything focusable inside it would be worse. */
 [data-mobile-story] .about-rail__card{
   padding:0;
+  /* no stroke (17.09.26, radius issue R3, by request): about.css's 1px line was also what hid the
+     button's own 2px outset border, so the button states none */
+  border:0;
   cursor:pointer;
   text-align:left;
   -webkit-tap-highlight-color:transparent;

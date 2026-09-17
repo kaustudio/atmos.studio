@@ -475,8 +475,11 @@ const UniversePanel = ({ c }) => (<>
       While a card is open this is the ONLY close mark on screen: the view's own, in the corner,
       is put away for the duration (universe.js openTile), because leaving the field with a card
       mid-open is an exit the engine cannot play. */}
-  <div data-upanel-part="1" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border-top:1px solid var(--line)')}>
-    <B006 data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} label={<B006Text>Open detail</B006Text>} />
+  <div data-upanel-part="1" data-voice="banner" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border-top:1px solid var(--line)')}>
+    {/* THE BANNER'S VOICE (17.09.26, by request): the dialogs' button type and Title Case, where this
+        was the uppercase action voice. An open card is a surface with a question at its foot, like
+        the dialogs, so its one act speaks as theirs do. */}
+    <B006 data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Open Detail</B006Text></span>} />
     <button type="button" data-ix="press" data-focus="chrome" data-upanel-close="1" onClick={c.onClose} aria-label={c.closeAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
   </div>
 </>);
@@ -520,7 +523,7 @@ function ValueRow({ v, showCaveat }) {
 // Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
 // the user to supply the verb; in a row of six that is six subjects and no route.
 const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check contrast</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
 );
 // EXPORT'S CHEVRON IS GONE. It was there to promise a chooser — press this and you will be asked
 // something — and that promise is the one thing this control did not need to make: what opens is a
@@ -530,7 +533,7 @@ const contrastB006Label = (
 // Copy keeps its ▾, and that is the distinction now rather than an inconsistency: Copy really does
 // drop a menu under the button, so the mark points at where the menu will appear.
 const exportB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span><B006Text>Export</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span><B006Text>Export</B006Text></span>
 );
 // COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
 // rather than saying "Copied", because from a menu that is the only part still in question — and it
@@ -548,9 +551,9 @@ const exportB006Label = (
 // two characters between them. The chevron holds its place, so the row still never moves, and which
 // format landed on the clipboard is said by the live region and by the menu item just pressed.
 const copyB006Label = (done) => (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
     <span aria-hidden="true" style={{ display: 'inline-flex' }}>{done ? <IconCheck /> : <IconCopy />}</span>
-    <span style={sx('display:inline-grid;align-items:center;justify-items:center;height:14px')}>
+    <span style={sx('display:inline-grid;align-items:center;justify-items:center;height:16px')}>
       <span style={{ gridArea: '1/1' }}><B006Text>{done ? 'Copied' : 'Copy'}</B006Text></span>
       <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>Copied</span>
     </span>
@@ -606,7 +609,7 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
   return (<>
     <B006 data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
       onClick={onToggle} onKeyDown={onKey} aria-label="Copy the whole palette, in a format you choose"
-      label={copyB006Label(done)} />
+      style={CONSENT_BTN_TYPE} label={copyB006Label(done)} />
     {open && owns && host && createPortal(
       /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
       <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
@@ -669,7 +672,7 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
 // Filing takes the same folder glyph the archive row and the overlay header already use — one
 // concept, one mark — and a label that changes with the state rather than an icon that doesn't.
 const assignB006Label = (text) => (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconFolder /></span><B006Text>{text}</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconFolder /></span><B006Text>{text}</B006Text></span>
 );
 /* Share carries an icon AND swaps its text, and it used to compose the icon wrapper with SwapLabel
    — a grid cell holding the label, a hidden copy of it and a hidden "✓ Copied", so the button was
@@ -688,7 +691,7 @@ const assignB006Label = (text) => (
    "Share", not "Share Link": the noun named the ARTEFACT the button produces, which is the one
    thing the reader does not have yet; the verb names the act, which is what a label is for. */
 const shareB006Label = (copied) => (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:14px')}>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
     <span aria-hidden="true" style={{ display: 'inline-flex' }}>{copied ? <IconCheck /> : <IconLink />}</span>
     <B006Text>{copied ? 'Copied' : 'Share'}</B006Text>
   </span>
@@ -2311,7 +2314,11 @@ export default function AppView({ vals }) {
                 the weight difference used to say, position and the hairline now say instead.
 
                 One 8px rhythm across the whole row, matching the archive header's bar. */}
-            <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
+            {/* THE BANNER'S VOICE (17.09.26, by request): the palette's acts are set like the
+                dialogs' buttons — --fs-body, Medium, Title Case, flat tracking — where they were the
+                uppercase --fs-label voice. The row is the same object on the detail overlay, which
+                carries the attribute too. */}
+            <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
                   gives: first in the sequence and available, organise then validate then output.
                   It held the second tier here only because one creative act stood ahead of it, and
@@ -2321,7 +2328,7 @@ export default function AppView({ vals }) {
                   filing changes the archive, so it stays on the committing side of the hairline.
                   Disabled while the palette is only in the URL — a shared palette has no record to
                   file until it is saved, and the strip above already offers that. */}
-              <B006 data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} label={assignB006Label(vals.assignLabel)} />
+              <B006 data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignB006Label(vals.assignLabel)} />
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
@@ -2335,9 +2342,9 @@ export default function AppView({ vals }) {
               {/* The hairline that used to divide the trio from the filing act is gone (by request,
                   02.09.26); the group is still one flex box so it wraps as one. */}
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
-                <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+                <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
                 <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-                <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+                <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2346,7 +2353,7 @@ export default function AppView({ vals }) {
                   (It was moved into the group above for one revision and moved back: the placement
                   was never the thing that looked wrong — see the label's own note for what was.) */}
               <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" label={shareB006Label(vals.shareCopied)} />
+                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" style={CONSENT_BTN_TYPE} label={shareB006Label(vals.shareCopied)} />
               </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
@@ -3293,8 +3300,9 @@ function ContrastDrawer({ vals }) {
           </div>
         </div>
 
+        {/* The rows alone: their "Text on each colour" label went on 17.09.26 (radius issue R10, by
+            request). Each row still names its colour and the text that reads on it. */}
         <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 0')}>
-          <div style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted); margin-bottom: 8px')}>Text on each colour</div>
           <div style={sx('display:flex;flex-direction:column;gap:1px')}>
             {contrast.textOn.map((t, ti) => (
               <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
@@ -3374,14 +3382,14 @@ function DetailOverlay({ vals }) {
               before copying. (No Share here: the overlay has no shareable URL, so that group is a
               trio, not four. The hairline that used to divide it from Filing went on 02.09.26, on
               both surfaces.) */}
-          <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
+          <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
             {/* Filing leads here, as it does on the result view: the act that is first in the
                 sequence and available — organise, then validate, then output. */}
-            <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} label={assignB006Label(overlay.assignLabel)} />
+            <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignB006Label(overlay.assignLabel)} />
             <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
-              <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" label={contrastB006Label} />
+              <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
               <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-              <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" label={exportB006Label} />
+              <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
             </div>
           </div>
         </div>
