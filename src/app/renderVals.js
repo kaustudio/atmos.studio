@@ -461,8 +461,17 @@ export const renderValsMethods = {
     // the menu calls it.
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
 
-    let procStatus = '';
-    if (busy) { const STEPS = ['Reading light', 'Sampling the field', 'Grouping the colours', 'Naming the mood']; procStatus = STEPS[Math.min(s.procStep, 3)] + '…'; }
+    /* THE FOUR STEPS, AND WHAT THE ORB IS DOING WHILE EACH ONE RUNS. The states are the Thinking Orbs'
+       own six (thinkingOrbs.js); these four are the ones that describe this work, in the order the
+       reading does it: it searches the photograph for its light, works through the field it sampled,
+       solves the grouping, and composes the name. */
+    let procStatus = '', procOrb = 'working';
+    if (busy) {
+      const STEPS = ['Reading light', 'Sampling the field', 'Grouping the colours', 'Naming the mood'];
+      const ORBS = ['searching', 'working', 'solving', 'composing'];
+      const i = Math.min(s.procStep, 3);
+      procStatus = STEPS[i] + '…'; procOrb = ORBS[i];
+    }
 
     const curId = s.stage === 'result' && s.current ? s.current.id : null;
     // The card's spoken form. Its metrics grid is aria-hidden (it is the visual layer), so whatever
@@ -2339,7 +2348,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       export: exportView, hasExport: !!exportView,
       closeExport: () => this.closeExport(), trapExport: (e) => this.trapExport(e),
       toggleExportSemantic: () => this.setState((st) => ({ exportSemantic: !st.exportSemantic })),
-      pill, result, procStatus, procStep: s.procStep,
+      pill, result, procStatus, procOrb, procStep: s.procStep,
     };
   },
 };

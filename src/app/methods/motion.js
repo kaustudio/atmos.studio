@@ -138,7 +138,16 @@ export const motionMethods = {
     // `think` is the least time one line of the processing stage stays up ("Reading light…" and the
     // three after it), so each can be read; two of the four stretch it by what the photograph is
     // (pipeline.js _thought). Same day, same reason.
-    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 0.62, overlayStep: 0.04, overlayItem: 0.05, overlayBlock: 0.08, overlayArrive: 1, reveal: 0.62, stagger: 0.05, line: 0.09, extract: 7.5, settle: 0.7, think: 0.75, focus: 0.9 };
+    // `swirl` is how long an impulse in the processing atmosphere's gas takes to die away
+    // (procField.js _procImpulse): a kick, a wind-up or a burst of turbulence easing back to the
+    // flow's resting figures. Longer than any arrival on the scale because it is not an arrival —
+    // it is momentum leaving a body of gas, and a beat of it has to still be legible under the next
+    // step's line. Chosen from recordings on 17.09.26.
+    // `breathe` is one full breath of that same atmosphere while the live reading is out (procField
+    // _procStep 3): the only step of the four whose length nobody knows, so the only one whose beat
+    // has to be a cycle rather than an arrival. Long enough that a nine-second wait never repeats a
+    // figure the eye has learnt, short enough to read as breathing rather than as drift.
+    this.DUR = { micro: 0.12, fast: 0.18, state: 0.24, chrome: 0.28, swap: 0.4, fold: 0.5, overlay: 0.8, overlayOut: 0.62, overlayStep: 0.04, overlayItem: 0.05, overlayBlock: 0.08, overlayArrive: 1, reveal: 0.62, stagger: 0.05, line: 0.09, extract: 7.5, settle: 0.7, think: 0.75, focus: 0.9, swirl: 1.5, breathe: 2.6 };
     // focus (17.09.26, audit F4): the colour demonstrations' blur-to-sharp arrival (renderVals
     // focusMotion), which was written as 0.9. JS only; no CSS transition runs it.
   },

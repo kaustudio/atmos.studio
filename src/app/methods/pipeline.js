@@ -193,6 +193,11 @@ export const pipelineMethods = {
       if (stale()) throw CANCEL;
       this.setState({ procStep: i });
       this._readBar(i, job);
+      // The atmosphere takes the same step as a beat in its gas, with the length this line is
+      // expected to hold the screen so the beat is about this step rather than about a clock
+      // (procField.js _procStep). The grouping's own structure arrives a moment later, inside its
+      // work, because there is no palette to take a shape from until k-means has run.
+      this._procStep(i, this._thought(i, job));
       const t0 = performance.now();
       await this._afterPaint();                      // the line is on screen before its work starts
       if (stale()) throw CANCEL;
@@ -209,6 +214,9 @@ export const pipelineMethods = {
       await step(2, () => {
         pal = this.buildPalette(this.kmeans(pts, job.k), thumb, job.srcUrl, job.hash);   // the local reading is the baseline
         job.spread = this._paletteSpread(pal);
+        // The atmosphere's grouping beat: how many swatches, what share each holds and their
+        // lightness order — never a hue (procField.js _procShape).
+        this._procShape(pal);
         reading = this._readMood(pal, thumb);
       });
       const { interp, errored } = await step(3, () => reading);
@@ -237,7 +245,7 @@ export const pipelineMethods = {
   },
   /* How long step i stays on screen at least, in seconds. See the note above _readPhotograph. */
   _thought(i, job) {
-    const T = this.THOUGHT, base = this.DUR ? this.DUR.think : 0.75;
+    const T = this.THOUGHT, base = this.DUR.think;
     if (i === 0) return base * Math.min(T.sizeMax, T.sizeBase + T.sizeGain * Math.log2(1 + (job.mp || 0)));
     if (i === 2) return base * (T.spreadBase + T.spreadGain * Math.min(1, (job.spread || 0) / T.spreadFull));
     return base;
@@ -274,7 +282,7 @@ export const pipelineMethods = {
     if (!g || !bar) return;
     const AT = [0.22, 0.46, 0.7, 0.86];
     g.killTweensOf(bar);
-    const ease = this.EASE ? this.EASE.progress : 'power2.out';
+    const ease = this.EASE.progress;
     const tl = g.timeline();
     tl.to(bar, { scaleX: AT[i], duration: this._thought(i, job), ease, transformOrigin: '0% 50%' });
     if (i === 3) tl.to(bar, { scaleX: 0.97, duration: 8, ease });
@@ -582,7 +590,8 @@ export const pipelineMethods = {
     // Five blobs round a ring the size of the gas, turning at the field's own tempo, so even the floor
     // has the eye in the middle and reads as the same object.
     const turn0 = Math.random() * 6.2832, spin = 6.2832 / this._procFloorShape().rotSecs;
-    const blobs = [0, 1, 2, 3, 4].map((i) => ({ g: i % 3, at: turn0 + i * 1.2566, r: 44 + Math.random() * 18, wob: Math.random() * 6.28, rp: Math.random() * 6.28, rs: 0.2 + Math.random() * 0.25 }));
+    const fr = this._procFloorShape().floorRx;
+    const blobs = [0, 1, 2, 3, 4].map((i) => ({ g: i % 3, at: turn0 + i * 1.2566, r: fr * (0.34 + Math.random() * 0.14), wob: Math.random() * 6.28, rp: Math.random() * 6.28, rs: 0.2 + Math.random() * 0.25 }));
     const t0 = performance.now();
     const paint = (t) => {
       ctx.clearRect(0, 0, W, H);

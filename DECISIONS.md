@@ -6,6 +6,43 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-17 — The atmosphere flows, wears the page's ink, and sits
+
+**It is a simulation now, and it answers the reading.** Asked to make it "more lively and expressive …
+the feeling that something special is being generated", four directions were built end to end in
+separate copies of the app, recorded, critiqued and shown side by side: the volume given four
+materials, a particle accretion, a light that reads, and a smoke-ring flow. The user picked the flow.
+`smokeFlow.js` advects a density-and-tone field on a polar grid over the disc's own plane, so the ring
+curls, sheds wisps and REMEMBERS an impulse; `nebulaField.js` renders it through the same camera,
+march and strip as before, behind a flag the landing never sets. The four steps are four beats
+(`_procStep`): a light passes round while the light is read, taps are drawn into streaks while the
+field is sampled, the arms give way to one eddy per swatch — sized and spaced by that colour's share,
+toned by its lightness, never its hue — while the colours are grouped, and the band breathes for as
+long as the naming takes, because that is the one step whose length nobody knows.
+
+**It is made of the page and its ink.** The strip runs in OKLab from `--surface` to `--on-surface`
+(_procRamp), so the deepest smoke is the primary black on paper and the primary white on the dark page,
+the ink's own faint warmth included. It replaced the landing's five-rung ladder, which stopped at a mid
+charcoal and a near-white — tones near the primary rather than the primary. The ceiling that held the
+lit gas short of it is gone, and the 2D fallback floor takes three tones off the same line.
+
+**It sits.** Three endings were asked for in turn: contract to 0 while dissolving, then "let it not
+scale down at the end, let it sit", then "just let it sit and not dissolve at the end". So the end is
+now only the bar completing and `DUR.settle` passing: the ring keeps its size, its flow, its turn and
+its full strength, and what ends it is the result arriving. The scale-out, the inward drain and the
+spin-up went with it, and so did the floor's departing fade.
+
+**The status line speaks in the CTA's voice, and the square is an orb.** The four lines were set in the
+default control voice — uppercase, Regular, flat, `--fs-label` — which is the voice of a metric label;
+they are the tool saying what it is doing, so they take the system's one statement voice (Medium,
+`--fs-cta`, `--track-statement`, case authored in the words). Beside them, the 7x7 square that had not
+blinked since its keyframes were removed is replaced by Jakub Antalik's Thinking Orbs — the
+dependency-free vanilla adaptation, adopted whole with its MIT notice, minus its `DOMContentLoaded`
+auto-init (`thinkingOrbs.js`). One 20px canvas whose state follows the reading: searching, working,
+solving, composing. It is `aria-hidden`, because the line beside it says the same thing in words and
+the stage already announces each step; `data-orb-theme="auto"` resolves against the `data-theme` this
+app already sets, and reduced motion gets one still frame, which is the answer the atmosphere gives.
+
 ## 2026-09-17 — The audit's fifth round: the lows, no standing sentences, round filter rows
 
 **No standing sentences, and no toggletips (by request, audit H5).**
@@ -375,7 +412,7 @@ live reading. Each new line rises in through the copy confirmation's mask (`val-
 ## 2026-09-17 — An atmosphere while the photograph is read
 
 **The processing stage shows a small, colourless version of the landing's field.** It is the same
-volume (`nebulaField.js`) and the same turning disc with its eye, about 270px across, floating where
+volume (`nebulaField.js`) and the same turning disc with its eye, about 140px across, floating where
 the ruled 380x250 box used to be. `procField.js` owns it. It never touches the landing's palette,
 wheel, memos or ticker, and `orbit.js` is unchanged.
 
@@ -386,16 +423,25 @@ container, smaller, with a natural end; and no colour, because while the reading
 not know the image's colours yet. From three neutral candidates the user picked the smaller, lighter
 one, and kept the natural end.
 
+**It grows in and contracts to nothing.** It scales up from half size as the reading starts, and at
+the natural end it draws in to 0 while it keeps turning at its own tempo (an earlier cut eased the turn
+to rest, and it read as stopping before it left). Both are changes of size, so both run on
+`EASE.fold`, the system's curve for that; the gas fades in on `EASE.standard` and out on `EASE.exit`,
+and the bar completes on `EASE.progress`. No curve outside the motion system is used.
+**THE ENDING IS GONE AGAIN** — see the entry at the top of this file: the atmosphere now sits. The
+grow-in and the curves are unchanged.
+
 **It lives on its own.** The slot keeps its size so the stage does not move, but it has no ground, clip
-or rule. The disc thins out at its own rim (eye 48x28, rim 2.8 of it), and its canvas overhangs the
-slot by 24px so perspective never clips the far side.
+or rule. The disc thins out at its own rim (eye 30x18, rim 2.3 of it, with a firmer edge from `fade`
+0.7 and `rise` 0.34). It was 48x28 at 2.8 until the user asked for it "more compact and smaller" and
+picked this from three sizes, keeping the slot's height so the page does not move.
 
 **It has no colour.** Its ramp is the landing's tonal ladder with the hue removed: greys solved against
 `--surface`, so it is a shade of the page in both themes. `tone` 0.2 and `toneSlope` 0.25 keep it to
 the near half of the ladder, so the rim stays a mid grey on light and a soft grey on dark. Colour
 arrives with the result.
 
-**It ends.** When the reading is done the turn eases to rest, the gas dissolves and the bar completes
+**It ends.** When the reading is done the disc contracts, still turning, the gas dissolves and the bar completes
 over `DUR.settle` (0.7s, a new named step), and only then does the result take the stage (`_procClose`,
 called from `commitGenerated`). This does not run under reduced motion or in a hidden document, and a
 timer backstops the ticker. Once the close has begun, a field still being built stays out of sight,

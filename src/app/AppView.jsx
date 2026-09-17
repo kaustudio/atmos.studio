@@ -30,6 +30,7 @@ if (typeof window !== 'undefined') {
 // [data-mobile-story], so nothing it holds can reach a viewport that never mounts that surface.
 import '../styles/story.css';
 import { isDoc, isLegal, pathFor } from './routes.js';
+import { thinkingOrbs } from './thinkingOrbs.js';
 // PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
 // any in-app action. Behavioural instrumentation is a separate decision with its own copy
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
@@ -1897,6 +1898,23 @@ function DocFallback() {
   return <div data-doc-fallback="1" style={sx('display:contents')} dangerouslySetInnerHTML={{ __html: pre.html }} />;
 }
 
+/* THE AGENT'S ORB, beside the reading's status line (thinkingOrbs.js, and the note at its head).
+   React owns the canvas; the module is told about it after mount and its returned function runs on
+   unmount, which is what its own instructions ask for in a framework. A step change re-runs the
+   effect: the module cleans the old instance off the canvas before it starts the new one, so the
+   orb changes what it is doing as the line changes what it says.
+   aria-hidden, because the line beside it is the same statement in words and the stage announces
+   every step through the live region; a second voice saying "Searching…" would be noise. */
+function ThinkingOrb({ state, size = 20 }) {
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return undefined;
+    return thinkingOrbs(cv, { size, theme: 'auto' });
+  }, [state, size]);
+  return <canvas ref={ref} data-thinking-orb="1" data-orb-state={state} data-orb-size={size} data-orb-theme="auto" aria-hidden="true" style={sx('display:block;flex:none')}></canvas>;
+}
+
 export default function AppView({ vals }) {
   /* About, privacy and terms, before anything the tool needs.
 
@@ -2254,14 +2272,33 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('width:380px;display:flex;flex-direction:column;gap:12px')}>
               <div style={sx('display:flex;justify-content:space-between;align-items:center')}>
-                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: uppercase')}>
-                  <span style={sx('width:7px;height:7px;background:var(--on-surface);animation:blink var(--dur-pulse) var(--ease-ambient) infinite')} aria-hidden="true"></span>
+                {/* THE READING SPEAKS IN THE CTA'S VOICE (17.09.26, by request). It was the default
+                    control voice — uppercase, Regular, flat, --fs-label — which is the voice of a
+                    metric label, and these four lines are the tool saying what it is doing. The
+                    page-scale calls to action are the system's one statement voice (global.css, "THE
+                    VOICES A CONTROL MAY SPEAK"): Medium, --fs-cta, --track-statement, the case
+                    authored in the words rather than transformed. The steps are written in sentence
+                    case (renderVals), so nothing here transforms them.
+                    OKLCH STOOD AT THE OTHER END OF THIS ROW and is gone (18.09.26, by request): the
+                    stage says what it is doing, and a colour space named at a palette that does not
+                    exist yet is not part of that. The word still appears where it explains something:
+                    the harmonies' note on the result (renderVals). */}
+                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-cta); font-weight:500; letter-spacing:var(--track-statement); color: var(--on-surface)')}>
+                  <ThinkingOrb state={vals.procOrb} />
                   {/* Each line of the reading rises into place through a mask, the swap the copy
                       confirmation uses (val-mask), so a new step reads as arriving rather than as the
                       text changing. Keyed by the step, which replays the rise. The steps are paced by
-                      the work itself (pipeline.js _readPhotograph). */}
-                  <span style={sx('display:inline-block;overflow:hidden')}><span key={vals.procStep} style={sx('display:inline-block;animation:val-mask-a var(--dur-swap) var(--ease-entrance) both')}>{vals.procStatus}</span></span></span>
-                <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); color: var(--on-surface-muted)')}>OKLCH</span>
+                      the work itself (pipeline.js _readPhotograph).
+                      THE MASK IS A LINE BOX, AND IT MUST FIT THE LETTERS (18.09.26). The row carried
+                      line-height:1 from the CTA's own rule, where it is right — a button's label is one
+                      line in a box sized around it — and here that box is also the clip: at 14px the
+                      content box is 14px tall, so "Grouping the colours…" lost the tails of its p and
+                      g, and every ascender was shaved at the top. The mask keeps its own line-height,
+                      1.42, which fits the face's ascenders and descenders with room to spare (measured:
+                      4.9px of slack above the tallest, 1.9px below the deepest) and still clears the
+                      110% the arriving line is parked at. The row's height does not move either: the
+                      orb beside it is 20px and the line box is 19.9px. */}
+                  <span style={sx('display:inline-block;overflow:hidden;line-height:1.42')}><span key={vals.procStep} style={sx('display:inline-block;animation:val-mask-a var(--dur-swap) var(--ease-entrance) both')}>{vals.procStatus}</span></span></span>
               </div>
               <div style={sx('height:2px;width:100%;background:var(--line);position:relative')}>
                 {/* Full width, drawn by scaleX from the left edge — the loader's bar primitive, not a

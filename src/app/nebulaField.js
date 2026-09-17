@@ -208,10 +208,31 @@ uniform float uArms, uPitch, uArmDepth, uThreshold, uSoften, uRise, uFade;
 uniform float uHeight, uFlare, uDensity, uExtinct, uHueJitter;
 uniform float uTone, uToneSlope, uToneNoise, uGain, uCover, uToneMap;
 
+#ifdef FLOW
+/* THE FLOWED FIELD (smokeFlow.js). Where a caller hands in a simulation, the MASS is no longer the
+   noise: it is a density field on a polar grid over this same disc plane, which the simulation
+   advects. Everything else in here — the camera, the warped mid-plane, the march, the ladder — is
+   untouched, so what changes is what the gas is DOING rather than what it is made of.
+   uFlowR is that grid's two radii, uOutMax how far past the resting rim a thrown wisp may be
+   marched, uFlowTone how much of a parcel's carried tone reaches the ladder, uFlowGrain how much of
+   the volume's own texture still grains the flowed gas, and uSweep/uSweepAmt the reading light
+   passing once round the ring. */
+uniform sampler2D uFlow;
+uniform vec2  uFlowR;
+uniform float uOutMax, uFlowTone, uFlowGrain, uSweep, uSweepAmt;
+#endif
+
 out vec4 outColor;
 
 const float TAU = 6.28318530718;
+/* The march's budget. A flowed field carries its structure in TWO axes rather than three — the
+   vertical profile is a scale height rather than noise — so a third of the samples buys nothing the
+   dither does not already hide, and the flow mode spends them on a wider outer bound instead. */
+#ifdef FLOW
+const int STEPS = 36;
+#else
 const int STEPS = 48;
+#endif
 
 /* Interleaved gradient noise, for the one place this shader needs a dither. A white-noise hash was
    here first and it is the wrong tool: its error is uncorrelated between neighbours, so the leftover
@@ -245,6 +266,26 @@ void main() {
   float qr = length(q);
 
   float outN = uOutN;
+#ifdef FLOW
+  // The bound the RAY is held to, not the rim the look is written against: gas thrown outside the
+  // resting ring has to be marched or a kick would be clipped into a circle. uOutN still scales the
+  // band everything else is measured in, so the resting picture is the same picture.
+  outN = max(uOutN, uOutMax);
+  /* The reading light, read off the SCREEN angle and therefore constant along a ray: one pass of
+     tonal contrast round the ring, which is the first step's beat. It is a shade deeper than the gas
+     it crosses rather than a brightening, so it tells on paper exactly as it does on a dark page.
+     A LEADING EDGE AND A TAIL, rather than a symmetric wedge. A band that fades in and out at the
+     same rate is a bright patch that happens to move; a light passing over something arrives at an
+     edge and leaves behind it, and the difference is the whole reason the eye reads it as a pass.
+     The exponent is the width: the front third of the wedge (an eighth of the turn) against a tail
+     twice that. The gas the pass lights is injected as well, by the caller (procField _procSparks),
+     so the trail it leaves is real gas and outlives the light itself. */
+  float sa = atan(q.y, q.x) - uSweep;
+  float sc = 0.5 + 0.5 * cos(sa);
+  // sa runs negative BEHIND the light (the angle it has already crossed), so the wide tail is where
+  // sin(sa) is negative and the hard edge is in front of it.
+  float sweep = uSweepAmt * mix(pow(max(0.0, sc), 13.0), pow(max(0.0, sc), 5.0), 0.5 - 0.5 * sin(sa));
+#endif
   /* The two dead regions, discarded before the march rather than marched and found empty — between
      them, most of a widescreen viewport. Both bounds are EXACT rather than generous: a ray falling
      from the camera keeps travelling outward, so by the bottom of the slab it is at world radius
@@ -278,6 +319,15 @@ void main() {
     if (r0 < 0.98 || r0 > outN) continue;
 
     float a = atan(p.z, p.x);
+#ifdef FLOW
+    /* THE SIMULATION IS SAMPLED FIRST, and the rigid turn is added HERE rather than lived through by
+       the grid (smokeFlow.js (1)): a minus uRot is the angle in the simulation's own frame. The fetch
+       is also the cheapest possible occupancy test — most of a slab is empty at any moment once the
+       gas is flowing — so an empty cell skips the two volume fetches below rather than multiplying
+       them by nothing. */
+    vec2 fl = texture(uFlow, vec2((a - uRot) / TAU, (r0 - uFlowR.x) / (uFlowR.y - uFlowR.x))).rg;
+    if (fl.r < 0.004) continue;
+#endif
     // ONE shared angle plus a FIXED twist — rigid rotation, no winding. See the header.
     float ang = a - uRot - uWind / (r0 + 0.55);
 
@@ -293,7 +343,8 @@ void main() {
     /* TWO FETCHES AT TWO VERTICAL SCALES, and the split is the whole reason this reads as a volume
        instead of as a painted gradient.
 
-       The march takes 48 samples through the slab, so anything that varies vertically faster than
+       The march takes 48 samples through the slab (36 where a flow is carrying the mass), so
+       anything that varies vertically faster than
        about a tenth of a noise period per sample is being undersampled — and undersampled noise does
        not come back as texture, it comes back as a crosshatch. But vertical variation is ALSO the
        only thing that makes near gas different from far gas, which is the depth. One scale cannot
@@ -334,15 +385,52 @@ void main() {
     float n = dot(lo, vec4(0.44, 0.24, 0.0, 0.0))
             + dot(hi, vec4(0.0, 0.0, 0.20 + 0.12 * (1.0 - uDetail), 0.12 * uDetail));
 
+#ifdef FLOW
+    /* THE MASS IS THE SIMULATION'S; the volume is demoted to grain. Two fetches' worth of filament
+       still shades it — gas this small wants a texture finer than a 384x96 grid can hold — but the
+       threshold that used to DECIDE where gas is has gone with the noise that used to decide it. */
+    /* uThreshold and uSoften keep their meaning and change their subject: they are still where gas
+       BEGINS and over how wide a band, but the quantity they read is the simulation's density rather
+       than the noise's. Without the knee the field's own haze — every cell the flow has smeared a
+       little density into — renders as a grey wash that flattens the whole disc; with it the thin
+       tails still show and the cores are what carry the picture.
+       THE GRAIN GOES IN BEFORE THE KNEE, and that one line is the difference between gas and cotton
+       wool. The simulation's grid is about a texel to the CSS pixel, so everything it can hold is at
+       the scale of the picture and nothing is at the scale of texture; the volume's two fetches are
+       the only thing in here finer than it. Multiplying the volume over the mass AFTER the knee —
+       which is what the first pass did — shades each sample by a factor whose mean is one, and 36
+       samples down a ray average that factor away again: the disc came back as smooth lumps where
+       the field it replaced came back as weather. Multiplying it IN first makes the volume decide
+       where the mass crosses the threshold, so the filaments are cut out of the flow's own body at
+       the volume's frequency and they survive the integration, exactly as they do in the field this
+       is a variation of. The simulation says where the mass is and how it moves; the volume says
+       what it is made of; the knee is where the two become one thing. */
+    float m = fl.r * mix(1.0, 0.22 + 1.56 * n, uFlowGrain);
+    float dens = m * smoothstep(uThreshold, uThreshold + uSoften, m);
+    dens *= 1.0 + sweep;
+#else
     float dens = smoothstep(uThreshold, uThreshold + uSoften, n);
+#endif
     /* Radial: rises out of the hole, falls away at the rim — and BOTH are measured against the band
        rather than against the disc. Fixed figures were the bug on a short viewport: the falloff
        started at 0.42 of the rim, which on a band running 1.0 to 1.36 is inside the hole, so the gas
        was fading out before it had begun. As fractions of the band the profile is the same picture
        at every viewport, which is the only way the artwork holds. */
+#ifdef FLOW
+    /* Against the RESTING rim, so the eye's edge sits where it always did however far a kick throws
+       the gas. THE OUTER SHOULDER IS THE FIELD'S OWN AGAIN: holding the gas at full weight all the
+       way to uOutN and only then cutting it gave the disc a clean circular edge — exactly the
+       rectangle-in-disguise this whole atmosphere exists not to be. uFade starts the shoulder
+       inside the band as it does everywhere else in this shader, and it runs out to the march's own
+       bound so a wisp thrown past the rim still ends in the air rather than at a line. */
+    float band = max(uOutN - 1.0, 1e-3);
+    dens *= smoothstep(1.0, 1.0 + uRise * band, r0);
+    dens *= 1.0 - smoothstep(1.0 + uFade * band, outN, r0);
+#else
     float band = max(outN - 1.0, 1e-3);
     dens *= smoothstep(1.0, 1.0 + uRise * band, r0);
     dens *= 1.0 - smoothstep(1.0 + uFade * band, outN, r0);
+#endif
     // vertical: a scale height that flares outward, so the disc thickens as it leaves the middle
     float h = uHeight * (1.0 + uFlare * smoothstep(1.0, outN, r0));
     dens *= exp(-(hgt * hgt) / (h * h));
@@ -369,9 +457,18 @@ void main() {
     // The tone ladder runs outward: the palette's airy lift where the gas meets the copy, its deep
     // shadow out at the rim. That gradient is the annulus's near/far read, and it is also what keeps
     // the quietest colour against the words.
-    float tone = clamp(uTone
-      + (r0 - 1.0) / max(outN - 1.0, 1e-3) * uToneSlope
-      + (n - 0.5) * uToneNoise, 0.0, 1.0);
+    float tone = uTone
+      + (r0 - 1.0) / max(uOutN - 1.0, 1e-3) * uToneSlope
+      + (n - 0.5) * uToneNoise;
+#ifdef FLOW
+    /* THE TONE A PARCEL IS CARRYING. The simulation's second channel is density x (tone + 0.5), so
+       dividing it out is the tone of the gas actually at this point — the swatch lightness the
+       grouping step handed to the eddy this gas came out of, carried here BY the flow. It is a place
+       on the page's own neutral ladder, never a hue; the field is not told the photograph's colour.
+       The sweep rides the same ladder, a shade deeper wherever the reading light is crossing. */
+    tone += (fl.g / max(fl.r, 1e-3) - 0.5) * uFlowTone + sweep * 0.22;
+#endif
+    tone = clamp(tone, 0.0, 1.0);
     vec3 col = srgbToLinear(texture(uRamp, vec2(hueU, tone)).rgb);
 
     float alpha = 1.0 - exp(-dens * dt * uExtinct);
@@ -533,6 +630,14 @@ export function createNebulaField(canvas, ramp, options = {}) {
 
   const noiseTex = buildNoise(options.seed || 0x1f123bb5);
 
+  /* THE FLOW, WHERE A CALLER ASKS FOR ONE (smokeFlow.js). It is handed in as a factory rather than
+     imported here, so the landing — which does not use it — neither links the second program nor
+     carries the module in its chunk, and this file keeps exactly one shader in the common path. It
+     is built BEFORE the uniforms because it decides the shader: a machine that cannot render to a
+     float target returns null from the factory and gets the rigid field, which is a whole picture. */
+  let flow = null;
+  if (options.flow) { try { flow = options.flow(renderer, noiseTex); } catch (e) { flow = null; } }
+
   const uniforms = {
     uRamp: { value: rampTex },
     uNoise: { value: noiseTex },
@@ -551,11 +656,26 @@ export function createNebulaField(canvas, ramp, options = {}) {
   const lookKey = (k) => 'u' + k[0].toUpperCase() + k.slice(1);
   Object.keys(LOOK).forEach((k) => { uniforms[lookKey(k)] = { value: look[k] }; });
 
+  /* The flow's own uniforms exist only in the flow build, because the shader that reads them exists
+     only there: a uniform three cannot find in the program is skipped, but a declaration the landing
+     never reads is a line of shader nobody can account for. The four look figures are the caller's
+     to move (setFlowLook); the two the beats drive are written every frame. */
+  if (flow) {
+    uniforms.uFlow = { value: flow.texture };
+    uniforms.uFlowR = { value: new THREE.Vector2(flow.range[0], flow.range[1]) };
+    uniforms.uOutMax = { value: options.outMax || 3.0 };
+    uniforms.uFlowTone = { value: options.flowTone === undefined ? 0.5 : options.flowTone };
+    uniforms.uFlowGrain = { value: options.flowGrain === undefined ? 0.85 : options.flowGrain };
+    uniforms.uSweep = { value: 0 };
+    uniforms.uSweepAmt = { value: 0 };
+  }
+
   const material = new THREE.ShaderMaterial({
     glslVersion: THREE.GLSL3,
     vertexShader: VERT,
     fragmentShader: FRAG,
     uniforms,
+    defines: flow ? { FLOW: '' } : {},
     // The quad covers the canvas exactly once and nothing is drawn under it, so the fragment IS the
     // framebuffer. Blending would only re-derive what it already holds.
     transparent: true,
@@ -646,12 +766,16 @@ export function createNebulaField(canvas, ramp, options = {}) {
          ends with the field instead. */
       if (disposed) return Promise.resolve();
       try { renderer.compile(scene, camera); } catch (e) { return Promise.resolve(); }
+      // The simulation's program links alongside the march's, and is waited on with it: it runs one
+      // line before the first render, so a link left to that moment is the same stall moved.
+      const mats = [material];
+      if (flow) { try { flow.compile(); mats.push(flow.material); } catch (e) { } }
       const parallel = renderer.extensions.get('KHR_parallel_shader_compile') !== null;
       return new Promise((resolve) => {
         const check = () => {
           if (disposed) { resolve(); return; }
           let ready = true;
-          try { const prog = renderer.properties.get(material).currentProgram; ready = !prog || prog.isReady(); } catch (e) { }
+          try { mats.forEach((m) => { const prog = renderer.properties.get(m).currentProgram; if (prog && !prog.isReady()) ready = false; }); } catch (e) { }
           if (ready) resolve(); else setTimeout(check, 10);
         };
         if (parallel) check(); else setTimeout(check, 10);
@@ -759,16 +883,32 @@ export function createNebulaField(canvas, ramp, options = {}) {
       uniforms.uTime.value += dt * timeScale;
       uniforms.uRot.value = (rot || 0) * Math.PI / 180;
       govern(dt);
+      // The field is advanced before it is drawn, and on its own fixed clock — at 120Hz half of
+      // these frames do no simulation at all and draw the same state under a turn that did move.
+      if (flow) { flow.step(dt); uniforms.uFlow.value = flow.texture; }
       renderer.render(scene, camera);
       // Same task as the render, which is the only time the drawing buffer holds anything — see the
       // readback note up top. Its own counter decides whether this frame actually pays for it.
       if (options.sample !== false) readbackIfDue();
     },
-    /** One frame at rest — the reduced-motion path, and the first frame under a cover. */
+    /** One frame at rest — the reduced-motion path, and the first frame under a cover. The flow is
+        NOT stepped here: a still frame is a still frame, and the state it draws is whatever the
+        caller last warmed the field to. */
     renderStill(rot) {
       if (disposed) return;
       uniforms.uRot.value = (rot || 0) * Math.PI / 180;
+      if (flow) uniforms.uFlow.value = flow.texture;
       renderer.render(scene, camera);
+    },
+    /** The simulation itself, for the caller that asked for one: its parameters, its structure and
+        its warm-up. Null on the landing and on any machine that fell back to the rigid field. */
+    get flow() { return flow; },
+    /** The two figures the beats move in the RENDERER rather than in the simulation: where the
+        reading light is (radians, screen angle) and how much of it there is. */
+    setSweep(angle, amount) {
+      if (!flow) return;
+      uniforms.uSweep.value = angle;
+      uniforms.uSweepAmt.value = amount;
     },
     /** The gas colour at a point, in VIEWPORT-normalised coordinates (0..1, y down) — the space a
         getBoundingClientRect() lands in, because every caller is asking on behalf of a DOM box.
@@ -793,6 +933,7 @@ export function createNebulaField(canvas, ramp, options = {}) {
     destroy() {
       disposed = true;
       if (tuner) { try { tuner.destroy(); } catch (e) { } tuner = null; }
+      if (flow) { try { flow.destroy(); } catch (e) { } }
       observer.disconnect();
       quad.geometry.dispose();
       material.dispose();
