@@ -83,6 +83,18 @@ global.css. It is the same row on the result stage and on the fullscreen detail,
 card's foot takes it too ("Open Detail", whose accessible name now opens with the visible label,
 SC 2.5.3).
 
+**The harmonies drawer speaks like the other controls (by request).** Its seven model pills take the
+segmented control's type — `--fs-body` at Medium, in the case their labels are written in — where they
+were `--fs-fine` at 400 in capitals (`toggleStyle`, whose only consumer they are). `data-hx-cell` joins
+the list in global.css of controls that keep their own case, which the drawer's two acts share, so
+Save as Palette and Copy Harmony read as written and take the same size and weight. Their accessible
+names now open with those labels (SC 2.5.3).
+
+**The library list's swatch has no hairline (by request).** The 24px strip at the head of a row drew a
+1px `--line` edge (`--ink-fill-line` on the inverted row). It was there because a pale palette's outer
+band sits at about 1.3:1 against the row, so its end can be hard to place; the row's own rule still
+closes the object.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.

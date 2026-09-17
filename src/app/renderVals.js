@@ -900,10 +900,11 @@ export const renderValsMethods = {
         // than overwriting the palette the source swatch came from: that palette is content-addressed
         // to a photograph and carries its own roles, and a harmony is a different object.
         onUse: () => this.useHarmonyAsPalette(),
-        useAria: 'Save this ' + active.name.toLowerCase() + ' harmony as a new palette in your library, ' + active.cells.length + ' colours',
+        // The names open with the visible labels, "Save as Palette" and "Copy Harmony" (SC 2.5.3).
+        useAria: 'Save as Palette: the ' + active.name.toLowerCase() + ' harmony becomes a new palette in your library, ' + active.cells.length + ' colours',
         onCopyAll: () => this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'),
         copyAllLabel: s.copied === 'hx-all' ? 'Copied' : 'Copy Harmony',
-        copyAllAria: 'Copy all ' + active.cells.length + ' colours in this harmony as a hex list',
+        copyAllAria: 'Copy Harmony: all ' + active.cells.length + ' colours in this harmony, as a hex list',
       };
     }
 

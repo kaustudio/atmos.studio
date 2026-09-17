@@ -267,13 +267,11 @@ const RowMain = ({ c, inv }) => (
           stay comparable down the list. Bands use flexGrow: w(b) — the same
           share-to-width mapping as the overview and the universe card, from one shared
           w(); scaling the box up cannot drift the proportions. */}
-      {/* Hairline because the strip is now the anchor: a pale palette's outer band sits
-          at ~1.3:1 against --surface-raised, so without an edge the anchor bleeds into
-          the row. --line is the same hairline the other media islands take (reference
-          thumbnail, "No reference" box, universe card) — quiet by system decision, and
-          matching that decision beats inventing a heavier border no sibling has.
-          box-sizing is border-box globally, so the box stays exactly 160×24. */}
-      <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px;border:1px solid ' + (inv ? 'var(--ink-fill-line)' : 'var(--line)'))}>
+      {/* NO HAIRLINE (17.09.26, by request), as the cards lost theirs: the colours are the
+          edge. It was there because a pale palette's outer band sits at ~1.3:1 against
+          --surface-raised, so the strip's own end can be hard to place on the lightest
+          palettes; the row's rule under it still ends the object. */}
+      <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px')}>
         {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
       </div>
       {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
@@ -3887,9 +3885,11 @@ function HarmonyDrawer({ vals }) {
         {/* THE ADOPTION PATH. Save as palette is the filled act; Copy harmony is the whole-set
             version of what a swatch already does and stays quiet beside it. Both act on the model
             currently shown, which is why the label names it. */}
+        {/* The two acts take the models' type (17.09.26, by request): --fs-body at Medium, in the case
+            their labels are written in, as the dialogs' buttons and the drawer's own pills read. */}
         <div data-hx-sec="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
-          <button type="button" data-hx-cell="1" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}><TextSwap>Save as palette</TextSwap></button>
-          <button type="button" data-hx-cell="1" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}><TextSwap>{harmony.copyAllLabel}</TextSwap></button>
+          <button type="button" data-hx-cell="1" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}><TextSwap>Save as Palette</TextSwap></button>
+          <button type="button" data-hx-cell="1" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}><TextSwap>{harmony.copyAllLabel}</TextSwap></button>
         </div>
 
         {/* THE "HOW HARMONIES ARE CALCULATED" FOLD STOOD HERE and is removed by request. It was a

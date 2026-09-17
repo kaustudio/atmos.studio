@@ -151,7 +151,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    List / Grid, All / Unfiled and the project chips, the library panel's tabs, the page sizes, the
    contrast checker's rails and its Passing Only. Set like the analytics banner's buttons, 13px
    Medium, from viewToggleOptStyle; this lifts the capitals the voice above gives every control. */
-[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix]{text-transform:none!important}
+[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
 /* The anchor dock's own case exemption went with the dock (17.09.26). */
 /* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").

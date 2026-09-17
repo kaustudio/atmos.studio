@@ -201,7 +201,11 @@ export const motionMethods = {
   // control on a surface whose actual primary action is the filter rows. Selection is carried by ink
   // and edge now, at one step down in size: still unambiguous (colour AND border move, plus
   // aria-pressed; the weight step went on 17.09.26, audit G4), no longer the loudest thing in the panel.
-  toggleStyle(active) { return this.monoLabel('var(--fs-fine)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: 400 }); },
+  // THE SEGMENTED CONTROL'S TYPE (17.09.26, by request): --fs-body at Medium, as the contrast
+  // checker's AA / AAA and the library's tabs read since round four, where this was --fs-fine at 400.
+  // The case comes from global.css, which lists data-hx-cell with the other controls that keep the
+  // case their labels are written in.
+  toggleStyle(active) { return this.monoLabel('var(--fs-body)', 'var(--track-flat)', { padding: 'var(--btn-pad-sm)', borderRadius: 'var(--radius-pill)', cursor: 'pointer', border: '1px solid ' + (active ? 'var(--on-surface)' : 'var(--action-line)'), background: 'transparent', color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontWeight: 500 }); },
   /* THE PAGER STEPS ON A CHEVRON NOW, so this stopped being a label style. It was monoLabel with
      --btn-pad-sm, which is the right box for the words "Prev" and "Next" and the wrong one for a
      glyph: padding sizes a box around TEXT, and a chevron has no width of its own to pad — the same
