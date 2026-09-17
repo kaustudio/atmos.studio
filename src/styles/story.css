@@ -479,27 +479,9 @@
   flex-direction:column;
   justify-content:flex-end;
 }
-[data-mobile-story] .about-rail__meta{margin-bottom:auto}
 
-/* THE RAIL CARD'S META KEEPS THE CARD'S INK, NOT THE LABEL'S.
-
-   Widening about.css's label-voice rule to this surface swept `.about-rail__meta` up with it, and
-   that rule ends in `color:var(--on-surface)` — full ink, which is right for a figure's NAME sitting
-   on the page and catastrophic for a line sitting on a photograph: dark grey on a dark image,
-   measured well under AA. `.about-rail__content` sets `color:#fff` for exactly this reason and was
-   being out-specified.
-
-   So the meta takes the label's TYPE here and the card's colour, which is what /about's own cascade
-   produces — there the label rule and the content rule resolve in the other order. Same result, said
-   explicitly. */
-[data-mobile-story] .about-rail__meta{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-label);
-  letter-spacing:var(--track-flat);
-  text-transform:uppercase;
-  line-height:1.2;
-  color:inherit;
-}
+/* The rail card's Warm · Dark line went on 17.09.26 (radius issue R3, by request), and with it the
+   rule that gave it the label's type in the card's ink. */
 
 /* ===== THE TOGGLE SWITCH ==================================================================== */
 
@@ -985,57 +967,8 @@
   display:none;
 }
 
-/* ------------------------------------------------- the palette strip on a rail card
-
-   THE STRIP IS THE ONLY REASON THE ROW IS A ROW. Seven cards go past under the thumb and the reader
-   is comparing palettes, not photographs; the five bands are the comparison. They were not doing the
-   job, and measured on the shipped data it is clear why rather than a matter of taste.
-
-   IT WAS SITTING ON THE PHOTOGRAPH IT CAME FROM. The strip was inset inside the card's padding and
-   floated over the picture with the image still showing below it. Every one of these palettes is
-   EXTRACTED from the photograph behind it, so the bands are by construction close to the pixels they
-   are drawn over: on Forged Midfield, a warm courtyard, the tan and the two browns land within a few
-   points of the wall behind them and the strip reads as a smear on the image rather than as a
-   reading of it. A swatch needs a ground that is not its own source.
-
-   ADJACENT NEAR-IDENTICAL BANDS MERGED. That is not a flaw in the palettes, it is what a five colour
-   reading of one photograph looks like: two of Garnet's five are #0F0302 and #540604, both near
-   black at C .028 and C .109. Butted edge to edge with no separator they are one band, so a palette
-   of five was being shown as a palette of three or four. The 1px outer border did nothing about this
-   because it outlined the strip rather than the bands.
-
-   THE GAP IS THE SEPARATOR, and it costs no markup. The bands are already flex children carrying
-   their real share as `flex-grow`; a 1px `gap` lets the strip's own background through between them
-   as a hairline, and because every band is `flex-basis:0` the shares still divide the remaining
-   space in exactly the same proportion. Nothing here invents a divider element or touches the
-   inline styles renderVals writes.
-
-   FULL BLEED, so it reads as the base the card stands on rather than a chip someone left on the
-   picture. The negative margins are the content's own padding token negated, not a number, so the
-   two cannot drift. It also gives the strip two edges it can be read against, which is what the
-   outer border was reaching for and missing.
-
-   SCOPED TO THIS SURFACE. `.about-rail__strip` is /about's, and about.html carries eight of them at
-   desktop width where the strip sits in a taller card with room to be inset. On the phone's story the
-   only strips are the gallery's (3.1), since the gallery became /about's rail. */
-[data-mobile-story] .about-rail__strip{
-  --rail-pad:clamp(14px,1.2vw,22px);
-  height:20px;
-  margin-top:12px;
-  margin-inline:calc(var(--rail-pad) * -1);
-  margin-bottom:calc(var(--rail-pad) * -1);
-  border:0;
-  border-top:1px solid color-mix(in srgb,#fff 45%,transparent);
-  gap:1px;
-  background:color-mix(in srgb,#fff 45%,transparent);
-}
-/* The no-photograph fallback takes the surface's own hairline, for the reason the rule above
-   `.about-rail__content` states: without a picture the card drops the scrim and its white would be
-   white on white. */
-[data-mobile-story] .about-rail__card:not(:has(img)) .about-rail__strip{
-  border-top-color:var(--line);
-  background:var(--line);
-}
+/* The palette strip on a rail card went on 17.09.26 (radius issue R3 and R10, by request): the
+   card's name stands alone, as on /about. */
 
 /* ------------------------------------------------- 1.2, the weights key as a full width tally
 

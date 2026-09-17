@@ -20,8 +20,8 @@ doesn't know it was ever made.
 **A corner is sized for its box (by request).** Start here and the error panel are 420px tall and
 keep 28px (`--radius-surface`). "Nothing here yet" and "No palette matches" (radius issue R1) are
 the same dashed panel but 162 and 166px tall, and 28px read too strong at that height, so they take
-`--radius-card` (12px). They were fully round (A8), then 28px. Don't give a box the corner of the box
-beside it; pick the corner for its own size.
+`--radius-panel` (16px, the user's pick after 12px). They were fully round (A8), then 28px, then
+12px. Don't give a box the corner of the box beside it; pick the corner for its own size.
 
 **How it Works' pair matrix pills speak like the phone story's verdict chips (by request, H6).**
 `--fs-body`, Medium, flat, in Title Case (Body Text at AA, Large Text and UI at AA, No WCAG Contrast
@@ -37,8 +37,8 @@ where they were plain uppercase labels; the old `.about-checks__use` rule is gon
     `__tint` in about.css). The tint is deep enough for white type on High Key.
   - Names are one step larger: 20px on the grid, 24px in the gallery. The reduced-motion grid and
     the list row stay at 13px, because a larger name truncated there.
-  - /about's cards lose the "Body text AA / Large text and UI AA" line; the phone keeps its
-    "Warm · Dark" line.
+  - /about's cards lose the "Body text AA / Large text and UI AA" line. Later the same day the
+    phone's "Warm · Dark" line went too (by request).
   - The blur is two blurred copies of the photograph, not `backdrop-filter`. On the grid's moving
     field, `backdrop-filter` measured p95 16.7ms against 8.8ms. The engine fades the copies with the
     caption when a card opens, and the photograph no longer moves (the hero's `bottom` stays 0).
@@ -57,8 +57,8 @@ where they were plain uppercase labels; the old `.about-checks__use` rule is gon
     Regular ratio. That is two cues, fill and weight, and the fill eases when a toggle moves a
     verdict.
   - The drawer's chips, text-on-colour rows and sample take `--radius-swatch` (3px, new).
-  - The same 3px is on the swatch strip on How it Works' photo cards. The phone's strip runs edge to
-    edge, so the card's corner shapes it.
+  - How it Works' photo cards have no swatch strip (by request, R10 and R3): the palette's name
+    stands alone on the desktop and the phone. The strip wore the same 3px until it went.
 - **R3, the corner (by request):**
   - The grid view's cards (300×344) and the reduced-motion grid's cards take `--radius-card`, 12px,
     the figure approved for them. 28px was put on them by mistake with the note below and taken off.

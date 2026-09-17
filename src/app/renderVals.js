@@ -1529,12 +1529,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            Eight distinct photographs across the surface: one in 1.3, doing the mask work, and seven
            here. No image is used twice. */
         cases: this._examples().filter((x) => x.id !== p.id).map((x) => {
-          const t = x.swatches.reduce((a, b) => a + (b.weight || 0), 0) || 1;
           return {
             key: x.id, name: x.name,
-            note: this.paletteTags(x).join(' · '),
             image: this.dispUrl(x), hasImage: this.hasImg(x),
-            strip: x.swatches.map((b, i) => ({ key: i, style: { flex: String((b.weight || 0) / t), background: b.hex } })),
             onOpen: () => this.setStoryCase(x.id),
             aria: 'Explore ' + x.name + '. ' + this.tagsSpoken(x),
           };

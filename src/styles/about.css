@@ -1405,18 +1405,12 @@
 .about-rail__card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .about-rail__content{
   position:relative;z-index:1;height:100%;
-  /* The name and strip sit at the foot; the phone story's meta line, where there is one, keeps the
-     top (margin-bottom:auto below). */
+  /* The name sits at the foot, alone (17.09.26, radius issue R3 and R10, by request: the swatch
+     strip under it and the phone's Warm · Dark line went). */
   display:flex;flex-direction:column;justify-content:flex-end;
   padding:clamp(14px,1.2vw,22px);
   color:#fff;
 }
-/* THE META LINE KEEPS ITS OWN GROUND, and only the phone story has one now: /about's "Body text AA /
-   Large text and UI AA" line went on 17.09.26 (radius issue R3, by request). The top stop is HELD to
-   12% rather than fading from 0: the meta sits about 5% down, where a gradient that starts fading at 0
-   has already dropped to ~47%, which put white text over the lightest card (poppy) at 4.19:1. */
-.about-rail__meta{margin-bottom:auto}
-.about-rail__content:has(> .about-rail__meta){background:linear-gradient(to bottom, color-mix(in srgb,#000 62%,transparent) 0%, color-mix(in srgb,#000 62%,transparent) 12%, transparent 38%)}
 /* THE FOOT: A PROGRESSIVE BLUR AND A DARK TINT (17.09.26, radius issue R3, by request), as the grid
    view's cards have. It replaced a plain gradient. Two blurred copies of the photograph (the card
    carries it as --card-img), masked so the blur grows toward the edge and scaled past the card so
@@ -1437,9 +1431,6 @@
    (.about-route h3) is --fs-subtitle. */
 .about-rail__content h3,.about-rail__name{color:#fff}
 .about-route .about-rail__content h3{font-size:var(--fs-title)}
-/* the swatch corner on the strip (17.09.26, by request) */
-.about-rail__strip{display:flex;height:16px;margin-top:12px;border:1px solid color-mix(in srgb,#fff 40%,transparent);border-radius:var(--radius-swatch);overflow:hidden}
-.about-rail__strip span{display:block;flex:1}
 /* No effect — no pin, no travel — so the rail becomes an ordinary horizontal scroller rather than a
    row clipped at the viewport edge. A pinned section that cannot animate must not be one you cannot
    read. `[data-rail-live]` is set by the script only when it has actually built. */

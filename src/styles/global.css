@@ -563,16 +563,17 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
                           (both 420px tall), and How it Works' photo cards, desktop and phone
        --radius-window    the page transition's opening slot
        --radius-tick      the filter rows' tick boxes
-       --radius-card      How it Works' colour cards (the role tiles), the grid view's cards, and
-                          the two short dashed panels, Nothing here yet and No palette matches
-       --radius-swatch    colour samples in the contrast checker and on the photo cards' strips
+       --radius-card      How it Works' colour cards (the role tiles) and the grid view's cards
+       --radius-panel     the two short dashed panels, Nothing here yet and No palette matches
+       --radius-swatch    colour samples in the contrast checker
      Photographs outside a card, the palette's bands and the tables stay square: they are samples,
      not objects. A new corner joins this list rather than writing a figure of its own. (Corrected
      17.09.26, audit H4.)
 
      A CORNER IS SIZED FOR ITS BOX (17.09.26, by request). 28px is Start here's corner, sized for
      its 420px height; the error panel stands in its place at the same size, and How it Works'
-     photo cards are 374px wide. On Nothing here yet (162px tall) the same figure read too strong.
+     photo cards are 374px wide. On Nothing here yet (162px tall) the same figure read too strong,
+     so it takes 16.
      A box takes the corner for its own size, not the corner of the box it sits next to.
 
      --radius-pill is a stadium: a control sized by its own label, whose corner is therefore half of
@@ -629,15 +630,17 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   /* --radius-card: How it Works' colour cards, the role tiles in 3.1 and the phone story (17.09.26,
      radius issue R5, by request). 28px was "too intense" on a tile this size; 12 keeps a round that
      reads without competing with the swatch, which takes the same corner less its 8px inset.
-     Also the grid view's cards (300x344, radius issue R3, approved at 12), and Nothing here yet and
-     No palette matches (162 and 166px tall), where 28 read too strong (17.09.26, by request).
-     How it Works' photo cards tried 12 and it was "too subtle" at 374x499: they take
-     --radius-surface. */
+     Also the grid view's cards (300x344, radius issue R3, approved at 12). How it Works' photo cards
+     tried 12 and it was "too subtle" at 374x499: they take --radius-surface. */
   --radius-card:12px;
+  /* --radius-panel: the two short dashed panels, Nothing here yet and No palette matches (162 and
+     166px tall), 16px (17.09.26, radius issue R11 and R1, by request). Start here's 28 read too
+     strong at their height, and 12 was tried first. */
+  --radius-panel:16px;
   /* --radius-swatch: a colour sample's corner, 3px (17.09.26, by request): the contrast checker's
-     chips, its text-on-colour rows and its sample, and the swatch strips on How it Works' photo
-     cards. Samples were square; this keeps them reading as samples with the corner the user asked
-     for. */
+     chips, its text-on-colour rows and its sample. (How it Works' photo cards wore it on their swatch
+     strips until the strips went, radius issue R10.) Samples were square; this keeps them reading as
+     samples with the corner the user asked for. */
   --radius-swatch:3px;
   /* --radius-dock-row, the anchor dock's inner corner, went with the dock (17.09.26). */
   /* A third family takes no padding token at all: SQUARE icon buttons, sized by width/height and

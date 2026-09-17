@@ -1127,15 +1127,13 @@ function MobileStory({ st }) {
                   {c.hasImage && <img src={c.image} alt="" fetchPriority="low" decoding="async" />}
                   {/* the foot's blur and tint, as /about's cards (about.css .about-rail__fade) */}
                   <span className="about-rail__fade" aria-hidden="true"></span><span className="about-rail__tint" aria-hidden="true"></span>
+                  {/* The name alone (17.09.26, radius issue R3 and R10, by request): the Warm · Dark
+                      line over it and the swatch strip under it went, as on /about. */}
                   <span className="about-rail__content">
-                    <span className="about-rail__meta"><span>{c.note}</span></span>
                     <span>
                       {/* data-case="own": the palette's NAME is a string the reading invented, and
                           the uppercase control voice would otherwise inherit into it. */}
                       <span className="about-rail__name" data-case="own">{c.name}</span>
-                      <span className="about-rail__strip" aria-hidden="true">
-                        {c.strip.map((b) => (<span key={b.key} style={b.style}></span>))}
-                      </span>
                     </span>
                   </span>
                 </button>
@@ -2859,10 +2857,10 @@ function FeedSection({ vals }) {
           hiding the one they had, which is that the combination is unsatisfiable. Two ways out:
           undo the most recent narrowing, or drop the lot. */}
       {vals.filteredEmpty && (
-        /* A CORNER FOR ITS HEIGHT (17.09.26, radius issue, by request): --radius-card, 12px, as
+        /* A CORNER FOR ITS HEIGHT (17.09.26, radius issue R1, by request): --radius-panel, 16px, as
            Nothing here yet. The panel is 166px tall; Start here's 28px is sized for its 420, and on
-           this height it read too strong. It was full round, then 28px (R1). */
-        <div role="status" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-card)')}>
+           this height it read too strong. It was full round, then 28px, then 12px. */
+        <div role="status" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-panel)')}>
           {/* The title alone (17.09.26, audit H5, by request): the combining rule stood under it
               as a sentence, then briefly in a toggletip. */}
           <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>No palette matches every filter</div>
@@ -2876,14 +2874,14 @@ function FeedSection({ vals }) {
         </div>
       )}
 
-      {/* A CORNER FOR ITS HEIGHT (17.09.26, radius issue, by request): --radius-card, 12px. The
-          same dashed panel as Start here above it, but 162px tall to Start here's 420, so it takes
-          a corner sized for that height: 28px, Start here's, read too strong here. It was full round
-          (A8), then 28px.
+      {/* A CORNER FOR ITS HEIGHT (17.09.26, radius issue R11, by request): --radius-panel, 16px.
+          The same dashed panel as Start here above it, but 162px tall to Start here's 420, so it
+          takes a corner sized for that height: 28px, Start here's, read too strong here. It was full
+          round (A8), then 28px, then 12px.
           The title alone (audit H5, by request): "Palettes you generate collect here, newest first"
           stood under it, then briefly in a toggletip. */}
       {vals.feedEmpty && (
-        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-card)')}>
+        <div style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-panel)')}>
           <div aria-hidden="true" style={sx('position:relative;width:34px;height:34px')}>
             <div style={sx('position:absolute;left:0;top:0;width:22px;height:22px;border:1px solid var(--line-strong)')}></div>
             <div style={sx('position:absolute;right:0;bottom:0;width:22px;height:22px;border:1px solid var(--on-surface-muted);background:var(--surface-raised)')}></div>
