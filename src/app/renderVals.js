@@ -156,10 +156,11 @@ export const renderValsMethods = {
        file finally means the shape as well as the role. It rounds with the result stage's own trait
        chips, which are the same object one surface over — and since 17.09.26 (audit C6) it is drawn
        the same way too: --btn-pad-chip in a 26px box, where it was 8px 11px and stood 29px tall. */
-    // --fs-label, as the list view's tags: the traits are the same words on every surface and they
-    // take the same size on every surface. (Raised to --fs-lead for an hour on 02.09.26; reverted
-    // the same day as inconsistent with the list.)
-    const pill = { fontFamily: sans, fontSize: 'var(--fs-label)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '1px solid color-mix(in srgb, var(--on-surface) 15%, transparent)', borderRadius: 'var(--radius-pill)', padding: 'var(--btn-pad-chip)', minHeight: '26px', display: 'inline-flex', alignItems: 'center', lineHeight: 1 };
+    // THE TRAITS ON THE FOUNDATIONS (18.09.26, by request): --fs-body, 13px Medium, in their own
+    // Title Case, and read from their fill with no stroke — the same words at the same size on every
+    // surface (the result stage, this overlay, the shared-link phone view). They had been --fs-label
+    // capitals on a hairline. The list's EXAMPLE chip is kept separate, by request.
+    const pill = { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '0', borderRadius: 'var(--radius-pill)', padding: 'var(--btn-pad-chip)', minHeight: '26px', display: 'inline-flex', alignItems: 'center', lineHeight: 1 };
     const busy = s.stage === 'processing';
 
     // ===== contrast checker view (computed from sRGB relative luminance — WCAG, not OKLCH L) =====
@@ -541,7 +542,11 @@ export const renderValsMethods = {
     // stay adjacent and the pair right-aligns as a unit. Pinning the badge to the column's left
     // edge was what kept it beside its number while the column was 104px wide; on a column that
     // takes a share of the row it would strand the badge a track away from the figure it grades.
-    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', paddingRight: '0', whiteSpace: 'nowrap' };
+    // justifySelf END (18.09.26, "align these to the grid"): below 1280 the column is one track, a
+    // few px narrower than the badge and its count, and a grid item cannot shrink below its content —
+    // so it spilled past the grid line to the right. Held at the track's end, any overflow goes LEFT
+    // into the gutter it shares with the name, and the count always ends on the line.
+    const aaCell = { display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', justifySelf: 'end', gap: '8px', paddingRight: '0', whiteSpace: 'nowrap' };
     // 2ch of tabular figures: the count runs 0–10, and a cluster that changed width with the digit
     // would slide the badge left and right down the list — the one column where a wobble is most
     // visible, because the badges are a stack of identical glyphs.
@@ -2128,7 +2133,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       prevDisabled: page <= 0, nextDisabled: page >= pageCount - 1,
       prevPage: () => this.setPage(page - 1), nextPage: () => this.setPage(page + 1),
       prevStyle: this.pageNavStyle(page <= 0), nextStyle: this.pageNavStyle(page >= pageCount - 1),
-      listWrapStyle: { display: s.feed.length > 0 ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: '100%', borderBottom: '1px solid var(--line)' },
+      listWrapStyle: { display: s.feed.length > 0 ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: 'calc(100% + var(--row-inset) * 2)', marginInline: 'calc(var(--row-inset) * -1)', borderBottom: '1px solid var(--line)' },
       // The list is under the grid while the grid is up: out of the tab order and the accessibility
       // tree, as it was when it was display:none, but still laid out. It is the reader's again on the
       // press that closes the grid, not when the field's fade ends — the fade takes no pointer.

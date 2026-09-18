@@ -732,7 +732,12 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      One token now feeds all three: the header and row grids pad by it on BOTH sides (the private
      date insets are gone), and --row-action-offset still derives from it, so the buttons land
      exactly where the stamp rests. The trade accepted with it: the interior column edges sit a
-     compressed hair off the page grid's lines — the row aligns to its own surface first. */
+     compressed hair off the page grid's lines — the row aligns to its own surface first.
+     THE TRADE IS GONE (18.09.26, by request: "align these to the grid"). The list and its sort
+     header now reach --row-inset past the grid on each side (margin-inline: -16px, width + 32px),
+     so the same 16px of padding lands the twelve tracks exactly on the page grid's lines, and the
+     surfaces — hover tint, selected fill, current marker, the rules — take their 16px outside the
+     grid instead of from inside it. Content on the grid, surfaces bleeding past it. */
   --row-inset:16px;
   /* The sort header's hover tint only. It was every metric cell's trailing inset as well, and half
      of the row's right margin — one measurement doing three jobs, which was elegant while the row

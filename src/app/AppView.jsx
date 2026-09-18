@@ -507,8 +507,15 @@ function ValueRow({ v, showCaveat }) {
 
 // Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
 // the user to supply the verb; in a row of six that is six subjects and no route.
+/* OPTICALLY BALANCED (18.09.26, by request): each icon steps into the button's left padding by what
+   its glyph's own empty margin adds, so the ink sits as far from the pill's left edge as the last
+   letter does from its right. Measured ink-to-edge in the row, not taken from the path: Check
+   Contrast was 1px heavier on the left, Export 3, Share 2.75 (between the two device pixels 2.5 and
+   3 land on at 2x); Add to Projects was already even, and
+   Copy's -1.5px is split by its centred unit into 0.75 a side. The same move New Palette makes in
+   chrome.jsx. */
 const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1px' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
 );
 // EXPORT'S CHEVRON IS GONE. It was there to promise a chooser — press this and you will be asked
 // something — and that promise is the one thing this control did not need to make: what opens is a
@@ -518,7 +525,7 @@ const contrastB006Label = (
 // Copy keeps its ▾, and that is the distinction now rather than an inconsistency: Copy really does
 // drop a menu under the button, so the mark points at where the menu will appear.
 const exportB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconExport /></span><B006Text>Export</B006Text></span>
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-3px' }}><IconExport /></span><B006Text>Export</B006Text></span>
 );
 // COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
 // rather than saying "Copied", because from a menu that is the only part still in question — and it
@@ -535,12 +542,21 @@ const exportB006Label = (
 // already there: the glyph becomes the check, the word becomes Copied, and the only reserve is the
 // two characters between them. The chevron holds its place, so the row still never moves, and which
 // format landed on the clipboard is said by the live region and by the menu item just pressed.
+/* THE UNIT IS CENTRED, NOT THE WORD (18.09.26, by request, twice). The reserve that keeps the row
+   still while "Copied" shows used to centre the WORD in a Copied-wide cell, which put half the spare
+   width (about 6.5px) between the glyph and "Copy" — its gap read 14 against the other buttons' 8.
+   Holding the word to the start fixed the gap and piled all the spare after it (the right side read
+   9.5px wider than the left). Now glyph-and-word is one unit, centred inside a hidden glyph-and-
+   "Copied" of the same build: the gap is the shared 7px, the spare splits evenly to both sides, and
+   the button is as wide in both states as before. */
 const copyB006Label = (done) => (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
-    <span aria-hidden="true" style={{ display: 'inline-flex' }}>{done ? <IconCheck /> : <IconCopy />}</span>
-    <span style={sx('display:inline-grid;align-items:center;justify-items:center;height:16px')}>
-      <span style={{ gridArea: '1/1' }}><B006Text>{done ? 'Copied' : 'Copy'}</B006Text></span>
-      <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>Copied</span>
+  <span style={sx('display:inline-grid;align-items:center;justify-items:center;height:16px')}>
+    <span style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px')}>
+      <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1.5px' }}>{done ? <IconCheck /> : <IconCopy />}</span>
+      <B006Text>{done ? 'Copied' : 'Copy'}</B006Text>
+    </span>
+    <span aria-hidden="true" style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px;visibility:hidden')}>
+      <span style={{ display: 'inline-flex' }}><IconCopy /></span>Copied
     </span>
   </span>
 );
@@ -677,7 +693,7 @@ const assignB006Label = (text) => (
    thing the reader does not have yet; the verb names the act, which is what a label is for. */
 const shareB006Label = (copied) => (
   <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
-    <span aria-hidden="true" style={{ display: 'inline-flex' }}>{copied ? <IconCheck /> : <IconLink />}</span>
+    <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-2.75px' }}>{copied ? <IconCheck /> : <IconLink />}</span>
     <B006Text>{copied ? 'Copied' : 'Share'}</B006Text>
   </span>
 );
@@ -1314,7 +1330,7 @@ function MobileShareView({ ms }) {
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
-              <span key={i} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-label);line-height:1;padding:var(--btn-pad-chip);border:1px solid color-mix(in srgb, var(--on-surface) 15%, transparent);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);text-transform:uppercase;border-radius:var(--radius-pill)')}>{d}</span>
+              <span key={i} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1;padding:var(--btn-pad-chip);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);border-radius:var(--radius-pill)')}>{d}</span>
             ))}
           </div>
         )}
@@ -2413,7 +2429,7 @@ export default function AppView({ vals }) {
                 {vals.result.hasTraits && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); border-width: 1px; border-style: solid; border-color: color-mix(in srgb, var(--on-surface) 15%, transparent); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); text-transform: uppercase; border-radius: var(--radius-pill)')}>{d}</span>
+                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); border-radius: var(--radius-pill)')}>{d}</span>
                   ))}
                 </div>
                 )}
@@ -2952,9 +2968,12 @@ function FeedSection({ vals }) {
         {/* Padded horizontally by --row-inset, exactly like every row's grid below: the header
             is the table's first row geometrically, so it must inherit the same insets or its
             columns are a different table's. The date column's private 16px (chip margin, stamp
-            padding) is gone — this shared padding is that inset now, held once. */}
+            padding) is gone — this shared padding is that inset now, held once.
+            ON THE PAGE GRID (18.09.26, by request): the header and the list both reach --row-inset
+            past the grid on each side, so that padding lands the twelve tracks on the page grid's
+            own lines — see --row-inset in global.css. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Sort the palette list" inert={vals.listInert || undefined} style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 var(--row-inset) 8px;border-bottom:1px solid var(--line-strong)')}>
+          <div role="group" aria-label="Sort the palette list" inert={vals.listInert || undefined} style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:calc(100% + var(--row-inset) * 2);margin-inline:calc(var(--row-inset) * -1);padding:0 var(--row-inset) 8px;border-bottom:1px solid var(--line-strong)')}>
             {/* Not a button: there is no name sort, and a label that looks pressable but is not is
                 worse than a label. It names the two tracks the strip and the palette name share —
                 the row's identity — so the header accounts for every column rather than starting
@@ -3346,9 +3365,22 @@ function ContrastDrawer({ vals }) {
         </div>
 
         <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 26px')}>
-          <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px')}>
-            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine); letter-spacing:var(--track-flat); text-transform: uppercase; color: var(--on-surface-muted)')}>Best pair sample</span>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);color:var(--on-surface-muted)')}>{contrast.sampleFg} on {contrast.sampleBg} · {contrast.sampleRatio}:1</span>
+          <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
+            {/* THE BUTTONS' TYPE (18.09.26, by request): the label at 13px Medium in its own Title Case,
+                where it was 11px capitals; the ratio beside it keeps its own smaller step, at Medium.
+                THE PAIR IS DRAWN, NOT SPELLED (same day, by request, option C of three): the background's
+                disc behind, the text colour's disc over it, ringed in the drawer's own --surface so the
+                two read as two; both carry the swatch idiom's 14% edge so a colour near the drawer's own
+                stays visible. The hexes are still said — visually hidden, ahead of the ratio. */}
+            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Best Pair Sample</span>
+            <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-label);font-weight:500;color:var(--on-surface-muted)')}>
+              <span aria-hidden="true" style={sx('position:relative;display:inline-block;flex:none;width:28px;height:18px')}>
+                <span style={{ position: 'absolute', left: 0, top: 0, width: 18, height: 18, borderRadius: 'var(--radius-pill)', background: contrast.sampleBg, boxShadow: 'inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)' }} />
+                <span style={{ position: 'absolute', left: 10, top: 0, width: 18, height: 18, borderRadius: 'var(--radius-pill)', background: contrast.sampleFg, boxShadow: '0 0 0 2px var(--surface), inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)' }} />
+              </span>
+              <span style={visuallyHidden}>{contrast.sampleFg} on {contrast.sampleBg}, </span>
+              <span>{contrast.sampleRatio}:1</span>
+            </span>
           </div>
           {/* The words have a box of their own so their size can step while the sample's box
               extends around them (_growSample in methods/overlays.js). */}

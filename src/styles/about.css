@@ -190,7 +190,6 @@
    here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
    consumers until they were removed from the page; the list is what is left. How it Works' figure
    labels left it too (18.09.26) — see the rule below this one. */
-.about-route .about-stack__ref,
 [data-mobile-story] .about-figure__label{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
@@ -699,8 +698,16 @@
   letter-spacing:var(--track-statement);text-wrap:balance;
   color:var(--on-surface);
 }
-/* Only once the effect is running does the stack form. See [ATMOS 2] in aboutStickyTitle.js. */
-[data-sticky-live] .about-takeover__el.is--stacked{visibility:hidden;position:absolute;inset:0}
+/* Only once the effect is running does the stack form. See [ATMOS 2] in aboutStickyTitle.js.
+   ONE CELL, EACH CENTRED (18.09.26, by request: "this takeover text should be center aligned"). The
+   stacked statement was position:absolute with inset:0, so it hung from the top of a box the FIRST
+   statement sized — two or three lines — and the second, five lines long, ran down past the middle
+   of the screen and off its foot. Now both statements share one grid cell, which the taller sets,
+   and each is centred in it, so whichever is showing sits on the viewport's centre. The effect only
+   toggles their visibility, so nothing it does depended on the absolute box. */
+[data-sticky-live] .about-takeover__inner{display:grid;place-items:center}
+[data-sticky-live] .about-takeover__el{grid-area:1 / 1}
+[data-sticky-live] .about-takeover__el.is--stacked{visibility:hidden}
 /* THE INK IS THE SECTION'S, once the takeover is live. aboutStickyTitle.js scrubs a ground colour and
    an ink colour onto the wrap across the same scroll range the statements run on, so the statements
    arrive in palettes of their own instead of screens of the same near-black. Inheriting is what lets
@@ -1145,7 +1152,15 @@
    Cut Limestone's ground before the swap, which is short of the 4.5 that small text needs. The cards
    carry 4.1's examples now (16.09.26) and it still holds: Dry Season's mark is 3.63 on its ground and
    Garnet's is 3.17. */
-.about-route .about-stack__ref{margin:0;color:var(--r-text)}
+/* THE NAME AT THE NUMERAL'S SIZE (18.09.26, by request): --fs-hero, Medium, display tracking, as
+   .about-stack__n below sets its figure, so the card's top line is one size — the number in the
+   palette's mark, the name in its text colour — where the name was the 11px uppercase label voice.
+   Written as the name is written; capitals at display size would shout. */
+.about-route .about-stack__ref{
+  margin:0;color:var(--r-text);
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-hero);font-weight:500;line-height:1;letter-spacing:var(--track-display);
+}
 /* Full strength, for the reason spelled out on .about-stack__d below: a tint on a palette colour is
    a contrast cut, and at --fs-label it is the smallest text on the card. */
 /* THE NUMERAL AT DISPLAY SIZE — the same top of the scale the page's h1 takes.

@@ -336,6 +336,48 @@ and 2px of gap reads as about 6. The same air made the pill's left read 4px wide
 the icon steps 4px into the left padding (`marginLeft: -4px`), stated on the icon rather than by
 restating the glass bar's padding. Measured from pixels: 16.0px from ink to edge on both sides.
 
+**The Library list sits on the page grid (by request: "align these to the grid").** Its twelve
+tracks were laid out inside the rows' 16px `--row-inset`, so every label and value landed up to 16px
+off the page grid's own lines (the trade recorded at --row-inset on 03.08). The sort header and the
+list now reach `--row-inset` past the grid on each side, so the same padding puts the tracks exactly
+on the page's column lines, and the rows' hover tint, selected fill, marker and rules take their
+16px outside the grid instead of from inside it. Below 1280 the AA column is one track, a few px
+narrower than a badge and its count, and the cell spilled past its line; it is `justify-self: end`
+now, so any overflow goes left into the gutter and the count ends on the line. Measured with the
+Shift+G overlay at 1024 to 1440: every label and value on a column edge.
+
+**The contrast drawer's best pair is drawn (by request).** "Best Pair Sample" takes the buttons'
+13px Medium in its own case. The pair beside it is two overlapping discs — the background's behind,
+the text colour's in front, ringed in the drawer's `--surface`, both on the swatch idiom's 14% edge
+— and then the ratio, option C of three; the hexes are still read out, visually hidden.
+
+**The result stage's action row is optically balanced (by request).** Each icon steps into the
+left padding by what its glyph's empty margin adds, measured from pixels as New Palette's was:
+Check Contrast 1px, Export 3, Share 2.75, Add to Projects none. Copy's label had centred its WORD
+inside a "Copied"-wide reserve, so its icon gap read 14px against the others' 8; the icon and word
+are now one unit centred inside a hidden icon-and-"Copied" (plus a 1.5px step, which the centring
+splits), so the gap is the shared 7px and the button still never changes width. Ink to edge is now
+equal on both sides of all five, within one device pixel on Share.
+
+**The trait tags are on the foundations (by request).** Warm, Dark, Light and the rest are
+`--fs-body`, 13px Medium, in their own Title Case, read from their 9% fill with no stroke, on every
+surface they appear: the result stage under the name, the detail overlay's footer and the
+shared-link phone view. They were `--fs-label` capitals on a 15% hairline. The list's EXAMPLE chip
+stays as it was, by request.
+
+**The takeover's statements sit on the screen's centre (by request).** The second statement was
+stacked with `position:absolute; inset:0`, so it hung from the top of a box the first, shorter
+statement sized, and its five lines ran down past the middle and off the foot. Both statements now
+share one grid cell (`display:grid; place-items:center` on the inner, `grid-area:1/1` on each), which
+the taller sets, and each is centred in it. Measured at 1200 and 1440: both statements 0px from the
+viewport's centre, horizontally and vertically. The effect only toggles their visibility, so it
+needed nothing from the absolute box.
+
+**2.2's cards name their palette at the numeral's size (by request).** `.about-stack__ref` leaves
+the 11px uppercase label voice for the numeral's own type: `--fs-hero`, Medium, display tracking,
+written as the name is written. 86px at 1440 and 34px on a phone, beside the number, which keeps the
+mark colour while the name keeps the text colour.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
