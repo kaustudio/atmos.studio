@@ -1,28 +1,47 @@
-/* THE AGENT'S ORB — the mark beside the reading's status line (17.09.26, by request).
+/* THE AGENT'S ORB — TWELVE POINTS, FOUR BEHAVIOURS (18.09.26, by request).
 
-   WHAT IT REPLACES. A 7x7 square of `--on-surface` that was meant to blink and had not blinked since
-   the `blink` keyframes were removed (audit H3, same day): a dead dot in front of a line of text that
-   is telling the reader something is being worked out. What the stage wanted there is the thing every
-   agent interface has learned to put there — a small body that is visibly thinking, and that thinks
-   DIFFERENTLY depending on what is being done.
+   WHY IT IS NOT THE REFERENCE ANY MORE. The orb beside the status line was Jakub Antalik's Thinking
+   Orbs adopted 1:1 (17.09.26). The ask the next day was "less circles, or in some way adjust it — I
+   don't want it to be 1:1 to the original reference". Four variants were recorded side by side at
+   20px and at 4x, in both themes: the reference thinned, thinned in the page's ink, a ring of dots
+   echoing the smoke ring, and this. This one was picked.
 
-   WHAT THIS IS. Jakub Antalik's Thinking Orbs, the dependency-free vanilla adaptation, adopted whole:
-   six states, each a different construction of dots on a 2D canvas, drawn with the Canvas 2D API and
-   no package of any kind. The MIT notice below travels with it and must not be shortened to a link.
-   The only edit to the distributed implementation is the removal of its final `DOMContentLoaded`
-   auto-init, which is what its own instructions ask for when it is imported into a framework: React
-   owns the canvas here, and AppView's ThinkingOrb calls `thinkingOrbs(canvas, …)` after mount and its
-   returned function on unmount.
+   WHAT CHANGED FROM THE REFERENCE. The Thinking Orbs build each state as a different construction
+   (a globe, orbits, a cube, a ribbon) out of forty to sixty dots at 20px, which beside a line of
+   type reads as a texture. Here there is one body for all four steps of the reading: the twelve
+   corners of an icosahedron — the fewest points that still read as a sphere when they turn — in the
+   page's ink (`--on-surface`), depth carried by opacity and size only. It keeps its identity from
+   step to step and changes only what it does:
 
-   HOW THE APP USES IT. One canvas, 20px — the smaller of the two sizes the designs are exact at —
-   beside the status line, with `data-orb-state` following the four steps of the reading
-   (renderVals.procOrb): searching while the light is read, working while the field is sampled,
-   solving while the colours are grouped, composing while the mood is named. It is `aria-hidden`
-   because the line beside it says the same thing in words and the stage already announces each step
-   through the live region; the module's own role/aria-label are left in place for any other caller.
-   `data-orb-theme="auto"` resolves against the `data-theme` attribute this app already sets on the
-   document element, so the dots invert with the page, and its reduced-motion path renders one still
-   frame, which is the same answer the atmosphere gives. */
+     searching  (Reading light)          a light crosses it left to right, the way a line is read:
+                                         the points it reaches come up to full ink and fade behind
+                                         it, then the body rests before the next pass.
+     working    (Sampling the field)     one point at a time, in no order, comes forward — it swells
+                                         to full ink and settles back, as if picked up and put down.
+     solving    (Grouping the colours)   the turn slows almost to a hold, and the points run over the
+                                         surface into one mark per swatch, set on the points facing
+                                         the reader; each mark's AREA is its swatch's share
+                                         (`data-orb-groups`), so the body shows the palette in
+                                         proportion for as long as the step lasts.
+     composing  (Naming the mood)        the marks let go, smallest first, back into the sphere, which
+                                         breathes as one body on DUR.breathe for as long as the name
+                                         takes.
+
+   CONTINUITY. The app starts it once per reading and changes `data-orb-state` and `data-orb-groups`
+   in place (AppView ThinkingOrb); the observer below picks both up and eases out of the current pose,
+   so the twelve points stay one object from the first step to the last. A re-init on the same canvas
+   continues too: on destroy an instance leaves its last pose on the canvas (`__thinkingOrbCarry`) and
+   the next one eases out of it, with the turn carrying on from the same angle.
+
+   COLOUR. One ink, read from the canvas. Points of the same opacity are filled as one path, and with
+   one colour the painting order does not matter, so where points meet — a mark forming — they read
+   as one shape, never as a darker seam.
+
+   The instance lifecycle below (scope scanning, the rAF loop, offscreen and hidden-tab pauses, theme
+   observers, DPR sizing, re-init cleanup) is adapted from the reference, whose MIT notice travels
+   with it. The module cannot reach the app's instance, so its EASE and DUR below are local copies of
+   motion.js's figures (EASE.standard, and DUR overlay 0.8, reveal 0.62, breathe 2.6); change them
+   together. */
 
 /*
 MIT License
@@ -51,6 +70,51 @@ Vanilla JavaScript adaptation of Thinking Orbs:
 https://github.com/Jakubantalik/thinking-orbs
 */
 
+/* ONE FRAME LOOP FOR THE WHOLE MODULE. Every call registers a step; a single requestAnimationFrame
+   runs them all and stops when none of them has anything to draw. */
+const ticker = { steps: new Set(), frame: 0 };
+const tick = (now) => {
+	ticker.frame = 0;
+	let again = false;
+	ticker.steps.forEach((step) => {
+		if (step(now)) again = true;
+	});
+	if (again && !ticker.frame) ticker.frame = requestAnimationFrame(tick);
+};
+const wake = () => {
+	if (!ticker.frame) ticker.frame = requestAnimationFrame(tick);
+};
+
+/* The site's curves (motion.js EASE), solved for x by bisection: a handful of calls per frame. */
+const cubicBezier = (x1, y1, x2, y2) => {
+	const cx = 3 * x1;
+	const bx = 3 * (x2 - x1) - cx;
+	const ax = 1 - cx - bx;
+	const cy = 3 * y1;
+	const by = 3 * (y2 - y1) - cy;
+	const ay = 1 - cy - by;
+	return (x) => {
+		if (x <= 0) return 0;
+		if (x >= 1) return 1;
+		let lo = 0;
+		let hi = 1;
+		let t = x;
+		for (let i = 0; i < 22; i += 1) {
+			const value = ((ax * t + bx) * t + cx) * t;
+			if (Math.abs(value - x) < 1e-5) break;
+			if (value < x) lo = t;
+			else hi = t;
+			t = (lo + hi) / 2;
+		}
+		return ((ay * t + by) * t + cy) * t;
+	};
+};
+const EASE = {
+	standard: cubicBezier(0.22, 1, 0.36, 1),
+};
+// motion.js DUR, the ones used here
+const DUR = { reveal: 0.62, overlay: 0.8, breathe: 2.6 };
+
 export function thinkingOrbs(scope = document, options = {}) {
 	const config = {
 		state: "working",
@@ -62,142 +126,49 @@ export function thinkingOrbs(scope = document, options = {}) {
 	};
 
 	const labels = {
-		working: "Working…",
 		searching: "Searching…",
+		working: "Working…",
 		solving: "Solving…",
-		listening: "Listening…",
 		composing: "Composing…",
+		listening: "Listening…",
 		shaping: "Shaping…",
 	};
-
-	const stateToMode = {
-		working: "orbits",
-		searching: "globe",
-		solving: "rubik",
-		listening: "wave",
-		composing: "ribbon",
-		shaping: "morph",
+	// The reference's two other states borrow the nearest behaviour, so no caller breaks.
+	const behaviourOf = {
+		searching: "searching",
+		working: "working",
+		solving: "solving",
+		composing: "composing",
+		listening: "composing",
+		shaping: "solving",
 	};
 
-	const baseProfiles = {
-		globe: {
-			latRings: 17,
-			lonDensity: 44,
-			rBase: 0.6,
-			rDepth: 1.7,
-			rBoost: 1,
-			inkFar: 0.62,
-			inkSpan: 0.54,
-			rsPow: 0.6,
-			rMin: 0.3,
-		},
-		orbits: {
-			orbitN: 12,
-			ghostN: 40,
-			ghostR: 0.9,
-			ghostA: 0.5,
-			particles: 3,
-			partR: 1.2,
-			partRDepth: 1.6,
-			rsPow: 0.6,
-			rMin: 0.3,
-		},
-		rubik: {
-			latRings: 15,
-			lonDensity: 40,
-			moveCount: 14,
-			rBase: 0.6,
-			rDepth: 1.7,
-			rActive: 0.3,
-			inkFar: 0.62,
-			inkSpan: 0.54,
-			rsPow: 0.6,
-			rMin: 0.3,
-		},
-		wave: {
-			rings: 15,
-			lonDensity: 40,
-			rBase: 0.6,
-			rDepth: 1.7,
-			rsPow: 0.6,
-			rMin: 0.3,
-		},
-		ribbon: {
-			lanes: 5,
-			segs: 88,
-			ghostN: 150,
-			rBase: 1.1,
-			rDepth: 1.7,
-			rsPow: 0.6,
-			rMin: 0.3,
-		},
-		morph: {
-			rDot: 0.021,
-			iconD: 1,
-			rMin: 0.25,
-		},
-	};
+	/* THE BODY. */
+	const N = 12;
+	const TILT = 0.44; // the axis leans toward the reader, so the turn reads as a turn
+	const SPIN = 0.5; // radians per second, while it reads, samples and names
+	// While it groups, the body all but holds still, so the palette stays up to the reader for as
+	// long as the step lasts; the turn slows into it and picks up out of it (SPIN_EASE, s).
+	const SPIN_OF = { searching: SPIN, working: SPIN, solving: 0.08, composing: SPIN };
+	const SPIN_EASE = 0.45;
+	const RADIUS = 0.315; // sphere radius, as a share of the canvas
+	const CARRY_MS = 1500; // how old a carried pose may be and still be continued
+	const DEFAULT_GROUPS = [0.38, 0.25, 0.17, 0.12, 0.08];
+	const MAX_MARKS = 6; // past six, the smallest swatches share one mark
+	// how long a new state takes to ease out of the pose it inherited
+	const TRANSITION = { searching: DUR.overlay, working: 0.7, solving: 0.35, composing: 1.2 };
+	// On the way out of the marks, size and ink lead the travel: a mark gives back its points'
+	// size before they part, the reverse of the gathering, so the parting is never a heap of discs.
+	const LEAD = { searching: 1, working: 1, solving: 1, composing: 2 };
 
-	const presets = {
-		orbits: {
-			20: { speed: 3.9, count: 0.238, size: 2.4 },
-			64: { speed: 1.885, count: 1, size: 1 },
-		},
-		globe: {
-			20: {
-				speed: 2.665,
-				count: 0.105,
-				size: 1.75,
-				extra: { scanMul: 4.335, dimBase: 0.45 },
-			},
-			64: {
-				speed: 2.015,
-				count: 0.42,
-				size: 1.15,
-				extra: { scanMul: 4.08, dimBase: 0.45 },
-			},
-		},
-		rubik: {
-			20: { speed: 1.95, count: 0.088, size: 1.9 },
-			64: { speed: 1.82, count: 0.35, size: 1.05 },
-		},
-		wave: {
-			20: { speed: 3.998, count: 0.105, size: 1.6 },
-			64: { speed: 4.388, count: 0.341, size: 1 },
-		},
-		ribbon: {
-			20: {
-				speed: 3.12,
-				count: 0.051,
-				size: 1.073,
-				extra: { spin: 0, bandMul: 4.94, wobMul: 1 },
-			},
-			64: {
-				speed: 2.34,
-				count: 0.25,
-				size: 0.85,
-				extra: { spin: 0, bandMul: 3.9, wobMul: 1 },
-			},
-		},
-		morph: {
-			20: {
-				speed: 2.08,
-				count: 0.53,
-				size: 1.011,
-				extra: { spread: 1.45 },
-			},
-			64: {
-				speed: 2.405,
-				count: 0.54,
-				size: 0.395,
-				extra: { spread: 1.45 },
-			},
-		},
-	};
-
-	const clamp = (value, min = 0, max = 1) =>
-		Math.min(max, Math.max(min, value));
+	const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 	const mix = (from, to, progress) => from + (to - from) * progress;
+	const easeInOutSine = (x) => 0.5 - 0.5 * Math.cos(Math.PI * x);
+	const easeOutCubic = (x) => 1 - (1 - x) ** 3;
+	const smoothStep = (edge0, edge1, x) => {
+		const t = clamp((x - edge0) / (edge1 - edge0));
+		return t * t * (3 - 2 * t);
+	};
 	const readNumber = (value, fallback) => {
 		const number = Number.parseFloat(value);
 		return Number.isFinite(number) ? number : fallback;
@@ -210,744 +181,372 @@ export function thinkingOrbs(scope = document, options = {}) {
 		const value = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
 		return value - Math.floor(value);
 	};
-	const angleDelta = (a, b) =>
-		Math.atan2(Math.sin(a - b), Math.cos(a - b));
-	const radiusScale = (size, power) => (size / 300) ** power;
-	const fibonacciDirection = (index, count) => {
-		const golden = Math.PI * (3 - Math.sqrt(5));
-		const y = 1 - (2 * (index + 0.5)) / count;
-		const radius = Math.sqrt(1 - y * y);
-		const angle = index * golden;
-		return [radius * Math.cos(angle), y, radius * Math.sin(angle)];
+
+	// The icosahedron, a five-fold axis upright: two poles and two staggered rings of five.
+	const HOME = [[0, 1, 0]];
+	for (let k = 0; k < 5; k += 1) {
+		const a = (2 * Math.PI * k) / 5;
+		HOME.push([(2 / Math.sqrt(5)) * Math.cos(a), 1 / Math.sqrt(5), (2 / Math.sqrt(5)) * Math.sin(a)]);
+	}
+	for (let k = 0; k < 5; k += 1) {
+		const a = (2 * Math.PI * k) / 5 + Math.PI / 5;
+		HOME.push([(2 / Math.sqrt(5)) * Math.cos(a), -1 / Math.sqrt(5), (2 / Math.sqrt(5)) * Math.sin(a)]);
+	}
+	HOME.push([0, -1, 0]);
+	// tipped off that axis, so the turn never lines the points up into a ring round a centre
+	HOME.forEach((h) => {
+		const ax = 0.62;
+		const az = 0.38;
+		const y1 = h[1] * Math.cos(ax) - h[2] * Math.sin(ax);
+		const z1 = h[1] * Math.sin(ax) + h[2] * Math.cos(ax);
+		const x2 = h[0] * Math.cos(az) - y1 * Math.sin(az);
+		const y2 = h[0] * Math.sin(az) + y1 * Math.cos(az);
+		h[0] = x2;
+		h[1] = y2;
+		h[2] = z1;
+	});
+
+	// sphere space -> view space (the turn about the upright axis, then the tilt); y up, z to the reader
+	const toView = (h, yaw, out) => {
+		const cy = Math.cos(yaw);
+		const sy = Math.sin(yaw);
+		const ct = Math.cos(TILT);
+		const st = Math.sin(TILT);
+		const rx = h[0] * cy + h[2] * sy;
+		const rz = -h[0] * sy + h[2] * cy;
+		out[0] = rx;
+		out[1] = h[1] * ct - rz * st;
+		out[2] = h[1] * st + rz * ct;
+		return out;
 	};
+	// depth: the near side larger and in full ink, the far side small and faint (px at a 20px canvas)
+	const depthRadius = (z) => 1 + 0.62 * ((z + 1) / 2);
+	const depthInk = (z) => 0.24 + 0.76 * ((z + 1) / 2) ** 1.4;
 
-	const makeProjector = (yaw, tilt, centerX, centerY, scale) => {
-		const sinTilt = Math.sin(tilt);
-		const cosTilt = Math.cos(tilt);
-		const sinYaw = Math.sin(yaw);
-		const cosYaw = Math.cos(yaw);
-
-		return (x, y, z) => {
-			const rotatedX = x * cosYaw + z * sinYaw;
-			const rotatedZ = -x * sinYaw + z * cosYaw;
-			const rotatedY = y * cosTilt - rotatedZ * sinTilt;
-			const depth = y * sinTilt + rotatedZ * cosTilt;
-			return [
-				centerX + rotatedX * scale,
-				centerY - rotatedY * scale,
-				depth,
-			];
-		};
-	};
-
-	const paintDots = (context, dots, dark, minimumRadius = 0.3) => {
-		dots.sort((first, second) => first.z - second.z);
-
-		dots.forEach((dot) => {
-			const alpha = dot.a ?? 1;
-			if (alpha < 0.02) return;
-
-			const white = clamp(dot.white);
-			const gray = Math.round((dark ? 1 - white : white) * 255);
-			context.fillStyle = `rgba(${gray}, ${gray}, ${gray}, ${alpha})`;
-			context.beginPath();
-			context.arc(
-				dot.x,
-				dot.y,
-				Math.max(minimumRadius, dot.r),
-				0,
-				Math.PI * 2,
-			);
-			context.fill();
-		});
-	};
-
-	const countPairs = [
-		["latRings", "lonDensity"],
-		["rings", "lonDensity"],
-		["lanes", "segs"],
-	];
-	const countKeys = ["orbitN", "ghostN"];
-	const radiusKeys = [
-		"rBase",
-		"rDepth",
-		"rActive",
-		"rDot",
-		"ghostR",
-		"partR",
-		"partRDepth",
-	];
-
-	const scaleCounts = (source, multiplier) => {
-		const output = { ...source };
-		const scaledKeys = new Set();
-		const pairMultiplier = Math.sqrt(multiplier);
-
-		countPairs.forEach(([firstKey, secondKey]) => {
-			if (
-				output[firstKey] === undefined ||
-				output[secondKey] === undefined ||
-				scaledKeys.has(firstKey) ||
-				scaledKeys.has(secondKey)
-			) {
-				return;
-			}
-
-			output[firstKey] = Math.max(
-				2,
-				Math.round(output[firstKey] * pairMultiplier),
-			);
-			output[secondKey] = Math.max(
-				2,
-				Math.round(output[secondKey] * pairMultiplier),
-			);
-			scaledKeys.add(firstKey);
-			scaledKeys.add(secondKey);
-		});
-
-		countKeys.forEach((key) => {
-			if (output[key] === undefined || scaledKeys.has(key)) return;
-			output[key] = Math.max(1, Math.round(output[key] * multiplier));
-		});
-
-		if (output.iconD !== undefined) {
-			output.iconD = Math.max(0.02, output.iconD * multiplier);
+	// Spherical interpolation of two points, lengths interpolated alongside, so a point travels over
+	// the surface instead of through the middle of the body.
+	const blendInto = (out, o, ax, ay, az, bx, by, bz, t) => {
+		const la = Math.hypot(ax, ay, az) || 1;
+		const lb = Math.hypot(bx, by, bz) || 1;
+		ax /= la; ay /= la; az /= la;
+		bx /= lb; by /= lb; bz /= lb;
+		const d = clamp(ax * bx + ay * by + az * bz, -1, 1);
+		const theta = Math.acos(d);
+		let wa = 1 - t;
+		let wb = t;
+		if (theta > 1e-4 && theta < Math.PI - 1e-3) {
+			const s = Math.sin(theta);
+			wa = Math.sin((1 - t) * theta) / s;
+			wb = Math.sin(t * theta) / s;
 		}
-
-		return output;
+		const x = ax * wa + bx * wb;
+		const y = ay * wa + by * wb;
+		const z = az * wa + bz * wb;
+		const l = Math.hypot(x, y, z) || 1;
+		const length = mix(la, lb, t);
+		out[o] = (x / l) * length;
+		out[o + 1] = (y / l) * length;
+		out[o + 2] = (z / l) * length;
 	};
 
-	const scaleRadii = (source, multiplier) => {
-		const output = { ...source };
-		radiusKeys.forEach((key) => {
-			if (output[key] !== undefined) output[key] *= multiplier;
-		});
-		return output;
+	const parseGroups = (value) => {
+		if (!value) return DEFAULT_GROUPS;
+		let weights = String(value)
+			.split(/[\s,]+/)
+			.map(Number.parseFloat)
+			.filter((w) => Number.isFinite(w) && w > 0)
+			.sort((a, b) => b - a);
+		if (weights.length > MAX_MARKS) {
+			const rest = weights.slice(MAX_MARKS - 1).reduce((sum, w) => sum + w, 0);
+			weights = [...weights.slice(0, MAX_MARKS - 1), rest].sort((a, b) => b - a);
+		}
+		return weights.length ? weights : DEFAULT_GROUPS;
 	};
 
-	const resolvePreset = (state, size) => {
-		const mode = stateToMode[state];
-		const small = presets[mode][20];
-		const large = presets[mode][64];
-		const progress = clamp((size - 20) / 44);
-		const countMultiplier = mix(small.count, large.count, progress);
-		const sizeMultiplier = mix(small.size, large.size, progress);
-		let drawOptions = scaleCounts(baseProfiles[mode], countMultiplier);
-		drawOptions = scaleRadii(drawOptions, sizeMultiplier);
+	/* THE MARKS. The palette is shown on the body itself. As many of the twelve points as there are
+	   weights (at most six) become marks — the ones facing the reader when the gathering lands, the
+	   heaviest on the nearest — and every other point runs over the surface into the mark nearest it,
+	   each mark taking a share of the points by its weight. A mark's AREA is its weight's share, so
+	   the marks side by side are the palette in proportion. They stay on the body and turn with it. */
+	const MARK_SCALE = 3.7; // px at a 20px canvas: the radius a palette of one colour would have
+	const MARK_MAX = 3;
+	const MARK_MIN = 0.9;
+	const LAND = 0.85; // how long one mark takes to gather (s)
+	const markRadius = (share, z) =>
+		clamp(MARK_SCALE * Math.sqrt(share), MARK_MIN, MARK_MAX) * (0.66 + 0.34 * ((z + 1) / 2));
+	const markInk = (z) => 0.28 + 0.72 * ((z + 1) / 2) ** 1.2;
 
-		const extraKeys = new Set([
-			...Object.keys(small.extra ?? {}),
-			...Object.keys(large.extra ?? {}),
-		]);
-		extraKeys.forEach((key) => {
-			const smallValue = small.extra?.[key] ?? large.extra?.[key];
-			const largeValue = large.extra?.[key] ?? small.extra?.[key];
-			drawOptions[key] = mix(smallValue, largeValue, progress);
-		});
-
-		return {
-			mode,
-			baseSpeed: mix(small.speed, large.speed, progress),
-			drawOptions,
-		};
-	};
-
-	const drawOrbits = (context, size, time, dark, drawOptions) => {
-		const center = size / 2;
-		const radius = center * 0.82;
-		const project = makeProjector(time * 0.12, 0.3, center, center, 1);
-		const dotScale = radiusScale(size, drawOptions.rsPow ?? 0.6);
-		const dots = [];
-		const orbitCount = drawOptions.orbitN ?? 12;
-		const ghostCount = drawOptions.ghostN ?? 40;
-		const particleCount = drawOptions.particles ?? 3;
-
-		for (let orbit = 0; orbit < orbitCount; orbit += 1) {
-			const firstRandom = hash(orbit, 1.7);
-			const secondRandom = hash(orbit, 5.2);
-			const thirdRandom = hash(orbit, 8.9);
-			const orbitRadius = radius * (0.45 + 0.52 * firstRandom);
-			const longitude = firstRandom * 2 * Math.PI;
-			const latitude = Math.acos(2 * secondRandom - 1);
-			const normalX = Math.sin(latitude) * Math.cos(longitude);
-			const normalY = Math.cos(latitude);
-			const normalZ = Math.sin(latitude) * Math.sin(longitude);
-			let unitX = -normalY;
-			let unitY = normalX;
-			const unitZ = 0;
-			const unitLength = Math.max(
-				0.000001,
-				Math.hypot(unitX, unitY),
-			);
-			unitX /= unitLength;
-			unitY /= unitLength;
-			const perpendicularX = normalY * unitZ - normalZ * unitY;
-			const perpendicularY = normalZ * unitX - normalX * unitZ;
-			const perpendicularZ = normalX * unitY - normalY * unitX;
-			const direction = thirdRandom > 0.5 ? 1 : -1;
-			const orbitSpeed = (0.25 + 0.55 * thirdRandom) * direction;
-
-			for (let index = 0; index < ghostCount; index += 1) {
-				const angle = (index / ghostCount) * 2 * Math.PI;
-				const cosine = Math.cos(angle);
-				const sine = Math.sin(angle);
-				const [x, y, z] = project(
-					(unitX * cosine + perpendicularX * sine) * orbitRadius,
-					(unitY * cosine + perpendicularY * sine) * orbitRadius,
-					(unitZ * cosine + perpendicularZ * sine) * orbitRadius,
-				);
-				const depth = (z / orbitRadius + 1) / 2;
-				dots.push({
-					x,
-					y,
-					z,
-					r: (drawOptions.ghostR ?? 0.9) * dotScale,
-					white: 0.72,
-					a: (drawOptions.ghostA ?? 0.5) * (0.4 + 0.6 * depth),
-				});
-			}
-
-			for (let index = 0; index < particleCount; index += 1) {
-				const angle =
-					time * orbitSpeed +
-					(index / particleCount) * 2 * Math.PI +
-					secondRandom * 6;
-				const cosine = Math.cos(angle);
-				const sine = Math.sin(angle);
-				const [x, y, z] = project(
-					(unitX * cosine + perpendicularX * sine) * orbitRadius,
-					(unitY * cosine + perpendicularY * sine) * orbitRadius,
-					(unitZ * cosine + perpendicularZ * sine) * orbitRadius,
-				);
-				const depth = (z / orbitRadius + 1) / 2;
-				dots.push({
-					x,
-					y,
-					z,
-					r:
-						((drawOptions.partR ?? 1.2) +
-							(drawOptions.partRDepth ?? 1.6) * depth) *
-						dotScale,
-					white: 0.3 - 0.22 * depth,
-				});
+	// Points per mark, by share (largest remainder, at least one each).
+	const countsFor = (weights) => {
+		const K = weights.length;
+		const total = weights.reduce((sum, w) => sum + w, 0);
+		const shares = weights.map((w) => (w / total) * N);
+		const counts = shares.map((s) => Math.max(1, Math.floor(s)));
+		let assigned = counts.reduce((sum, c) => sum + c, 0);
+		const byRemainder = shares
+			.map((s, k) => [s - Math.floor(s), k])
+			.sort((a, b) => b[0] - a[0]);
+		for (let r = 0; assigned < N; r += 1, assigned += 1) counts[byRemainder[r % K][1]] += 1;
+		for (let k = K - 1; assigned > N; k = (k + K - 1) % K) {
+			if (counts[k] > 1) {
+				counts[k] -= 1;
+				assigned -= 1;
 			}
 		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
+		return counts;
 	};
 
-	const drawGlobe = (context, size, time, dark, drawOptions) => {
-		const center = size / 2;
-		const radius = center * 0.82;
-		const spin = 0.5;
-		const tilt = 0.4 + 0.06 * Math.sin(time * 0.35);
-		const project = makeProjector(
-			time * spin,
-			tilt,
-			center,
-			center,
-			radius,
-		);
-		const scan =
-			time * (spin + (1.7 - spin) * (drawOptions.scanMul ?? 1));
-		const dotScale = radiusScale(size, drawOptions.rsPow ?? 0.6);
-		const dots = [];
-		const latitudeRings = drawOptions.latRings ?? 17;
-		const longitudeDensity = drawOptions.lonDensity ?? 44;
-
-		for (let ring = 0; ring <= latitudeRings; ring += 1) {
-			const latitude = -Math.PI / 2 + (ring / latitudeRings) * Math.PI;
-			const cosineLatitude = Math.cos(latitude);
-			const sineLatitude = Math.sin(latitude);
-			const longitudeCount = Math.max(
-				1,
-				Math.round(Math.abs(cosineLatitude) * longitudeDensity),
-			);
-
-			for (let index = 0; index < longitudeCount; index += 1) {
-				const longitude = (index / longitudeCount) * 2 * Math.PI;
-				const [x, y, z] = project(
-					cosineLatitude * Math.cos(longitude),
-					sineLatitude,
-					cosineLatitude * Math.sin(longitude),
-				);
-				const depth = (z + 1) / 2;
-				const distance = angleDelta(longitude + time * spin, scan);
-				const boost =
-					Math.exp(-(distance * distance) / 0.18) * Math.max(0, z);
-				const dimBase = drawOptions.dimBase ?? 1;
-
-				dots.push({
-					x,
-					y,
-					z,
-					r:
-						((drawOptions.rBase ?? 0.6) +
-							(drawOptions.rDepth ?? 1.7) * depth +
-							(drawOptions.rBoost ?? 1) * boost) *
-						dotScale,
-					white:
-						(drawOptions.inkFar ?? 0.62) -
-						(drawOptions.inkSpan ?? 0.54) * depth,
-					a: dimBase + (1 - dimBase) * Math.min(1, boost),
-				});
-			}
-		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
-	};
-
-	const moveCache = new Map();
-	const getMoves = (count) => {
-		if (moveCache.has(count)) return moveCache.get(count);
-
-		const moves = [];
-		for (let index = 0; index < count; index += 1) {
-			const axis = Math.min(2, Math.floor(hash(index, 2.3) * 3));
-			const minimum =
-				-1 + 0.5 * Math.min(3, Math.floor(hash(index, 5.9) * 4));
-			const direction = hash(index, 7.7) < 0.5 ? 1 : -1;
-			moves.push({
-				axis,
-				minimum,
-				maximum: minimum + 0.5,
-				angle: (direction * Math.PI) / 2,
+	// Which points become marks, and which mark every other point runs into: nearest pairs first
+	// over the sphere, so the gathering is short travel.
+	const makeGroups = (instance, weights) => {
+		const total = weights.reduce((sum, w) => sum + w, 0);
+		const shares = weights.map((w) => w / total);
+		const counts = countsFor(weights);
+		const K = weights.length;
+		const at = [0, 0, 0];
+		// where the turn will have carried the body once the gathering has landed
+		const landing = instance.yaw + instance.spin * SPIN_EASE + SPIN_OF.solving * LAND;
+		const site = HOME.map((h, i) => [toView(h, landing, at)[2], i])
+			.sort((p, q) => q[0] - p[0])
+			.slice(0, K)
+			.map(([, i]) => i);
+		const markOf = new Int8Array(N).fill(-1);
+		const filled = new Array(K).fill(1);
+		site.forEach((i, k) => {
+			markOf[i] = k;
+		});
+		const pairs = [];
+		for (let i = 0; i < N; i += 1) {
+			if (markOf[i] >= 0) continue;
+			site.forEach((s, k) => {
+				const h = HOME[i];
+				const m = HOME[s];
+				pairs.push([h[0] * m[0] + h[1] * m[1] + h[2] * m[2], i, k]);
 			});
 		}
-
-		moveCache.set(count, moves);
-		return moves;
+		pairs.sort((p, q) => q[0] - p[0]);
+		pairs.forEach(([, i, k]) => {
+			if (markOf[i] >= 0 || filled[k] >= counts[k]) return;
+			markOf[i] = k;
+			filled[k] += 1;
+		});
+		instance.groups = { site, shares, markOf };
 	};
 
-	const getSolveCycle = (time, count, slotDuration, restDuration) => {
-		const cycleDuration = 2 * count * slotDuration + restDuration;
-		const cycleTime = time % cycleDuration;
-		const amounts = new Array(count).fill(0);
-		let activeMove = -1;
+	/* THE FOUR BEHAVIOURS. Each writes, for every point, a position in view space (sphere radius 1,
+	   y up, z toward the reader), a radius (px at a 20px canvas) and an ink (0–1). */
+	const view = [0, 0, 0];
+	const setPoint = (instance, i, v, radius, ink) => {
+		instance.tp[i * 3] = v[0];
+		instance.tp[i * 3 + 1] = v[1];
+		instance.tp[i * 3 + 2] = v[2];
+		instance.tr[i] = radius;
+		instance.ta[i] = ink;
+	};
 
-		if (cycleTime < 2 * count * slotDuration) {
-			const slot = Math.floor(cycleTime / slotDuration);
-			const slotProgress =
-				(cycleTime - slot * slotDuration) / slotDuration;
-			const clampedProgress = Math.min(1, slotProgress / 0.7);
-			const easedProgress = 1 - (1 - clampedProgress) ** 3;
+	const reading = (instance, t) => {
+		// A pass every 1.75s: the light crosses in 1.35s, what it has reached stays lit behind it and
+		// fades, so the lit side grows from the left like a line being read; then a short rest. The
+		// light reaches the far side too, so the pass is seen arriving at the left edge and leaving
+		// at the right, not only where it crosses the middle.
+		const period = 1.75;
+		const sweep = 1.35;
+		const phase = instance.still ? 0.8 : t % period;
+		const front = -1.25 + (2.5 * phase) / sweep;
+		const rest = smoothStep(period, period - 0.4, phase);
+		for (let i = 0; i < N; i += 1) {
+			toView(HOME[i], instance.yaw, view);
+			const passed = front - view[0];
+			const lit = rest * smoothStep(-0.2, 0.08, passed) * Math.exp(-Math.max(0, passed) / 0.95);
+			const ink = depthInk(view[2]);
+			setPoint(
+				instance,
+				i,
+				view,
+				depthRadius(view[2]) * (1 + 0.24 * lit),
+				mix(ink * 0.56, Math.max(ink, 0.7), lit),
+			);
+		}
+	};
 
-			if (slot < count) {
-				for (let index = 0; index < slot; index += 1) amounts[index] = 1;
-				amounts[slot] = easedProgress;
-				activeMove = slot;
-			} else {
-				const reverseIndex = 2 * count - 1 - slot;
-				for (let index = 0; index < reverseIndex; index += 1) {
-					amounts[index] = 1;
+	const LIFT = 1.2;
+	const liftAmount = (p) => {
+		if (p <= 0 || p >= 1) return 0;
+		if (p < 0.3) return easeOutCubic(p / 0.3);
+		if (p < 0.42) return 1;
+		return 1 - easeInOutSine((p - 0.42) / 0.58);
+	};
+	const sampling = (instance, t) => {
+		const { liftStart } = instance;
+		if (instance.still) {
+			liftStart.fill(-9);
+			let pick = -1;
+			let bestZ = -2;
+			for (let i = 0; i < N; i += 1) {
+				toView(HOME[i], instance.yaw, view);
+				if (view[2] < 0.75 && view[2] > bestZ && Math.abs(view[0]) > 0.3) {
+					bestZ = view[2];
+					pick = i;
 				}
-				amounts[reverseIndex] = 1 - easedProgress;
-				activeMove = reverseIndex;
 			}
+			if (pick >= 0) liftStart[pick] = t - LIFT * 0.36;
+		} else if (t >= instance.nextLift) {
+			// one at a time, on the near side, never the same point twice running or its neighbour
+			const candidates = [];
+			for (let i = 0; i < N; i += 1) {
+				if (t - liftStart[i] < LIFT + 0.3) continue;
+				toView(HOME[i], instance.yaw + instance.spin * 0.3, view);
+				if (view[2] < -0.05) continue;
+				if (instance.lastLift >= 0) {
+					const h = HOME[instance.lastLift];
+					if (h[0] * HOME[i][0] + h[1] * HOME[i][1] + h[2] * HOME[i][2] > 0.4) continue;
+				}
+				candidates.push(i);
+			}
+			if (candidates.length) {
+				const pick = candidates[Math.floor(hash(instance.liftCount, 7.31) * candidates.length)];
+				liftStart[pick] = t;
+				instance.lastLift = pick;
+			}
+			instance.liftCount += 1;
+			instance.nextLift = t + 0.46 + 0.16 * hash(instance.liftCount, 3.17);
 		}
-
-		return { amounts, activeMove };
+		for (let i = 0; i < N; i += 1) {
+			toView(HOME[i], instance.yaw, view);
+			const l = liftAmount((t - liftStart[i]) / LIFT);
+			const ink = depthInk(view[2]);
+			const radius = depthRadius(view[2]);
+			const out = 1 + 0.2 * l;
+			view[0] *= out;
+			view[1] *= out;
+			view[2] *= out;
+			setPoint(instance, i, view, radius * (1 + 0.42 * l), mix(ink * 0.6, 1, l));
+		}
 	};
 
-	const applyMoves = (point, moves, solveCycle) => {
-		let [x, y, z] = point;
-		let inActiveMove = false;
+	const markAt = [0, 0, 0];
+	const grouping = (instance, t) => {
+		const { tp } = instance;
+		const { site, shares, markOf } = instance.groups;
+		const time = instance.still ? 4 : t;
+		for (let i = 0; i < N; i += 1) {
+			const k = markOf[i];
+			toView(HOME[i], instance.yaw, view);
+			toView(HOME[site[k]], instance.yaw, markAt);
+			// the heaviest first, the rest a beat apart
+			const g = easeInOutSine(clamp((time - 0.06 * k) / LAND));
+			blendInto(tp, i * 3, view[0], view[1], view[2], markAt[0], markAt[1], markAt[2], g);
+			// a point keeps its own size while it travels and takes the mark's once it has arrived
+			instance.tr[i] = mix(depthRadius(view[2]), markRadius(shares[k], markAt[2]), smoothStep(0.45, 1, g));
+			// ink leads, so points already meeting are one shape of one ink
+			instance.ta[i] = mix(depthInk(view[2]) * 0.6, markInk(markAt[2]), smoothStep(0, 0.55, g));
+		}
+	};
 
-		moves.forEach((move, index) => {
-			const amount = solveCycle.amounts[index];
-			if (amount <= 0) return;
+	const naming = (instance, t) => {
+		const time = instance.still ? DUR.breathe / 2 : t;
+		const breath = 0.5 - 0.5 * Math.cos((2 * Math.PI * time) / DUR.breathe);
+		const scale = 0.86 + 0.14 * breath;
+		for (let i = 0; i < N; i += 1) {
+			toView(HOME[i], instance.yaw, view);
+			const ink = depthInk(view[2]);
+			const radius = depthRadius(view[2]);
+			view[0] *= scale;
+			view[1] *= scale;
+			view[2] *= scale;
+			setPoint(instance, i, view, radius * (0.94 + 0.1 * breath), ink * (0.62 + 0.38 * breath));
+		}
+	};
 
-			const coordinate = move.axis === 0 ? x : move.axis === 1 ? y : z;
-			if (coordinate < move.minimum || coordinate >= move.maximum) return;
-			if (index === solveCycle.activeMove) inActiveMove = true;
+	const behaviours = {
+		searching: reading,
+		working: sampling,
+		solving: grouping,
+		composing: naming,
+	};
 
-			const angle = move.angle * amount;
-			const cosine = Math.cos(angle);
-			const sine = Math.sin(angle);
-
-			if (move.axis === 0) {
-				const nextY = y * cosine - z * sine;
-				z = y * sine + z * cosine;
-				y = nextY;
-			} else if (move.axis === 1) {
-				const nextX = x * cosine + z * sine;
-				z = -x * sine + z * cosine;
-				x = nextX;
+	/* ONE FRAME: advance the chosen behaviour, ease out of any inherited pose, then paint. */
+	const compute = (instance) => {
+		const { cp, cr, ca, tp, tr, ta } = instance;
+		const t = instance.t;
+		behaviours[instance.behaviour](instance, t);
+		const from = instance.still ? null : instance.from;
+		let settled = true;
+		for (let i = 0; i < N; i += 1) {
+			const o = i * 3;
+			const p = from ? clamp((t - instance.fromT - instance.fromDelay[i]) / instance.transition) : 1;
+			if (p < 1) {
+				settled = false;
+				const e = easeInOutSine(p);
+				const lead = easeInOutSine(clamp(p * instance.lead));
+				blendInto(cp, o, from.pos[o], from.pos[o + 1], from.pos[o + 2], tp[o], tp[o + 1], tp[o + 2], e);
+				cr[i] = mix(from.r[i], tr[i], lead);
+				ca[i] = mix(from.a[i], ta[i], lead);
 			} else {
-				const nextX = x * cosine - y * sine;
-				y = x * sine + y * cosine;
-				x = nextX;
-			}
-		});
-
-		return [x, y, z, inActiveMove];
-	};
-
-	const drawRubik = (context, size, time, dark, drawOptions) => {
-		const center = size / 2;
-		const radius = center * 0.82;
-		const project = makeProjector(
-			time * 0.55,
-			0.35 + 0.1 * Math.sin(time * 0.9),
-			center,
-			center,
-			radius,
-		);
-		const dotScale = radiusScale(size, drawOptions.rsPow ?? 0.6);
-		const moveCount = drawOptions.moveCount ?? 14;
-		const moves = getMoves(moveCount);
-		const solveCycle = getSolveCycle(time, moveCount, 0.42, 1.2);
-		const latitudeRings = drawOptions.latRings ?? 15;
-		const longitudeDensity = drawOptions.lonDensity ?? 40;
-		const dots = [];
-
-		for (let ring = 0; ring <= latitudeRings; ring += 1) {
-			const latitude = -Math.PI / 2 + (ring / latitudeRings) * Math.PI;
-			const cosineLatitude = Math.cos(latitude);
-			const sineLatitude = Math.sin(latitude);
-			const longitudeCount = Math.max(
-				1,
-				Math.round(Math.abs(cosineLatitude) * longitudeDensity),
-			);
-
-			for (let index = 0; index < longitudeCount; index += 1) {
-				const longitude = (index / longitudeCount) * 2 * Math.PI;
-				const movedPoint = applyMoves(
-					[
-						cosineLatitude * Math.cos(longitude),
-						sineLatitude,
-						cosineLatitude * Math.sin(longitude),
-					],
-					moves,
-					solveCycle,
-				);
-				const [x, y, z] = project(
-					movedPoint[0],
-					movedPoint[1],
-					movedPoint[2],
-				);
-				const depth = (z + 1) / 2;
-				const activeSize = movedPoint[3] ? drawOptions.rActive ?? 0.3 : 0;
-
-				dots.push({
-					x,
-					y,
-					z,
-					r:
-						((drawOptions.rBase ?? 0.6) +
-							(drawOptions.rDepth ?? 1.7) * depth +
-							activeSize) *
-						dotScale,
-					white:
-						(drawOptions.inkFar ?? 0.62) -
-						(drawOptions.inkSpan ?? 0.54) * depth -
-						(movedPoint[3] ? 0.14 : 0),
-				});
+				cp[o] = tp[o];
+				cp[o + 1] = tp[o + 1];
+				cp[o + 2] = tp[o + 2];
+				cr[i] = tr[i];
+				ca[i] = ta[i];
 			}
 		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
+		if (from && settled) instance.from = null;
+		instance.fade = instance.still
+			? 1
+			: mix(instance.fadeFrom, 1, EASE.standard(clamp(t / DUR.reveal)));
+		instance.drawn = true;
 	};
 
-	const drawWave = (context, size, time, dark, drawOptions) => {
-		const center = size / 2;
-		const radius = center * 0.874;
-		const project = makeProjector(time * 0.18, 0.38, center, center, 1);
-		const dotScale = radiusScale(size, drawOptions.rsPow ?? 0.6);
-		const ringCount = drawOptions.rings ?? 15;
-		const longitudeDensity = drawOptions.lonDensity ?? 40;
-		const dots = [];
-
-		for (let ring = 0; ring <= ringCount; ring += 1) {
-			const latitude = -Math.PI / 2 + (ring / ringCount) * Math.PI;
-			const cosineLatitude = Math.cos(latitude);
-			const sineLatitude = Math.sin(latitude);
-			const wave =
-				0.62 * Math.sin(time * 2.1 - ring * 0.52) +
-				0.38 * Math.sin(time * 1.27 + ring * 0.83);
-			const ringRadius = radius * (0.88 + 0.105 * wave);
-			const longitudeCount = Math.max(
-				1,
-				Math.round(Math.abs(cosineLatitude) * longitudeDensity),
-			);
-
-			for (let index = 0; index < longitudeCount; index += 1) {
-				const longitude = (index / longitudeCount) * 2 * Math.PI;
-				const [x, y, z] = project(
-					cosineLatitude * Math.cos(longitude) * ringRadius,
-					sineLatitude * ringRadius,
-					cosineLatitude * Math.sin(longitude) * ringRadius,
-				);
-				const depth = (z / radius + 1) / 2;
-				const crest = Math.max(0, wave);
-
-				dots.push({
-					x,
-					y,
-					z,
-					r:
-						((drawOptions.rBase ?? 0.6) +
-							(drawOptions.rDepth ?? 1.7) * depth) *
-						(1 + 0.4 * crest) *
-						dotScale,
-					white: 0.66 - 0.56 * depth - 0.1 * crest,
-				});
+	const paint = (instance) => {
+		const { context, size, devicePixelRatio, cp, cr, ca, px, py, pr, pa, order } = instance;
+		context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+		context.clearRect(0, 0, size, size);
+		const centre = size / 2;
+		const radius = size * RADIUS;
+		const dotScale = (size / 20) ** 0.8;
+		const fade = instance.fade;
+		const grow = 0.8 + 0.2 * fade;
+		for (let i = 0; i < N; i += 1) {
+			const o = i * 3;
+			let x = cp[o] * radius * grow;
+			let y = -cp[o + 1] * radius * grow;
+			const r = Math.max(0.35, cr[i] * dotScale);
+			// nothing leaves the canvas: a point near the edge is held just inside it
+			const room = centre - r - 0.35 * dotScale;
+			const reach = Math.hypot(x, y);
+			if (reach > room && reach > 0) {
+				x *= room / reach;
+				y *= room / reach;
 			}
+			px[i] = centre + x;
+			py[i] = centre + y;
+			pr[i] = r;
+			// quantised, so points of one ink can share a path
+			pa[i] = Math.round(clamp(ca[i] * fade) * 32) / 32;
 		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
-	};
-
-	const drawRibbon = (context, size, time, dark, drawOptions) => {
-		const center = size / 2;
-		const radius = center * 0.78;
-		const spin = drawOptions.spin ?? 1;
-		const project = makeProjector(
-			time * 0.1 * spin,
-			0.3,
-			center,
-			center,
-			1,
-		);
-		const dotScale = radiusScale(size, drawOptions.rsPow ?? 0.6);
-		const dots = [];
-		const ghostCount = drawOptions.ghostN ?? 150;
-
-		for (let index = 0; index < ghostCount; index += 1) {
-			const direction = fibonacciDirection(index, ghostCount);
-			const [x, y, z] = project(
-				direction[0] * radius,
-				direction[1] * radius,
-				direction[2] * radius,
-			);
-			const depth = (z / radius + 1) / 2;
-			dots.push({
-				x,
-				y,
-				z,
-				r: 0.8 * dotScale,
-				white: 0.78,
-				a: 0.1 + 0.22 * depth,
-			});
-		}
-
-		const yaw = time * 0.24 * spin;
-		const tilt = 0.55 + 0.3 * Math.sin(time * 0.18) * spin;
-		const unitX = Math.cos(yaw);
-		const unitY = 0;
-		const unitZ = Math.sin(yaw);
-		const perpendicularX = -unitZ * Math.sin(tilt);
-		const perpendicularY = Math.cos(tilt);
-		const perpendicularZ = unitX * Math.sin(tilt);
-		const normalX = unitY * perpendicularZ - unitZ * perpendicularY;
-		const normalY = unitZ * perpendicularX - unitX * perpendicularZ;
-		const normalZ = unitX * perpendicularY - unitY * perpendicularX;
-		const baseLanes = drawOptions.lanes ?? 5;
-		const segmentCount = drawOptions.segs ?? 88;
-		const laneCount = Math.max(
-			1,
-			Math.round(baseLanes * (drawOptions.bandMul ?? 1)),
-		);
-
-		for (let lane = 0; lane < laneCount; lane += 1) {
-			const laneOffset = (lane - (laneCount - 1) / 2) * 0.075;
-			const edge =
-				Math.abs(lane - (laneCount - 1) / 2) /
-				Math.max(1, (laneCount - 1) / 2);
-
-			for (let segment = 0; segment < segmentCount; segment += 1) {
-				const angle = (segment / segmentCount) * 2 * Math.PI;
-				const wobble =
-					(0.16 * Math.sin(angle * 3 - time * 1.7 + lane * 0.22) +
-						0.07 * Math.sin(angle * 5 + time * 1.1)) *
-					(drawOptions.wobMul ?? 1);
-				const offset = laneOffset + wobble;
-				const rawX =
-					unitX * Math.cos(angle) +
-					perpendicularX * Math.sin(angle) +
-					normalX * offset;
-				const rawY =
-					unitY * Math.cos(angle) +
-					perpendicularY * Math.sin(angle) +
-					normalY * offset;
-				const rawZ =
-					unitZ * Math.cos(angle) +
-					perpendicularZ * Math.sin(angle) +
-					normalZ * offset;
-				const length = Math.hypot(rawX, rawY, rawZ);
-				const [x, y, z] = project(
-					(rawX / length) * radius,
-					(rawY / length) * radius,
-					(rawZ / length) * radius,
-				);
-				const depth = (z / radius + 1) / 2;
-
-				dots.push({
-					x,
-					y,
-					z,
-					r:
-						((drawOptions.rBase ?? 1.1) +
-							(drawOptions.rDepth ?? 1.7) * depth) *
-						(1 - 0.25 * edge) *
-						dotScale,
-					white: 0.52 - 0.44 * depth + 0.18 * edge,
-					a: 0.4 + 0.6 * depth,
-				});
+		order.sort((a, b) => pa[a] - pa[b]);
+		context.fillStyle = instance.ink;
+		let k = 0;
+		while (k < N) {
+			const alpha = pa[order[k]];
+			if (alpha < 0.02) {
+				k += 1;
+				continue;
 			}
-		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
-	};
-
-	const smoothStep = (value) => value * value * (3 - 2 * value);
-	const makePolygonPath = (vertices) => {
-		const lengths = [];
-		let totalLength = 0;
-
-		vertices.forEach((vertex, index) => {
-			const nextVertex = vertices[(index + 1) % vertices.length];
-			const length = Math.hypot(
-				nextVertex[0] - vertex[0],
-				nextVertex[1] - vertex[1],
-			);
-			lengths.push(length);
-			totalLength += length;
-		});
-
-		return (progress) => {
-			let targetLength = progress * totalLength;
-			let segment = 0;
-			while (
-				targetLength > lengths[segment] &&
-				segment < vertices.length - 1
-			) {
-				targetLength -= lengths[segment];
-				segment += 1;
+			context.globalAlpha = alpha;
+			context.beginPath();
+			while (k < N && pa[order[k]] === alpha) {
+				const i = order[k];
+				context.moveTo(px[i] + pr[i], py[i]);
+				context.arc(px[i], py[i], pr[i], 0, Math.PI * 2);
+				k += 1;
 			}
-
-			const first = vertices[segment];
-			const second = vertices[(segment + 1) % vertices.length];
-			const segmentProgress = lengths[segment]
-				? Math.min(1, targetLength / lengths[segment])
-				: 0;
-			return [
-				mix(first[0], second[0], segmentProgress),
-				mix(first[1], second[1], segmentProgress),
-			];
-		};
-	};
-
-	const circlePath = (progress) => {
-		const angle = -Math.PI / 2 + progress * 2 * Math.PI;
-		return [Math.cos(angle) * 0.24, Math.sin(angle) * 0.24];
-	};
-	const trianglePath = makePolygonPath([
-		[0, -0.26],
-		[0.24, 0.16],
-		[-0.24, 0.16],
-	]);
-	const squarePath = makePolygonPath([
-		[0, -0.2],
-		[0.2, -0.2],
-		[0.2, 0.2],
-		[-0.2, 0.2],
-		[-0.2, -0.2],
-	]);
-	const morphPaths = [circlePath, trianglePath, squarePath];
-
-	const drawMorph = (context, size, time, dark, drawOptions) => {
-		const holdDuration = 1.4;
-		const morphDuration = 0.9;
-		const segmentDuration = holdDuration + morphDuration;
-		const cycleTime = time % (segmentDuration * morphPaths.length);
-		const pathIndex = Math.floor(cycleTime / segmentDuration);
-		const localTime = cycleTime - pathIndex * segmentDuration;
-		const morphProgress =
-			localTime > holdDuration
-				? smoothStep((localTime - holdDuration) / morphDuration)
-				: 0;
-		const spread = drawOptions.spread ?? 1;
-		const firstPath = morphPaths[pathIndex];
-		const secondPath = morphPaths[(pathIndex + 1) % morphPaths.length];
-		const sampleCount = 160;
-		const sampledPoints = [];
-
-		for (let index = 0; index < sampleCount; index += 1) {
-			const progress = index / sampleCount;
-			const firstPoint = firstPath(progress);
-			const secondPoint = secondPath(progress);
-			sampledPoints.push([
-				mix(firstPoint[0], secondPoint[0], morphProgress) * spread,
-				mix(firstPoint[1], secondPoint[1], morphProgress) * spread,
-			]);
+			context.fill();
 		}
-
-		const segmentLengths = [];
-		let totalLength = 0;
-		sampledPoints.forEach((point, index) => {
-			const nextPoint = sampledPoints[(index + 1) % sampleCount];
-			const length = Math.hypot(
-				nextPoint[0] - point[0],
-				nextPoint[1] - point[1],
-			);
-			segmentLengths.push(length);
-			totalLength += length;
-		});
-
-		const dotCount = Math.max(
-			6,
-			Math.round(34 * (drawOptions.iconD ?? 1)),
-		);
-		const dotRadius = (drawOptions.rDot ?? 0.021) * 1.35 * spread;
-		const pulse = 1 + 0.02 * Math.sin(localTime * 3.1);
-		const center = size / 2;
-		const dots = [];
-		let segment = 0;
-		let accumulatedLength = 0;
-
-		for (let index = 0; index < dotCount; index += 1) {
-			const targetLength = (index / dotCount) * totalLength;
-			while (
-				accumulatedLength + segmentLengths[segment] < targetLength &&
-				segment < sampleCount - 1
-			) {
-				accumulatedLength += segmentLengths[segment];
-				segment += 1;
-			}
-
-			const firstPoint = sampledPoints[segment];
-			const secondPoint = sampledPoints[(segment + 1) % sampleCount];
-			const segmentProgress = segmentLengths[segment]
-				? Math.min(
-						1,
-						(targetLength - accumulatedLength) / segmentLengths[segment],
-					)
-				: 0;
-			const x = mix(firstPoint[0], secondPoint[0], segmentProgress) * pulse;
-			const y = mix(firstPoint[1], secondPoint[1], segmentProgress) * pulse;
-
-			dots.push({
-				x: center + x * size,
-				y: center + y * size,
-				z: 0,
-				r: Math.max(0.35, dotRadius * size),
-				white: 0.1,
-			});
-		}
-
-		paintDots(context, dots, dark, drawOptions.rMin);
+		context.globalAlpha = 1;
 	};
 
-	const modeDrawers = {
-		orbits: drawOrbits,
-		globe: drawGlobe,
-		rubik: drawRubik,
-		wave: drawWave,
-		ribbon: drawRibbon,
-		morph: drawMorph,
-	};
-
+	/* LIFECYCLE (adapted from the reference). */
 	const selector = "[data-thinking-orb]";
 	const canvases = [];
 	if (scope instanceof Element && scope.matches(selector)) canvases.push(scope);
@@ -955,14 +554,11 @@ export function thinkingOrbs(scope = document, options = {}) {
 	if (!canvases.length) return () => {};
 
 	const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
-	const reducedMotionQuery = window.matchMedia(
-		"(prefers-reduced-motion: reduce)",
-	);
+	const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	let reducedMotion = reducedMotionQuery.matches;
-	let animationFrame = 0;
 	let sharedListenersRemoved = false;
 	let intersectionObserver;
-	let themeObserver;
+	let attributeObserver;
 	const instances = [];
 
 	const getAncestorTheme = (element) => {
@@ -978,83 +574,209 @@ export function thinkingOrbs(scope = document, options = {}) {
 		return null;
 	};
 
-	const resolveDarkTheme = (instance) => {
-		if (instance.theme === "dark") return true;
-		if (instance.theme === "light") return false;
-		return getAncestorTheme(instance.canvas) ?? systemThemeQuery.matches;
-	};
-
-	const drawFrame = (instance, time) => {
-		const { context, size, devicePixelRatio } = instance;
-		context.setTransform(
-			devicePixelRatio,
-			0,
-			0,
-			devicePixelRatio,
-			0,
-			0,
-		);
-		context.clearRect(0, 0, size, size);
-		instance.draw(
-			context,
-			size,
-			time,
-			instance.dark,
-			instance.drawOptions,
-		);
+	// The ink is the page's `--on-surface`, as the canvas itself resolves it (the context normalises
+	// whatever colour syntax it is written in). A canvas forced to the other theme than its page's,
+	// or a page without the property, takes that theme's ink instead.
+	const resolveInk = (instance) => {
+		const { context, canvas } = instance;
+		const pageDark = getAncestorTheme(canvas) ?? systemThemeQuery.matches;
+		instance.dark = instance.theme === "auto" ? pageDark : instance.theme === "dark";
+		const fallback = instance.dark ? "#f3f3ef" : "#1a1a1a";
+		context.fillStyle = fallback;
+		const value = getComputedStyle(canvas).getPropertyValue("--on-surface").trim();
+		if (value && instance.dark === pageDark) context.fillStyle = value;
+		instance.ink = context.fillStyle;
 	};
 
 	const canAnimate = (instance) =>
 		!instance.destroyed &&
 		!instance.paused &&
-		instance.effectiveSpeed > 0 &&
+		instance.speed > 0 &&
 		instance.visible &&
 		!reducedMotion &&
 		document.visibilityState !== "hidden";
 
-	const render = () => {
-		animationFrame = 0;
-		const time = performance.now() / 1000;
-		let needsAnotherFrame = false;
+	const drawStill = (instance) => {
+		instance.still = true;
+		compute(instance);
+		paint(instance);
+		instance.still = false;
+	};
 
+	// Repaint what is there if there is anything, otherwise the state's still.
+	const redraw = (instance) => {
+		if (instance.drawn && !reducedMotion) paint(instance);
+		else drawStill(instance);
+	};
+
+	const step = (now) => {
+		let needsAnotherFrame = false;
 		instances.forEach((instance) => {
-			if (!canAnimate(instance)) return;
-			drawFrame(instance, time * instance.effectiveSpeed);
+			if (!canAnimate(instance)) {
+				instance.last = now;
+				return;
+			}
+			const dt = clamp((now - instance.last) / 1000, 0, 0.05) * instance.speed;
+			instance.last = now;
+			instance.t += dt;
+			instance.spin += (SPIN_OF[instance.behaviour] - instance.spin) * (1 - Math.exp(-dt / SPIN_EASE));
+			instance.yaw += dt * instance.spin;
+			compute(instance);
+			paint(instance);
 			needsAnotherFrame = true;
 		});
-
-		if (needsAnotherFrame) animationFrame = requestAnimationFrame(render);
+		return needsAnotherFrame;
 	};
 
 	const requestRender = () => {
-		if (animationFrame || !instances.some(canAnimate)) return;
-		animationFrame = requestAnimationFrame(render);
+		if (sharedListenersRemoved || !instances.some(canAnimate)) return;
+		wake();
+	};
+
+	const snapshot = (instance) => ({
+		pos: Float64Array.from(instance.cp),
+		r: Float64Array.from(instance.cr),
+		a: Float64Array.from(instance.ca),
+		fade: instance.fade,
+		spin: instance.spin,
+		yaw: instance.yaw,
+		at: performance.now(),
+		n: N,
+	});
+
+	// Start (or restart) a behaviour; `from` is the pose it eases out of, if any.
+	const begin = (instance, state, from) => {
+		instance.state = state;
+		instance.behaviour = behaviourOf[state];
+		instance.t = 0;
+		instance.from = from;
+		instance.fromT = 0;
+		instance.fromDelay.fill(0);
+		instance.transition = TRANSITION[instance.behaviour];
+		instance.lead = LEAD[instance.behaviour];
+		instance.liftStart.fill(-9);
+		instance.nextLift = 0.12;
+		instance.liftCount = 0;
+		instance.lastLift = -1;
+		instance.groups = null;
+		const weights = parseGroups(instance.canvas.dataset.orbGroups);
+		if (instance.behaviour === "solving") makeGroups(instance, weights);
+		if (instance.behaviour === "composing") {
+			if (!from) {
+				// Arriving with nothing to continue (never in the app, where the grouping always comes
+				// first): start from the marks, so what is seen is still the letting go.
+				makeGroups(instance, weights);
+				const { site, shares, markOf } = instance.groups;
+				const pos = new Float64Array(N * 3);
+				const r = new Float64Array(N);
+				const a = new Float64Array(N);
+				for (let i = 0; i < N; i += 1) {
+					const k = markOf[i];
+					toView(HOME[site[k]], instance.yaw, markAt);
+					pos.set(markAt, i * 3);
+					r[i] = markRadius(shares[k], markAt[2]);
+					a[i] = markInk(markAt[2]);
+				}
+				instance.from = { pos, r, a };
+				instance.groups = null;
+			}
+			// the smallest marks let go first, the heaviest last
+			const order = Array.from({ length: N }, (_, i) => i).sort(
+				(p, q) => instance.from.r[p] - instance.from.r[q],
+			);
+			let rank = 0;
+			order.forEach((i, index) => {
+				if (index > 0 && instance.from.r[i] - instance.from.r[order[index - 1]] > 0.05) rank += 1;
+				instance.fromDelay[i] = Math.min(0.24, 0.06 * rank);
+			});
+		}
+	};
+
+	const switchState = (instance, requested) => {
+		const state = Object.hasOwn(labels, requested) ? requested : "working";
+		if (state === instance.state) return;
+		instance.fadeFrom = instance.fade; // an arrival already under way carries on, not over
+		begin(instance, state, instance.drawn && !reducedMotion ? snapshot(instance) : null);
+		if (instance.ownsLabel) instance.canvas.setAttribute("aria-label", labels[state]);
+		if (!canAnimate(instance)) drawStill(instance);
+		requestRender();
+	};
+
+	const regroup = (instance) => {
+		if (instance.behaviour !== "solving") return;
+		const from = instance.drawn && !reducedMotion ? snapshot(instance) : null;
+		makeGroups(instance, parseGroups(instance.canvas.dataset.orbGroups));
+		instance.from = from;
+		instance.fromT = instance.t;
+		instance.fromDelay.fill(0);
+		instance.transition = DUR.overlay;
+		instance.lead = 1;
+		if (!canAnimate(instance)) drawStill(instance);
+		requestRender();
+	};
+
+	const readSize = (canvas) =>
+		Math.max(8, readNumber(canvas.dataset.orbSize, readNumber(config.size, 64)));
+	const applySize = (instance) => {
+		const { canvas } = instance;
+		canvas.width = Math.round(instance.size * instance.devicePixelRatio);
+		canvas.height = Math.round(instance.size * instance.devicePixelRatio);
+		canvas.style.width = `${instance.size}px`;
+		canvas.style.height = `${instance.size}px`;
+	};
+	const readTheme = (canvas) => {
+		const requestedTheme = canvas.dataset.orbTheme ?? config.theme;
+		return ["auto", "dark", "light"].includes(requestedTheme) ? requestedTheme : "auto";
+	};
+
+	// The attributes the reference only read once are followed here, so a framework can change them
+	// in place without a re-init.
+	const updateAttribute = (instance, name) => {
+		const { canvas } = instance;
+		if (name === "data-orb-state") switchState(instance, canvas.dataset.orbState ?? config.state);
+		else if (name === "data-orb-groups") regroup(instance);
+		else if (name === "data-orb-paused") {
+			instance.paused = readBoolean(canvas.dataset.orbPaused, config.paused);
+			if (!instance.drawn) drawStill(instance);
+			requestRender();
+		} else if (name === "data-orb-speed") {
+			instance.speed = Math.max(0, readNumber(canvas.dataset.orbSpeed, readNumber(config.speed, 1)));
+			requestRender();
+		} else if (name === "data-orb-size") {
+			const size = readSize(canvas);
+			if (size === instance.size) return;
+			instance.size = size;
+			applySize(instance);
+			resolveInk(instance);
+			redraw(instance);
+		} else if (name === "data-orb-theme") {
+			instance.theme = readTheme(canvas);
+			resolveInk(instance);
+			redraw(instance);
+		}
 	};
 
 	const removeSharedListeners = () => {
 		if (sharedListenersRemoved) return;
 		sharedListenersRemoved = true;
-		cancelAnimationFrame(animationFrame);
-		animationFrame = 0;
+		ticker.steps.delete(step);
 		intersectionObserver?.disconnect();
-		themeObserver?.disconnect();
+		attributeObserver?.disconnect();
 		document.removeEventListener("visibilitychange", requestRender);
 		systemThemeQuery.removeEventListener("change", refreshThemes);
 		reducedMotionQuery.removeEventListener("change", updateReducedMotion);
 	};
 
 	const removeSharedListenersWhenEmpty = () => {
-		if (instances.every((instance) => instance.destroyed)) {
-			removeSharedListeners();
-		}
+		if (instances.every((instance) => instance.destroyed)) removeSharedListeners();
 	};
 
 	const refreshThemes = () => {
-		const time = performance.now() / 1000;
 		instances.forEach((instance) => {
 			if (instance.destroyed) return;
-			instance.dark = resolveDarkTheme(instance);
-			drawFrame(instance, time * instance.effectiveSpeed);
+			const ink = instance.ink;
+			resolveInk(instance);
+			if (instance.ink !== ink || !instance.drawn) redraw(instance);
 		});
 		requestRender();
 	};
@@ -1062,10 +784,8 @@ export function thinkingOrbs(scope = document, options = {}) {
 	const updateReducedMotion = () => {
 		reducedMotion = reducedMotionQuery.matches;
 		if (reducedMotion) {
-			cancelAnimationFrame(animationFrame);
-			animationFrame = 0;
 			instances.forEach((instance) => {
-				if (!instance.destroyed) drawFrame(instance, 0.6);
+				if (!instance.destroyed) drawStill(instance);
 			});
 			return;
 		}
@@ -1078,7 +798,7 @@ export function thinkingOrbs(scope = document, options = {}) {
 			: new IntersectionObserver((entries) => {
 					entries.forEach((entry) => {
 						const instance = instances.find(
-							(candidate) => candidate.canvas === entry.target,
+							(candidate) => candidate.canvas === entry.target && !candidate.destroyed,
 						);
 						if (instance) instance.visible = entry.isIntersecting;
 					});
@@ -1090,88 +810,134 @@ export function thinkingOrbs(scope = document, options = {}) {
 		canvas.__thinkingOrbDestroy?.();
 
 		const requestedState = canvas.dataset.orbState ?? config.state;
-		const state = Object.hasOwn(labels, requestedState)
-			? requestedState
-			: "working";
-		const size = Math.max(
-			8,
-			readNumber(canvas.dataset.orbSize, readNumber(config.size, 64)),
-		);
-		const speed = Math.max(
-			0,
-			readNumber(canvas.dataset.orbSpeed, readNumber(config.speed, 1)),
-		);
-		const requestedTheme = canvas.dataset.orbTheme ?? config.theme;
-		const theme = ["auto", "dark", "light"].includes(requestedTheme)
-			? requestedTheme
-			: "auto";
+		const state = Object.hasOwn(labels, requestedState) ? requestedState : "working";
+		const speed = Math.max(0, readNumber(canvas.dataset.orbSpeed, readNumber(config.speed, 1)));
 		const paused = readBoolean(canvas.dataset.orbPaused, config.paused);
 		const devicePixelRatio = Math.min(2, window.devicePixelRatio || 1);
 		const context = canvas.getContext("2d");
 		if (!context) return;
 
-		const preset = resolvePreset(state, size);
+		const now = performance.now();
+		const carry = canvas.__thinkingOrbCarry;
+		const continues = !reducedMotion && carry && carry.n === N && now - carry.at < CARRY_MS;
+		delete canvas.__thinkingOrbCarry;
+
 		const instance = {
 			canvas,
 			context,
-			state,
-			size,
-			theme,
+			size: readSize(canvas),
+			speed,
+			theme: readTheme(canvas),
 			paused,
 			devicePixelRatio,
-			draw: modeDrawers[preset.mode],
-			drawOptions: preset.drawOptions,
-			effectiveSpeed: preset.baseSpeed * speed,
-			dark: true,
+			dark: false,
+			ink: "#1a1a1a",
 			visible: true,
 			destroyed: false,
+			drawn: false,
+			still: false,
+			ownsLabel: false,
+			last: now,
+			t: 0,
+			yaw: continues ? carry.yaw + ((now - carry.at) / 1000) * carry.spin * speed : 0.35,
+			spin: continues ? carry.spin : SPIN_OF[behaviourOf[state]],
+			lead: 1,
+			fade: continues ? carry.fade : 0,
+			fadeFrom: continues ? carry.fade : 0,
+			tp: new Float64Array(N * 3),
+			tr: new Float64Array(N),
+			ta: new Float64Array(N),
+			cp: new Float64Array(N * 3),
+			cr: new Float64Array(N),
+			ca: new Float64Array(N),
+			px: new Float64Array(N),
+			py: new Float64Array(N),
+			pr: new Float64Array(N),
+			pa: new Float64Array(N),
+			order: Array.from({ length: N }, (_, i) => i),
+			fromDelay: new Float64Array(N),
+			liftStart: new Float64Array(N).fill(-9),
+			nextLift: 0,
+			liftCount: 0,
+			lastLift: -1,
+			groups: null,
 		};
+		begin(instance, state, continues ? carry : null);
 
-		canvas.width = Math.round(size * devicePixelRatio);
-		canvas.height = Math.round(size * devicePixelRatio);
-		canvas.style.width = `${size}px`;
-		canvas.style.height = `${size}px`;
+		applySize(instance);
 		if (!canvas.hasAttribute("role")) canvas.setAttribute("role", "img");
 		if (!canvas.hasAttribute("aria-label")) {
 			canvas.setAttribute("aria-label", labels[state]);
+			instance.ownsLabel = true;
 		}
 
-		instance.dark = resolveDarkTheme(instance);
+		resolveInk(instance);
 		instances.push(instance);
 		intersectionObserver?.observe(canvas);
 
 		const destroy = () => {
 			if (instance.destroyed) return;
 			instance.destroyed = true;
+			// leave the last pose for whatever starts on this canvas next
+			if (instance.drawn && !reducedMotion) canvas.__thinkingOrbCarry = snapshot(instance);
 			intersectionObserver?.unobserve(canvas);
-			if (canvas.__thinkingOrbDestroy === destroy) {
-				delete canvas.__thinkingOrbDestroy;
-			}
+			if (canvas.__thinkingOrbDestroy === destroy) delete canvas.__thinkingOrbDestroy;
 			removeSharedListenersWhenEmpty();
 		};
+		instance.destroy = destroy;
 		canvas.__thinkingOrbDestroy = destroy;
 
-		drawFrame(
-			instance,
-			reducedMotion ? 0.6 : (performance.now() / 1000) * instance.effectiveSpeed,
-		);
+		if (canAnimate(instance)) {
+			compute(instance);
+			paint(instance);
+		} else {
+			drawStill(instance);
+		}
 	});
 
 	if (!instances.length) return () => {};
 
-	themeObserver = new MutationObserver(refreshThemes);
-	themeObserver.observe(document.documentElement, {
+	const watched = [
+		"data-orb-state",
+		"data-orb-groups",
+		"data-orb-paused",
+		"data-orb-speed",
+		"data-orb-size",
+		"data-orb-theme",
+	];
+	attributeObserver = new MutationObserver((records) => {
+		let themeChanged = false;
+		records.forEach((record) => {
+			if (watched.includes(record.attributeName)) {
+				const instance = instances.find(
+					(candidate) => candidate.canvas === record.target && !candidate.destroyed,
+				);
+				if (instance) updateAttribute(instance, record.attributeName);
+				return;
+			}
+			// A theme or class change only matters where it can change a canvas's ink: on the canvas
+			// or one of its ancestors.
+			if (instances.some((instance) => !instance.destroyed && record.target.contains(instance.canvas))) {
+				themeChanged = true;
+			}
+		});
+		if (themeChanged) refreshThemes();
+	});
+	attributeObserver.observe(document.documentElement, {
 		attributes: true,
-		attributeFilter: ["class", "data-theme"],
+		attributeFilter: ["class", "data-theme", ...watched],
 		subtree: true,
 	});
 	document.addEventListener("visibilitychange", requestRender);
 	systemThemeQuery.addEventListener("change", refreshThemes);
 	reducedMotionQuery.addEventListener("change", updateReducedMotion);
+	ticker.steps.add(step);
 	requestRender();
 
 	return () => {
-		instances.forEach((instance) => instance.canvas.__thinkingOrbDestroy?.());
+		// each instance's own destroy, never whatever is on the canvas now: a later call on the same
+		// canvas owns it, and this one must not take it down
+		instances.forEach((instance) => instance.destroy?.());
 		removeSharedListeners();
 	};
 }

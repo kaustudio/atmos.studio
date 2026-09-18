@@ -6,6 +6,25 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-18 — The orb is twelve points, not the reference
+
+**Asked for "less circles, or in some way adjust it — I don't want it to be 1:1 to the original
+reference".** Four variants were recorded side by side at 20px and at 4x, in both themes: the Thinking
+Orbs thinned to half their dots; the same in the page's ink; a ring of eleven dots echoing the smoke
+ring; and one sphere of twelve points. The user picked the sphere.
+
+**One body for the whole reading.** The reference builds a different construction of forty to sixty
+dots for each state. This is the twelve corners of an icosahedron in `--on-surface`, depth carried only
+by opacity and size, and it stays the same object through all four steps: a light crosses it while the
+light is read, single points lift and settle while the field is sampled, the points run together into
+one mark per swatch while the colours are grouped — each mark's area is that swatch's share of this
+photograph (`data-orb-groups`, set by the grouping step) — and it breathes while the mood is named.
+
+**Started once per reading, and followed in place.** The app no longer restarts it on every step: React
+updates `data-orb-state` and `data-orb-groups` on the same canvas and the module's observer eases out of
+the current pose. The lifecycle code is adapted from the reference, so its MIT notice stays in
+`thinkingOrbs.js`; its easing and durations are local copies of motion.js's figures.
+
 ## 2026-09-17 — The atmosphere flows, wears the page's ink, and sits
 
 **It is a simulation now, and it answers the reading.** Asked to make it "more lively and expressive …

@@ -151,7 +151,7 @@ export const pipelineMethods = {
     const job = { gen: myGen, img, buf, hash, srcUrl, k, mp: ((img.naturalWidth || img.width || 0) * (img.naturalHeight || img.height || 0)) / 1e6 };
     if (this._t) { clearInterval(this._t); this._t = null; }
     if (this._end) { clearTimeout(this._end); this._end = null; }
-    this.setState({ stage: 'processing', imageUrl: srcUrl, procStep: 0, pending: job, announce: 'Generating palette from your image.' });
+    this.setState({ stage: 'processing', imageUrl: srcUrl, procStep: 0, procGroups: null, pending: job, announce: 'Generating palette from your image.' });
     this._readPhotograph(job);
   },
 
@@ -217,6 +217,8 @@ export const pipelineMethods = {
         // The atmosphere's grouping beat: how many swatches, what share each holds and their
         // lightness order — never a hue (procField.js _procShape).
         this._procShape(pal);
+        // And the orb's: the same shares, as marks on its body (thinkingOrbs.js, data-orb-groups).
+        this.setState({ procGroups: pal.swatches.map((s) => (+s.weight || 0).toFixed(3)).join(',') });
         reading = this._readMood(pal, thumb);
       });
       const { interp, errored } = await step(3, () => reading);

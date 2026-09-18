@@ -1885,20 +1885,22 @@ function DocFallback() {
 }
 
 /* THE AGENT'S ORB, beside the reading's status line (thinkingOrbs.js, and the note at its head).
-   React owns the canvas; the module is told about it after mount and its returned function runs on
-   unmount, which is what its own instructions ask for in a framework. A step change re-runs the
-   effect: the module cleans the old instance off the canvas before it starts the new one, so the
-   orb changes what it is doing as the line changes what it says.
+   React owns the canvas; the module is told about it once, after mount, and its returned function
+   runs on unmount. The STEP and the PALETTE are attributes React updates in place — data-orb-state as
+   the line changes, data-orb-groups once the grouping step has the swatches' shares — and the module
+   follows both on its own observer, easing from where the body is rather than starting over, so the
+   twelve points stay one object for the whole reading. (It used to re-run on every step, which
+   restarted the orb four times a reading.)
    aria-hidden, because the line beside it is the same statement in words and the stage announces
    every step through the live region; a second voice saying "Searching…" would be noise. */
-function ThinkingOrb({ state, size = 20 }) {
+function ThinkingOrb({ state, groups, size = 20 }) {
   const ref = React.useRef(null);
   React.useEffect(() => {
     const cv = ref.current;
     if (!cv) return undefined;
     return thinkingOrbs(cv, { size, theme: 'auto' });
-  }, [state, size]);
-  return <canvas ref={ref} data-thinking-orb="1" data-orb-state={state} data-orb-size={size} data-orb-theme="auto" aria-hidden="true" style={sx('display:block;flex:none')}></canvas>;
+  }, [size]);
+  return <canvas ref={ref} data-thinking-orb="1" data-orb-state={state} data-orb-groups={groups || undefined} data-orb-size={size} data-orb-theme="auto" aria-hidden="true" style={sx('display:block;flex:none')}></canvas>;
 }
 
 export default function AppView({ vals }) {
@@ -2270,7 +2272,7 @@ export default function AppView({ vals }) {
                     exist yet is not part of that. The word still appears where it explains something:
                     the harmonies' note on the result (renderVals). */}
                 <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-cta); font-weight:500; letter-spacing:var(--track-statement); color: var(--on-surface)')}>
-                  <ThinkingOrb state={vals.procOrb} />
+                  <ThinkingOrb state={vals.procOrb} groups={vals.procGroups} />
                   {/* Each line of the reading rises into place through a mask, the swap the copy
                       confirmation uses (val-mask), so a new step reads as arriving rather than as the
                       text changing. Keyed by the step, which replays the rise. The steps are paced by

@@ -2341,7 +2341,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       export: exportView, hasExport: !!exportView,
       closeExport: () => this.closeExport(), trapExport: (e) => this.trapExport(e),
       toggleExportSemantic: () => this.setState((st) => ({ exportSemantic: !st.exportSemantic })),
-      pill, result, procStatus, procOrb, procStep: s.procStep,
+      pill, result, procStatus, procOrb, procStep: s.procStep, procGroups: s.procGroups,
     };
   },
 };
