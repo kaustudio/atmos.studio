@@ -285,6 +285,29 @@ cards' hex and share stay 11px under the 13px name, muted, and the share reads i
 ("34.9% of the frame", "Shares the primary swatch"). The hex keeps its capitals, since the phone
 story hands some hexes over in lower case.
 
+**3.1's colour cards are the colour (by request).** Each card is filled edge to edge with its colour,
+with its role at the foot, 20px Medium in Title Case, and nothing laid over the colour: it wore the
+image cards' dark foot (`.about-rail__tint`) for an hour, and Frozen Slate's colours needed no help
+from it. Without the foot the name takes whichever of white or black reads better, measured: white on
+the four dark cards (11.11 to 21), black on Accent (5.34, where white is 3.93) and Text (8.53, where
+white is 2.46), set per card as `--role-ink`. The cards are `clamp(200px, 20vw, 300px)` tall, 288px
+at 1440, kept by request when the foot went; a clamp rather than an aspect ratio keeps six stacked
+on a phone at 200px each. A white 10% inset ring keeps #000000 and #090606 visible on the dark
+theme's page and is all but invisible on the light cards. The hexes, the share lines and Secondary's
+note are gone. The phone story's role cards share .about-role and keep their swatch, 13px, hexes and
+shares.
+
+**Frozen Slate follows its roles, and the feature pills are gone (by request).** 3.1's six roles
+had been explained twice: the colour cards, then Osmo's Expanding Feature Pills beside six
+photographs of other things. The pills figure is removed, and See Frozen Slate in Use moves up to
+follow 3.1 — the roles, then the roles worn by the palette's own interface, then the contrast between
+them — so it is 3.2 and Contrast Creates Hierarchy is 3.3. With the figure went aboutPills.js and its
+wiring in AboutPage, 14KB of about.css, and the six photographs in public/assets/story/ that nothing
+else used; the comments that described either section by number or named the pills were corrected.
+The note under the colour cards ("Frozen Slate shows how five colours can be assigned…") went next,
+and 3.1 gives up its bottom padding (`about-sec--joined`), so See Frozen Slate in Use starts one band
+gap under the cards (108px at 1440) where it had been 398.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.

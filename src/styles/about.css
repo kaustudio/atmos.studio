@@ -204,7 +204,7 @@
 }
 
 /* HOW IT WORKS' FIGURE LABELS SPEAK LIKE ITS BUTTONS (18.09.26, by request): --fs-body, Medium,
-   flat tracking and their own Title Case, as the feature pills below and the matrix pills do, where
+   flat tracking and their own Title Case, as the matrix pills do, where
    they were the uppercase label voice above. Full ink stays, for the reason given there: the
    figure's name outranks the muted terms inside it, and now by size and weight as well.
    Five of them: OKLCH and WCAG Contrast over 1.2's lenses, Lightness, Chroma and Hue over 1.3's
@@ -223,15 +223,6 @@
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);
   line-height:1.2;
-}
-
-/* THE FEATURE PILLS SPEAK LIKE THE BANNER'S BUTTONS (17.09.26, audit A4, by request): --fs-body,
-   Medium, flat tracking and the labels' own Title Case, where they were the uppercase label voice
-   above. The pill is a control, and this is the voice the site's pill buttons now share. */
-.about-route .pills__label,.about-route .pills__inner-label{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);text-transform:none;
-  line-height:1.2;color:var(--on-surface);
 }
 
 /* ------------------------------------------------------------- the divider
@@ -555,7 +546,7 @@
   margin:0;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));column-gap:var(--grid-gutter);
 }
 /* TERM ABOVE VALUE, which is the readout idiom this page already has: .about-figure__label over its
-   figure, .about-role__name over its hex and its share, .about-axis's label over its ramp. Beside the
+   figure, .about-axis's label over its ramp. Beside the
    value it needed a fixed 6.5em gutter to keep the three numbers on one edge — an edge that belonged
    to the longest word rather than to the grid. Stacked, the numbers start on the track. */
 .about-route .about-lens__read > div{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -794,9 +785,10 @@
    sit in. Real gaps and real borders rather than a 1px grid gap with the container showing through:
    every cell is its own parallax trigger, and a cell that moves cannot also be the thing hiding the
    container it moves over — the "rules" would open into bands the moment they travelled. */
-/* The note that explains the doubled swatch. It belongs to the grid above it rather than to the
-   pills below, so it sits in the body column and keeps the section's reading measure. */
-.about-route .about-roles__after{grid-column:1 / -1;margin:var(--block-gap) 0 0;max-width:var(--measure)}
+/* ONE STEP, NOT TWO (18.09.26, by request). Find a Role and See Frozen Slate in Use are the roles and
+   the roles worn, so the first section gives up its foot and the pair is one band gap apart rather
+   than the two every other pair of sections is. The note that followed the grid went the same day. */
+.about-route .about-sec--joined{padding-bottom:0}
 .about-roles{
   grid-column:1 / -1;
   display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));
@@ -825,10 +817,32 @@
 .about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px;border-radius:calc(var(--radius-card) - 8px)}
 .about-route .about-role__name,
 [data-mobile-story] .about-role__name{color:var(--on-surface)}
-/* The name's two annotations stay a size below it (18.09.26, by request: "keep each line's own
-   size"), at Medium and in their own case like the name: the share reads "34.9% of the frame". The
-   hex keeps its capitals because the phone story hands some hexes over in lower case, and notation
-   on this site is written #6881AE wherever it comes from. */
+/* ON HOW IT WORKS THE CARD IS THE COLOUR (18.09.26, by request): full bleed, with the role at its
+   foot and nothing over the colour. It wore the image cards' dark foot for an hour, and the colours
+   were better without it. The name keeps --fs-subtitle, 20px Medium, on the rail content's padding,
+   in --role-ink: white by default, black where the card sets it because white would fall under
+   4.5 to 1 on it (Accent 3.93, Text 2.46; black gives them 5.34 and 8.53).
+   288px at 1440 (clamp(200px, 20vw, 300px)), the height it took when the foot was still dark and
+   kept by request when the foot went. A clamp rather than an aspect ratio, so six stacked on a
+   phone stay 200px each rather than a screen and a half of colour. A white 10% inset ring, above the tint, keeps #000000 and #090606
+   from vanishing into the dark theme's page (1.06 to 1); on a light card it is all but invisible,
+   so it adds an edge only where the fill cannot draw one. The phone story's role cards share
+   .about-role and keep their swatch, 13px, hexes and shares. */
+.about-route .about-role{
+  position:relative;overflow:hidden;isolation:isolate;
+  justify-content:flex-end;height:clamp(200px,20vw,300px);
+  padding:clamp(14px,1.2vw,22px);
+  background:var(--role-colour);border:0;
+}
+.about-route .about-role::after{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1);
+}
+.about-route .about-role__name{position:relative;z-index:1;font-size:var(--fs-subtitle);color:var(--role-ink,#fff)}
+/* The phone story's role cards: the name's annotations stay a size below it (18.09.26, by request:
+   "keep each line's own size"), at Medium and in their own case like the name. How it Works' cards
+   carry neither any more. The hex keeps its capitals because the story hands some hexes over in
+   lower case, and notation on this site is written #6881AE wherever it comes from. */
 .about-role__hex,.about-role__note{
   font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
   font-size:var(--fs-fine);letter-spacing:var(--track-flat);
@@ -910,8 +924,9 @@
 }
 .about-checks__pair{display:flex;align-items:center;gap:10px;min-width:0;font-size:var(--fs-body);letter-spacing:var(--track-body)}
 .about-checks__val{font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat)}
-/* .about-checks__use, 3.3's plain uppercase label, went on 17.09.26 (audit H6, by request): 3.3's
-   verdicts are this pill now, as 3.2's are. */
+/* .about-checks__use, the plain uppercase label in See Frozen Slate in Use (3.3 then, 3.2 since
+   18.09.26), went on 17.09.26 (audit H6, by request): its verdicts are this pill now, as the contrast
+   matrix's in Contrast Creates Hierarchy are. */
 /* A pill, like the matrix's verdicts above and the tool's AA badge (17.09.26, audit A5), with the same
    12px inline padding the matrix gives its chips so the first letter clears the curve. The banner's
    text style since the third round (by request): --fs-body, Medium, and the verdict's own Title Case
@@ -1063,8 +1078,8 @@
    is position:relative. All three cards then resolve against the SAME box and overlay the whole
    section: a reader without JavaScript saw the last card and two hidden underneath it.
 
-   Every other effect on this page guards exactly this with a `-live` attribute — data-rail-live,
-   data-pills-live, data-sticky-live.
+   Every other effect on this page guards exactly this with a `-live` attribute — data-rail-live
+   and data-sticky-live.
    The stack was the only one without one, and the only one whose floor was broken.
 
    So the base rules below are the FLOOR: three ordinary blocks down the page, each as tall as its
@@ -1579,210 +1594,6 @@
    nothing is armed and nothing is inserted. What is left is this stylesheet, which animates nothing
    on its own: --rule defaults to 1, the stream's frames keep their natural scale, and the rail falls
    back to a horizontal scroller through the :not([data-rail-live]) rule above. */
-
-/* ===== THE SIX ROLES, ONE AT A TIME — Osmo Supply's Expanding Feature Pills.
-   The swatch grid above states the roles; this explains them on demand. Six paragraphs printed at
-   once is a wall of text, and the page has already argued that a palette is a set of decisions rather
-   than a list — so the decisions are offered one at a time, each with a photograph beside it whose
-   own character is the argument for that role.
-
-   The mechanic is the resource's (one open at a time, the box tweened on width and height with
-   back.out(2), the visual synced by index, a cover when nothing is open). The dress is the house's:
-   hairline borders on --line, the label ladder, and every transition on the DUR/EASE tokens so
-   nothing here appears instantly.
-
-   ROUND SINCE 17.09.26 (audit A4), on --radius-dock, and for the dock's own reason: this box MORPHS,
-   from a single-line pill to a card holding a paragraph. --radius-pill would be a stadium shut and a
-   lozenge open. The dock's 20px is more than half the shut pill's height, so CSS clamps it to a true
-   stadium there, and it is an ordinary 20px corner on the open card. */
-.about-figure--pills{margin-top:var(--block-gap)}
-
-.pills{
-  /* Read by aboutPills.js — the width the open pill tweens to. Bounded by the measure rather than by
-     the column: at the full seven columns the pill would be twice as wide as the line length its own
-     body copy is set to, and the reader would be looking at a box two-thirds empty. `min()` keeps it
-     honest on narrow screens, where the column is the smaller of the two. */
-  --content-item-expanded:min(100%, 30rem);
-  /* The collapsed width's floor, read by the same file at the same moment. Empty here on purpose:
-     beside the photograph the pills are a column seven tracks wide and the widest label is the right
-     width for all six — sized by their own content, which is what [ATMOS 7] argues for. The rule at
-     the foot of this component fills it in for the one layout where that stops being true. */
-  --content-item-collapsed:;
-  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));column-gap:var(--grid-gutter);
-  align-items:start;row-gap:var(--grid-gutter)
-}
-.pills__list-wrap{grid-column:1 / span 7;min-width:0}
-/* A COLUMN, not a wrapped cloud. The resource lays its pills out as a wrapping row, which reads as a
-   tag cloud — and these six are not tags, they are the same six roles the grid above lists in order.
-   Stacked, they keep that order and the stack ends up roughly as tall as the photograph beside it
-   instead of a third of it. The mechanic is untouched: one open at a time, expanding in place.
-
-   Collapsed, all six share one width — the widest label's, measured by aboutPills.js. See [ATMOS 7]
-   there for why: six controls at six widths read as six inconsistent things rather than one set. */
-.pills__list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-
-/* ===== THE FLOOR IS SIX STATIC BLOCKS.
-   Everything below this line describes the page WITHOUT JavaScript: each role is a heading and a
-   paragraph, all six readable at once, the button hidden because a button with no handler is a dead
-   control. aboutPills.js sets data-pills-live and the disclosure takes over — the same `-live`
-   contract every other effect on this page uses, for the same reason: the page has to say what it
-   means before the motion arrives, not because of it. */
-.pills__item{
-  position:relative;flex:0 0 auto;width:100%;max-width:100%;
-  background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-dock);
-  /* The open pill's ground and edge ease in and out on the state timing (17.09.26, audit E7); they
-     switched in one frame while the box around them morphed. */
-  transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)
-}
-/* No overflow:hidden here, and that is the fix rather than an omission: the button's border box
-   coincides with the item's, so a ring drawn at the house's 3px offset fell entirely outside the
-   item and was clipped away — a keyboard user tabbing the pills saw nothing move. The content is
-   clipped by .pills__mask, which is where the clipping was always doing its work.
-
-   THE BOX MOTION LIVES HERE. Length from --dur-fold, the disclosure's own; curve from
-   --ease-standard rather than --ease-fold, and that pairing is deliberate.
-
-   --ease-fold is the right IDEA for a disclosure — global.css introduces it with "a disclosure and a
-   moving selection share one motion character" — and it is the wrong curve for this particular box.
-   Sampled, it has travelled 12.6% of the way at a quarter of its duration: on a marker sliding forty
-   pixels behind a toggle that reads as anticipation, and on a pill crossing three hundred and fifty
-   it reads as lag. The resource's own back.out(2) was at 85.9% by the same moment, which is why it
-   felt immediate — and it got there by overshooting to 1.125 and springing back, a bounce nothing
-   else on this site has.
-
-   --ease-standard is 76.5% at that quarter and never exceeds 1. Same decelerating character as the
-   resource's ease, none of the overshoot. See [ATMOS 10] and [ATMOS 13] in aboutPills.js. */
-[data-pills-live] .pills__item{
-  width:auto;
-  transition:width var(--dur-fold) var(--ease-standard),height var(--dur-fold) var(--ease-standard)
-}
-/* No transition of its own: the box is GSAP's, and a CSS transition on width/height would fight the
-   tween for the same two properties. Colour is CSS's and is declared where it changes. */
-.pills__item[data-active="true"]{background:var(--surface-white);border-color:var(--on-surface)}
-
-/* display:none is the FLOOR, not an afterthought — a button with no script behind it is a dead
-   control, and the six paragraphs it would otherwise hide are the section's actual content. It only
-   becomes a control once aboutPills.js says so.
-
-   NO transition and NO hover of its own. The markup carries data-ix="press", which is the tier for
-   chrome with no background of its own, and an inline transition on a data-ix control REPLACES the
-   contract rather than adding to it. Hover, press, the (hover:hover) gate that stops a tap latching
-   the hover state on a phone, and the reduced-motion floor all arrive from global.css. */
-.pills__button{
-  /* space-between, now that all six pills are one width: the labels start on one line and the plus
-     marks end on another. Packed left they sat wherever their own word ended, which put six marks at
-     six positions inside six identical boxes — the raggedness the shared width was there to remove,
-     moved four millimetres to the right. */
-  display:none;align-items:center;justify-content:space-between;gap:12px;width:100%;
-  padding:var(--btn-pad-lg);margin:0;border:0;background:none;cursor:pointer;text-align:left;
-  color:var(--on-surface);font:inherit;
-  /* The item's corner, so the press tier's hover tint and the focus ring take the pill's shape
-     rather than drawing a square inside it. */
-  border-radius:var(--radius-dock)
-}
-[data-pills-live] .pills__button{display:flex}
-.pills__item[data-active="true"] .pills__button{opacity:0;pointer-events:none}
-
-/* Size, case and tracking come from the label-voice rule at the top of this file — the same one
-   that sets .about-role__name, which is the SAME six words forty pixels further up. Only the
-   wrapping behaviour is local. */
-.pills__label{white-space:nowrap}
-/* The plus is drawn rather than typed so it can rotate into an implied minus as the pill opens —
-   the same two-bar mark the rest of the site uses for a toggle. */
-.pills__plus{position:relative;width:9px;height:9px;flex:0 0 auto;opacity:.5}
-.pills__plus::before,.pills__plus::after{
-  content:'';position:absolute;inset:50% 0 auto;height:1px;background:currentColor;
-  transform:translateY(-50%);transition:transform var(--dur-state) var(--ease-standard)
-}
-.pills__plus::after{transform:translateY(-50%) rotate(90deg)}
-.pills__item[data-active="true"] .pills__plus::after{transform:translateY(-50%) rotate(180deg)}
-
-.pills__content{transition:opacity var(--dur-state) var(--ease-standard)}
-[data-pills-live] .pills__content{position:absolute;inset:0;opacity:0;pointer-events:none}
-[data-pills-live] .pills__item[data-active="true"] .pills__content{opacity:1;pointer-events:auto}
-.pills__mask{width:100%;height:100%;overflow:hidden}
-.pills__inner{padding:var(--btn-pad-lg);display:flex;flex-direction:column;gap:10px}
-.pills__inner-label{color:var(--on-surface-muted)}
-/* --fs-body, the step every other card body on this page is set in (.about-ui__body,
-   .about-stack__body) — which also keeps it a step below the section's own paragraphs at --fs-lead,
-   so the pill reads as the detail and the section keeps the argument. No max-width: the pill's
-   expanded width IS the measure, and two caps competing is how one of them ends up unused. */
-.about-route .pills__body{margin:0;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);color:var(--on-surface)}
-
-/* Four columns at 3:4 — the native ratio of every photograph in the set, so none of them is cropped
-   to fit a box that was chosen before the images were. */
-.pills__visual{
-  grid-column:9 / -1;position:relative;min-width:0;aspect-ratio:3 / 4;overflow:hidden;
-  background:var(--surface-raised);border:1px solid var(--line)
-}
-/* The panels are stacked over a cover that never moves, and they arrive by CLIP rather than by fade
-   — Osmo Supply's Sticky Features transition, see [ATMOS 12] in aboutPills.js. The closed value is
-   the resting state and the no-JS floor: with no script the cover is simply the picture. z-index
-   rather than DOM order puts the cover underneath, so the markup can keep the resource's order. */
-.pills__visual-item,.pills__cover{position:absolute;inset:0}
-.pills__visual-item{z-index:1;clip-path:inset(50%)}
-.pills__cover{z-index:0}
-.pills__visual-item img,.pills__cover img{width:100%;height:100%;object-fit:cover;display:block}
-.pills__visual-item[data-active="true"]{clip-path:inset(0%)}
-
-/* FULLY ROUND, --radius-pill (16.09.26, by request): the app's close mark is a circle, and this was
-   the one square copy of it. */
-.pills__close{
-  position:absolute;top:12px;right:12px;z-index:2;width:34px;height:34px;padding:0;
-  display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--line);border-radius:var(--radius-pill);background:var(--surface);color:var(--on-surface);cursor:pointer;
-  opacity:0;pointer-events:none;
-  transition:opacity var(--dur-state) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover)
-}
-/* The one control here that cannot take data-ix: the press tier replaces background outright, and
-   this button's opaque plate is what keeps an ink glyph legible over a photograph. So it states the
-   contract's own 16/24 spectrum by hand, over its plate rather than instead of it — including the
-   (hover:hover) gate, so a tap on a phone does not leave it latched. */
-@media (hover:hover){
-  .pills__close:hover{background:color-mix(in srgb,var(--on-surface) 16%,var(--surface))}
-}
-.pills__close:active{background:color-mix(in srgb,var(--on-surface) 24%,var(--surface))}
-/* THE MARK'S SWAP IS ITS HOVER NOW (16.09.26, by request), as it is for every close mark in the app
-   (global.css, the close-mark rule). The × was two ruled pseudo-elements; it is the app's IconClose
-   glyph in the masked swap now, so where the swap runs, the plate stays the plate. The fills above are
-   the floor for a touchscreen and for reduced motion, where the swap does not run. */
-@media (hover:hover) and (prefers-reduced-motion:no-preference){
-  .pills__close:hover,.pills__close:active{background:var(--surface)}
-}
-[data-feature-pills-active="true"] .pills__close{opacity:1;pointer-events:auto}
-
-/* Under 900px the visual stops earning its quarter of the row: it would leave the pills too narrow
-   to hold a sentence. Both take the full width, stacked — and the visual stays SECOND, where it is
-   in the document. Ordering it above the pills would have put the close button, which lives inside
-   it, ahead of the six controls in the tab order while sitting below them on screen. */
-@media (max-width:900px){
-  .pills__list-wrap{grid-column:1 / -1}
-  .pills__visual{grid-column:1 / -1;aspect-ratio:16 / 10}
-  /* AND ONCE THE LIST IS THE WHOLE COLUMN, A PILL IS A ROW.
-
-     [ATMOS 7] sizes all six to the widest label so the set has an edge instead of a stagger, which
-     is right while the column is seven tracks of twelve and the photograph holds the rest. Here the
-     photograph has moved below and the list owns the full width — so the widest label decides the
-     width of a column it no longer shares. Measured at 375px: six 123px controls in a 327px column,
-     204px of empty gutter down the right of all of them, and a plus mark stranded two-thirds of the
-     way from the edge it is supposed to sit against.
-
-     Full width also makes the disclosure honest: --content-item-expanded already resolves to 100%
-     at this width, so opening now changes only the HEIGHT. The box grows downward the way every
-     other disclosure on this site does, instead of shooting sideways to fill space that was always
-     there. */
-  .pills{--content-item-collapsed:100%}
-}
-
-/* The three transitions this component still owns are the ones the contract does not cover: the
-   content crossfade inside a pill, the plus mark turning, and the photograph swapping. Under a
-   reduced-motion preference they resolve instantly, which is what the global [data-ix] block does
-   one file up. The GSAP box tween has its own floor inside aboutPills.js. */
-@media (prefers-reduced-motion: reduce){
-  [data-pills-live] .pills__item,
-  .pills__content,.pills__plus::before,.pills__plus::after,
-  .pills__close{transition:none}
-}
 
 /* THE SECTION ANCHOR DOCK went on 17.09.26, by request ("remove the dock altogether globally"): the
    pill at the foot of the viewport, its markup in about.html and aboutDock.js. The phone story had

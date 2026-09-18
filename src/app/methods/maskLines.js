@@ -3,7 +3,8 @@
    This was written inside pageReveal.js for the legal documents and lifted out unchanged the moment
    a second surface needed it. That file says why in its own words: "Two copies of them is how the
    second page ends up subtly different from the first for reasons nobody can find." There is one
-   copy — pageReveal uses it for a page's arrival, aboutPills for a pill's disclosure.
+   copy — pageReveal uses it for a page's arrival (aboutPills, its second user, went with the
+   feature pills on 18.09.26).
 
    It is pure DOM: hand it an element, get back its visual lines wrapped in .reveal-mask/.reveal-line
    pairs and a restore() that puts the original markup back verbatim. It knows nothing about GSAP,

@@ -1,7 +1,8 @@
 /* THE SETS THAT ARRIVED ALL AT ONCE.
 
    Audited against the rest of the page, three groups had no entrance of any kind: the six role
-   cells, the six pills, and the ten rows of the contrast matrix. Every heading and paragraph on this
+   cells, the six feature pills (removed from the page 18.09.26) and the ten rows of the contrast
+   matrix. Every heading and paragraph on this
    page is masked in line by line, every figure's hairline is drawn from its leading edge, every
    photograph moves against its frame — and then a set of six or ten identical objects simply existed,
    fully formed, the moment it came into view. That is the difference the page reads as "not quite
@@ -156,12 +157,11 @@ export function initCascade(root, motion, focusMotion) {
        could not otherwise touch.
 
        Audited on /about, the graphic blocks had no entrance at all and sat fully drawn while the
-       copy around them rose out of masks. Most take the ordinary form below. Two cannot: `.pills` is
-       an accordion whose buttons and panels aboutPills.js holds references to, and
-       `.about-figure__media` wraps a single `.about-shot` that aboutParallax.js drives. Parking the
-       CHILDREN of either means writing autoAlpha and y onto elements another module owns and is
-       mid-way through positioning. (A third, the before/after splitter, was here until its figure
-       was removed from the page.)
+       copy around them rose out of masks. Most take the ordinary form below. One cannot:
+       `.about-figure__media` wraps a single `.about-shot` that aboutParallax.js drives, and parking
+       its CHILDREN means writing autoAlpha and y onto elements another module owns and is mid-way
+       through positioning. (The before/after splitter and the feature pills' accordion were here
+       too, until their figures were removed from the page.)
 
        `data-reveal` is not the alternative either: it routes through pageReveal's revealMasked, which
        calls splitLines, which calls wrapWords and rewrites innerHTML. On an accordion that discards

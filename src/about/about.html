@@ -14,9 +14,9 @@
      look good here would be the one thing that undoes the page.
 
      THE NARRATIVE. One photograph is carried the whole way down: it arrives, is counted by area, is
-     read as three dimensions, is given suggested roles, is checked as pairs, is taken into use, and
-     leaves as a palette to explore. Every section is a step in one journey rather than a feature of
-     a product.
+     read as three dimensions, is given suggested roles and seen wearing them, is checked as pairs,
+     is taken into use, and leaves as a palette to explore. Every section is a step in one journey
+     rather than a feature of a product.
 
      THE GRID. Every section is 100% wide and lays its contents on the site's own twelve columns
      (--grid-cols / --grid-gutter / --page-gutter in global.css) through .about-grid. Prose sits in a
@@ -205,7 +205,7 @@
     <!-- No rule between the list and its caption, by request. The caption is already set apart by
          its own type, and .about-figure .about-divider adds 22px above what the figcaption's own
          margin has already opened — a line drawn across a gap that had already done the separating.
-         Two identical ones remain in 2.1 and 3.3; the CSS stays for them. -->
+         One identical one remains, in 2.1; the CSS stays for it. -->
     <figcaption data-reveal>WCAG defines large text as at least 18 point in regular weight or 14 point in bold.</figcaption>
   </figure>
 </section>
@@ -272,7 +272,7 @@
        Dry Season    #D5CDBF ground, #361905 text 10.26, #A74B1B numeral 3.63. Pale neutral, warm
                      brown, orange: the three things its paragraph names.
        Frozen Slate  #000000 ground, #8CA6D5 text 8.53, #6881AE numeral 5.34. Black under both blues,
-                     lightness 0 against 0.723 and 0.602. The roles 3.1 and 3.3 give the same colours.
+                     lightness 0 against 0.723 and 0.602. The roles 3.1 and 3.2 (See Frozen Slate in Use) give the same colours.
        Garnet        #540604 ground, #F17645 text 5.28, #E12409 numeral 3.17. The numeral is on the
                      ground's own hue (31.0° on 28.9°) at twice its chroma (0.223 on 0.109).
      Garnet's near-black #0F0302 was the more neutral ground, but it reads as black, disappears into
@@ -331,7 +331,7 @@
   </div>
 </section>
 
-<section id="sampled-to-roles" class="about-sec about-grid" data-sec>
+<section id="sampled-to-roles" class="about-sec about-sec--joined about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.1</span>Find a Role for Each Colour</h2>
     <p data-reveal>A palette describes the colours drawn from an image. Suggested roles offer possible ways to use those colours in a design.</p>
@@ -344,165 +344,91 @@
        Nightfall, which is not one of 4.1's eight). Its area-weighted lightness is 0.470, so the tool
        reads it as a dark palette: the black becomes the background, the palest blue the text, and
        the dark slate covering 1.6% of the frame takes primary. Every colour is claimed by then, so
-       secondary repeats primary, which is the doubling the paragraph under the grid explains. 3.3's
+       secondary repeats primary, which is the doubling the paragraph under the grid explains. 3.2's
        interface is drawn in this same assignment. The shares are the seed's weights at one decimal,
-       as the phone story prints them: .0905 is 9.0, not 9.1, in the app's own toFixed. Six cells
-       on the twelve-column grid, two columns each. -->
+       as the phone story prints them: .0905 is 9.0, not 9.1, in the app's own toFixed. They are not
+       printed here since 18.09.26 (by request), and neither are the hexes. Each card IS its colour,
+       full bleed, with its role at the foot and nothing laid over the colour. The name takes whichever
+       of white or black reads better on it, measured: white on the four dark cards (11.11 to 21), black
+       on Accent (5.34, where white is 3.93) and Text (8.53, where white is 2.46) — --role-ink. The note
+       that used to follow the grid went too, and the section runs straight into See Frozen Slate in
+       Use (about-sec--joined). Six cells on the twelve-column grid, two columns each. -->
   <div class="about-roles" data-cascade data-reveal-focus>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#000000"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#000000">
       <span class="about-role__name">Background</span>
-      <span class="about-role__hex">#000000</span>
-      <span class="about-role__note">20.8% of the frame</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#090606"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#090606">
       <span class="about-role__name">Surface</span>
-      <span class="about-role__hex">#090606</span>
-      <span class="about-role__note">9.0% of the frame</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#383b49"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#383b49">
       <span class="about-role__name">Primary</span>
-      <span class="about-role__hex">#383B49</span>
-      <span class="about-role__note">1.6% of the frame</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#383b49"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#383b49">
       <span class="about-role__name">Secondary</span>
-      <span class="about-role__hex">#383B49</span>
-      <span class="about-role__note">Shares the primary swatch</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#6881ae"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#6881ae;--role-ink:#000000">
       <span class="about-role__name">Accent</span>
-      <span class="about-role__hex">#6881AE</span>
-      <span class="about-role__note">34.9% of the frame</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape">
-      <span class="about-role__swatch" style="background:#8ca6d5"></span>
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#8ca6d5;--role-ink:#000000">
       <span class="about-role__name">Text</span>
-      <span class="about-role__hex">#8CA6D5</span>
-      <span class="about-role__note">33.6% of the frame</span>
     </div>
   </div>
 
-  <p class="about-roles__after" data-reveal>Frozen Slate shows how five colours can be assigned to six suggested roles. At least one colour must be used more than once. Where roles share a colour, use placement, shape or text to make their purpose clear.</p>
+</section>
 
-  <!-- WHAT EACH ROLE IS FOR — offered one at a time. The grid above says what the roles ARE; six
-       paragraphs printed under it would be a wall nobody reads. Osmo Supply's Expanding Feature
-       Pills: one open at a time, the pill growing to hold its own answer, a photograph beside it
-       whose character argues for that role. Every data-feature-pills-* attribute is the resource's
-       contract and is load-bearing — see aboutPills.js. -->
-  <figure class="about-figure about-figure--full about-figure--pills">
-    <div data-feature-pills-init data-feature-pills-active="false" data-cascade="self" class="pills" aria-label="The six semantic roles">
-      <div class="pills__list-wrap">
-        <ul role="list" class="pills__list" data-cascade>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Background</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Background</span>
-                  <p class="pills__body">The furthest surface back. It gives the system its ground without asking for attention. Area alone cannot determine this role. The most common colour in a photograph is not necessarily the colour best suited to holding an interface.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Surface</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Surface</span>
-                  <p class="pills__body">Cards, panels, rows and everything that sits above the background. A surface must separate clearly from its ground without becoming a competing focal point. A subtle difference can be enough when the separation is decorative. If the boundary is necessary for identifying a control or understanding the interface, it must meet the relevant non-text contrast requirement.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Text</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Text</span>
-                  <p class="pills__body">Text is never evaluated on its own. It is tested against the surface beneath it. Body text needs a contrast ratio of at least 4.5 to 1 at level AA. Large text needs at least 3 to 1. The assigned text colour must therefore be tested against every surface on which it will appear.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Primary</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Primary</span>
-                  <p class="pills__body">The action with the greatest visual priority. Its fill must be distinguishable where the shape of the control matters. Its label must also be tested separately against the fill. A strong primary colour is not enough. The complete button must work as a pair of relationships.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Secondary</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Secondary</span>
-                  <p class="pills__body">An action that should remain visible without competing with the primary one. The distinction may come from lightness, contrast, outline, placement or type treatment. It does not necessarily require a different hue. Any visual information required to identify the control still needs sufficient contrast against its surroundings.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-          <li data-feature-pills-item data-active="false" class="pills__item">
-            <button data-feature-pills-button aria-expanded="false" data-ix="press" data-focus="chrome" class="pills__button">
-              <span class="pills__label">Accent</span>
-              <span class="pills__plus" aria-hidden="true"></span>
-            </button>
-            <div data-feature-pills-content aria-hidden="true" tabindex="-1" data-focus="chrome" class="pills__content">
-              <div class="pills__mask">
-                <div data-feature-pills-inner class="pills__inner">
-                  <span class="pills__inner-label">Accent</span>
-                  <p class="pills__body">A colour used to mark, highlight or direct attention. Its strength comes from its relationship with the surrounding palette. A restrained ground can make even a small chromatic shift feel vivid. If an accent communicates status, selection or meaning, it cannot rely on hue alone. Contrast, shape, text or an icon must support it.</p>
-                </div>
-              </div>
-            </div>
-          </li>
-        </ul>
+<!-- SOME IMAGES ALREADY WORK, and that earns its own section rather than a footnote to the one about
+     contrast. Frozen Slate clears AA on five of its ten pairs; nothing in the eight-palette gallery
+     below reaches more than four. It is the honest answer to "does this ever just come out right",
+     and the one interface on this page a reader can simply read.
+
+     THE FIRST PARAGRAPH SAYS WHAT CAN BE SEEN (16.09.26). It said one clearer blue carried the
+     palette's strongest colour, but the two blues are one hue (261.9° and 262.1°) at one chroma
+     (0.0750 and 0.0748), and only their lightness differs (0.602 and 0.723). Black and near-black
+     hold 29.9% of the image, most of the 31.5% the blues leave. The interface's sample line below
+     said the same thing and changed with it.
+
+     MOVED UP TO FOLLOW 3.1 (18.09.26, by request): the roles, then the roles in use, then the
+     contrast between them — a more natural sequence than assigning roles, leaving them for the
+     contrast argument and coming back. It replaced 3.1's feature pills, whose six photographs
+     illustrated the roles in pictures of other things; this section shows them in the palette's own
+     interface. -->
+<section id="already-contain-relationships" class="about-sec about-grid" data-sec>
+  <div class="about-col">
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.2</span>See Frozen Slate in Use</h2>
+    <p data-reveal>The palette&rsquo;s two blues share one hue and almost the same chroma, and differ only in lightness. Black and near-black fill most of the rest of the image.</p>
+    <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
+  </div>
+
+  <figure class="about-figure about-figure--split">
+    <div class="about-figure__media" data-cascade="self" data-reveal-focus>
+      <div class="about-shot" data-parallax="trigger" data-parallax-start="-7" data-parallax-end="7" data-parallax-disable="mobileLandscape">
+        <div class="about-shot__inner" data-parallax="target">
+          <img fetchpriority="low" width="1600" height="2124" src="/assets/examples/about/profile-sky-1600.webp" srcset="/assets/examples/about/profile-sky-1200.webp 1200w, /assets/examples/about/profile-sky-1600.webp 1600w, /assets/examples/about/profile-sky-2400.webp 2400w" sizes="(max-width: 1100px) 110vw, 51vw" alt="A profile in silhouette against a clear evening sky." decoding="async" />
+        </div>
       </div>
-      <div class="pills__visual">
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/runner.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="800" height="1062" src="/assets/story/stone.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1400" height="1859" src="/assets/story/pearls.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/pump.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1200" height="1593" src="/assets/story/profile-pearl.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-visual data-active="false" aria-hidden="true" class="pills__visual-item"><img width="1500" height="1991" src="/assets/story/padel.webp" alt="" loading="lazy" decoding="async" /></div>
-        <div data-feature-pills-cover data-active="true" class="pills__cover"><img width="1500" height="1991" src="/assets/story/comb.webp" alt="" loading="lazy" decoding="async" /></div>
-        <!-- The app's close mark (16.09.26): the same glyph as IconClose, in the same masked swap, which is
-             the whole of its hover now. -->
-        <button data-feature-pills-close aria-hidden="true" tabindex="-1" aria-label="Close" data-focus="chrome" class="pills__close"><span class="tswap"><span class="tswap__a"><svg data-icon="close" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block;flex:none"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg></span><span class="tswap__b" aria-hidden="true"><svg data-icon="close" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="display:block;flex:none"><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg></span></span></button>
+    </div>
+    <div class="about-figure__side" data-cascade>
+      <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text and a blue accent on near-black grounds, every pairing clearing AA." style="--r-bg:#000000;--r-surface:#090606;--r-text:#8CA6D5;--r-primary:#383B49;--r-accent:#6881AE">
+        <div class="about-ui__card">
+          <p class="about-ui__title">Frozen Slate</p>
+          <p class="about-ui__body">Two blues of one hue, on black and near-black.</p>
+          <p class="about-ui__actions"><span class="about-ui__btn">Primary</span><span class="about-ui__link">Accent</span></p>
+        </div>
       </div>
+      <ul class="about-checks">
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
+      </ul>
+      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least 4.5 to 1. They can support body text at AA when used as foreground and background.</p>
     </div>
   </figure>
 </section>
 
 <section id="contrast-creates-hierarchy" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.2</span>Contrast Creates Hierarchy</h2>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.3</span>Contrast Creates Hierarchy</h2>
     <p data-reveal>Contrast helps you decide which colour pairs can carry text or essential visual information, and which are better suited to decorative use.</p>
     <p data-reveal>Small differences between colours can create subtle depth. Text and essential controls need sufficient contrast against their backgrounds. Check each pairing for its intended use.</p>
   </div>
@@ -535,50 +461,6 @@
     <figcaption data-reveal>Contrast between all ten colour pairs in Dry Season.</figcaption>
   </figure>
 
-</section>
-
-<!-- SOME IMAGES ALREADY WORK, and that earns its own section rather than a footnote to the one about
-     contrast. Frozen Slate clears AA on five of its ten pairs; nothing in the eight-palette gallery
-     below reaches more than four. It is the honest answer to "does this ever just come out right",
-     and the one interface on this page a reader can simply read.
-
-     THE FIRST PARAGRAPH SAYS WHAT CAN BE SEEN (16.09.26). It said one clearer blue carried the
-     palette's strongest colour, but the two blues are one hue (261.9° and 262.1°) at one chroma
-     (0.0750 and 0.0748), and only their lightness differs (0.602 and 0.723). Black and near-black
-     hold 29.9% of the image, most of the 31.5% the blues leave. The interface's sample line below
-     said the same thing and changed with it. -->
-<section id="already-contain-relationships" class="about-sec about-grid" data-sec>
-  <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.3</span>See Frozen Slate in Use</h2>
-    <p data-reveal>The palette&rsquo;s two blues share one hue and almost the same chroma, and differ only in lightness. Black and near-black fill most of the rest of the image.</p>
-    <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
-  </div>
-
-  <figure class="about-figure about-figure--split">
-    <div class="about-figure__media" data-cascade="self" data-reveal-focus>
-      <div class="about-shot" data-parallax="trigger" data-parallax-start="-7" data-parallax-end="7" data-parallax-disable="mobileLandscape">
-        <div class="about-shot__inner" data-parallax="target">
-          <img fetchpriority="low" width="1600" height="2124" src="/assets/examples/about/profile-sky-1600.webp" srcset="/assets/examples/about/profile-sky-1200.webp 1200w, /assets/examples/about/profile-sky-1600.webp 1600w, /assets/examples/about/profile-sky-2400.webp 2400w" sizes="(max-width: 1100px) 110vw, 51vw" alt="A profile in silhouette against a clear evening sky." decoding="async" />
-        </div>
-      </div>
-    </div>
-    <div class="about-figure__side" data-cascade>
-      <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text and a blue accent on near-black grounds, every pairing clearing AA." style="--r-bg:#000000;--r-surface:#090606;--r-text:#8CA6D5;--r-primary:#383B49;--r-accent:#6881AE">
-        <div class="about-ui__card">
-          <p class="about-ui__title">Frozen Slate</p>
-          <p class="about-ui__body">Two blues of one hue, on black and near-black.</p>
-          <p class="about-ui__actions"><span class="about-ui__btn">Primary</span><span class="about-ui__link">Accent</span></p>
-        </div>
-      </div>
-      <ul class="about-checks">
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
-      </ul>
-      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least 4.5 to 1. They can support body text at AA when used as foreground and background.</p>
-    </div>
-  </figure>
 </section>
 
 <section id="refine-without-losing" class="about-sec about-grid" data-sec>

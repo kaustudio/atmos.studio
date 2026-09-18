@@ -18,8 +18,7 @@
      aboutDividers   every standalone hairline, drawn from its leading edge instead of being there
      aboutStack      the five steps, as five cards that recede and hand off
      aboutRail       the gallery, pinned, travelling sideways
-     aboutPills      the six roles, explained one at a time, each with a photograph of its own
-     aboutCascade    the sets that had no entrance — role cells, pills, matrix rows, weight key
+     aboutCascade    the sets that had no entrance — role cells, matrix rows, weight key
      aboutOptical    display type nudged so its INK lands on the column line, not its box
 
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
@@ -33,7 +32,6 @@ import { initFlipOnScroll } from './methods/aboutFlip.js';
 import { initDividers } from './methods/aboutDividers.js';
 import { initStackSlides } from './methods/aboutStack.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
-import { initFeaturePills } from './methods/aboutPills.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
@@ -127,7 +125,6 @@ export default class AboutPage extends React.Component {
     this._killParallax = initGlobalParallax(root);
     this._killHighlight = initHighlightText(root);
     this._killDividers = initDividers(root, { motion: vals.maskMotion });
-    this._killPills = initFeaturePills(root, vals.maskMotion);
     this._killSticky = initStickyTitle(root);
     this._killCascade = initCascade(root, vals.maskMotion, vals.focusMotion);
     this._killOptical = initOptical(root);
@@ -164,7 +161,7 @@ export default class AboutPage extends React.Component {
      are the last to let go. Killing a pin first would reflow the page underneath modules that are
      still holding measurements of it. */
   _teardown() {
-    ['_killOptical', '_killCascade', '_killSticky', '_killPills', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
+    ['_killOptical', '_killCascade', '_killSticky', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
       '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
