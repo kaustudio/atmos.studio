@@ -5,6 +5,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
 import { B006, B006Text, DocHead, GlassEffect, NavNewPalette, TextSwap, ThemeSwitch } from './chrome.jsx';
+import { IconPlus } from './icons.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
 
    Imported statically, these dragged about.html (89KB, injected verbatim as a string), about.css,
@@ -149,21 +150,6 @@ const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox=
 // Sort chevron — drawn at the same 1-unit hairline weight as the rest of the icon set, so it sits
 // in the header without shouting. It points DOWN at rest (descending) and rotates 180° to point up
 // for ascending; the rotation is the state change, so the glyph never swaps out from under the eye.
-/* THE PLUS, FROM THE FIGMA NODE ITSELF (ic:outline-plus, 10384:7592). The exported asset draws it
-   in a 40 box — arms spanning 10→30 at a thickness of 2.857 — and those are the numbers below,
-   multiplied by 0.6 so the glyph lives in the same 24 box as every other icon here: 6→18 at 1.714.
-   The export drew the mark at half its disc (20 in 40) and this draws it a step under that — the
-   icon renders at 20 inside a 24 disc, so the plus spans 10 and the ground around it grows from 6px
-   to 7.
-   20 IS NOT ONE OF THE SET'S SIZES, and it is not meant to be. Every other icon here is drawn at 9,
-   12 or 14 because it sits beside text and has to match its optical weight; this one sits ON a
-   ground and is sized as a FRACTION of it — five-sixths of the disc's diameter. Read as a ratio it
-   stays repeatable if the disc ever changes size; read as a number it looks like a stray. At 24px the exported ratio put the arms almost against the edge; the mark reads as a mark
-   rather than as a filled shape with a cross cut out of it once the ring of ground is legible. What is NOT taken from
-   the asset is its colour: the file hardcodes #141414 on the disc and #F1F1F1 on the mark, which is
-   this app's filled pair written as literals — so the disc takes --on-surface and the glyph
-   currentColor, and the design survives the theme switch the export could not know about. */
-const IconPlus = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M18 12.857H12.857V18H11.143V12.857H6V11.143H11.143V6H12.857V11.143H18V12.857Z"></path></svg>);
 /* THE CHEVRON THAT COMMITS. Not IconChevron rotated: that one is the hairline mark the project
    rail's steppers use, and this is the Material 2-unit form the rest of the acts now take. It sits
    in the create field's own button, pointing the way the text is going. */

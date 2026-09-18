@@ -7,6 +7,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { sx } from '../lib/sx.js';
 import { initDocHeadHide } from './methods/docHeadHide.js';
+import { IconPlus } from './icons.jsx';
 
 /* THE PART THAT SWAPS. Wrap the WORDS of a label in this and nothing else — an icon, a chevron or a
    toggle track passed as a sibling stays exactly where it is while the text rises through its mask.
@@ -102,6 +103,13 @@ function navMotion() {
 }
 const NAV_GONE_BLUR_PX = 6;
 const navBlur = (px) => 'blur(' + px + 'px)';
+/* THE PLUS STEPS INTO THE LEFT PADDING, and by exactly the air its own box carries (18.09.26, by
+   request: "decrease button padding on the left to maintain optical balance"). The glyph fills the
+   middle half of its 16px box, so 4px of nothing stood between the padding and the ink, and the
+   left of the pill read 4px wider than the right. -4px here is the same 4px taken off the left
+   padding, stated on the icon so it cannot drift from the glass bar's --button-006-padding. */
+const NAV_PLUS_SLOT = { display: 'inline-flex', marginLeft: '-4px' };
+
 export function NavNewPalette({ show, onPress }) {
   const ref = React.useRef(null);
   const anims = React.useRef([]);
@@ -175,7 +183,7 @@ export function NavNewPalette({ show, onPress }) {
     <B006 btnRef={ref} data-emphasis="primary"
       onClick={() => { if (!leaving.current) onPress(); }}
       style={sx("font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat)")}
-      label={<span style={sx('display:flex;align-items:center;height:14px')}><B006Text>New Palette</B006Text></span>} />
+      label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><B006Text>New Palette</B006Text></span>} />
   );
 }
 

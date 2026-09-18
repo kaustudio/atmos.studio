@@ -308,6 +308,15 @@ The note under the colour cards ("Frozen Slate shows how five colours can be ass
 and 3.1 gives up its bottom padding (`about-sec--joined`), so See Frozen Slate in Use starts one band
 gap under the cards (108px at 1440) where it had been 398.
 
+**New Palette leads with the plus (by request).** The design system's plus (`IconPlus`, the Figma
+node ic:outline-plus) sits left of the label in both mastheads. It moved from AppView.jsx into a
+small shared `src/app/icons.jsx`, because the button is built in chrome.jsx and chrome.jsx cannot
+import from AppView (AppView imports it). 16px, so its arms span 8px, the 12px label's cap height,
+on a 2px gap: the glyph fills only the middle half of its box, so the box holds 4px of air each side
+and 2px of gap reads as about 6. The same air made the pill's left read 4px wider than its right, so
+the icon steps 4px into the left padding (`marginLeft: -4px`), stated on the icon rather than by
+restating the glass bar's padding. Measured from pixels: 16.0px from ink to edge on both sides.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
