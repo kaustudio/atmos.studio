@@ -218,6 +218,23 @@ step, and the page's own notes about both. Part 3 is four sections: Take your pa
 design is 3.4 now, and keeps the prose it had — the supplied replacement was withdrawn in the same
 answer. The page is 4KB smaller and 1.4k pixels shorter.
 
+**How it Works' eight photographs come from their 4K masters (by request, 18.09.26).** The page drew
+900px files everywhere, a third of what the landed hero needs on a retina screen (2780px at 1440),
+and their compression blocks showed as smears along every edge. All eight are re-encoded from the
+3712×4928 originals with Chrome's own libwebp through Playwright — the repo has no image encoder —
+into public/assets/examples/about/. The app's seed files in public/assets/examples/ are untouched:
+pipeline.js resolves the eight seeds against them and each seed carries a hash of its image.
+- The hero (profile-ember): 800, 1200, 1600 and 2400 at q76. The markup's `sizes` describes the
+  plate, so the first paint takes the plate's file (30 KB at 1440 on retina); aboutFlip restates
+  `sizes` as the landed frame's width once the page has loaded, and the browser swaps the 2400 in
+  when it has decoded. Measured: requested at 824ms against a load event at 347ms. A 3200 was cut:
+  556 KB of film grain in a motion-blurred photograph, which nothing on screen resolves.
+- 3.3 (profile-sky): 1200, 1600 and 2400 at q85 — a gradient and a silhouette, 19 to 64 KB. Its
+  `sizes` is 1.17 times the box, because cover fills the 124%-tall inner by height.
+- The rail: one file per card, and the blurred foot shares it, so each card is one request as it
+  always was. The six examples at 1000px q78 total 369 KB against 364 KB for the 900px files they
+  replace; the two profiles use their 1200, which on most screens the hero plate has already fetched.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.

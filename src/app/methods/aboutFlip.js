@@ -125,6 +125,27 @@ export function initFlipOnScroll(root) {
     });
   }
 
+  /* [ATMOS 6] RESOLUTION FOLLOWS THE JOURNEY (18.09.26). The markup's `sizes` describes the plate,
+     so the first fetch is only what the photograph needs at plate size and the page's largest paint
+     stays light. The frame it lands in is two to three times wider, so once the page has loaded,
+     `sizes` is restated as that frame's width and the browser fetches the srcset candidate for it.
+     The picture on screen stays until the new one has decoded, so nothing flashes; idle rather than
+     on the first scroll, so the file is usually in hand before the flip has grown far enough to show
+     the difference. Nothing here runs without the flip, and without the flip the plate never grows. */
+  const plateSizes = imgEl ? imgEl.getAttribute('sizes') : null;
+  let upgraded = false, idleId = 0, idleTimer = 0;
+  function upgradeSizes() {
+    if (!imgEl || !imgEl.hasAttribute('srcset')) return;
+    const w = Math.ceil(wrapperElements[wrapperElements.length - 1].getBoundingClientRect().width);
+    if (w > 0) { imgEl.sizes = w + 'px'; upgraded = true; }
+  }
+  function onIdle() {
+    if (window.requestIdleCallback) idleId = window.requestIdleCallback(() => { if (root.isConnected) upgradeSizes(); }, { timeout: 2000 });
+    else idleTimer = setTimeout(() => { if (root.isConnected) upgradeSizes(); }, 200);
+  }
+  if (document.readyState === 'complete') onIdle();
+  else window.addEventListener('load', onIdle, { once: true });
+
   flipTimeline();
   driftTween();
 
@@ -132,7 +153,7 @@ export function initFlipOnScroll(root) {
   function onResize() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
-      if (root.isConnected) { flipTimeline(); driftTween(); }
+      if (root.isConnected) { flipTimeline(); driftTween(); if (upgraded) upgradeSizes(); }
     }, 100);
   }
   window.addEventListener("resize", onResize);
@@ -144,6 +165,10 @@ export function initFlipOnScroll(root) {
 
   return function destroy() {
     try { root.removeAttribute('data-flip-live'); } catch (e) { }
+    window.removeEventListener('load', onIdle);
+    try { if (idleId && window.cancelIdleCallback) window.cancelIdleCallback(idleId); } catch (e) { }
+    clearTimeout(idleTimer);
+    if (imgEl && plateSizes != null) imgEl.setAttribute('sizes', plateSizes);
     if (drift) {
       try { if (drift.scrollTrigger) drift.scrollTrigger.kill(); } catch (e) { }
       try { drift.kill(); } catch (e) { }
