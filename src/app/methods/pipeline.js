@@ -658,40 +658,67 @@ export const pipelineMethods = {
     // upload stage but nothing has painted yet, and a fromTo writes its start values at once, so
     // the dropzone is never on screen at rest before it arrives. The rAF that used to sit here
     // gave it exactly one painted frame at full opacity before the tween took it back to zero.
-    const commit = () => { this._genId = (this._genId || 0) + 1; this.stopCanvas(); this._resultFrom = null; this.setState({ stage: 'upload', current: null, imageUrl: null, sharedView: false, announce: o.announce || 'Ready for a new reference image.' }, () => { this.animateUploadIn(); if (o.after) try { o.after(); } catch (e) { } }); };
+    const commit = () => {
+      const below = this._belowStage();   // where the page under the stage stood, before the swap moves it
+      this._genId = (this._genId || 0) + 1; this.stopCanvas(); this._resultFrom = null;
+      this.setState({ stage: 'upload', current: null, imageUrl: null, sharedView: false, announce: o.announce || 'Ready for a new reference image.' }, () => { this.animateUploadIn(); if (o.after) try { o.after(); } catch (e) { } this._settleBelowStage(below); });
+    };
     if (this._reduce || !g || !root || this.state.stage !== 'result' || document.hidden) { commit(); return; }
     const bands = [...root.querySelectorAll('[data-band]')];
-    const fx = [...root.querySelectorAll('[data-fx]')];
+    // Everything on the stage that is not the swatch row: the shared strip, the actions, the name
+    // block and the readout. The action row and the readout carry no data-fx, so this is the one way
+    // all of them leave together.
+    const rest = [...root.children].filter((c) => !c.querySelector('[data-band]'));
     let done = false; const go = () => { if (done) return; done = true; commit(); };
     clearTimeout(this._resetGuard); this._resetGuard = setTimeout(go, this.DUR.reveal * 1000 + 220);
     try {
-      if (fx.length) g.to(fx, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.exit, stagger: .03 });
-      if (bands.length) {
-        /* THE ARRIVAL CROSSES THE EXIT. The stage used to swap only when the last band had finished
-           sinking — its onComplete, plus the stagger tail — and the dropzone mounted into a stage
-           that had been empty for a beat. Measured: bands gone at 600ms, "Start here" at 718ms, a
-           tenth of a second of nothing between two things that should overlap. Every other arrival
-           on the site crosses its exit; this one queued behind it.
-           So the swap is scheduled at 0.8 of the exit's length, and the result's root fades over the
-           last stretch before it, so whatever a lagging band still shows at the cut is already
-           transparent: the stage can be unmounted mid-tween without a visible pop, and the dropzone
-           rises while the palette's tail is still leaving. The bands' onComplete and the guard
-           timer stay as the fallbacks they were. */
-        const total = this.DUR.reveal * 0.8 + this.DUR.stagger * (bands.length - 1);
-        /* INSIDE THE PRESS'S HALF SECOND. The swap shortens the page, because the result is taller
-           than the dropzone, and that pulls the Library up into view. A layout shift more than 500ms
-           after the input that caused it counts against the page, and at 0.8 of the exit five bands
-           put the swap at about 560ms: the returning reader's only layout shift (0.068, the whole
-           Library section) was this one. So the cut is capped at 380ms, and the root's fade keeps its
-           proportions to the cut, so the stage is still transparent when it unmounts. With more
-           bands the sink simply has less of its tail left to show. */
-        const cut = Math.min(total * 0.8, 0.38);
-        g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger, onComplete: go });
-        g.to(root, { opacity: 0, duration: cut * 0.375, ease: this.EASE.exit, delay: cut * 0.625 });
+      /* THE SWATCHES SINK ALL THE WAY, FROM THE PRESS (18.09.26, "the transition to that from the
+         swatches seems off"). Measured in Chrome before this: each band sank on EASE.exit, an
+         ease-in, over half a second with a 50ms stagger, and the whole result faded out over the
+         last stretch before a cut at 380ms — so at the cut the first band was 66% down and the last
+         19%, and what showed was a staircase of half-sunk colour dissolving, after a start in which
+         almost nothing moved. Now the sink is fitted INSIDE the cut: each band sinks over DUR.state
+         on EASE.reveal (moving from the first frame, soft at the foot), the ripple's step shrinks to
+         fit however many bands there are, and the stage swaps as the last one lands, so no fade
+         has to hide an unfinished band. The words, actions and readout leave on the same curve and
+         length. The cut still lands inside the press's half second, which keeps the page shortening
+         out of the layout-shift count (the 16.09 figure: 0.068 when it landed at ~560ms); the
+         Library's own move is played as a transform (_settleBelowStage), which is not counted. */
+      const D = this.DUR.state, FIT = 0.36, n = bands.length;
+      const step = n > 1 ? Math.min(this.DUR.stagger, Math.max(0, (FIT - D) / (n - 1))) : 0;
+      // The swap lands as the last band is all but down: EASE.reveal is an out-cubic, past 99.6% at
+      // 0.85 of its length, so what the cut removes is under a pixel of a 340px swatch.
+      const cut = Math.min(D * 0.85 + step * Math.max(0, n - 1), 0.38);
+      if (rest.length) g.to(rest, { opacity: 0, y: 8, duration: D, ease: this.EASE.reveal });
+      if (n) {
+        g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: D, ease: this.EASE.reveal, stagger: step, onComplete: go });
         g.delayedCall(cut, go);
       }
-      else go();
+      else g.delayedCall(D, go);
     } catch (e) { go(); }
+  },
+  /* THE PAGE UNDER THE STAGE, AND WHERE IT STOOD. The result is taller than the dropzone (817px to
+     500 at 1440x900), so the swap pulls the Library and the footer up — 317px, in one frame, while
+     "Start here" was still arriving above it. _belowStage records each part's place in the document
+     before the swap; _settleBelowStage starts it from there and glides it home on the arrival's
+     length. A transform, never a margin or a height: the layout still changes at the cut (inside
+     the input's half second, so it is not counted as a shift) and what follows is a transform,
+     which never is. Not while the grid is up: the grid's fixed layer lives inside the Library, a
+     transform there would carry it, and the grid covers the page anyway. */
+  _belowStage() {
+    if (this._reduce || !window.gsap || document.hidden || this.state.feedView === 'grid' || this.state.gridLeaving) return [];
+    return [...document.querySelectorAll('[data-app]:not([data-ghost-app]) > section[data-recent], [data-app]:not([data-ghost-app]) > .site-foot')]
+      .map((el) => ({ el, top: el.getBoundingClientRect().top + window.scrollY }));
+  },
+  _settleBelowStage(below) {
+    const g = window.gsap;
+    if (!g || !below || !below.length) return;
+    below.forEach(({ el, top }) => {
+      if (!el.isConnected) return;
+      const dy = top - (el.getBoundingClientRect().top + window.scrollY);
+      if (Math.abs(dy) < 1) return;
+      g.fromTo(el, { y: dy }, { y: 0, duration: this.DUR.reveal, ease: this.EASE.fold, clearProps: 'transform' });
+    });
   },
   /* NEW PALETTE, THE BAR'S FILLED ACTION, ON THE CREATE PAGE IN EVERY STATE (15.09.26, by request).
      It used to exist only while there was something to reset. Now it always starts a palette: from a
