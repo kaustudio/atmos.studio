@@ -227,15 +227,12 @@
 
 /* ---------------------------------------------------------------- hero */
 
+/* NO RULE AT ITS FOOT. The opening used to close on a full-bleed hairline; the photograph below the
+   lead already ends the block, and a line under it was ruling an edge the image had drawn itself.
+   The band gap carries the separation now, so the hero needs neither --rule nor a containing block. */
 .about-hero{
-  position:relative;--rule:1;
   padding-block:clamp(48px,8vh,96px) var(--band-gap);
   row-gap:var(--block-gap);
-}
-.about-hero::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:var(--line-strong);
-  transform:scaleX(var(--rule));transform-origin:0 50%;
 }
 /* CENTRED ON EIGHT OF TWELVE — the same span the reading column takes, placed at column three so it
    centres on the page rather than starting from the edge. That pairing is the point: the opening and
@@ -336,7 +333,11 @@
    straight over the photograph arriving inside it. 3 clears both plates and stays under the orb
    canvas (5) and the masthead (20). */
 .about-plate__target{position:absolute;inset:0;z-index:3;overflow:hidden;border-radius:var(--radius-surface);will-change:transform,width,height}
-.about-plate__img{display:block;width:100%;height:100%;object-fit:cover}
+/* SLACK TO DRIFT IN. 124% tall and pulled up 12%, the same geometry .about-shot__inner uses for the
+   page's other masked photograph, so this one holds 12% of the box in hand at each edge and
+   aboutFlip can pan it against the scroll without ever bringing one into view. Without JS, and under
+   reduced motion, it sits centred — the framing it had when the picture simply filled the plate. */
+.about-plate__img{position:absolute;left:0;right:0;top:-12%;display:block;width:100%;height:124%;object-fit:cover;will-change:transform}
 /* The house image treatment: an inset ring rather than a border, so the outline cannot shift the
    picture inside a box whose size is being animated. */
 .about-plate__target::after{
@@ -440,159 +441,6 @@
   box-shadow:inset 0 0 0 1px var(--img-outline);
 }
 
-/* ------------------------------------------------------------- the interval rail
-
-   Five swatches and four gaps, and the gaps are the subject. aboutIntervals.js grows each one to the
-   perceptual distance it represents; at rest they are equal, which is the convention the figure
-   exists to replace. The readouts live inside the gaps so the number and the distance are the same
-   object. */
-/* THE INTERVALS, drawn as a dimension drawing rather than as a row of colours.
-
-   The section's claim is that a palette's character is in the distances between its colours, and the
-   figure's job is to make one distance visibly bigger than another. It was failing at the first
-   hurdle: Shale is achromatic — #0D0D11, #1D2025, #44464B — and the gaps between its swatches were
-   the page's own #141413, so the second swatch sat within four values of the empty space beside it.
-   A reader could not tell which bands were the palette and which were the measurement, and a row of
-   grey blocks with numbers floating in some of them is not a diagram of anything.
-
-   Three things fix it, and none of them is a colour change:
-
-     · THE SWATCH IS BOUNDED and hangs its own hex underneath, so it is unmistakably an object and
-       there is nothing left in it to go looking for. Half of "is this interactive?" is "is something
-       hidden here?", and printing the value answers it.
-     · THE GAP CARRIES A DIMENSION LINE — a rule with a tick at each end, the notation every technical
-       drawing uses for "this distance". It reads as a measurement, and measurements are not controls.
-     · THE STEP LEADS. The perceptual distance is set at body size on the line; the three deltas that
-       compose it sit under it at label size. Before, all three were equal-weight 9px and the number
-       the figure is actually about was not visibly the answer to anything.
-
-   The deltas are NOT uppercased, and that is a correction rather than a preference: the rule that
-   used to set them ran text-transform:uppercase over the whole readout, which turned Δh into ΔH —
-   and lowercase h is the OKLCH convention for hue, against upper-case L and C. The figure was
-   printing a notation that does not exist. */
-.about-intervals{
-  display:flex;align-items:stretch;width:100%;
-  height:clamp(120px,15vw,190px);
-  /* Room beneath for the hanging hex labels — they sit outside the rail so they never need to solve
-     contrast against five different grounds. */
-  margin-bottom:26px;
-}
-.about-intervals__swatch{
-  position:relative;flex:0 0 clamp(48px,6vw,90px);display:block;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 22%,transparent);
-}
-.about-route .about-intervals__hex{
-  position:absolute;top:100%;left:0;right:0;margin-top:7px;text-align:center;
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
-  line-height:1;color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-/* min-content, NOT min-width:0, and this is the row's version of the rule the stacked layout
-   already states below: grows by its step, never shrinks below its own readout.
-   min-width:0 let flex shrink a gap past its own contents, and the contents are nowrap, so they did
-   not shrink with it — they printed across the swatches on either side. The breakpoint underneath
-   was supposed to prevent that, but its arithmetic (5 x 48 + 4 x 84) assumes four EQUAL gaps, and
-   aboutIntervals.js makes them unequal on purpose: each gap gets its share of step/mean, so the
-   narrowest one gets a fraction of a quarter. Midfield's smallest is 9.1% of the gap space rather
-   than 25%, which needs ~923px of it to hold an 84px readout instead of 336px. Measured before this
-   line: 16.9px of spill per side at 820px, still 2px at 1280px.
-   min-content is the readout's own width, so the clamp is whatever the content actually needs and
-   there is no second number to keep in step with the markup.
-
-   WHAT THIS COSTS, stated because it is a real cost and because the number is bigger than it looks.
-   min-content here is 94px, not the 84px the note below estimates: that figure was measured against
-   the old content, and Midfield's longest delta line ("Lightness +0.236") is 82px plus the read's
-   12px of padding. The narrowest gap is 9.1% of the gap space, so exact widths need 1033px of it,
-   which is a ~1545px viewport. Below that the narrow gaps sit on the clamp and the row compresses
-   toward even. Measured: 98/94/95/102 at 660px, 166/94/95/172 at 820px, 379/94/96/391 at 1440px,
-   against a true ratio of 4.52:1 — so it is nearly exact at 1440 (4.18) and flat at 660.
-
-   The width encoding degrades there. The NUMERIC one does not, and that is the whole reason this is
-   the right trade rather than a defeat: every gap prints its own step, so a reader at 1024px still
-   reads 0.236 against 0.054 and the caption still checks out against the figure. What this replaced
-   was those same numbers printed 17px over the swatches on each side.
-   Rotating at ~1545 instead would keep the widths exact at every size, at the price of putting
-   every laptop and most desktops on the stacked layout. That is a design call, not a bug fix. */
-.about-intervals__gap{
-  flex:1 1 0;min-width:min-content;position:relative;
-  display:flex;align-items:center;justify-content:center;
-}
-.about-route .about-intervals__read{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  width:100%;min-width:0;padding:0 6px;margin:0;text-align:center;
-}
-.about-route .about-intervals__step{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-body);line-height:1;letter-spacing:var(--track-flat);
-  color:var(--on-surface);font-variant-numeric:tabular-nums;
-}
-/* The rule and its two end ticks, drawn as one background so the gap needs no extra elements and
-   the ticks stay pinned to the ends however wide the scrub makes it. */
-.about-intervals__dim{
-  width:100%;height:9px;flex:none;min-width:0;
-  background:
-    linear-gradient(var(--line-strong),var(--line-strong)) 0 4px/100% 1px no-repeat,
-    linear-gradient(var(--line-strong),var(--line-strong)) 0 0/1px 9px no-repeat,
-    linear-gradient(var(--line-strong),var(--line-strong)) 100% 0/1px 9px no-repeat;
-}
-/* SPELLED OUT, not signed. These were ΔL / ΔC / Δh — correct notation and, at nine pixels on a dark
-   ground, three small triangles that read as a rendering fault rather than as "the change in". The
-   words cost four characters each and the figure stops needing to be decoded. */
-.about-route .about-intervals__deltas{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);line-height:1.6;letter-spacing:var(--track-flat);
-  text-transform:none;color:var(--on-surface-muted);
-  font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-
-/* THE DRAWING TURNS NINETY DEGREES, and 620 is measured rather than chosen.
-
-   A readout is 72px wide at this size and its column carries 12px of padding, so an interval needs
-   84px to hold one. The five swatches are 48px each at their clamp floor, so the figure needs
-   5 × 48 + 4 × 84 = 576px of content box, which is a 624px viewport once the page gutters are off.
-   Measured at 645 the gaps are 88px and nothing spills; measured at 375 they are 22px and every
-   readout spilled 16 to 19px over the swatch on EACH side — hex values and delta stacks printed
-   across the five colours the figure exists to be about.
-
-   Stacked, the same drawing reads the same way: colour, interval, colour. The gap is still the
-   interval, it is simply measured down the page instead of across it, and each one gets the whole
-   measure. The hex stays OUTSIDE its swatch for the reason the base rule gives — it must never have
-   to solve contrast against five different grounds — it just moves from under the block to beside it. */
-@media screen and (max-width:620px){
-  /* min-height rather than height, and that distinction is what keeps the gaps proportional.
-     aboutIntervals.js animates flex-grow per gap, from an even 1 to a value scaled by that gap's own
-     OKLab step — which is the entire figure. flex-grow only does anything when the container has free
-     space to hand out, and a column container at height:auto has none, so `flex:0 0 auto` here would
-     have made every interval the same size and quietly falsified the caption above it. A definite
-     min-height gives the column surplus to distribute; if the readouts ever outgrow it the container
-     falls back to content height rather than overflowing into the note below. */
-  .about-intervals{
-    flex-direction:column;height:auto;
-    min-height:clamp(560px,86vh,760px);
-    margin-bottom:0;
-  }
-  /* A row now, and only part of the width, so there is page ground to the right to set the hex on. */
-  .about-intervals__swatch{flex:0 0 52px;width:62%}
-  .about-route .about-intervals__hex{
-    top:50%;translate:0 -50%;left:calc(100% + 12px);right:auto;margin-top:0;text-align:left;
-  }
-  /* Grows by its step, never shrinks below its own readout. */
-  .about-intervals__gap{flex:1 0 auto;align-items:stretch;justify-content:flex-start;padding:14px 0}
-  .about-route .about-intervals__read{
-    flex-direction:row;align-items:center;gap:14px;width:auto;padding:0;text-align:left;
-  }
-  /* The dimension rule stands up with the drawing, and it STRETCHES: the stem spans the whole gap, so
-     the line the reader sees is the interval rather than a fixed tick standing next to it. */
-  .about-intervals__dim{
-    width:9px;height:auto;align-self:stretch;min-height:34px;
-    background:
-      linear-gradient(var(--line-strong),var(--line-strong)) 4px 0/1px 100% no-repeat,
-      linear-gradient(var(--line-strong),var(--line-strong)) 0 0/9px 1px no-repeat,
-      linear-gradient(var(--line-strong),var(--line-strong)) 0 100%/9px 1px no-repeat;
-  }
-}
-
-
 /* ===== THE TWO LENSES, THE THREE AXES AND THE THRESHOLDS
    Four figures that carry the page's only genuinely technical material, and the brief for all of them
    was the same: stay editorial. This is a story about colour that happens to be measured, not a
@@ -656,8 +504,8 @@
    swatch again: square, because a swatch is a sample and samples are square here, and a circle was
    only ever the orb's silhouette, and at full strength, because there is no longer anything drawing over it.
 
-   The hairline is the page's own swatch idiom — .about-intervals__swatch and .about-axis__step both
-   carry it — and it earns its place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
+   The hairline is the page's own swatch idiom — .about-axis__step carries it too — and it earns its
+   place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
    so without an edge the darker of the two lenses would be a colour the reader cannot locate. */
 .about-lens__body{
   display:block;
@@ -1176,7 +1024,7 @@
    section: a reader without JavaScript saw the last card and two hidden underneath it.
 
    Every other effect on this page guards exactly this with a `-live` attribute — data-rail-live,
-   data-pills-live, data-sticky-live, data-intervals-live.
+   data-pills-live, data-sticky-live.
    The stack was the only one without one, and the only one whose floor was broken.
 
    So the base rules below are the FLOOR: three ordinary blocks down the page, each as tall as its

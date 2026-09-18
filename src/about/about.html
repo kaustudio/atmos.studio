@@ -14,9 +14,9 @@
      look good here would be the one thing that undoes the page.
 
      THE NARRATIVE. One photograph is carried the whole way down: it arrives, is counted by area, is
-     read as three dimensions, is given suggested roles, is checked as pairs, is read again as
-     intervals, is taken into use, and leaves as a palette to explore. Every section is a step in one
-     journey rather than a feature of a product.
+     read as three dimensions, is given suggested roles, is checked as pairs, is taken into use, and
+     leaves as a palette to explore. Every section is a step in one journey rather than a feature of
+     a product.
 
      THE GRID. Every section is 100% wide and lays its contents on the site's own twelve columns
      (--grid-cols / --grid-gutter / --page-gutter in global.css) through .about-grid. Prose sits in a
@@ -33,7 +33,6 @@
        data-highlight-text                      — a statement resolving character by character (none on
                                                   this page now: the close is a sticky title, see below)
                                      — the hero photograph, as cloth under the pointer
-       data-intervals / data-step               — the spacing that is itself a measurement
        data-stack-slide / -wrap / -content      — the falling card stack
        data-rail / -track / -card               — the pinned horizontal gallery -->
 
@@ -53,7 +52,7 @@
     <div class="about-plate about-plate--sm">
       <div data-flip-element="wrapper" class="about-plate__wrap">
         <div data-flip-element="target" class="about-plate__target">
-          <img width="900" height="1195" class="about-plate__img" src="/assets/examples/profile-ember.webp" alt="A profile in silhouette against a deep red ground, the face lit only along its edge." />
+          <img width="900" height="1195" class="about-plate__img" data-flip-drift="7" src="/assets/examples/profile-ember.webp" alt="A profile in silhouette against a deep red ground, the face lit only along its edge." />
         </div>
       </div>
     </div>
@@ -77,11 +76,12 @@
      reason the rest of the page is worth reading: a designer usually knows the feeling before the
      values, and nothing in the usual toolchain carries the feeling across. Prose only, deliberately.
      The page has ten figures after this one and the argument for why they matter should not have to
-     compete with a diagram. -->
+     compete with a diagram. Prose supplied 18.09.26: the reader is told what the next step is rather
+     than that doing it by eye is slow. -->
 <section id="from-instinct-to-system" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.1</span>From an Image You Like to a Starting Palette</h2>
-    <p data-reveal>A project often starts with an image whose colours feel right. Picking them out by eye is slow, because each area holds many shades. Colours that look good together can also lack the contrast text needs.</p>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.1</span>Start with colours you like</h2>
+    <p data-reveal>A project often starts with an image whose colours feel right. Choosing which colours to take into your design is the next step. If you plan to use them for text and backgrounds, you also need to check their contrast.</p>
     <p class="about-lead" data-reveal>Atmos does that first step for you and measures the result. You still choose which colours to use, and adjust them in your own design tools.</p>
   </div>
 </section>
@@ -116,13 +116,15 @@
 
      BOTH LENSES ARE HIGH KEY. The pair on the right is its background and its PRIMARY, by
      semanticRoles() (16.09.26): its text is #1B2F0C, so the label no longer calls #3C5E19 the text.
-     The swatch on the left is its accent. -->
+     The swatch on the left is its accent.
+
+     Prose supplied 18.09.26. It names what each lens does and what each is for, where it used to
+     argue that neither answers alone; the figure makes that argument on its own. -->
 <section id="how-atmos-reads-colour" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.2</span>How Atmos Reads Colour</h2>
-    <p data-reveal>Atmos uses two complementary ways of reading colour. OKLCH describes the character of each colour. WCAG measures whether two colours create enough contrast for a particular purpose.</p>
-    <p data-reveal>Neither provides the full answer alone. A palette can feel coherent and still contain pairings that are difficult to read. A pair can meet a contrast requirement and still feel disconnected from the atmosphere around it.</p>
-    <p data-reveal>Atmos uses both.</p>
+    <p data-reveal>Atmos uses OKLCH to describe each colour&rsquo;s lightness, chroma and hue. It also calculates contrast between colour pairs and checks the results against WCAG contrast requirements.</p>
+    <p data-reveal>These help you make different decisions: compare the colours in your palette, then check the combinations you want to use for text or interface elements. Colours that look good together may still lack enough contrast for their intended use.</p>
   </div>
 
   <figure class="about-figure about-figure--full about-lenses" data-cascade data-reveal-focus>
@@ -152,40 +154,46 @@
 
 <!-- THE READING GUIDE. Three ramps, each holding two of the three coordinates still and moving the
      third, so the axis being described is the only thing changing. Every step is generated by the
-     app's own gamutMap, so nothing here is an illustration of OKLCH, it IS OKLCH. -->
+     app's own gamutMap, so nothing here is an illustration of OKLCH, it IS OKLCH.
+
+     Prose supplied 18.09.26, the intro and all three notes. -->
 <section id="reading-oklch" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.3</span>Reading OKLCH</h2>
-    <p data-reveal>Every sampled colour is described through lightness, chroma and hue. Together they reveal the shape of a colour. They do not determine whether it is accessible.</p>
+    <p data-reveal>OKLCH describes each colour through three properties: lightness, chroma and hue. Use them to compare the colours in your palette.</p>
   </div>
 
   <div class="about-axes" data-cascade data-reveal-focus>
     <div class="about-axis">
       <p class="about-figure__label">Lightness</p>
       <div class="about-axis__ramp" role="img" aria-label="A ramp from lightness 0 to lightness 1 at a fixed hue and chroma."><span class="about-axis__step" style="background:#010000"><span>0.0</span></span><span class="about-axis__step" style="background:#350000"><span>0.2</span></span><span class="about-axis__step" style="background:#70322A"><span>0.4</span></span><span class="about-axis__step" style="background:#B06B61"><span>0.6</span></span><span class="about-axis__step" style="background:#F2A89C"><span>0.8</span></span><span class="about-axis__step" style="background:#FFE9DC"><span>1.0</span></span></div>
-      <p class="about-axis__note">How light or dark a colour appears, on a scale from 0 to 1. Zero is black. One is white. This is perceptual lightness, which helps designers make changes that feel visually consistent. It is not the same measurement as the relative luminance used by WCAG.</p>
+      <p class="about-axis__note">How light or dark a colour appears. Atmos shows this on a scale from 0 to 1, where 0 is black and 1 is white. OKLCH lightness is different from the relative luminance used to calculate WCAG contrast.</p>
     </div>
     <div class="about-axis">
       <p class="about-figure__label">Chroma</p>
       <div class="about-axis__ramp" role="img" aria-label="A ramp from chroma 0 to chroma 0.20 at a fixed hue and lightness."><span class="about-axis__step" style="background:#868686"><span>0.00</span></span><span class="about-axis__step" style="background:#9D7E78"><span>0.04</span></span><span class="about-axis__step" style="background:#B1746A"><span>0.08</span></span><span class="about-axis__step" style="background:#C4685B"><span>0.12</span></span><span class="about-axis__step" style="background:#D5594A"><span>0.16</span></span><span class="about-axis__step" style="background:#E64537"><span>0.20</span></span></div>
-      <p class="about-axis__note">How strongly a colour departs from neutral. At zero the colour is grey. As chroma rises the colour becomes more vivid. A chroma value only makes sense as part of the complete colour, because its visible effect depends on lightness, hue and the available gamut.</p>
+      <p class="about-axis__note">How muted or vivid a colour appears. At zero, the colour is neutral: black, grey or white, depending on its lightness. Higher values move further from neutral. The visible effect also depends on lightness and hue.</p>
     </div>
     <div class="about-axis">
       <p class="about-figure__label">Hue</p>
       <div class="about-axis__ramp" role="img" aria-label="A ring of hues from 0 to 330 degrees at a fixed lightness and chroma."><span class="about-axis__step about-axis__step--hue" style="background:#B76C84"><span>0&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#BB6E62"><span>30&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#B27744"><span>60&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#9E8337"><span>90&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#7E8F46"><span>120&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#579766"><span>150&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#2C9A88"><span>180&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#2196A7"><span>210&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#478EBC"><span>240&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#6F83C3"><span>270&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#8F78BA"><span>300&deg;</span></span><span class="about-axis__step about-axis__step--hue" style="background:#A86FA3"><span>330&deg;</span></span></div>
-      <p class="about-axis__note">The colour&rsquo;s position around a perceptual colour wheel, measured as an angle from 0&deg; to 360&deg;. As chroma approaches zero, hue carries less visible meaning. A nearly neutral grey can still have a recorded hue, but that hue contributes very little to what the eye sees.</p>
+      <p class="about-axis__note">The colour family, such as red, yellow, green or blue, expressed as a position around a colour wheel. It is measured in degrees, with 0&deg; and 360&deg; marking the same position. Hue becomes less noticeable as chroma approaches zero.</p>
     </div>
   </div>
 </section>
 
 <!-- THE THRESHOLDS, stated once, near the top, so that every ratio printed later in the page can be
-     read against a rule the reader has already met. A pass always belongs to a role. -->
+     read against a rule the reader has already met. A pass always belongs to a role.
+
+     Prose supplied 18.09.26, four paragraphs where there were three: what contrast is, what each
+     threshold is for, what a pair below 3 to 1 may still do, and that meeting one is not the end of it. -->
 <section id="reading-wcag-contrast" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.4</span>Reading WCAG Contrast</h2>
-    <p data-reveal>Contrast belongs to a pair, not to an individual colour. WCAG compares the relative luminance of a foreground colour and the colour behind it. The result sits between 1 to 1 and 21 to 1. A ratio of 1 to 1 means there is no luminance contrast. A ratio of 21 to 1 is the maximum contrast between black and white.</p>
-    <p data-reveal>A result below 3 to 1 does not make the colours unusable. The pair can still create atmosphere, depth and decorative separation. It should not be responsible for legibility, interaction or essential visual information.</p>
-    <p class="about-lead" data-reveal>A pair does not simply pass WCAG. It passes for body text, for large text or for a meaningful non-text element.</p>
+    <p data-reveal>Contrast compares two colours, such as text and its background. Atmos calculates their contrast ratio using the WCAG formula for relative luminance. Results range from 1 to 1 for equal luminance to 21 to 1 for black and white.</p>
+    <p data-reveal>The contrast you need depends on how you use the pair. At WCAG AA, normal text requires at least 4.5 to 1 and large text at least 3 to 1. Visual details needed to identify controls or understand graphics generally require 3 to 1 against adjacent colours.</p>
+    <p data-reveal>Pairs below 3 to 1 can still be used for decoration where the colour difference is not needed to read content, identify a control or understand information.</p>
+    <p class="about-lead" data-reveal>Meeting a contrast requirement does not make the whole design accessible. Check each pair in the context where you use it.</p>
   </div>
 
   <figure class="about-figure about-figure--full">
@@ -204,15 +212,18 @@
 
 <section id="more-than-common-colours" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.1</span>An Image Is More Than Its Most Common Colours</h2>
-    <p data-reveal>Conventional colour extraction often begins with frequency. It identifies the colours that occupy the largest areas of an image and ranks them by prevalence.</p>
-    <p data-reveal>But prevalence is not the same as importance. A small highlight can define an image&rsquo;s energy. A near-black shadow can create its depth. A muted field can make a single saturated detail feel vivid.</p>
-    <p data-reveal>Atmos considers how much of each colour is present, how the colours relate and what each one contributes to the image as a whole.</p>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.1</span>Small details can stand out</h2>
+    <p data-reveal>The colours that cover the largest areas of an image are not always the ones that catch your attention. A small, vivid detail can stand out against a muted background, while a dark shadow can make lighter colours more noticeable.</p>
+    <p data-reveal>Atmos shows the proportions, colour properties and contrast of the extracted palette. Use these to explore the colours and decide which ones to emphasise in your design.</p>
   </div>
 
   <!-- The demonstration, in the reference's own figures. Every width is that swatch's measured share
        of the frame, so the bar is the photograph counted rather than an illustration of one. Full
-       width: it is a measurement of the whole picture and it should read as the whole picture. -->
+       width: it is a measurement of the whole picture and it should read as the whole picture.
+
+       Prose and caption supplied 18.09.26. The caption no longer recites 77.7, 22.3 and 5.6: the key
+       below the bar prints all five shares already, and its aria-label reads them out, so the words
+       say what the shares mean instead of repeating them. -->
   <figure class="about-figure about-figure--full">
     <div class="about-weights" data-cascade data-reveal-focus role="img" aria-label="High Key by area: near-white 77.7 per cent, pale green 8.1, mid green 5.6, deep green 4.8, darkest green 3.8.">
       <span class="about-weights__part" style="width:77.7%;background:#eae8dd"></span>
@@ -229,7 +240,12 @@
       <li><span class="about-key__chip" style="background:#1b2f0c"></span><span class="about-key__hex">#1B2F0C</span><span class="about-key__ok">L .28 &middot; C .063 &middot; H 134&deg;</span><span class="about-key__pct">3.8%</span></li>
     </ol>
     <div class="about-divider" data-divider aria-hidden="true"></div>
-    <figcaption data-reveal>The near-white centre holds 77.7 per cent of the frame. Every green in the palette together makes 22.3, and the most saturated of them, the one the eye actually goes to, is 5.6. Frequency explains how much space each colour occupies. OKLCH reveals how the colours differ. Neither measurement alone decides the role a colour should play. Ranked by area, the subject comes last.</figcaption>
+    <!-- Two paragraphs, on 3.4's pattern: each one is its own reveal block and about.css keeps both
+         in the caption's type rather than the page's paragraph size. -->
+    <figcaption>
+      <p data-reveal>In High Key, the pale colour accounts for most of the image. The greens cover smaller areas but vary in lightness and chroma, from pale and muted to vivid and dark.</p>
+      <p data-reveal>The green with the highest chroma occupies only a small part of the image. It could work as an accent in your design, even though it is not the most common colour. Use the proportions to understand the image, then decide how much of each colour to use.</p>
+    </figcaption>
   </figure>
 </section>
 
@@ -261,14 +277,17 @@
                      ground's own hue (31.0° on 28.9°) at twice its chroma (0.223 on 0.109).
      Garnet's near-black #0F0302 was the more neutral ground, but it reads as black, disappears into
      the dark theme's page and follows Frozen Slate's black card; a dark red ground is what Coral's
-     card had too. -->
+     card had too.
+
+     Prose supplied 18.09.26, two paragraphs where there were three. The lead quoted in the merge
+     note above went with them; the merge it explains stands, and the new lead still hands off to
+     the cards. -->
 <section id="shape-of-a-palette" class="about-stack" data-sec>
   <div class="about-grid">
     <div class="about-col">
-      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.2</span>Reading the Shape of a Palette</h2>
-      <p data-reveal>Two colours can share a hue and still perform entirely different roles. A change in lightness can separate one surface from another. It can also determine whether text can be read at all.</p>
-      <p data-reveal>A change in chroma can turn a quiet detail into a focal point without changing its underlying hue.</p>
-      <p class="about-lead" data-reveal>Atmos reads all three dimensions together. Each is taken on its own below, in the palette whose character turns on it.</p>
+      <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.2</span>Similar colours, different possibilities</h2>
+      <p data-reveal>Colours with similar hues can have different uses in a design. Differences in lightness can help separate text from its background or distinguish one surface from another. Differences in chroma can make one colour stand out against more muted colours.</p>
+      <p class="about-lead" data-reveal>The examples below focus on hue, lightness and chroma in turn. Use them to compare the colours, then check contrast between the pairs you want to use together.</p>
     </div>
   </div>
 
@@ -314,7 +333,7 @@
 
 <section id="sampled-to-roles" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.1</span>From Sampled Colours to Suggested Roles</h2>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.1</span>Find a role for each colour</h2>
     <p data-reveal>A palette describes the colours drawn from an image. Suggested roles offer possible ways to use those colours in a design.</p>
     <p data-reveal>Atmos suggests background, surface, text, primary, secondary and accent roles. These are a starting point for exploration, not a finished design or a guarantee that every pairing meets a contrast requirement.</p>
     <p data-reveal>Review the roles in the context of your work. Check contrast between the colours you use together, and adjust them in your own tools where needed.</p>
@@ -530,7 +549,7 @@
      said the same thing and changed with it. -->
 <section id="already-contain-relationships" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.3</span>Some Images Already Contain the Required Relationships</h2>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.3</span>See Frozen Slate in use</h2>
     <p data-reveal>The palette&rsquo;s two blues share one hue and almost the same chroma, and differ only in lightness. Black and near-black fill most of the rest of the image.</p>
     <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
   </div>
@@ -562,69 +581,9 @@
   </figure>
 </section>
 
-<section id="the-intervals-matter" class="about-sec about-grid" data-sec>
-  <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.4</span>The Intervals Matter</h2>
-    <p data-reveal>The character of a palette often lives in the distance between its colours. A narrow change in OKLCH lightness can create subtle depth. A wider one can establish hierarchy. Related hues can produce harmony, while a controlled shift in chroma can introduce tension and focus.</p>
-    <p data-reveal>Atmos makes these differences visible, helping you compare how closely the colours relate in lightness, chroma and hue.</p>
-  </div>
-
-  <!-- THE GAPS ARE THE MEASUREMENT. data-step is the perceptual distance between two neighbours in
-       OKLab; aboutIntervals.js grows each gap to the size of its own step, so the rhythm of the row is
-       the palette's rhythm rather than a spacing decision. Ordered by lightness, the axis the eye
-       reads first. Without JS the gaps stay even and the readouts are simply a legible table. -->
-  <figure class="about-figure about-figure--full">
-    <div class="about-intervals" data-cascade data-reveal-focus data-intervals role="img" aria-label="Midfield ordered by lightness. Between #0A2944 and #456B85 the step is 0.236; then 0.054 to #547B95; then 0.060 to #678DA4; then 0.244 to #D0D2C6. Each gap is drawn at the size of its step.">
-      <span class="about-intervals__swatch" style="background:#0a2944"><span class="about-intervals__hex">#0A2944</span></span>
-      <span class="about-intervals__gap" data-step="0.236">
-        <span class="about-intervals__read" data-step-read>
-          <span class="about-intervals__step">0.236</span>
-          <span class="about-intervals__dim" aria-hidden="true"></span>
-          <span class="about-intervals__deltas">Lightness +0.236<br />Chroma &minus;0.002<br />Hue 9&deg;</span>
-        </span>
-      </span>
-      <span class="about-intervals__swatch" style="background:#456b85"><span class="about-intervals__hex">#456B85</span></span>
-      <span class="about-intervals__gap" data-step="0.054">
-        <span class="about-intervals__read" data-step-read>
-          <span class="about-intervals__step">0.054</span>
-          <span class="about-intervals__dim" aria-hidden="true"></span>
-          <span class="about-intervals__deltas">Lightness +0.054<br />Chroma 0.000<br />Hue 1&deg;</span>
-        </span>
-      </span>
-      <span class="about-intervals__swatch" style="background:#547b95"><span class="about-intervals__hex">#547B95</span></span>
-      <span class="about-intervals__gap" data-step="0.060">
-        <span class="about-intervals__read" data-step-read>
-          <span class="about-intervals__step">0.060</span>
-          <span class="about-intervals__dim" aria-hidden="true"></span>
-          <span class="about-intervals__deltas">Lightness +0.060<br />Chroma &minus;0.005<br />Hue 3&deg;</span>
-        </span>
-      </span>
-      <span class="about-intervals__swatch" style="background:#678da4"><span class="about-intervals__hex">#678DA4</span></span>
-      <span class="about-intervals__gap" data-step="0.244">
-        <span class="about-intervals__read" data-step-read>
-          <span class="about-intervals__step">0.244</span>
-          <span class="about-intervals__dim" aria-hidden="true"></span>
-          <span class="about-intervals__deltas">Lightness +0.235<br />Chroma &minus;0.038<br />Hue 121&deg;</span>
-        </span>
-      </span>
-      <span class="about-intervals__swatch" style="background:#d0d2c6"><span class="about-intervals__hex">#D0D2C6</span></span>
-    </div>
-    <div class="about-divider" data-divider aria-hidden="true"></div>
-    <!-- THE SUPPLIED CAPTION (16.09.26), in two paragraphs. It replaced one that walked every step in
-         figures; those stay in the readouts above and in the row's label. Checked against the seed:
-         the three blues sit at L 0.510, 0.564 and 0.624, the darker blue at 0.274, and the neutral
-         carries chroma 0.016. Each paragraph is its own reveal block, and about.css keeps them in the
-         caption's type rather than the page's paragraph size. -->
-    <figcaption>
-      <p data-reveal>Midfield contains three blues with similar lightness, alongside a darker blue and a pale neutral. The diagram places the colours in order of lightness. Larger gaps show greater differences.</p>
-      <p data-reveal>Use this view to compare the colours, then check contrast between the pairs you want to use in your design.</p>
-    </figcaption>
-  </figure>
-</section>
-
 <section id="refine-without-losing" class="about-sec about-grid" data-sec>
   <div class="about-col">
-    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.5</span>From Reading to Use</h2>
+    <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.4</span>Take your palette into your design</h2>
     <!-- THIS SECTION USED TO DESCRIBE REFINEMENT — strengthening a contrast, quieting a surface —
          which the tool does not do: nothing in Atmos edits a colour. What it does have is five
          doors out of a reading, and this is the one place on the page that names them together. -->

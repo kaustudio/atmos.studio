@@ -90,24 +90,68 @@ export function initFlipOnScroll(root) {
      the two situations we are in, so no-JS, no-GSAP and reduced motion all keep the drawn frame. */
   root.setAttribute('data-flip-live', '1');
 
+  /* [ATMOS 5] THE PHOTOGRAPH DRIFTS INSIDE ITS OWN FRAME (18.09.26, by request).
+     Every other image on this page does this through aboutParallax's data-* API, which cannot say
+     what this one needs: that module looks for its target inside its trigger, and the only box this
+     image can honestly be measured against — the frame it is travelling into — does not contain it
+     until the journey is over. So the drift lives here, where the element's lifecycle already is:
+     the same rebuild on resize and on fonts.ready, the same destroy.
+
+     Its range is that destination frame's own traversal of the viewport, not the flip's range, so
+     the photograph keeps drifting after it has landed rather than stopping dead at the moment it
+     arrives. Direction matches the page's other parallax (-D to +D): scrolling down, the picture
+     lags the frame carrying it. The travel is a percentage of the image, so it holds at both the
+     plate's size and the full-width frame's, and stays inside the 12% of slack about.css leaves. */
+  const imgEl = targetEl.querySelector('[data-flip-drift]');
+  const driftPct = imgEl ? parseFloat(imgEl.getAttribute('data-flip-drift')) : 0;
+  let drift;
+  function driftTween() {
+    if (drift) {
+      try { if (drift.scrollTrigger) drift.scrollTrigger.kill(); } catch (e) { }
+      drift.kill();
+      gsap.set(imgEl, { clearProps: 'transform' });
+      drift = null;
+    }
+    if (!imgEl || !driftPct) return;
+    drift = gsap.fromTo(imgEl, { yPercent: -driftPct }, {
+      yPercent: driftPct,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: wrapperElements[wrapperElements.length - 1],
+        start: 'clamp(top bottom)',
+        end: 'clamp(bottom top)',
+        scrub: 0.25
+      }
+    });
+  }
+
   flipTimeline();
+  driftTween();
 
   let resizeTimer;
   function onResize() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
-      if (root.isConnected) flipTimeline();
+      if (root.isConnected) { flipTimeline(); driftTween(); }
     }, 100);
   }
   window.addEventListener("resize", onResize);
 
   // [ATMOS 3] — see the note above.
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(function () { if (root.isConnected) flipTimeline(); });
+    document.fonts.ready.then(function () { if (root.isConnected) { flipTimeline(); driftTween(); } });
   }
 
   return function destroy() {
     try { root.removeAttribute('data-flip-live'); } catch (e) { }
+    if (drift) {
+      try { if (drift.scrollTrigger) drift.scrollTrigger.kill(); } catch (e) { }
+      try { drift.kill(); } catch (e) { }
+      // Same reason the target is cleared below: a route that mounts again must not inherit the
+      // offset the last scroll position left the picture at.
+      try { gsap.set(imgEl, { clearProps: 'transform' }); } catch (e) { }
+      drift = null;
+    }
     window.removeEventListener("resize", onResize);
     clearTimeout(resizeTimer);
     if (tl) {

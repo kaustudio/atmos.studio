@@ -106,6 +106,11 @@ export function initPageReveal(root, options) {
   function viewTop() { return scroller ? scroller.getBoundingClientRect().top : 0; }
 
   var hero = opts.hero || null;
+  /* Whether that hero carries a hairline at its foot. The legal documents do — theirs is the line
+     under the title block — and /about did until its opening was left to close on the photograph
+     alone. A hero without one is passed heroRule:false rather than left to tween a --rule nothing
+     reads, which would also park it in `pending` and give the failsafe a rule to wait on. */
+  var heroRule = opts.heroRule !== false;
   var groups = (opts.groups || []).filter(function (grp) {
     return grp && (grp.heading || (grp.blocks && grp.blocks.length));
   });
@@ -319,8 +324,10 @@ export function initPageReveal(root, options) {
   if (hero) {
     heroEls = (opts.heroParts || []).filter(Boolean).map(arm).filter(Boolean);
 
-    g.set(hero, { '--rule': 0 });
-    pending.push(hero);
+    if (heroRule) {
+      g.set(hero, { '--rule': 0 });
+      pending.push(hero);
+    }
   }
 
   // ------------------------------------------------------- sections (scroll-triggered)
@@ -397,7 +404,7 @@ export function initPageReveal(root, options) {
     // One call, so the stagger runs across the title's line, the summary's three and the meta's one
     // as a single cascade of five rather than as three animations starting together.
     revealMasked(heroEls);
-    if (hero) {
+    if (hero && heroRule) {
       g.to(hero, {
         '--rule': 1,
         duration: MOTION.rule || FALLBACK.rule,

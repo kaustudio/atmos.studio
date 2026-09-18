@@ -156,6 +156,68 @@ names now open with those labels (SC 2.5.3).
 band sits at about 1.3:1 against the row, so its end can be hard to place; the row's own rule still
 closes the object.
 
+**How it Works' opening closes on its photograph (by request).** The hero ruled its own foot with a
+full-bleed hairline under the reference image, drawn on arrival with the page's other rules. It is
+gone: the photograph is the edge of that block, and a line a hundred and fifty pixels beneath it was
+ruling an edge the image had already drawn. The band gap carries the separation. `initPageReveal`
+takes `heroRule:false` so nothing tweens a `--rule` that no longer paints, and the hero needs no
+containing block; the legal documents keep theirs, where the hairline rules a title rather than an
+image.
+
+**That photograph drifts inside its frame (by request).** It is 124% tall and pulled up 12%, the
+geometry the page's other masked photograph already uses, and aboutFlip pans it ±7% against the
+scroll — the figure the section band uses, chosen from 3, 5 and 7 — so the two images move by one
+rule. 89px of travel at 1440, 29px on a phone, and the slack never runs out: the tightest point
+measured leaves 8px of picture beyond the frame. The drift is keyed to the destination frame's own
+traversal rather than to the flip's range, so it carries on after the photograph has landed instead
+of stopping at the moment it arrives; it cannot be written in aboutParallax's data-* API, which
+looks for its target inside its trigger, because the frame this image is measured against does not
+contain it until the journey is over. Under reduced motion, and without JS, the picture sits centred.
+
+**How it Works, 1.1 to 1.4, in supplied copy (18.09.26).** Four sections rewritten to the words
+given, not edited from them.
+- 1.1 loses "picking them out by eye is slow" for what the reader does next: choose which colours to
+  take into the design, and check contrast if they are for text and backgrounds. Its closing
+  paragraph, which was not named, stays.
+- 1.2 states what each lens does and what each is for, in two paragraphs where there were three. The
+  argument it dropped — that neither answers alone — is what the figure beside it draws, so it is
+  made once rather than twice.
+- 1.3 names the three properties in its opening and defines each one under its own ramp. All three
+  notes are the supplied text.
+- 1.4 runs four paragraphs: what contrast is and the range it sits in, what each threshold is for,
+  what a pair below 3 to 1 may still do, and that meeting a requirement is not the end of it.
+
+**Ratios keep the page's own notation (by request).** The supplied copy wrote them 4.5:1; the page
+writes them "4.5 to 1" in twenty-two places, including the threshold list directly under 1.4's prose
+and the 6.09 to 1 in 1.2's figure. The seven in the new copy were converted, so the page has one
+form for a ratio, twenty-nine of them.
+
+**2.1 and 2.2, in supplied copy (18.09.26).**
+- 2.1 opens on what the reader notices rather than on how conventional extraction works: the largest
+  areas are not always what catches the eye, and Atmos shows proportions, properties and contrast to
+  decide what to emphasise. Two paragraphs where there were three.
+- Its caption is two paragraphs on 3.4's pattern, each its own reveal block, both in the caption's
+  own type. It no longer recites 77.7, 22.3 and 5.6: the key under the bar prints all five shares and
+  its aria-label reads them, so the words say what the shares mean instead of repeating them. What
+  they point at is the printed figures — the pale colour at 77.7%, and the highest chroma (0.141) at
+  5.6%, small and not the most common.
+- 2.2 states what lightness and chroma do for a design and hands off to the three cards. The lead
+  quoted in the merge note above it went with the old prose; the merge itself stands.
+
+**Seven headlines, in supplied copy (18.09.26).** 1.1 Start with colours you like, 2.1 Small details
+can stand out, 2.2 Similar colours, different possibilities, 3.1 Find a role for each colour, 3.3 See
+Frozen Slate in use, 3.4 See how lightness separates colours, 3.5 Take your palette into your design.
+They are sentence case where the page's were Title Case; 1.2, 1.3, 1.4 and 3.2 keep theirs, by
+request, so the page runs both.
+
+**The interval rail is gone (by request).** 3.4 asked what its own diagram's caption already said —
+the diagram orders Midfield by lightness, larger gaps are larger differences, compare then check
+contrast — and the answer was to delete the section rather than choose between the two. With it went
+aboutIntervals.js, its wiring in AboutPage, the 9.9KB of about.css that grew each gap to its OKLab
+step, and the page's own notes about both. Part 3 is four sections: Take your palette into your
+design is 3.4 now, and keeps the prose it had — the supplied replacement was withdrawn in the same
+answer. The page is 4KB smaller and 1.4k pixels shorter.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
