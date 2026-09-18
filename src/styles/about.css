@@ -188,11 +188,10 @@
 
 /* The label voice — the app's own uppercase chrome label at --fs-label on flat tracking. Nothing
    here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
-   consumers until they were removed from the page; the list is what is left. */
-.about-route .about-figure__label,
-.about-route .about-role__name,.about-route .about-stack__ref,
-[data-mobile-story] .about-figure__label,
-[data-mobile-story] .about-role__name{
+   consumers until they were removed from the page; the list is what is left. How it Works' figure
+   labels left it too (18.09.26) — see the rule below this one. */
+.about-route .about-stack__ref,
+[data-mobile-story] .about-figure__label{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   line-height:1.2;
@@ -202,6 +201,28 @@
      has no room between --fs-label and --fs-detail to separate them by size, and a 1px step would
      not read anyway. Brightness does it: the parent is the ink, the children stay muted. */
   color:var(--on-surface);
+}
+
+/* HOW IT WORKS' FIGURE LABELS SPEAK LIKE ITS BUTTONS (18.09.26, by request): --fs-body, Medium,
+   flat tracking and their own Title Case, as the feature pills below and the matrix pills do, where
+   they were the uppercase label voice above. Full ink stays, for the reason given there: the
+   figure's name outranks the muted terms inside it, and now by size and weight as well.
+   Five of them: OKLCH and WCAG Contrast over 1.2's lenses, Lightness, Chroma and Hue over 1.3's
+   ramps. The phone story's figure label keeps the label voice — it is a finding, a sentence, where
+   these are names. */
+.about-route .about-figure__label{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);
+  line-height:1.2;color:var(--on-surface);
+}
+/* 3.1'S COLOUR CARDS NAME THEIR ROLE THE SAME WAY (18.09.26, by request): Background, Surface, Text,
+   Primary, Secondary, Accent at the buttons' 13px Medium in their own case, where they were the
+   uppercase label voice. The phone story's role cards are the same component and move with them. */
+.about-route .about-role__name,
+[data-mobile-story] .about-role__name{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);
+  line-height:1.2;
 }
 
 /* THE FEATURE PILLS SPEAK LIKE THE BANNER'S BUTTONS (17.09.26, audit A4, by request): --fs-body,
@@ -405,12 +426,12 @@
    whole length arguing are the real description of a colour, printed beside the notation everyone
    already uses. Muted, because it is the annotation and the hex is the name. */
 .about-key__ok{
-  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
   letter-spacing:var(--track-flat);text-transform:uppercase;
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
 }
 .about-key__hex,.about-key__pct{
-  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
   font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
   font-variant-numeric:tabular-nums;
 }
@@ -804,11 +825,16 @@
 .about-role__swatch{display:block;width:100%;height:clamp(56px,7vw,96px);margin-bottom:4px;border-radius:calc(var(--radius-card) - 8px)}
 .about-route .about-role__name,
 [data-mobile-story] .about-role__name{color:var(--on-surface)}
+/* The name's two annotations stay a size below it (18.09.26, by request: "keep each line's own
+   size"), at Medium and in their own case like the name: the share reads "34.9% of the frame". The
+   hex keeps its capitals because the phone story hands some hexes over in lower case, and notation
+   on this site is written #6881AE wherever it comes from. */
 .about-role__hex,.about-role__note{
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
+  font-size:var(--fs-fine);letter-spacing:var(--track-flat);
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
 }
+.about-role__hex{text-transform:uppercase}
 
 /* -------------------------------------------------------- the interface preview
 

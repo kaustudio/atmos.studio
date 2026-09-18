@@ -273,6 +273,18 @@ case list in global.css. The three heads still have no edge (global.css removed 
 the stadium shows only in the hover and press tint; the sorted column is full ink with its chevron. Palette
 sits on the chips' baseline (7px under the text, as their padding puts it), measured level.
 
+**How it Works' labels speak like its buttons (by request).** Five figure labels (OKLCH, WCAG
+Contrast, Lightness, Chroma, Hue) and 3.1's role names are 13px Medium in their own case, where
+both were the 11px uppercase label voice; the phone story's role names are the same component and
+move with them. The story's figure label stays in the label voice: it is a finding ("3 of 10 pairs
+reach 4.5:1"), a sentence, where these are names. 2.2's card references keep it too.
+
+**2.1's key and the colour cards' annotations are Medium, each at its own size (by request: "keep
+each line's own size").** The key's hex, coordinates and share keep 11px and their two inks; the
+cards' hex and share stay 11px under the 13px name, muted, and the share reads in its own case
+("34.9% of the frame", "Shares the primary swatch"). The hex keeps its capitals, since the phone
+story hands some hexes over in lower case.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
