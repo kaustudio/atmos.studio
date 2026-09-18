@@ -235,6 +235,27 @@ pipeline.js resolves the eight seeds against them and each seed carries a hash o
   always was. The six examples at 1000px q78 total 369 KB against 364 KB for the 900px files they
   replace; the two profiles use their 1200, which on most screens the hero plate has already fetched.
 
+**How it Works' headlines are all Title Case (by request).** The six supplied in sentence case are
+set in the house form, which is Chicago's, as the landing's "Colour Read from Light and Atmosphere"
+already has it: prepositions of any length lower case (with, into, for, in), articles too, and a
+verb's particle capitalised (Stand Out). Figure labels, list labels and notes are not headlines and
+keep their case.
+
+**The Frozen Slate preview wears the site's own shapes (by request).** It had been drawn as an
+interface in general — square corners, a hairline border, uppercase labels. Now the frame takes the
+short panels' 16px and the card `--radius-card`, and the two actions are the system's tiers in the
+banner voice: Primary a filled stadium on `--action-primary-padding`, Accent the secondary tier's
+outlined stadium, 13px Medium, Title Case, 35px tall as the consent banner's Accept and Decline are.
+The colours are still the palette's roles, so 3.3's four checks describe what is drawn. The frame
+keeps an edge as an inset 14% hairline, the swatch idiom, because Frozen Slate's ground is #000 and
+would otherwise vanish into the dark theme's page.
+
+**3.3's photograph takes the hero's corner and loses its ring (by request).** `.about-shot` is
+`--radius-surface`, as the opening plate is, and its `::after` inset `--img-outline` hairline is
+deleted. `isolation:isolate` on the clip is the usual guard against WebKit letting a will-change
+child escape a rounded overflow; the corners were verified in Chrome by pixel, and WebKit is not
+installed here to check.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.

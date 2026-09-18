@@ -432,14 +432,14 @@
 .about-key__hex,.about-key__ok{font-size:var(--fs-fine)}
 .about-key__pct{color:var(--on-surface-muted)}
 
-/* a masked photograph that moves against its frame — the parallax resource's own background pattern */
-.about-shot{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--surface-raised)}
+/* a masked photograph that moves against its frame — the parallax resource's own background pattern.
+   THE HERO'S CORNER AND NO RING (18.09.26, by request): --radius-surface, as the opening plate has,
+   and the inset --img-outline hairline it carried is gone. isolation gives the rounded clip its own
+   stacking context, the usual guard for WebKit, which has let children promoted by will-change
+   escape a rounded overflow clip. Verified in Chrome only (corner pixels are the page's). */
+.about-shot{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--surface-raised);border-radius:var(--radius-surface);isolation:isolate}
 .about-shot__inner{position:absolute;left:0;right:0;top:-12%;height:124%;will-change:transform}
 .about-shot__inner img{display:block;width:100%;height:100%;object-fit:cover}
-.about-shot::after{
-  content:'';position:absolute;inset:0;z-index:1;pointer-events:none;
-  box-shadow:inset 0 0 0 1px var(--img-outline);
-}
 
 /* ===== THE TWO LENSES, THE THREE AXES AND THE THRESHOLDS
    Four figures that carry the page's only genuinely technical material, and the brief for all of them
@@ -814,20 +814,29 @@
 
    A working surface drawn in the assigned roles, not a picture of one. The six roles arrive as custom
    properties on the block, so every colour below is the assignment itself and cannot drift from the
-   grid above it. Its structure is drawn plainly — a hairline, square corners, an uppercase label —
-   so it reads as an interface in general rather than as this site's own, whose controls are round
-   and set in Title Case (corrected 17.09.26, audit H4). */
+   grid above it. THE SHAPES AND THE TYPE ARE THE SITE'S OWN (18.09.26, by request), where they had
+   been drawn plainly — square corners, a hairline border, uppercase labels — to read as an interface
+   in general. Corners are sized for their boxes, and the two actions are the system's primary and
+   secondary tiers in the banner voice: a filled stadium and an outlined one, 13px Medium, Title Case.
+   Only the colours are the palette's, which is the point of the figure. */
 .about-ui{
   height:100%;
   padding:clamp(22px,3vw,44px);
   background:var(--r-bg);
   display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.4vw,30px);
 }
-.about-ui--compact{height:auto;padding:clamp(18px,2.2vw,28px);border:1px solid var(--line-strong)}
+/* The ground is the palette's background, and Frozen Slate's is #000: 1.06 to 1 against the dark
+   theme's page. So it keeps an edge, in the swatch idiom (.about-lens__body) rather than a border —
+   inset, so it follows the corner and takes no layout. 16px, the short panels' corner: the frame is
+   about 205px tall, the height of the empty states that took it. */
+.about-ui--compact{
+  height:auto;padding:clamp(18px,2.2vw,28px);border-radius:var(--radius-panel);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
+}
 /* CENTRED IN THE FRAME, and capped at a reading measure inside it. The card is a specimen of the
    palette, so the ground has to be visible around it on both sides — a card flush to one edge reads
    as a layout rather than as a sample held up against its own background. */
-.about-ui__card{padding:clamp(18px,2.4vw,32px);background:var(--r-surface);width:100%;max-width:46ch;margin-inline:auto}
+.about-ui__card{padding:clamp(18px,2.4vw,32px);background:var(--r-surface);width:100%;max-width:46ch;margin-inline:auto;border-radius:var(--radius-card)}
 .about-route .about-ui__title{
   margin:0 0 10px;color:var(--r-text);
   font-size:var(--fs-subtitle);font-weight:500;line-height:1.2;letter-spacing:var(--track-title);
@@ -845,16 +854,21 @@
 .about-route .about-ui--compact .about-ui__body{
   max-width:36ch;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);
 }
-.about-route .about-ui__actions{display:flex;align-items:center;gap:18px;margin:0}
-.about-ui__btn{
-  display:inline-flex;align-items:center;padding:var(--btn-pad-md);
-  background:var(--r-primary);color:var(--r-text);
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-text) 30%,transparent);
-  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
+.about-route .about-ui__actions{display:flex;align-items:center;gap:8px;margin:0}
+/* The two tiers as .button-006 draws them, in the palette's roles. Primary is its own fill with no
+   edge (--action-primary-line is the surface's own colour); secondary is transparent on the tier's
+   48% edge, mixed from the accent where the site mixes from its ink. Padding and weight are the
+   tiers' tokens, the type is the banner voice (CONSENT_BTN_TYPE and [data-voice="banner"]), and the
+   line box is normal as the banner's is: 35.5px, measured against its Accept and Decline. */
+.about-ui__btn,.about-ui__link{
+  display:inline-flex;align-items:center;border-radius:var(--radius-pill);
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;
+  letter-spacing:var(--track-flat);line-height:normal;white-space:nowrap;
 }
+.about-ui__btn{padding:var(--action-primary-padding);background:var(--r-primary);color:var(--r-text)}
 .about-ui__link{
-  color:var(--r-accent);
-  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;line-height:1;
+  padding:0.75em 1em;color:var(--r-accent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-accent) 48%,transparent);
 }
 
 /* ------------------------------------------------------------ contrast readout
