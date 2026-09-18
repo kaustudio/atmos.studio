@@ -505,11 +505,18 @@ export const renderValsMethods = {
     // walks every swatch PAIR, so computing it twice per palette per render is the one thing here
     // worth not doing. Sorting is applied for the list only: the grid has no column headers,
     // so reordering them would be an invisible change to an order nobody asked to change.
-    const listRows = s.feedView === 'list'
-      ? this.sortDecorated(scopedAll.map((p) => ({ p, met: this.paletteMetrics(p) })), s.sortKey, s.sortDir)
-        .slice(page * pageSize, (page + 1) * pageSize)
-      : [];
-    const scoped = s.feedView === 'list' ? listRows.map((d) => d.p) : scopedAll;
+    /* THE LIST STAYS LAID OUT UNDER THE GRID (18.09.26). It used to be emptied while the grid was up
+       and rebuilt only once the grid's exit had finished, so the page the field faded into was the
+       library with no rows in it (the footer pulled up into their place) and the rows then appeared
+       in one frame. The grid is a fullscreen view OVER the list, so the list is kept exactly as it
+       was left, inert (AppView) while it is covered: the exit reveals the page it lands on, and the
+       document keeps its height, so the scroll position the grid was opened from is the one it
+       closes onto. The grid's own field keeps the unsorted, unpaged set while it is up or leaving
+       (gridUp). */
+    const gridUp = s.feedView === 'grid' || !!s.gridLeaving;
+    const listRows = this.sortDecorated(scopedAll.map((p) => ({ p, met: this.paletteMetrics(p) })), s.sortKey, s.sortDir)
+      .slice(page * pageSize, (page + 1) * pageSize);
+    const scoped = gridUp ? scopedAll : listRows.map((d) => d.p);
     // A list row carries ONLY what recognition needs. The reference image, the large strip with
     // hex labels and the seven-metric readout all used to ride along here for the inline expansion;
     // that expansion is gone and the overview panel above is the single detail surface, so none of
@@ -564,8 +571,7 @@ export const renderValsMethods = {
     const metricValueInv = Object.assign({}, metricValue, { color: 'var(--surface)' });
     const contrastCellInv = Object.assign({}, contrastCell, { color: 'var(--surface)' });
     const timeCellInv = Object.assign({}, timeCell, { color: 'var(--ink-fill-muted)' });
-    const listDecorated = s.feedView === 'list' ? listRows : scoped.map((p) => ({ p, met: this.paletteMetrics(p) }));
-    const feedList = listDecorated.map(({ p, met }, rowIdx) => {
+    const feedList = listRows.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
       return {
         // the column shows the absolute stamp (comparable down a sorted column); the relative form
@@ -2091,8 +2097,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // eight seeded palettes and nothing to page through.
       // scopedAll, never `scoped`: in list view `scoped` is the CURRENT PAGE's rows, so testing it
       // would hide the pager exactly when paging had done its job and left 12 rows on screen.
-      showPageSize: s.feed.length > 0 && s.feedView === 'list' && scopedAll.length > PAGE_SIZES[0],
-      showPager: s.feed.length > 0 && s.feedView === 'list' && pageCount > 1,
+      // Not gated on the view: the list and its footer stay laid out under the grid (see listRows).
+      showPageSize: s.feed.length > 0 && scopedAll.length > PAGE_SIZES[0],
+      showPager: s.feed.length > 0 && pageCount > 1,
       // Osmo toggle-switch mechanic, adapted: sliding pill driven by the active index (squared, token
       // colors/easing), roving tabindex + arrow-key wrap on the buttons; state stays declarative.
       pageSizeOptions: PAGE_SIZES.map((n) => ({
@@ -2121,13 +2128,17 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       prevDisabled: page <= 0, nextDisabled: page >= pageCount - 1,
       prevPage: () => this.setPage(page - 1), nextPage: () => this.setPage(page + 1),
       prevStyle: this.pageNavStyle(page <= 0), nextStyle: this.pageNavStyle(page >= pageCount - 1),
-      listWrapStyle: { display: s.feed.length > 0 && s.feedView === 'list' ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: '100%', borderBottom: '1px solid var(--line)' },
+      listWrapStyle: { display: s.feed.length > 0 ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: '100%', borderBottom: '1px solid var(--line)' },
+      // The list is under the grid while the grid is up: out of the tab order and the accessibility
+      // tree, as it was when it was display:none, but still laid out. It is the reader's again on the
+      // press that closes the grid, not when the field's fade ends — the fade takes no pointer.
+      listInert: s.feedView === 'grid',
       // ===== sortable column headers =====
       // Plain <button>s in a group, so keyboard operation is the platform's, not ours: Tab reaches
       // them in visual order, Enter/Space activates. They carry aria-pressed (the same toggle
       // vocabulary the view toggle and the project chips already use) and each states its NEXT
       // action, so the label is never a lie about what activating it will do.
-      showSortHeader: s.feed.length > 0 && s.feedView === 'list',
+      showSortHeader: s.feed.length > 0,
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [
@@ -2205,7 +2216,12 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // the field out in stage coordinates and so does the open card, so a scrolled stage put both
       // 418px from where they were computed to be. clip forbids the scroll at the source; the engine
       // (centerOnTile) is what brings a focused tile into view, and always was meant to be.
-      spaceStyle: { display: s.feed.length > 0 && s.feedView === 'grid' ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: this._reduce ? 'auto' : 'clip', touchAction: this._reduce ? 'auto' : 'none', userSelect: 'none', cursor: this._reduce ? 'default' : 'grab' },
+      // UP WHILE IT LEAVES. The toggle flips to List on the press (setFeedView), so the view's own
+      // exit runs with the state already on the list; gridLeaving keeps the layer on screen for it.
+      // A leaving field takes no pointer and no focus: a press during its fade lands on the list it is
+      // revealing, and Grid pressed again brings the field back (universe.js _resumeGrid).
+      spaceStyle: { display: s.feed.length > 0 && gridUp ? 'block' : 'none', position: 'fixed', inset: 0, zIndex: 90, background: 'var(--surface-raised)', overflow: this._reduce ? 'auto' : 'clip', touchAction: this._reduce ? 'auto' : 'none', userSelect: 'none', cursor: this._reduce ? 'default' : 'grab', pointerEvents: s.gridLeaving ? 'none' : undefined },
+      spaceLeaving: !!s.gridLeaving,
       universeEngine: !this._reduce, universeReduced: !!this._reduce,
       spaceRef: this.spaceRef, planeRef: this.planeRef, universeCloseRef: this.universeCloseRef,
       // The content layer lives INSIDE the plane, above the lifted card — z 5 over [clones auto,

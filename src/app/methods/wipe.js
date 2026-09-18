@@ -76,10 +76,9 @@ export const wipeMethods = {
     // open a card → logo → Get Started.
     this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
     clearTimeout(this._closeGuard);
-    if (this.state.feedView === 'grid') { this.killSpatial(); this._lenisStart(); try { document.documentElement.style.overflow = ''; } catch (e) { } }
-    // A view swap caught mid-exit has a queued arrival waiting on it; this reset outranks it. Left
-    // alone it would fire after the wipe and pull the reader back into the view they just left.
-    this._viewClosing = false; this._viewPending = null;
+    // The grid, up or still leaving, goes down with the rest under the cover (universe.js _gridOff):
+    // no exit of its own, and nothing pending that could pull the reader back into it after the wipe.
+    if (this.state.feedView === 'grid' || this.state.gridLeaving) this._gridOff();
     /* THE LIBRARY PANEL, TORN DOWN RATHER THAN SWITCHED OFF. It is the one surface here that owns
        something outside its own state — a document-level pointerdown listener, its arrival timeline
        and a close guard — so setting its flag false in the batch below would have left all three
@@ -93,7 +92,7 @@ export const wipeMethods = {
     this.setState(Object.assign({
       backupMenuOpen: false, copyMenuOpen: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
-      feedView: 'list', overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
+      feedView: 'list', gridLeaving: false, overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
     }, extra), afterCb);
   },
@@ -302,6 +301,13 @@ export const wipeMethods = {
     const restoreY = push ? 0 : Math.max(0, opts.scrollY || 0);
 
     const commit = (afterCb) => {
+      /* THE GRID GOES WITH THE PAGE IT IS ON (18.09.26). A reader in the grid who leaves by Back, by
+         Forward or by any link does not press its close first, and nothing used to take it down: the
+         document arrived with the root still locked and Lenis still stopped, so it would not scroll,
+         and the pan engine kept ticking over a field that had left the DOM. The snapshot has already
+         taken the field for the departing half of the gesture, so it is dropped here, under the
+         cover, and the tool comes back on its list. */
+      const grid = (this.state.feedView === 'grid' || this.state.gridLeaving) ? this._gridOff() : null;
       // The address bar moves with the content, not before it — a pushState that lands ahead of the
       // swap is a URL describing a page that is not on screen yet, and a reload in that window
       // serves the wrong one.
@@ -314,7 +320,7 @@ export const wipeMethods = {
       // change said nothing at all: no reload, no focus move of its own, and a <title> swap that
       // screen readers do not reliably announce. The page is the only thing that changed, so the
       // page is what gets said.
-      this.setState({ route: next, announce: routeName(next) + ' page.' }, () => { if (restoreY) this._scrollToY(restoreY); (afterCb || function () { })(); });
+      this.setState(Object.assign({ route: next, announce: routeName(next) + ' page.' }, grid), () => { if (restoreY) this._scrollToY(restoreY); (afterCb || function () { })(); });
     };
 
     // The cover is _wipeCover's; only these four decisions are the route's. The comments that used to

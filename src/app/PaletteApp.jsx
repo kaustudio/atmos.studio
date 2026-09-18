@@ -214,7 +214,7 @@ export default class PaletteApp extends React.Component {
     storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyMasks: null,
     // The image chooser, which covers the story rather than replacing it (see chooseStoryCase).
     storyPicker: false,
-    pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', uOpen: null, overlay: null,
+    pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', gridLeaving: false, uOpen: null, overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
@@ -523,6 +523,9 @@ export default class PaletteApp extends React.Component {
         // second Escape while that close is still playing is not swallowed: it falls through to
         // the field's own exit, which resets the card on the way.
         if (this.state.uOpen != null && !this._uClosing) { e.preventDefault(); this.closeTile(); return; }
+        // A field already leaving swallows the key rather than letting it fall through to the
+        // result stage behind it: one Escape, one step out, even while the exit is still playing.
+        if (this.state.gridLeaving) { e.preventDefault(); return; }
         if (this.state.feedView === 'grid') { e.preventDefault(); this.setFeedView('list'); return; }
         // Close rather than reset: a palette opened from a row goes back to that row (pipeline.js
         // closeResult); one with no row behind it resets exactly as before.
@@ -657,7 +660,8 @@ export default class PaletteApp extends React.Component {
     const themeNow = s.theme;
     if (this._prevFieldTheme !== themeNow) { this._prevFieldTheme = themeNow; if (this._orbit) this.refreshOrbitTheme(); this._procFieldTheme(); }
     // spatial grid lifecycle (independent of stage/current — runs on view toggle too)
-    const wantSpatial = s.feedView === 'grid' && s.feed.length > 0;
+    // A leaving field is still wanted: its exit runs with the state already on the list (universe.js)
+    const wantSpatial = (s.feedView === 'grid' || s.gridLeaving) && s.feed.length > 0;
     const prevWant = this._prevWantSpatial; this._prevWantSpatial = wantSpatial;
     if (wantSpatial && !this._spatialBuilt()) { requestAnimationFrame(() => { if (this.state.feedView === 'grid') this.initSpatial(); }); }
     // Tear down ONLY on a real grid->list (or feed-emptied) transition — never on unrelated commits

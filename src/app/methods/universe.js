@@ -25,47 +25,23 @@ const smooth = (t) => t * t * (3 - 2 * t);
 
 export const universeMethods = {
   setFeedView(v) {
-    // Re-entering grid while the close is still playing: cancel the close and bring the field back
-    // from wherever it is — no teardown, no lost click. (State never left 'grid'.)
-    if (v === 'grid' && v === this.state.feedView && this._uCloseTl && this._uCloseTl.isActive()) {
-      this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate the pending close completion
-      // ...and with it the arrival that close was on its way to. The generation guard makes the
-      // pending finish() a no-op, so nothing else would ever release this latch or run the queued
-      // enter — the toggle would come back to life pointing at a view nobody asked for any more.
-      this._viewClosing = false; this._viewPending = null;
-      try { this._uCloseTl.kill(); } catch (e) { } this._uCloseTl = null;
-      const g = window.gsap, layer = document.querySelector('[data-universe-status]'), plane = document.querySelector('[data-plane]');
-      const chrome = layer ? [...layer.querySelectorAll('[data-universe-chrome]')] : [];
-      if (g) {
-        if (layer) g.to(layer, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance });
-        if (plane) g.to(plane, { scale: 1, duration: this.DUR.state, ease: this.EASE.entrance });
-        if (chrome.length) g.to(chrome, { opacity: 1, y: 0, duration: this.DUR.state, ease: this.EASE.entrance });
-        try { if (this._ticker) g.ticker.add(this._ticker); } catch (e) { }
-      }
-      return;
-    }
+    // Grid pressed again while the field is still leaving: the exit is cancelled and the field comes
+    // back from wherever it has got to — no teardown, no rebuild, no lost click.
+    if (v === 'grid' && this.state.gridLeaving) { this._resumeGrid(); return; }
     if (v === this.state.feedView) return;
-    const from = this.state.feedView;
-    /* ONE RULE FOR EVERY DEPARTURE: whatever is on screen plays its own exit, and the next view is
-       built in that exit's completion.
-
-       Only the exit to the list ever obeyed it. While there was a third, 3D view (removed 10.09.26
-       — the field made it redundant) the two fullscreen views could be swapped DIRECTLY, and those
-       paths tore the leaving view down synchronously on the click: a fully opaque layer lost its
-       entire contents between two frames while it was still the thing being looked at. The rule
-       stays with one fullscreen view because it is the rule, not the workaround. */
-    const enter = v === 'grid' ? () => this._enterGrid() : () => this._enterList();
-    if (from === 'list') { enter(); return; }
-    // A second press while a view is already leaving does not start a second exit — it changes where
-    // the one already running lands. Dropping it instead would swallow Escape during the exit,
-    // which is the one key that must always be able to get someone out of a fullscreen view.
-    if (this._viewClosing) { this._viewPending = enter; return; }
-    this._viewClosing = true;
-    const done = () => { this._viewClosing = false; const next = this._viewPending || enter; this._viewPending = null; next(); };
-    this.closeUniverse(done);
+    if (v === 'grid') { this._enterGrid(); return; }
+    /* THE FIELD PLAYS ITS OWN EXIT, AND THE LIST IS ALREADY THERE (18.09.26). The rule is unchanged —
+       whatever is on screen plays its own exit, and nothing is torn down while it is being looked at
+       — but what the exit uncovers is not built in its completion any more. The list stays laid out
+       under the grid (renderVals listRows), so the state moves to the list ON THE PRESS: the toggle's
+       pill slides as the field starts to go, focus lands on the page at once, and the field's fade
+       is the only thing left running, over the page it is revealing. gridLeaving keeps the layer up
+       for it; closeUniverse's completion takes it down. A second press of List is the view it is
+       already on; Grid pressed during the fade resumes it (above). */
+    this.closeUniverse();
   },
-  // The two arrivals. Each assumes the previous view has ALREADY played its exit and is hidden —
-  // which is what makes it safe to tear down here, before the state flip, rather than after it.
+  // The arrival. It assumes no field is on screen, which is what makes it safe to tear down here,
+  // before the state flip, rather than after it.
   _enterGrid() {
     this._uCloseGen = (this._uCloseGen || 0) + 1;   // invalidate any pending close completion
     this.killSpatial();
@@ -78,47 +54,96 @@ export const universeMethods = {
        floats, above the field, from wherever the grid is opened. */
     try { document.documentElement.style.overflow = 'hidden'; } catch (e) { }
     this._bloomNext = true;                              // play the radial assembly bloom on this entrance
-    this.setState({ feedView: 'grid', announce: 'Spatial grid view. Drag to pan the field. Press a card to open it. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
+    this.setState({ feedView: 'grid', gridLeaving: false, announce: 'Spatial grid view. Drag to pan the field. Press a card to open it. Press Escape to return to the list.' }, () => { requestAnimationFrame(() => { const layer = document.querySelector('[data-universe-status]'); if (layer) try { layer.style.visibility = ''; } catch (e) { } this.initSpatial(); const c = this.universeCloseRef.current; if (c) try { c.focus(); } catch (e) { } }); });
   },
-  // The list is the one arrival that keeps its teardown INSIDE the state callback: the page behind
-  // is real document flow rather than a layer of its own, so the fullscreen surface is hidden by the
-  // re-render first and only then emptied.
-  _enterList() {
-    this._lenisStart();
-    try { document.documentElement.style.overflow = ''; } catch (e) { }
-    this.setState({ feedView: 'list', announce: 'List view.' }, () => { this.killSpatial(); requestAnimationFrame(() => { const t = this.gridRef.current && this.gridRef.current.closest('section'); const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => /grid/i.test(b.textContent)); if (gt) try { gt.focus(); } catch (e) { } }); });
+  // Focus returns to the toggle that opened the field — the reader stays where they were in the page.
+  _focusGridToggle() {
+    const t = this.gridRef.current && this.gridRef.current.closest('section');
+    const gt = t && [...t.querySelectorAll('button[aria-pressed]')].find((b) => /grid/i.test(b.textContent));
+    if (gt) try { gt.focus({ preventScroll: true }); } catch (e) { }
   },
-  // Open: the universe layer fades in and the tile field assembles from the viewport centre; close
-  // is reverse() of the same timeline. The pan/Observer engine starts only at forward completion.
-  closeUniverse(done) {
+  /* THE EXIT (18.09.26, "it comes off laggy"). Measured in Chrome at 120Hz before this was written:
+     the first visible change came ~200ms after the press, the fade then ran at 40-60fps, and the
+     list appeared in one frame after it. Three causes, three changes:
+
+     IT STARTS ON THE PRESS. The layer waited a stagger and then faded on EASE.exit, an ease-in, so
+     for the first fifth of a second nothing on screen answered and the whole change was spent in
+     the last frames. It runs from the first frame now, on EASE.reveal — the out-cubic that stays
+     legible for its whole length rather than snapping (motion.js) — over DUR.swap: half gone in a
+     tenth of a second, settled by 0.4, still quicker out than the one-second arrival.
+
+     IT HOLDS THE FRAME RATE, BY NOT SCALING. The field used to recede as it went — the plane settling
+     back to the 0.985 it arrives from — and any change of the plane's scale re-rasterises every
+     card's two blurred copies (a masked blur each, AppView TILE_FADE) on every frame. Measured, each
+     variant on a fresh page: the fade alone 120fps, the fade with the recession about half that, and
+     back to 120 with either the blur or the mask taken off the copies. No compositing hint saved it
+     (will-change on the plane, the layer or the copies). A 1.5% recession under a fade is barely
+     seen; the frames it cost were not, so the fade carries the exit alone.
+
+     THE PAGE IS ALREADY UNDERNEATH. The list is laid out under the field (renderVals listRows), so
+     the fade uncovers the page it lands on instead of an empty library that fills a frame later.
+
+     The dock (the hint and this close) rides the layer's fade — an opacity of its own would switch
+     its glass off mid-exit (glass-is-fill-defined) — and sinks toward the edge it stands on. */
+  closeUniverse() {
     const g = window.gsap, layer = document.querySelector('[data-universe-status]');
-    const myGen = (this._uCloseGen = (this._uCloseGen || 0) + 1);
-    const finish = () => { if (myGen !== this._uCloseGen) return; if (layer) try { layer.style.visibility = 'hidden'; } catch (e) { } done(); };   // hide synchronously before ANY teardown can un-hide
+    const gen = (this._uCloseGen = (this._uCloseGen || 0) + 1);
+    this.setState({ feedView: 'list', gridLeaving: true, announce: 'List view.' }, () => { if (gen === this._uCloseGen) this._focusGridToggle(); });
+    const finish = () => { if (gen !== this._uCloseGen) return; if (layer) try { layer.style.visibility = 'hidden'; } catch (e) { } this._finishGridLeave(); };   // hide synchronously before ANY teardown can un-hide
     if (this._reduce || !g || !layer) { finish(); return; }
-    /* THE EXIT IS WRITTEN, NOT REVERSED, for every departure. It used to reverse the bloom at 1.8x
-       when a bloom had played and recede by hand only on a rebuilt field, so the same press left
-       two ways depending on whether a filter had been touched since arriving — and the reversed
-       half was the worse one: a reversed expo-out is an expo-in, and the layer's own fade sat in
-       the first third of the assembly, so on the way out nothing moved for over half the run and
-       then everything dropped at once. One exit now, the shape the reverse was trying to produce:
-       chrome lifts out first, the plane settles back to where it arrived from, the layer goes
-       last — on the exit curve, about half a second, quicker than the arrival as every exit here
-       is (motion.js). */
     try { if (this._ticker) g.ticker.remove(this._ticker); } catch (e) { }   // freeze the pan so the field recedes cleanly
-    const plane = document.querySelector('[data-plane]');
-    const chrome = [...layer.querySelectorAll('[data-universe-chrome]')];
+    this._uRingOff();
+    const dock = layer.querySelector('[data-grid-dock]');
     if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } }
     // The timeline and the floor share ONE latched completion — passing `finish` to both would let
-    // a slow-but-alive tween land after the floor had already fired, and finish() is not idempotent:
-    // it calls done(), which builds the arriving view. Twice.
-    const land = this._exitFloor('u', 0.5, finish);
-    const tl = this._uCloseTl = g.timeline({ defaults: { ease: this.EASE.exit }, onComplete: land });
-    if (chrome.length) tl.to(chrome, { opacity: 0, y: -6, duration: this.DUR.state }, 0);
-    if (plane) tl.to(plane, { scale: 0.985, duration: this.DUR.swap, transformOrigin: 'center center' }, 0);
-    tl.to(layer, { opacity: 0, duration: this.DUR.swap }, this.DUR.stagger);
+    // a slow-but-alive tween land after the floor had already fired, and finish() is not idempotent.
+    const land = this._exitFloor('u', this.DUR.swap, finish);
+    const tl = this._uCloseTl = g.timeline({ defaults: { duration: this.DUR.swap, ease: this.EASE.reveal }, onComplete: land });
+    tl.to(layer, { opacity: 0 }, 0);
+    if (dock) tl.to(dock, { y: 8 }, 0);
+  },
+  // The exit's completion: the field is hidden, so the page takes its scroll back and the field is
+  // emptied (killSpatial, from here and from componentDidUpdate's grid->list edge).
+  _finishGridLeave() {
+    this._uCloseTl = null;
+    this._lenisStart();
+    try { document.documentElement.style.overflow = ''; } catch (e) { }
+    this.setState({ gridLeaving: false }, () => { if (!this.state.gridLeaving && this.state.feedView === 'list') this.killSpatial(); });
+  },
+  // Grid pressed while the field is leaving: back from wherever the exit has got to, on the entrance
+  // curve. The page was never handed back (_finishGridLeave had not run), so there is nothing to
+  // lock again; the pan resumes where it froze.
+  _resumeGrid() {
+    this._uCloseGen = (this._uCloseGen || 0) + 1;   // the pending exit's completion is void
+    clearTimeout(this._exitFloorT_u); this._exitFloorT_u = null;
+    if (this._uCloseTl) { try { this._uCloseTl.kill(); } catch (e) { } this._uCloseTl = null; }
+    const g = window.gsap, layer = document.querySelector('[data-universe-status]');
+    const dock = layer && layer.querySelector('[data-grid-dock]');
+    this.setState({ feedView: 'grid', gridLeaving: false, announce: 'Spatial grid view.' }, () => { const c = this.universeCloseRef.current; if (c) try { c.focus({ preventScroll: true }); } catch (e) { } });
+    if (!g) return;
+    const back = { duration: this.DUR.state, ease: this.EASE.entrance, overwrite: 'auto' };
+    if (layer) { try { layer.style.visibility = ''; } catch (e) { } g.to(layer, Object.assign({ opacity: 1 }, back)); }
+    if (dock) g.to(dock, Object.assign({ y: 0 }, back));
+    try { if (this._ticker) { g.ticker.remove(this._ticker); g.ticker.add(this._ticker); } } catch (e) { }
+  },
+  /* THE SAFETY NET (18.09.26). Anything that takes the whole screen away from the tool while the
+     field is up — a route change, Back and Forward included, or the start screen — takes the field
+     down with it, instantly, under its own cover: no exit of the field's own, because the cover is
+     already playing one. Before this, Back from the grid reached /about with the root still locked
+     and Lenis still stopped (the page would not scroll), the pan engine still ticking over a field
+     that had left the DOM, and Forward brought back a grid with no clones in it. Returns the state
+     the caller commits alongside its own. */
+  _gridOff() {
+    this._uCloseGen = (this._uCloseGen || 0) + 1;
+    clearTimeout(this._exitFloorT_u); this._exitFloorT_u = null;
+    this.killSpatial();
+    this._lenisStart();
+    try { document.documentElement.style.overflow = ''; } catch (e) { }
+    return { feedView: 'list', gridLeaving: false };
   },
   killSpatial() {
     this._spatialLive = false;
+    this._uRingEl = null;
     this._resetOpenTile();   // before the cards go: it reads the open card's element
     if (this._obs) { try { this._obs.kill(); } catch (e) { } this._obs = null; }
     if (this._ticker && window.gsap) { window.gsap.ticker.remove(this._ticker); } this._ticker = null;
@@ -192,9 +217,10 @@ export const universeMethods = {
         if (this.state.feedView !== 'grid' || this._uOpenCard || this._uClosing || this._ovOpen || !this._uPos || !this._uView || !this._engineStarted) return;
         const t = e.target, tag = t && t.tagName;
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
-        if (e.key === ' ' && !(tag === 'BUTTON' || tag === 'A')) { e.preventDefault(); this._uPos.ty -= this._uView.mid.y * 1.6 * (e.shiftKey ? -1 : 1); return; }
+        if (e.key === ' ' && !(tag === 'BUTTON' || tag === 'A')) { e.preventDefault(); this._uHandPan(); this._uPos.ty -= this._uView.mid.y * 1.6 * (e.shiftKey ? -1 : 1); return; }
         if (!e.key.startsWith('Arrow')) return;
         e.preventDefault();
+        this._uHandPan();
         if (e.key === 'ArrowLeft') this._uPos.tx += this._uView.cellW; if (e.key === 'ArrowRight') this._uPos.tx -= this._uView.cellW;
         if (e.key === 'ArrowUp') this._uPos.ty += this._uView.cellH; if (e.key === 'ArrowDown') this._uPos.ty -= this._uView.cellH;
       };
@@ -304,7 +330,8 @@ export const universeMethods = {
       // the open card, as the render loop sees it: k is the reference's open.c, w/h the element's
       // live size (the matrix has to divide by what the element IS, not what it was)
       const open = this._uOpenK = { k: 0, w: TW, h: TH, cell: null, box: null, panel: null, portrait: false };
-      this._uView = { mid, cursor, lens, fine, pos, cellW, cellH, GAP, TW, TH };
+      // `panning`: a hand (drag, wheel, keys) is moving the field — the ring stands down (stackEnter)
+      const view = this._uView = { mid, cursor, lens, fine, pos, cellW, cellH, GAP, TW, TH, panning: false };
 
       // the torch: a transparent hole of `hole` px, then a smoothstep ramp out to `edge`
       const hole = cellW * (fine ? TORCH : TORCH_TOUCH), edge = hole * 2;
@@ -429,6 +456,8 @@ export const universeMethods = {
         // the lens fades while the field is travelling — a bulge riding a pan reads as a wobble
         const vel = Math.abs(pos.tx - pos.x) + Math.abs(pos.ty - pos.y), calm = 1 / (1 + vel / 40);
         lens.c = damp(lens.c, lens.t * calm, BULGE_EASE, dt);
+        // A hand pan has settled: the ring comes back on whatever card the pointer is resting over.
+        if (view.panning && vel < 0.5 && wrapper.getAttribute('data-universe-status') !== 'dragging') { view.panning = false; this._uRingAtPointer(); }
         const still = Math.abs(pos.tx - pos.x) < 0.1 && Math.abs(pos.ty - pos.y) < 0.1
           && Math.abs(cursor.x - cursor.cx) < 0.1 && Math.abs(cursor.y - cursor.cy) < 0.1
           && Math.abs(lens.t * calm - lens.c) < 0.001;
@@ -454,6 +483,7 @@ export const universeMethods = {
           onStop: () => { wrapper.setAttribute('data-universe-status', 'idle'); },
           onChange: (self) => {
             if (this._uOpenCard || this._uClosing) return;   // the field is held while a card is open
+            this._uHandPan();
             const isWheel = self.event.type === 'wheel'; const sp = isWheel ? WHEEL : DRAG;
             const dx = g.utils.clamp(-CLAMP, CLAMP, self.deltaX * sp), dy = g.utils.clamp(-CLAMP, CLAMP, self.deltaY * sp);
             if (!isWheel && (Math.abs(dx) > 1 || Math.abs(dy) > 1)) this._uMoved = true;
@@ -476,7 +506,7 @@ export const universeMethods = {
       const bloom = this._bloomNext && !this._reduce && g;
       this._bloomNext = false;
       const inners = cards.map((cd) => cd.el.querySelector('[data-tile-inner]')).filter(Boolean);
-      const chrome = [...wrapper.querySelectorAll('[data-universe-chrome]')];
+      const dock = wrapper.querySelector('[data-grid-dock]');
       const layer = document.querySelector('[data-universe-status]');
       if (layer) try { layer.style.visibility = ''; } catch (e) { }   // clear any close-finish visibility guard
       if (this._uBloomTl) { try { this._uBloomTl.kill(); } catch (e) { } this._uBloomTl = null; }
@@ -484,7 +514,7 @@ export const universeMethods = {
         if (layer && g) g.set(layer, { opacity: 1 });
         g.set(inners, { opacity: 1, y: 0, clearProps: 'transform' });
         g.set(plane, { clearProps: 'transform' });
-        if (chrome.length) g.set(chrome, { opacity: 1, y: 0, clearProps: 'transform' });
+        if (dock) { g.set(dock, { '--dock-glass': 1, '--dock-ink': 1, y: 0 }); dock.style.visibility = ''; dock.removeAttribute('data-glass-anim'); }
         startEngine();
       } else {
         /* THE CARDS APPEAR, THEY DO NOT ASSEMBLE. The bloom used to scale every card from 0.9 and
@@ -499,7 +529,7 @@ export const universeMethods = {
            0.62 reveal token), because a field of thirty cards fading up is one large surface
            arriving, not a line of type — the closest sibling is the overlay arrival at 0.8, and
            this is a screen, not a panel. The radial spread scales with it so the order still
-           reads. The exit (closeUniverse) keeps its half second: quicker out than in, as ever. */
+           reads. The exit (closeUniverse) takes 0.4s: quicker out than in, as ever. */
         const ARRIVE = 1;
         const dist = cards.map((cd) => { const q = quad(cd); return Math.hypot((q.tl.x + q.br.x) / 2, (q.tl.y + q.br.y) / 2); });
         const maxD = Math.max.apply(null, dist) || 1, SPREAD = ARRIVE * 0.5;
@@ -508,14 +538,16 @@ export const universeMethods = {
         if (layer) g.set(layer, { opacity: 0 });
         g.set(plane, { scale: 0.985, transformOrigin: 'center center' });
         g.set(inners, { opacity: 0, y: 10 });
-        if (chrome.length) g.set(chrome, { opacity: 0, y: -6 });
+        // The dock rises into place from the edge it stands on, its pane and its ink coming up with it
+        // (never an opacity: see global.css [data-grid-dock])
+        if (dock) { dock.style.visibility = ''; dock.setAttribute('data-glass-anim', ''); g.set(dock, { '--dock-glass': 0, '--dock-ink': 0, y: 8 }); }
         // The arrival only. The exit is written by hand in closeUniverse — a reversed expo-out is
         // an expo-in that holds still for half its length — so this timeline is never reversed.
         const tl = g.timeline({ onComplete: startEngine });
         if (layer) tl.to(layer, { opacity: 1, duration: ARRIVE * 0.5, ease: this.EASE.entrance }, 0);
         tl.to(plane, { scale: 1, duration: ARRIVE, ease: this.EASE.entrance, transformOrigin: 'center center' }, 0);
         tl.to(inners, { opacity: 1, y: 0, duration: ARRIVE, ease: this.EASE.entrance, stagger: (i) => delays[i] }, 0);
-        if (chrome.length) tl.to(chrome, { opacity: 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: 0.06 }, ARRIVE * 0.45);
+        if (dock) tl.to(dock, { '--dock-glass': 1, '--dock-ink': 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, onComplete: () => dock.removeAttribute('data-glass-anim') }, ARRIVE * 0.45);
         this._uBloomTl = tl;
       }
       this._built = true;   // synchronous 'field built' flag — stops the cDU gate re-scheduling rebuilds that strip clones
@@ -529,15 +561,43 @@ export const universeMethods = {
      change is a state change without a geometry change, which is this app's rule for a control
      under a pointer (see the press tiers in global.css). The lens and the parallax are the FIELD
      answering the pointer, not the control — the reference's own distinction, kept. */
+  /* THE RING ANSWERS A POINTER, NOT A PASSING FIELD (18.09.26, "images are glitchy when dragging
+     and scrolling"). A drag carries the pointer across card after card, and a wheel slides cards
+     under a pointer that never moved, and every one of them took the hover: measured over a drag and
+     a wheel burst, a ring was lit on 663 of 701 frames, two at once at times — a dark hairline
+     flickering round the photographs as they went by. While a hand is moving the field (_uHandPan:
+     a drag, the wheel, the arrow keys) the ring stands down, and the one that was lit goes out; when
+     the pan settles, the card the pointer is resting on takes it (tick -> _uRingAtPointer). Keyboard
+     focus is not a hand pan, so a focused tile keeps its ring while centerOnTile brings it in. One
+     ring at a time: a new one puts out the last. */
   stackEnter(el) {
-    if (!el || el.hasAttribute('data-universe-open')) return; const r = el.querySelector('[data-ring]');
+    if (!el || el.hasAttribute('data-universe-open')) return;
+    if (this._uView && this._uView.panning) return;
+    const r = el.querySelector('[data-ring]');
+    if (this._uRingEl && this._uRingEl !== el) this.stackLeave(this._uRingEl);
+    this._uRingEl = el;
     if (this._reduce || !window.gsap) { if (r) r.style.opacity = '1'; return; }
     if (r) window.gsap.to(r, { opacity: 1, duration: this.DUR.state, ease: this.EASE.standard, overwrite: 'auto' });
   },
   stackLeave(el) {
     if (!el) return; const r = el.querySelector('[data-ring]');
+    if (this._uRingEl === el) this._uRingEl = null;
     if (this._reduce || !window.gsap) { if (r) r.style.opacity = '0'; return; }
     if (r) window.gsap.to(r, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, overwrite: 'auto' });
+  },
+  // A hand has started moving the field: the ring stands down until the pan settles.
+  _uHandPan() {
+    if (this._uView) this._uView.panning = true;
+    this._uRingOff();
+  },
+  _uRingOff() { if (this._uRingEl) this.stackLeave(this._uRingEl); },
+  // The pan has settled: whatever card the pointer rests on answers it, as if it had just arrived there.
+  _uRingAtPointer() {
+    const V = this._uView;
+    if (!V || !V.fine || !V.lens.t || this._uOpenCard || this._uClosing) return;
+    const hit = document.elementFromPoint(V.cursor.x + V.mid.x, V.cursor.y + V.mid.y);
+    const card = hit && hit.closest && hit.closest('[data-plane] [data-feed]');
+    if (card) this.stackEnter(card);
   },
   /* ================= THE OPEN CARD =================
      Press a card and it comes to the centre, flattens, grows to its open size and a panel slides
@@ -707,16 +767,29 @@ export const universeMethods = {
     this._uViewClose(true, true);
     if (this.state.uOpen != null) this.setState({ uOpen: null });
   },
-  // The corner close mark, shown or put away. Hidden = faded on the exit curve, then visibility
-  // hidden so it leaves the tab order and the accessibility tree; shown = visible first, then
-  // faded in on the entrance curve. `instant` is the reset path.
+  // The dock — the hint and the close — put away while a card is open, and back when it is home.
+  // Hidden = the pane and its ink go out on the exit curve as it sinks, then visibility hidden so the
+  // close leaves the tab order and the accessibility tree; shown = visible first, then back up on the
+  // entrance curve. Never an opacity on the pair: see global.css [data-grid-dock]. `instant` is the
+  // reset path. The hint goes with the close because a held field has nothing to drag.
   _uViewClose(show, instant = false) {
     const g = window.gsap, btn = this.universeCloseRef && this.universeCloseRef.current;
-    if (!btn) return;
+    const dock = btn && btn.closest('[data-grid-dock]');
+    if (!dock) return;
     if (this._uViewCloseTw) { try { this._uViewCloseTw.kill(); } catch (e) { } this._uViewCloseTw = null; }
-    if (instant || this._reduce || !g) { btn.style.opacity = show ? '' : '0'; btn.style.visibility = show ? '' : 'hidden'; return; }
-    if (show) { btn.style.visibility = ''; this._uViewCloseTw = g.to(btn, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }); }
-    else this._uViewCloseTw = g.to(btn, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, onComplete: () => { btn.style.visibility = 'hidden'; } });
+    const cur = (n) => { const v = parseFloat(getComputedStyle(dock).getPropertyValue(n)); return isNaN(v) ? 1 : v; };
+    const done = () => { dock.removeAttribute('data-glass-anim'); this._uViewCloseTw = null; };
+    if (instant || this._reduce || !g) {
+      dock.removeAttribute('data-glass-anim');
+      if (g) g.set(dock, { '--dock-glass': show ? 1 : 0, '--dock-ink': show ? 1 : 0, y: show ? 0 : 8 });
+      else { dock.style.setProperty('--dock-glass', show ? '1' : '0'); dock.style.setProperty('--dock-ink', show ? '1' : '0'); }
+      dock.style.visibility = show ? '' : 'hidden';
+      return;
+    }
+    const from = { '--dock-glass': cur('--dock-glass'), '--dock-ink': cur('--dock-ink') };
+    dock.setAttribute('data-glass-anim', '');
+    if (show) { dock.style.visibility = ''; this._uViewCloseTw = g.fromTo(dock, from, { '--dock-glass': 1, '--dock-ink': 1, y: 0, duration: this.DUR.state, ease: this.EASE.entrance, onComplete: done }); }
+    else this._uViewCloseTw = g.fromTo(dock, from, { '--dock-glass': 0, '--dock-ink': 0, y: 8, duration: this.DUR.state, ease: this.EASE.exit, onComplete: () => { dock.style.visibility = 'hidden'; done(); } });
   },
   // bring a focused original tile into view (keyboard) by panning the field toward centre
   // — called only when the last input was keyboard (_kbdInput); pointer focus never moves the camera

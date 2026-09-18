@@ -149,9 +149,11 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 [data-ix]{text-transform:uppercase!important}
 /* THE SEGMENTED CONTROL AND ITS CHIPS KEEP THEIR OWN CASE (17.09.26, audits D1 and G4, by request):
    List / Grid, All / Unfiled and the project chips, the library panel's tabs, the page sizes, the
-   contrast checker's rails and its Passing Only. Set like the analytics banner's buttons, 13px
-   Medium, from viewToggleOptStyle; this lifts the capitals the voice above gives every control. */
-[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix]{text-transform:none!important}
+   contrast checker's rails and its Passing Only — and since 18.09.26, by request, the applied-filter
+   chips and Clear Filters under them. Set like the analytics banner's buttons, 13px Medium, from
+   viewToggleOptStyle (the applied row inline, AppView); this lifts the capitals the voice above
+   gives every control. */
+[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
 /* The anchor dock's own case exemption went with the dock (17.09.26). */
 /* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").
@@ -2767,15 +2769,50 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   border:1px solid color-mix(in srgb, var(--on-surface) calc(12% * var(--consent-glass, 1)), transparent);
   border-radius:var(--radius-surface);
 }
+/* THE GRID'S DOCK (18.09.26, by request): the hint and the close, one pair at the bottom centre, in
+   the front page's glass — the landing's quiet act ([data-landing] .glass-cta above): the page's own
+   surface at 70% over the 12px blur, the 12% hairline, the pill, and .glass-cta's own 14px Medium in
+   Title Case, with the ink as the label. The close is the same pane as a 32px circle, which is the
+   pill's own height (14 of label on line-height 1, 8 over and under, the hairline twice), so the two
+   stand on one line. It replaces the label chip that stood alone in the bottom-left corner.
+
+   --dock-glass SCALES THE PANE and --dock-ink its contents, 1 at rest. The pair arrives, hides while
+   a card is open and comes back on those two and a rise (universe.js), never on an opacity of its
+   own: glass at an opacity below 1 becomes its own backdrop root, and its blur goes out mid-fade
+   (the banner's --consent-glass, for the same reason). On the field's exit it rides the layer's fade,
+   which keeps the field inside its backdrop. data-glass-anim holds the pane's own transitions off
+   while a tween is writing it, so the two cannot ease toward different values.
+
+   HOVER HOLDS THE PANE: the close's answer is the × through its mask, as every close mark's is.
+   Where the swap does not run — touch, reduced motion — a tenth of ink goes into the pane on press,
+   as it does on the landing. */
+[data-grid-dock]{--dock-glass:1;--dock-ink:1}
+[data-grid-dock] .glass-cta{
+  pointer-events:auto;
+  background-color:color-mix(in srgb, var(--surface) calc(70% * var(--dock-glass)), transparent);
+  -webkit-backdrop-filter:blur(calc(var(--glass-blur) * var(--dock-glass)));backdrop-filter:blur(calc(var(--glass-blur) * var(--dock-glass)));
+  border-color:color-mix(in srgb, var(--on-surface) calc(12% * var(--dock-glass)), transparent);
+  color:var(--on-surface);
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover),
+             color var(--dur-chrome) var(--ease-button-hover);
+}
+[data-grid-dock] [data-grid-hint]{pointer-events:none;cursor:default}
+[data-grid-dock] [data-grid-close]{width:32px;height:32px;padding:0}
+.grid-dock__ink{display:inline-flex;align-items:center;opacity:var(--dock-ink)}
+[data-grid-dock][data-glass-anim] .glass-cta{transition:none}
+@media (hover:hover){
+  [data-grid-dock] .glass-cta:hover:not(:disabled){background-color:color-mix(in srgb, var(--surface) calc(70% * var(--dock-glass)), transparent)}
+}
+[data-grid-dock] .glass-cta:active:not(:disabled){background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) calc(70% * var(--dock-glass)), transparent)}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  [data-grid-dock] .glass-cta:active:not(:disabled){background-color:color-mix(in srgb, var(--surface) calc(70% * var(--dock-glass)), transparent)}
+}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  [data-grid-dock] [data-grid-close]:hover:not(:disabled){background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) calc(70% * var(--dock-glass)), transparent)}
+}
 /* The pane's blur and tint, restated against the same number. -webkit- first, standard last — the
    order the build keeps; see .button-006. */
-/* A GLASS CHIP: a floating label with no action, over something that moves (today the grid view's
-   "Drag or scroll to explore"). The bar's recipe at the size of a control: the glass pane, the 12%
-   hairline, a pill, and the 32px height of the close mark it shares the field with. Its padding is
-   --row-inset, the inset a surface gives its content, which is the bar's padding too. The label is
-   the label voice: --fs-label, capitals, flat tracking, muted. */
-.glass-chip{display:inline-flex;align-items:center;height:32px;padding:0 var(--row-inset);border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);border-radius:var(--radius-pill);isolation:isolate}
-.glass-chip__label{position:relative;z-index:1;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;line-height:1}
 .consent > .glass-effect{
   --glass-tint:color-mix(in srgb, var(--surface) calc(70% * var(--consent-glass, 1)), transparent);
   -webkit-backdrop-filter:blur(calc(var(--glass-blur) * var(--consent-glass, 1)));

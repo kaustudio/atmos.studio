@@ -2827,15 +2827,19 @@ function FeedSection({ vals }) {
           group order — each removable on its own, so a narrowing can be undone from either end.
           THE APP'S CLOSE GLYPH, IN THE SWAP (17.09.26, audit C2, by request). The cross was a typed
           "✕" and nothing moved on hover; it is IconClose now, and the label and the glyph slide
-          through one mask together, the way a button-006 carries its icon inside its label. */}
+          through one mask together, the way a button-006 carries its icon inside its label.
+          THE SCOPE CHIPS' VOICE (18.09.26, by request): the chips and Clear Filters are set like All /
+          Unfiled above them, 13px Medium in the case their labels are written in (global.css lifts
+          the capitals for [data-applied-filters]), where they were the tool's 11px capitals. The ×
+          is the close mark every other button carries, at its own 12px (it was drawn down to 10). */}
       {vals.appliedTags.map((t) => (
-        <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
-          <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.label}<IconClose size={10} /></span></TextSwap>
+        <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
+          <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.label}<IconClose /></span></TextSwap>
         </button>
       ))}
       {/* No aria-label: the visible text is the accessible name, so label-in-name (SC 2.5.3) can
           never drift. */}
-      <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear filters</TextSwap></button>
+      <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear Filters</TextSwap></button>
     </div>
   );
 
@@ -2950,7 +2954,7 @@ function FeedSection({ vals }) {
             columns are a different table's. The date column's private 16px (chip margin, stamp
             padding) is gone — this shared padding is that inset now, held once. */}
         {vals.showSortHeader && (
-          <div role="group" aria-label="Sort the palette list" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 var(--row-inset) 8px;border-bottom:1px solid var(--line-strong)')}>
+          <div role="group" aria-label="Sort the palette list" inert={vals.listInert || undefined} style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:end;gap:var(--grid-gutter);width:100%;padding:0 var(--row-inset) 8px;border-bottom:1px solid var(--line-strong)')}>
             {/* Not a button: there is no name sort, and a label that looks pressable but is not is
                 worse than a label. It names the two tracks the strip and the palette name share —
                 the row's identity — so the header accounts for every column rather than starting
@@ -3002,7 +3006,9 @@ function FeedSection({ vals }) {
 
         {/* LIST view (canonical). The id is what the toolbar's aria-controls points at, so a
             screen reader can say which region those filter controls act on. */}
-        <div id="library-list" data-list-wrap="1" style={vals.listWrapStyle}>
+        {/* Inert while the grid covers it: laid out, so the grid's exit reveals it, but out of the tab
+            order and the accessibility tree, as display:none used to keep it (renderVals listRows). */}
+        <div id="library-list" data-list-wrap="1" inert={vals.listInert || undefined} style={vals.listWrapStyle}>
           {vals.feedList.map((c) => (
             /* Enter and leave are on the WRAP, not the row: the folder and bin buttons are the
                wrap's children beside the row, so a pointer crossing onto one of them left the row
@@ -3067,7 +3073,7 @@ function FeedSection({ vals }) {
             also one page, but choosing 12 there WOULD split it. Both conditions live in
             renderVals; when neither holds, the <nav> is not rendered at all. */}
         {(vals.showPageSize || vals.showPager) && (
-          <nav aria-label="Palette list pages" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
+          <nav aria-label="Palette list pages" inert={vals.listInert || undefined} style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:16px 0 0')}>
             {vals.showPageSize ? (
               <div role="group" aria-label="Palettes per page" style={sx('display:flex;align-items:center;gap:10px')}>
                 {/* The words "Per page" stood here and are gone by request. The control is three
@@ -3103,7 +3109,7 @@ function FeedSection({ vals }) {
         )}
 
         {/* FULLSCREEN PALETTE UNIVERSE (overscanning, wrapping field) */}
-        <div ref={vals.spaceRef} role="region" aria-label="Palette universe, spatial view" data-universe-status="idle" style={vals.spaceStyle}>
+        <div ref={vals.spaceRef} role="region" aria-label="Palette universe, spatial view" data-universe-status="idle" inert={vals.spaceLeaving || undefined} style={vals.spaceStyle}>
 
           {vals.universeEngine && (<>
             <div ref={vals.planeRef} data-plane="1" style={sx('position:absolute;top:0;left:0;width:100%;height:100%')}>
@@ -3152,9 +3158,10 @@ function FeedSection({ vals }) {
           </>)}
 
           {vals.universeReduced && (
-            /* Reduced motion's plain grid scrolls under the bar and the close row like everything else,
-               and starts clear of both: the bar, the air, the 32px close row, the air again. */
-            <div data-lenis-prevent="1" style={sx('position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;padding:calc(var(--nav-top) * 3 + var(--nav-h) + 32px) var(--page-gutter) var(--page-gutter)')}>
+            /* Reduced motion's plain grid scrolls under the bar and above the dock like everything else,
+               and starts clear of the bar (the bar, the air) and ends clear of the dock (the air, its
+               32px, the air again). */
+            <div data-lenis-prevent="1" style={sx('position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;padding:calc(var(--nav-top) * 2 + var(--nav-h)) var(--page-gutter) calc(var(--page-gutter) * 2 + 32px)')}>
               <div style={sx('display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;max-width:1200px;margin:0 auto')}>
                 {vals.feedNodes.map((c, ci) => (
                   <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onClick={c.onClick} style={sx('position:relative;display:block;text-align:left;width:100%;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-card);padding:0;margin:0;cursor:pointer;font:inherit;overflow:hidden')}>
@@ -3178,28 +3185,22 @@ function FeedSection({ vals }) {
             </div>
           )}
 
-          {/* UNIVERSE CHROME, UNDER THE FLOATING BAR (15.09.26, by request). The bar floats over the field
-              now (header 95, this stage 90), and this row used to be the stage's top 56px, which put
-              the close mark exactly under the bar's right end. It stands below the bar instead, the
-              same air under it as over it (--nav-top), with its right edge on the bar's right edge,
-              the grid's outer line: still the top-right corner where a full-screen view's close is
-              looked for, and the stage's own, not a control added to the site's bar. */}
-          <div data-universe-chrome="1" style={sx('position: absolute; top: calc(var(--nav-top) * 2 + var(--nav-h)); left: 0; right: 0; height: 32px; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 var(--page-gutter); pointer-events: none')}>
-            <div style={sx('display:flex;align-items:baseline;gap:12px;pointer-events:auto')}></div>
-            {/* The app's close mark, at the 32px circle every other surface uses, with the same one
-                deviation: --surface behind it, because this one floats over a live WebGL field too.
-                The pair are the app's only two full-screen stages and they now leave the same way. */}
-            <button type="button" ref={vals.universeCloseRef} data-ix="press" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe, or press Escape" title="Close" style={sx('pointer-events:auto;flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+          {/* THE DOCK (18.09.26, by request): the hint and the close as one pair at the bottom centre,
+              in the front page's glass (the landing's quiet .glass-cta: the masthead pane, the 12%
+              hairline, the pill, 14px Medium in Title Case). The close used to stand alone under the
+              bar's right end and the hint in the bottom-left corner as a label chip; they belong
+              together, so they share one edge, one baseline and one way in and out. The pair's glass
+              arrives and leaves on --dock-glass and its ink on --dock-ink rather than on an opacity,
+              which would switch the blur off mid-fade (universe.js _uViewClose, global.css).
+              The close keeps the close mark's rule: the × sliding through its mask is the hover, and
+              the pane holds still under the pointer. No data-ix: .glass-cta states its own contract,
+              and the press tier's close-mark rule would clear the pane on hover. */}
+          <div data-grid-dock="1" style={sx('position:absolute;left:0;right:0;bottom:var(--page-gutter);z-index:5;display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none')}>
+            {vals.universeEngine && (
+              <span className="glass-cta" data-grid-hint="1" aria-hidden="true"><span className="grid-dock__ink">Drag or Scroll to Explore</span></span>
+            )}
+            <button type="button" ref={vals.universeCloseRef} className="glass-cta" data-grid-close="1" data-focus="chrome" onClick={vals.setList} aria-label="Close palette universe, or press Escape" title="Close"><span className="grid-dock__ink"><TextSwap><IconClose /></TextSwap></span></button>
           </div>
-
-          {vals.universeEngine && (
-            /* THE HINT IS A GLASS CHIP (15.09.26, by request: match the design system). It was a plate of
-               its own: 88% surface under a --line stroke, tracked out at .06em, 20 and 18px off the
-               corner. It takes the system's pieces now: the bar's glass (the field pans behind it,
-               which is what glass is for), a pill, the flat tracking every label keeps, and the page
-               gutter off both edges, so it stands on the grid's outer lines like the bar. */
-            <div data-universe-chrome="1" aria-hidden="true" className="glass-chip" style={sx('position:absolute;left:var(--page-gutter);bottom:var(--page-gutter);z-index:5;pointer-events:none')}><GlassEffect /><span className="glass-chip__label">Drag or scroll to explore</span></div>
-          )}
         </div>
 
       </div>
