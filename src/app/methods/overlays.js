@@ -165,9 +165,12 @@ export const overlayMethods = {
     } else { commit(); }
   },
   undoDelete() {
+    // A PROJECT'S UNDO REFILES THROUGH withProjects (19.09.26). It wrote the legacy projectId alone,
+    // which nothing reads since membership became the projectIds set, so the project came back empty
+    // while the toast said it was restored.
     if (this._deletedProject) {
       const dp = this._deletedProject; this._deletedProject = null;
-      this.setState((st) => { const projects = st.projects.slice(); projects.splice(Math.min(dp.index, projects.length), 0, dp.project); const feed = st.feed.map((p) => dp.palIds.indexOf(p.id) >= 0 ? Object.assign({}, p, { projectId: dp.project.id }) : p); return { projects, feed, announce: 'Restored project ' + dp.project.name + '.' }; }, () => { this.persist({ immediate: true }); this._dismissToast(); });
+      this.setState((st) => { const projects = st.projects.slice(); projects.splice(Math.min(dp.index, projects.length), 0, dp.project); const feed = st.feed.map((p) => dp.palIds.indexOf(p.id) >= 0 ? this.withProjects(p, this.palProjects(p).concat([dp.project.id])) : p); return { projects, feed, announce: 'Restored project ' + dp.project.name + '.' }; }, () => { this.persist({ immediate: true }); this._dismissToast(); });
       return;
     }
     const d = this._deleted; this._deleted = null;
@@ -847,7 +850,8 @@ export const overlayMethods = {
     const hash = hashBytes(new TextEncoder().encode(hexes.slice().sort().join(',')));
     const used = new Set(feed.filter((p) => p && p.hash === hash).map((p) => (typeof p.variation === 'number' ? p.variation : 0)));
     let variation = 0; while (used.has(variation)) variation++;
-    const active = (s.activeProject && s.activeProject !== '__unfiled__') ? s.activeProject : null;
+    // A palette made while projects are ticked joins them, so it lands in the view it was made in.
+    const active = (s.activeProjects || []).slice();
     const pal = {
       id: hash + '-' + variation, hash, variation,
       // No image, and no pretence of one: hasImg() returns false and the result view already has a
@@ -857,7 +861,7 @@ export const overlayMethods = {
       // fallback marks "no live reading was applied", which is exactly true here — the harmony never
       // leaves the device, so the Name from row reads Local reading rather than claiming otherwise.
       fallback: true,
-      projectId: active, projectIds: active ? [active] : [],
+      projectId: active[0] || null, projectIds: active,
       swatches,
     };
     this.setState((st) => ({
@@ -993,7 +997,7 @@ export const overlayMethods = {
      state and the Projects tab keep the block schedule — they are chrome, not sections.
      Played immediately rather than armed: there is no cover to wait for. The panel's expo-out
      slide is past 80% of its travel inside its first 150ms, so the copy rises on a surface that is
-     already, to the eye, in place. Rebuilt on every return to the Filter tab (setLibraryTab) and
+     already, to the eye, in place. Stood down whenever the Project group swaps its rows (toggleProjectsEdit, toggleProjectsAll) and
      torn down with the panel (_finishTagClose). */
   _syncLibraryReveal() {
     this._killLibraryReveal();
@@ -1042,38 +1046,41 @@ export const overlayMethods = {
     if (head && !this._reduce) tl.from(head, { opacity: 0, duration: this.DUR.overlayArrive * 0.55, ease: this.EASE.overlay, clearProps: 'opacity' }, this.DUR.overlay * 0.16);
     this._tgTl = tl;
   },
-  /* THE TAB SWITCH, and the arrival that comes with it. The panel is already on screen, so its own
-     entrance timeline is spent; without this the second tab would simply BE there between two
-     frames, which in this app reads as a bug rather than as a change. So the incoming blocks run
-     the drawer's own stagger again, because it is the same event as the panel's own arrival:
-     content arriving inside a panel that is already open.
-
-     The pill under the tabs is a CSS transition on --dur-fold and travels on its own; only what it
-     reveals is scripted here.
-
-     Announced, because the change happens below the control that caused it and a screen reader
-     following the tab strip would otherwise be told nothing at all. The count goes with it: it is
-     the fact that would have been read off the panel had it been looked at. */
-  setLibraryTab(tab) {
-    if (!tab || this.state.libraryTab === tab) return;
-    const n = this.state.projects.length;
-    const said = tab === 'projects'
-      ? 'Projects tab, ' + (n === 1 ? '1 project' : n + ' projects') + '.'
-      : 'Filter tab.';
-    // The Filter tab's reveal modules hold triggers against nodes this state change unmounts, so
-    // they go before the render and come back after it (see _syncLibraryReveal).
+  /* THE PROJECT GROUP'S EDIT (19.09.26, by request), where the Projects tab was. The group's filter
+     rows give way to the management rows (a new-project field, then each project with rename,
+     export and delete), and Done gives them back: one list of projects, turned from picking to
+     managing and back, so the reader never leaves the place the projects are.
+     A rename typed and not yet blurred lands before its field unmounts (_commitProjectNames).
+     THE REVEAL IS STOOD DOWN FIRST. Its triggers hold rows this swap unmounts, and killing it hands
+     back everything it still held hidden, so the other groups simply stay as they are; only what
+     arrives in the Project group moves, on the drawer's own small stagger. Announced, because the
+     change happens below the button that caused it. */
+  toggleProjectsEdit() {
+    const on = !this.state.projectsEditing;
+    if (!on) { try { this._commitProjectNames(); } catch (e) { } }
     this._killLibraryReveal();
-    this.setState({ libraryTab: tab, announce: said }, () => {
-      const g = window.gsap;
-      if (!g || this._reduce) return;
-      const panel = document.querySelector('[data-library-panel]');
-      if (!panel) return;
-      try { this._syncLibraryReveal(); } catch (e) { }
-      // Whatever the tab holds that is NOT a section — the Projects tab in full, the Filter tab's
-      // empty state — takes the drawer's own block stagger, as before.
-      const secs = [...panel.querySelectorAll('[data-tg-sec]')];
-      const rows = secs.length ? secs : (panel.querySelector('[data-sec]') ? [] : [panel]);
-      if (rows.length) g.from(rows, { opacity: 0, y: 8, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
+    this.setState({ projectsEditing: on, announce: on ? 'Editing projects.' : 'Done editing projects.' }, () => {
+      const g = window.gsap; if (!g || this._reduce) return;
+      const items = [...document.querySelectorAll('[data-library-panel] [data-proj-sec] [data-proj-item]')];
+      if (items.length) g.from(items, { opacity: 0, y: 6, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.4, clearProps: 'transform,opacity' });
+    });
+  },
+  /* SHOW ALL, SHOW FEWER (19.09.26, by request: "what if a user have 15-20 projects?"). The group
+     shows five and the rest arrive in place on the same small stagger; going back, the extra rows
+     leave on the exit curve before the state removes them, so neither direction is a cut. */
+  toggleProjectsAll() {
+    const on = !this.state.projectsAll;
+    const g = window.gsap;
+    this._killLibraryReveal();
+    if (!on && g && !this._reduce) {
+      const extra = [...document.querySelectorAll('[data-library-panel] [data-proj-sec] [data-proj-extra]')];
+      if (extra.length) { g.to(extra, { opacity: 0, y: -4, duration: this.DUR.fast, ease: this.EASE.exit, onComplete: () => this.setState({ projectsAll: false, announce: 'Showing five projects.' }) }); return; }
+    }
+    const before = new Set([...document.querySelectorAll('[data-library-panel] [data-proj-sec] [data-sec-row]')]);
+    this.setState({ projectsAll: on, announce: on ? 'Showing all projects.' : 'Showing five projects.' }, () => {
+      if (!on || !g || this._reduce) return;
+      const fresh = [...document.querySelectorAll('[data-library-panel] [data-proj-sec] [data-sec-row]')].filter((r) => !before.has(r));
+      if (fresh.length) g.from(fresh, { opacity: 0, y: 6, duration: this.DUR.state, ease: this.EASE.entrance, stagger: this.DUR.stagger * 0.3, clearProps: 'transform,opacity' });
     });
   },
   /* A RENAME IN A FIELD YOU NEVER LEFT IS STILL A RENAME. The project name commits on blur, which
@@ -1115,10 +1122,9 @@ export const overlayMethods = {
     const back = this._tagBack; this._tgTl = null;
     // Committed BEFORE the state that unmounts the fields, and only ever with a value that differs.
     try { this._commitProjectNames(); } catch (e) { }
-    // libraryTab resets with the panel: a surface that reopens on the tab you happened to leave it
-    // on is a surface that opens differently every time. Back to NULL rather than to 'filter' — that is the difference between "open where the
-    // work is" and "open on Filter and then argue with the library about it" (see libTab).
-    this.setState({ tagMenuOpen: false, libraryTab: null, announce: 'Manage Library closed.' }, () => {
+    // The Project group's Edit and Show All reset with the panel: a surface that reopens in the state
+    // you happened to leave it in is a surface that opens differently every time.
+    this.setState({ tagMenuOpen: false, projectsEditing: false, projectsAll: false, announce: 'Manage Library closed.' }, () => {
       // Focus returns to the library trigger — but only when the user did not put it somewhere else
       // themselves. Clicking outside IS choosing where focus goes next, and yanking it back to a
       // button they just clicked away from would undo their own move.

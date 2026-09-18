@@ -173,23 +173,21 @@ export default class PaletteApp extends React.Component {
     // because a tag is a property a palette either has or lacks and you can hold several at once.
     // Accessibility is one exclusive property per palette, so within it only OR is meaningful —
     // AND would always yield nothing.
-    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProject: null, activeTags: [], activeA11y: [],
+    // activeProjects: the Project facet, ids ticked in the Library panel (19.09.26: a filter like the
+    // others, OR within the group, where it used to be a single scope chosen on the rail).
+    feed: this.hydrateFeed(), projects: this.hydrateProjects(), activeProjects: [], activeTags: [], activeA11y: [],
     // the two MEASURED facets, beside contrast potential. Character traits stay in activeTags.
     activeLight: [], activeTemp: [],
-    /* The project rail's step buttons: whether the chips overflow at all, and which end the row is
-       standing at. Measured from the scroller by _syncProjSteps, never derived here — a chip row
-       overflows or does not depending on name lengths and window width, and the render knows
-       neither. Starts closed so the buttons cannot flash in before the first measurement. */
-    projStep: { can: false, start: true, end: true },
     // the Library panel, closed by default (its trait search and sort went on 17.09.26, audit H3)
     tagMenuOpen: false,
-    /* WHICH TAB THE LIBRARY PANEL SHOWS — filtering, or the projects the library is divided into.
-       NULL IS THE REAL DEFAULT, and it means "the reader has not chosen": renderVals then opens the
-       panel where the work is (see libTab — Filter normally, Projects when there is nothing yet to
-       filter), and any press replaces it with an answer that is always obeyed. It returns to null
-       on close, because a surface that reopens in the state you left it in two visits ago is a
-       surface that opens differently every time. */
-    libraryTab: null,
+    /* THE PROJECT GROUP'S TWO STATES (19.09.26). The panel had two tabs, Filter and Projects; it is
+       one list now, with Project as its first group. projectsEditing turns that group's rows into
+       the management rows (rename, export, delete, a new project); projectsAll shows every project
+       where the group otherwise shows five. Both return to false on close, because a surface that
+       reopens in the state you left it in two visits ago is a surface that opens differently every
+       time. */
+    projectsEditing: false,
+    projectsAll: false,
     // a re-uploaded image the archive already holds: the choice dialog's subject, null when closed
     recognised: null,
     // the result view's More: reveals the poetic reading and the traits past the first two
@@ -446,7 +444,6 @@ export default class PaletteApp extends React.Component {
     safe(() => initGridOverlay(), 'grid-overlay');
     safe(() => this.initMotion(), 'motion');   // EASE/DUR tokens must exist before the loader builds its timeline
     safe(() => this._initLenis(), 'lenis');
-    safe(() => requestAnimationFrame(() => { this._updateProjPill(); this._syncProjSteps(); }), 'projpill');
     safe(() => this._initLoader(), 'loader');
     safe(() => this._syncAppInert(), 'inert');   // the landing covers the tool; what it covers is inert
     safe(() => this._syncLandingCover(), 'cover');   // ...and holds still, unpainted (methods/misc.js)
@@ -590,11 +587,6 @@ export default class PaletteApp extends React.Component {
 
   componentDidUpdate() {
     const s = this.state;
-    // The rail's pill and step buttons, re-measured only when the row has actually changed: both
-    // are layout reads, and this runs on every commit. See _syncProjRow in methods/misc.js.
-    // _syncProjSteps sets state only when a boolean actually flips, so calling it from here cannot
-    // loop.
-    this._syncProjRow();
     /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
        on screen and torn down when anything covers it, so its triggers can never be left measuring
        chapters that are no longer in the document — the failure aboutStack records, where one
@@ -902,7 +894,6 @@ export default class PaletteApp extends React.Component {
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
     if (this._consentT) { clearTimeout(this._consentT); this._consentT = null; }
     if (this._consentLearnT) { clearTimeout(this._consentLearnT); this._consentLearnT = null; }
-    if (this._projRowRO) { this._projRowRO.disconnect(); this._projRowRO = null; }
     if (this._textRevealCancel) this._textRevealCancel();
     if (this._engageOff) this._engageOff();
     if (this._wipeBeginFloor) { clearTimeout(this._wipeBeginFloor); this._wipeBeginFloor = null; }

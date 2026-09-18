@@ -148,12 +148,12 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    "CSS" are whatever the source typed. */
 [data-ix]{text-transform:uppercase!important}
 /* THE SEGMENTED CONTROL AND ITS CHIPS KEEP THEIR OWN CASE (17.09.26, audits D1 and G4, by request):
-   List / Grid, All / Unfiled and the project chips, the library panel's tabs, the page sizes, the
+   List / Grid, All and the project chips, the library panel's tabs, the page sizes, the
    contrast checker's rails and its Passing Only — and since 18.09.26, by request, the applied-filter
    chips and Clear Filters under them. Set like the analytics banner's buttons, 13px Medium, from
    viewToggleOptStyle (the applied row inline, AppView); this lifts the capitals the voice above
    gives every control. */
-[data-toggle-btn][data-ix],[data-proj-chip][data-ix],[data-lib-tab][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix]{text-transform:none!important}
+[data-toggle-btn][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
 /* The anchor dock's own case exemption went with the dock (17.09.26). */
 /* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").
@@ -195,17 +195,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    there is no text left to transform. The corner stays: it is what makes this the same circle as
    the trigger that opens the panel. */
 [data-library-dialog] [data-drawer-act][data-ix]{border-radius:var(--radius-pill)}
-/* AND SO IS THE TAB STRIP, for the same kind of reason one step up. The drawer-wide rule above is
-   about a SHEET's voice — headings, counts, option labels, things you read — and the two tabs are
-   none of those: they are the panel's navigation, the same segmented control as the library's
-   LIST / GRID / 3D and its ALL / UNFILED chips, which sit a few pixels away in caps. Sentence case
-   made the one control the panel is steered by read as quieter than the option rows beneath it.
-   (0,3,0), naming the dialog and both attributes, so it outranks the drawer-wide rule on
-   specificity rather than on order — the same construction as Done above. */
-/* The panel's two tabs were put back into caps here, against the panel's sentence case. They speak
-   like the analytics banner's buttons now (17.09.26, audit D1, by request): see the segmented
-   control's rule under the uppercase voice. */
-[data-library-dialog] [data-lib-tab][data-ix]{text-transform:none!important}
+/* THE PANEL'S TAB STRIP had its own case rule here; the strip went on 19.09.26, when the panel
+   became one list (Project first, then the filters). */
 /* A THIRD EXCEPTION FOR CLEAR FILTER STOOD HERE and went out with the control: the panel's copy of
    the clear-all moved back to the applied-filter row outside, where the chips are. The row out there
    is not in the drawer, so it speaks the app's caps without needing an exception at all. */
@@ -351,6 +342,16 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    narrow (aria-disabled) keeps the plate and answers nothing. The row's content is lifted above the
    plate, which is positioned and would otherwise paint over it. */
 [data-row-plate]{background:var(--surface-raised);border:1px solid var(--line);transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
+/* THE PROJECT GROUP'S NAME FIELDS WEAR THE ROW'S PLATE (19.09.26, by request): the new-project field
+   and each rename field take the fill, hairline and height inline, and answer a hover the way a row
+   does, by brightening to --surface-white; focus holds it there under the field's own ring. The
+   placeholder takes the muted ink the rows' counts use, where it was the browser's grey. */
+[data-manage-new],[data-proj-name]{transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
+@media (hover:hover){
+  [data-manage-new]:hover,[data-proj-name]:hover{background:var(--surface-white)!important}
+}
+[data-manage-new]:focus,[data-proj-name]:focus{background:var(--surface-white)!important}
+[data-manage-new]::placeholder{color:var(--on-surface-muted);opacity:1}
 [data-sec-row]>:not([data-row-plate]){position:relative}
 [data-sec-row][aria-pressed="true"]>[data-row-plate]{border-color:var(--on-surface)}
 @media (hover:hover){
@@ -456,6 +457,11 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --surface-raised:#fafaf8;   /* rows, panels */
   --surface-white:#ffffff;    /* cards that pop / current row */
   --on-surface:#1a1a1a;       /* primary ink */
+  /* THE DESTRUCTIVE INK (19.09.26, by request: "a red color for the bin"). 4.9:1 on the page, 4.1
+     on its own 12% hover tint, 3.6 at the 20% press; --danger-inverse is the other theme's red, for
+     the bin on a lit (ink-filled) row: 6.4:1 there. */
+  --danger:#c8322a;
+  --danger-inverse:#ff6e62;
   --on-surface-muted:#63635b; /* secondary text */
   --line:#e0e0db;             /* hairline dividers */
   --line-strong:#d5d5d0;      /* stronger borders */
@@ -1108,6 +1114,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --surface-raised:#1f1f1e;
   --surface-white:#2a2a28;
   --on-surface:#f3f3ef;       /* ~16:1 on --surface */
+  --danger:#ff6e62;           /* 6.7:1 on --surface, 5.7 on its hover tint */
+  --danger-inverse:#c8322a;   /* the light theme's red, for the lit (light) row: 4.8:1 */
   --on-surface-muted:#a2a29a; /* ~6.4:1 on --surface (AA) */
   --line:#333331;
   --line-strong:#454542;
@@ -1645,31 +1653,16 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    bordered; only these three are the sortable heads, and the rest are cells inside [data-row-main]
    — the per-row AA badges among them. Rounding by the attribute alone would have reached into every
    row of the table, which is not what was asked for. */
-[data-proj-rail],
-[data-proj-group],
-[data-proj-pill],
-[data-proj-chip],
 [data-toggle-init],
 [data-toggle-init] > [aria-hidden="true"],
 [data-toggle-btn],
-/* The library panel's own two tabs, in the list for the same reason the feed's three are: it is the
-   same segmented control — a travelling pill behind aria-pressed buttons — and a corner that
-   depended on which panel a toggle happened to sit in would be two controls, not one. */
-[data-lib-tabs],
-[data-lib-tabs] > [aria-hidden="true"],
-[data-lib-tab],
 /* The contrast checker's two pairs, built as the same rail — see the note in AppView for why they
    carry their own attribute names rather than the library tabs'. Same three entries: the box, the
    pill that travels inside it, and the buttons over the top. */
 [data-seg-rail],
 [data-seg-rail] > [aria-hidden="true"],
 [data-seg-btn],
-[data-library-btn],
-/* The rail's own prev/next steppers. These carry no border and no rest background — the corner is
-   only ever seen on the hover and press tint the [data-ix="press"] tier paints, which was arriving
-   as a square block inside a rounded rail. They keep that tint, unlike the chips beside them: a
-   stepper has no label to swap, so the tint is the only feedback it has. */
-[data-proj-step]{border-radius:var(--radius-pill)}
+[data-library-btn]{border-radius:var(--radius-pill)}
 
 /* THE 12px INTERACTIVE-LABEL FLOOR WAS HERE AND IS REVERTED. It raised the masthead pills, both
    rails, Manage Projects, Filter and the sort heads from --fs-micro/--fs-label to --fs-detail, on
@@ -1752,35 +1745,26 @@ button[data-row-cell] .tswap{flex:none}
    the blanket border-radius:0 without touching renderVals' object. */
 [data-del]{border-radius:var(--radius-pill)}
 
-/* THE STEPPER'S TINT IS INSET BY 2px SO IT TOUCHES NOTHING. At 30x31 the circle filled its button
-   edge to edge, which put it hard against the rail's own rounded end on one side and against its
-   twin on the other — two round shapes meeting on a shared tangent, which reads as one smudged
-   shape rather than as the one control under the pointer.
-
-   A TRANSPARENT BORDER PLUS padding-box, rather than padding: these buttons take their inline style
-   from renderVals.js (projStepStyle), which sets padding:0 and border:0, and that file is holding
-   another branch's work. box-sizing is border-box globally, so the 2px costs no layout — the button
-   stays 32x33 and only the painted area shrinks. The 12px chevron has 28x29 to sit in.
-
-   THE WHOLE TIER IS RESTATED rather than just the clip, and that is not belt-and-braces: the tier
-   paints with the `background` SHORTHAND, and a shorthand resets background-clip to border-box.
-   Declaring the clip alone would be undone by the very rule it is trying to modify. (0,4,0) by
-   naming data-ix, so this outranks the tier's (0,3,0) instead of relying on order. */
-[data-proj-step][data-ix]{border:2px solid transparent!important}
-[data-proj-step][data-ix]:hover:not(:disabled){
-  background:color-mix(in srgb,var(--on-surface) 16%,transparent)!important;
-  background-clip:padding-box!important;
-  border-color:transparent!important;
+/* THE PAGE ARROWS' HOVER IS THE PRIMARY BLACK, NOT THE 16% GREY (18.09.26, by request). The pair
+   under the list fills with the primary action's own surface on hover and inverts its chevron to
+   its ink, as a pressed segment does; a press takes the primary's press tone, so it still changes
+   colour and nothing moves. Its hairline fills with it, so each circle reads as one solid shape.
+   (The Library rail's own pair took the same rule until the rail went, 19.09.26.)
+   BEHIND (hover:hover), where the grey was not: a black disc latched on a tapped arrow would report
+   a pointer that has already gone. Press stays outside, true on both. (0,4,0) by naming data-ix, so
+   these outrank the tier's (0,3,0) instead of relying on order. */
+@media (hover:hover){
+  [data-page-step][data-ix]:hover:not(:disabled){
+    background:var(--action-primary-surface)!important;
+    border-color:var(--action-primary-surface)!important;
+    color:var(--action-primary-ink)!important;
+  }
 }
-[data-proj-step][data-ix]:active:not(:disabled){
-  background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;
-  background-clip:padding-box!important;
-  border-color:transparent!important;
+[data-page-step][data-ix]:active:not(:disabled){
+  background:var(--action-primary-press)!important;
+  border-color:var(--action-primary-press)!important;
+  color:var(--action-primary-ink)!important;
 }
-/* border-color IS RESTATED IN BOTH STATES, and it has to be. The same tier that paints the tint
-   also sets border-color:var(--action-line-hover) — written for controls whose 2px is a real edge,
-   which here is the 2px of clearance. Left alone it inked the gap in at 62% and drew a ring exactly
-   where the point was to have nothing: the collision back again, one step out. */
 
 /* ===== THE SEGMENTED RAILS ANSWER A HOVER WITH THEIR LABEL, NOT A TINT =========================
    Same decision as the masthead, forced by a sharper symptom: these chips sit BESIDE a travelling
@@ -1805,21 +1789,9 @@ button[data-row-cell] .tswap{flex:none}
    (0,4,0) BY NAMING data-ix AS WELL. The tier being overridden is [data-ix="seg"][aria-pressed=
    "false"]:hover at (0,3,0) with !important, so an attribute-and-state selector alone would tie on
    specificity and lose on document order. */
-/* THE LIBRARY PANEL'S TABS JOIN THEM, and they have to: the strip is the same object as the rails
-   above — a travelling --on-surface pill with unselected labels beside it — so an unselected tab
-   filling with 16% ink put the same grey slab against the same hard black one, inside a panel with
-   nothing else in it to absorb the noise. The tabs already carry .tswap, so unlike the rails there
-   was nothing to add: taking the tint away leaves the masked label doing the whole job, which is
-   the more legible event of the two anyway.
-   Reduced motion is still covered, and by the media query rather than by a second rule: with the
-   swap not running, the tint IS the feedback, so it comes back exactly where it is needed. */
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
-  [data-proj-chip][data-ix][aria-pressed="false"]:hover,
-  [data-proj-chip][data-ix][aria-pressed="false"]:active,
   [data-toggle-btn][data-ix][aria-pressed="false"]:hover,
   [data-toggle-btn][data-ix][aria-pressed="false"]:active,
-  [data-lib-tab][data-ix][aria-pressed="false"]:hover,
-  [data-lib-tab][data-ix][aria-pressed="false"]:active,
   /* The contrast checker's two rails, and the harmony drawer's seven method chips. Both carry
      .tswap now, and both sat beside — or, in the rails' case, directly against — a solid
      --on-surface pill: an unselected option filling with 16% ink put a soft grey slab next to a
@@ -1880,14 +1852,6 @@ button[data-row-cell] .tswap{flex:none}
   [data-ix="press"]:has(.tswap__a > svg[data-icon="close"]:only-child):active:not(:disabled){background:transparent!important}
 }
 
-/* THE CHIP'S TRUNCATION SURVIVES THE SWAP. ch.labelStyle (renderVals.js) truncates a project name
-   at 26ch with text-overflow:ellipsis, and that only works on the box holding the TEXT — wrapping
-   the label in .tswap put an inline-block in between, so the outer span had nothing of its own left
-   to ellipsize. Handing the two copies the same treatment restores it: each one truncates itself,
-   and the ellipsis appears on whichever is on screen. */
-[data-proj-chip] .tswap{max-width:100%}
-[data-proj-chip] .tswap__a,
-[data-proj-chip] .tswap__b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ===== THE MASTHEAD ANSWERS A HOVER WITH ITS LABEL, NOT WITH ITS SURFACE =======================
    All three of these carry the masked text swap — the label lifts out and a second copy rises into
    its place — and that is a bigger, more legible event than any tint. Running both meant the row
@@ -1942,6 +1906,13 @@ button[data-row-cell] .tswap{flex:none}
   .button-006[data-theme-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
 }
 .button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
+/* COPY TAKES ITS "COPIED" ROOM OUT OF ITS PADDING (19.09.26, by request: "make sure padding on this
+   button reflects the others"). Its label is centred inside a hidden glyph-and-"Copied", so the row
+   never moves when it confirms (see copyB006Label in AppView), and at rest that spare, 12px, sat as
+   6px more air on each side: 18.7 and 19.3px from ink to edge, where Check Contrast reads 13.3 and 13
+   and Export 12.7. The padding gives the spare back, split so the ink lands 13px from both edges
+   (measured from pixels at 3x); "Copied" spends it for the moment it shows. */
+.button-006[data-copy-trigger]{--button-006-padding:0.75em 6.67px 0.75em 7.33px}
 .button-006__default .button-006__text{color:var(--button-006-on-surface);}
 .button-006__hover .button-006__text{color:var(--button-006-on-accent);}
 /* TEXT ONLY. .b006-swap is the per-line mask (see B006Text in chrome.jsx); the row around it — icon,
@@ -2078,92 +2049,6 @@ a.button-006{text-decoration:none;}
    turns a half-circle to point up (ascending). Declarative like the [data-ix] contract — the state
    lives on data-dir, the motion is one transition on --ease-standard, and it reverses by construction
    because the same rule drives both directions. transform-origin is centred so it pivots in place. */
-/* HIDDEN CHIPS ANNOUNCE THEMSELVES. The project group scrolls horizontally once the chips outgrow
-   it, and a scroll container with no cue is content that may as well not exist. The classic
-   scrolling-shadows pair: two surface-coloured covers pinned to the CONTENT (background-attachment:
-   local) and two shadows pinned to the BOX (scroll). With nothing clipped, each cover sits over its
-   shadow and the group looks exactly as before; the moment chips continue past an edge, that edge's
-   cover has scrolled away and the shadow shows. No JS, no state to update, and the shadow ink is
-   the same on-surface mix the hairlines use, so it reads in both themes.
-
-   ONE CUE, AT THE END ONLY. There were two, one per edge, and the pair was the problem: a hard mark
-   at the leading edge sat right where the selected chip sits, in ink close enough to the pill behind
-   it to read as part of the selection rather than as the boundary of the row. The start of the row
-   needs no announcement — you can see where it begins. Only the end hides anything.
-
-   AND IT DISSOLVES RATHER THAN DRAWS. --surface at 90%, ramped from transparent across 28px, so the
-   chips fade into the container instead of having a line drawn beside them. It is the SURFACE colour
-   and not an ink, which is what stops it competing with the selection: nothing darkens, the row just
-   stops being legible at its end. The 10% left unfilled is what keeps it a blur rather than a wipe —
-   the last chip stays faintly visible under it instead of being cut off. */
-/* FOUR OF THE TWELVE COLUMNS, and it is derived from the grid rather than eyeballed:
-     col   = (100% − 11 × gutter) / 12          ← 12 tracks, 11 gutters between them
-     4 col = 4 × col + 3 × gutter               ← the three gutters the span swallows
-   which reduces to the expression below. 100% resolves against the band, and the band is a
-   block-level flex container filling the section's content box — so this really is four of the
-   page's own columns, and it re-derives itself if --grid-gutter ever moves.
-
-   It lives here rather than inline because it is grid knowledge, and because it belongs beside the
-   cue below: the cap is what makes the scroller overflow, and the cue is what says so. The two are
-   one mechanism. Anything past four columns scrolls; see the note in AppView for why the ceiling is
-   what keeps Manage Projects on the row and in one place.
-
-   THE CAP IS ON THE RAIL, NOT ON THE SCROLLER. The rail is the bordered control; inside it sit the
-   scrolling chips and the two step buttons that page along them. Capping the scroller instead would
-   put the buttons OUTSIDE the four columns, and the whole point of the ceiling is that the control
-   ends in the same place whatever the folders are called — so the ceiling has to be drawn around
-   everything the control contains, and the chips take what is left after the buttons.
-
-   The 280px floor is not a second rule, it is a guard on this one. Four columns is a PROPORTION, so
-   it shrinks with the window — and at the narrowest width the desktop gate still allows it came out
-   at 192px, which is one chip and the edge of another. The grid governs above a ~936px viewport,
-   where four columns is already wider than the floor; below that the floor holds the scroller at a
-   width you can still read two scopes in. It costs nothing: measured at 673px the whole band is
-   still one row with 54px to spare, so the guard never pushes anything onto a second line.
-
-   AND A CEILING ON THE CEILING, because a proportion was the wrong instrument at the top end. Four
-   columns is grid-true at every width and ergonomically true at almost none of them: it is 448px at
-   1440, but 821px on a 27" and 1115px on an ultrawide, and a segmented control a metre into a
-   1115px row has stopped being a control and become a rule across the page. Worse, it made the cap
-   INVISIBLE on exactly the displays this tool is used on — you have to file ten folders before a
-   821px ceiling clips anything, so adding folders just extended the row and the ceiling read as
-   absent. Reported as "it only extends", and the report was right about the experience.
-   So the grid still decides the width while the width is reasonable, and 520px decides it after
-   that: enough for four or five scopes, which is the count the row was ever meant to show at once,
-   and past which the arrows are the better instrument anyway. Below 1512 nothing changes — the
-   proportion is already under the ceiling there — so the value this was tuned at is untouched.
-
-   TWO DECLARATIONS, AND THE FIRST IS NOT DEAD CODE. If an engine cannot parse the clamp() — a
-   percentage and a var() inside a math function is where older parsers give up — it drops that line
-   and keeps the plain one above, which caps at the same ceiling and simply loses the proportional
-   behaviour below it. The failure mode is a control that is still bounded rather than one that runs
-   off the row, and that is the failure worth designing for. */
-[data-proj-rail]{
-  max-width:520px;
-  max-width:clamp(280px, (100% - 11 * var(--grid-gutter)) / 3 + 3 * var(--grid-gutter), 520px);
-}
-[data-proj-group]{
-  background:
-    linear-gradient(var(--surface), var(--surface)) right center,
-    linear-gradient(to right, transparent, color-mix(in srgb, var(--surface) 90%, transparent)) right center;
-  background-repeat:no-repeat;
-  background-size:32px 100%, 28px 100%;
-  background-attachment:local, scroll;
-  /* NO SCROLLBAR, because the shadows above ARE the scrollbar's job done better. A horizontal bar
-     inside a 30px segmented control is a third of its height, it sits under the chips it belongs to,
-     and on Windows it is permanently there rather than fading like macOS's overlay bars — so the
-     control looks broken in exactly the state it is working correctly.
-     This is only safe because the affordance is not being dropped, only moved: the edge shadow says
-     there is more, every chip is a tab stop that the browser scrolls into view on focus, and a
-     trackpad or wheel still scrolls the group. Never hide a bar without one of those in place. */
-  scrollbar-width:none;         /* Firefox */
-  -ms-overflow-style:none;      /* legacy Edge */
-}
-[data-proj-group]::-webkit-scrollbar{display:none}   /* WebKit, Blink */
-/* No scroll-margin-inline here, and that is a finding rather than an omission: it was tried, and it
-   changes nothing on the path it was meant to fix. Chrome's focus scroll-into-view centres a chip
-   that is entirely out of view and leaves a merely-clipped one where it is, honouring the margin in
-   neither case. The reveal in misc.js drives the keyboard path instead — see the note there. */
 [data-sort-chevron]{display:inline-flex;transform-origin:50% 50%;transition:transform var(--dur-chrome) var(--ease-standard),opacity var(--dur-fast) var(--ease-standard)}
 [data-sort-chevron][data-dir="asc"]{transform:rotate(180deg)}
 /* ONE ARROW, AND IT IS THE TRUE ONE. Every column used to draw a chevron at rest — the active one
@@ -2774,6 +2659,23 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   border:1px solid color-mix(in srgb, var(--on-surface) calc(12% * var(--consent-glass, 1)), transparent);
   border-radius:var(--radius-surface);
 }
+/* THE TEMPORARY SURFACES ARE GLASS (19.09.26, by request: "these floating containers that are
+   temporary needs to match the glass environment we have established"). The deletion toast and the
+   notice took --surface-raised, the --line-strong edge and the surface shadow: the solid recipe,
+   for surfaces that sit on the page. These float over whatever the page is showing, which is the
+   one place glass earns its keep, so they take the dock's pane: the page's own surface at 70% over
+   the 12px blur, the ink's 12% hairline, and no shadow, since glass reads from its fill.
+   THEY STILL FADE ON THEIR OWN OPACITY. The rule that glass must never fade is about an ANCESTOR
+   at opacity below 1, which becomes the backdrop root and cuts the blur off (the banner's
+   --consent-glass). An element's own opacity does not: measured in Chrome, a pane at .5 shows its
+   blurred copy at half strength over the page, a crossfade, never a sharp frame. -webkit- first,
+   standard last; see .button-006. */
+[data-toast],
+[data-notice]{
+  background-color:color-mix(in srgb, var(--surface) 70%, transparent);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
+  border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
+}
 /* THE GRID'S DOCK (18.09.26, by request): the hint and the close, one pair at the bottom centre, in
    the front page's glass — the landing's quiet act ([data-landing] .glass-cta above): the page's own
    surface at 70% over the 12px blur, the 12% hairline, the pill, and .glass-cta's own 14px Medium in
@@ -2860,3 +2762,26 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    gives up the width the disc needs so the two never touch. */
 .consent__close{position:absolute;top:12px;inset-inline-end:12px;z-index:1}
 .consent[data-closable] .consent__text{padding-inline-end:36px}
+
+/* THE BIN IS RED, AND ITS HOVER IS A RED TINT (19.09.26, by request: "apply a red color for the bin
+   and a tinted red fill on hover state. make sure it matches both light and dark mode"). Every delete
+   in the app carries data-danger: the Library row's bin, the palette detail's, and a project's in the
+   Project group's Edit. The glyph takes --danger through currentColor; hover fills with 12% of it and
+   the edge (where there is one) goes to 45%, press to 20% and 60%, so the answer is the same object
+   in red rather than the press tier's grey. Nothing moves. On a lit row, which is filled with the ink,
+   the bin takes the other theme's red (--danger-inverse) so it holds its contrast there too.
+   Last in the file, and (0,4,0) and up with !important, because the press tier and the lit-row rules
+   it answers are !important as well; on a tie, order decides, and this comes last. */
+/* THE EDGE IS RED AT REST TOO (19.09.26, by request: "border on the bin should be red as well"):
+   70% of the red, the lightest that clears the 3:1 the app holds control edges to, in both themes
+   (3.1:1 on the light page, 3.8 on the dark). It goes to the full red on hover and press (4.9 / 6.7),
+   where it was 45% on hover, which was under 3:1. The row bins have no edge, so only the glyph
+   applies there. */
+[data-danger]{color:var(--danger)!important;border-color:color-mix(in srgb,var(--danger) 70%,transparent)!important}
+[data-row-wrap][data-lit] [data-danger]{color:var(--danger-inverse)!important}
+@media (hover:hover){
+  [data-danger][data-ix]:hover:not(:disabled){background:color-mix(in srgb,var(--danger) 12%,transparent)!important;border-color:var(--danger)!important}
+  [data-row-wrap][data-lit] [data-danger][data-ix]:hover:not(:disabled){background:color-mix(in srgb,var(--danger-inverse) 16%,transparent)!important}
+}
+[data-danger][data-ix]:active:not(:disabled){background:color-mix(in srgb,var(--danger) 20%,transparent)!important;border-color:var(--danger)!important}
+[data-row-wrap][data-lit] [data-danger][data-ix]:active:not(:disabled){background:color-mix(in srgb,var(--danger-inverse) 24%,transparent)!important}

@@ -157,7 +157,8 @@ const IconChevronRight = ({ size = 14 }) => (<svg width={size} height={size} vie
 /* THE UNDO ARROW — a line that turns back on itself, which is the one gesture that reads as
    "put it back" without a word. It replaces the label on the toast's own act; see the note there
    for why that control lost its text. */
-const IconUndo = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88c3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8"></path></svg>);
+// The undo mark, as supplied 19.09.26: an arrow that turns back on itself and runs home.
+const IconUndo = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M9 10h6c2.21 0 4 1.79 4 4s-1.79 4-4 4h-3v2h3c3.31 0 6-2.69 6-6s-2.69-6-6-6H9V4L3 9l6 5z"></path></svg>);
 /* THE CLOSE MARK, and until now a component nothing rendered: every dismiss in the app drew a ✕
    CHARACTER instead, which is a piece of text pretending to be an icon — it takes the font's
    metrics, its own optical size and whatever the label voice does to it. The toast's dismiss uses
@@ -165,7 +166,7 @@ const IconUndo = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 
    glyph in the text stream is the right object. */
 // data-icon="close" is how global.css finds a close mark (16.09.26): the swap alone answers its hover.
 const IconClose = ({ size = 12 }) => (<svg data-icon="close" width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"></path></svg>);
-const IconChevron = ({ size = 9 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M12 14.708L6.692 9.4l.708-.708l4.6 4.6l4.6-4.6l.708.708z"></path></svg>);
+const IconChevron = ({ size = 9, turn = 0 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none', transform: turn ? 'rotate(' + turn + 'deg)' : undefined }}><path fill="currentColor" d="M12 14.708L6.692 9.4l.708-.708l4.6 4.6l4.6-4.6l.708.708z"></path></svg>);
 const IconContrast = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2S2 6.48 2 12s4.48 10 10 10m1-17.93c3.94.49 7 3.85 7 7.93s-3.05 7.44-7 7.93z"></path></svg>);
 /* EXPORT, AT THE SAME WEIGHT AS THE FOLDER AND THE BIN. It sits directly beside both — the project
    row in the library panel is name → export → delete — and left at the 1-unit hairline it read as a
@@ -271,13 +272,15 @@ const RowMain = ({ c, inv }) => (
           chip are flex:none and would otherwise spill into the AA column on a narrow
           window. Clipped is recoverable; overlapping two columns is not. */}
       <div data-row-cell="name" style={sx('display:flex;align-items:center;gap:16px;min-width:0;overflow:hidden')}>
-      {/* Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
+      {/* --fs-lead (15) SINCE 19.09.26 (by request: "the nearest token"; 14 is the glass call to
+          action's own size, outside the ten steps). The note below is the 13 it replaces.
+          Secondary by SIZE alone now: down a step from the overview's title (16 → 13),
           but at the same medium weight the filter panel gives its facet names. Both are
           the same kind of thing — the name of a choosable, the subject of its row — and
           13/500 is what that is called in this app. Still full --on-surface ink, not
           muted: it is the row's only text identifier and the one thing a screen reader
           leads with, so the demotion is a size step and never a fade. */}
-      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);flex:none;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
+      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);flex:none;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
       {c.isExample && (
         <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); text-transform: uppercase; border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
       )}
@@ -2185,11 +2188,10 @@ export default function AppView({ vals }) {
                   what let the chevron go.
 
                   WHAT THIS COSTS, stated rather than buried: per-project backup is no longer
-                  reachable from the masthead. The handlers are untouched in renderVals.js —
-                  backUpProject, showBackUpProject, toggleBackupMenu, backupMenuOpen and
-                  activeScopeLabel are all still there and are now uncalled — so restoring the menu is
-                  markup rather than a feature. That file is left alone deliberately; it carries
-                  another branch's work at the moment. */}
+                  reachable from the masthead. toggleBackupMenu and backupMenuOpen are still in
+                  renderVals.js, uncalled; backUpProject, showBackUpProject and activeScopeLabel went
+                  on 19.09.26 with the single project scope they read (projects are a filter now), and
+                  saveProjectFile(id) still writes one project's file if the menu comes back. */}
               <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back Up</TextSwap></button>
               <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" data-tier3-action="" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
               <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
@@ -2496,7 +2498,7 @@ export default function AppView({ vals }) {
               <span data-meta-line="1" aria-hidden="true" style={sx('display:block;flex:none;width:100%;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
                 <div key={gi} style={sx('flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column')}>
-                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
+                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>
                     {g.rows.map((m, mi) => (
@@ -2510,7 +2512,7 @@ export default function AppView({ vals }) {
                             align-items:baseline on the wrapper, so the badge's own word sits on the
                             same line as the value it qualifies rather than floating beside it. */}
                         <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
                             <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')}>{m.value}</span>
@@ -2603,18 +2605,18 @@ function FeedSection({ vals }) {
 
   // FIVE JOBS WERE ON ONE LINE, AND THE LINE COULD NOT SAY WHICH WAS WHICH.
   //
-  // Library segment (All / Unfiled / a project), management (Manage), filtering (Filter + the
+  // Library segment (All / a project), management (Manage), filtering (Filter + the
   // applied chips), the result size, and sorting (AA pairs / Max contrast / Date) all shared one
   // horizontal strip, several of them in the same borders and all of them in the same 10px
   // uppercase. Black fill meant "selected scope" and "selected view" and "applied filter" at once.
   // Nothing on the row declared what was navigation, what was state, what was metadata and what
   // was an act, so the row had to be decoded rather than read.
   //
-  // It is now three bands over the table, and PLACEMENT STATES THE RELATIONSHIP. A thing sits with
-  // the thing it acts on; nothing is placed to balance a corner:
+  // It is now two bands over the table (three until 19.09.26, when the scope rail went and the title
+  // took its row), and PLACEMENT STATES THE RELATIONSHIP. A thing sits with the thing it acts on;
+  // nothing is placed to balance a corner:
   //
-  //   heading   Library ⓘ                                      [ List | Grid | 3D ]
-  //   projects  [ All 8 ][ Unfiled 7 ]  [ ☰ 1 ]
+  //   heading   Library [ ☰ 1 ]                                        [ List | Grid ]
   //   toolbar   [ Text-ready ✕ ][ Clear filters ]
   //   ─────────────────────────────────────────────────────────────────────────────
   //   header    Palette                        AA pairs · Max contrast · Created ↓
@@ -2635,172 +2637,93 @@ function FeedSection({ vals }) {
   // "show me the palettes in this project that also work for text". You had to leave one surface to
   // reach the other, and neither knew what the other had done.
   //
-  // They are now one trigger — the ☰ beside the scope chips — onto one panel with two tabs, so
+  // They are now one trigger — the ☰ beside the title — onto one panel with two tabs, so
   // filtering and organising are two views of the library rather than two errands. What that costs
   // is a label: the trigger is a glyph, because "Filter" would name half of it and "Manage" the
   // other half. What it buys is that the project you are filtering inside is one tab away, not one
   // dialog and one dismissal away.
   //
-  // BAND 2 — THE LIBRARY'S CONTROLS. The chips say which segment you are in and the trigger beside
-  // them opens the panel that changes what those segments hold and what is held back — one subject,
-  // one row, one baseline. Manage Projects stood here as its own bordered act and is gone into that
-  // panel; what replaced it is not a second act but the door to both.
-  // The pill selects [data-proj-chip][aria-pressed="true"] and the trigger carries neither that nor
-  // aria-pressed, so it was never at risk of being SELECTED, only of looking selectable.
-  const viewRow = vals.showProjectsBar && (
-    // stretch, not center: the rail and the view toggle take a common height from the row rather
-    // than from a number either of them states — a hardcoded match would have agreed until the next
-    // padding-token edit.
-    // 12px below, matching the 12px the band keeps between its own groups. One number for the gap
-    // around this band whichever way it is measured, rather than 12 across and 24 down.
-    <div style={sx('display:flex;align-items:stretch;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
-      {/* THE SCOPES GET FOUR COLUMNS, AND THE GRID DECIDES HOW WIDE THAT IS.
+  // BAND 1 — THE LIBRARY'S ROW (19.09.26, by request). The title alone at the start, and the two
+  // controls scoped to the whole section at the far edge: the door into the Library panel, then the
+  // switch that redraws it, 8px apart. A scope rail stood on a row of its own under the title (All
+  // and a chip per project, with arrows once they overflowed); it went by request ("it only adds
+  // inconvenience"), the title moved down into its place, and the door, first set 8px after the
+  // title, moved over to the toggle ("let Library sit alone").
+  // THE TITLE IS 32 (--fs-statement), NOT 24 (19.09.26, by request: title and door "don't seem to
+  // have visual balance" while they stood together). Kept at 32 when the door moved away.
+  // THE WORD'S INK IS CENTRED, NOT ITS CAPITALS (19.09.26, by request: "the list button seem to sit
+  // above the Library text"). Centring line boxes puts the controls' centre on the capitals' centre,
+  // but "Library" is lowercase after its L and hangs a y below the baseline, so its mass sits lower
+  // and a control centred on its capitals read high. The title lifts 0.1em (3.2px at 32), which puts
+  // the middle of its ink, L-top to y-tail, on the row's centre line to within a quarter pixel
+  // (measured at 2x and 3x; 0.09em left half a pixel at 3x). In em so it follows the title's size.
+  // centre, not stretch: the title and the 35.5px pair share one centre line, where stretch would
+  // draw the controls to the title's line box. 12px below, the gap the controls band always kept
+  // above the table. The title is always here; the controls arrive with a library to act on, as
+  // they did on the band (showProjectsBar, feedHasItems).
+  const libraryRow = (
+    <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
+      <h2 id="feed-heading" style={sx("position:relative; top:-0.1em; font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-statement); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
+      {/* THE STORAGE MARKER STOOD HERE and is removed by request. It was a 16px toggletip beside
+          the heading carrying the one fact no control on this page states — where the library
+          lives: saved in this browser, on this machine, no account and no server copy, and gone
+          if you clear your browser data. It had a second state that is worth naming separately,
+          because it was not an explanation but a WARNING: when the storage probe failed (private
+          browsing, a locked-down profile, a full disk) the glyph became ! and the sheet said
+          nothing here would survive closing the tab. That signal has no other home in the
+          interface — persist() still fails silently — so the failure is now unannounced.
+          Its unread state went on 17.09.26 (audit H3), and so did the toggletip component the
+          empty states briefly used (audit H5, by request): putting the marker back is a rebuild. */}
+      {/* THE DOOR AND THE SWITCH, AT THE FAR EDGE, 8px APART (19.09.26, by request: "move the list
+          button to the right next to the list/grid toggle with the same gap"). The pair carries
+          margin-inline-start:auto; the toggle used to carry it alone. */}
+      {vals.showProjectsBar && (
+        <div style={sx('display:flex;align-items:center;gap:8px;margin-inline-start:auto')}>
+          {/* THE ONE DOOR INTO THE LIBRARY PANEL. It replaced two controls: Manage Projects ended the
+              old scope rail and Filter began the row under it.
 
-          The group used to size to its own content with no ceiling, and that is what cost Manage
-          Projects its place. flex-wrap breaks lines by HYPOTHETICAL size — an item's content width,
-          measured before any shrinking — and shrink then applies only WITHIN a line. An unbounded
-          group therefore never got a shrink pass: two long project names made it 693px, it took the
-          whole line alone, and Manage wrapped underneath at a 908px viewport. Not a phone; a laptop
-          with the window not maximised.
+              IT IS THE ONLY CONTROL IN THIS CHROME WITH NO WORD ON IT. That is a real cost — an icon
+              has to be recognised where a label is read — and it is paid for the reason set out at the
+              top of this section: the panel behind it holds two jobs, and every honest label names
+              one of them. The mark is the list it acts on, the hover title and the accessible name
+              say the whole sentence, and the panel names itself in its heading the moment it arrives.
 
-          Capping it fixes that at the cause rather than fencing it off, because a hypothetical size
-          is clamped by max-width (Flexbox §9.2) — so the group can no longer claim a line it cannot
-          fill. It also fixes the thing the wrap was a symptom of: Manage used to slide rightward as
-          project names grew, so the control moved every time the library did. Against a fixed frame
-          it lands in the same place whatever the folders are called.
+              flex:none is load-bearing, not tidiness. This is the only door to filtering AND to
+              creating, renaming, deleting and exporting a project, so it must never be the thing on
+              the row that gives way.
 
-          FOUR OF TWELVE, derived rather than guessed — see the max-width note in global.css, which
-          now caps the RAIL rather than the scroller inside it. The rail takes as much of that frame
-          as it needs and no more (flex 0 1 auto, never 1), so a library with two short scopes is not
-          a wide box mostly full of nothing; past four columns the chips scroll inside it, the fade
-          cue in global.css finally has work to do, and the step buttons below appear to work it. */}
-      {/* THE RAIL IS THE CONTROL; THE SCROLLER IS ONLY ITS WINDOW.
+              data-library-btn keeps it out of the drawer's own dismiss-on-outside-press (see
+              _facetOutside) and gives the stylesheet the one selector it needs for the pill corner.
 
-          The border used to sit on the scrolling element itself, which made the cap and the clip
-          the same edge: chips ran under a fade and there they stopped, with no way to reach the
-          rest that did not involve a trackpad. A fade says THERE IS MORE and nothing says HOW, and
-          a mouse — no horizontal wheel, no two-finger swipe — had no answer at all.
-
-          So the border moved out to a rail, and the rail holds two things: the scroller, which
-          takes whatever width is left (flex:1 1 auto, min-width:0 so it may actually shrink), and a
-          pair of step buttons pinned to its trailing edge. One bordered object still, one hairline
-          inside it, and the chips end where they always did.
-
-          THE BUTTONS ARE REAL CONTROLS, not a decorative pointer affordance. They were built
-          aria-hidden and tabIndex={-1} on the argument that the keyboard already has this route —
-          every chip is a tab stop and _revealProjChip scrolls the focused one into view — so two
-          more tab stops were only length. That argument was wrong twice over. A <button> stays
-          focusable with tabindex="-1", so aria-hidden was sitting on focusable content; and the
-          global `:focus{outline:none}` reset means a control with no data-focus token has NO ring
-          at all, so anything that ever did focus one would have focused it invisibly.
-          Both faults have the same cure: label them, give them the chrome focus token, and let them
-          into the tab order. The cost is smaller than it looked — a disabled button is not tabbable,
-          so at the row's resting position there is exactly one extra stop, not two. */}
-      {/* THE RAIL AND ITS DOOR ARE ONE GROUP, 8px apart, inside a band that spaces at 12. The two
-          are a pair — the scopes and the panel that changes what they hold — and 12 spaced them the
-          same as the distance to the view toggle, which is a different subject entirely. A tighter
-          gap inside the pair than around it is the whole grammar of grouping, and it is stated as a
-          nested flex rather than a negative margin so the trigger keeps taking the rail's height
-          from the row. */}
-      <div style={sx('display:flex;align-items:stretch;gap:8px;flex:0 1 auto;min-width:0')}>
-      <div data-proj-rail="1" style={sx('display:inline-flex;align-items:stretch;border:1px solid var(--action-line);flex:0 1 auto;min-width:0')}>
-        <div role="group" data-proj-group="1" aria-label="Library view" style={sx('position:relative;display:inline-flex;align-items:stretch;padding:' + (vals.projSteps.show ? '2px 20px 2px 2px' : '2px') + ';flex:1 1 auto;min-width:0;overflow-x:auto')}>
-          <span data-proj-pill="1" aria-hidden="true" style={sx('position:absolute;top:0;left:0;width:0;height:0;background:var(--on-surface);opacity:0;pointer-events:none')}></span>
-          {vals.projectChips.map((ch) => (
-            /* The label is its own span so it can be the ONLY part that truncates. As a bare text
-               node beside the count there was nothing to put an ellipsis on, and a 46-character
-               project name simply became a 294px chip — one name eating the whole frame. */
-            <button key={ch.key} type="button" data-proj-chip="1" data-ix="seg" data-focus="chrome" aria-pressed={ch.active} aria-label={ch.aria} title={ch.title} onMouseDown={ch.onMouseDown} onFocus={ch.onFocus} onClick={ch.onClick} style={ch.chipStyle}><span style={ch.labelStyle}><TextSwap>{ch.label}</TextSwap></span><span style={ch.countStyle}>{ch.count}</span></button>
-          ))}
-        </div>
-        {/* PRESENT ONLY WHEN THERE IS SOMEWHERE TO GO, which is the rule the rest of this band
-            already keeps — Clear filters is absent until something is applied, the pager is absent
-            at one page. A row of four scopes fits, and four scopes get no arrows.
-
-            Both arrows, though, the moment either can act: they are one control for one axis, and
-            an arrow that appears at the far end only once you have moved would be a control that
-            arrives after you needed it. The one that cannot act is disabled rather than removed —
-            same reading as the pager's Prev at page one, and the pair keeps its width so the chips
-            beside it never shift as you step. */}
-        {/* THE ARROWS ARE A PILL OF THEIR OWN (17.09.26, audit C11, by request: "full radius on both
-            sides", where a straight hairline divided them from the chips). The pill lies on the
-            rail's own edge (the -1px on three sides) and paints the page under it, so the rail's
-            line is covered and drawn once, by the pill, and only its round left end is new. It
-            reaches 18px back over the scroller, so the chips pass under that round end rather than
-            stopping at a straight cut; the scroller pads its end by the same 18 (20 with its own 2)
-            while the pair is here, so the rail keeps its width and the last chip still clears the
-            pill. misc.js leaves those 18px out of the view it steps and reveals in. */}
-        {vals.projSteps.show && (
-          <div data-proj-steps="1" style={sx('position:relative;z-index:1;display:flex;align-items:stretch;flex:none;margin:-1px -1px -1px -18px;border:1px solid var(--action-line);border-radius:var(--radius-pill);background:var(--surface)')}>
-            {/* "Previous projects" / "Next projects" — the pager's own two words at the foot of this
-                same list, with this control's noun in place of "page". One vocabulary for one
-                relationship, and no left/right in it: the words survive a mirrored layout even
-                though the glyph rotations below do not. */}
-            <button type="button" data-proj-step="prev" data-ix="press" data-focus="chrome" disabled={vals.projSteps.prev.disabled} aria-label="Previous projects" onClick={vals.projSteps.prev.onClick} style={vals.projSteps.prev.style}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(90deg)')}><IconChevron size={12} /></span></button>
-            <button type="button" data-proj-step="next" data-ix="press" data-focus="chrome" disabled={vals.projSteps.next.disabled} aria-label="Next projects" onClick={vals.projSteps.next.onClick} style={vals.projSteps.next.style}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(-90deg)')}><IconChevron size={12} /></span></button>
-          </div>
-        )}
-      </div>
-      {/* THE ONE DOOR INTO THE LIBRARY PANEL, on the row with the scopes it opens onto — where the
-          two controls it replaces were: Manage Projects ended this rail, Filter began the row under
-          it, and one of the two had to be somewhere it was not. On its own line it read as a second
-          band of chrome rather than as part of this one, so it stands against the rail instead.
-          It takes the rail's height rather than stating one: align-items:stretch means the pair can
-          never disagree, where a hardcoded match would have agreed until the next padding-token
-          edit. Its own padding would leave it a few pixels shorter; it centres its mark inside
-          whatever height the row gives it.
-
-          IT IS THE ONLY CONTROL IN THIS CHROME WITH NO WORD ON IT. That is a real cost — an icon has
-          to be recognised where a label is read — and it is paid for the reason set out at the top
-          of this section: the panel behind it holds two jobs, and every honest label names one of
-          them. The mark is the list it acts on, the hover title and the accessible name say the
-          whole sentence, and the panel names itself in its heading the moment it arrives.
-
-          flex:none is load-bearing, not tidiness. This is the only door to filtering AND to
-          creating, renaming, deleting and exporting a project, so it is the one control on the band
-          that must never be the thing that gives way — the scroller beside it exists precisely so
-          that it does not have to.
-
-          data-library-btn keeps it out of the drawer's own dismiss-on-outside-press (see
-          _facetOutside) and gives the stylesheet the one selector it needs for the pill corner. */}
-      {/* FULLY ROUND, WHICH IS A CONSEQUENCE OF BEING SQUARE. --radius-pill is a stadium: it rounds
-          to half the shorter side, so at 38 × 32.5 of chip padding it drew a lozenge with straight
-          top and bottom edges. The corner was already at its maximum; what was missing was equal
-          sides — so the resting state is a 32px square and the token does the rest.
-          A NUMBER, AFTER TRYING NOT TO USE ONE. aspect-ratio:1 with no padding was the first
-          attempt, on the reasoning that the width should follow the height the row already gives
-          this button (stretch, from the rail) rather than restate it: the ratio does not transfer
-          from a stretched cross size, and it collapsed the button to 14px of icon. 32 is the size
-          every other icon-only button in the app is drawn at (the manage rows' export and delete),
-          and the rail beside it stands at 32.5 — half a pixel nobody can see, against a number the
-          next person can repeat. align-self:center keeps it on the rail's own centre line.
-          IT BECOMES A STADIUM WHEN A FILTER IS ON, and that is the shape saying so. The count needs
-          room the circle does not have, so the button goes back to its label padding and the same
-          999px reads as a pill — the state is legible from the silhouette before the numeral is. */}
-      <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;' + (vals.filterCount ? 'padding:var(--btn-pad-sm)' : 'padding:0;width:32px;height:32px;align-self:center'))}>
-        {/* THE MARK ANSWERS A HOVER, THE NUMBER DOES NOT. The glyph takes the masked swap every
-            other control in this chrome uses — it lifts out and its twin rises into place — which
-            is what pays for this button's exemption from the [data-ix="press"] tint a few rules
-            into global.css: that rule was written for controls "carrying the swap already", and
-            until now this one was not.
-            The count is left outside it deliberately, on the rule the scope chips are built to:
-            a figure that lifts and re-enters on hover reads as the number CHANGING, which is the
-            one thing it must never appear to do. The glyph names the surface, the number names what
-            filtering is holding back, and they are two facts that change on different occasions. */}
-        <TextSwap><IconList size={12} /></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
-      </button>
-      </div>
-      {/* HOW the section is drawn, on the row with the controls that decide WHAT it holds. It sat
-          on the heading row, which paired it with the title but left it floating above a band of
-          same-height bordered controls it never lined up with. Here it shares a baseline and a row
-          with the chip rail; align-items:stretch already gives them a common height, so the
-          alignment is structural rather than two matching numbers.
-          margin-inline-start:auto keeps it at the far edge, away from the rail it does not join. */}
-      {vals.feedHasItems && (
-        <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent;margin-inline-start:auto')}>
-          <span aria-hidden="true" style={vals.viewTogglePill}></span>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}><TextSwap>List</TextSwap></button>
-          <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}><TextSwap>Grid</TextSwap></button>
+              THE TOGGLE'S HEIGHT, 35.5, IN BOTH STATES: side by side, a 32px circle beside the 35.5px
+              toggle stood 1.75px short at each end. 35.5 is the toggle's own sum (29.5px segments,
+              2px of padding, the hairline twice), stated, because aspect-ratio does not transfer from
+              a stretched cross size (it collapsed this button to 14px of icon once). A square at rest,
+              so --radius-pill draws a circle; A STADIUM WHEN A FILTER IS ON, and that is the shape
+              saying so: the count needs room the circle does not have, so the button widens by 12px
+              each side of its contents and the same 999px reads as a pill. */}
+          <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;' + (vals.filterCount ? 'padding:0 12px;height:35.5px' : 'padding:0;width:35.5px;height:35.5px'))}>
+            {/* THE MARK ANSWERS A HOVER, THE NUMBER DOES NOT. The glyph takes the masked swap every
+                other control in this chrome uses — it lifts out and its twin rises into place — which
+                is what pays for this button's exemption from the [data-ix="press"] tint a few rules
+                into global.css: that rule was written for controls "carrying the swap already", and
+                until now this one was not.
+                The count is left outside it deliberately, on the rule the scope chips are built to:
+                a figure that lifts and re-enters on hover reads as the number CHANGING, which is the
+                one thing it must never appear to do. The glyph names the surface, the number names what
+                filtering is holding back, and they are two facts that change on different occasions. */}
+            <TextSwap><IconList size={12} /></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+          </button>
+          {/* HOW the section is drawn, the last thing on the row. It sat on the heading row once
+              before and went down to the scope rail's row, to line up with the bordered controls
+              there; the rail is gone, and it shares its row with the title again (19.09.26). */}
+          {vals.feedHasItems && (
+            <div role="group" aria-label="Feed layout" data-toggle-init="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
+              <span aria-hidden="true" style={vals.viewTogglePill}></span>
+              <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.listPressed} tabIndex={vals.listTab} onClick={vals.setList} onKeyDown={vals.viewToggleKey} style={vals.listToggleStyle}><TextSwap>List</TextSwap></button>
+              <button type="button" data-toggle-btn="1" data-ix="seg" data-focus="chrome" aria-pressed={vals.gridPressed} tabIndex={vals.gridTab} onClick={vals.setGrid} onKeyDown={vals.viewToggleKey} style={vals.gridToggleStyle}><TextSwap>Grid</TextSwap></button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -2816,6 +2739,12 @@ function FeedSection({ vals }) {
   // themselves, then the way out of all of them, then the consequence at the far end. It used to
   // run trigger → consequence → way out → filters, which put the escape hatch before the thing to
   // escape and the count before the narrowing that produced it.
+  //
+  // 24px UNDER THE TITLE ROW, 8 OVER THE TABLE (19.09.26, by request: the laws of proximity; the row
+  // sat 12 under the title and 8 over the table, and belonged to neither). margin-top 24 collapses
+  // with the title row's 12 into one 24px gap. A PROJECT'S CHIP CARRIES THE FOLDER, the app's one
+  // mark for "project" (the row's Add to Projects, the action row), so "Smukfest" cannot be read as a
+  // property like "Warm" (similarity).
   //
   // BAND 3 — THE APPLIED FILTERS, and only here. One removable chip per narrowing plus the one way
   // out of all of them, under the controls and above the list they act on.
@@ -2838,19 +2767,19 @@ function FeedSection({ vals }) {
   // visible when it is shut. Removing a narrowing should not also put away the surface you would
   // remove the next one from, and clearing from here with the panel open must leave it open.
   const filterRow = vals.showProjectsBar && vals.anyFilter && (
-    <div role="toolbar" aria-label="Applied filters" aria-controls="library-list" data-filter-toolbar="1" data-applied-filters="1" onKeyDown={vals.toolbarKey} style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px')}>
+    <div role="toolbar" aria-label="Applied filters" aria-controls="library-list" data-filter-toolbar="1" data-applied-filters="1" onKeyDown={vals.toolbarKey} style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:24px;margin-bottom:8px')}>
       {/* One chip per applied filter across every group — accessibility first, matching the panel's
           group order — each removable on its own, so a narrowing can be undone from either end.
           THE APP'S CLOSE GLYPH, IN THE SWAP (17.09.26, audit C2, by request). The cross was a typed
           "✕" and nothing moved on hover; it is IconClose now, and the label and the glyph slide
           through one mask together, the way a button-006 carries its icon inside its label.
-          THE SCOPE CHIPS' VOICE (18.09.26, by request): the chips and Clear Filters are set like All /
-          Unfiled above them, 13px Medium in the case their labels are written in (global.css lifts
+          THE SCOPE CHIPS' VOICE (18.09.26, by request): the chips and Clear Filters are set like the
+          scope chips above them, 13px Medium in the case their labels are written in (global.css lifts
           the capitals for [data-applied-filters]), where they were the tool's 11px capitals. The ×
           is the close mark every other button carries, at its own 12px (it was drawn down to 10). */}
       {vals.appliedTags.map((t) => (
         <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
-          <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.label}<IconClose /></span></TextSwap>
+          <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.project && <IconFolder size={12} />}{t.label}<IconClose /></span></TextSwap>
         </button>
       ))}
       {/* No aria-label: the visible text is the accessible name, so label-in-name (SC 2.5.3) can
@@ -2861,39 +2790,18 @@ function FeedSection({ vals }) {
 
   return (
     <section data-recent="1" aria-labelledby="feed-heading" style={sx('width: 100%; padding: 40px var(--page-gutter) 88px; border-top: 1px solid var(--line-strong); margin-top: 36px')}>
-      {/* THE HEADING NAMES THE SECTION AND HOLDS NOTHING ELSE. The view switcher used to end this
-          row, paired with the title on the argument that both are scoped to the whole region. True,
-          and it still left a bordered control floating alone above a band of three more bordered
-          controls it never lined up with — the pairing was conceptual and the misalignment was on
-          screen. It has gone down to that band, where it shares a row, a height and a baseline with
-          the chip group and Manage Projects.
+      {libraryRow}
 
-          What is left is the name and its marker. The marker is not a control and must never read
-          as one: no border tier, no fill, 16px of glyph. See the region comment above. */}
-      <div style={sx('display:flex;align-items:center;gap:10px;margin-bottom:16px')}>
-        <h2 id="feed-heading" style={sx("font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
-        {/* THE STORAGE MARKER STOOD HERE and is removed by request. It was a 16px toggletip beside
-            the heading carrying the one fact no control on this page states — where the library
-            lives: saved in this browser, on this machine, no account and no server copy, and gone
-            if you clear your browser data. It had a second state that is worth naming separately,
-            because it was not an explanation but a WARNING: when the storage probe failed (private
-            browsing, a locked-down profile, a full disk) the glyph became ! and the sheet said
-            nothing here would survive closing the tab. That signal has no other home in the
-            interface — persist() still fails silently — so the failure is now unannounced.
-            Its unread state went on 17.09.26 (audit H3), and so did the toggletip component the
-            empty states briefly used (audit H5, by request): putting the marker back is a rebuild. */}
-      </div>
-
-      {/* THE TWO CONTROL BANDS, in every view. They used to be one strip that rode the sort row in
+      {/* THE CONTROL BANDS, in every view. They used to be one strip that rode the sort row in
           list view and stood alone in Grid and 3D — a conditional placement whose whole purpose was
           to make scope, filter and sort read as "one bank of list controls". That was the mistake:
-          they are not one bank. Scope says which segment of the library you are in, filter says
-          what is being held back, sort says how what is left is ordered, and putting all three on
-          a line asked the user to work out which was which every time they looked.
+          they are not one bank. Filter says what is being held back, sort says how what is left is
+          ordered, and putting them on a line asked the user to work out which was which every time
+          they looked.
 
           Sort has gone back to the column header where it belongs — over the numbers it orders —
-          and these two stand on their own rows, in one place rather than two, above every view.
-          Their vertical order is the order the questions arrive in; see the band diagram above. */}
+          and the applied filters stand on their own row under the title's, above every view. The
+          scope chips had a row between them until 19.09.26; see the band diagram above. */}
       {/* SPOKEN, NOT PRINTED, and mounted with the SECTION rather than with the toolbar below.
           "Showing 5 of 8 palettes" is redundant on screen — the list below IS the count, and a
           filtered list that visibly shrank does not need a sentence saying so. It is NOT redundant
@@ -2907,7 +2815,6 @@ function FeedSection({ vals }) {
           unspoken. It is also not a toolbar widget — it is a page-level status — so this is where
           it should have been either way. */}
       <span role="status" aria-live="polite" style={liveRegionStyle}>{vals.resultSummary}</span>
-      {viewRow}
       {filterRow}
 
       {/* FILTERED TO NOTHING is not EMPTY. The cold-start message told someone holding three
@@ -3078,7 +2985,7 @@ function FeedSection({ vals }) {
               <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.assignAria} onClick={c.onAssign} style={sx('position:absolute;right:calc(var(--row-action-offset) + 38px);z-index:6;width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconFolder />
               </button>
-              <button type="button" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
+              <button type="button" data-danger="1" data-ix="press" data-del="1" data-focus="chrome" aria-label={c.deleteAria} onClick={c.onDelete} style={sx('position:absolute;right:var(--row-action-offset);z-index:6;width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:none;border:0;cursor:pointer')}>
                 <IconTrash />
               </button>
             </div>
@@ -3111,9 +3018,10 @@ function FeedSection({ vals }) {
             {vals.showPager && (
               <div style={sx('display:flex;align-items:center;gap:10px')}>
                 {/* The same chevron pair the project rail steps on, rotated the same way — one
-                    direction control, one glyph, on both rows. aria-label already carried the words,
+                    direction control, one glyph, on both rows, rolling through the same mask on
+                    hover. aria-label already carried the words,
                     so nothing is lost to a screen reader by dropping them from the face. */}
-                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(90deg)')}><IconChevron size={12} /></span></button>
+                <button type="button" data-page-step="prev" data-ix="press" data-focus="chrome" disabled={vals.prevDisabled} aria-label="Previous page" onClick={vals.prevPage} style={vals.prevStyle}><TextSwap><IconChevron size={12} turn={90} /></TextSwap></button>
                 {/* The figure twice: seen as "1/2", heard as "Page 1 of 2". The live region is the
                     hidden one — it is a stable element whose text changes, which is what makes a
                     polite announcement reliable, and it says the sentence rather than the slash. */}
@@ -3121,7 +3029,7 @@ function FeedSection({ vals }) {
                   <span aria-hidden="true">{vals.pageLabel}</span>
                   <span aria-live="polite" style={visuallyHidden}>{vals.pageLabelSpoken}</span>
                 </span>
-                <button type="button" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}><span aria-hidden="true" style={sx('display:inline-flex;transform:rotate(-90deg)')}><IconChevron size={12} /></span></button>
+                <button type="button" data-page-step="next" data-ix="press" data-focus="chrome" disabled={vals.nextDisabled} aria-label="Next page" onClick={vals.nextPage} style={vals.nextStyle}><TextSwap><IconChevron size={12} turn={-90} /></TextSwap></button>
               </div>
             )}
           </nav>
@@ -3413,7 +3321,7 @@ function DetailOverlay({ vals }) {
               the project row use, at the size every icon-only act in the app is drawn at.
               aria-label still names the palette ("Delete High Key"), which is the part that must
               never become a glyph: a destructive act has to say what it destroys. */}
-          <button type="button" data-ix="press" data-focus="chrome" aria-label={overlay.deleteAria} title="Delete" onClick={overlay.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconTrash /></TextSwap></button>
+          <button type="button" data-danger="1" data-ix="press" data-focus="chrome" aria-label={overlay.deleteAria} title="Delete" onClick={overlay.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconTrash /></TextSwap></button>
           <button type="button" data-ix="press" data-focus="chrome" title="Close" aria-label="Close palette detail" onClick={vals.closeOverlay} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </div>
       </header>
@@ -3513,8 +3421,10 @@ const SEC_PLATE = sx('position:absolute;inset:0;border-radius:var(--radius-pill)
 const measuredLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;flex:none;font-weight:500');
 
 // ============================== THE LIBRARY PANEL ==============================
-// ONE PANEL, TWO TABS: what is being held back (Filter) and what the library is divided into
-// (Projects). They were two surfaces — this drawer and a centred Manage Projects dialog — reached
+// ONE PANEL, ONE LIST (19.09.26, by request; it had two tabs, Filter and Projects): the Project
+// group first, whose Edit manages the projects in place, then what is being held back.
+// ONE PANEL, TWO TABS was the step before: what is being held back (Filter) and what the library is
+// divided into (Projects). They were two surfaces — this drawer and a centred Manage Projects dialog — reached
 // from two buttons a row apart, and the split was in the interface rather than in the work: a
 // project IS a filter you made yourself, and every question that spans the two ("which of the
 // palettes in Coastal can hold text?") meant closing one surface to open the other.
@@ -3599,45 +3509,13 @@ function LibraryDrawer({ vals }) {
               press tint off a button whose swap does that job. */}
           <button type="button" data-drawer-act="" data-ix="press" data-focus="chrome" onClick={vals.closeFacet} aria-label="Close the library panel" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </div>
-        {/* THE TWO VIEWS OF THE LIBRARY, on the app's own segmented control — the same object as
-            List / Grid / 3D one band away, down to the travelling pill, because it is the same kind
-            of choice: which view of this thing am I looking at. It is a switch and not a pair of
-            links, so it takes aria-pressed rather than tab semantics, exactly as the view toggle
-            does; aria-controls names the region below that it redraws, and each press announces the
-            tab it landed on (see setLibraryTab) since the change happens out of the reading order.
-
-            CONTENT-SIZED AND AT THE LEADING EDGE, exactly like the view toggle it copies. It ran
-            the full 480px for a while, on the argument that a sheet whose two tabs share its whole
-            measure states there are two of everything and no more. What that actually produced was
-            a 430px bar of mostly empty pill: the labels sat marooned in the middle of their halves,
-            and the strip read as a header rule rather than as a control you press. Sized to its own
-            labels it is a control again, and it starts where every other line in this panel starts.
-            inline-grid with two 1fr tracks, not two auto ones: 1fr resolves both columns to the
-            wider label, so FILTER and PROJECTS keep equal halves and the pill's 50% stays true.
-            align-self:flex-start because the header is a flex column — without it the strip would
-            stretch back across the sheet whatever its display says.
-
-            THE LABELS SPEAK IN CAPS, which is an exception the stylesheet has to grant: the drawer
-            puts its controls into a sheet's sentence case, and these two are not sheet furniture but
-            the navigation the panel is steered by — the same object as LIST / GRID / 3D and the
-            scope chips a few pixels outside it. See the [data-lib-tab] rule in global.css. */}
-        <div role="group" aria-label="Library panel view" data-lib-tabs="1" style={sx('position:relative;align-self:flex-start;display:inline-grid;grid-template-columns:repeat(2,1fr);padding:2px;border:1px solid var(--action-line);background:transparent')}>
-          <span aria-hidden="true" style={vals.libTabPill}></span>
-          {vals.libTabs.map((t) => (
-            <button key={t.key} type="button" data-lib-tab={t.key} data-ix="seg" data-focus="chrome" aria-pressed={t.active} aria-controls="library-panel" aria-label={t.aria} onClick={t.onClick} onKeyDown={vals.libTabKey} style={t.style}>
-              {/* A plain wrapper, so the flex line takes the label's baseline from its text: the swap
-                  clips, and a clipping flex item's baseline is its bottom edge. */}
-              <span><TextSwap>{t.label}</TextSwap></span>{t.count && <span style={t.countStyle}>{t.count}</span>}
-            </button>
-          ))}
-        </div>
         {/* THE PANEL'S COPY OF THE APPLIED CHIPS STOOD HERE and is removed by request. It pinned one
             removable chip per applied value to the header, plus a Clear Filter, so that a selection
             never scrolled out of reach of the list that made it.
             WHAT MAKES IT REDUNDANT IS THE LIST ITSELF. Every applied value is a row a few pixels
             below with its checkbox filled — the state is already on the control that sets it, and a
-            chip above it was the same fact said twice, in two shapes, on one surface. The Filter tab
-            still carries the count, so the panel says HOW MANY without listing them again.
+            chip above it was the same fact said twice, in two shapes, on one surface. The list button
+            outside carries the count, so the panel does not list them again.
             THE STATE IS NOT LOST WHEN THE PANEL IS SHUT: the toolbar outside keeps the chips and the
             clear-all, and that row is exempt from the panel's dismiss-on-outside-press (see
             _facetOutside and data-applied-filters), so it can be used with the panel still open.
@@ -3645,18 +3523,159 @@ function LibraryDrawer({ vals }) {
             argument that the rows cannot clear themselves in one press — true, and it put a filter
             control on the surface whose whole claim is that the rows ARE the filter state. Both the
             chips and the clear-all belong to the same row outside, where they survive the panel
-            being shut; the panel keeps the count on its Filter tab and nothing else.
+            being shut; the count is the list button's.
             renderVals still supplies appliedTags, hasAppliedTags and facetClear, all now unread —
             the row outside builds its own from appliedTags and onClearAll. */}
         </header>
 
-        {/* THE SWITCHED REGION, named by the tabs that redraw it (aria-controls above) and marked
-            for the arrival on tab change — see setLibraryTab, which re-runs the drawer's own block
-            stagger over whatever this now holds. One wrapper for both tabs, so the two can never
-            arrive differently. */}
+        {/* THE REGION THE PANEL'S ROWS LIVE IN, and since 19.09.26 it is one list: the Filter and
+            Projects tabs that used to switch it are gone (by request: with projects in the filter
+            list the toggle "is unnecessary"). */}
         <div id="library-panel" data-library-panel="1">
+        {/* THE PROJECT GROUP (19.09.26, by request), first, because which project comes before what
+            to leave out. Its rows are the panel's own rows (similarity: a project reads as a filter
+            and a ticked one looks like any ticked filter); OR within the group, AND against the
+            rest, counted against the other groups but not itself (renderVals, the Project facet).
+            FIVE, THEN SHOW ALL, so twenty projects do not push the other groups off the screen
+            (Hick's law, Miller's law); the control is not a row, it is the heading's column in the
+            muted ink, so it cannot be taken for a project.
+            EDIT, BESIDE THE HEADING, turns the same rows into the management rows the Projects tab
+            held (a new-project field, then rename, export and delete per project), and Done turns
+            them back: the projects are managed where they are listed. With no project yet the group
+            opens on the field itself.
+            data-sec for the panel's reveal like every group; data-proj-sec for the toggles that swap
+            its rows (toggleProjectsEdit, toggleProjectsAll in overlays.js). */}
+        <div data-sec="1" data-proj-sec="1" style={sx('padding:18px var(--page-gutter) 0')}>
+          {/* The heading stays text alone: the reveal splits it into lines and restores it as markup,
+              and a control inside it would go inert (the tick-box bug of 17.09). Edit stands beside
+              it, at the rows' trailing edge. */}
+          <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px')}>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);padding:0 18px')}>Project</span>
+            {vals.canEditProjects && (
+              <button type="button" data-ix="press" data-focus="chrome" aria-pressed={vals.projectsEditing} aria-label={vals.projectsEditing ? 'Done editing projects' : 'Edit projects'} onClick={vals.toggleProjectsEdit} style={sx('flex:none;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>{vals.projectsEditing ? 'Done' : 'Edit'}</TextSwap></button>
+            )}
+          </div>
+          {vals.canEditProjects && !vals.projectsEditing ? (
+            <div role="group" aria-label="Filter by project" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;gap:6px')}>
+              {vals.projectOptions.map((o) => (
+                <button key={o.key} type="button" data-sec-row="1" data-proj-extra={o.extra ? '1' : undefined} data-ex-item={o.disabled ? undefined : '1'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.label.length > 32 ? o.label : undefined} onClick={o.onPick} style={sx(SEC_ROW + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
+                  <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
+                  <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
+                  {/* A name may run to 60 characters, so this label may shrink and end in an ellipsis,
+                      where the measured labels are short and never do. */}
+                  <span data-reveal="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;font-weight:500;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis')}>{o.label}</span>
+                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                </button>
+              ))}
+              {vals.projectMore && (
+                /* NOT IN THE REVEAL. The line reveal restores what it animated from markup, and a
+                   label with React inside it (the swap, the chevron) would stop updating: it read
+                   Show All after it had opened. It arrives with the panel instead. No aria-pressed,
+                   so the list's arrow keys pass over it (onFacetListKey walks the pressable rows).
+                   18px of leading padding puts its word on the heading's column; 6px over and under
+                   make a 28px target. */
+                <button type="button" data-proj-more="1" data-ix="press" data-focus="chrome" aria-expanded={vals.projectsAll} aria-label={vals.projectMoreAria} onClick={vals.toggleProjectsAll} style={sx('align-self:flex-start;display:inline-flex;align-items:center;margin-top:2px;padding:6px 18px;background:none;border:0;border-radius:var(--radius-pill);cursor:pointer;font-family:Neue Montreal;font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>
+                  <span style={sx('display:inline-flex;align-items:center;gap:6px')}><TextSwap>{vals.projectMore}</TextSwap><IconChevron size={12} turn={vals.projectsAll ? 180 : 0} /></span>
+                </button>
+              )}
+            </div>
+          ) : (<>
+            {/* THE FIELD FIRST, because a panel of folders you cannot add to is a list, not a manager.
+                Enter and the button do the same thing (see manage.onCreateKey) — a name typed and then
+                confirmed by the keyboard should not need the mouse to land. */}
+            <div data-proj-item="1">
+              {/* THE ACT LIVES IN THE FIELD NOW, not beside it. A name and the button that commits it
+                  are one thought, and as two objects with an 8px gap they read as two: type here, then
+                  go over there. Inside, the chevron is where your eye already is when you stop typing —
+                  the same place Enter is (manage.onCreateKey), which is the route most people take.
 
-        {vals.libTab === 'filter' && (<>
+                  THE FIELD DID NOT GROW TO MAKE ROOM. It keeps its own box, its own border, its own
+                  radius and its 35.5px height; the button is positioned against the inside of that box
+                  rather than laid out in the row, so nothing about the input answers to it. What DOES
+                  answer to it is the input's trailing padding: 40px, which is the button's 28 plus its
+                  4px inset plus 8 of clearance, so a long project name runs under the caret and stops
+                  before the disc rather than under it.
+
+                  4px OF INSET ON THREE SIDES, and the height falls out of it: inset-block:4px against a
+                  35.5px field leaves 27.5, and 28 of width makes it a circle at --radius-pill without
+                  either number being a guess about the other. No transform anywhere — the press
+                  contract is a colour change in this app, and a control centred by a transform is one
+                  that would have to fight it. inset-inline-end, so the disc sits at the end of the
+                  reading direction rather than at the right of the screen. */}
+              <div style={sx('position:relative;display:flex')}>
+                {/* THE ROWS' PLATE, SINCE 19.09.26 (by request: "input field should match the styling of
+                the other elements in the drawer"). The filter rows became raised stadiums on 17.09
+                (audit Q4), so both name fields in the Project group take the same plate:
+                --surface-raised with the --line hairline, the rows' 37.5px (10px over and under),
+                Medium, and the rows' hover to --surface-white (global.css). The create disc is 29.5
+                square to stay round. The Add to Projects dialog's field is not in the drawer and is
+                unchanged. The note below is the reasoning this reverses, kept for the record.
+                NO RAISED FILL. All three of the app's name fields sat on --surface-raised, which is
+                    a lighter plate meant to lift a surface off the page — and these sit ON a --surface
+                    sheet, so the plate lifted them off nothing and read as a second ground inside the
+                    first. The stadium's own hairline is what says "type here"; the fill was saying it a
+                    second time, more loudly, in a panel whose whole point is that its rows are quiet.
+                    THE FIELD IS A STADIUM AND ITS INSET GREW WITH IT. 11px of leading padding put the
+                    placeholder against the widest point of an 18px arc; 18 clears it — and 18 is the
+                    figure the rows below use too, so every piece of text inside a control on this
+                    surface starts on the same column. (The toast keeps 16: it is a 48px bar with a
+                    deeper arc and a leading inset chosen for it by hand.) */}
+                <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+                {/* Filled --on-surface, unlike the toast's outlined pair: this is the one act on the tab
+                    that commits something, and fill is how this system says primary. A GLYPH CARRIES ITS
+                    NAME: aria-label states the act, title hands the word to a pointer, and the swap runs
+                    on it exactly as it does on every other mark now. */}
+                <button type="button" data-manage-add="1" data-ix="cta" data-focus="chrome" onClick={vals.manage.onCreate} aria-label="Create project" title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:29.5px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
+              </div>
+            </div>
+            {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
+                as a whole. The count sits INSIDE the name field (see the note on manageView.count) and
+                what it paid for is the Export button — the act a folder existed for and did not have.
+                Order is name → export → delete: the constructive act sits next to the thing it acts on,
+                and the destructive one stays at the far edge where it is hardest to hit by accident.
+                data-tg-cell on the row, so a project arrives on the same per-item stagger a facet row
+                does — this panel is a list of things too, and the drawer only knows that from the hook. */}
+            {!vals.manage.empty && (
+            <div style={sx('display:flex;flex-direction:column;gap:8px;margin-top:8px')}>
+              {vals.manage.rows.map((pr) => (
+                <div key={pr.id} data-proj-item="1" style={sx('display:flex;align-items:center;gap:8px')}>
+                  <span style={sx('position:relative;flex:1;min-width:0;display:flex')}>
+                    {/* padding-right clears the numeral's column so a long project name runs under the
+                        caret, never under the count.
+                        BOTH INSETS MOVED WITH THE CORNER. The field is a stadium now, so 11px of leading
+                        padding put the name against the widest point of an 18px arc and 11px of trailing
+                        inset did the same to the numeral. 18 on both edges — the SAME 18 the rows in this
+                        panel and both dialogs use, so a field and a row put their text on one column
+                        instead of two. The padding-right follows the numeral rather than being chosen:
+                        the inset, plus the digits, plus the clearance the name needs from them. */}
+                    <input data-proj-name={pr.id} data-focus="field" type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" aria-describedby={'projn-' + pr.id} style={sx("width:100%;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+                    {/* The numeral is painted; the noun is spoken. A bare "8" announced after a project
+                        name is a quantity of nothing in particular, and aria-label on a span with no
+                        role is not reliably read — so the description this field points at carries the
+                        whole sentence as real text, and only the digits are visible. */}
+                    <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
+                      <span aria-hidden="true">{pr.count}</span>
+                      <span style={liveRegionStyle}>{pr.countAria}</span>
+                    </span>
+                  </span>
+                  {/* THE FIELDS' RAISED FILL (19.09.26, by request: the icons beside the fields cannot stand
+                      without a fill once the fields have one). Hover and press keep the press tier's tints,
+                      the delete its red ones (global.css [data-danger]).
+                      cursor written from state, not left to [data-ix]:disabled — that rule is in the
+                      stylesheet and this style is inline, so a hardcoded `pointer` would outrank it and
+                      the empty project's control would still invite the press it refuses. */}
+                  <button type="button" data-ix="press" data-focus="chrome" disabled={!pr.canExport} aria-label={pr.exportAria} title={pr.exportTitle} onClick={pr.onExport} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-raised);border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);padding:0;cursor:' + (pr.canExport ? 'pointer' : 'default'))}>
+                    <TextSwap><IconExport /></TextSwap>
+                  </button>
+                  <button type="button" data-danger="1" data-ix="press" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-raised);border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
+                    <TextSwap><IconTrash /></TextSwap>
+                  </button>
+                </div>
+              ))}
+            </div>
+            )}
+          </>)}
+        </div>
 
         {/* NOTHING TO FILTER YET is a state this panel could not previously be in: the trigger used
             to require a facet to exist before it appeared at all. It can now be opened for the
@@ -3768,102 +3787,6 @@ function LibraryDrawer({ vals }) {
             and E9) with the state and view-model only it read. Filtering by trait is still reached
             from a palette's own tags; the applied chips remove it. */}
 
-        </>)}
-
-        {/* ===== PROJECTS — the manage dialog's whole content, one tab over =====
-            Same three acts in the same order as the dialog it replaces: name one, then the rows,
-            each row being a project and the two things you can do to it as a whole. The handlers
-            are the dialog's handlers untouched (manageView in renderVals), so nothing about what a
-            project IS changed here — only where you stand while working on it. */}
-        {vals.libTab === 'projects' && vals.manage && (<>
-
-        {/* THE FIELD FIRST, because a panel of folders you cannot add to is a list, not a manager.
-            Enter and the button do the same thing (see manage.onCreateKey) — a name typed and then
-            confirmed by the keyboard should not need the mouse to land. */}
-        <div data-tg-sec="1" style={sx('padding:18px var(--page-gutter) 0')}>
-          {/* THE ACT LIVES IN THE FIELD NOW, not beside it. A name and the button that commits it
-              are one thought, and as two objects with an 8px gap they read as two: type here, then
-              go over there. Inside, the chevron is where your eye already is when you stop typing —
-              the same place Enter is (manage.onCreateKey), which is the route most people take.
-
-              THE FIELD DID NOT GROW TO MAKE ROOM. It keeps its own box, its own border, its own
-              radius and its 35.5px height; the button is positioned against the inside of that box
-              rather than laid out in the row, so nothing about the input answers to it. What DOES
-              answer to it is the input's trailing padding: 40px, which is the button's 28 plus its
-              4px inset plus 8 of clearance, so a long project name runs under the caret and stops
-              before the disc rather than under it.
-
-              4px OF INSET ON THREE SIDES, and the height falls out of it: inset-block:4px against a
-              35.5px field leaves 27.5, and 28 of width makes it a circle at --radius-pill without
-              either number being a guess about the other. No transform anywhere — the press
-              contract is a colour change in this app, and a control centred by a transform is one
-              that would have to fight it. inset-inline-end, so the disc sits at the end of the
-              reading direction rather than at the right of the screen. */}
-          <div style={sx('position:relative;display:flex')}>
-            {/* NO RAISED FILL. All three of the app's name fields sat on --surface-raised, which is
-                a lighter plate meant to lift a surface off the page — and these sit ON a --surface
-                sheet, so the plate lifted them off nothing and read as a second ground inside the
-                first. The stadium's own hairline is what says "type here"; the fill was saying it a
-                second time, more loudly, in a panel whose whole point is that its rows are quiet.
-                THE FIELD IS A STADIUM AND ITS INSET GREW WITH IT. 11px of leading padding put the
-                placeholder against the widest point of an 18px arc; 18 clears it — and 18 is the
-                figure the rows below use too, so every piece of text inside a control on this
-                surface starts on the same column. (The toast keeps 16: it is a 48px bar with a
-                deeper arc and a leading inset chosen for it by hand.) */}
-            <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface);border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-            {/* Filled --on-surface, unlike the toast's outlined pair: this is the one act on the tab
-                that commits something, and fill is how this system says primary. A GLYPH CARRIES ITS
-                NAME: aria-label states the act, title hands the word to a pointer, and the swap runs
-                on it exactly as it does on every other mark now. */}
-            <button type="button" data-manage-add="1" data-ix="cta" data-focus="chrome" onClick={vals.manage.onCreate} aria-label="Create project" title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
-          </div>
-        </div>
-
-        {/* THE ROW IS THE PROJECT: its name, how much is in it, and the two things you can do to it
-            as a whole. The count sits INSIDE the name field (see the note on manageView.count) and
-            what it paid for is the Export button — the act a folder existed for and did not have.
-            Order is name → export → delete: the constructive act sits next to the thing it acts on,
-            and the destructive one stays at the far edge where it is hardest to hit by accident.
-            data-tg-cell on the row, so a project arrives on the same per-item stagger a facet row
-            does — this panel is a list of things too, and the drawer only knows that from the hook. */}
-        {!vals.manage.empty && (
-        <div data-tg-sec="1" style={sx('padding:14px var(--page-gutter) 26px;display:flex;flex-direction:column;gap:8px')}>
-          {vals.manage.rows.map((pr) => (
-            <div key={pr.id} data-tg-cell="1" style={sx('display:flex;align-items:center;gap:8px')}>
-              <span style={sx('position:relative;flex:1;min-width:0;display:flex')}>
-                {/* padding-right clears the numeral's column so a long project name runs under the
-                    caret, never under the count.
-                    BOTH INSETS MOVED WITH THE CORNER. The field is a stadium now, so 11px of leading
-                    padding put the name against the widest point of an 18px arc and 11px of trailing
-                    inset did the same to the numeral. 18 on both edges — the SAME 18 the rows in this
-                    panel and both dialogs use, so a field and a row put their text on one column
-                    instead of two. The padding-right follows the numeral rather than being chosen:
-                    the inset, plus the digits, plus the clearance the name needs from them. */}
-                <input data-proj-name={pr.id} data-focus="field" type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" aria-describedby={'projn-' + pr.id} style={sx("width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-pill);padding:9px 44px 9px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface)")} />
-                {/* The numeral is painted; the noun is spoken. A bare "8" announced after a project
-                    name is a quantity of nothing in particular, and aria-label on a span with no
-                    role is not reliably read — so the description this field points at carries the
-                    whole sentence as real text, and only the digits are visible. */}
-                <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
-                  <span aria-hidden="true">{pr.count}</span>
-                  <span style={liveRegionStyle}>{pr.countAria}</span>
-                </span>
-              </span>
-              {/* cursor written from state, not left to [data-ix]:disabled — that rule is in the
-                  stylesheet and this style is inline, so a hardcoded `pointer` would outrank it and
-                  the empty project's control would still invite the press it refuses. */}
-              <button type="button" data-ix="press" data-focus="chrome" disabled={!pr.canExport} aria-label={pr.exportAria} title={pr.exportTitle} onClick={pr.onExport} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);padding:0;cursor:' + (pr.canExport ? 'pointer' : 'default'))}>
-                <TextSwap><IconExport /></TextSwap>
-              </button>
-              <button type="button" data-ix="press" data-focus="chrome" aria-label={pr.deleteAria} onClick={pr.onDelete} style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
-                <TextSwap><IconTrash /></TextSwap>
-              </button>
-            </div>
-          ))}
-        </div>
-        )}
-
-        </>)}
 
         </div>
       </div>
@@ -4210,7 +4133,7 @@ function AssignDialog({ vals }) {
               as a dismiss gets a dismiss, not a silent save. */}
           {/* A RULE, NOT MORE SPACE, and this is the case that earns one. The field above creates a
               project; the pair below commits the whole picker — two different acts, and stacked with
-              only a gap between them the buttons read as the field's own controls, as though Confirm
+              only a gap between them the buttons read as the field's own controls, as though Done
               submitted the name. Space alone cannot fix that here: the gap would have to grow past
               the dialog's own rhythm before the grouping flipped, and the dialog is already tight.
               --line, the same hairline the list rows and the drawer sections rule with. */}
@@ -4223,8 +4146,11 @@ function AssignDialog({ vals }) {
             everything above, the same construction the restore dialog's footer uses. */}
         <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:18px var(--page-gutter) 22px;border-top:1px solid var(--line)')}>
           <B006 data-emphasis="secondary" onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Cancel</B006Text></span>} />
-          {/* No check before Confirm (17.09.26, by request): the word says it; the glyph repeated it. */}
-          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Confirm the projects for ' + assign.name} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Confirm</B006Text></span>} />
+          {/* No check before the word (17.09.26, by request): the word says it; the glyph repeated it.
+              DONE, NOT CONFIRM (18.09.26, by request). The act is unchanged — this still commits
+              the pending set and Cancel still drops it — so the spoken name keeps the visible word
+              first and says what it saves, the way Cancel's says what it leaves. */}
+          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Done, saving the projects for ' + assign.name} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Done</B006Text></span>} />
         </div>
       </div>
     </div>
@@ -4258,9 +4184,11 @@ function ToastLayer({ vals }) {
               whole-screen states, and a bar reporting one act does not outrank them. */}
           {vals.hasToast && (
             <div style={sx('position:fixed;left:0;right:0;bottom:var(--page-gutter);z-index:158;display:flex;justify-content:center;pointer-events:none')}>
-              {/* FULLY ROUND, THE SURFACE SHADOW, AND THE PAGE GUTTER FROM THE BOTTOM EDGE (17.09.26,
-                  audits D1, D2 and C9, by request): it took 18px for one round and went back to the
-                  stadium; --shadow-surface and --page-gutter stayed. The note below is the stadium's.
+              {/* GLASS SINCE 19.09.26 (by request): the pane, its blur and its hairline are in
+                  global.css ([data-toast], shared with the notice); the surface shadow went with the
+                  solid plate. FULLY ROUND, AND THE PAGE GUTTER FROM THE BOTTOM EDGE (17.09.26, audits
+                  D1, D2 and C9, by request): it took 18px for one round and went back to the stadium.
+                  The note below is the stadium's.
                   A STADIUM, LIKE EVERY OTHER FLOATING SURFACE THE TOOL PUTS OVER THE STAGE. It was the
                   last square bar left: it arrives over a result view whose actions, traits and badges
                   are all pills, and a hard-cornered plate reads as a different system rather than as
@@ -4271,7 +4199,7 @@ function ToastLayer({ vals }) {
                   against the widest point of a 24px arc, and 8px of it read as the sentence crowding
                   the curve. padding-inline-start, not padding-left: the asymmetry is about the reading
                   edge, so it should follow the reading direction rather than the screen's. */}
-              <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;background:var(--surface-raised);color:var(--on-surface);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;box-shadow:var(--shadow-surface);pointer-events:auto')}>
+              <div data-toast="1" role="status" aria-live="polite" style={sx('display:flex;align-items:center;gap:16px;color:var(--on-surface);border-radius:var(--radius-pill);padding:8px;padding-inline-start:16px;pointer-events:auto')}>
                 {/* No capitalize transform: it Title-Cased whole sentences ("Dry Season Deleted"). The
                     label arrives as a natural sentence — the palette's own name keeps its case, the
                     verb stays lowercase — and a status line is prose, not a button. */}
@@ -4344,12 +4272,12 @@ function NoticeLayer({ vals }) {
               keep their five seconds but hold while hovered or focused, so looking at a notice is enough
               to keep it. role follows the kind: alert for the ones that stay, status for the ones that pass. */}
           {vals.hasNotice && (
-            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:var(--page-gutter);bottom:var(--page-gutter);z-index:128;display:flex;align-items:center;gap:9px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:8px;padding-inline-start:16px;max-width:340px;box-shadow:var(--shadow-surface)')}>
+            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('position:fixed;left:var(--page-gutter);bottom:var(--page-gutter);z-index:128;display:flex;align-items:center;gap:9px;border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:8px;padding-inline-start:16px;max-width:340px')}>
               {/* The leading dot went on 17.09.26, by request (audit C9). It was a bullet with no
                   meaning to lose: aria-hidden, no state, no variants. */}
               {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
-                  They sit in the same corner, take the same --surface-raised plate, the same
-                  --line-strong edge, the same pill and the same shadow — and then set their text three
+                  They sit in the same corner, take the same pane (glass since 19.09.26, one rule in
+                  global.css for both), the same pill — and then set their text three
                   different ways: --fs-label against the toast's --fs-body, a hand-set .01em against its
                   --track-flat, and --on-surface-muted against its --on-surface. Two objects that agree
                   about every other property and disagree about the type read as one of them being

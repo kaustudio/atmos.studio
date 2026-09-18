@@ -56,8 +56,8 @@ export const shareMethods = {
       time: Date.now(),
       // Saved inside a scope, so it joins that project — as a set of one, with the legacy mirror
       // written beside it like every other record.
-      projectId: (this.state.activeProject && this.state.activeProject !== '__unfiled__') ? this.state.activeProject : null,
-      projectIds: (this.state.activeProject && this.state.activeProject !== '__unfiled__') ? [this.state.activeProject] : [],
+      projectId: (this.state.activeProjects || [])[0] || null,
+      projectIds: (this.state.activeProjects || []).slice(),
     });
     this.setState((st) => ({
       feed: [mine, ...st.feed], current: mine, sharedView: false,

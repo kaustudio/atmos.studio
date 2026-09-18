@@ -382,8 +382,11 @@ export const renderValsMethods = {
       // comparison columns, but the detail pane states the full readout: the row exists to compare,
       // this panel exists to inspect, and inspection should not require the row.
       // Grouped, not flat: the seven values are three different KINDS of statement, and the
-      // hierarchy follows that — group heading (uppercase, muted) → label (sentence case, muted)
-      // → value (full ink, tabular, right-aligned). Scanning is two-step: find the group, then
+      // hierarchy follows that — group heading (full ink, Medium) → label (muted) → value (full
+      // ink, tabular, right-aligned). Headings and labels in Title Case since 19.09.26 (by request),
+      // where they were set in capitals, and two steps larger (by request, a step at a time):
+      // --fs-body (13), from --fs-fine (11), the values' own size; the label is told from its value
+      // by the muted ink, and the heading by Medium. Scanning is two-step: find the group, then
       // read down an aligned value column, instead of parsing seven equal pairs in a line. The
       // groups are also the wrap unit: on a narrow window whole groups reflow, so "Lightness"
       // can never end up orphaned on a new line away from the other colour facts.
@@ -391,7 +394,7 @@ export const renderValsMethods = {
       const detailMeta = [
         {
           title: 'Colour', rows: [
-            { label: 'Dominant hue', value: curMet.hue + '°' },
+            { label: 'Dominant Hue', value: curMet.hue + '°' },
             { label: 'Chroma', value: curMet.chroma.toFixed(3) },
             { label: 'Lightness', value: curMet.lMin + '–' + curMet.lMax + '%' },
             { label: 'Temperature', value: curMet.temp },
@@ -403,8 +406,8 @@ export const renderValsMethods = {
           // never disagree. It used to print "2 / 10" with no verdict at all, which left the panel
           // stating a raw fraction while the row two sections down led with ✓ AA.
           title: 'Accessibility', rows: [
-            { label: 'Max contrast', value: curMet.contrastMax.toFixed(1) + ':1' },
-            { label: 'AA text pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
+            { label: 'Max Contrast', value: curMet.contrastMax.toFixed(1) + ':1' },
+            { label: 'AA Text Pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
           ],
         },
         {
@@ -431,7 +434,7 @@ export const renderValsMethods = {
             // Every value is two words that survive the cell's text-transform:capitalize intact —
             // which is why it is not "From the link" or "Shared link".
             {
-              label: 'Name from',
+              label: 'Name From',
               value: s.sharedView ? 'Shared palette'
                 : s.current.example === true ? 'Bundled example'
                   : s.current.fallback === true ? 'Local reading' : 'Live reading',
@@ -992,76 +995,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       };
     }
 
-    // --- projects: filter chips + assign/manage dialog data ---
-    // SENTENCE CASE, AND ONE SIZE FOR THE WHOLE LIBRARY BAR.
-    // These were 10px uppercase, which is the app's label voice — right for a CTA of two words,
-    // wrong for a bar of eight controls someone has to scan and tell apart. Uppercase removes the
-    // word-shape the eye actually reads, and at 10px it was doing that to "Unfiled", "Manage",
-    // "Max contrast" and "Clear filters" all at once. 12px sentence case is the same optical size
-    // and a readable word. Applied to this section's chrome only — the rest of the app's labels are
-    // single acts, not a scan surface. AA and 3D stay uppercase because they are initialisms.
-    // The scope chips ARE view-toggle options — same segmented control, same states — and were a
-    // hand-copy of that builder down to a truncated transition that left their background tint
-    // cutting. Only the row layout differs, so only the row layout is stated.
-    /* THE COUNT SITS ON THE LABEL'S BASELINE (17.09.26, by request: "the number should be centrally
-       aligned, it sticks to the top"). Centred boxes put the 11px count's baseline 0.8-1.25px above the
-       13px label's, with its top level with the ascenders, so it hung from the top of the line. On a
-       shared baseline it sits where a number in the same line of text would, and reads as centred on
-       the word. See labelStyle for the clip this needed moved. */
-    const chipStyle = (active) => this.viewToggleOptStyle(active, { whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'baseline', gap: '7px', maxWidth: '100%' });
-    /* ONE NAME CANNOT TAKE THE WHOLE ROW. A project name may be 60 characters, and at 10px that is
-       a 294px chip — two of them and the scope group is 693px wide before All and Unfiled have had
-       a turn. The cap is stated in `ch` rather than px so it stays a CHARACTER budget: it tracks
-       --fs-label if that token ever moves, which a pixel value would not.
-       Truncation hides content, so the full name stays reachable two ways — the aria-label has
-       always carried it, and `title` now carries it for a pointer. */
-    const CHIP_CHARS = 26;
-    // No overflow clip on this span (17.09.26): a flex item that clips has its baseline taken from its
-    // bottom edge, which dropped the count below the word. The ellipsis never came from here anyway —
-    // the swap's inline-block sat between this span and the text — it comes from the
-    // [data-proj-chip] .tswap rules in global.css, capped by this span's max-width.
-    const labelStyle = { whiteSpace: 'nowrap', minWidth: 0, maxWidth: CHIP_CHARS + 'ch' };
-    // No opacity on the counts. 0.7 over the muted token multiplied two de-emphases: muted ink
-    // clears 4.5:1 with little headroom, and the alpha pushed the 9px numerals well under it
-    // (WCAG 1.4.3 — a count is content, not decoration). The step down from the label is carried
-    // by SIZE alone (12 → 9), which was already doing the work.
-    // flex:none so the ellipsis eats the NAME and never the number: a scope chip whose count has
-    // been truncated away is a chip that has stopped saying the one thing only it can say.
-    const countStyle = (active) => ({ fontFamily: sans, fontSize: 'var(--fs-fine)', color: active ? 'var(--surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', flex: 'none' });
-    /* NATIVE FOCUS, LEFT ALONE — and that is the whole point of this handler being a recorder
-       rather than a preventDefault.
-
-       The chip must not take a focus RING on a mouse click. It carries data-focus="chrome", which is
-       3px of --on-surface at a 3px offset over a 3px --surface shadow; the group clips vertically, so
-       all that survives of that ring is its left and right segments, and they arrive as two black
-       bars flanking the selected chip with a pale gap inside them. The browser gets this right on
-       its own: a genuine mouse click does not match :focus-visible. Every attempt to take focus by
-       hand does — preventDefault plus focus() from the click handler, and equally from the mousedown
-       handler; both were measured resolving :focus-visible to true. There is no programmatic focus
-       that Chrome will attribute to a pointer, so the only correct move is not to make one.
-
-       That leaves the scroll jump the preventDefault was there to stop: focus makes the browser
-       scroll the group the minimum needed to expose the chip — 368px, instantly — and the reveal
-       tween then eased backward to its peek position, which read as an overshoot correcting itself.
-       So the press records where the row was BEFORE focus touched it, and _revealProjChip winds it
-       back to that value before tweening. Both happen inside the focus event, ahead of the next
-       paint, so the browser's jump is never seen and the row makes one movement on one curve.
-
-       onFocus carries the reveal for BOTH routes, which is what puts the keyboard on equal footing
-       rather than leaving it to the browser — measured, the browser leaves a clipped chip clipped.
-       On the pointer route it fires before the click that selects, so by the time setActiveProject
-       calls the reveal again the chip is already in place and that second call returns doing
-       nothing. */
-    const mkChip = (id, label) => { const active = s.activeProject === id; const count = (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length; return { key: String(id), label, count: String(count), active, chipStyle: chipStyle(active), labelStyle, countStyle: countStyle(active), onMouseDown: () => this._holdProjScroll(), onFocus: (e) => this._revealProjChip(e.currentTarget), onClick: () => this.setActiveProject(id), aria: 'Show ' + label + ', ' + count + ' palette' + (count === 1 ? '' : 's') + (active ? ' (current filter)' : ''), title: label.length > CHIP_CHARS ? label : undefined }; };
-    // Zero-result suppression on the project scopes: a scope whose count is 0 leads nowhere, so it
-    // is not offered — EXCEPT the scope currently active (it must stay on screen to be left) and
-    // All, which is the home scope, not a filter. Unfiled follows the same rule as real projects.
-    const projCount = (id) => (id === null) ? s.feed.length : (id === '__unfiled__') ? s.feed.filter((p) => this.palProjects(p).length === 0).length : s.feed.filter((p) => this.inProject(p, id)).length;
-    const projectChips = [
-      mkChip(null, 'All'),
-      ...((projCount('__unfiled__') > 0 || s.activeProject === '__unfiled__') ? [mkChip('__unfiled__', 'Unfiled')] : []),
-      ...s.projects.filter((pr) => projCount(pr.id) > 0 || s.activeProject === pr.id).map((pr) => mkChip(pr.id, pr.name)),
-    ];
+    // --- projects: the Projects tab and the assign dialog ---
+    // The scope chips that were built here went with the rail they filled (19.09.26, by request).
+    // The scope pipeline outlived the rail: activeProjects, setProjectFilter and projectFeed are the
+    // Project facet now, the first group of the Library panel (19.09.26).
     const hasProjects = s.projects.length > 0;
 
     // --- the tag facet: an OPEN vocabulary behind one disclosure, searched rather than enumerated ---
@@ -1074,23 +1011,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     const activeTags = s.activeTags || [];
     const activeA11y = s.activeA11y || [];
 
-    /* WHICH HALF OF THE LIBRARY PANEL IS SHOWING — resolved here, once, because two things read it
-       long before the panel does: manageView below is only worth building when the Projects tab is
-       up, and the tab strip itself has to agree with whatever the body renders.
-
-       NULL MEANS "NOT CHOSEN YET", and that is what makes the default answerable. `libraryTab` is
-       null until the reader presses a tab, and stays null across the panel's close (see
-       _finishTagClose), so an unchosen panel can open where the work actually is: Filter normally,
-       Projects when there is nothing to filter — a library with no palettes in it has no traits to
-       narrow by, and opening onto an empty facet list while the only available act sits one tab
-       over would be a default chosen for tidiness.
-       A PRESS IS ALWAYS OBEYED, which is the other half of it. The reader can still walk to the
-       empty Filter tab and be told, in words, why it is empty; a tab that silently refuses the
-       press is a dead control, and this file's own rule is that a control which cannot act says so.
-       Everything downstream — the pressed state, the pill's position, the announcement — reads this
-       and not the raw flag, so the strip can never disagree with the body under it. */
-    const canFilter = tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0;
-    const libTab = s.libraryTab || (canFilter ? 'filter' : 'projects');
     // Each group counts against the OTHER groups' filters but not its own — the standard faceted
     // convention. Counting a group against itself would make every unselected option read zero the
     // moment you picked something in that group.
@@ -1103,6 +1023,40 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       && (skip === 'light' || this.matchesLight(p, activeLight))
       && (skip === 'temp' || this.matchesTemp(p, activeTemp)));
     const a11yBase = others('a11y');
+    /* ---- THE PROJECT FACET (19.09.26, by request) ----------------------------------------------
+       The first group in the Library panel, on the same grammar as the rest: OR within the group,
+       AND against the others, a count that holds the OTHER groups' filters but not its own.
+       EVERY PROJECT IS LISTED, where the measured groups drop a value nothing has. A project is
+       something the reader made, and one that vanished from the list the moment it was empty (or
+       the moment another filter left it nothing) read as a project that was never saved; so a
+       project that would narrow to nothing stays, inert, with its 0, as an "Every palette here" row
+       does. Inert rows go after the live ones.
+       FIVE, THEN SHOW ALL (Hick's law, Miller's law: twenty folders at once is a slower choice
+       than five). The order is recent activity, the newest palette each project holds, and it is
+       fixed while you pick: a ticked project never jumps to the top under the pointer. A ticked
+       project past the fifth still shows, so what is applied is always on screen. */
+    const activeProjects = s.activeProjects || [];
+    const projBase = s.feed.filter((p) => this.matchesTags(p, activeTags) && this.matchesA11y(p, activeA11y) && this.matchesLight(p, activeLight) && this.matchesTemp(p, activeTemp));
+    const PROJECT_ROWS = 5;
+    const projectAll = s.projects.map((pr) => {
+      const n = projBase.filter((p) => this.inProject(p, pr.id)).length;
+      const on = activeProjects.indexOf(pr.id) >= 0;
+      let newest = 0; s.feed.forEach((p) => { if ((p.time || 0) > newest && this.inProject(p, pr.id)) newest = p.time || 0; });
+      const empty = !on && n === 0;
+      const whole = !on && n > 0 && n === projBase.length;
+      const disabled = empty || whole;
+      return {
+        key: pr.id, label: pr.name, count: String(n), active: on, pressed: on ? 'true' : 'false', disabled,
+        recent: newest || pr.createdAt || 0,
+        aria: (empty ? pr.name + ' has no palettes here'
+          : whole ? 'Every palette here is in ' + pr.name + ', so it cannot narrow them further'
+          : (on ? 'Remove the ' + pr.name + ' project filter, ' : 'Show only the ' + pr.name + ' project, ') + n + ' palette' + (n === 1 ? '' : 's')),
+        onPick: disabled ? () => {} : () => this.setProjectFilter(pr.id),
+      };
+    }).sort((a, b) => (a.disabled - b.disabled) || (b.recent - a.recent));
+    projectAll.forEach((o, i) => { o.extra = i >= PROJECT_ROWS && !o.active; });
+    const projectShown = s.projectsAll ? projectAll : projectAll.filter((o) => !o.extra);
+    const projectHidden = projectAll.length - projectShown.length;
     // One removable chip per selected tag, in the order they were picked, so the narrowing reads as
     // a sentence you can dismantle from either end. The count on the LAST chip is the live result
     // size; earlier chips show what the selection was worth at that point, which is why only the
@@ -1111,11 +1065,15 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     // Chips for BOTH groups, accessibility first so the chip order matches the panel's group order.
     // Only the final chip carries the live result count — two numbers meaning different things
     // beside each other is worse than one.
-    const appliedRaw = activeA11y.map((v) => ({
+    const appliedRaw = activeProjects.map((id) => ({
+      key: 'project:' + id, label: this.projectName(id), project: true,
+      aria: 'Remove the ' + this.projectName(id) + ' project filter',
+      onRemove: () => { this.setProjectFilter(id); focusFacetBtn(); },
+    })).concat(activeA11y.map((v) => ({
       key: 'a11y:' + v, label: A11Y_LABEL[v],
       aria: 'Remove the ' + A11Y_SPOKEN[v] + ' text usability filter',
       onRemove: () => { this.setA11yFilter(v); focusFacetBtn(); },
-    })).concat(MEAS_CHIPS(this, s, focusFacetBtn)).concat(activeTags.map((t) => ({
+    }))).concat(MEAS_CHIPS(this, s, focusFacetBtn)).concat(activeTags.map((t) => ({
       key: 'tag:' + t, label: t,
       aria: 'Remove the ' + t + ' filter',
       onRemove: () => { this.setActiveTag(t); focusFacetBtn(); },
@@ -1279,7 +1237,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
        question asked of the panel — is it open, and is this the half showing. Nothing else changed:
        every row, count and handler below is the manage dialog's, moved. */
     let manageView = null;
-    if (s.tagMenuOpen && libTab === 'projects') {
+    if (s.tagMenuOpen) {
       manageView = {
         empty: !hasProjects, rows: s.projects.map((pr) => {
           const count = this.projectPalettes(pr.id).length; return {
@@ -1305,7 +1263,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
             exportAria: count
               ? 'Export the project ' + pr.name + ' as design tokens, all ' + count + ' palette' + (count === 1 ? '' : 's') + ' in one file'
               : pr.name + ' is empty, so there is nothing to export yet',
-            onDelete: () => this.deleteProject(pr.id), deleteAria: 'Delete project ' + pr.name + ' (its palettes move to Unfiled)',
+            onDelete: () => this.deleteProject(pr.id), deleteAria: 'Delete project ' + pr.name + ' (its palettes stay in your library)',
           };
         }),
         onCreate: () => { const inp = document.querySelector('[data-manage-new]'); if (inp && inp.value.trim()) { this.createProject(inp.value.trim()); inp.value = ''; inp.focus(); } },
@@ -1801,35 +1759,19 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // The cold-start empty state is only cold start. Filtered-to-nothing is a different message
       // with a different way out, and showing "Palettes you generate collect here" to someone
       // holding three filters was the app answering a question nobody asked.
-      feedEmpty: scoped.length === 0 && !(this.scopedFeed(s.feed).length === 0 && ((s.activeTags || []).length || (s.activeA11y || []).length || (s.activeLight || []).length || (s.activeTemp || []).length)),
+      feedEmpty: scoped.length === 0 && !(this.scopedFeed(s.feed).length === 0 && ((s.activeProjects || []).length || (s.activeTags || []).length || (s.activeA11y || []).length || (s.activeLight || []).length || (s.activeTemp || []).length)),
       feedHasItems: scoped.length > 0,
       // projects
-      projectChips, hasProjects, activeIsAll: s.activeProject === null,
+      hasProjects,
       // MANAGE IS AN ACT, AND IT LEFT THE SCOPE GROUP TO SAY SO.
       // It used to sit inside the chips' shared border, after a hairline, wearing the chip
       // component's exact type and padding. Everything about that placement said "one more scope":
       // same box, same baseline, last in a row of four. The hairline was carrying the entire
       // distinction between navigating the library and changing its structure.
       //
-      // MANAGE PROJECTS NO LONGER STANDS HERE. It was a bordered act at the end of this row, and it
-      // is now the second tab of the library panel — one door instead of two onto one library. Its
-      // style went with it: the tab takes the app's segmented-control style (libTabs below) rather
-      // than a bordered button's, because it is now a view of a surface rather than a way into one.
-      /* THE STEP PAIR. No border of its own: the rail already draws one, and the hairline in the
-         JSX separates the pair from the chips — a second box inside the box would read as another
-         scope. Square by construction (a fixed 32px, not padding), because a chevron has no width
-         of its own to pad and two arrows of different widths beside each other look broken.
-
-         Disabled reads as the app's disabled reads — [data-ix]:disabled, the same rule every other
-         dead control in the tree answers to — rather than a number invented at the project rail.
-
-         data-ix="press" and NOTHING inline about transitions: the press contract is a CSS rule
-         keyed on that attribute, and any transition declared here would replace it wholesale. */
-      projSteps: {
-        show: !!s.projStep.can,
-        prev: { disabled: !!s.projStep.start, style: this.projStepStyle(!!s.projStep.start), onClick: () => this.stepProjects(-1) },
-        next: { disabled: !!s.projStep.end, style: this.projStepStyle(!!s.projStep.end), onClick: () => this.stepProjects(1) },
-      },
+      // MANAGE PROJECTS NO LONGER STANDS HERE. It was a bordered act at the end of this row; it is
+      // the Project group's Edit in the library panel now (a tab of that panel until 19.09.26), one
+      // door instead of two onto one library.
       // The file pair (save / open) reads at the action row's SECONDARY emphasis — the same edge
       // and the same full-strength ink as every other unfilled control in the app. It used to take
       // the utility tier's muted ink and 15% edge; that tier is gone (it could not hold 4.5:1 once
@@ -1848,49 +1790,21 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       }),
       // the library panel: a drawer in the contrast/harmony family + applied chip (one filter state)
       facetOpen: !!s.tagMenuOpen,
-      /* ===== THE PANEL'S TWO TABS =====
-         The same object as the feed's List / Grid / 3D switch, one file over: a travelling pill
-         behind two aria-pressed buttons, built from the same viewToggleOptStyle so a future edit to
-         the app's segmented control reaches both. Two columns rather than three, and the pill is
-         written from libTab — the RESOLVED tab, never the raw flag — so the marker cannot sit under
-         a tab the body is not showing.
-
-         The counts say two different kinds of thing on purpose. Projects carries a cardinality (how
-         many folders there are, zero included: it is why the tab is empty when it is), Filter
-         carries a STATE (how many narrowings are on) and so is absent at rest — "Filter 0" would be
-         a number reporting nothing, and the trigger outside follows the same rule.
-         No opacity on either: the count is small text on a filled pill, and the archive's own audit
-         took opacity off these numerals once already for contrast. */
-      libTab,
-      libTabPill: {
-        position: 'absolute', top: '2px', bottom: '2px', left: '2px', width: 'calc((100% - 4px) / 2)',
-        transform: 'translateX(' + (libTab === 'projects' ? 100 : 0) + '%)', background: 'var(--on-surface)',
-        transition: this._reduce ? 'none' : 'transform var(--dur-fold) var(--ease-fold)',
-      },
-      libTabs: [
-        { key: 'filter', label: 'Filter', count: appliedRaw.length ? String(appliedRaw.length) : '', aria: appliedRaw.length ? 'Filter, ' + appliedRaw.length + ' filter' + (appliedRaw.length === 1 ? '' : 's') + ' applied' : 'Filter' },
-        { key: 'projects', label: 'Projects', count: String(s.projects.length), aria: s.projects.length === 1 ? 'Projects, 1 project' : 'Projects, ' + s.projects.length + ' projects' },
-      ].map((t) => ({
-        ...t, active: libTab === t.key,
-        // Guarded on the RESOLVED tab, not on the raw flag: with nothing chosen yet the flag is
-        // null, and a press on the tab already showing would otherwise re-announce and re-run the
-        // arrival of a panel that did not change.
-        onClick: () => { if (libTab !== t.key) this.setLibraryTab(t.key); },
-        // The count on the label's baseline, as on the scope chips (see chipStyle).
-        style: this.viewToggleOptStyle(libTab === t.key, { display: 'inline-flex', alignItems: 'baseline', justifyContent: 'center', gap: '7px' }),
-        countStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: libTab === t.key ? 'var(--surface)' : 'var(--on-surface-muted)' },
-      })),
-      // Left/Right across the pair, the same two lines the feed's view toggle takes: a segmented
-      // control is one control, and walking it with the arrows is what makes it one to a keyboard
-      // as well as to the eye. Focus follows the press so the next arrow continues from where you
-      // are, which is only possible because both buttons stay mounted across the switch.
-      libTabKey: (e) => {
-        const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!dir) return;
-        e.preventDefault();
-        const next = libTab === 'filter' ? 'projects' : 'filter';
-        this.setLibraryTab(next);
-        requestAnimationFrame(() => { const b = document.querySelector('[data-lib-tab="' + next + '"]'); if (b) try { b.focus(); } catch (err) { } });
-      },
+      /* ===== THE PROJECT GROUP (19.09.26, by request) =====
+         The panel's two tabs are gone: Project is the first group of the one list, and its Edit turns
+         the same rows into the management rows the Projects tab held. projectOptions are the rows on
+         screen (five, the ticked ones, or all), projectMore the control that shows the rest. */
+      projectOptions: projectShown,
+      hasProjectOptions: projectShown.length > 0,
+      projectMore: projectAll.length > PROJECT_ROWS ? (s.projectsAll ? 'Show Fewer' : 'Show All ' + projectAll.length) : '',
+      projectMoreAria: s.projectsAll ? 'Show the five most recent projects' : 'Show all ' + projectAll.length + ' projects, ' + projectHidden + ' more',
+      projectsAll: !!s.projectsAll,
+      toggleProjectsAll: () => this.toggleProjectsAll(),
+      projectsEditing: !!s.projectsEditing && hasProjects,
+      // Edit is offered once there is something to edit; with no project yet the group opens on the
+      // new-project field itself, since that is the only act there is.
+      canEditProjects: hasProjects,
+      toggleProjectsEdit: () => this.toggleProjectsEdit(),
       // A TOGGLE, because it has always claimed to be one. The trigger carries aria-expanded, so it
       // announces as a disclosure, and it only ever opened — pressing it while the panel was up
       // re-ran the open and appeared to do nothing. Now that a press outside dismisses the panel,
@@ -1908,7 +1822,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // One key, not two: `matchCount` sat beside this with no consumer at all.
       // Same sentence the bar states, so the panel and the row it sits over never disagree.
       matchLabel: appliedRaw.length
-        ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
+        ? 'Showing ' + scopedNow + ' of ' + s.feed.length + ' palette' + (s.feed.length === 1 ? '' : 's')
         : tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's'),
       // roving arrow traversal inside a filter group — Down/Up step, Home/End jump. The rows are
       // data-sec-row since the section reveal; this still looked for the traits list's data-tg-cell
@@ -1972,10 +1886,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // filter cost: 5 of 8, a narrowing and its size in one line.
       //
       // The denominator is the project scope's own total, not the whole archive, because the scope
-      // chips above already declared which library segment we are inside; counting against the
-      // archive would make Unfiled + a filter report a number matching neither row.
+      // chips above already declared which library segment we are inside. SINCE 19.09.26 a project is
+      // a filter like the others, so the whole library is the denominator and every narrowing,
+      // the project's included, is inside the one number.
       resultSummary: appliedRaw.length
-        ? 'Showing ' + scopedNow + ' of ' + tagPool.length + ' palette' + (tagPool.length === 1 ? '' : 's')
+        ? 'Showing ' + scopedNow + ' of ' + s.feed.length + ' palette' + (s.feed.length === 1 ? '' : 's')
         : '',
       anyFilter: appliedTags.length > 0,
       // "Clear all" is now "Clear filters", and it sits AFTER the chips rather than before them.
@@ -2050,8 +1965,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // the consequence rather than the file dialog; the file format itself is untouched (see the
       // frozen `schema` note in persistence.js).
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
-      showBackUpProject: s.activeProject !== null,
-      backUpProject: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile(s.activeProject); },
       backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); },
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
@@ -2064,7 +1977,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // there is no tool behind the small-screen surface to hand a "back to the start" button to
       showLogoButton: !!s.landingDismissed && !s.narrow,
       showLogoDecor: !s.landingDismissed || s.narrow,
-      activeScopeLabel: (s.activeProject === '__unfiled__' ? 'Unfiled' : this.projectName(s.activeProject)),
       onRestore: () => { const inp = this.projectFileRef && this.projectFileRef.current; if (inp) inp.click(); },
       onProjectFileChange: (e) => { const f = e && e.target && e.target.files && e.target.files[0]; if (f) this.importProjectFile(f); if (e && e.target) e.target.value = ''; },
       projectFileRef: this.projectFileRef,

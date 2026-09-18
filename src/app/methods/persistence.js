@@ -271,7 +271,8 @@ export const persistenceMethods = {
     return this.makeSeed();
   },
   hydrateProjects() { const parsed = this.loadPersisted(); return parsed ? parsed.projects : []; },
-  // Scope the archive to the active project: null=All, '__unfiled__'=Unfiled, else a project id.
+  // The Project facet: palettes in ANY ticked project (OR within the group, as every group is), all
+  // of them when none is ticked.
   // Two scoping axes, one pipeline. projectFeed is the project axis alone — the chip counts and the
   // tag menu are built from it, so choosing a tag never narrows the menu it was chosen from (and an
   // active tag can never delete its own way out of the UI). scopedFeed is what the whole app reads:
@@ -295,7 +296,7 @@ export const persistenceMethods = {
     const clean = (ids || []).filter((x, i, a) => typeof x === 'string' && x && a.indexOf(x) === i);
     return Object.assign({}, p, { projectIds: clean, projectId: clean[0] || null });
   },
-  projectFeed(feed) { const a = this.state ? this.state.activeProject : null; if (a === null || a === undefined) return feed; if (a === '__unfiled__') return feed.filter((p) => this.palProjects(p).length === 0); return feed.filter((p) => this.inProject(p, a)); },
+  projectFeed(feed) { const a = (this.state && this.state.activeProjects) || []; if (!a.length) return feed; return feed.filter((p) => this.palProjects(p).some((id) => a.indexOf(id) >= 0)); },
   // Tags combine with AND: a palette must carry EVERY selected tag. Adding a tag narrows.
   matchesTags(p, tags) { if (!tags || !tags.length) return true; const d = p.descriptors.map((x) => x.toLowerCase()); return tags.every((t) => d.indexOf(t) >= 0); },
   // OR within the group: a palette holds exactly one accessibility state, so selecting two means
@@ -316,8 +317,9 @@ export const persistenceMethods = {
     if (w.length) out = out.filter((p) => this.matchesTemp(p, w));
     return out;
   },
-  // ---- project CRUD + assignment (one flat axis; delete refiles palettes to Unfiled with undo) ----
-  projectName(id) { if (!id) return 'Unfiled'; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : 'Unfiled'; },
+  // ---- project CRUD + assignment (one flat axis; delete leaves its palettes in the library, with undo) ----
+  // No project, no name: '' rather than a word for the absence (18.09.26, the Unfiled scope went).
+  projectName(id) { if (!id) return ''; const p = this.state.projects.find((x) => x.id === id); return p ? p.name : ''; },
   // What is IN a folder, in library order, ignoring whatever the archive is currently scoped or
   // filtered to. Exporting a project must write the whole project — a filter is a way of looking at
   // the library, never a silent edit to what a folder contains — so this reads the feed, not
@@ -326,17 +328,22 @@ export const persistenceMethods = {
   // Scoping the archive replaces every row in it, so it takes the same arrival as a page change:
   // the list restates itself top-down instead of cutting to a different set in place.
   //
-  // Reveal WITHOUT the anchor scroll that setPage/setPageSize use, deliberately. The chips and the
-  // filter drawer sit ABOVE the list, so anchoring would scroll the control you just clicked off the
+  // Reveal WITHOUT the anchor scroll that setPage/setPageSize use, deliberately. The filter drawer
+  // sits ABOVE the list, so anchoring would scroll the control you just clicked off the
   // top of the screen — the cure would be worse than the jump. Paging is different: the pager is
   // below the list, so anchoring moves toward what you were touching, not away from it.
   // Folders hold different counts, so the list's height changes with the scope — see _listFreezeHeight
   // for why that has to be ramped rather than stepped. Freeze BEFORE the swap, ramp after it.
-  // _revealProjChip rides HERE rather than in componentDidUpdate, and that placement is the whole
-  // safeguard: this is the one path a scope change comes through, so the container moves when the
-  // user chooses and at no other time. Hung off the render pass it would re-assert itself on every
-  // unrelated update and fight anyone scrolling the row by hand.
-  setActiveProject(id) { this._listFreezeHeight(); this.setState({ activeProject: id, page: 0, announce: (id === null ? 'Showing all palettes.' : id === '__unfiled__' ? 'Showing Unfiled palettes.' : 'Showing project ' + this.projectName(id) + '.') }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._revealProjChip(); this._listRowsReveal(); this._listSettleHeight(); }); },
+  // A project is ticked and unticked like any facet value (19.09.26, the Project group in the Library
+  // panel): same list pipeline as setFacet, and the announcement names the project, not its id.
+  setProjectFilter(id) {
+    this._listFreezeHeight();
+    this.setState((st) => {
+      const cur = st.activeProjects || [];
+      const on = cur.indexOf(id) >= 0;
+      return { activeProjects: on ? cur.filter((x) => x !== id) : cur.concat([id]), page: 0, announce: (on ? 'Removed the ' : 'Added the ') + this.projectName(id) + ' project filter.' };
+    }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+  },
   // Tag scoping. Activating the pressed tag clears it — the chip is the toggle, so there is no
   // separate "clear" control to find, and no way to end up filtered with nothing to unfilter with.
   // Same shape as setActiveProject deliberately: same state pipeline, same universe rebuild, same
@@ -387,16 +394,16 @@ export const persistenceMethods = {
   // Clears EVERY group — the single clear-all the panel and the archive header share.
   clearTags() {
     this._listFreezeHeight();
-    this.setState({ activeTags: [], activeA11y: [], activeLight: [], activeTemp: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
+    this.setState({ activeProjects: [], activeTags: [], activeA11y: [], activeLight: [], activeTemp: [], page: 0, announce: 'Filters cleared.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
   },
   // The way out of a zero-result state that does not throw away everything else the user chose.
   // Order matters: the last filter added is the one most likely to have caused the conflict, and
   // filters are appended within their group, so the newest is the tail of whichever group is last.
   removeLastFilter() {
     const st = this.state;
-    for (const key of ['activeTemp', 'activeLight', 'activeA11y', 'activeTags']) {
+    for (const key of ['activeTemp', 'activeLight', 'activeA11y', 'activeTags', 'activeProjects']) {
       const cur = st[key] || [];
-      if (cur.length) { this._listFreezeHeight(); const gone = cur[cur.length - 1];
+      if (cur.length) { this._listFreezeHeight(); const gone = key === 'activeProjects' ? 'the ' + this.projectName(cur[cur.length - 1]) + ' project' : cur[cur.length - 1];
         this.setState({ [key]: cur.slice(0, -1), page: 0, announce: 'Removed ' + gone + ' filter.' }, () => { if (this.state.feedView === 'grid') this.buildUniverse(); this._listRowsReveal(); this._listSettleHeight(); });
         return; }
     }
@@ -407,8 +414,8 @@ export const persistenceMethods = {
   },
   renameProject(id, name) { name = (name || '').trim(); if (!name) return; this.setState((st) => ({ projects: st.projects.map((p) => p.id === id ? Object.assign({}, p, { name: name.slice(0, 60) }) : p), announce: 'Project renamed to ' + name + '.' }), () => this.persist({ immediate: true })); },
   /* TOGGLE, not move. Picking a project the palette is already in removes it; picking a new one
-     adds it. Unfiled is not a project — choosing it means "belong to nothing", so it clears the
-     set rather than joining a ninth list. */
+     adds it. Belonging to nothing is not a project: it is the empty set, reached by clearing,
+     never a list to join. */
   /* THE ACT IS CONFIRMED, VISIBLY. Filing a palette used to say so in `announce` alone — which is
      the live region, which is to say: to screen readers only. Everyone else got a 6px dot appearing
      beside a row and had to infer from it that a specific palette had joined a specific folder. The
@@ -449,20 +456,27 @@ export const persistenceMethods = {
     // sentences into 'Dry Season Deleted': a status line is prose, and prose is sentence case. The
     // notice bar beside it carries full sentences for the same reason.
     const patch = { projects, feed, toast: { name: project.name + ' project', label: 'Project deleted' } };
-    if (st.activeProject === id) patch.activeProject = null;
-    patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) moved to Unfiled. Undo available.';
+    if ((st.activeProjects || []).indexOf(id) >= 0) patch.activeProjects = st.activeProjects.filter((x) => x !== id);
+    patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) stay in your library. Undo available.';
     // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next
     // deletion replaces it — see the note in overlays.js where the palette path says the same.
     // A deletion reflows the row, and if the deleted project WAS the scope the app has just fallen
     // back to All — which sits at the far left of a group that may be scrolled well past it. Same
     // reveal, same reason: the active chip should never be the one you cannot see.
-    this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); this._revealProjChip(); if (this.state.feedView === 'grid') this.buildUniverse(); });
+    this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); if (this.state.feedView === 'grid') this.buildUniverse(); });
   },
   // ---- portable project file (accountless permanence) — DISTINCT from token export ----
+  /* ONE PROJECT OR EVERYTHING (18.09.26, by request: "even if a palette doesn't live in a folder,
+     it should still be backed up"). A scope that is not a project id — 'library', All's null, or
+     an id since deleted — backs up the whole library, where it used to back up only the palettes
+     in no project, under the name "unfiled". So a palette outside every folder is in every backup
+     except one taken of a single project, and that one is a project's by definition. */
+  _backupProject(scope) { return this.state.projects.some((p) => p.id === scope) ? scope : null; },
   buildProjectFile(scope) {
     const st = this.state; let projects, palettes;
-    if (scope === 'library') { projects = st.projects.slice(); palettes = st.feed.slice(); }
-    else { const pid = (scope && scope !== '__unfiled__') ? scope : null; projects = pid ? st.projects.filter((p) => p.id === pid) : []; palettes = st.feed.filter((p) => pid ? this.inProject(p, pid) : this.palProjects(p).length === 0); }
+    const pid = this._backupProject(scope);
+    if (!pid) { projects = st.projects.slice(); palettes = st.feed.slice(); }
+    else { projects = st.projects.filter((p) => p.id === pid); palettes = st.feed.filter((p) => this.inProject(p, pid)); }
     return { schema: 'palette-generator/project-file', version: 1, exportedAt: new Date().toISOString(), projects, palettes };
   },
   // The FILENAME follows the interface's vocabulary; the `schema` string inside the file does not,
@@ -474,8 +488,9 @@ export const persistenceMethods = {
     const data = this.buildProjectFile(scope);
     const d = new Date(), date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     let fn;
-    if (scope === 'library') fn = 'atmos_library_backup_' + date + '.json';
-    else { const nm = (scope && scope !== '__unfiled__') ? this.projectName(scope) : 'unfiled'; fn = 'atmos_project_' + this.slugName(nm) + '_' + date + '.json'; }
+    const pid = this._backupProject(scope);
+    if (!pid) fn = 'atmos_library_backup_' + date + '.json';
+    else fn = 'atmos_project_' + this.slugName(this.projectName(pid)) + '_' + date + '.json';
     this.download(fn, JSON.stringify(data, null, 2), 'application/json');
   },
   // Restoring is TWO acts now: read the file, then commit it. Nothing reaches the library until
@@ -1176,7 +1191,7 @@ export const persistenceMethods = {
     }), () => { this.persist({ immediate: true }); this.showNotice(msg); this.closeAssign(); });
   },
   // The project is created for real — it is a thing in the library either way — but joining it is
-  // still a draft edit, so it lands in the pending set and waits for Confirm like every other row.
+  // still a draft edit, so it lands in the pending set and waits for Done like every other row.
   newProjectAndAssign(name) { const id = this.createProject(name); if (id) { const pal = this.state.assignPalette; if (pal) setTimeout(() => this.setState((st) => ({ assignPending: (st.assignPending || []).concat([id]) })), 0); } },
   /* openManage / closeManage WERE HERE. The manage surface is no longer a dialog of its own — it is
      the Projects tab of the library panel — so its open, close, focus capture and arrival are the

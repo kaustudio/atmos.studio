@@ -108,13 +108,14 @@ export const pipelineMethods = {
     const feed = (this.state && this.state.feed) ? this.state.feed : [];
     const it = this.cachedReading(hash) || this.interpret(swatches, feed);
     this.cacheReading(hash, it);
-    const active = (this.state && this.state.activeProject && this.state.activeProject !== '__unfiled__') ? this.state.activeProject : null;
+    // A palette made while projects are ticked joins them, so it lands in the view it was made in.
+    const active = ((this.state && this.state.activeProjects) || []).slice();
     // Identity comes from content, not from the clock and a dice roll. The suffix is the lowest
     // index not already taken by a palette of this same image, so re-extracting never collides with
     // an existing entry and never reuses an id freed by a deletion.
     const used = new Set(feed.filter((p) => p && p.hash === hash).map((p) => (typeof p.variation === 'number' ? p.variation : 0)));
     let variation = 0; while (used.has(variation)) variation++;
-    const pal = { id: hash + '-' + variation, hash, variation, imageUrl: url, time: Date.now(), name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, projectId: active, projectIds: active ? [active] : [], swatches };
+    const pal = { id: hash + '-' + variation, hash, variation, imageUrl: url, time: Date.now(), name: it.name, descriptors: it.descriptors, rationale: it.rationale, archetype: it.archetype, projectId: active[0] || null, projectIds: active, swatches };
     if (srcUrl && srcUrl !== url) Object.defineProperty(pal, '_srcUrl', { value: srcUrl, enumerable: false, writable: true, configurable: true }); // non-enumerable so it never gets persisted
     return pal;
   },

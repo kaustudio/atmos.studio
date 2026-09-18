@@ -378,6 +378,119 @@ the 11px uppercase label voice for the numeral's own type: `--fs-hero`, Medium, 
 written as the name is written. 86px at 1440 and 34px on a phone, beside the number, which keeps the
 mark colour while the name keeps the text colour.
 
+**Add to Projects ends on Done, not Confirm (18.09, by request).** The act is unchanged: the ticks
+are still a draft until this button commits them, and Cancel still drops them. The spoken name
+starts with the visible word ("Done, saving the projects for …"), as Cancel's does.
+
+**The Library's scope rail is gone, and the title took its row (19.09, by request: "I think it only
+adds inconvenience for the user").** The rail was All and a chip per project, scrolling behind ‹ ›
+arrows once they overflowed, on its own row under the title. The round before its removal moved the
+arrows inside it, then beside it, and narrowed it to three columns; none of that shipped. Now one
+row holds "Library" alone at the start and, at the far edge, the list button and List | Grid, 8px
+apart ("let Library sit alone and move the list button to the right next to the list/grid toggle
+with the same gap"; it stood 8px after the title for one step). The row is centred on one line, 12px
+above the table. The list button is the toggle's height, 35.5px, in both states (a circle at rest, a
+stadium with its count), where it was 32 and would have stood 1.75px short at each end beside it.
+The rail's code went with it: the chips, the arrows, the travelling pill, the scroll reveal, their
+state and their styles. What stays is the scope pipeline (`activeProject`, `setActiveProject`,
+`projectFeed`), so **there is currently no way to show one project's palettes**: the list button's
+panel filters and manages projects but does not open one. **The title is 32px** (`--fs-statement`,
+was 24), set while the list button stood beside it (at 24 its capitals were half the button's
+height) and kept when it moved. **Its ink is centred, not its capitals** ("the list button seem to
+sit above the Library text"): "Library" is lowercase after its L and hangs a y, so a control
+centred on its capitals read high; the title lifts 0.1em, which puts the middle of its ink (L-top
+to y-tail) on the row's centre line to within a quarter pixel at 2x and 3x.
+
+**The deletion toast and the notice are glass (19.09, by request: "these floating containers that
+are temporary needs to match the glass environment we have established").** They were the solid
+recipe, `--surface-raised`, the `--line-strong` edge and the surface shadow, for surfaces that sit
+on the page. They float over it, so they take the grid dock's pane instead: the surface at 70% over
+the 12px blur, the ink's 12% hairline and no shadow, one rule in global.css for both. They keep
+fading on their own opacity: an element's own opacity does not cut its blur the way an ancestor's
+does (measured: a pane at .5 shows its blurred copy at half strength, a crossfade). **The toast's
+undo takes the supplied icon**, an arrow that turns back and runs home.
+
+**The Library panel is one list, and projects are a filter in it (19.09, by request).** The rail
+went, so the drawer behind the list button became the one place to pick a project, and its Filter |
+Projects toggle went with it ("doesn't that make the toggle between the filter and project
+unnecessary?"). The list opens on a **Project** group, then Text usability, Lightness and
+Temperature. Projects follow the facet grammar: `activeProjects` (a list), OR within the group, AND
+across groups, and counts that hold the other groups but not their own. Every project is listed; one
+with nothing to show is inert with its 0, where a measured value would be hidden, because a project
+that vanished when empty read as one never saved. The order is recent activity (the newest palette
+each holds) and stays put while you pick. **Five rows, then "Show All N"** ("what if a user have
+15-20 projects?"; Hick's law, Miller's law), in the heading's column and muted ink so it is not read
+as a project; a ticked project always shows. **Edit**, beside the heading, turns the same rows into
+the management rows the Projects tab held (a new-project field, then rename, export and delete), and
+**Done** turns them back; with no project yet the group opens on the field. On the page, each ticked
+project is a chip carrying **the folder mark** (similarity with Add to Projects), and the chip row sits
+**24px under the title row and 8px over the table** (proximity; it was 12 and 8). The result sentence
+now counts against the whole library. A palette made while projects are ticked joins them, so it lands
+in the view it was made in. Clear Filters and deleting a project both untick. "Show All" is not in the
+panel's line reveal: the reveal restores markup, and it left the label reading Show All after opening.
+
+**Copy's padding matches the row (19.09, by request).** Its label sits centred in a hidden
+glyph-and-"Copied" so the row never moves when it confirms, and at rest that spare sat as 6px more air
+each side (18.7 and 19.3px ink to edge, against Check Contrast's 13.3/13 and Export's 12.7). The spare
+comes out of its padding now (`--button-006-padding` on `[data-copy-trigger]`): 12.7 and 13px, measured
+from pixels at 3x. "Copied" spends it for the moment it shows.
+
+**The bins are red (19.09, by request: "a red color for the bin and a tinted red fill on hover...
+both light and dark mode").** A new pair of tokens: `--danger` #c8322a in light (4.9:1 on the page,
+4.1 on its 12% hover tint, 3.6 at the 20% press) and #ff6e62 in dark (6.7, 5.7, 5.0), and
+`--danger-inverse`, the other theme's red, for the bin on an ink-filled (lit) Library row (6.4:1 and
+4.8:1). Every delete carries `data-danger`: the Library row's, the palette detail's and a project's in
+Edit. The glyph is red at rest, and so is the edge where there is one ("border on the bin should be
+red as well"): 70% of the red, the lightest that clears the 3:1 control edge in both themes (3.1:1
+light, 3.8 dark). Hover fills 12% of the red with the edge at full red (4.9 / 6.7:1), press 20%. An
+earlier 45% hover edge was under 3:1. Verified by computed style in both themes.
+
+**The result stage's metrics are Title Case, one step larger (19.09, by request).** Colour,
+Accessibility and Reading, and every label under them (Dominant Hue, Max Contrast, AA Text Pairs,
+Name From…), were set in capitals by the stylesheet; they are written in Title Case now with the
+transform gone, and moved from `--fs-fine` (11) to `--fs-body` (13), a step at a time (12 first,
+then "titles and labels" to 13). They are the values' size now: a label is told from its value by
+the muted ink, and a heading by Medium.
+
+**The Project group's fields wear the rows' plate (19.09, by request: "input field should match the
+styling of the other elements in the drawer").** The new-project field and each rename field take
+the filter rows' look: `--surface-raised` with the `--line` hairline, 37.5px tall (10px over and
+under), 13px Medium, the count 18px from the edge, and the rows' hover to `--surface-white`; the
+placeholder is the muted ink. This reverses the older "no raised fill" note on the name fields,
+written before the rows became raised plates. The create disc is 29.5 square so it stays round.
+The Add to Projects dialog's field is outside the drawer and unchanged. **The export and delete
+circles beside them take the same raised fill** ("we can't have the icons in the drawer without a
+fill"); their hover and press tints are unchanged.
+
+**The Library list's palette names are 15px (19.09, by request: "the nearest token").** `--fs-lead`,
+from `--fs-body` (13). The 14px `--fs-cta` is the glass call to action's own size, outside the ten
+type steps, so the next step of the scale is 15.
+
+**Undoing a project's deletion puts its palettes back in it.** The undo wrote the legacy `projectId`
+alone, which nothing reads since membership became the `projectIds` set, so the project came back
+empty while the toast said it was restored. It refiles through `withProjects` now.
+
+**The page arrows behave like the design system's buttons (18.09, by request).** The pair under
+the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as
+the list icon, the close marks and every label do. Their hover fill is the primary
+black, `--action-primary-surface` with the chevron in `--action-primary-ink` (the pressed chip's
+own pill, in both themes), where it was the press tier's 16% grey; a press takes
+`--action-primary-press`, and nothing moves. The pager's hairline fills with it, so its circle is
+one solid disc. The hover sits behind `(hover:hover)`, so a tapped arrow never keeps a black disc.
+`IconChevron` takes a `turn` so the svg stays the swap's only child: with a wrapper span there,
+global.css would read the button as text-bearing and drop its hover fill.
+
+**No Unfiled scope (18.09, by request: "Not all colors need a folder").** The rail's Unfiled chip
+is gone. It singled out the palettes in no project, which made being outside a folder look like a
+to-do, and All already holds them. With it went the scope's other traces: `projectName()` has no
+word for "no project" (it returns ''), deleting a project says its palettes "stay in your library",
+and saving a palette inside All files it nowhere. **Backups hold every palette that is not in a
+folder** ("it should still be backed up when a user chooses to do so"): a backup whose scope is not
+a live project id (the masthead's library backup, All's `null`, a project since deleted) writes the
+whole library. It used to write only the palettes in no project, under the name "unfiled", for
+`null`. Only a backup of one project is limited to that project. Verified: 8 of 8 palettes, the 3
+without a folder included, in every backup but a single project's.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
