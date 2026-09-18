@@ -2974,7 +2974,7 @@ function FeedSection({ vals }) {
                 grid padding puts its text edge exactly where the strip below begins — so the line
                 it must state is already stated by its text. Boxing it would push the word 6px off
                 that line. Each column aligns by the rule its content needs. */}
-            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:6px')}>Palette</span>
+            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:7px')}>Palette</span>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -2992,7 +2992,7 @@ function FeedSection({ vals }) {
                 is two colours reaching AA — belongs to the contrast surface that measures it,
                 which is one button away and has room to say it properly. */}
               {vals.sortCols.filter((col) => col.key === 'aa').map((col) => (
-                <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
+                <button key={col.key} type="button" data-ix="press" data-focus="chrome" data-sort-col="1" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
                   {/* The 9px slot is reserved on every column whether or not it draws anything, so
                       a label never shifts when the sort moves to it. data-dim marks the columns
                       that are NOT the current sort: they render nothing at rest and fade the
@@ -3004,7 +3004,7 @@ function FeedSection({ vals }) {
             </div>
             {/* MAX CONTRAST and DATE each own their column outright */}
             {vals.sortCols.filter((col) => col.key === 'contrast' || col.key === 'time').map((col) => (
-              <button key={col.key} type="button" data-ix="press" data-focus="chrome" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
+              <button key={col.key} type="button" data-ix="press" data-focus="chrome" data-sort-col="1" aria-pressed={col.pressed} aria-label={col.aria} onClick={col.onSort} data-row-cell={col.key === 'time' ? 'date' : col.key} style={col.style}>
                 {/* Same reserved slot and same data-dim rule as the AA column above. */}
                 <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none')}>{col.showChevron && <span data-sort-chevron="1" data-dir={col.dir} data-dim={col.chevronDim ? '1' : null}><IconChevron /></span>}</span><TextSwap>{col.label}</TextSwap>
               </button>

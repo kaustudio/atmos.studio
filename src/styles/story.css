@@ -290,13 +290,17 @@
    a CSS mask cannot be blurred without blurring what it reveals — and the softness belongs to the
    mask anyway: every pixel on that boundary is a near-tie between two colours, so a hard line would
    claim a precision the classification has not got. */
+/* THE HERO'S CORNER AND NO BORDER (18.09.26, by request): --radius-surface, as How it Works'
+   photographs have it, and the 1px --line-strong border gone as theirs is. isolation for the same
+   reason as .about-shot — three stacked copies on their own layers inside a rounded clip. */
 .story-mask{
   position:relative;
   width:100%;
   aspect-ratio:4/3;
   overflow:hidden;
   background:var(--surface-raised);
-  border:1px solid var(--line-strong);
+  border-radius:var(--radius-surface);
+  isolation:isolate;
 }
 .story-mask img{
   position:absolute;

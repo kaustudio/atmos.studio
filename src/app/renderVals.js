@@ -369,8 +369,11 @@ export const renderValsMethods = {
       // Build the reference thumbnail as a node so the <img> only exists once its src is resolved.
       // 156×104 (same 3:2), sized to sit level with the metadata columns it now shares a row
       // with — the subtle enlargement the move down bought; click-to-zoom still carries the
-      // full-size view, so the thumbnail only has to identify, not exhibit
-      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', border: '1px solid var(--line-strong)' } })) : null;
+      // full-size view, so the thumbnail only has to identify, not exhibit.
+      // 12px AND NO BORDER (18.09.26, by request): --radius-card, a tenth of its 104px height as the
+      // short panels' 16 is of theirs, where 28 would be a quarter; the button takes the same corner
+      // so its focus ring follows the picture's.
+      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in', borderRadius: 'var(--radius-card)' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', borderRadius: 'var(--radius-card)' } })) : null;
       // The metadata cluster — restored to the detail pane. It used to live ONLY in the list's
       // inline expansion; Phase 1 removed that expansion on the contract that this panel is the one
       // detail surface, but these five values (hue/chroma/lightness/temperature/archetype) were
@@ -2131,11 +2134,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // No widths here any more: the header sits on --row-grid, the same template the rows use,
         // so each label is sized by the track it lands in. Each right-aligns over the values it
         // sorts. (The ⓘ that shared 'aa''s track to explain the badge was removed by request.)
-        // Sentence case, like every other control: these were Title Case while a transform was
-        // uppercasing them and the source case never showed. "AA" stays capital because it is the
-        // WCAG level, not a word.
-        { key: 'aa', label: 'AA text pairs' },
-        { key: 'contrast', label: 'Max contrast' },
+        // Title Case, as every control speaks since the banner voice (18.09.26, by request); the
+        // uppercase transform that hid the source case is lifted for these by data-sort-col.
+        { key: 'aa', label: 'AA Text Pairs' },
+        { key: 'contrast', label: 'Max Contrast' },
         // "Date" named the type of the value, not the event. Created, because that is what the
         // number IS: `time` is stamped once in pipeline.js when the palette is minted and no edit
         // touches it. So "Updated" would have been a plausible label for a column that never
@@ -2176,33 +2178,24 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           aria: 'Sort by ' + this.SORT_LABELS[c.key] + ', ' + highLow[nextIsDesc ? 0 : 1]
             + (active ? ' (currently sorted by ' + this.SORT_LABELS[c.key] + ', ' + highLow[desc ? 0 : 1] + ')' : ''),
           onSort: () => this.setSort(c.key),
-          style: this.monoLabel('var(--fs-fine)', 'var(--track-flat)', {
-            // A CHIP, NOT A COLUMN. It hugs its label with the same padding on all four sides and
-            // sits at its track's end, so the BOX lands on the column line and the label is centred
-            // inside it. Filling the whole track was tried and removed: a tint one column wide
-            // announcing a two-word label reads as the column having a state, not the control.
-            //
-            // THE BORDER IS LOAD-BEARING AND MUST NOT BE REMOVED. It is what carries the alignment
-            // at rest — the box edge IS the grid line, which is the only way the header can be
-            // seen to sit on the same column the values below it sit on. Dropping it was tried
-            // once, on the theory that a header should read as a plain label; what actually
-            // happened is that the header stopped declaring the grid at all, and three
-            // right-aligned words floated over three columns with nothing stating the relationship.
-            // The hover tint fills exactly that box, so hovering changes the chip's colour rather
-            // than its shape. --line is the quietest edge the app owns; anything stronger turns a
-            // header row into a table.
-            //
-            // Created carries no private margin any more: the header grid's --row-inset padding is
-            // the 16px it used to hold for itself, and the stamp below gets the same figure from
-            // the row grid — one token, both edges, cannot drift.
-            width: 'auto', minWidth: 0, minHeight: '24px', justifySelf: 'end',
+          /* A CHIP, NOT A COLUMN, AND NOW THE SYSTEM'S TOGGLE TYPE (18.09.26, by request):
+             toggleStyle, as the harmonies drawer's model pills are — a stadium on --btn-pad-sm, 13px
+             Medium in the label's own case (data-sort-col joins the case list in global.css). The
+             sorted column is carried by full ink and its chevron; the others are muted.
+             NO EDGE, as before: global.css removes these three heads' border by request (a row of
+             outlined boxes along the header's rule read as chrome), so the stadium is drawn only by
+             the press tier's hover and press tint. `border:none` is stated here too, so the inline
+             style says what renders.
+             It hugs its label and sits at its track's end; filling the whole track was tried and
+             removed, because a tint one column wide reads as the column having a state.
+             Created carries no private margin: the header grid's --row-inset padding is the 16px
+             it used to hold for itself, and the stamp below gets the same figure from the row
+             grid — one token, both edges, cannot drift. */
+          style: Object.assign(this.toggleStyle(active), {
+            border: 'none',
+            width: 'auto', minWidth: 0, justifySelf: 'end',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px',
-            padding: '6px',
-            border: '1px solid var(--line)', background: 'transparent', cursor: 'pointer',
-            color: active ? 'var(--on-surface)' : 'var(--on-surface-muted)',
-            // Regular in both states (17.09.26, audit G4, by request): the chevron and the ink say
-            // which column sorts; controls do not change weight.
-            fontWeight: 400, whiteSpace: 'nowrap',
+            whiteSpace: 'nowrap',
           }),
         };
       }),

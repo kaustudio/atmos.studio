@@ -256,6 +256,23 @@ deleted. `isolation:isolate` on the clip is the usual guard against WebKit letti
 child escape a rounded overflow; the corners were verified in Chrome by pixel, and WebKit is not
 installed here to check.
 
+**The phone story's photograph takes the same corner (by request).** `.story-mask`, the one place the
+story shows an example's picture (1.3, where a colour's region lights up), is `--radius-surface` with
+`isolation:isolate`, 358×269 on a 390 screen. The lit copy stays inside the curve. Its 1px
+`--line-strong` border went in the next note, as 3.3's ring had.
+
+**A palette's reference image: 12px and no border (by request).** The 156×104 thumbnail on the
+result stage loses its 1px `--line-strong` border and takes `--radius-card`: a tenth of its height,
+the proportion of the 16px the short panels took, where the photographs' 28 would be a quarter. Its
+zoom button takes the same corner so the focus ring follows the picture.
+
+**The Library list's sort header speaks like the controls above it (by request).** Palette, AA Text
+Pairs, Max Contrast and Created are 13px Medium in Title Case, where they were 11px capitals at 400:
+the chips are toggleStyle, as the harmonies drawer's model pills are, and `data-sort-col` joins the
+case list in global.css. The three heads still have no edge (global.css removed it by request), so
+the stadium shows only in the hover and press tint; the sorted column is full ink with its chevron. Palette
+sits on the chips' baseline (7px under the text, as their padding puts it), measured level.
+
 **Already Extracted (by request).** The secondary button reads "Extract Again" ("anyway" went).
 "Saved just now" and the note under the buttons ("Extraction is repeatable…") are gone. Later the
 same day, the "Already extracted" eyebrow went too, since the line under the name says the same.
