@@ -493,6 +493,27 @@ const FacetMark = ({ active, unavailable }) => (
     }}>{active && <IconCheck size={9} />}</span>
 );
 
+/* COPYING SWAPS THE WORDS THROUGH THE LINE'S MASK (19.09.26, by request: "when pressing a value on a
+   swatch for copy, it should make the text mask animation and "Copied" should be title case"). The
+   value vanished in one frame while "Copied" rose into its place, and the harmony drawer's cells
+   swapped with no motion at all. Now the leaving word goes up out of the mask as the arriving one
+   rises into it, on one length and curve, so the two read as one strip moving, as a button's label
+   does (.tswap), and the same again when the confirmation ends. The leaving copy exists for the flip
+   it belongs to only, so a new palette's values are never swapped out. "Copied" is set as written, in
+   Title Case; the values keep their capitals. `arrive` keeps the value rows' own rise on mount. */
+function CopySwap({ copied, value, arrive, style }) {
+  const flip = React.useRef({ copied, gone: null, n: 0 });
+  if (flip.current.copied !== copied) flip.current = { copied, gone: copied ? value : 'Copied', n: flip.current.n + 1 };
+  const { gone, n } = flip.current;
+  const word = (caps) => ({ display: 'inline-block', textTransform: caps ? 'uppercase' : 'none' });
+  return (
+    <span style={{ ...style, display: 'block', overflow: 'hidden', position: 'relative' }}>
+      <span key={'in' + n} style={{ ...word(!copied), animation: n || arrive ? 'val-mask-a var(--dur-swap) var(--ease-entrance) both' : 'none' }}>{copied ? 'Copied' : value}</span>
+      {gone != null && (<span key={'out' + n} aria-hidden="true" style={{ ...word(copied), position: 'absolute', left: 0, top: 0, animation: 'val-mask-out var(--dur-swap) var(--ease-entrance) both' }}>{gone}</span>)}
+    </span>
+  );
+}
+
 // swatch value row (result bands + overlay bands share it). Neither renders the caveat chip since
 // 19.09.26 (audit U6); the spoken name still carries it.
 function ValueRow({ v, showCaveat }) {
@@ -503,7 +524,7 @@ function ValueRow({ v, showCaveat }) {
           <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine)')}>{v.labelText}</span>
           {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-fine); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
         </span>
-        <span style={sx('font-family: Neue Montreal; text-transform: uppercase; font-size:var(--fs-detail); overflow: hidden; display: block')}><span style={v.valueAnim}>{v.display}</span></span>
+        <CopySwap copied={v.copied} value={v.value} arrive style={sx('font-family: Neue Montreal; font-size:var(--fs-detail)')} />
       </span>
       <span style={v.iconWrapStyle} aria-hidden="true">
         {v.copied && <IconCheck />}
@@ -2434,11 +2455,15 @@ export default function AppView({ vals }) {
                 </span>
               </div>
             )}
-            <div role="group" aria-label="Generated palette swatches" style={sx('display:flex;height:340px;width:100%;gap:0')}>
+            {/* The shares count up out of the blur, as How it Works 2.1's tiles do (19.09.26, by request):
+                motion.js _countShares plays the group on each arrival. The rolling strips are hidden
+                from a screen reader, which reads the twin beside them. */}
+            <div role="group" aria-label="Generated palette swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;height:340px;width:100%;gap:6px')}>
               {vals.result.bands.map((b, bi) => (
                 <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
                   <span data-ring="1" aria-hidden="true" style={b.bandRingStyle}></span>
-                  <span data-fx="1" style={b.weightStyle}>{b.weightPct}</span>
+                  <span data-fx="1" data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true" style={b.weightStyle}>{b.weightPct}</span>
+                  <span style={visuallyHidden}>{b.weightPct}</span>
                   {/* The outset ring, as every other round control: the inset value ring filled a 28px
                       circle. The icon rides the hover swap, like the close marks. */}
                   <button type="button" data-ix="icon" data-info="1" data-focus="chrome" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
@@ -3999,7 +4024,7 @@ function HarmonyDrawer({ vals }) {
                   <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
                     {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
                   </span>
-                  <span style={sx('text-transform: uppercase; font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{cell.display}</span>
+                  <CopySwap copied={cell.copied} value={cell.hex} style={sx('font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')} />
                 </button>
               </div>
             ))}

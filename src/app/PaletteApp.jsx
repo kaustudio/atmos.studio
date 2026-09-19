@@ -686,6 +686,7 @@ export default class PaletteApp extends React.Component {
     if (s.stage === prev.stage && curId === prev.curId) return;
     if (s.stage === 'processing' && prev.stage !== 'processing') this.startCanvas();
     if (s.stage !== 'processing' && prev.stage === 'processing') this.stopCanvas();
+    if (s.stage !== 'result' && prev.stage === 'result') this._stopShares();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
     this._prev = { stage: s.stage, curId: curId };
     if (enteredResult) {
@@ -916,6 +917,7 @@ export default class PaletteApp extends React.Component {
     if (this._storyT) { clearTimeout(this._storyT); this._storyT = null; }
     if (this._maskT) { clearTimeout(this._maskT); this._maskT = null; }
     this._killStory();
+    this._stopShares();
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }

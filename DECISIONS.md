@@ -907,6 +907,49 @@ Body text AA and others etc. needs stroke" and "go with b tray").**
   (half of --radius-card). Passing Only still dims the reading, not the tile. The ranked list (C) was
   turned down for its length, and the "Aa" pair grid (A) for the same staircase with more to read.
 
+**The result stage is five tiles, and its shares count up (19.09, by request: "how will the result stage
+look when animating in given we have borders", then "go with b and the rounded edge, but add the lines to
+maintain hierarchy" and "add the same progessive blur animation to the numbers").**
+- Each swatch is a tile: --radius-card corners, 6px from the next, clipped, where the five stood flush
+  and square. The value rows keep their hairlines — they rank HEX, RGB, CMYK and HSL inside the tile, and
+  that is hierarchy, not decoration, which is the difference the stroke rule draws.
+- The last row takes the tile's bottom corners, so its inset focus ring follows the corner instead of
+  being cut by the clip.
+- **The arrival's edge is the tile's corner.** The wipe carries `round var(--radius-card)`, so a band
+  rises as a whole rounded tile rather than one with its top cut off, and the sink on New Generation
+  goes down the same way.
+- The inset rides a custom property, not the clip-path string. GSAP takes a tween's start from the
+  element and the browser shortens inset() as it shortens margin — `100% 0% 0% 0%` comes back as
+  `100% 0% 0%`, `0% 0% 0% 0%` as `0%` — so the string tween paired the wrong numbers: measured on the
+  first build, the corner grew from 0 to 12px through the rise and the left edge moved with it. A custom
+  property comes back as written, so the tween is one number. Measured after: `round 12px` on every
+  frame of the rise.
+- **The shares count up out of the blur**, as How it Works 2.1's tiles do, on the same figures: from 0
+  over 1.4s, 0.2s apart so they land one after another, resolving out of the 9px focus blur. The share
+  no longer rises with the other words; the count is its arrival.
+  - It is built after the click has painted, with the words, because building measures every column —
+    the reason animateText defers its splits. The band's clip hides the number until then.
+  - numberOdometer.js gains a play-now mode ([ATMOS 6]): the stage is not scrolled to, it arrives. Its
+    destroy now finishes a run it cuts short, because the stage counts again on every palette over the
+    same elements, and the resource reads each element's text as its target — a strip left mid-roll
+    would have been the next palette's number. Verified by switching palettes twice inside a count: the
+    five shares landed at the new palette's figures.
+  - The blur clears a beat before the digits land (BLUR_LEAD, 0.12s, by request: "number blur animation
+    should be a couple of ms shorter"), so the last of the roll — where the digits are barely moving —
+    is read rather than watched. Measured on a stage share: sharp at 1.46s, landed at 1.74s. One module,
+    so How it Works 2.1 and the phone story's tiles take the same beat.
+  - The rolling strips are aria-hidden, with a hidden twin beside them, as on How it Works.
+  - Not on phones: the tool asks for a window 1024px or wider, so the stage is never drawn there.
+
+**Copying swaps the words through the line's mask, and "Copied" is Title Case (19.09, by request).** The
+value vanished in one frame while "Copied" rose into its place, and the drawer's harmony cells swapped
+with no motion at all. Now the leaving word goes up and out of the mask as the arriving one rises into
+it — one strip moving, the swap every button's label makes — and the same again when the confirmation
+ends. The row is no longer uppercased as a whole: the values keep their capitals, "Copied" is set as
+written. One CopySwap in AppView carries all of it, so the result stage, the detail overlay and the
+harmony drawer cannot drift; the second restart keyframe (val-mask-b) is gone, since remounting both
+spans restarts them.
+
 **The takeover's statements take the column on phones (19.09, by request: "extend width. typography is
 cramped").** Their measure is eight of twelve tracks, which at 375 came to 223px of a 343px column: the
 28px statement broke every two or three words, ten lines deep. At 600px and below it takes the column, so

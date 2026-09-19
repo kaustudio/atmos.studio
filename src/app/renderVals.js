@@ -325,16 +325,18 @@ export const renderValsMethods = {
         const fmt = this.swatchFormats(b.hex);
         const divCol = on === '#000000' ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.24)';
         const rowBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on };
+        // The last row sits in the tile's bottom corners, so its inset focus ring takes them rather
+        // than being cut by the band's clip.
+        const rowLast = Object.assign({}, rowBase, { borderRadius: '0 0 var(--radius-card) var(--radius-card)' });
         const values = ['hex', 'rgb', 'cmyk', 'hsl'].map((key) => {
           const f = fmt[key];
           const copied = s.copied === key + '-' + sid;
           return {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
-            display: copied ? 'Copied' : f.display,
-            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' var(--dur-swap) var(--ease-entrance) both' },
+            value: f.display,
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy),
-            rowStyle: rowBase,
+            rowStyle: key === 'hsl' ? rowLast : rowBase,
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
             labelStyle: this.monoLabel('var(--fs-fine)', '.14em', { color: on, opacity: 0.75, flex: 'none' }),
@@ -352,8 +354,12 @@ export const renderValsMethods = {
              control: every other icon-only button is a circle. 28px here and in the detail overlay,
              which drew it at 26. A solid disc since the same day's second round — see _infoBtnStyle. */
           infoBtnStyle: this._infoBtnStyle(on),
-          style: { flexGrow: w(b), flexBasis: 0, minWidth: '190px', height: '340px', background: b.hex, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', willChange: 'opacity' },
-          bandRingStyle: { position: 'absolute', inset: '0', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 1 },
+          /* EACH COLOUR A TILE (19.09.26, by request: option B, "go with b and the rounded edge, but add the
+             lines to maintain hierarchy"): the colour tiles' --radius-card corner, 6px from the next (the
+             group's gap in AppView), clipped so the value rows and their hairlines follow the corner. The
+             hairlines stay: they rank the four notations under the share. The ring takes the corner too. */
+          style: { flexGrow: w(b), flexBasis: 0, minWidth: '190px', height: '340px', background: b.hex, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', willChange: 'opacity', borderRadius: 'var(--radius-card)', overflow: 'hidden' },
+          bandRingStyle: { position: 'absolute', inset: '0', borderRadius: 'inherit', boxShadow: 'none', opacity: 0, pointerEvents: 'none', zIndex: 1 },
           /* THE SHARE IS A FIGURE, NOT A LABEL, and it had been dressed as one. Three things moved
              together here and they are one decision:
                · opacity is GONE. `on` is onColor()'s guaranteed-AA ink for this swatch, and the
@@ -831,8 +837,7 @@ export const renderValsMethods = {
           const f = fmt[key]; const copied = s.copied === 'ov-' + key + '-' + i;
           return {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
-            display: copied ? 'Copied' : f.display,
-            valueAnim: { display: 'inline-block', animation: (copied ? 'val-mask-a' : 'val-mask-b') + ' var(--dur-swap) var(--ease-entrance) both' },
+            value: f.display,
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
             onCopy: () => this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy),
             rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on },
@@ -917,7 +922,7 @@ export const renderValsMethods = {
       const cells = active.cells.map((c, ci) => {
         const on = this.onColor(c.hex), copied = s.copied === 'hx-' + active.id + '-' + ci;
         return {
-          hex: c.hex, display: copied ? 'Copied' : c.hex, isBase: c.base, mapped: c.mapped,
+          hex: c.hex, copied, isBase: c.base, mapped: c.mapped,
           // THE SOURCE IS NAMED. It was a 5px square in the corner with no legend anywhere — a mark
           // that can only be decoded by someone who already knows what it means.
           badge: c.base ? 'Source' : (c.mapped ? 'Mapped' : ''),

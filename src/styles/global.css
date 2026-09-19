@@ -1178,9 +1178,11 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 }
 html,body{background:var(--surface);transition:background var(--dur-chrome) var(--ease-standard)}
 @keyframes gradient-drift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-/* value→Copied text swap: masked line reveal (two identical keyframes so the swap back restarts it) */
+/* value→Copied text swap through a line's mask: the arriving word rises in (a), the leaving one goes
+   up and out (out). AppView's CopySwap remounts both spans on each flip, which restarts them, so the
+   second, identical keyframe that used to restart the swap back (b) is gone (19.09.26). */
 @keyframes val-mask-a{from{transform:translateY(110%)}to{transform:none}}
-@keyframes val-mask-b{from{transform:translateY(110%)}to{transform:none}}
+@keyframes val-mask-out{from{transform:none}to{transform:translateY(-110%)}}
 @media (prefers-reduced-motion: reduce){ [data-logo]{animation:none!important} }
 /* ===== .glass-cta — THE ACTION ON A SCREEN THAT IS NOT THE TOOL ================================
 

@@ -3,6 +3,7 @@
 // theme toggle, and the uppercase-label style builders.
 import { syncThemeColor } from '../../lib/themeColor.js';
 import { paletteTags as tagsFor, temperatureBand, lightnessBand, TEMP_LABEL } from '../../lib/classify.js';
+import { initNumberOdometer } from './numberOdometer.js';
 
 export const motionMethods = {
   // ---- motion tokens: one shared set, scaled by hierarchy ----
@@ -688,17 +689,40 @@ export const motionMethods = {
     // Reduced motion: one fade on the swap step, every band together (17.09.26, audit F4: it was .4
     // with a .03 stagger, neither of them named, and a sequence is the thing the preference declines).
     if (this._reduce) { g.fromTo(bands, { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none', clearProps: 'opacity' }); return; }
-    g.set(bands, { clipPath: 'inset(100% 0 0 0)' });                                   // fully clipped, hidden
-    g.to(bands, { clipPath: 'inset(0% 0 0 0)', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath' }); // wipe up from the bottom edge
+    // fully clipped, then wiped up from the bottom edge
+    this._bandWipe(bands, 100, 0, { duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, clearProps: 'clipPath,--wipe' });
+  },
+  /* THE WIPE'S EDGE IS THE TILE'S CORNER (19.09.26, by request: "go with b and the rounded edge"). Each
+     band is a tile with --radius-card corners now, and a plain inset() rose with a square edge, so for
+     most of the arrival a band read as a tile with its top cut off. `round` gives the clip the tile's
+     corner, so every frame is a whole rounded tile growing into place, and the sink when the result
+     leaves (pipeline.js doReset) has the same edge on the way down.
+     The inset rides a custom property, not the clip-path string. GSAP takes a tween's start from the
+     element, and the browser shortens inset() the way it shortens margin (100% 0% 0% 0% comes back as
+     100% 0% 0%, and 0% 0% 0% 0% as 0%), so a string tween paired the wrong numbers: measured on the
+     first build of this, the corner grew from 0 to 12px through the rise and the left edge moved with
+     it. A custom property comes back as written, so the tween is one number and the corner is the
+     tile's from the first frame. A band caught mid-wipe goes on from where it is (`from` null), and
+     whatever else was moving it stops first, so an arrival's clean-up never lands inside a sink. */
+  _bandWipe(bands, from, to, vars) {
+    const g = window.gsap, list = [].slice.call(bands);
+    const r = this._cssVar('--radius-card') || '12px';
+    g.killTweensOf(list);
+    list.forEach((b) => {
+      if (from != null || !b.style.getPropertyValue('--wipe')) b.style.setProperty('--wipe', (from || 0) + '%');
+      b.style.clipPath = 'inset(var(--wipe) 0% 0% 0% round ' + r + ')';
+    });
+    return g.to(list, Object.assign({ '--wipe': to + '%' }, vars));
   },
   animateText(delay) {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;
     const all = [...root.querySelectorAll('[data-fx]')];
     const meta = [...root.querySelectorAll('[data-meta]')];
-    if (this._reduce) { g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none' }); return; }
+    if (this._reduce) { this._stopShares(); g.fromTo(all.concat(meta), { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none' }); return; }
     const split = all.filter((el) => el.hasAttribute('data-split'));
-    const fx = all.filter((el) => !el.hasAttribute('data-split'));
+    // the shares count instead of rising (_countShares, from run below)
+    const fx = all.filter((el) => !el.hasAttribute('data-split') && !el.hasAttribute('data-odometer-element'));
     // The metrics readout assembles as a sequence, from the same two primitives the page already
     // owns: every [data-meta-line] rule draws left→right (the loader bar's scaleX-from-origin-0
     // draw), and every [data-meta-split] text rises through the same masked line reveal as the
@@ -732,6 +756,7 @@ export const motionMethods = {
       stop();
       if (!root.isConnected) return;
       const d = Math.max(0, delay - (performance.now() - asked) / 1000);
+      this._countShares(d);
       g.from(fx, { y: 14, opacity: 0, duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: d });
       split.forEach((el) => this._maskLineReveal(el, d));
       if (metaLines.length) g.from(metaLines, { scaleX: 0, transformOrigin: '0% 50%', duration: this.DUR.reveal, stagger: this.DUR.stagger, ease: this.EASE.entrance, delay: d + 0.1, clearProps: 'transform' });
@@ -742,6 +767,25 @@ export const motionMethods = {
     frame = requestAnimationFrame(() => { timer = setTimeout(run, 0); });
     safety = setTimeout(run, 500);
     this._textRevealCancel = () => { if (!settled) stop(); };
+  },
+  /* THE SHARES COUNT UP OUT OF THE BLUR (19.09.26, by request: "add the same progressive blur animation
+     to the numbers"). Each band's share rolls up from 0 in its masked columns and resolves out of the
+     focus blur (9px, renderVals focusMotion), with How it Works 2.1's figures: 1.4s a count, 0.2s
+     between counts so they land one after another. It plays on the words' beat (`delay`), as the wipe
+     has shown the top of the first band; numberOdometer.js [ATMOS 6] has the play-now mode. Built after
+     the click has painted, with the words (animateText's run), since building measures every column;
+     the band's clip hides the number until then. The group is React's, so its done-flag is cleared
+     for each palette, and the last run is finished first. */
+  _countShares(delay) {
+    this._stopShares();
+    const root = this.resultRef.current;
+    const group = root && root.querySelector('[data-odometer-group]');
+    if (!group) return;
+    group.removeAttribute('data-odometer-initialized');
+    this._shareCount = initNumberOdometer(root, { blur: 9, now: delay });
+  },
+  _stopShares() {
+    if (this._shareCount) { try { this._shareCount(); } catch (e) { } this._shareCount = null; }
   },
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then

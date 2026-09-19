@@ -707,7 +707,8 @@ export const pipelineMethods = {
       const cut = Math.min(D * 0.85 + step * Math.max(0, n - 1), 0.38);
       if (rest.length) g.to(rest, { opacity: 0, y: 8, duration: D, ease: this.EASE.reveal });
       if (n) {
-        g.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: D, ease: this.EASE.reveal, stagger: step, onComplete: go });
+        // The arrival's rounded edge on the way down, from wherever each band is (_bandWipe, motion.js).
+        this._bandWipe(bands, null, 100, { duration: D, ease: this.EASE.reveal, stagger: step, onComplete: go });
         g.delayedCall(cut, go);
       }
       else g.delayedCall(D, go);

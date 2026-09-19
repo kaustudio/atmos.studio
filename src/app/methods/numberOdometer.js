@@ -14,7 +14,8 @@
              9px the colour demonstrations arrive from, focusMotion in renderVals), on the roll's own
              duration and a curve that eases out as the digits slow, so it is sharpest as it lands.
              On the element, not the rollers: each roller sits in a clipping mask, and a blur there
-             would be cut to a hard edge at every column.
+             would be cut to a hard edge at every column. It clears BLUR_LEAD before the digits land, so
+             the last of the roll is sharp (19.09.26, by request).
    [ATMOS 3] BUILT ONCE THE FACE HAS LOADED. The resource measures each growing column in ems and
              keeps that width after it lands. Measured in the fallback face, a column is the wrong
              width in Neue Montreal, so the rollers are built on document.fonts.ready.
@@ -31,6 +32,12 @@
              moving and blurred. A grown column grows to that width rather than the strip's, and every
              other column narrows to it on the roll's own duration and curve. The number lands spaced
              as plain text, and nothing moves after it lands.
+   [ATMOS 6] A COUNT THAT PLAYS NOW, AND AGAIN (19.09.26, by request: the tool's result stage takes the
+             same count on its shares). The stage is not scrolled to; it arrives. `now` is the seconds
+             to wait before playing, in place of the scroll trigger, so the count meets the stage's
+             words on their beat. The stage counts again on every palette, over the same elements where
+             React keeps them, so destroy finishes a run it cuts short: the resource reads each
+             element's text as its target, and a strip left mid-roll would be the next run's number.
    */
 
 function noop() { }
@@ -42,6 +49,7 @@ export function initNumberOdometer(root, options) {
   try { gsap.registerPlugin(ScrollTrigger) } catch (e) { return noop }
   const opts = options || {}
   const blur = opts.blur > 0 ? opts.blur : 0
+  const now = typeof opts.now === 'number' ? opts.now : null // [ATMOS 6]
   const timelines = []
   const timers = []
   let destroyed = false
@@ -49,7 +57,7 @@ export function initNumberOdometer(root, options) {
 
   const run = () => {
     if (destroyed || !root.isConnected) return
-    const update = initNumberOdometerIn(root, gsap, ScrollTrigger, blur, timelines, (fn) => { removeResize = fn })
+    const update = initNumberOdometerIn(root, gsap, ScrollTrigger, blur, now, timelines, (fn) => { removeResize = fn })
     destroy.update = update
     catchUp()
   }
@@ -82,6 +90,7 @@ export function initNumberOdometer(root, options) {
     removeResize()
     timelines.forEach(({ tl }) => {
       try { if (tl.scrollTrigger) tl.scrollTrigger.kill() } catch (e) { }
+      try { if (tl.progress() < 1) tl.progress(1) } catch (e) { } // [ATMOS 6] plain text back, not a strip
       try { tl.kill() } catch (e) { }
     })
   }
@@ -90,7 +99,9 @@ export function initNumberOdometer(root, options) {
 
 /* ---- the resource, as delivered, apart from the [ATMOS] lines ---------------------------------- */
 
-function initNumberOdometerIn(root, gsap, ScrollTrigger, blur, timelines, onResizeBound) {
+const BLUR_LEAD = 0.12 // [ATMOS 2] how long the number is sharp before it lands
+
+function initNumberOdometerIn(root, gsap, ScrollTrigger, blur, now, timelines, onResizeBound) {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const initFlag = 'data-odometer-initialized'
   const activeTweens = new WeakMap()
@@ -149,11 +160,13 @@ function initNumberOdometerIn(root, gsap, ScrollTrigger, blur, timelines, onResi
     const ordered = applyStaggerOrder(elementData, staggerOrder)
 
     const tl = gsap.timeline({
-      scrollTrigger: {
+      // [ATMOS 6] after `now` seconds instead, where the host asks for it
+      scrollTrigger: now != null ? undefined : {
         trigger: group,
         start: triggerStart,
         once: true
       },
+      delay: now != null ? now : 0,
       onComplete() {
         elementData.forEach(({ el, originalText, step }) => {
           cleanupElement(el, originalText)
@@ -169,11 +182,14 @@ function initNumberOdometerIn(root, gsap, ScrollTrigger, blur, timelines, onResi
       const growing = new Set(revealData.map(r => r.el)) // [ATMOS 5]
       const offset = orderIdx * elementStagger
 
-      // [ATMOS 2] the count resolves out of the blur as it slows
+      // [ATMOS 2] the count resolves out of the blur as it slows, and is sharp a beat BEFORE it lands
+      // (19.09.26, by request: "number blur animation should be a couple of ms shorter") — the last
+      // stretch of the roll, where the digits are barely moving, is read rather than watched.
       if (blur) {
+        const span = duration + (rollers.length - 1) * defaults.digitStagger
         tl.fromTo(el, { filter: 'blur(' + blur + 'px)' }, {
           filter: 'blur(0px)',
-          duration: duration + (rollers.length - 1) * defaults.digitStagger,
+          duration: Math.max(0.2, span - BLUR_LEAD),
           ease: 'power2.out',
           clearProps: 'filter'
         }, offset)
