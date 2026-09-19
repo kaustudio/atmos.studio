@@ -773,6 +773,68 @@ reduced motion skips it; a shared link skips it.
   Export. So each button then Enter does its dialog's job. The proposal named only Copy, but Export
   also opened on its close mark, so it follows.
 
+**The colour bands lose their stroke (19.09, by request: "remove 1px stroke and refine the boxes
+visually, same for lightness, chroma and hue. we need proper visual presentation").** How it Works 1.2's
+lens bands and 1.3's Lightness, Chroma and Hue ramps each drew a 1px inset edge around every box, with
+square corners. Three looks were rendered on the page, and the user chose A:
+- No stroke.
+- Each figure is one field with `--radius-card` (12px) at its outer ends, the corner of 3.1's role
+  tiles, the page's other drawn colour.
+- The parts still meet flush, so a ramp reads as one scale and the pair keeps the seam its ratio is
+  measured across.
+Asked about separately, the weight bar follows (How it Works 2.1 and the phone story's 1.2): its
+`--line-strong` border went. The corner goes on the first and last part (about.css, "THE COLOUR BANDS'
+ENDS"), not on a clipping container. The ramps' scale marks hang below their steps, and the weight bar's
+parts rise into place one by one, so a clip would cut both.
+The trade-off was shown and accepted: a colour close to the page now reads faintly, such as the pair's
+#EAE8DD and High Key's near-white share in light, and the ramp's black step in dark. Other strokes are
+unchanged: the key's chips, the interface preview's inset edge and the plate.
+
+**How it Works 1.2 and 2.1 show their point, in new copy (19.09, by request: "are we presenting the
+idea of oklch and wcag visually correct for the user to understand? The copy is not strong enough, same
+for 2.1", then "Build as shown" for both rendered proposals).**
+- **1.2's WCAG lens.** It drew two flat blocks with a bare 6.09:1, so it never showed what a ratio is
+  for or whether 6.09 is enough. Its greens were also not the OKLCH lens's.
+  - It now draws the page's pair mark at specimen size: "Aa" in the accent (#6C9429, the OKLCH lens's
+    green) and in the primary (#3C5E19), on High Key's background.
+  - The readings use 3.3's verdicts: "No WCAG Contrast Role, 2.89:1" and "Body Text at AA, 6.09:1".
+    The ratios are color.js contrastRatio() at two decimals.
+  - The notes under both lenses went, so the lens grid has three rows.
+  - On phones, both lenses stack (by request: "on mobile, let this sit horizontally below the green and
+    let the color do full width like wcag contrast. if there is no room for all three, let hue sit left
+    aligned below"). The OKLCH swatch is a band across the lens, like the pair, where it was a square
+    beside its readings. Its three readings share a row on auto-fit tracks of at least 4.5rem. All
+    three fit at 320, and Hue drops under Lightness only when they don't, for example at 150% text.
+  - Each value sits at the foot of its cell, so a row's numbers share a line even when a term wraps.
+- **1.2's lead.** "Atmos reads every colour in two ways. OKLCH describes the colour itself: its
+  lightness, chroma and hue. WCAG contrast compares two colours: how readable text in one is on the
+  other." Then: "OKLCH tells you what a colour is. Contrast tells you where it can go. High Key's most
+  vivid green is too faint for text on its own background, while its deep green reads clearly."
+- **Labels on their figures** (by request: "move lightness, chroma and hue closer to the visual
+  element"). 1.3's names sat 28px above their ramps, the label's margin stacked on the column gap.
+  They sit 14px above now. 1.2's labels also dropped their margin and sit on their bands by the row
+  gap alone.
+- **2.1's mark, removed the same day.** A "Most Vivid" label with a tick over the 5.6% share was built
+  as part of the approved proposal. The user then asked for it gone ("delete 'most vivid' text"), so
+  the bar carries no label, and its accessible name is back to the shares alone. Don't propose a label
+  on the bar again.
+- **2.1's copy.** The lead is now "The colour that covers most of an image is rarely the one you notice
+  first. A small, vivid detail stands out against a muted field, and a dark shadow makes lighter
+  colours look brighter." and "Atmos shows how much of the image each colour covers, so you can see
+  which colours carry it and which ones catch the eye." The caption is one paragraph where there were
+  two, and still recites no shares.
+- **1.4's thresholds list ends the figure.** Its caption went, by request ("delete"): "WCAG defines large
+  text as at least 18 point in regular weight or 14 point in bold."
+
+**The stacked cards keep the desktop's arrangement on phones (19.09, by request: "sort the mobile
+hierarchy on the stacked cards to match the desktop version").** A portrait card used to centre its
+content with a stated gap, so the number and the name sat directly on the title, mid-screen. It now keeps
+space-between at every aspect: the number and the name on the top line, and the title, description and
+strip on the floor.
+- The pinned slide is 100vh. So on phones the card's bottom padding adds (100vh - 100svh), which keeps the
+  strip clear of a showing browser toolbar. That addition is 0 on desktop.
+- The sizes stay on the type scale: --fs-hero and --fs-chapter, 34 and 28px at 375.
+
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as
 the list icon, the close marks and every label do. Their hover fill is the primary

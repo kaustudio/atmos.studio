@@ -409,8 +409,9 @@
 .about-figure__media,.about-figure__side{min-width:0}
 .about-figure__side{display:flex;flex-direction:column;gap:20px}
 
-/* the weight bar — one row, five real shares of a photograph, at full page width */
-.about-weights{display:flex;width:100%;height:clamp(64px,8vw,110px);border:1px solid var(--line-strong)}
+/* the weight bar — one row, five real shares of a photograph, at full page width. No border since
+   19.09.26 (by request, with the lenses and the ramps below): its ends take the colour bands' corner. */
+.about-weights{display:flex;width:100%;height:clamp(64px,8vw,110px)}
 .about-weights__part{display:block;height:100%}
 .about-weights__key{display:flex;flex-wrap:wrap;gap:8px 24px;margin:14px 0 0;padding:0;list-style:none}
 .about-weights__key li{display:flex;align-items:center;gap:8px}
@@ -480,9 +481,11 @@
    its top so 5.56 lands on the same line as 0.551 — which is the comparison, one number against the
    first of three. Below 900 the lenses stack and there is no second column to align to, so the rows
    go back to the parent and each lens is a plain flex column again. */
+/* THREE ROWS SINCE 19.09.26: label, band, reading. The notes under both lenses went with the rewrite of
+   1.2 (about.html), so the fourth row the paragraph above describes is gone. */
 .about-lenses{
   display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));
-  grid-template-rows:auto auto auto auto;
+  grid-template-rows:auto auto auto;
   column-gap:var(--grid-gutter);row-gap:var(--block-gap);
 }
 /* THE HIERARCHY WAS FLAT, and measured it was not a hierarchy at all: label 10px, reading 13px, note
@@ -491,7 +494,7 @@
    three coordinates on one side, one ratio on the other — so it takes the numeral treatment the stack
    cards already use, and the note steps properly down beneath it. */
 .about-lens{
-  grid-column:span 6;grid-row:span 4;min-width:0;
+  grid-column:span 6;grid-row:span 3;min-width:0;
   display:grid;grid-template-rows:subgrid;row-gap:clamp(14px,1.6vw,22px);
 }
 /* THE BAND, NOT THE PLATE — and the arity is the only thing that differs across it.
@@ -515,16 +518,15 @@
 
 /* THE COLOUR, PLAIN. These were briefly WebGL orb slots — a lit particle sphere per colour, with this
    rule painting a disc underneath as the no-WebGL floor. The spheres are gone and the swatch is the
-   swatch again: square, because a swatch is a sample and samples are square here, and a circle was
-   only ever the orb's silhouette, and at full strength, because there is no longer anything drawing over it.
-
-   The hairline is the page's own swatch idiom — .about-axis__step carries it too — and it earns its
-   place here: #1A1D0D against a #141413 ground is a 1.06 to 1 difference,
-   so without an edge the darker of the two lenses would be a colour the reader cannot locate. */
+   swatch again, at full strength, because there is no longer anything drawing over it.
+   NO HAIRLINE SINCE 19.09.26 (by request: "remove 1px stroke and refine the boxes visually, same for
+   lightness, chroma and hue. we need proper visual presentation"). It carried an inset 14% edge so a
+   colour close to the page could still be located. The band now reads from its fill and its corners
+   (THE COLOUR BANDS' ENDS, below), and a colour that close to the page, like the pair's #EAE8DD in
+   light, reads faintly. The user chose that from rendered options, dark included. */
 .about-lens__body{
   display:block;
   background:var(--lens-swatch,var(--surface-raised));
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
 }
 
 /* The numerals, set as the figure's own subject. dl rather than three lines in one <p>: each of these
@@ -560,44 +562,33 @@
   font-size:var(--fs-body);letter-spacing:var(--track-flat);
   color:var(--on-surface-muted);
 }
+/* The value sits at the foot of its cell (margin-top:auto in the flex column), so values in one row
+   share a line even when a term wraps, as "No WCAG Contrast Role" does at large text sizes (19.09.26). */
 .about-route .about-lens__read dd{
-  margin:0;font-family:'Neue Montreal',system-ui,sans-serif;
+  margin:auto 0 0;font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
 /* One number, so it gets to be the biggest thing in the figure, written 6.09:1 since 19.09.26. */
-/* ALIGNED TO THE BOTTOM OF THE SHARED ROW, which is where the other lens's numerals are. This lens
-   has no term to set over its value — the figure label above the band already says WCAG CONTRAST, and
-   a second "RATIO" under it would name the same thing twice — so the row is as tall as the other
-   lens's term-plus-value and the ratio would hang at the top of it, level with three small labels
-   rather than with the three numbers it is the peer of. End-aligned, 5.56 sits on the same line as
-   0.551, and the space above it is exactly the line the other lens spends on naming its terms. */
-/* THE SAME SIZE AS THE OTHER LENS'S NUMBERS, because they are peers rather than tiers. This was
-   clamp(38px,5.4vw,72px) on the reasoning that one number should get to be the biggest thing in the
-   figure — but the figure holds TWO lenses side by side, and the other one's readings are the same
-   kind of thing: the measurement this lens exists to give. Rendered, that put 5.56 at 53px beside
-   0.551 at 25px, a 2.1x gap between siblings, which reads as two different levels of importance
-   rather than two ways of reading one colour. Equal size, equal standing. */
-.about-route .about-lens__ratio{
-  margin:0;align-self:end;
-  font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
-  color:var(--on-surface);font-variant-numeric:tabular-nums;
+/* THE PAIR, DRAWN AS TEXT ON ITS GROUND (19.09.26, by request; about.html has the why). The right lens
+   is one field of High Key's background carrying "Aa" in two of its greens, the page's own mark for a
+   pair (.about-pair), at the size of a specimen. Its two halves are the readout's two tracks: the same
+   gutter, and each glyph inset by the same amount from its own track, so each ratio stands under its
+   "Aa". The readings take the other lens's term-over-value form, the verdict as the term, so the two
+   lenses' numbers share one line. (.about-lens__ratio and .about-lens__note went with this change.) */
+.about-lens__ground{
+  display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));column-gap:var(--grid-gutter);align-items:center;
 }
-/* "6.09:1" (19.09.26, by request): written as the tool writes a ratio, one string in one ink, where it
-   was "6.09" with "to 1" beside it as notation. The span that styled the notation went with it. */
-/* TWO THIRDS OF THE LENS, so the note ends on a column line like everything else in the figure. A ch
-   cap is a measure but it is not a place: at 42ch the note stopped 312px into a 684px column, an edge
-   belonging to nothing. Two of the readout's three tracks plus the gutter between them is
-   (2W - g) / 3 — 448px at 1440, which is ~55 characters at --fs-detail, inside the caption range and
-   on the same line the middle readout ends on. It narrows with the grid, so the measure stays in
-   range at every width without a second rule. */
-.about-route .about-lens__note{
-  margin:0;max-width:calc((100% * 2 - var(--grid-gutter)) / 3);
-  color:var(--on-surface-muted);font-size:var(--fs-detail);line-height:1.55;
+.about-lens__ground > span{
+  padding-left:clamp(16px,2vw,28px);
+  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
+  font-size:clamp(34px,3.6vw,52px);line-height:1;letter-spacing:var(--track-statement);
 }
+.about-route .about-lens--pair .about-lens__read{grid-template-columns:repeat(2, minmax(0, 1fr))}
+/* THE LABEL ON ITS BAND, as 1.3's names are on their ramps (19.09.26): the row gap alone. */
+.about-route .about-lens > .about-figure__label{margin:0}
 /* Stacked, each lens is the only thing on its line, so there is no second column to share rows with —
-   and leaving the four rows on the parent would hold two of them open under a one-lens column. */
+   and leaving the rows on the parent would hold them open under a one-lens column. */
 @media (max-width:900px){
   .about-lenses{grid-template-rows:none}
   .about-lens{
@@ -622,11 +613,25 @@
   column-gap:var(--grid-gutter);row-gap:var(--band-gap);
 }
 .about-axis{grid-column:span 4;min-width:0;display:flex;flex-direction:column;gap:14px}
+/* THE NAME ON ITS RAMP (19.09.26, by request: "move lightness, chroma and hue closer to the visual
+   element"). The label's own 14px margin stacked on the column's 14px gap, so Lightness stood 28px
+   above its ramp. The gap alone is the page's label-to-figure distance. */
+.about-route .about-axis > .about-figure__label{margin:0}
 .about-axis__ramp{display:flex;width:100%;height:clamp(44px,5vw,68px)}
-.about-axis__step{
-  flex:1 1 0;min-width:0;position:relative;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
-}
+.about-axis__step{flex:1 1 0;min-width:0;position:relative}
+/* THE COLOUR BANDS' ENDS (19.09.26, by request, option A of three rendered on this page). The lens
+   bands, the three ramps and the weight bar lost their 1px strokes, and each now reads as one field
+   with --radius-card at its outer ends: the corner of 3.1's role tiles, the page's other drawn colour.
+   The parts still meet flush, so a ramp reads as one scale and the pair keeps the seam its ratio is
+   measured across. The corner goes on the first and last part rather than a clipping container: the
+   ramps' scale marks hang below their steps, and the weight bar's parts rise into place one by one
+   (aboutCascade.js), so an overflow clip would cut both. */
+.about-weights__part:first-child,
+.about-lens__body:first-child,
+.about-axis__step:first-child{border-top-left-radius:var(--radius-card);border-bottom-left-radius:var(--radius-card)}
+.about-weights__part:last-child,
+.about-lens__body:last-child,
+.about-axis__step:last-child{border-top-right-radius:var(--radius-card);border-bottom-right-radius:var(--radius-card)}
 /* The scale marks hang below rather than sitting on the colour, so no step has to solve contrast
    against its own swatch and the row reads as one continuous ramp. */
 .about-route .about-axis__step > span{
@@ -887,7 +892,7 @@
   display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.4vw,30px);
 }
 /* The ground is the palette's background, and Frozen Slate's is #000: 1.06 to 1 against the dark
-   theme's page. So it keeps an edge, in the swatch idiom (.about-lens__body) rather than a border —
+   theme's page. So it keeps an edge, the inset edge the page's swatches wore until 19.09.26, rather than a border —
    inset, so it follows the corner and takes no layout. 16px, the short panels' corner: the frame is
    about 205px tall, the height of the empty states that took it. */
 .about-ui--compact{
@@ -1139,35 +1144,17 @@
   padding:clamp(24px,4vw,72px) var(--page-gutter);
 }
 [data-stack-live] .about-stack__card{position:absolute;inset:0;min-height:0}
-/* [ATMOS] SPACE-BETWEEN IS AN INSTRUCTION ABOUT A LANDSCAPE CARD, and the pinned card is not one
-   on a phone.
-
-   The note further down this file records measuring the card at 375x812 and finding its content
-   "ends 517px ABOVE the card's floor", then concluding space-between already handles it. It does
-   not: space-between does not remove that slack, it DISTRIBUTES it — all of it into one gap, in the
-   middle, where nothing is. Measured live at 375x812 with the pin built: a 34px header, a 252–276px
-   payload, and 382px, 454px and 478px of flat colour between them on the three cards. Between 47 and
-   59 per cent of a full-screen panel is a hole, and on a card whose whole job is to BE a palette,
-   the hole is what the reader is looking at.
-
-   Centred with a stated gap instead, and the gap is the whole of the fix. The card cannot get any
-   shorter — it is inset:0 of a 100vh slide and has to stay full-bleed, because the handoff works by
-   the incoming card covering the receding one and any inset would show page ground through the seam
-   (aboutStack.js records measuring exactly that failure). So the slack cannot be removed; it can
-   only be put somewhere. Between two elements it is a hole. Around a composition it is margin.
-   Measured after: no gap inside the card over 57px, and ~220px of the card's own palette above and
-   below a block that now reads as one thing.
-
-   Splitting it — header pinned top, payload centred under it — was tried first and halved the hole
-   rather than closing it: 250px still stood between the numeral and the title, which is the gap the
-   complaint was about. The numeral leads the title on this card either way; it does not have to be
-   against the ceiling to do that.
-
-   Gated on the ASPECT rather than a width, which is the source's own gate for the rules it changes
-   inside this card: the fault is a card taller than it is wide, and a narrow desktop window has it
-   just as much as a phone does. */
+/* THE PHONE'S CARD IS THE DESKTOP'S (19.09.26, by request: "sort the mobile hierarchy on the stacked
+   cards to match the desktop version"). A portrait card used to centre its content with a stated gap,
+   to put the slack around the composition rather than in one hole inside it. The number and the name
+   then sat directly on the title, mid-screen. Now the card keeps the desktop's space-between at every
+   aspect: the number and the name on its top line, and the title, description and strip on its floor.
+   THE FLOOR CLEARS THE BROWSER'S BARS. The slide is 100vh, the large viewport, so on a phone whose
+   toolbar is showing, the card's last (100vh - 100svh) sit under the bar. That was harmless while the
+   content was centred. On the floor it would hide the strip, so the difference is added to the bottom
+   padding. It is 0 wherever the two units agree, which includes every desktop. */
 @media (max-aspect-ratio:1/1){
-  [data-stack-live] .about-stack__card{justify-content:center;gap:clamp(32px,7vh,72px)}
+  [data-stack-live] .about-stack__card{padding-bottom:calc(clamp(24px,4vw,72px) + 100vh - 100svh)}
 }
 .about-stack__top{display:flex;justify-content:space-between;align-items:flex-start}
 /* Each card carries a different palette, so each card has to say WHICH. Set in the page's label
@@ -1678,32 +1665,17 @@
     font-size:var(--fs-lead);font-weight:500;color:var(--on-surface);text-align:right;
   }
 
-  /* ---- 1.2, THE LENS PUTS ITS READOUT BESIDE THE COLOUR ------------------------------------
-     The swatch is a 96px square and the lens is 343 wide, so 247px sat empty to its right while the
-     three coordinates it exists to explain were stacked underneath it. The figure was tall and said
-     little: a colour, a lot of nothing, then its numbers somewhere else.
-
-     Beside it instead, in the space that was already there. A coordinate belongs next to the colour
-     it measures, and the swatch reads as the subject rather than as a block the page happens to
-     start with. The label and the note keep the full width because they frame the pair rather than
-     belonging to either half. Grid rather than the flex column above, because this is the one width
-     where the two halves are a row. */
-  .about-lens{
-    display:grid;
-    grid-template-columns:clamp(84px,26vw,120px) minmax(0,1fr);
-    align-items:start;
-    column-gap:clamp(14px,4vw,22px);
-  }
-  .about-lens > .about-figure__label,
-  .about-route .about-lens__note{grid-column:1 / -1}
-  .about-lens__art{grid-column:1;height:clamp(84px,26vw,120px)}
-  .about-route .about-lens__read,
-  .about-route .about-lens__ratio{grid-column:2;margin:0}
-  /* Back to one track. Here the readout is the narrow half of a two-column lens — 241px at 375 —
-     and three tracks in that is 64px each, against a LIGHTNESS label that measures 62. The terms
-     stay above their values; only the row becomes a column. */
-  .about-route .about-lens__read{grid-template-columns:minmax(0,1fr);row-gap:14px}
-  .about-route .about-lens__ratio{align-self:start}
-  .about-route .about-lens__note{max-width:none}
+  /* ---- 1.2, BOTH LENSES STACK: THE COLOUR ACROSS, ITS READINGS IN A ROW UNDER IT ---------------
+     (19.09.26, by request: "on mobile, let this sit horizontally below the green and let the color do
+     full width like wcag contrast. if there is no room for all three, let hue sit left aligned below").
+     The OKLCH swatch stood as an 84 to 120px square with its three readings stacked beside it, while
+     the WCAG lens under it ran its band across. Both now take the stacked form of the widths above:
+     the band across the lens, and the readings under it.
+     The three readings share a row where they fit. Where they do not, Hue drops to the next line,
+     under Lightness. The tracks are auto-fit, no narrower than 4.5rem. That clears "Lightness" (54px
+     at 13px) with room for the fallback face, and it grows with a reader's text size. At 320, all
+     three fit (288px of lens for 248). The pair keeps its two halves by its own, more specific rule. */
+  .about-lens__art{height:clamp(84px,26vw,120px)}
+  .about-route .about-lens__read{grid-template-columns:repeat(auto-fit, minmax(4.5rem, 1fr));row-gap:14px}
 }
 

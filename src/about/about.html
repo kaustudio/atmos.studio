@@ -119,12 +119,21 @@
      The swatch on the left is its accent.
 
      Prose supplied 18.09.26. It names what each lens does and what each is for, where it used to
-     argue that neither answers alone; the figure makes that argument on its own. -->
+     argue that neither answers alone; the figure makes that argument on its own.
+
+     THE SAME GREEN ON BOTH SIDES, AND THE PAIR AS TEXT ON ITS GROUND (19.09.26, by request: "are we
+     presenting the idea of oklch and wcag visually correct for the user to understand? The copy is
+     not strong enough"). The right lens drew two flat blocks with a bare 6.09:1, so it never showed what a
+     ratio is for or whether 6.09 was enough, and its colours were not the left lens's. It now draws
+     every pair the page's way, "Aa" on its ground: the accent from the left lens, which reaches only
+     2.89:1 on High Key's background, beside the primary's 6.09:1. Each carries the verdict 3.3's list
+     uses. Both ratios are color.js contrastRatio() at two decimals. The notes under both lenses went:
+     the lead says what each lens is for, and the figure shows it. -->
 <section id="how-atmos-reads-colour" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.2</span>How Atmos Reads Colour</h2>
-    <p data-reveal>Atmos uses OKLCH to describe each colour&rsquo;s lightness, chroma and hue. It also calculates contrast between colour pairs and checks the results against WCAG contrast requirements.</p>
-    <p data-reveal>These help you make different decisions: compare the colours in your palette, then check the combinations you want to use for text or interface elements. Colours that look good together may still lack enough contrast for their intended use.</p>
+    <p data-reveal>Atmos reads every colour in two ways. OKLCH describes the colour itself: its lightness, chroma and hue. WCAG contrast compares two colours: how readable text in one is on the other.</p>
+    <p data-reveal>OKLCH tells you what a colour is. Contrast tells you where it can go. High Key&rsquo;s most vivid green is too faint for text on its own background, while its deep green reads clearly.</p>
   </div>
 
   <figure class="about-figure about-figure--full about-lenses" data-cascade data-reveal-focus>
@@ -138,16 +147,16 @@
         <div><dt>Chroma</dt><dd>0.141</dd></div>
         <div><dt>Hue</dt><dd>128&deg;</dd></div>
       </dl>
-      <p class="about-lens__note">Describes what a colour is. It belongs to one colour on its own.</p>
     </div>
-    <div class="about-lens">
+    <div class="about-lens about-lens--pair">
       <p class="about-figure__label">WCAG Contrast</p>
-      <div class="about-lens__art" role="img" aria-label="Two swatches of High Key, its background and primary colours, measured against each other.">
-        <div class="about-lens__body" style="--lens-swatch:#EAE8DD"></div>
-        <div class="about-lens__body" style="--lens-swatch:#3C5E19"></div>
+      <div class="about-lens__art" role="img" aria-label="Text in High Key&rsquo;s most vivid green and in its deep green, each on its background.">
+        <div class="about-lens__body about-lens__ground" style="--lens-swatch:#EAE8DD"><span style="color:#6C9429">Aa</span><span style="color:#3C5E19">Aa</span></div>
       </div>
-      <p class="about-lens__ratio"><span data-ratio>6.09</span></p>
-      <p class="about-lens__note">Describes what a pair can do. It has no meaning until a second colour is named.</p>
+      <dl class="about-lens__read">
+        <div><dt>No WCAG Contrast Role</dt><dd><span data-ratio>2.89</span></dd></div>
+        <div><dt>Body Text at AA</dt><dd><span data-ratio>6.09</span></dd></div>
+      </dl>
     </div>
   </figure>
 </section>
@@ -202,19 +211,16 @@
       <li><span class="about-thresholds__role">Large Text</span><span class="about-thresholds__val"><span data-ratio>3</span> or Higher</span></li>
       <li><span class="about-thresholds__role">Meaningful Graphics and Interface Elements</span><span class="about-thresholds__val"><span data-ratio>3</span> or Higher against Adjacent Colours</span></li>
     </ul>
-    <!-- No rule between the list and its caption, by request. The caption is already set apart by
-         its own type, and .about-figure .about-divider adds 22px above what the figcaption's own
-         margin has already opened — a line drawn across a gap that had already done the separating.
-         One identical one remains, in 2.1; the CSS stays for it. -->
-    <figcaption data-reveal>WCAG defines large text as at least 18 point in regular weight or 14 point in bold.</figcaption>
+    <!-- NO CAPTION (19.09.26, by request: "delete"). "WCAG defines large text as at least 18 point in
+         regular weight or 14 point in bold." stood here: the list ends the figure. -->
   </figure>
 </section>
 
 <section id="more-than-common-colours" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">2.1</span>Small Details Can Stand Out</h2>
-    <p data-reveal>The colours that cover the largest areas of an image are not always the ones that catch your attention. A small, vivid detail can stand out against a muted background, while a dark shadow can make lighter colours more noticeable.</p>
-    <p data-reveal>Atmos shows the proportions, colour properties and contrast of the extracted palette. Use these to explore the colours and decide which ones to emphasise in your design.</p>
+    <p data-reveal>The colour that covers most of an image is rarely the one you notice first. A small, vivid detail stands out against a muted field, and a dark shadow makes lighter colours look brighter.</p>
+    <p data-reveal>Atmos shows how much of the image each colour covers, so you can see which colours carry it and which ones catch the eye.</p>
   </div>
 
   <!-- The demonstration, in the reference's own figures. Every width is that swatch's measured share
@@ -223,7 +229,11 @@
 
        Prose and caption supplied 18.09.26. The caption no longer recites 77.7, 22.3 and 5.6: the key
        below the bar prints all five shares already, and its aria-label reads them out, so the words
-       say what the shares mean instead of repeating them. -->
+       say what the shares mean instead of repeating them.
+
+       The lead and the caption were rewritten on 19.09.26 (by request: "The copy is not strong
+       enough"), one caption paragraph where there were two. NO LABEL ON THE BAR: a "Most Vivid" mark
+       over the 5.6% share was built the same day and deleted by request ("delete 'most vivid' text"). -->
   <figure class="about-figure about-figure--full">
     <div class="about-weights" data-cascade data-reveal-focus role="img" aria-label="High Key by area: near-white 77.7 per cent, pale green 8.1, mid green 5.6, deep green 4.8, darkest green 3.8.">
       <span class="about-weights__part" style="width:77.7%;background:#eae8dd"></span>
@@ -240,11 +250,10 @@
       <li><span class="about-key__chip" style="background:#1b2f0c"></span><span class="about-key__hex">#1B2F0C</span><span class="about-key__ok">L .28 &middot; C .063 &middot; H 134&deg;</span><span class="about-key__pct">3.8%</span></li>
     </ol>
     <div class="about-divider" data-divider aria-hidden="true"></div>
-    <!-- Two paragraphs, on 3.4's pattern: each one is its own reveal block and about.css keeps both
-         in the caption's type rather than the page's paragraph size. -->
+    <!-- One paragraph since 19.09.26 (it was two, on 3.4's pattern). It stays a <p> reveal block, which
+         about.css keeps in the caption's type rather than the page's paragraph size. -->
     <figcaption>
-      <p data-reveal>In High Key, the pale colour accounts for most of the image. The greens cover smaller areas but vary in lightness and chroma, from pale and muted to vivid and dark.</p>
-      <p data-reveal>The green with the highest chroma occupies only a small part of the image. It could work as an accent in your design, even though it is not the most common colour. Use the proportions to understand the image, then decide how much of each colour to use.</p>
+      <p data-reveal>High Key is almost entirely pale, and its most vivid green covers only a sliver of the image. That sliver is the colour that stands out, and it can lead your design as an accent.</p>
     </figcaption>
   </figure>
 </section>

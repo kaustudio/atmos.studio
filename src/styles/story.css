@@ -1068,8 +1068,9 @@
   margin:14px 0 0;
   border-top:1px solid var(--line);
 }
-/* --line, not --line-strong: the proportional bar 14px above owns the strong edge, and two equal
-   weights that close together read as one accident rather than two decisions. */
+/* --line, the weight of the key's own row rules. The bar 14px above lost its --line-strong edge on
+   19.09.26 (it reads from its fill and its rounded ends now), so this is the table's first rule rather
+   than a second edge beside the bar's. */
 [data-mobile-story] .about-weights__key li{
   display:grid;
   grid-template-columns:10px minmax(0, 1fr) 112px 40px;
