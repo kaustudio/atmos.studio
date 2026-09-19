@@ -823,6 +823,8 @@ for 2.1", then "Build as shown" for both rendered proposals).**
   colours look brighter." and "Atmos shows how much of the image each colour covers, so you can see
   which colours carry it and which ones catch the eye." The caption is one paragraph where there were
   two, and still recites no shares.
+- **3.2's verdict is "Non-Text Elements at AA"** (by request: "delete meaningful"). 1.4's threshold label
+  "Meaningful Graphics and Interface Elements" was not named, so it is unchanged.
 - **1.4's thresholds list ends the figure.** Its caption went, by request ("delete"): "WCAG defines large
   text as at least 18 point in regular weight or 14 point in bold."
 
@@ -834,6 +836,76 @@ strip on the floor.
 - The pinned slide is 100vh. So on phones the card's bottom padding adds (100vh - 100svh), which keeps the
   strip clear of a showing browser toolbar. That addition is 0 on desktop.
 - The sizes stay on the type scale: --fs-hero and --fs-chapter, 34 and 28px at 375.
+
+**How it Works 2.1's key is colour tiles whose shares count up (19.09, by request: option B of three
+rendered on the page, "go with B"; then "a number counter with progressive blur whilst counting up to
+their respective number with as masked counter", with Osmo Supply's Number Odometer; "Hex code and LCH
+should use the text masked animation").**
+- **The tiles.** Each colour is a tile of itself, with the --radius-card corner of 3.1's role tiles,
+  its hex, OKLCH and share in the ink that reads on it (#1A1A1A or white, 4.89 to 1 at the least).
+  Stacked on a phone, with the share on the right. Five across from 900px, with the share leading. The
+  cascade lands the tiles.
+- **The share counts up** in the odometer's masked digit columns, from 0, growing into its columns, and
+  resolves out of the page's 9px focus blur as it slows. The shares land in order, each 0.2s after the
+  one before (`data-odometer-stagger`, by request: "they don't land at the same time, it needs to be
+  sequential"), so the first lands at 1.4s and the fifth at 2.2s.
+- numberOdometer.js keeps the resource's code as delivered and marks its five additions [ATMOS]:
+  - scoped to the page, with a destroy;
+  - the blur;
+  - built on document.fonts.ready;
+  - a catch-up;
+  - each column landing at its own digit's width.
+- **Why the last addition.** Neue Montreal has no tabular figures, so a column rolls as wide as the
+  widest digit in its strip. A first version eased the columns to their digits' widths after landing,
+  which read as the number tightening up (by request: "they shouldn't tighten up"). The width now moves
+  during the roll, while the strip is still blurred and moving, so a share lands at its final spacing
+  and nothing moves after. Measured, the width at landing equals the width at rest.
+- The rolling strips are aria-hidden, and each share has a hidden twin for a screen reader.
+- **The hex and OKLCH rise through their own masks** (aboutTiles.js), with the tile, on the cascade's
+  enter line and the page's mask motion. It is not [data-reveal]: pageReveal reveals a section's copy
+  when its heading enters, a screen before these tiles.
+- A catch-up must read the element's position, not the trigger's start. A trigger created a moment ago
+  has not been measured, its start reads 0, and the first version played every count at page load.
+
+**No stroke on a swatch; only the verdict pills are outlined (19.09, by request: "apply it to the phone
+story and 2.2", "remove 1px stroke as well", then, after a rendered mockup, "no stroke, only pills saying
+Body text AA and others etc. needs stroke" and "go with b tray").**
+- **The phone story's 1.2 figure is How it Works 2.1's.** The key is colour tiles, where it was a list
+  with stroked 10x14 chips. Their hex and OKLCH rise through masks, and their shares count up in the
+  odometer, landing 0.2s apart. The bar resolves out of the focus blur (PaletteApp now hands initCascade
+  focusMotion's figures).
+  - Each tile's ink comes from the view model: white where white wins, otherwise #1A1A1A, or black
+    where #1A1A1A would fall under 4.5 to 1.
+  - The list is keyed by the case, so a new photograph gets new tiles rather than React writing into
+    text the odometer has replaced. Measured: a case change rebuilds the tiles, and they count again.
+  - The story's tally rules (story.css) and the old key's rules (about.css: .about-weights__key and
+    .about-key__*) are gone. Nothing rendered them any more.
+- **The "Aa" pair mark has no edge**, wherever it is drawn: AppView's PairMark (the phone story's
+  contrast rows and the checker's Best Pair Sample) and about.css's .about-pair (How it Works 3.2 and
+  3.3). It is one mark, so it changes as one. The verdict pills keep their 1px edge.
+- **2.2's strips stand on a tray, not in a hairline.**
+  - Each card's ground is one of its five colours. Without an edge, that band vanished into the card:
+    a hole in Dry Season's strip, a missing end on Garnet's.
+  - Of three rendered versions (no stroke, tray, four bands), the tray was chosen: 3px of the card's
+    text colour at 18% under the strip, with the strip's ends at 6 to 8px (--strip-r, sized for a bar
+    28 to 44px tall) and the tray's corner that plus 3px.
+  - All five bands stay visible, with no stroke.
+- **Still stroked, and not asked about:** the picker and Role cards' edge in the phone story (kept on
+  19.09 by request), the contrast checker's 24px chips and the harmony drawer's swatch.
+- **The contrast checker's text-on-colour rows are tiles** (by request: option A of two rendered in the
+  drawer, "go with a"). Each row is a tile of its colour, with --radius-card corners and 6px apart,
+  where they were 3px-cornered bars 1px apart.
+  - Inside each tile, the hex (13px Medium) sits over the name of the text colour that reads on it
+    (11px), and the ratio is the figure at 20px, since it is what the panel measures.
+  - Static, with no count-up or masked reveal. The drawer is opened often, so the motion the pages'
+    tiles carry stays on the pages.
+  - A screen reader hears "#0F0302 White Text 20.3 to 1".
+- **The contrast checker's pair grid is tiles without lines** (by request: option B of three rendered in
+  the drawer, "b, with c the list get too long"). Each measured pair is a rounded tile (8px, two thirds
+  of --radius-card), 4px from the next. A pass keeps its 14% ink fill, and a fail stands on a faint 4%
+  one where it had nothing. The empty half is empty. The axis chips have no stroke and a 6px corner
+  (half of --radius-card). Passing Only still dims the reading, not the tile. The ranked list (C) was
+  turned down for its length, and the "Aa" pair grid (A) for the same staircase with more to read.
 
 **The takeover's statements take the column on phones (19.09, by request: "extend width. typography is
 cramped").** Their measure is eight of twelve tracks, which at 375 came to 223px of a 343px column: the

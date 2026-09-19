@@ -413,39 +413,65 @@
    19.09.26 (by request, with the lenses and the ramps below): its ends take the colour bands' corner. */
 .about-weights{display:flex;width:100%;height:clamp(64px,8vw,110px)}
 .about-weights__part{display:block;height:100%}
-.about-weights__key{display:flex;flex-wrap:wrap;gap:8px 24px;margin:14px 0 0;padding:0;list-style:none}
-.about-weights__key li{display:flex;align-items:center;gap:8px}
-.about-key__chip{width:10px;height:10px;flex:none;border:1px solid color-mix(in srgb,var(--on-surface) 15%,transparent)}
-/* The OKLCH readout sits between the hex and the share: the three coordinates the page spends its
-   whole length arguing are the real description of a colour, printed beside the notation everyone
-   already uses. Muted, because it is the annotation and the hex is the name. */
-.about-key__ok{
-  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
-  letter-spacing:var(--track-flat);text-transform:uppercase;
-  color:var(--on-surface-muted);font-variant-numeric:tabular-nums;white-space:nowrap;
-}
-.about-key__hex,.about-key__pct{
-  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
-  font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;
-  font-variant-numeric:tabular-nums;
-}
-/* THE HEX AND ITS COORDINATES READ AT 11, AND THEY SHARE ONE DECLARATION BECAUSE THEY ARE ONE
-   FIGURE. The hex was --fs-micro (9) and the OKLCH triplet --fs-nano (8) — the two smallest rungs on
-   the ladder, carrying the only literal values in the key. 8px of uppercase tabular figures is below
-   anything this site asks a reader to actually read; it was legible as a texture and not as a number.
 
-   OFF THE LADDER, DELIBERATELY AND ONCE. 11 sits between --fs-label (10) and --fs-detail (12), and
-   neither of those is right: this is not a label and it is not secondary copy, it is the notation the
-   whole figure exists to print. Rather than mint a rung for one component, both consumers take a
-   single declaration here — so the exception is one line, countable, and moves as one thing.
-   0.6875rem, not 11px: every step on the ladder is rem so a reader who has set a larger default text
-   size gets larger type, and a px here would be the one figure on the page that ignores them.
+/* ===== 2.1's KEY AS COLOUR TILES (19.09.26, by request: option B, "go with B") =======================
+   Each colour is a tile of itself, the page's --radius-card corner as 3.1's role tiles have, with its hex,
+   OKLCH and share in the ink that reads on it (set per tile in about.html, 4.89 to 1 at the least).
+   Stacked on a phone, the share to the right. Five across from 900, the share leading each tile. No
+   opacity on any of it: a tint on a palette colour is a contrast cut (see .about-stack__d). */
+.about-tiles{display:grid;gap:6px;margin:14px 0 0;padding:0;list-style:none}
+.about-tile{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:16px;
+  padding:14px 16px;border-radius:var(--radius-card);
+  background:var(--tile);color:var(--tile-ink);
+  font-family:'Neue Montreal',system-ui,sans-serif;letter-spacing:var(--track-flat);
+}
+/* THE MASK each line rises through (aboutTiles.js). A hair of padding with the same negative margin, so
+   the clip clears the glyphs' overhang without moving the line. */
+.about-tile__line{display:block;grid-column:1;overflow:clip;padding-block:.08em;margin-block:-.08em}
+.about-tile__line > span{display:block}
+.about-tile__line--hex{font-size:var(--fs-body);font-weight:500;line-height:1.3}
+.about-tile__line--ok{font-size:var(--fs-fine);line-height:1.3;margin-top:calc(4px - .08em)}
+.about-tile__pct{
+  grid-column:2;grid-row:1 / span 2;align-self:center;
+  font-size:var(--fs-subtitle);font-weight:500;line-height:1.1;letter-spacing:var(--track-flat);
+}
+@media (min-width:900px){
+  .about-tiles{grid-template-columns:repeat(5, minmax(0, 1fr))}
+  .about-tile{min-height:132px;grid-template-columns:minmax(0,1fr);grid-template-rows:1fr auto auto;align-items:start}
+  .about-tile__pct{grid-column:1;grid-row:1;align-self:start;justify-self:start}
+  .about-tile__line--hex{grid-row:2}
+  .about-tile__line--ok{grid-row:3}
+}
+/* Read by a screen reader and nobody else: the share's twin, since the odometer's rolling strips are
+   aria-hidden. */
+.about-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0}
 
-   IT HOLDS AT EVERY WIDTH. The ≤560 block used to step the hex to --fs-label and the triplet to
-   --fs-micro; both overrides are gone, because the argument for 11 is legibility and a phone is
-   where that argument is strongest, not weakest. */
-.about-key__hex,.about-key__ok{font-size:var(--fs-fine)}
-.about-key__pct{color:var(--on-surface-muted)}
+/* Osmo Supply's Number Odometer, its CSS as delivered (numberOdometer.js has the script). */
+[data-odometer-element] {
+  display: inline-flex;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-odometer-part="mask"],
+[data-odometer-part="static"] {
+  display: inline-block;
+  overflow: clip;
+  padding: 0.05em;
+  margin: -0.05em;
+}
+
+[data-odometer-part="roller"] {
+  display: block;
+  white-space: pre;
+  text-align: center;
+  will-change: transform;
+}
+
+[data-odometer-part="static"] {
+  display: inline-block;
+}
 
 /* a masked photograph that moves against its frame — the parallax resource's own background pattern.
    THE HERO'S CORNER AND NO RING (18.09.26, by request): --radius-surface, as the opening plate has,
@@ -773,14 +799,15 @@
    first colour on a stadium of the second, so which colour is the text and which the background reads off
    the mark itself; the two chips and the two discs before it left that to a convention. The same mark is
    in the contrast checker's Best Pair Sample and the phone story's contrast rows (AppView PairMark), at
-   the same 40 by 26, 13px Medium and 14% edge. */
+   the same 40 by 26 and 13px Medium. No edge since 19.09.26 (by request: "no stroke, only pills saying
+   Body text AA and others etc. needs stroke"): it is drawn by its fill, and only the verdict pills are
+   outlined. */
 .about-pair{
   display:inline-flex;align-items:center;justify-content:center;flex:none;
   width:40px;height:26px;border-radius:var(--radius-pill);
   background:var(--pair-bg);color:var(--pair-fg);
   font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;
   letter-spacing:var(--track-flat);line-height:1;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
 }
 .about-route .about-matrix__val,
 [data-mobile-story] .about-matrix__val{
@@ -955,8 +982,8 @@
 }
 /* ON HOW IT WORKS THE COLUMNS ARE THE LIST'S, NOT EACH ROW'S (19.09.26, interface review, by request:
    "fix all"). Each li was its own grid, so every row sized its tracks from its own verdict, and in 3.2
-   the last ratio ended 116px left of the other three because "Meaningful Non-Text Elements at AA" is
-   the widest pill. The list is the grid now and each row a subgrid of it, so the ratios end on one
+   the last ratio ended 116px left of the other three because "Non-Text Elements at AA" ("Meaningful
+   Non-Text Elements at AA" until 19.09.26) is the widest pill. The list is the grid now and each row a subgrid of it, so the ratios end on one
    edge and the pills on another, the row's end. The phone story's rows keep their own tracks: there
    the ratio rides with its chip. The 820px block below turns this back into a row per grid. */
 .about-route .about-checks{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:16px}
@@ -1206,13 +1233,23 @@
 .about-stack__bottom{display:flex;flex-direction:column;gap:clamp(16px,2vw,28px)}
 /* THE PALETTE'S DEPTH, on the card that is made of it. Each card is now a ground taken from a real
    palette rather than a near-black, which shows one colour; the strip shows the other four it came
-   with, so the card states its own range instead of asserting it. Five equal bands, the page's own
-   hairline between them and the ground. */
-.about-stack__strip{display:flex;width:100%;max-width:clamp(220px,26vw,420px);height:clamp(28px,3.2vw,44px)}
-/* A hairline in the card's OWN text colour, not the page's. Each ground is one of the five colours in
-   its strip, so without a boundary that band vanishes into the card and a palette of five reads as
-   four — which is precisely the miscount the strip is there to prevent. */
-.about-stack__strip > span{flex:1 1 0;min-width:0;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-text) 22%,transparent)}
+   with, so the card states its own range instead of asserting it. Five equal bands. */
+/* ON A TRAY, NOT IN A HAIRLINE (19.09.26, by request: "no stroke, only pills saying Body text AA and others
+   etc. needs stroke", then "go with b tray", option B of three rendered on the page). Each ground is one of
+   the five colours in its strip, so the band that matches it needs something to stand on, or it
+   vanishes into the card and a palette of five reads as four (a hole in Dry Season's strip, a missing
+   end on Garnet's). A 22% hairline in the card's text colour did that; a fill does it now. The strip
+   stands on 3px of the card's text colour at 18%, and its ends are rounded for a bar 28 to 44px tall:
+   6 to 8px (--strip-r), and the tray's corner is that plus its 3px. */
+.about-stack__strip{
+  --strip-r:clamp(6px,.55vw,8px);
+  display:flex;width:100%;max-width:clamp(220px,26vw,420px);height:clamp(28px,3.2vw,44px);
+  padding:3px;border-radius:calc(var(--strip-r) + 3px);
+  background:color-mix(in srgb,var(--r-text) 18%,transparent);
+}
+.about-stack__strip > span{flex:1 1 0;min-width:0}
+.about-stack__strip > span:first-child{border-radius:var(--strip-r) 0 0 var(--strip-r)}
+.about-stack__strip > span:last-child{border-radius:0 var(--strip-r) var(--strip-r) 0}
 .about-route .about-stack__t{
   margin:0;max-width:18ch;
   font-size:var(--fs-chapter);font-weight:500;line-height:1.06;letter-spacing:var(--track-statement);
@@ -1640,35 +1677,6 @@
 
 /* ---- NARROW ---------------------------------------------------------------------------------- */
 @media screen and (max-width:560px){
-  /* ---- 2.1, THE WEIGHTS KEY, AS A FULL WIDTH TALLY ------------------------------------------
-     Two faults, and neither is the one it looks like.
-
-     IT UNDER FILLS, IT DOES NOT OVERFLOW. The key is a flex WRAP with a 24px column gap, which is
-     right at this page's desktop width and only there. Measured at 375: the figure is 343px, the
-     widest row 183px, and two rows need 390 — so the wrap drops to one row per line and each row
-     leaves 160px of dead air. Five rows, five times over. The four fields have always fitted one
-     line with room to spare; nothing needed cutting or stacking.
-
-     THE HIERARCHY IS INVERTED. `.about-route` raises --fs-nano to 10px so this page's nine figure
-     annotations are not set at a size nobody leans in for, and --fs-micro stays at 9. The key is the
-     one place those two meet: the OKLCH readout takes nano and the HEX takes micro, so the
-     annotation renders larger than the name it annotates, and the share, which is what the chapter
-     is arguing, is the quietest thing in the row at 9px muted. Below, the answer leads at 13/500 in
-     full ink, the hex names it at 10, and the readout annotates at 9 muted. Same order the phone
-     story's own key takes.
-
-     Tracks are cut for the FALLBACK font, not the webfont: font-display:swap paints system-ui first,
-     where the OKLCH measures 113.30px against Neue Montreal's 96.66, and the share 45.02 against
-     41.17. 120 and 48 clear the fallback. They must be FIXED rather than auto — each row is its own
-     grid, so auto would size per row and the columns would stop lining up, which is the whole point. */
-  .about-weights__key{display:block;margin:14px 0 0;border-top:1px solid var(--line)}
-  .about-weights__key li{
-    display:grid;grid-template-columns:10px minmax(0,1fr) 120px 48px;
-    align-items:center;gap:0 16px;padding:12px 0;border-bottom:1px solid var(--line);
-  }
-  .about-weights__key .about-key__pct{
-    font-size:var(--fs-lead);font-weight:500;color:var(--on-surface);text-align:right;
-  }
 
   /* ---- 1.2, BOTH LENSES STACK: THE COLOUR ACROSS, ITS READINGS IN A ROW UNDER IT ---------------
      (19.09.26, by request: "on mobile, let this sit horizontally below the green and let the color do

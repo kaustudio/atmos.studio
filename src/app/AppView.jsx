@@ -929,33 +929,26 @@ function MobileStory({ st }) {
             <h2 data-sec-head>A Palette Is More Than a List of Colours</h2>
             <p data-reveal>Each colour holds a share of the frame. These are the real proportions.</p>
           </div>
-          <figure className="about-figure about-figure--full" data-cascade>
-            <div className="about-weights" role="img" aria-label={st.weightsAria}>
+          {/* THE FIGURE IS HOW IT WORKS 2.1's (19.09.26, by request: "apply it to the phone story", with
+              the key's stroke gone). The bar's parts rise out of the focus blur, the key is colour tiles
+              whose hex and OKLCH rise through their masks (aboutTiles.js) and whose shares count up in
+              Osmo's odometer (numberOdometer.js), each landing 0.2s after the one before. Keyed by the
+              case: the odometer rebuilds a share's text into its own columns, so a new photograph
+              gets new tiles rather than React writing into text the odometer has replaced. The
+              rolling strips are aria-hidden, each share has a hidden twin, and role="list" is the
+              Safari repair (list-style:none drops list semantics there). */}
+          <figure className="about-figure about-figure--full">
+            <div className="about-weights" data-cascade data-reveal-focus role="img" aria-label={st.weightsAria}>
               {st.swatches.map((r) => (
                 <span key={r.key} className="about-weights__part" style={{ width: r.share + '%', background: r.hex }}></span>
               ))}
             </div>
-            {/* THE KEY UNDER-FILLED, IT NEVER OVERFLOWED — and that is why no markup changes here.
-
-                about.css:352 lays these five rows out as a flex wrap with a 24px column gap, which is
-                right at /about's 1032px and only there. At 375px the figure is 343px and two rows
-                would need 375, so the wrap drops to one row per line and each row uses 179 of the 343
-                available. Five rows, 164px of dead air each. The four fields have always fitted one
-                line with room to spare; nothing had to be cut or stacked to make them fit.
-
-                So the fields keep their classes, their order and their mapping, identical to /about's,
-                and the whole repair is scoped rules in story.css turning a wrapped list into the
-                full-width tally this surface already uses at 2.1.
-
-                role="list" is a separate, pre-existing repair: list-style:none drops list semantics in
-                Safari, on both surfaces. */}
-            <ol className="about-weights__key" role="list">
+            <ol key={st.caseId} className="about-tiles" role="list" data-cascade data-tile-lines data-odometer-group data-odometer-trigger-start="top 88%" data-odometer-stagger="0.2">
               {st.swatches.map((r) => (
-                <li key={r.key}>
-                  <span className="about-key__chip" style={{ background: r.hex }}></span>
-                  <span className="about-key__hex">{r.hex}</span>
-                  <span className="about-key__ok">{r.ok}</span>
-                  <span className="about-key__pct">{r.pct}</span>
+                <li key={r.key} className="about-tile" style={{ '--tile': r.hex, '--tile-ink': r.ink }}>
+                  <span className="about-tile__line about-tile__line--hex" data-tile-line=""><span>{r.hex}</span></span>
+                  <span className="about-tile__line about-tile__line--ok" data-tile-line=""><span>{r.ok}</span></span>
+                  <span className="about-tile__pct"><span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">{r.pct}</span><span className="about-sr">{r.pct}</span></span>
                 </li>
               ))}
             </ol>
@@ -1475,10 +1468,12 @@ const visuallyHidden = sx('position:absolute;width:1px;height:1px;overflow:hidde
    colour on a stadium of the background, so which colour is which reads off the mark. It replaced two
    overlapping discs, which asked a reader to know that the one behind was the background. The contrast
    checker's Best Pair Sample and the phone story's contrast rows use it, and How it Works draws the same
-   chip from about.css (.about-pair), at the same 40 by 26, 13px Medium and 14% edge. The hexes are still
-   said, visually hidden, by whoever places the mark. */
+   chip from about.css (.about-pair), at the same 40 by 26 and 13px Medium. NO EDGE since 19.09.26 (by
+   request: "no stroke, only pills saying Body text AA and others etc. needs stroke"): the chip is drawn by
+   its fill, and the verdict pills are the only outlined things in these rows. The hexes are still said,
+   visually hidden, by whoever places the mark. */
 const PairMark = ({ fg, bg }) => (
-  <span aria-hidden="true" style={{ ...sx("display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:26px;border-radius:var(--radius-pill);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)"), background: bg, color: fg }}>Aa</span>
+  <span aria-hidden="true" style={{ ...sx("display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:26px;border-radius:var(--radius-pill);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1"), background: bg, color: fg }}>Aa</span>
 );
 /* EVERY "4.5:1" IN A STRING IS DRAWN AS WRITTEN AND SAID "4.5 TO 1" (19.09.26, interface review, by
    request: "fix all"). The figure goes in a [data-ratio] span whose ":1" global.css generates with " to 1"
@@ -3335,7 +3330,7 @@ function ContrastDrawer({ vals }) {
         <div data-cx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div style={contrast.matrixColsStyle}>
             {contrast.rows.map((row, ri) => (
-              <div key={ri} style={sx('display:flex;align-items:stretch')}>
+              <div key={ri} style={sx('display:flex;align-items:stretch;gap:4px')}>
                 {row.isHeader && (<>
                   <div style={sx('width:34px;flex:none')}></div>
                   {row.chips.map((c, ci) => (
@@ -3382,14 +3377,22 @@ function ContrastDrawer({ vals }) {
         </div>
 
         {/* The rows alone: their "Text on each colour" label went on 17.09.26 (radius issue R10, by
-            request). Each row still names its colour and the text that reads on it. */}
+            request). Each row still names its colour and the text that reads on it.
+            AS TILES (19.09.26, by request: option A of two rendered in this drawer, "go with a"): each
+            row is a tile of its colour, like How it Works 2.1's, 6px apart. The hex (13px Medium) sits
+            over the name of the text colour that reads on it (11px), and the ratio is the row's figure
+            at 20px, since it is what this panel measures. Static: this drawer is opened often, so the
+            count-up and masked reveal the pages' tiles carry stay on the pages. */}
         <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 0')}>
-          <div style={sx('display:flex;flex-direction:column;gap:1px')}>
+          <div style={sx('display:flex;flex-direction:column;gap:6px')}>
             {contrast.textOn.map((t, ti) => (
               <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
-                <span style={{ fontSize: 'var(--fs-label)' }}>{t.hex}</span>
-                {/* No capitals (19.09.26, audit W2): a value, in the Title Case of the Q5 rule. */}
-                <span style={sx('font-size:var(--fs-label)')}>{t.onLabel} · <span data-ratio="">{t.ratio}</span></span>
+                <span style={sx("display:flex;flex-direction:column;gap:3px;min-width:0;font-family:'Neue Montreal';letter-spacing:var(--track-flat)")}>
+                  <span style={sx('font-size:var(--fs-body);font-weight:500;line-height:1.2')}>{t.hex}</span>
+                  {/* No capitals (19.09.26, audit W2): a value, in the Title Case of the Q5 rule. */}
+                  <span style={sx('font-size:var(--fs-fine);line-height:1.2')}>{t.onLabel}</span>
+                </span>
+                <span style={sx("flex:none;font-family:'Neue Montreal';font-size:var(--fs-subtitle);font-weight:500;line-height:1;letter-spacing:var(--track-flat)")}><span data-ratio="">{t.ratio}</span></span>
               </div>
             ))}
           </div>

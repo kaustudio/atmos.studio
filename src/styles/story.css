@@ -8,7 +8,7 @@
    THIS FILE IS SMALL ON PURPOSE, and it got smaller twice.
 
    The surface is built from /about's components — `.about-sec`, `.about-grid`, `.about-col`,
-   `.about-figure`, `.about-weights` + `.about-weights__key`, `.about-role`, `.about-thresholds`,
+   `.about-figure`, `.about-weights` + `.about-tiles`, `.about-role`, `.about-thresholds`,
    `.about-checks`, `.about-rail` — and driven by /about's own modules: initPageReveal, initCascade,
    initDividers, initGlobalParallax and initHighlightText all take a root, so they run over this
    markup exactly as they run over that page's. (The section dock was one of both lists until it
@@ -1020,106 +1020,5 @@
 /* The palette strip on a rail card went on 17.09.26 (radius issue R3 and R10, by request): the
    card's name stands alone, as on /about. */
 
-/* ------------------------------------------------- 1.2, the weights key as a full width tally
-
-   THE DIAGNOSIS WAS BACKWARDS EVERYWHERE. This looked like five rows stacking because four fields
-   would not fit beside each other, and the ask was to put them two up. Measured against the real
-   stylesheets and the real font at 375px, that is not what is happening.
-
-   `--page-gutter` is 16px and `--grid-cols` is 4, so the figure spans 343px. about.css:352 makes the
-   key a flex WRAP with a 24px column gap: two rows need 375px, it has 343, so it drops to one row per
-   line — and each row then uses 179.2px of the 343 it was given. The key never overflowed. It
-   under-filled, by 164px, five times over. The four fields have always fitted one line with room to
-   spare, so nothing had to be cut, stacked or paired to make room.
-
-   And two up was never available anyway: a 50/50 column at this width is 171.5px at its absolute
-   widest, against a worst case single line row of 175.5px. The ask would have cost a field.
-
-   THE ROW BORROWS .about-checks' CONSTRUCTION, AND THAT CLAIM NEEDS ONE QUALIFICATION. The base rule
-   (about.css:997) is exactly this shape: a grid per row, the identifying column flexible, the readouts
-   trailing right, 12px padding, a hairline under each. But about.css:1549 restates it under 820px as
-   `minmax(0,1fr) auto` with the verdict moved to grid-column 2 — so at THIS width 2.1's checks are a
-   two column, two row block, not a single line tally. The construction is borrowed; the phone
-   silhouette is not shared, and it would be wrong to say 1.2 and 2.1 now look alike here.
-
-   What actually justifies the shape is the measurement above, not the precedent: 164px of dead air per
-   row, five times, and four fields that have always fitted one line.
-
-   THE TRACKS ARE SIZED FOR THE FALLBACK FONT, NOT THE WEBFONT. font-display:swap paints system-ui
-   first, and the same string is about 22% wider there. Measured in the browser, at 9px, uppercase,
-   --track-flat:
-
-     worst SHIPPED readout   L .85 · C .021 · H 82°      74.59 webfont   91.67 fallback
-     theoretical maximum     L 1.00 · C .000 · H 360°    87.00 webfont  103.45 fallback
-     worst share             100%                        31.19 webfont   34.13 fallback
-
-   The maximum is real rather than rhetorical: H runs to three digits and an L of 1.00 keeps the digit
-   the regex would otherwise strip. 112 and 40 clear the fallback maximum with 8.5px and 5.9px spare.
-
-   THE TRACKS MUST BE FIXED, and an `auto` track is the one substitution that breaks this. Each row is
-   its OWN grid, so `auto` would size every row to its own content and the columns would stop lining
-   up between rows — which is the entire point of the layout. Fixed numbers are what put all five
-   readouts on one left edge and all five shares on one right edge.
-
-   NOTHING IS ADDED TO about.css. Every rule below is scoped and out-specifies its unscoped original,
-   so /about's Dusk Slate figure is untouched by construction rather than by argument. */
-[data-mobile-story] .about-weights__key{
-  display:block;
-  margin:14px 0 0;
-  border-top:1px solid var(--line);
-}
-/* --line, the weight of the key's own row rules. The bar 14px above lost its --line-strong edge on
-   19.09.26 (it reads from its fill and its rounded ends now), so this is the table's first rule rather
-   than a second edge beside the bar's. */
-[data-mobile-story] .about-weights__key li{
-  display:grid;
-  grid-template-columns:10px minmax(0, 1fr) 112px 40px;
-  align-items:center;
-  gap:0 16px;
-  padding:12px 0;
-  border-bottom:1px solid var(--line);
-}
-/* DESCENDANT QUALIFIED, WHICH IS THE POINT. `.about-key__chip` is read by four components across two
-   documents: /about's contrast matrix takes it at 22x14, /about's checks list and THIS surface's own
-   2.1 pair list both take it at 10x10. Qualifying under .about-weights__key reaches the five chips in
-   this one figure and nothing else anywhere.
-
-   Portrait rather than square, at the row's cap height, so the five of them make a colour column down
-   the left to scan against the magnitude column down the right. Deliberately SEPARATED by the row
-   padding: a continuous equal-height colour spine directly under a bar of proportional widths would
-   be a second chart contradicting the first. */
-[data-mobile-story] .about-weights__key .about-key__chip{
-  width:10px;
-  height:14px;
-  align-self:center;
-}
-[data-mobile-story] .about-weights__key .about-key__hex,
-[data-mobile-story] .about-weights__key .about-key__ok{
-  line-height:1.2;
-}
-/* THE HEX IN THE CARDS' VOICE (19.09.26, audit X1, by request: "go with proposed and with ink"). It was
-   11px Medium here and 13px Regular in 1.3's picker and the Role cards one scroll on, so the same value
-   read as two things. It takes the cards' size and weight, and the cards take this table's ink (below),
-   so the hex and the share read the same wherever the story prints them. The OKLCH beside it keeps
-   /about's 11: it is this table's own annotation, and the cards never print it. */
-[data-mobile-story] .about-weights__key .about-key__hex{
-  font-size:var(--fs-body);
-  font-weight:400;
-  color:var(--on-surface);
-}
-/* THE SHARE IS THE CHAPTER'S ARGUMENT, so it takes the answer's voice — the same step .story-facts dd
-   takes for a found value and .about-checks__val takes for a measurement. Both siblings land on 13px,
-   which is why this does, and why it goes no further: this file already recorded making and reversing
-   a 20px readout here because it led past everything.
-
-   text-align:right does the real work. All five right edges land on one x, so the units align. That
-   comes from the alignment and NOT from the inherited font-variant-numeric:tabular-nums, which is
-   inert here: Neue Montreal ships no tnum table, and 111% and 000% measure 29.39px and 30.34px with
-   the property on or off. Nothing on this surface may lean on tabular metrics. */
-[data-mobile-story] .about-weights__key .about-key__pct{
-  font-size:var(--fs-lead);   /* one step up with the result swatches (13.09.26); their 32px does not fit this 40px key column */
-  font-weight:500;
-  line-height:1.1;
-  color:var(--on-surface);
-  text-align:right;
-}
+/* 1.2's key is colour tiles since 19.09.26 (.about-tiles in about.css, the same as How it Works 2.1),
+   so the full-width tally that stood here, and its tracks cut for the fallback face, are gone. */

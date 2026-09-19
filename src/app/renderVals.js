@@ -174,7 +174,9 @@ export const renderValsMethods = {
         const sw = cp.swatches, N = sw.length, aaa = s.contrastLens === 'AAA';
         const th = CONTRAST_MIN(aaa, s.contrastLarge);
         // The swatch corner on every colour sample in this panel (17.09.26, by request).
-        const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', border: '1px solid color-mix(in srgb, var(--on-surface) 20%, transparent)', borderRadius: 'var(--radius-swatch)' } });
+        // The axis chips have no stroke since 19.09.26 (the pair grid as tiles, option B, by request:
+        // "b"), and a corner sized for a 24px chip: half the tiles' --radius-card.
+        const chip = (b) => ({ hex: b.hex.toUpperCase(), style: { width: '24px', height: '24px', background: b.hex, flex: 'none', borderRadius: 'calc(var(--radius-card) / 2)' } });
         /* THE SUMMARY USED TO ANSWER A QUESTION NOBODY HAD ASKED. It read `summary.aa` from
            contrastSummary(), which counts pairs at a hard-coded 4.5 — the AA/normal threshold — so
            selecting AAA moved the matrix, moved the minimum, and left the sentence above them both
@@ -188,7 +190,7 @@ export const renderValsMethods = {
         const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map(chip) }];
         sw.forEach((rb, i) => {
           const cells = sw.map((cb, j) => {
-            if (j >= i) return { blank: true, key: '', ratio: '', numStyle: {}, style: { flex: 1, minWidth: 0, height: '34px', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)' } };
+            if (j >= i) return { blank: true, key: '', ratio: '', numStyle: {}, style: { flex: 1, minWidth: 0, height: '34px' } };
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
             pairTotal++; if (pass) passCount++;
             return {
@@ -208,16 +210,19 @@ export const renderValsMethods = {
                  broke into a patchwork of full-strength and ghosted lines that belonged to no row or
                  column. The lines are the table; they are what makes a cell readable as the meeting
                  of two colours, and they should not report anything about the pair inside.
-                 So the cell keeps its borders and its ground at full strength and the two things
-                 that ARE the reading — the ratio and the mark — carry the dim instead. The hidden
+                 So the cell keeps its ground at full strength (its tile, since the lines went on
+                 19.09.26) and the two things that ARE the reading — the ratio and the mark — carry
+                 the dim instead. The hidden
                  description is left alone: a filter is a visual narrowing, and quieting a pair is
                  not a reason to make its sentence harder for a screen reader to reach. */
               /* PASS AND FAIL WITHOUT A MARK (17.09.26, by request: the ✓ and ✕ "ruin the layout").
                  The verdict is the ground and the figure: a pass sits on a 14% ink fill in Medium ink,
-                 a fail on nothing in muted Regular. The fill was 6% beside the mark and could not carry
+                 a fail on a 4% one in muted Regular. (THE GRID HAS NO LINES since 19.09.26, option B of
+                 three rendered in this drawer, by request: "b". Each pair is a rounded tile, 8px, 4px
+                 from the next, so the fail's faint tile is what shows a pair was measured.) The fill was 6% beside the mark and could not carry
                  the verdict alone. Two cues, fill and weight, so it is not colour alone (SC 1.4.1),
                  and the number is still the reading. The fill eases when a toggle moves the verdict. */
-              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderLeft: '1px solid var(--line)', borderTop: '1px solid var(--line)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'transparent', transition: 'background-color var(--dur-state) var(--ease-standard)' },
+              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', transition: 'background-color var(--dur-state) var(--ease-standard)' },
               /* --fs-detail and --fs-fine, off the tokens this cell used to borrow. --fs-label is
                  defined as "uppercase labels" and this is a number. It sat under --fs-fine, which
                  global.css names the smallest READABLE size, so the checker's own fifteen
@@ -235,7 +240,9 @@ export const renderValsMethods = {
           const on = this.onColor(b.hex); const r = this.contrastRatio(b.hex, on);
           return {
             hex: b.hex.toUpperCase(), onLabel: on === '#000000' ? 'Black Text' : 'White Text', ratio: r.toFixed(1),
-            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: b.hex, color: on, padding: '10px 12px', minWidth: 0, borderRadius: 'var(--radius-swatch)' },
+            // A TILE, as How it Works 2.1's (19.09.26, option A, by request: "go with a"): the tiles'
+            // --radius-card corner and room for two lines and a figure.
+            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', background: b.hex, color: on, padding: '12px 16px', minWidth: 0, borderRadius: 'var(--radius-card)' },
             metaStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', opacity: 0.85, whiteSpace: 'nowrap' },
           };
         });
@@ -288,8 +295,10 @@ export const renderValsMethods = {
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
           large: s.contrastLarge, passOnly: s.contrastPassOnly,
           rows, textOn,
-          matrixColsStyle: { display: 'flex', flexDirection: 'column', width: '100%' },
-          sampleStyle: { borderRadius: 'var(--radius-swatch)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '20px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
+          matrixColsStyle: { display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' },
+          // The text-on-colour tiles' padding (19.09.26, by request: "add same padding to this"), so the
+          // sample's words start on the same inner edge as the hexes above them.
+          sampleStyle: { borderRadius: 'var(--radius-swatch)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '12px 16px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
@@ -1349,9 +1358,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          picture beside an unfloored number is a figure disagreeing with its own caption.
 
          /about had already solved this and the fix is to adopt its solution rather than tune ours:
-         `.about-weights` is a bar of TRUE widths and `.about-weights__key` is a list underneath
-         carrying the chip, the hex, the coordinates and the share (about.css:317-335, about.html's
-         Dusk Slate figure). The bar then only has to show proportion, which it can do honestly at
+         `.about-weights` is a bar of TRUE widths and a key underneath carries the hex, the
+         coordinates and the share (colour tiles, `.about-tiles`, since 19.09.26, as How it Works 2.1
+         draws them). The bar then only has to show proportion, which it can do honestly at
          1.9%, and every number gets a line of its own at a readable size. swatchGrow's 0.06 floor is
          no longer reached for here at all. */
       const okl = (b) => {
@@ -1377,6 +1386,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           // of the app quotes.
           share: ((b.weight / totW) * 100).toFixed(1),
           ok: okl(b),
+          /* THE TILE'S INK (19.09.26, the key as tiles): the text that reads on this colour as a tile of
+             itself. White where white wins; otherwise the page's #1A1A1A, or black where #1A1A1A would
+             fall under 4.5 to 1. onColor's winner always clears 4.5, so this does too. */
+          ink: this.onColor(HX) === '#ffffff' ? '#ffffff' : (this.contrastRatio(HX, '#1a1a1a') >= 4.5 ? '#1a1a1a' : '#000000'),
           hasRegion: !!mask, mask,
           selected: s.storySwatch === i,
           onPick: () => this.pickStorySwatch(i),

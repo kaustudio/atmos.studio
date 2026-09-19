@@ -38,6 +38,8 @@ import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initLayeredSlider } from './methods/layeredSlider.js';
 import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
+import { initTileLines } from './methods/aboutTiles.js';
+import { initNumberOdometer } from './methods/numberOdometer.js';
 
 // Speed Insights' beforeSend: nothing without analytics consent, and never the share link's fragment.
 // Module scope, so the component is handed one function for its whole life rather than a new one
@@ -848,7 +850,14 @@ export default class PaletteApp extends React.Component {
        _syncStory re-entering and rebuilding over its parked children. That re-entrancy is guarded
        now, and the module commits no React state of its own, so it cannot re-enter. Same call
        AboutPage makes, with the motion object already built above. */
-    this._storyKills.push(initCascade(root, motion));
+    // focusMotion's own figures (renderVals), for 1.2's bar, the one set here marked data-reveal-focus:
+    // it resolves out of the blur as How it Works 2.1's does (19.09.26).
+    const focus = { duration: this.DUR ? this.DUR.focus : 0.9, ease: this.EASE ? this.EASE.reveal : 'power2.out', blur: 9 };
+    this._storyKills.push(initCascade(root, motion, focus));
+    // 1.2's tiles, as How it Works 2.1's (19.09.26): their words rise through their masks and their
+    // shares count up out of the same blur.
+    this._storyKills.push(initTileLines(root, motion));
+    this._storyKills.push(initNumberOdometer(root, { blur: focus.blur }));
 
     /* The reveal is ARMED, not played — the contract AboutPage and LegalPage both describe. The note
        that used to sit here said the split existed "so a future wiped arrival can hold it behind the

@@ -242,12 +242,18 @@
       <span class="about-weights__part" style="width:4.8%;background:#3c5e19"></span>
       <span class="about-weights__part" style="width:3.8%;background:#1b2f0c"></span>
     </div>
-    <ol class="about-weights__key" data-cascade>
-      <li><span class="about-key__chip" style="background:#eae8dd"></span><span class="about-key__hex">#EAE8DD</span><span class="about-key__ok">L .93 &middot; C .015 &middot; H 98&deg;</span><span class="about-key__pct">77.7%</span></li>
-      <li><span class="about-key__chip" style="background:#b8cd79"></span><span class="about-key__hex">#B8CD79</span><span class="about-key__ok">L .81 &middot; C .111 &middot; H 120&deg;</span><span class="about-key__pct">8.1%</span></li>
-      <li><span class="about-key__chip" style="background:#6c9429"></span><span class="about-key__hex">#6C9429</span><span class="about-key__ok">L .62 &middot; C .141 &middot; H 128&deg;</span><span class="about-key__pct">5.6%</span></li>
-      <li><span class="about-key__chip" style="background:#3c5e19"></span><span class="about-key__hex">#3C5E19</span><span class="about-key__ok">L .44 &middot; C .104 &middot; H 132&deg;</span><span class="about-key__pct">4.8%</span></li>
-      <li><span class="about-key__chip" style="background:#1b2f0c"></span><span class="about-key__hex">#1B2F0C</span><span class="about-key__ok">L .28 &middot; C .063 &middot; H 134&deg;</span><span class="about-key__pct">3.8%</span></li>
+    <!-- THE KEY AS TILES (19.09.26, by request: option B of three rendered on this page, "go with B").
+         Each colour is a tile of itself, its hex, OKLCH and share in the ink that reads on it: #1A1A1A
+         on the three light greens, white on the two dark, 4.89 to 1 at the least (color.js). The share
+         counts up in Osmo's masked odometer (numberOdometer.js) and is a hidden twin for a screen
+         reader, which would otherwise read the rolling strips. The hex and OKLCH rise through their
+         own masks (aboutTiles.js), and the cascade lands the tiles. -->
+    <ol class="about-tiles" role="list" data-cascade data-tile-lines data-odometer-group data-odometer-trigger-start="top 88%" data-odometer-stagger="0.2">
+      <li class="about-tile" style="--tile:#eae8dd;--tile-ink:#1a1a1a"><span class="about-tile__line about-tile__line--hex" data-tile-line><span>#EAE8DD</span></span><span class="about-tile__line about-tile__line--ok" data-tile-line><span>L .93 &middot; C .015 &middot; H 98&deg;</span></span><span class="about-tile__pct"><span data-odometer-element data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">77.7%</span><span class="about-sr">77.7%</span></span></li>
+      <li class="about-tile" style="--tile:#b8cd79;--tile-ink:#1a1a1a"><span class="about-tile__line about-tile__line--hex" data-tile-line><span>#B8CD79</span></span><span class="about-tile__line about-tile__line--ok" data-tile-line><span>L .81 &middot; C .111 &middot; H 120&deg;</span></span><span class="about-tile__pct"><span data-odometer-element data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">8.1%</span><span class="about-sr">8.1%</span></span></li>
+      <li class="about-tile" style="--tile:#6c9429;--tile-ink:#1a1a1a"><span class="about-tile__line about-tile__line--hex" data-tile-line><span>#6C9429</span></span><span class="about-tile__line about-tile__line--ok" data-tile-line><span>L .62 &middot; C .141 &middot; H 128&deg;</span></span><span class="about-tile__pct"><span data-odometer-element data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">5.6%</span><span class="about-sr">5.6%</span></span></li>
+      <li class="about-tile" style="--tile:#3c5e19;--tile-ink:#ffffff"><span class="about-tile__line about-tile__line--hex" data-tile-line><span>#3C5E19</span></span><span class="about-tile__line about-tile__line--ok" data-tile-line><span>L .44 &middot; C .104 &middot; H 132&deg;</span></span><span class="about-tile__pct"><span data-odometer-element data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">4.8%</span><span class="about-sr">4.8%</span></span></li>
+      <li class="about-tile" style="--tile:#1b2f0c;--tile-ink:#ffffff"><span class="about-tile__line about-tile__line--hex" data-tile-line><span>#1B2F0C</span></span><span class="about-tile__line about-tile__line--ok" data-tile-line><span>L .28 &middot; C .063 &middot; H 134&deg;</span></span><span class="about-tile__pct"><span data-odometer-element data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">3.8%</span><span class="about-sr">3.8%</span></span></li>
     </ol>
     <div class="about-divider" data-divider aria-hidden="true"></div>
     <!-- One paragraph since 19.09.26 (it was two, on 3.4's pattern). It stays a <p> reveal block, which
@@ -428,7 +434,7 @@
         <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#000000">Aa</span>Text on Background</span><span class="about-checks__val"><span data-ratio>8.53</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
         <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#090606">Aa</span>Text on Surface</span><span class="about-checks__val"><span data-ratio>8.20</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
         <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#383B49">Aa</span>Text on Primary</span><span class="about-checks__val"><span data-ratio>4.51</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#6881AE;--pair-bg:#000000">Aa</span>Accent against Background</span><span class="about-checks__val"><span data-ratio>5.34</span></span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#6881AE;--pair-bg:#000000">Aa</span>Accent against Background</span><span class="about-checks__val"><span data-ratio>5.34</span></span><span class="about-checks__verdict">Non-Text Elements at AA</span></li>
       </ul>
       <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least <span data-ratio>4.5</span>. They can support body text at AA when used as foreground and background.</p>
     </div>

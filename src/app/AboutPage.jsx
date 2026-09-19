@@ -19,6 +19,8 @@
      aboutStack      the five steps, as five cards that recede and hand off
      aboutRail       the gallery, pinned, travelling sideways
      aboutCascade    the sets that had no entrance — role cells, matrix rows, weight key
+     aboutTiles      2.1's colour tiles: each tile's hex and OKLCH rise through their masks
+     numberOdometer  2.1's shares count up in masked digit columns, out of a blur (Osmo's resource)
      aboutOptical    display type nudged so its INK lands on the column line, not its box
 
    Each returns its own destroy, each floors itself under reduced motion or a missing dependency, and
@@ -33,6 +35,8 @@ import { initDividers } from './methods/aboutDividers.js';
 import { initStackSlides } from './methods/aboutStack.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
 import { initCascade } from './methods/aboutCascade.js';
+import { initTileLines } from './methods/aboutTiles.js';
+import { initNumberOdometer } from './methods/numberOdometer.js';
 import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
 import aboutHtml from '../about/about.html?raw';
@@ -127,6 +131,9 @@ export default class AboutPage extends React.Component {
     this._killDividers = initDividers(root, { motion: vals.maskMotion });
     this._killSticky = initStickyTitle(root);
     this._killCascade = initCascade(root, vals.maskMotion, vals.focusMotion);
+    // 2.1's tiles: the cascade lands each tile, these land what is on it, on the same enter line.
+    this._killTileLines = initTileLines(root, vals.maskMotion);
+    this._killOdometer = initNumberOdometer(root, { blur: vals.focusMotion ? vals.focusMotion.blur : 9 });
     this._killOptical = initOptical(root);
     /* The section anchor dock was mounted here, last; it went on 17.09.26 (by request). */
 
@@ -161,7 +168,7 @@ export default class AboutPage extends React.Component {
      are the last to let go. Killing a pin first would reflow the page underneath modules that are
      still holding measurements of it. */
   _teardown() {
-    ['_killOptical', '_killCascade', '_killSticky', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
+    ['_killOptical', '_killOdometer', '_killTileLines', '_killCascade', '_killSticky', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
       '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
