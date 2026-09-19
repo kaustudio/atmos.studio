@@ -713,6 +713,11 @@
    of the screen and off its foot. Now both statements share one grid cell, which the taller sets,
    and each is centred in it, so whichever is showing sits on the viewport's centre. The effect only
    toggles their visibility, so nothing it does depended on the absolute box. */
+/* THE COLUMN ON A PHONE (19.09.26, by request: "extend width. typography is cramped"). Eight of twelve
+   tracks is a statement's measure while the tracks are wide, and at 768 it is still 472px for 32px type.
+   On a phone it came to 223px of a 343px column, so a 28px statement broke every two or three words,
+   ten lines deep. At 600 and below, the statement takes the column. */
+@media (max-width:600px){ .about-takeover__inner{max-width:none} }
 [data-sticky-live] .about-takeover__inner{display:grid;place-items:center}
 [data-sticky-live] .about-takeover__el{grid-area:1 / 1}
 [data-sticky-live] .about-takeover__el.is--stacked{visibility:hidden}

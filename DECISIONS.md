@@ -835,6 +835,13 @@ strip on the floor.
   strip clear of a showing browser toolbar. That addition is 0 on desktop.
 - The sizes stay on the type scale: --fs-hero and --fs-chapter, 34 and 28px at 375.
 
+**The takeover's statements take the column on phones (19.09, by request: "extend width. typography is
+cramped").** Their measure is eight of twelve tracks, which at 375 came to 223px of a 343px column: the
+28px statement broke every two or three words, ten lines deep. At 600px and below it takes the column, so
+the same statement sets in six lines. The measure is unchanged from 768 up: 472px there, 643px at 1024 and
+920px at 1440. A release at 1100, matching the closing statement's, was tried first, but it set 1024
+edge to edge, wider than the desktop measure.
+
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as
 the list icon, the close marks and every label do. Their hover fill is the primary
