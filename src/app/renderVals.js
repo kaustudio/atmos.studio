@@ -471,6 +471,18 @@ export const renderValsMethods = {
     // single Copy control, and the styles were left behind exported but unrendered. copyPal stays:
     // the menu calls it.
     const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
+    // THE SHARE DIALOG'S ROWS (19.09.26, by request): one list, drawn by the stage and by the palette
+    // detail with their own palette and their own confirmation keys. Share via… is the device's share
+    // sheet, and it is only offered where there is one (Safari, Chrome and Edge on a Mac or Windows,
+    // every phone). Email Link stood in for it elsewhere and was dead in an in-app browser, which
+    // swallows mailto: without a word (reported the same day); a page cannot tell whether a mail app
+    // opened, so the row went rather than promise one. Copy Link covers a mail there.
+    const canShareSheet = typeof navigator !== 'undefined' && !!navigator.share;
+    const shareRowsFor = (pal, linkKey, imgKey) => [
+      { key: 'link', label: 'Copy Link', doneWord: 'Copied', done: s.copied === linkKey, onPick: () => this.shareCurrent(pal || undefined, linkKey) },
+      canShareSheet && { key: 'via', label: 'Share via…', doneWord: '', done: false, onPick: () => this.shareVia(pal || undefined) },
+      { key: 'img', label: 'Download Image', doneWord: 'Downloaded', done: s.copied === imgKey, onPick: () => this.downloadShareImage(pal || undefined, imgKey) },
+    ].filter(Boolean);
 
     /* THE FOUR STEPS, AND WHAT THE ORB IS DOING WHILE EACH ONE RUNS. The states are the Thinking Orbs'
        own six (thinkingOrbs.js); these four are the ones that describe this work, in the order the
@@ -847,7 +859,7 @@ export const renderValsMethods = {
         time: this.stampTime(p.time), timeTitle: this.isFresh(p.time) ? this.absTime(p.time) : this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
-        onShare: () => this.shareCurrent(p, 'ov-pal-share'), shareCopied: s.copied === 'ov-pal-share',
+        shareRows: shareRowsFor(p, 'ov-pal-share', 'ov-pal-img'),
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
@@ -1295,7 +1307,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // Stated in words. Nothing here is carried by colour or by an icon alone.
         // One line, and only when it explains why there is no act (17.09.26, by request: "Nothing is
         // replaced…" went; the counts and the two buttons say the rest).
-        line: nothingNew ? 'Everything in this file is already in your library. Adding it would change nothing.' : '',
+        // "Adding it would change nothing" went on 19.09.26, by request: the counts say it.
+        line: nothingNew ? 'Everything in this file is already in your library.' : '',
         rows: [
           { label: 'Palettes', value: r.newPalettes + ' new of ' + r.palettes },
           { label: 'Projects', value: r.newProjects + ' new of ' + r.projects },
@@ -1754,9 +1767,12 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // pair above. The row reports; the sheet is left where the reader put it.
       copyHexList: () => copyPal('hex'),
       copyCss: () => copyPal('css'),
-      // share link — the palette rides in the URL fragment, which never reaches a server
-      shareCopied: s.copied === 'pal-share',
-      onShare: () => this.shareCurrent(),
+      // THE SHARE DIALOG (19.09.26): the button opens it, as Copy's does; the rows copy the link (the
+      // palette rides in its fragment, which never reaches a server), hand it to the device, or draw it.
+      shareMenuOpen: !!s.shareMenuOpen,
+      toggleShareMenu: () => { if (this.state.shareMenuOpen) this.closeShareMenu(); else this.openShareMenu(); },
+      shareMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeShareMenu(); } else this.trapFocusIn('[data-share-dialog]', e); },
+      shareRows: shareRowsFor(null, 'pal-share', 'pal-img'),
       // viewing someone else's palette: nothing is in this browser's archive until they say so
       isSharedView: !!s.sharedView,
       onSaveShared: () => this.saveShared(),

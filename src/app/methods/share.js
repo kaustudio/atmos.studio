@@ -1,6 +1,7 @@
 // Share-link glue: read an incoming palette out of the URL fragment, and put the current one into
 // a link. The encoding itself lives in lib/share.js; this is the app-state side.
 import { decodeShare, shareUrl } from '../../lib/share.js';
+import { renderPaletteCard, paletteCardName } from '../../lib/paletteCard.js';
 
 export const shareMethods = {
   // Read at CONSTRUCTION (see the _shared field in PaletteApp), not on mount: a share link should
@@ -45,6 +46,71 @@ export const shareMethods = {
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
     this.copy(url, key || 'pal-share', 'Share link copied to your clipboard.');
+  },
+
+  /* THE SHARE DIALOG (19.09.26, by request: "go with the download image and build a"). Share opened
+     nothing and copied a link; it opens the Copy dialog's sheet now, with three ways out: Copy Link,
+     Share via… (the device's own share sheet, or Email Link where the browser has none) and Download
+     Image (the palette as a picture, lib/paletteCard.js). It opens and closes exactly as Copy does:
+     the opener is remembered, the landmarks go inert through PaletteApp's modal set, and focus comes
+     back to the button once they are live again.
+     ONE DIFFERENCE: focus lands on Copy Link rather than on the close mark, so the press this button
+     used to be is still two keys away, Share and then Enter. */
+  openShareMenu() {
+    if (this.state.shareMenuOpen) return;
+    this._shareBack = document.activeElement;
+    this.setState({ shareMenuOpen: true }, () => requestAnimationFrame(() => {
+      const d = document.querySelector('[data-share-dialog]');
+      if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      this._dialogIn('[data-share-dialog]');
+    }));
+  },
+  closeShareMenu() {
+    if (!this.state.shareMenuOpen || this._shareClosing) return;
+    this._shareClosing = true;
+    this._dialogOut('[data-share-dialog]', () => {
+      this._shareClosing = false;
+      this.setState({ shareMenuOpen: false }, () => this._focusShareTrigger(true));
+    });
+  },
+  // Back to whoever opened the sheet. A mouse press in Safari (or a scripted click) never focuses the
+  // button, so the opener it remembers can be the page itself; then the Share button takes focus, the
+  // palette detail's one when the detail is up, since it comes later in the document.
+  _focusShareTrigger(defer) {
+    const go = () => {
+      const back = this._shareBack;
+      const all = document.querySelectorAll('[data-share-trigger]');
+      const b = (back && back.isConnected && back !== document.body) ? back : all[all.length - 1];
+      if (b && b.focus) try { b.focus(); } catch (e) { }
+    };
+    if (defer) requestAnimationFrame(go); else go();
+  },
+  // The device's share sheet, carrying the name and the link; the same call the phone story's handoff
+  // makes. The row only exists where navigator.share does (renderVals). A sheet the reader closes
+  // without choosing rejects with AbortError, which is an answer, not a failure.
+  shareVia(pal) {
+    const p = pal || this.state.current;
+    const url = shareUrl(p);
+    if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
+    if (!navigator.share) return;
+    navigator.share({ title: 'Atmos Gallery: ' + p.name, url }).catch(() => { });
+  },
+  // The palette as a picture, saved under its own name. The row answers "Downloaded" on the Copied
+  // timer, so the two confirmations in the sheet keep one rhythm.
+  downloadShareImage(pal, key) {
+    const p = pal || this.state.current;
+    if (!p || !p.swatches || !p.swatches.length) return;
+    renderPaletteCard(p).then((blob) => {
+      if (!blob) { this.showNotice('That image couldn’t be made.', { sticky: true }); return; }
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href; a.download = paletteCardName(p);
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(href), 4000);
+      if (this._copyT) clearTimeout(this._copyT);
+      this.setState({ copied: key || 'pal-img', announce: 'Downloaded ' + a.download + '.' });
+      this._copyT = setTimeout(() => this.setState({ copied: null }), 1500);
+    });
   },
 
   // Viewing a shared palette writes NOTHING to the recipient's archive. This is the only path that

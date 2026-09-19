@@ -565,7 +565,9 @@ const exportB006Label = (
 const copyB006Label = (done) => (
   <span style={sx('display:grid;align-items:center;justify-items:center;height:16px')}>
     <span style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px')}>
-      <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1.5px' }}>{done ? <IconCheck /> : <IconCopy />}</span>
+      {/* ITS OWN ICON THROUGH THE COPIED STATE (19.09.26, by request: "keep their own icon"): the word
+          says Copied, and the copy glyph stays, where it swapped to a tick. */}
+      <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1.5px' }}><IconCopy /></span>
       <B006Text>{done ? 'Copied' : 'Copy'}</B006Text>
     </span>
     <span aria-hidden="true" style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px;visibility:hidden')}>
@@ -673,10 +675,63 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
                 {/* ALWAYS MOUNTED, AND EASED (17.09.26, audit E6): Add to Projects' "Added" recipe, the
                     mark sliding 4px in as it fades, on --dur-chrome. It popped in and out with the
                     render, and carried a .06em of its own where every label is flat. */}
-                <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;gap:5px;flex:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: isDone ? 1 : 0, transform: isDone ? 'translateX(0)' : 'translateX(4px)' }}><IconCheck /> Copied</span>
+                {/* "Copied" IN TITLE CASE, WITHOUT THE CHECK (19.09.26, by request: "Copied should be in title case.
+                    Remove the checkmark"). It takes the phone share rows' voice for the same word, 13px
+                    Medium, where it was an 11px capital tag behind a tick. */}
+                <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;flex:none;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: isDone ? 1 : 0, transform: isDone ? 'translateX(0)' : 'translateX(4px)' }}>Copied</span>
               </button>
               );
             })}
+          </div>
+        </div>
+      </div>
+    , host)}
+  </>);
+}
+
+/* THE SHARE DIALOG (19.09.26, by request: "go with the download image and build a"). Share copied a
+   link on the press and said nothing about what else a share could be; it opens Copy's sheet now, the
+   same layer, corner, header and rows, with three ways out:
+   - Copy Link, answering "Copied" in the row, as Copy's formats do;
+   - Share via…, the device's share sheet, only where the browser has one;
+   - Download Image, the palette as a 1080 by 1350 picture (lib/paletteCard.js), answering "Downloaded".
+   No social buttons: a link previews as the site's card, never the palette (it rides in the fragment),
+   and the share sheet already reaches the apps people have. The labels are written in their Title
+   Case, so the rows set no text-transform and "via" stays lower case. Two call sites, one sheet: the
+   same `owns` rule as Copy's. */
+function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint }) {
+  const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
+  return (<>
+    <B006 data-share-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
+      onClick={onToggle} onKeyDown={onKey} aria-label="Share this palette: copy a link, send it, or download an image"
+      style={CONSENT_BTN_TYPE} label={shareB006Label()} />
+    {open && owns && host && createPortal(
+      <div data-share-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
+        <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+        <div data-share-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Share ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
+          <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
+            <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
+              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Share palette</span>
+              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{name}</h2>
+            </div>
+            <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close share options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+          </header>
+          <div style={sx('padding:14px var(--page-gutter) 0')}>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Anyone with the link sees this palette as it is now.</span>
+          </div>
+          <div style={sx('padding:16px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:6px')}>
+            {rows.map((r) => (
+              /* Focus goes back to the row after the pick, as in Copy's sheet: the copy fallback and
+                 the download's anchor both take it for a moment. */
+              <button key={r.key} type="button" data-ex-item="1" data-focus="chrome" onClick={(e) => { const el = e.currentTarget; r.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
+                onMouseEnter={tint && tint.onEnter} onMouseLeave={tint && tint.onLeave} onFocus={tint && tint.onFocus} onBlur={tint && tint.onBlur}
+                aria-label={r.label + (r.done && r.doneWord ? ', ' + r.doneWord.toLowerCase() : '')} style={itemStyle}>
+                <span style={sx('font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat)')}><TextSwap>{r.label}</TextSwap></span>
+                {r.doneWord && (
+                  <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;flex:none;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: r.done ? 1 : 0, transform: r.done ? 'translateX(0)' : 'translateX(4px)' }}>{r.doneWord}</span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -705,10 +760,12 @@ const assignB006Label = (text) => (
 
    "Share", not "Share Link": the noun named the ARTEFACT the button produces, which is the one
    thing the reader does not have yet; the verb names the act, which is what a label is for. */
-const shareB006Label = (copied) => (
+/* SINCE 19.09.26 THE BUTTON OPENS THE SHARE DIALOG and always says Share: the rows inside confirm
+   what was done, so the label no longer swaps to Copied. */
+const shareB006Label = () => (
   <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
-    <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-2.75px' }}>{copied ? <IconCheck /> : <IconLink />}</span>
-    <B006Text>{copied ? 'Copied' : 'Share'}</B006Text>
+    <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-2.75px' }}><IconLink /></span>
+    <B006Text>Share</B006Text>
   </span>
 );
 
@@ -1388,7 +1445,7 @@ function MobileShareView({ ms }) {
             <span style={r.metaStyle}>
               <span style={sx('display:inline-grid')}>
                 <span data-done-mark="1" style={{ gridArea: '1 / 1', justifySelf: 'end', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 0 : 1 }}>{r.pct}</span>
-                <span data-done-mark="1" aria-hidden={!r.copied} style={{ gridArea: '1 / 1', justifySelf: 'end', display: 'inline-flex', alignItems: 'center', gap: '5px', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 1 : 0 }}><IconCheck />Copied</span>
+                <span data-done-mark="1" aria-hidden={!r.copied} style={{ gridArea: '1 / 1', justifySelf: 'end', display: 'inline-flex', alignItems: 'center', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 1 : 0 }}>Copied</span>
               </span>
             </span>
           </button>
@@ -2446,7 +2503,7 @@ export default function AppView({ vals }) {
                   (It was moved into the group above for one revision and moved back: the placement
                   was never the thing that looked wrong — see the label's own note for what was.) */}
               <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-                <B006 data-emphasis="secondary" onClick={vals.onShare} aria-label="Copy a shareable link to this palette" style={CONSENT_BTN_TYPE} label={shareB006Label(vals.shareCopied)} />
+                <ShareControl open={vals.shareMenuOpen} owns={!vals.hasOverlay} name={vals.result.name} rows={vals.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
               </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
@@ -3431,7 +3488,7 @@ function DetailOverlay({ vals }) {
             <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-            <B006 data-emphasis="secondary" onClick={overlay.onShare} aria-label="Copy a shareable link to this palette" style={CONSENT_BTN_TYPE} label={shareB006Label(overlay.shareCopied)} />
+            <ShareControl open={vals.shareMenuOpen} owns name={overlay.name} rows={overlay.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
           </span>
         </div>
       </footer>
@@ -4389,10 +4446,10 @@ function RestoreDialog({ vals }) {
   return (
     <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore from a file" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
+      <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore from a file</span>
+            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;color:var(--on-surface-muted)')}>Restore</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
             <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
           </div>
@@ -4400,7 +4457,10 @@ function RestoreDialog({ vals }) {
               says which outcome it is: cancel, or close when there was nothing to add. */}
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeRestore} aria-label={r.cancelAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
-        <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
+        {/* WITH NO FOOTER, THE LIST KEEPS A GUTTER UNDER IT (19.09.26, by request: "Add more equal spacing
+            at the bottom so text can breathe"). When nothing in the file is new there is no commit pair,
+            and the last row ran to the dialog's edge; the gutter the sides and top keep now closes it. */}
+        <div style={sx('padding:14px var(--page-gutter) ' + (r.hasAct ? '0' : 'var(--page-gutter)') + ';display:flex;flex-direction:column;gap:12px')}>
           {r.line && <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>}
           {/* Four numbers are not a sentence. Muted term, full-ink tabular value, a hairline under each
               row — so a count reads here exactly as it reads on the result view's metrics, and the two

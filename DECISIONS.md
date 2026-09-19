@@ -692,6 +692,44 @@ text reveal on the text. apply title text here as well").**
 - `_maskLineReveal`'s restore now undoes only its own split. On a quick second toggle, the first
   reveal's completion used to write the older words back over the newer.
 
+**A row's "Copied" is Title Case, without a checkmark (19.09, by request: "Copied should be in title case.
+Remove the checkmark").** In the Copy dialog's rows it was an 11px capital tag behind a tick; it is
+"Copied" at 13px Medium now, the voice the phone share view's rows already used for the same word. Those
+rows lose their tick too. The Copy and Share buttons keep their own icon while they say Copied (by
+request: "keep their own icon"), where each swapped it for a tick. Only the value rows' copy icon still
+turns into a tick, because it is their only sign that a copy happened.
+
+**The Restore dialog says "Restore" (19.09, by request).** The small label was "Restore from a file"; the
+file's name under it already says where the palettes come from. When nothing in the file is new, the line
+is "Everything in this file is already in your library." ("Adding it would change nothing" went), and the
+list keeps a gutter under it, 24px as at the sides and top, where the last row ran to the dialog's edge.
+
+**Share opens a dialog (19.09, by request: "go with the download image and build a").** It used to copy
+a link on the press. It now opens Copy's sheet, with the same layer, corner, header and rows
+(`ShareControl` in AppView). It offers three ways out:
+- **Copy Link** answers "Copied" in its row, and the sheet stays open.
+- **Share via…** hands the palette's name and link to the device's share sheet (`navigator.share`, as
+  the phone story's handoff does). It only appears where there is one: Safari, Chrome and Edge on a Mac
+  or Windows, and every phone. Elsewhere (desktop Firefox, in-app browsers) the dialog has two rows.
+  An Email Link row stood in for it there until the user found it dead ("email link is dead"): the
+  Claude app's browser swallows `mailto:` silently, and a page cannot tell whether a mail app opened.
+  Copy Link covers an email there.
+- **Download Image** saves the palette as a picture and answers "Downloaded". It uses design A of the
+  mockups (`lib/paletteCard.js`): the weight bar, then the hex and share list on hairlines, 1080 by 1350,
+  drawn in Neue Montreal. It is always on the light surface, since it leaves the site, and the file is
+  named `atmos-gallery-<name>.png`.
+
+The dialog makes one departure from Copy's: focus lands on Copy Link, not on the close mark. So the
+press Share used to be is still two keys away: Share, then Enter.
+
+It left some things out on purpose:
+- No buttons for X, Pinterest and the like: a link previews as the site's own card, never the palette,
+  which rides in the fragment. The share sheet already reaches the apps people use.
+- No copy on open: the clipboard stays the reader's until they press Copy Link.
+
+The Share button no longer swaps to Copied, since the rows confirm. It is in both places Share lives,
+under Copy's `owns` rule. `shareMenuOpen` joins the modal set, Escape and the wipe's reset.
+
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as
 the list icon, the close marks and every label do. Their hover fill is the primary

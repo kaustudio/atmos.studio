@@ -90,7 +90,7 @@ export const wipeMethods = {
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState(Object.assign({
-      backupMenuOpen: false, copyMenuOpen: false,
+      backupMenuOpen: false, copyMenuOpen: false, shareMenuOpen: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
       feedView: 'list', gridLeaving: false, overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
