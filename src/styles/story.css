@@ -370,7 +370,9 @@
    the caps) puts its cap line 8.65px under the swatch. Role's name, in the Medium face, sits 8px under
    it. The swatch is 8px in from the border above and to the sides, so the card has one inset. */
 [data-mobile-story] .about-role__swatch{margin-bottom:2.5px}
-[data-mobile-story] .about-role__hex{font-size:var(--fs-body);line-height:1.3}
+/* Ink, not muted, since 19.09.26 (audit X1, by request): the weights table in 1.2 prints the same hex
+   and share in ink, and the two now share one voice. The picked card still shows its state in its edge. */
+[data-mobile-story] .about-role__hex{font-size:var(--fs-body);line-height:1.3;color:var(--on-surface)}
 /* THE HEX AT THE CAPTION'S TOP LEFT, THE SHARE AT THE CARD'S BOTTOM RIGHT (19.09.26, by request: "let hex
    code sit top left and % bottom right", and "don't decrease the height on the card because we remove
    text"). One line each, so the card keeps the height its second line gave it once "of the Frame" left.
@@ -386,7 +388,7 @@
 [data-mobile-story] .about-role__pct{
   align-self:flex-end;
   font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);font-weight:500;line-height:1.3;
-  letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
+  letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
 /* THE CONTRAST ROWS DRAW THEIR PAIR (19.09.26, by request): the Aa chip and the ratio as one unit, 8px
    apart as they are under Best Pair Sample, and the verdict at the row's end on the same line. */
@@ -1093,6 +1095,16 @@
 [data-mobile-story] .about-weights__key .about-key__hex,
 [data-mobile-story] .about-weights__key .about-key__ok{
   line-height:1.2;
+}
+/* THE HEX IN THE CARDS' VOICE (19.09.26, audit X1, by request: "go with proposed and with ink"). It was
+   11px Medium here and 13px Regular in 1.3's picker and the Role cards one scroll on, so the same value
+   read as two things. It takes the cards' size and weight, and the cards take this table's ink (below),
+   so the hex and the share read the same wherever the story prints them. The OKLCH beside it keeps
+   /about's 11: it is this table's own annotation, and the cards never print it. */
+[data-mobile-story] .about-weights__key .about-key__hex{
+  font-size:var(--fs-body);
+  font-weight:400;
+  color:var(--on-surface);
 }
 /* THE SHARE IS THE CHAPTER'S ARGUMENT, so it takes the answer's voice — the same step .story-facts dd
    takes for a found value and .about-checks__val takes for a measurement. Both siblings land on 13px,

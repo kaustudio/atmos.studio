@@ -685,10 +685,13 @@ export const persistenceMethods = {
     if (defer) requestAnimationFrame(go); else go();
   },
   /* THE SAME ARRIVAL AS ASSIGN AND RESTORE. Copy is a modal dialog, so it opens the way the other
-     centred dialogs do: the opener is remembered, focus moves INTO the sheet (its Close button is
-     the first control, as it is in the export dialog), and the landmarks behind it go inert through
-     the flag in PaletteApp's modal set. Focus must move in, because the trigger it would otherwise
-     stay on is inside <main> and is inert for as long as the sheet is up.
+     centred dialogs do: the opener is remembered, focus moves INTO the sheet, and the landmarks behind
+     it go inert through the flag in PaletteApp's modal set.
+     FOCUS LANDS ON THE FIRST ROW, Hex List, not on the close mark (19.09.26, audit X5, by request). Share
+     opened on Copy Link while this opened on Close, so Copy then Enter shut the sheet it had just
+     opened. Now either button then Enter does its sheet's job, and so does Export (overlays.js).
+     Focus must move in, because the trigger it would otherwise stay on is inside <main> and is inert
+     for as long as the sheet is up.
      On the way out the order matters: the state flips first, which lifts inert from the landmarks,
      and only then does focus return — focus() on an element that is still inert is a silent no-op,
      which left the next Tab starting from the top of the document. */
@@ -697,7 +700,7 @@ export const persistenceMethods = {
     this._copyBack = document.activeElement;
     this.setState({ copyMenuOpen: true }, () => requestAnimationFrame(() => {
       const d = document.querySelector('[data-copy-dialog]');
-      if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+      if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
       this._dialogIn('[data-copy-dialog]');
     }));
   },

@@ -860,7 +860,9 @@ export default class PaletteApp extends React.Component {
        to have simply been there, which is the exact fault the wipe was built to fix. _wipeCover's
        reveal() releases it as the panel's trailing edge clears. Every other way onto this surface has
        no cover to wait for, so it plays now. */
-    if (this._arrivingByWipe) this._storyArmed = true;
+    // The page loader is a cover too (19.09.26): on a first visit the story is held under it, and the
+    // loader's exit releases it as its fold lifts, as it does the desktop landing's lines.
+    if (this._arrivingByWipe || this.state.showLoader) this._storyArmed = true;
     else try { this._storyReveal.play(); } catch (e) { }
 
     // The same refresh AboutPage runs for the same reason: these triggers are created before the

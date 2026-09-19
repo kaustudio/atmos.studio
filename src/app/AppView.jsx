@@ -638,11 +638,11 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
             </div>
             <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close copy options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
           </header>
-          {/* The same slot the export dialog puts its "what these values are" line in, saying the
-              thing that is actually in question here: this goes to the clipboard, not to a file. */}
-          <div style={sx('padding:14px var(--page-gutter) 0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every swatch in the palette, in the shape you pick. It goes to the clipboard, so nothing is downloaded.</span>
-          </div>
+          {/* NO LEAD (19.09.26, audit X4, by request: "Delete the copy. We are overexplaining too many
+              places"). "Every swatch in the palette, in the shape you pick. It goes to the clipboard, so
+              nothing is downloaded." stood here; the rows name the shapes, and the word Copy says where
+              they go. Share and Export lost theirs the same day, and the rows sit 16px under the title,
+              as Assign's do. */}
           {/* THE ROW REPORTS, AND THE SHEET STAYS. Picking a format used to close the dialog and
               leave the confirmation on the button behind it — a menu's manners on a surface that is
               not a menu. The right-hand slot already held the format's kind, and that is the slot
@@ -716,9 +716,8 @@ function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint
             </div>
             <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close share options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
           </header>
-          <div style={sx('padding:14px var(--page-gutter) 0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Anyone with the link sees this palette as it is now.</span>
-          </div>
+          {/* No lead (19.09.26, audit X4, by request): "Anyone with the link sees this palette as it
+              is now." went with Copy's and Export's, so the three sheets open the same way. */}
           <div style={sx('padding:16px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:6px')}>
             {rows.map((r) => (
               /* Focus goes back to the row after the pick, as in Copy's sheet: the copy fallback and
@@ -2102,6 +2101,11 @@ export default function AppView({ vals }) {
             .doc-route, and site-foot.css is scoped to nothing above .site-foot, so it lands here
             styled exactly as it does on /about. */}
         <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        {/* THE LOADER ON THE PHONE TOO (19.09.26, by request: "make sure the page loader is active on
+            mobile"). This branch never mounted it, so a first visit on a phone got no loader while the
+            run still waited out its 4s search for one, holding the consent ask back. The story's
+            reveal is held under it and plays as the fold lifts (_syncStory, loader.js). */}
+        <LogoLoader show={vals.showLoader} />
         {vals.analyticsOn && <Analytics beforeSend={sendPageview} />}
       </div>
     );
@@ -3363,8 +3367,11 @@ function ContrastDrawer({ vals }) {
                       {/* The ratio is aria-hidden and the whole statement is carried by the hidden
                           span below it. Read aloud, the visible number alone was "10.3", with the two
                           colours it compares in a header several rows back. No ✓/✕ mark since
-                          17.09.26: the fill and the number's weight carry the verdict (renderVals). */}
-                      <span data-cx-num="1" aria-hidden="true" style={cell.numStyle}>{cell.ratio}</span>
+                          17.09.26: the fill and the number's weight carry the verdict (renderVals).
+                          THE CELL WRITES ITS ":1" (19.09.26, audit X3, by request: ":1 too"), as the rows
+                          under it and Best Pair do, through the same [data-ratio] rule. Blank cells take
+                          no attribute, or the empty half of the grid would print ":1" on its own. */}
+                      <span data-cx-num="1" data-ratio={cell.blank ? undefined : ''} aria-hidden="true" style={cell.numStyle}>{cell.ratio}</span>
                       {cell.aria && <span style={visuallyHidden}>{cell.aria}</span>}
                     </div>
                   ))}
@@ -4042,9 +4049,9 @@ function ExportDialog({ vals }) {
           <button type="button" data-ix="press" data-focus="chrome" onClick={vals.closeExport} aria-label="Close export options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
 
-        <div style={sx('padding:14px var(--page-gutter) 0')}>
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty')}>Every export contains HEX, RGB and HSL. The CMYK shown on screen is an approximation, so it is never included.</span>
-        </div>
+        {/* No lead (19.09.26, audit X4, by request: "Delete the copy. We are overexplaining too many
+            places"). "Every export contains HEX, RGB and HSL. The CMYK shown on screen is an
+            approximation, so it is never included." stood here; the files carry what they carry. */}
 
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
           {ex.formats.map((f, fi) => (
@@ -4069,10 +4076,11 @@ function ExportDialog({ vals }) {
             {/* The rows' voice, 13px Medium (19.09.26, audit W4, by request): it names the switch beside it,
                 as Passing Only's words name its control, and at 12px Regular it read as description. */}
             <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
-            {/* What the switch adds, said once and left standing: the toggle used to be a bare
-                label, and a reader met six roles in the file with nothing on the sheet saying they
-                were suggestions. */}
-            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-fine); line-height:1.5; color: var(--on-surface-muted); text-wrap:pretty; margin-top:4px")}>Adds six suggested roles per palette, background to text.</div>
+            {/* THE NOTE UNDER IT WENT (19.09.26, audit X4, by request: "We are overexplaining too many
+                places"). "Adds six suggested roles per palette, background to text." stood here, so a
+                reader met the six roles in the file knowing they were suggestions. That fact is not
+                dropped: the switch's name and title carry it, the way the Text usability rows carry
+                theirs, and the visible line goes. */}
           </div>
           {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
               the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
@@ -4081,7 +4089,7 @@ function ExportDialog({ vals }) {
               data-switch="fill": ITS STATE IS IN THE FILL TOO (same day, by request: "the active/inactive
               state needs to be more clear"). On the dialog's plain surface the glass track barely
               showed and position alone carried the state; see [data-switch="fill"] in global.css. */}
-          <B006 data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Semantic scaffold" title="Semantic scaffold" label={<SwitchTrack />} />
+          <B006 data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Semantic scaffold: add six suggested roles per palette, background to text" title="Adds six suggested roles per palette, background to text" label={<SwitchTrack />} />
         </div>
       </div>
     </div>

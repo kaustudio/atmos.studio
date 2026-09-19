@@ -1394,6 +1394,32 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   [data-landing] .glass-cta[data-emph="primary"]:hover:not(:disabled){background-color:var(--action-primary-hover)}
 }
 [data-landing] .glass-cta[data-emph="primary"]:active:not(:disabled){background-color:var(--action-primary-press)}
+/* THE STORY'S CLOSE WEARS THE QUIET GLASS (19.09.26, audit X2, by request: "take the quiet glass for button
+   consistency"). Explore Another Example fell outside the two selectors above and kept .glass-cta's
+   55% black, the one dark act on a story whose hero offers the same button in glass.
+   /ABOUT'S FIGURES, NOT THE HERO'S. The hero's pane is the page at 70%, which works over the field. The
+   close stands on the plain page, where that pane is the page itself and only a 12% hairline would be
+   left: the 1.51:1 edge /about measured and fixed (about.css, .doc-route .about-cta). How it Works
+   ends at the same moment with the same kind of act, so this takes that control's quiet fill: 7% of
+   ink, the --action-line edge that clears 3:1, and the ink as the label. The states keep this
+   family's contract: hover is the label swap, and the tint answers on press, and on hover when
+   motion is reduced. */
+.story-actions .glass-cta{
+  background-color:color-mix(in srgb, var(--on-surface) 7%, transparent);
+  -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
+  border-color:var(--action-line);
+  color:var(--on-surface);
+  transition:background-color var(--dur-chrome) var(--ease-button-hover),
+             border-color var(--dur-chrome) var(--ease-button-hover),
+             color var(--dur-chrome) var(--ease-button-hover);
+}
+@media (hover:hover){
+  .story-actions .glass-cta:hover:not(:disabled){background-color:color-mix(in srgb, var(--on-surface) 7%, transparent)}
+}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  .story-actions .glass-cta:hover:not(:disabled){background-color:color-mix(in srgb, var(--on-surface) 12%, transparent)}
+}
+.story-actions .glass-cta:active:not(:disabled){background-color:color-mix(in srgb, var(--on-surface) 18%, transparent)}
 /* 36px is the figure /about and /404 present their one action at, and it is a POINTER figure — both
    of those are read on a desktop as often as not. The gate is the one surface on this site that is
    only ever reached by a thumb, and 36 is under the 44 touch wants (WCAG 2.5.8 asks 24, which both

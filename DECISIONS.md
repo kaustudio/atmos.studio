@@ -725,8 +725,9 @@ a link on the press. It now opens Copy's sheet, with the same layer, corner, hea
   drawn in Neue Montreal. It is always on the light surface, since it leaves the site, and the file is
   named `atmos-gallery-<name>.png`.
 
-The dialog makes one departure from Copy's: focus lands on Copy Link, not on the close mark. So the
-press Share used to be is still two keys away: Share, then Enter.
+Focus lands on Copy Link, not on the close mark, so the press Share used to be is still two keys away:
+Share, then Enter. This was the one departure from Copy's sheet until audit X5 (below), when Copy and
+Export began opening on their first rows too.
 
 It left some things out on purpose:
 - No buttons for X, Pinterest and the like: a link previews as the site's own card, never the palette,
@@ -735,6 +736,42 @@ It left some things out on purpose:
 
 The Share button no longer swaps to Copied, since the rows confirm. It is in both places Share lives,
 under Copy's `owns` rule. `shareMenuOpen` joins the modal set, Escape and the wipe's reset.
+
+**The page loader plays on phones too (19.09, by request: "make sure the page loader is active on
+mobile").** The phone's homepage, the story, never mounted `LogoLoader`. So a first visit on a phone
+showed no loader, while the run still searched for its cover for 4 seconds (40 tries) before giving up,
+which also held the consent banner back. The story's branch mounts it now, as the tool and the gate do.
+The story's reveal is held under it, as it already was under the page-change wipe (`_storyArmed`), and
+`_playStoryReveal` runs on the same beat that plays the desktop landing's lines, as the fold lifts. The
+loader's failsafe path runs it too, so nothing can stay hidden. It is once per session, as everywhere;
+reduced motion skips it; a shared link skips it.
+
+**The third live pass, X1 to X5 (19.09, the user's answers to the Laws of UX audit's third pass).**
+- **X1: the phone story prints a hex and its share one way** (by request: "go with proposed and with
+  ink"). The weights table in 1.2 set the hex at 11px Medium in ink. 1.3's picker and the Role cards
+  set it at 13px Regular and the share at 15px Medium, both muted. Now the table's hex is 13px Regular,
+  and the cards' hex and share are in ink. The OKLCH readout keeps /about's 11px muted: it is the
+  table's annotation, and the cards never print it. Everything is scoped to `[data-mobile-story]`, so
+  /about's key is untouched.
+- **X2: the story's close wears the quiet glass** (by request: "take the quiet glass for button
+  consistency"). Explore Another Example had `.glass-cta`'s dark default (55% black, white text),
+  because the light rule covers only the landing and the story's hero. It takes /about's closing fill
+  rather than the hero's pane. On the plain page, the hero's 70% surface pane matches the page and
+  leaves only a 12% hairline, which is the 1.51:1 edge /about fixed. So `.story-actions .glass-cta` in
+  global.css is 7% ink with the `--action-line` edge and ink text. Hover is the label swap, and a press
+  tints to 18% (hover tints to 12% under reduced motion).
+- **X3: the checker's grid writes ":1"** (by request: ":1 too"), through `[data-ratio]`, like the rows
+  and Best Pair. Blank cells carry no attribute. A palette has five colours, which leaves every cell room.
+- **X4: Copy, Share and Export open without a lead** (by request: "Delete the copy. We are
+  overexplaining too many places."). The three sentences went, and the rows now sit 16px under the
+  title, as Assign's do. Export's note under Semantic Scaffold went too. The switch's accessible name
+  and title now carry that it adds six suggested roles. Kept:
+  - Restore's line: it appears only when a file adds nothing, and it is the only thing that says why.
+  - Recognise's sentence: it is the dialog's news.
+  - Assign's empty state.
+- **X5: Copy and Export open on their first row**, as Share does: Hex List in Copy, the first format in
+  Export. So each button then Enter does its dialog's job. The proposal named only Copy, but Export
+  also opened on its close mark, so it follows.
 
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as

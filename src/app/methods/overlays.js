@@ -1260,7 +1260,8 @@ export const overlayMethods = {
     this.setState(Object.assign({ exportOpen: true, announce }, patch), () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-export-dialog]');
-        if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+        // On the first format, as Copy and Share open on their first rows (19.09.26, audit X5).
+        if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
         // THE DIALOGS' ARRIVAL (17.09.26, audit F1). This played a timeline of its own on the
         // overlay curve, 0.8s with a staggered list, while the other four dialogs arrive on
         // _dialogIn's 0.24s: two arrivals for one kind of surface. It takes theirs now.

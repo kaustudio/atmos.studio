@@ -65,6 +65,7 @@ export const loaderMethods = {
       try { this._landingTextReveal(); } catch (e) { }
       try { this._dropLinesReveal(); } catch (e) { }
       try { this._listRowsReveal(); } catch (e) { }
+      try { this._playStoryReveal(); } catch (e) { }   // the phone's story, held under the cover
       try { this.setState({ showLoader: false }); } catch (e) { }
     };
     // Watchdogs armed FIRST: no failure path below may strand the fixed covering layer. They
@@ -126,7 +127,7 @@ export const loaderMethods = {
         // rising just behind its trailing edge rather than after a beat of empty landing
         // One arrival, in reading order: the dropzone copy first, the archive a beat behind it, so
         // the page resolves top-down instead of everything firing at once.
-        tl.call(() => { this._landingTextReveal(g); this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); }, null, '<+0.15');
+        tl.call(() => { this._landingTextReveal(g); this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); this._playStoryReveal(); }, null, '<+0.15');
         this._loaderTl = tl; tl.play(0);
       };
       const startFill = () => {
