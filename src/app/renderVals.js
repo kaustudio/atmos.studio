@@ -4,7 +4,7 @@ import React from 'react';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
-import { CONTRAST_MIN, CRITERION, RATIO_TEXT } from '../lib/wcag.js';
+import { CONTRAST_MIN, CRITERION, CRITERION_TITLE, RATIO_TEXT } from '../lib/wcag.js';
 
 const MONO = 'Neue Montreal';
 
@@ -281,7 +281,8 @@ export const renderValsMethods = {
           lensPill: segPill(aaa), sizePill: segPill(s.contrastLarge),
           name: cp.name, N, aaa, lensLabel: aaa ? 'AAA' : 'AA', threshold: th.toFixed(th % 1 ? 1 : 0),
           // Both lines of the summary, composed here so the view holds no arithmetic and no grammar.
-          summaryText: passCount + ' of ' + pairTotal + ' pairs meet ' + criterion,
+          // Title Case (19.09.26, by request: "apply title text here as well"), as the phone's figure label.
+          summaryText: passCount + ' of ' + pairTotal + ' Pairs Meet ' + CRITERION_TITLE(aaa ? 'AAA' : 'AA', s.contrastLarge),
           minText: 'Minimum ' + th.toFixed(th % 1 ? 1 : 0) + ':1',
           criterion, passCount, pairTotal,
           aa: summary.aa, total: summary.total, allPass: summary.aa === summary.total,
@@ -1522,8 +1523,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           return {
             key: x.id, name: x.name,
             image: this.dispUrl(x), hasImage: this.hasImg(x),
-            onOpen: () => this.setStoryCase(x.id),
-            aria: 'Explore ' + x.name + '. ' + this.tagsSpoken(x),
           };
         }),
 

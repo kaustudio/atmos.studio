@@ -1131,22 +1131,21 @@ function MobileStory({ st }) {
             This replaces Osmo Supply's Horizontal Scrolling Sections, which carried the same seven cases two
             to a screen after the old heading and sentence.
 
-            THE RING IS THE CARD RING, OUTSIDE THE CARD (17.09.26, audit B3). The inset value ring was
-            painted under the photograph and its scrim, so a focused card looked exactly like a resting
-            one. The grid view's photo cards already use this one.
-
-            THE CARDS STAY BUTTONS, because here they open that example. The live stage lets the pointer
-            through to the close under it, and the cards take it back (story.css). Nothing in the scene
-            carries data-reveal: the rail splits the statement itself, and a block holding a control must
-            never be rewritten (see the note at the top of <main>). Reduced motion and no JavaScript get the
-            statement above a row that scrolls sideways, as on /about. */}
+            THE CARDS ARE PHOTOGRAPHS, NOT BUTTONS (19.09.26, by request: "Make sure the horizontal cards
+            on mobile cant be pressed when scrolling. we want the user to get to the cta and click explore
+            another palette"). They opened their example, and a pinned rail fills the screen, so a scroll
+            that began on a card and moved too little was a tap: the story jumped back to its photograph
+            and the reader never reached the close. They are /about's <article>s now, and Explore Another
+            Example is the way on. The live stage lets the pointer through to the close under it, and the
+            cards still take it back (story.css), so a tap on a passing photograph lands on nothing. Nothing
+            in the scene carries data-reveal: the rail splits the statement itself. Reduced motion and no
+            JavaScript get the statement above a row that scrolls sideways, as on /about. */}
         <section id="story-gallery" data-story-ch="gallery" data-sec className="about-sec about-sec--gallery">
           <div className="about-rail" data-rail="1">
             <p className="about-rail__statement" data-rail-statement="1">The examples below are palettes drawn from different photographs. Compare their colours, proportions and contrast, then try your own image in the desktop tool.</p>
             <div className="about-rail__track" data-rail-track="1">
               {st.cases.map((c) => (
-                <button key={c.key} type="button" className="about-rail__card" data-rail-card="1" data-story-case="1" data-ix="press" data-focus="card"
-                  onClick={c.onOpen} aria-label={c.aria} style={c.hasImage ? { '--card-img': 'url(' + c.image + ')' } : undefined}>
+                <article key={c.key} className="about-rail__card" data-rail-card="1" style={c.hasImage ? { '--card-img': 'url(' + c.image + ')' } : undefined}>
                   {/* Not lazy, as on /about: the stage clips its row, so a lazy photograph would only be asked
                       for once it was already on screen. Low priority keeps it behind the story's own. */}
                   {c.hasImage && <img src={c.image} alt="" fetchPriority="low" decoding="async" />}
@@ -1161,7 +1160,7 @@ function MobileStory({ st }) {
                       <span className="about-rail__name" data-case="own">{c.name}</span>
                     </span>
                   </span>
-                </button>
+                </article>
               ))}
             </div>
           </div>
@@ -3260,9 +3259,14 @@ function ContrastDrawer({ vals }) {
             graded on, so the sentence, the minimum and the matrix cannot report different criteria. */}
         <div data-cx-sec="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px var(--page-gutter) 0')}>
           {/* The rule's other label (19.09.26, audit U8, by request): 13px Title Case, muted, where it was
-              11px capitals. "Minimum" names the value beside it. */}
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{withRatios(contrast.minText)}</span>
-          <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
+              11px capitals. "Minimum" names the value beside it.
+              BOTH LINES RISE THROUGH THE MASKED REVEAL WHEN AA/AAA OR NORMAL/LARGE REWRITES THEM (19.09.26,
+              by request): _revealContrastLines on [data-cx-line]. The reveal rebuilds a line from its
+              textContent, so the minimum is its string whole, hidden from a screen reader, and the ratio
+              is said beside it (spokenRatios) rather than drawn by [data-ratio]. */}
+          <span data-cx-line="1" aria-hidden="true" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
+          <span style={visuallyHidden}>{spokenRatios(contrast.minText)}</span>
+          <span data-cx-summary="1" data-drawer-split="1" data-cx-line="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
         </div>
 
         {/* A "Pairwise contrast" eyebrow stood above the matrix and is gone by request (14.09.26).

@@ -20,6 +20,8 @@ export const CONTRAST_MIN = (aaa, large) => (large ? (aaa ? 4.5 : 3) : (aaa ? 7 
 // Sentence-cased for mid-sentence use; the caller supplies any capital. Always names the text size,
 // so a reported pass can never be mistaken for a claim about non-text contrast (see above).
 export const CRITERION = (level, large) => level + ' contrast for ' + (large ? 'large' : 'normal') + ' text';
+// The same criterion as a label, in the house's Title Case (the contrast checker's summary line).
+export const CRITERION_TITLE = (level, large) => level + ' Contrast for ' + (large ? 'Large' : 'Normal') + ' Text';
 
 /* THE PRINTED RATIO NEVER SITS ON THE WRONG SIDE OF THE THRESHOLD IT WAS JUDGED AGAINST.
    A contrast ratio printed beside a verdict derived from it has one obligation the number alone does

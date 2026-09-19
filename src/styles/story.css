@@ -411,7 +411,8 @@
 /* /about's 4.1 SCENE IS THE STORY'S GALLERY (16.09.26, by request). The markup is /about's rail — the
    stage, its statement, its track and cards — and methods/aboutRail.js drives it exactly as it does
    there. about.css carries the scene's layout and names this surface where a rule was scoped to /about.
-   What is left here is the one real difference: these cards are buttons that open an example.
+   The cards were buttons that opened an example until 19.09.26, when they became /about's static
+   <article>s by request, so that a scroll through the pinned rail can never open one (see AppView).
 
    It replaces two galleries, both gone: a native row that snapped ([data-story-rail]), and Osmo
    Supply's Horizontal Scrolling Sections, two cards to a screen after a heading and a sentence
@@ -420,21 +421,19 @@
 
    THE STAGE LETS THE POINTER THROUGH AND THE CARDS TAKE IT BACK. about.css gives the live stage and
    its pin spacer pointer-events:none, so the close underneath can be pressed while the last photographs
-   pass over it. /about's cards carry nothing to press; these do. */
+   pass over it. The cards carry nothing to press now, but they keep the pointer, so a tap on a passing
+   photograph lands on nothing rather than on the close's button while it is still waiting to appear. */
 [data-mobile-story] .about-rail[data-rail-live] .about-rail__card{ pointer-events:auto }
-/* A <span> stack inside a button rather than /about's <article> + <h3>: a heading inside a control is
-   not a heading, and nesting anything focusable inside it would be worse. */
+/* The name is a <span> stack, not /about's <h3>, from when the card was a button; it keeps the span so
+   the story's heading outline is unchanged. */
 [data-mobile-story] .about-rail__card{
   padding:0;
-  /* no stroke (17.09.26, radius issue R3, by request): about.css's 1px line was also what hid the
-     button's own 2px outset border, so the button states none */
+  /* no stroke (17.09.26, radius issue R3, by request): about.css's 1px line stays off here */
   border:0;
-  cursor:pointer;
   text-align:left;
   -webkit-tap-highlight-color:transparent;
 }
-/* The name is set as /about's card heading is (`[data-mobile-story] h3` in about.css), since it cannot
-   be one. */
+/* The name is set as /about's card heading is (`[data-mobile-story] h3` in about.css). */
 [data-mobile-story] .about-rail__name{
   display:block;
   font-family:'Neue Montreal',system-ui,sans-serif;

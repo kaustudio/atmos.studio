@@ -654,7 +654,10 @@ Three findings, all fixed; the first was reversed the same day, by request:
   verdict takes its own full-width line. The phone story's rows are untouched.
   After the push, by request ("V2 needs capitalized 'Text on Background' etc. for all"), 3.2's pair
   names are Title Case in the house's Chicago form, prepositions lower case: Text on Background, Text
-  on Surface, Text on Primary, Accent against Background.
+  on Surface, Text on Primary, Accent against Background. The thresholds list above it followed, labels
+  and values alike (by request: "apply title case to thresholds too"): Body Text, 4.5:1 or Higher; Large
+  Text, 3:1 or Higher; Meaningful Graphics and Interface Elements, 3:1 or Higher against Adjacent
+  Colours.
 - **A ratio is written 4.5:1 and said "4.5 to 1" (accessibility, low).** `[data-ratio]::after` in
   global.css draws ":1" with " to 1" as its alternative text. AppView's `withRatios` puts the figure
   in the span wherever a ratio is rendered as text: the list's Max Contrast, the checker's Minimum,
@@ -666,6 +669,28 @@ Three findings, all fixed; the first was reversed the same day, by request:
 Considered and kept: the verdict pills' filled weights (A5, H6), the phone's verdict names beside
 3.3's, "Aa" on the accent pair, the share's 15px beside Role's 13px name, and AppView's inline font
 stacks without a fallback (101 of them, a sweep of its own).
+
+**The phone story's gallery cards are photographs, not buttons (19.09, by request: "Make sure the
+horizontal cards on mobile cant be pressed when scrolling. we want the user to get to the cta and click
+explore another palette").** Each card opened its example. The pinned rail fills the screen, so a scroll
+that began on a card and moved too little was a tap: the story jumped back to the photograph, and the
+reader never reached the close. The cards are How it Works' static `<article>`s now. Explore Another
+Example is the one way on, and its chooser holds every example. The cards still take the pointer from
+the live stage, so a tap on a passing photograph lands on nothing, not on the close's button while it
+waits to appear.
+
+**The contrast checker's minimum and summary rise through the masked reveal when AA/AAA or Normal/Large
+rewrites them (19.09, by request: "When toggling between AA and AAA the transitions should be our masked
+text reveal on the text. apply title text here as well").**
+- The summary is Title Case: "2 of 10 Pairs Meet AA Contrast for Normal Text" (`CRITERION_TITLE` in
+  lib/wcag.js; `CRITERION` stays sentence case for the sentences that use it).
+- `_revealContrastLines` (overlays.js) runs `_maskLineReveal` on both `[data-cx-line]` lines at the
+  drawer's own tempo, the minimum a step ahead. `componentDidUpdate` calls it when `contrastLens` or
+  `contrastLarge` changes; opening the drawer changes neither.
+- The reveal rebuilds a line from its `textContent`, so the minimum is its string whole again ("Minimum
+  7:1", hidden from a screen reader), and a visually hidden twin says "Minimum 7 to 1".
+- `_maskLineReveal`'s restore now undoes only its own split. On a quick second toggle, the first
+  reveal's completion used to write the older words back over the newer.
 
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as

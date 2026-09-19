@@ -597,7 +597,7 @@ export default class PaletteApp extends React.Component {
     this._storyT = setTimeout(() => this._syncStory(), 400);
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps, prevState) {
     const s = this.state;
     /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
        on screen and torn down when anything covers it, so its triggers can never be left measuring
@@ -610,6 +610,8 @@ export default class PaletteApp extends React.Component {
     this._syncConsent();
     this._syncFilteredEmpty();
     this._syncLaneLift();
+    // The contrast checker's minimum and summary rise again when the lens or the size rewrites them.
+    if (prevState && (prevState.contrastLens !== s.contrastLens || prevState.contrastLarge !== s.contrastLarge)) this._revealContrastLines();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.

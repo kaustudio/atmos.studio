@@ -687,6 +687,20 @@ export const overlayMethods = {
       try { this._maskLineReveal(el, delay, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
     });
   },
+  /* THE CHECKER'S TWO LINES, TOLD AGAIN (19.09.26, by request: "When toggling between AA and AAA the
+     transitions should be our masked text reveal on the text"). A lens or size change rewrites the
+     minimum and the summary, and both rise through the masked line reveal at the tempo the drawer opens
+     with, the minimum a step ahead. componentDidUpdate calls this once the new words are in the
+     document; a second toggle mid-reveal re-splits the new words, and the first reveal's restore
+     leaves them alone (see _maskLineReveal). */
+  _revealContrastLines() {
+    if (this._reduce || !window.gsap) return;
+    const root = document.querySelector('[data-contrast-dialog]'); if (!root) return;
+    const dur = this.DUR.overlay * 0.75;
+    root.querySelectorAll('[data-cx-line]').forEach((el, i) => {
+      try { this._maskLineReveal(el, i * this.DUR.overlayStep * 2, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
+    });
+  },
   // ONE reversible timeline — play forward on open, reverse() on close (symmetric by construction).
   buildContrastTimeline() {
     this._cxTl = null;

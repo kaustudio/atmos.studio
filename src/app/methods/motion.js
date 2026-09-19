@@ -761,7 +761,10 @@ export const motionMethods = {
     if (el._splitRevert) { try { el._splitRevert(); } catch (e) { } }
     const prev = { minHeight: el.style.minHeight, display: el.style.display };
     const box = el.getBoundingClientRect();
-    const restore = () => { if (!el._splitRevert) return; el._splitRevert = null; el.textContent = text; el.style.minHeight = prev.minHeight; el.style.display = prev.display; };
+    // ONLY ITS OWN SPLIT. A second reveal on the same element (the contrast checker's lines, toggled
+    // twice in a row) replaces el._splitRevert; the first one's tween still completes on its detached
+    // lines, and its restore must not write the older text back over the newer.
+    const restore = () => { if (el._splitRevert !== restore) return; el._splitRevert = null; el.textContent = text; el.style.minHeight = prev.minHeight; el.style.display = prev.display; };
     el._splitRevert = restore;
     el.style.minHeight = box.height + 'px';
     el.style.display = 'block';                                   // line-clamp's -webkit-box can't hold block masks; restored after
