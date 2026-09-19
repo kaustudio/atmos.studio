@@ -714,6 +714,12 @@ a link on the press. It now opens Copy's sheet, with the same layer, corner, hea
   An Email Link row stood in for it there until the user found it dead ("email link is dead"): the
   Claude app's browser swallows `mailto:` silently, and a page cannot tell whether a mail app opened.
   Copy Link covers an email there.
+  Since the UX review the same day (by request: "fix both"), it sends the picture too. Where the browser
+  can share a file (`navigator.canShare({ files })`: Chrome 153 and Safari on a Mac, and phones), the
+  Download Image card goes with the link, so the person on the other end sees the colours, not the
+  site's card. The card is drawn once the sheet has arrived (`_prepareShareCard`), because
+  `navigator.share` only works in the moment after a press; a faster press waits about 30ms for it. A
+  share that completes closes the dialog. A cancelled one (`AbortError`) leaves it open.
 - **Download Image** saves the palette as a picture and answers "Downloaded". It uses design A of the
   mockups (`lib/paletteCard.js`): the weight bar, then the hex and share list on hairlines, 1080 by 1350,
   drawn in Neue Montreal. It is always on the light surface, since it leaves the site, and the file is

@@ -63,6 +63,9 @@ export const shareMethods = {
       const d = document.querySelector('[data-share-dialog]');
       if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
       this._dialogIn('[data-share-dialog]');
+      // The picture Share via… sends, drawn once the sheet has arrived (see shareVia). The detail owns
+      // the sheet whenever it is up, so its palette is the one to draw.
+      if (navigator.share && navigator.canShare) setTimeout(() => { try { this._prepareShareCard(this.state.overlay || this.state.current); } catch (e) { } }, this.DUR.state * 1000);
     }));
   },
   closeShareMenu() {
@@ -85,15 +88,44 @@ export const shareMethods = {
     };
     if (defer) requestAnimationFrame(go); else go();
   },
-  // The device's share sheet, carrying the name and the link; the same call the phone story's handoff
-  // makes. The row only exists where navigator.share does (renderVals). A sheet the reader closes
-  // without choosing rejects with AbortError, which is an answer, not a failure.
+  /* THE DEVICE'S SHARE SHEET, CARRYING THE PALETTE AS WELL AS ITS LINK (19.09.26, UX review, by request:
+     "fix both"). A link previews as the site's own card, since the palette rides in the fragment, so
+     where the browser can hand over a file the Download Image card goes with it: the person on the
+     other end sees the colours, not our logo. Where it cannot, the link goes alone, as before.
+     navigator.share only works in the moment after a press, so the card is drawn when the sheet opens
+     (_prepareShareCard); a press that beats it waits for the draw, about 30ms, well inside that moment.
+     A share that completes closes the dialog: the task is done where it began. A sheet closed without
+     choosing rejects with AbortError, and the dialog stays for another way out. The row only exists
+     where navigator.share does (renderVals). */
   shareVia(pal) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
     if (!navigator.share) return;
-    navigator.share({ title: 'Atmos Gallery: ' + p.name, url }).catch(() => { });
+    const send = (file) => {
+      const data = { title: 'Atmos Gallery: ' + p.name, url };
+      try { if (file && navigator.canShare && navigator.canShare({ files: [file] })) data.files = [file]; } catch (e) { }
+      navigator.share(data).then(() => { if (this.state.shareMenuOpen) this.closeShareMenu(); }, () => { });
+    };
+    const c = this._shareCard;
+    if (c && c.key === this._shareCardKey(p) && c.file) { send(c.file); return; }
+    if (!navigator.canShare) { send(null); return; }
+    this._prepareShareCard(p).then(send, () => send(null));
+  },
+  // One drawing per palette as it stands: its id, name and every swatch with its weight, so an edit
+  // since the last draw is never sent as the old picture.
+  _shareCardKey(p) { return p ? [p.id, p.name].concat((p.swatches || []).map((x) => x.hex + ':' + x.weight)).join('|') : ''; },
+  _prepareShareCard(p) {
+    const key = this._shareCardKey(p);
+    if (!key) return Promise.resolve(null);
+    if (this._shareCard && this._shareCard.key === key) return this._shareCard.promise;
+    const card = { key, file: null, promise: null };
+    card.promise = renderPaletteCard(p).then((blob) => {
+      card.file = blob ? new File([blob], paletteCardName(p), { type: 'image/png' }) : null;
+      return card.file;
+    });
+    this._shareCard = card;
+    return card.promise;
   },
   // The palette as a picture, saved under its own name. The row answers "Downloaded" on the Copied
   // timer, so the two confirmations in the sheet keep one rhythm.
