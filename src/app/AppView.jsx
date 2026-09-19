@@ -946,13 +946,12 @@ function MobileStory({ st }) {
                         <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </button>
                     ) : (
-                      <div className="about-role" data-story-pick="1" data-unlocatable={st.masksReady ? '' : undefined}>
+                      <div className="about-role" data-story-pick="1">
                         <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
                         {/* NO NOTE SAYING WHY (19.09.26, by request: "We don't need to explicitly say 'Spread
-                            too finely to locate'… We overexplain too much"). NOR THE CARD'S EDGE (same day,
-                            interface review, by request: "fix all"): looking like its pressable neighbours, it
-                            promised a tap that did nothing. data-unlocatable waits for the masks, because
-                            until they are built every cell is a div; story.css takes the edge away. */}
+                            too finely to locate'… We overexplain too much"). The cell is the same card as its
+                            neighbours; that it is not a button is the whole difference (the edge stays, by
+                            request, the same day: see story.css). */}
                         <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </div>
                     )}

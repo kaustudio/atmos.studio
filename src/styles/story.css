@@ -398,14 +398,10 @@
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
-/* A COLOUR THE PHOTOGRAPH CANNOT LOCATE IS NOT DRAWN AS A CARD (19.09.26, interface review, by request:
-   "fix all"). It wore the pressable cells' edge, so on Frozen Slate three of five colours looked tappable
-   under "Select a colour to find it in the photograph" and did nothing. Only a pressable cell keeps the
-   edge now; an unlocatable one is its swatch and caption, and the geometry does not move (the border
-   stays, transparent). data-unlocatable is set only once the case's masks are built, since until then
-   every cell is a div; the edge leaves on the state beat. */
-[data-story-pick]:not(button){ cursor:default; transition:border-color var(--dur-state) var(--ease-standard) }
-[data-story-pick][data-unlocatable]{ border-color:transparent }
+/* EVERY COLOUR KEEPS THE CARD'S EDGE, LOCATABLE OR NOT (19.09.26). The interface review took the edge off
+   the colours a photograph cannot locate, so that only what can be tapped looked tappable, and it was
+   reversed the same day by request: "That doesn't make any sense. bring it back". Don't propose it again. */
+[data-story-pick]:not(button){ cursor:default }
 /* Selected is stated by the cell's border going to full ink — not by a tint, because the cell is
    mostly a block of the palette's colour and tinting it would change the very thing it shows. */
 [data-story-pick][aria-pressed="true"]{ border-color:var(--on-surface) }

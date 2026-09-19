@@ -1424,10 +1424,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         litMask: selected && selected.mask ? selected.mask : null,
         litHex: selected ? selected.hex : '',
         litPct: selected ? selected.pct : '',
-        // Whether the masks for THIS case are built. Until they are, every swatch renders as a plain
-        // cell because none has a region yet, so "not a button" only means "cannot be located" once
-        // this is true (the picker's unlocatable cells drop their edge on it; see story.css).
-        masksReady: !!masks,
 
         /* CHAPTER 5 — three readings, one palette. Segmented buttons carrying aria-pressed, not a
            tablist: there is no tab primitive in this codebase and a control that announces itself

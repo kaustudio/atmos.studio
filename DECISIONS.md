@@ -642,17 +642,19 @@ in the text colour, on the 14% edge. It appears in four places:
 - How it Works 3.3, where each pair's first colour is set as the text.
 
 **The interface review of rounds 3 and 4 (19.09, all seven better-* domains, by request: "fix all").**
-Three findings, all fixed:
-- **A colour the photograph can't locate isn't drawn as a card (UX, medium).** It wore the pressable
-  cells' edge, so on Frozen Slate three of five colours looked tappable under "Select a colour to find
-  it in the photograph" and did nothing (Law of Similarity; a tap with no response). Only pressable
-  cells keep the edge: `data-unlocatable` goes on a plain cell once its case's masks are built, and
-  story.css makes that border transparent, fading on the state beat. No copy came back.
+Three findings, all fixed; the first was reversed the same day, by request:
+- **Reversed the same day: every colour keeps the card's edge.** The review took the edge off the
+  colours a photograph can't locate (Frozen Slate's three, Dry Season's one), so that only what can be
+  tapped looked tappable. The user: "That doesn't make any sense. bring it back". Don't propose it
+  again: an unlocatable colour is the same card as its neighbours, and only not a button.
 - **3.2's columns are the list's (layout, medium).** Each row was its own grid, so each verdict pill
   sized its row's tracks. At 1440 the last ratio ended 116px left of the others, and under 820px
   "Accent against background" wrapped to three lines. Above 820px How it Works' `.about-checks` is one
   grid and each row a subgrid, so the ratios share an edge and the pills end the row. Under 820px the
   verdict takes its own full-width line. The phone story's rows are untouched.
+  After the push, by request ("V2 needs capitalized 'Text on Background' etc. for all"), 3.2's pair
+  names are Title Case in the house's Chicago form, prepositions lower case: Text on Background, Text
+  on Surface, Text on Primary, Accent against Background.
 - **A ratio is written 4.5:1 and said "4.5 to 1" (accessibility, low).** `[data-ratio]::after` in
   global.css draws ":1" with " to 1" as its alternative text. AppView's `withRatios` puts the figure
   in the span wherever a ratio is rendered as text: the list's Max Contrast, the checker's Minimum,
