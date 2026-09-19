@@ -425,6 +425,15 @@ export default class PaletteApp extends React.Component {
     if (!window.__pgErrHook) { window.__pgErrHook = true; window.addEventListener('error', (e) => { try { console.error('[pg:onerror]', e.message, e.filename, e.lineno, e.error && e.error.stack); } catch (_) { } }); }
     // one feature's failure must never abort the rest of mount
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
+    // THE STAMPS KEEP TIME (19.09.26, audit U6). The Library's Created column and the palette detail
+    // read "9m ago" for anything under a day old, and nothing else here re-renders on a clock, so
+    // "Just now" would stand for as long as the page stayed still. Once a minute, while a stamp is on
+    // screen and a palette is young enough to need it, the view is drawn again.
+    this._stampT = setInterval(() => {
+      if (document.hidden || !document.querySelector('[data-row-time], [data-overlay-stage]')) return;
+      const reach = 864e5 + 6e4;
+      if ((this.state.feed || []).some((p) => Date.now() - p.time < reach)) this.forceUpdate();
+    }, 60000);
     // Live, not a snapshot. CSS re-evaluates its own reduced-motion blocks the moment the OS setting
     // changes, and _reduce gates every GSAP path in the app — read once, the two halves disagree
     // until reload. The timing is what makes it matter: reduced motion is usually switched on IN
@@ -596,6 +605,7 @@ export default class PaletteApp extends React.Component {
     this._syncAppInert();
     this._syncLandingCover();
     this._syncConsent();
+    this._syncFilteredEmpty();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
@@ -881,6 +891,7 @@ export default class PaletteApp extends React.Component {
 
   componentWillUnmount() {
     this._alive = false;
+    if (this._stampT) { clearInterval(this._stampT); this._stampT = null; }
     if (this._killPicker) { try { this._killPicker(); } catch (e) { } this._killPicker = null; }
     if (this._storyT) { clearTimeout(this._storyT); this._storyT = null; }
     if (this._maskT) { clearTimeout(this._maskT); this._maskT = null; }

@@ -38,11 +38,13 @@ export const shareMethods = {
   // lib/share.js). The notice that said so when the link was made ("A share link is a snapshot, not
   // a backup…") went on 17.09.26, by request: the button's own Copied state confirms the copy. A
   // palette that cannot be shared still says so.
-  shareCurrent(pal) {
+  // `key` names the button whose Copied state answers: the result stage's by default, the palette
+  // detail's since it carries Share too (19.09.26, audit U6), so the one under it stays quiet.
+  shareCurrent(pal, key) {
     const p = pal || this.state.current;
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
-    this.copy(url, 'pal-share', 'Share link copied to your clipboard.');
+    this.copy(url, key || 'pal-share', 'Share link copied to your clipboard.');
   },
 
   // Viewing a shared palette writes NOTHING to the recipient's archive. This is the only path that

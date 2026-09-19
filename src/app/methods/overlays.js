@@ -195,8 +195,16 @@ export const overlayMethods = {
     g.from(row, { height: 0, opacity: 0, duration: this.DUR.state, ease: this.EASE.entrance, onComplete: () => { try { g.set(row, { clearProps: 'height,opacity,overflow' }); } catch (e) { } } });
   },
   // toast enter/exit — fade + small slide, --ease-standard; instant under reduced motion
-  _toastIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
-  _dismissToast() { const g = window.gsap; const el = document.querySelector('[data-toast]'); const clear = () => this.setState({ toast: null }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
+  _toastIn() { const g = window.gsap; this._noticeRide(); if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
+  _dismissToast() { const g = window.gsap; const el = document.querySelector('[data-toast]'); const clear = () => this.setState({ toast: null }, () => this._noticeRide()); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
+  // THE NOTICE RIDES ABOVE THE TOAST (19.09.26, audit U7). They share one lane at the bottom centre
+  // (AppView MessageLane), the toast at its foot, so the toast arriving lifts a notice by its height and
+  // the gap, and the toast leaving drops it again. The commit has already moved it; this plays the
+  // move from where it was, on the state beat, instead of letting it jump. Where it was is its layout
+  // position (the lane's top plus its offset, which no transform of its own disturbs), recorded when
+  // it arrives and after every ride, so a toast replaced by another plays no move that did not happen.
+  _noticeLayoutTop() { const n = document.querySelector('[data-notice]'); if (!n) return null; const lane = n.offsetParent; return (lane ? lane.getBoundingClientRect().top : 0) + n.offsetTop; },
+  _noticeRide() { const was = this._noticeY, now = this._noticeLayoutTop(); this._noticeY = now; const g = window.gsap; const n = document.querySelector('[data-notice]'); if (this._reduce || !g || !n || was == null || now == null) return; const dy = was - now; if (Math.abs(dy) < 1) return; g.fromTo(n, { y: dy }, { y: 0, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' }); },
   // The ✕ on the toast: letting the undo go is a decision, so it discards the held record — the
   // same forfeit the old timer performed silently. If focus was inside the toast it would die with
   // it (the control disappears mid-press), so it is handed to the first row's own hit surface —

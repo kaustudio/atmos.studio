@@ -458,7 +458,8 @@ the filter rows' look: `--surface-raised` with the `--line` hairline, 37.5px tal
 under), 13px Medium, the count 18px from the edge, and the rows' hover to `--surface-white`; the
 placeholder is the muted ink. This reverses the older "no raised fill" note on the name fields,
 written before the rows became raised plates. The create disc is 29.5 square so it stays round.
-The Add to Projects dialog's field is outside the drawer and unchanged. **The export and delete
+The Add to Projects dialog's field was left as it was that round, and took its own rows' plate later
+the same day (audit U2, below). **The export and delete
 circles beside them take the same raised fill** ("we can't have the icons in the drawer without a
 fill"); their hover and press tints are unchanged.
 
@@ -469,6 +470,86 @@ type steps, so the next step of the scale is 15.
 **Undoing a project's deletion puts its palettes back in it.** The undo wrote the legacy `projectId`
 alone, which nothing reads since membership became the `projectIds` set, so the project came back
 empty while the toast said it was restored. It refiles through `withProjects` now.
+
+**The Laws of UX audit (19.09).** Twelve findings (U1–U12) and eight questions, published as an
+artifact. U1 to U4 were done the same day, by request:
+
+**Filtered to nothing, the panel takes the table's place (audit U1).** While a narrowing matches no
+palette, the column header steps aside, as List | Grid already did, and the list drops its closing
+rule. Before, the "No palette matches every filter" panel had the header under it, labelling no rows.
+The panel keeps one way out, Remove Last Filter. Clear Filters left it, because the applied-filters
+row directly above carries it in every filtered state. The panel arrives on the rows' own rise: 12px
+and a fade on `DUR.reveal` with the entrance ease. When a narrowing is undone, the header comes back
+on the same rise, with the rows. This runs from `_syncFilteredEmpty` in motion.js, called from
+componentDidUpdate, so every way in or out takes it. It is instant under reduced motion.
+
+**Add to Projects' field wears its rows' plate (audit U2).** It has `--surface-raised` with the
+`--line` hairline, 13px Medium, where it stood on the page colour inside a 48% ink edge. Its hover,
+focus and placeholder follow the Library panel field's rules. It is 39.5px, the height of the rows
+above it.
+
+**Every option row speaks in the panel's voice (audit U3).** Copy's and Export's format rows and Add
+to Projects' rows are 13px Medium and flat, as the Library panel's rows are. They were 12px Regular
+in Copy and Export and 13px Regular in Add to Projects. Export's format tags keep the tag voice. The
+13px label grew Copy's and Export's rows to 41.5px, so their block padding went from 12px to 11px.
+Every dialog row is now 39.5px, the same as Add to Projects' rows and field.
+
+**Add to Projects takes the panel's tick box (audit U4, "use the panel tick box").** Choosing
+projects is one act in two places, and it wore two marks: a tick box in the panel, an ink ring and the
+word ADDED here. The rows now lead with `FacetMark`, with the name 11px after it, and keep the ink
+edge the panel's ticked rows also carry. ADDED and its eased entrance are gone. The tick changes at
+once, as the panel's does, because it answers a press directly.
+
+Round 2 took the rest the same day, on the user's answers:
+
+**Semantic Scaffold is the theme switch, with its state in the fill (audit U5, "drop the off to match
+the theme switch").** It was a ringed pill holding its own track and the word OFF. It is now
+chrome.jsx's `SwitchTrack` in an unringed button-006, with the hook renamed from
+`[data-theme-switch]` to `[data-switch]`, since two switches share it. Asked next that "the
+active/inactive state needs to be more clear", it carries `data-switch="fill"`. Off is an outlined
+track on `--action-line` with the ink knob at the start; on is an ink track with the surface-coloured
+knob at the end. The masthead's switch keeps its glass. **Passing Only stays a pill:** it was made a
+switch too, then put back the same day ("revert passing only back to be a button").
+
+**One palette, one reading (audit U6).** The detail writes CMYK, as the result stage does, not CMYK
+APPROX; Export already says the value is approximate. **The stamp, in the list and the detail:**
+minutes and hours under a day ("Just now", "9m ago", "3h ago"), then the date and clock ("Date
+should only appear when it's more than a day old"). This is `stampTime` in pipeline.js, and a day
+means 24 hours. The tooltip carries the other form. This reverses absTime's one shape for every row,
+by request; the column still sorts on the timestamp. Neither view sets the stamp in capitals now. A
+minute tick re-renders the view while a young stamp is on screen, so "Just now" does not stand for an
+hour. **Share closes the detail's action row too**, at the far right, with its own Copied state
+(`ov-pal-share`). The detail's footer became two rows so the action row runs its full width: the
+traits and the reading on the first row, the actions on the second.
+
+**Messages share one lane at the bottom centre (audit U7).** It is `MessageLane`, z 158. The toast
+stands at the foot and a notice above it. A notice coming or going leaves the toast where it is. When
+the toast arrives or leaves, the notice glides by the toast's height plus the gap, from its recorded
+layout position (`_noticeRide`), so a replaced toast moves nothing.
+
+**Capitals name a surface, a group or a state; a label that names a value is 13px Title Case (audit
+U8, Q5).** The rule moved Restore's Palettes and Projects, the contrast checker's Minimum 4.5:1 and
+the phone story's facts (Dominance through Hue Range) to the result stage's muted 13px. Eyebrows,
+the panel's group labels and tags keep their capitals.
+
+**The phone story's toggle speaks like the desktop's (audit U9).** It is 13px Medium in its own case;
+the 44px target stays.
+
+**The AA badge keeps one edge (audit U10).** Neue Montreal has no tabular figures, so `tabular-nums`
+did nothing and a 1 is narrower. The count's figure sits in a one-`ch` slot, right-aligned, so "/10"
+and the badge before it keep one place. Measured: 986.3px on every row, where the 1/10 row stood
+2.5px right.
+
+**Copy is 35.5 (audit U11).** Its label was an inline grid, which sat on a text line and kept the
+strut's descent under its 16px box. It is a block-level grid now, like its siblings' flex rows.
+
+**Privacy and Terms name the button "Back Up" (audit U12).** How it Works' "Back up your Library" is
+a verb in a sentence and stays.
+
+**The chosen harmony method is filled (Q6, "fill the chosen one like the segmented").** It has an
+ink ground and surface text, where it was an ink ring. The Library's sort header shares
+`toggleStyle` and keeps its ink-only state. **Kept, by request:** the harmony glyph (Q7), and
+sentence case on Privacy, Terms and "Start here" (Q8).
 
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as

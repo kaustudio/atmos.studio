@@ -546,9 +546,12 @@
   cursor:pointer;
   color:var(--on-surface-muted);
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-label);
+  /* THE DESKTOP'S SEGMENTED VOICE (19.09.26, audit U9, by request: "apply the desktop styling to
+     phone"): 13px Medium in the case the labels are written in, as List | Grid and every rail are
+     since 17.09. It was the last segmented control in 11px capitals. The 44px target stays. */
+  font-size:var(--fs-body);
+  font-weight:500;
   letter-spacing:var(--track-flat);
-  text-transform:uppercase;
   transition:color var(--dur-state) var(--ease-standard);
   -webkit-tap-highlight-color:transparent;
 }
@@ -622,11 +625,13 @@
 /* An odd count leaves a hole at the end of a two-column grid; the last pair takes the whole row
    rather than sitting beside an empty cell. */
 .story-facts__row:last-child:nth-child(odd){ grid-column:1 / -1 }
+/* THE TERM IN THE RESULT STAGE'S VOICE (19.09.26, audit U8, by request): 13px, muted, in the Title
+   Case its label is written in, where it was 11px capitals. Capitals name a surface, a group or a
+   state; a label that names a value is set as the desktop's metrics are. */
 .story-facts dt{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-label);
+  font-size:var(--fs-body);
   letter-spacing:var(--track-flat);
-  text-transform:uppercase;
   line-height:1.2;
   color:var(--on-surface-muted);
 }
@@ -642,9 +647,9 @@
    it is not size: "The scale has no room between --fs-label and --fs-detail to separate them by
    size, and a 1px step would not read anyway. Brightness does it: the parent is the ink, the
    children stay muted." So the band takes --fs-body — the same step the Contrast panel's values take,
-   which is what puts all three panels on one ladder — and the separation is carried by the three
-   channels that cost no scale: full ink against muted, Medium against Regular, and sentence case
-   against the dimension's uppercase. */
+   which is what puts all three panels on one ladder — and the separation is carried by the channels
+   that cost no scale: full ink against muted, and Medium against Regular. (The dimension's capitals
+   were a third, until 19.09.26: it is Title Case at the same 13px now, audit U8.) */
 .story-facts dd{
   margin:0;
   font-family:'Neue Montreal',system-ui,sans-serif;

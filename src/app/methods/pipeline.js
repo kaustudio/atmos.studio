@@ -336,7 +336,7 @@ export const pipelineMethods = {
   _armNoticeTimer() { if (this._noticeT) clearTimeout(this._noticeT); this._noticeT = setTimeout(() => { this._noticeT = null; this._dismissNotice(); }, 5000); },
   _holdNotice() { if (this._noticeT) { clearTimeout(this._noticeT); this._noticeT = null; } },
   _releaseNotice() { if (this.state.notice && !this.state.noticeSticky && !this._noticeT) this._armNoticeTimer(); },
-  _noticeIn() { const g = window.gsap; if (this._reduce || !g) return; const el = document.querySelector('[data-notice]'); if (el) g.from(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
+  _noticeIn() { const g = window.gsap; this._noticeY = this._noticeLayoutTop(); if (this._reduce || !g) return; const el = document.querySelector('[data-notice]'); if (el) g.from(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
   _dismissNotice() { const g = window.gsap; const el = document.querySelector('[data-notice]'); if (this._noticeT) { clearTimeout(this._noticeT); this._noticeT = null; } const clear = () => this.setState({ notice: null, noticeSticky: false }); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 14, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
 
   // ================= pre-seeded feed =================
@@ -516,6 +516,21 @@ export const pipelineMethods = {
       this._dfDateTime = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
     }
     return this._dfDateTime.format(new Date(ts));
+  },
+  // THE STAMP THE LIBRARY AND THE PALETTE DETAIL SHOW (19.09.26, audit U6, by request: "Date should
+  // only appear when it's more than a day old; if it's within the same day, we stick with mins and
+  // hours"). Under a day, the relative form ("Just now", "9m ago", "3h ago"); from a day on, the
+  // absolute date and clock above. This reverses absTime's one shape for every row, by request: the
+  // column still sorts on the timestamp, never on the words. The list used absTime and the detail
+  // relTime, so one palette read "19.09.26, 01.21" in one and "9M AGO" in the other.
+  // A 'day' is 24 hours, so something made at 23.50 reads "2h ago" just after midnight rather than
+  // yesterday's date. The first letter is capitalised because the stamp stands alone in its cell;
+  // relTime stays lower case for the sentences that carry it ("Generated 3h ago").
+  isFresh(ts) { return Date.now() - ts < 864e5; },
+  stampTime(ts) {
+    if (!this.isFresh(ts)) return this.absTime(ts);
+    const r = this.relTime(ts);
+    return r.charAt(0).toUpperCase() + r.slice(1);
   },
 
   // Downscaled reference thumbnail as a data URL — object URLs are session-only; this survives reload.

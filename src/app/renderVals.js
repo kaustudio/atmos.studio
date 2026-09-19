@@ -108,6 +108,9 @@ const aaReadout = (met) => ({
      is a quantity with no scale, and a reader cannot tell 3 of 10 from 3 of 45. The denominator is
      the scale, and it is the only thing that makes the numerator mean anything. */
   aaValueText: met.aaPairs + '/' + met.totalPairs,
+  // The same figure in two parts for the Library's column (19.09.26, audit U10): the count sits in a
+  // one-figure slot so '/10', and the badge before it, keep one place down the list.
+  aaNum: String(met.aaPairs), aaDen: '/' + met.totalPairs,
 });
 
 // A slider track drawn as its own axis. n evenly spaced samples through a colour function, emitted
@@ -572,7 +575,8 @@ export const renderValsMethods = {
     // which is exactly how the value ended up flush while the header sat inset.
     // No private inset any more: the row grid's own --row-inset padding is the 16px this cell used
     // to carry itself, back when it was the only edge of the row that kept one.
-    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    // No capitals (19.09.26, audits U6 and U8): the stamp is a value, and "9m ago" read 9M AGO.
+    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     // The same three cells on the hover fill's ink ground (AppView RowMain with `inv`): identical
     // metrics, only the colour swapped for the surface's. --ink-fill-muted is the muted step on
     // ink, defined beside the fill's other colours in global.css.
@@ -582,9 +586,10 @@ export const renderValsMethods = {
     const feedList = listRows.map(({ p, met }, rowIdx) => {
       const isCur = p.id === curId;
       return {
-        // the column shows the absolute stamp (comparable down a sorted column); the relative form
-        // rides along as the tooltip and stays in the accessible sentence below
-        name: p.name, time: this.absTime(p.time), timeRel: this.relTime(p.time),
+        // The stamp (19.09.26, audit U6, by request): minutes and hours under a day, the date after.
+        // The tooltip carries the other form, so either can be read; the accessible sentence below
+        // keeps the relative one.
+        name: p.name, time: this.stampTime(p.time), timeTitle: this.isFresh(p.time) ? this.absTime(p.time) : this.relTime(p.time),
         // Tags recede: they repeat down the whole list, so as decoration they were spending the
         // row's flexible middle to say almost nothing. They stay present because the RARE one is
         // the informative one, and because they are the readable form of what the chips above
@@ -838,8 +843,10 @@ export const renderValsMethods = {
       });
       overlay = {
         name: p.name, rationale: p.rationale, descriptors: this.paletteTags(p), bands: obands,
-        time: this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
+        time: this.stampTime(p.time), timeTitle: this.isFresh(p.time) ? this.absTime(p.time) : this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
+        // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
+        onShare: () => this.shareCurrent(p, 'ov-pal-share'), shareCopied: s.copied === 'ov-pal-share',
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
@@ -879,7 +886,10 @@ export const renderValsMethods = {
           id: g.id, label: g.name, active: on, pressed: on ? 'true' : 'false',
           aria: 'Show the ' + g.name.toLowerCase() + ' harmony, ' + g.cells.length + ' colours',
           onPick: () => this.setHarmonyModel(g.id),
-          style: this.toggleStyle(on),
+          // THE CHOSEN METHOD IS FILLED, as a segmented control's chosen option is (19.09.26, audit Q6,
+          // by request): ink ground and surface text, where it was an ink ring on the page colour. The
+          // Library's sort header shares toggleStyle and keeps its ink-only state.
+          style: on ? Object.assign(this.toggleStyle(true), { background: 'var(--on-surface)', color: 'var(--surface)' }) : this.toggleStyle(false),
         };
       });
       const cells = active.cells.map((c, ci) => {
@@ -948,7 +958,9 @@ export const renderValsMethods = {
        HOISTED OUT OF exportView because the copy dialog wears it too. Copy stopped being a dropdown
        and became the same surface as Export, and "the same surface" has to mean one style object
        rather than two that currently agree. */
-    const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid var(--line)', padding: '12px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
+    // 11px of block padding, where it was 12: the 13px label the rows took on 19.09.26 (audit U3)
+    // grew them to 41.5, and 11 lands them on the 39.5 of Add to Projects' rows and field.
+    const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid var(--line)', padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
 
     let exportView = null;
     if (s.exportOpen && (s.exportPalette || s.exportProject)) {
@@ -989,9 +1001,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           mk('css', 'CSS custom properties', 'css'),
           mk('ase', 'Adobe swatches', 'ase'),
         ],
-        semanticTrackBg: semantic ? 'var(--on-surface)' : 'var(--line-strong)',
-        semanticDotX: semantic ? 'translateX(14px)' : 'translateX(0px)',
-        semanticLabel: semantic ? 'On' : 'Off',
+        // The switch draws itself from aria-checked now (chrome.jsx SwitchTrack, 19.09.26, audit U5):
+        // its track colour, knob position and ON / OFF word went with the ringed pill.
       };
     }
 
@@ -1085,6 +1096,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     // reading "Showing 5 of 8" is the same number twice, once without its denominator. A chip's
     // whole job here is to name one narrowing and offer to remove it.
     const appliedTags = appliedRaw;
+    // Filtered to nothing: a narrowing is on and no palette survives it. The panel that says so takes
+    // the table's place, and the column header and the list's closing rule step aside for it
+    // (19.09.26, audit U1): a header over no rows read as a stray line under the panel.
+    const filteredEmpty = scopedNow === 0 && appliedTags.length > 0;
 
     // ---- THE MEASURED FACETS ----------------------------------------------------------------
     // Three groups that MEASURE a palette, kept apart from the ones that INTERPRET it. Contrast
@@ -1153,7 +1168,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     let assignView = null;
     if (s.assignPalette) {
       const pal = s.assignPalette;
-      const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
+      // The tick box leads and the name follows it at the panel rows' 11px (19.09.26, audit U4), where
+      // the name led and ADDED stood at the far end.
+      const optStyle = (cur) => ({ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '11px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid ' + (cur ? 'var(--on-surface)' : 'var(--line)'), padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' });
       /* STADIUMS, AND THE INSET THAT GOES WITH THEM. The rows were bordered rectangles in a dialog
          whose every other control had already rounded; --radius-pill clamps to half their 40px
          height, so the corner is a true stadium end. 14px of horizontal padding then put a row's
@@ -1172,27 +1189,17 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          three ticks showed on screen. Whatever states membership states what Confirm will write. */
       const pending = s.assignPending || [];
       const memberOf = pending.map((id) => this.projectName(id)).filter(Boolean);
-      /* THE MARK IS A WORD AND A TICK, not a 6px dot. The dot said "current" to whoever already knew
-         the convention and nothing at all to anyone else — and it flipped between opacity 0 and 1
-         with no transition, so the one piece of feedback the dialog gave arrived as a pop, which
-         this app's own contract reads as a rendering fault rather than a response.
-         `Added` is stated in words beside the tick because a tick alone is a colourless icon
-         carrying the whole state of the row (SC 1.4.1), and it eases in on the chrome band like
-         every other state change here. */
+      /* THE MARK IS THE LIBRARY PANEL'S TICK BOX (19.09.26, audit U4, by request), drawn in AppView
+         from `current`. It was a 6px dot first, then the word ADDED at the row's end, easing in on the
+         chrome band. Picking projects is one act here and in the panel, so it takes the panel's mark:
+         the box, which states the row in shape as well as in ink (SC 1.4.1), and the ink edge the
+         panel's ticked rows also wear. */
       /* THE ROWS READ THE DRAFT — `pending`, declared above with the sentence it shares a source
          with. Reading the archive here would show a row unticked immediately after it was tapped. */
       const mkOpt = (id, label) => {
         const cur = pending.indexOf(id) >= 0;
         return {
           key: String(id), label, current: cur, checked: cur ? 'true' : 'false',
-          markStyle: {
-            display: 'inline-flex', alignItems: 'center', gap: '5px', flex: 'none',
-            fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)',
-            textTransform: 'uppercase', color: 'var(--on-surface)',
-            opacity: cur ? 1 : 0, transform: cur ? 'translateX(0)' : 'translateX(4px)',
-            transition: this._reduce ? 'none' : 'opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)',
-          },
-          markLabel: 'Added',
           style: optStyle(cur), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), onPick: () => this.pickAssign(id),
           aria: cur ? 'Remove ' + pal.name + ' from ' + label : 'Add ' + pal.name + ' to ' + label,
         };
@@ -1491,7 +1498,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           { key: 'light', label: 'Lightness', value: CAPS(an.lightness.band) },
           { key: 'temp', label: 'Temperature', value: met.temp },
           { key: 'chroma', label: 'Chroma', value: CAPS(an.chroma.band) },
-          { key: 'hue', label: 'Hue range', value: CAPS(an.hue.band) },
+          // Title Case (19.09.26, audit U8): the labels read as the result stage's do, not in capitals.
+          { key: 'hue', label: 'Hue Range', value: CAPS(an.hue.band) },
         ],
         // A11Y_LABEL, not A11Y_TITLE: the caption wants the NAME (Text-Ready); A11Y_TITLE is that
         // name plus its definition, which is a tooltip's job and a full line of type here.
@@ -1923,7 +1931,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       },
       onRemoveLast: () => this.removeLastFilter(),
       // A zero-result state has to explain the conflict rather than pretend the shelf is bare.
-      filteredEmpty: scopedNow === 0 && appliedTags.length > 0,
+      filteredEmpty,
       a11yOptions, hasA11yOptions: a11yOptions.length > 0,
       // The panel's ⓘ and the Library heading's storage marker, both removed by request, read state
       // that went with them on 17.09.26 (filterInfoOpen, a11yDefs, storeInfo); the three definitions
@@ -2045,7 +2053,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       prevDisabled: page <= 0, nextDisabled: page >= pageCount - 1,
       prevPage: () => this.setPage(page - 1), nextPage: () => this.setPage(page + 1),
       prevStyle: this.pageNavStyle(page <= 0), nextStyle: this.pageNavStyle(page >= pageCount - 1),
-      listWrapStyle: { display: s.feed.length > 0 ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: 'calc(100% + var(--row-inset) * 2)', marginInline: 'calc(var(--row-inset) * -1)', borderBottom: '1px solid var(--line)' },
+      // No closing rule while nothing matches: with no rows it was a hairline under the panel.
+      listWrapStyle: { display: s.feed.length > 0 ? 'flex' : 'none', flexDirection: 'column', gap: '0', width: 'calc(100% + var(--row-inset) * 2)', marginInline: 'calc(var(--row-inset) * -1)', borderBottom: filteredEmpty ? '0' : '1px solid var(--line)' },
       // The list is under the grid while the grid is up: out of the tab order and the accessibility
       // tree, as it was when it was display:none, but still laid out. It is the reader's again on the
       // press that closes the grid, not when the field's fade ends — the fade takes no pointer.
@@ -2055,7 +2064,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // them in visual order, Enter/Space activates. They carry aria-pressed (the same toggle
       // vocabulary the view toggle and the project chips already use) and each states its NEXT
       // action, so the label is never a lie about what activating it will do.
-      showSortHeader: s.feed.length > 0,
+      // Away while nothing matches, as List | Grid is: it heads rows, and there are none.
+      showSortHeader: s.feed.length > 0 && !filteredEmpty,
       // AA first — the badge leads the cluster, so its sort leads the header; both metric sorts
       // stay separate buttons over the ONE cluster column and keep operating on the true numbers
       sortCols: [

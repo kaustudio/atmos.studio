@@ -345,13 +345,14 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 /* THE PROJECT GROUP'S NAME FIELDS WEAR THE ROW'S PLATE (19.09.26, by request): the new-project field
    and each rename field take the fill, hairline and height inline, and answer a hover the way a row
    does, by brightening to --surface-white; focus holds it there under the field's own ring. The
-   placeholder takes the muted ink the rows' counts use, where it was the browser's grey. */
-[data-manage-new],[data-proj-name]{transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
+   placeholder takes the muted ink the rows' counts use, where it was the browser's grey.
+   Add to Projects' field is the same field and takes the same rules (19.09.26, audit U2, by request). */
+[data-manage-new],[data-proj-name],[data-assign-new]{transition:background-color var(--dur-state) var(--ease-standard),border-color var(--dur-state) var(--ease-standard)}
 @media (hover:hover){
-  [data-manage-new]:hover,[data-proj-name]:hover{background:var(--surface-white)!important}
+  [data-manage-new]:hover,[data-proj-name]:hover,[data-assign-new]:hover{background:var(--surface-white)!important}
 }
-[data-manage-new]:focus,[data-proj-name]:focus{background:var(--surface-white)!important}
-[data-manage-new]::placeholder{color:var(--on-surface-muted);opacity:1}
+[data-manage-new]:focus,[data-proj-name]:focus,[data-assign-new]:focus{background:var(--surface-white)!important}
+[data-manage-new]::placeholder,[data-assign-new]::placeholder{color:var(--on-surface-muted);opacity:1}
 [data-sec-row]>:not([data-row-plate]){position:relative}
 [data-sec-row][aria-pressed="true"]>[data-row-plate]{border-color:var(--on-surface)}
 @media (hover:hover){
@@ -1527,7 +1528,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    say, "this is a control", the track now says by being one (see .theme-switch__track below).
    No side padding either, for the links' reason: it belonged to the outlined pill. The bar's inset now
    places the track, the vertical padding keeps the target 34px tall, and the track is 32 wide. */
-.button-006[data-theme-switch][data-emphasis]{--button-006-line:transparent;--button-006-line-hover:transparent;--button-006-line-press:transparent;--button-006-padding:0.75em 0}
+.button-006[data-switch][data-emphasis]{--button-006-line:transparent;--button-006-line-hover:transparent;--button-006-line-press:transparent;--button-006-padding:0.75em 0}
 /* THE TRACK IS GLASS, AND THE KNOB CARRIES THE STATE.
 
    The track wears the navigation's glass (by request, 15.09.26): the recipe the bar, the analytics
@@ -1564,13 +1565,32 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   background-color:var(--on-surface);
   transition:transform var(--dur-chrome) var(--ease-standard),background-color var(--dur-chrome) var(--ease-standard);
 }
-[data-theme-switch][aria-checked="true"] .theme-switch__dot{transform:translateX(14px)}
-[data-theme-switch] .button-006__hover .theme-switch__track{visibility:hidden}
-.button-006[data-theme-switch][data-emphasis] .button-006__bg.is--hover{opacity:0}
+[data-switch][aria-checked="true"] .theme-switch__dot{transform:translateX(14px)}
+[data-switch] .button-006__hover .theme-switch__track{visibility:hidden}
+.button-006[data-switch][data-emphasis] .button-006__bg.is--hover{opacity:0}
 @media (hover:hover){
-  [data-theme-switch]:hover:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+  [data-switch]:hover:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
 }
-[data-theme-switch]:active:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+[data-switch]:active:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
+/* ONE SWITCH, TWO PLACES (19.09.26, audit U5, by request). [data-switch] was [data-theme-switch]
+   until Export's Semantic Scaffold, a ringed pill reading OFF, took this form: both are chrome.jsx's
+   SwitchTrack in an unringed button-006. The contrast checker's Passing Only was made one too and
+   put back as a pill the same day, by request. */
+/* A SETTING'S SWITCH SAYS ITS STATE IN FILL AS WELL AS POSITION (19.09.26, by request: "the
+   active/inactive state needs to be more clear"). The masthead's switch sits on glass and turns the
+   whole page when pressed, so its knob's position is enough there. On a dialog's plain surface the
+   glass track all but vanished and left the knob's 14px of travel to carry the state alone. Off is an
+   outlined track on --action-line, the control edge the app draws everywhere (3:1 or better), with the
+   ink knob at the start; on is a filled ink track with the surface-coloured knob at the end. The fill
+   eases on the track's own transition. Under the pointer, off takes the 10% tint every switch takes
+   and on takes the primary tier's hover and press inks, colour and never geometry. */
+[data-switch="fill"] .theme-switch__track{background-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;border-color:var(--action-line)}
+[data-switch="fill"][aria-checked="true"] .theme-switch__track{background-color:var(--on-surface);border-color:var(--on-surface)}
+[data-switch="fill"][aria-checked="true"] .theme-switch__dot{background-color:var(--surface)}
+@media (hover:hover){
+  [data-switch="fill"][aria-checked="true"]:hover:not(:disabled) .theme-switch__track{background-color:var(--action-primary-hover);border-color:var(--action-primary-hover)}
+}
+[data-switch="fill"][aria-checked="true"]:active:not(:disabled) .theme-switch__track{background-color:var(--action-primary-press);border-color:var(--action-primary-press)}
 /* BACK UP AND RESTORE, the masthead's other two acts, take the same corner as the switch beside
    them. They are the only consumers of renderVals' tier3BtnStyle, and that object sets no radius —
    so this needs no !important: the blanket border-radius:0 they were inheriting is a TYPE selector,
@@ -1902,8 +1922,8 @@ button[data-row-cell] .tswap{flex:none}
   }
   /* The switch answers through tokens rather than selectors — same gate, same reason. It has no label
      to swap any more, so under the pointer it answers with its own track (see .theme-switch__track). */
-  .button-006[data-theme-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:transparent}
-  .button-006[data-theme-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
+  .button-006[data-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:transparent}
+  .button-006[data-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
 }
 .button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
 /* COPY TAKES ITS "COPIED" ROOM OUT OF ITS PADDING (19.09.26, by request: "make sure padding on this

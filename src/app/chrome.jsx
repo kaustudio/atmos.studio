@@ -213,16 +213,18 @@ export function GlassEffect() {
   );
 }
 
-function themeSwitchLabel() {
+/* THE APP'S ONE SWITCH, since 19.09.26 (audit U5, by request: "drop the off to match the theme
+   switch"). The theme switch and Export's Semantic Scaffold both draw this track inside a button-006
+   carrying data-switch, role="switch" and aria-checked; the scaffold's was a ringed pill reading OFF.
+   (Passing Only, in the contrast checker, stays a pill by request.) The theme-switch__ class names
+   are where it started.
+   THE SWITCH STANDS ALONE: a track and a knob, no word beside them and no ring around them
+   (15.09.26, by request). Position is the state, start for off and end for on; colours, states and
+   the hover live in global.css (.theme-switch__track), keyed off the button's own aria-checked, so
+   there is one source for what "on" looks like. The name a screen reader hears is the button's
+   aria-label or its words; the state is aria-checked. */
+export function SwitchTrack() {
   return (
-    /* THE SWITCH STANDS ALONE: a track and a knob, no word beside them and no ring around them
-       (15.09.26, by request). What the word used to carry, the control now carries in its own
-       shape — position AND fill both change with the state, so neither is the only cue:
-         light  an outlined track, --on-surface-muted at 1.5px, with an ink knob at the start
-         dark   a filled --on-surface track with a --surface knob at the end
-       Colours, states and the hover live in global.css (.theme-switch__track), keyed off the
-       button's own aria-checked, so there is one source for what "on" looks like. The name a
-       screen reader hears is still the button's aria-label; the state is aria-checked. */
     <span className="theme-switch__row">
       <span aria-hidden="true" className="theme-switch__track">
         <span className="theme-switch__dot"></span>
@@ -239,10 +241,9 @@ export function ThemeSwitch({ vals }) {
   return (
     <B006
       data-emphasis="secondary"
-      /* The hook the pill radius is scoped to — see .button-006[data-theme-switch] in global.css.
-         B006 backs about fifteen controls across the tool and they are all still square; this one
-         is named rather than the token being changed underneath all of them. */
-      data-theme-switch=""
+      /* The hook the switch's styles are scoped to — see .button-006[data-switch] in global.css. It
+         was data-theme-switch until the other two switches took the same form (19.09.26, audit U5). */
+      data-switch=""
       data-focus="chrome"
       role="switch"
       aria-checked={vals.isDark}
@@ -250,7 +251,7 @@ export function ThemeSwitch({ vals }) {
       aria-label="Dark theme"
       /* The pointer's version of the name, now that nothing is written beside the track. */
       title="Dark theme"
-      label={themeSwitchLabel()}
+      label={<SwitchTrack />}
     />
   );
 }

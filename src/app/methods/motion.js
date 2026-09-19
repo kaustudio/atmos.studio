@@ -619,6 +619,32 @@ export const motionMethods = {
       try { g.set(rows, { clearProps: 'transform,opacity' }); } catch (e) { }
     }, 2500 + delay * 1000);
   },
+  // FILTERED TO NOTHING, AND BACK (19.09.26, audit U1). While no palette matches, the panel takes the
+  // table's place and the column header steps aside (renderVals showSortHeader). Both are a render,
+  // and the rows they stand in for arrive on _listRowsReveal's rise, so the panel arrives on that rise
+  // too, and the header comes back on it when a narrowing is undone: it is the table's first row, so
+  // it returns with the rows rather than ahead of them. Read from the DOM after each commit rather
+  // than from a setter, so every way in or out (a filter, a chip, a deletion, an undo) takes it.
+  // Runs before paint, in componentDidUpdate, so nothing is seen at rest before it rises.
+  _syncFilteredEmpty() {
+    const panel = document.querySelector('[data-filtered-empty]');
+    const on = !!panel;
+    if (on === !!this._filteredEmptyOn) return;
+    this._filteredEmptyOn = on;
+    const g = window.gsap;
+    if (!g || this._reduce || document.hidden) return;
+    const el = on ? panel : document.querySelector('[data-sort-head]');
+    if (!el) return;
+    g.killTweensOf(el);
+    const tw = g.fromTo(el, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform,opacity' });
+    // The reveals' stall contract: a ticker that never wakes must not leave either one invisible.
+    clearTimeout(this._filteredEmptyT);
+    this._filteredEmptyT = setTimeout(() => {
+      this._filteredEmptyT = null;
+      if (tw.progress() >= 1) return;
+      try { tw.kill(); g.set(el, { clearProps: 'transform,opacity' }); } catch (e) { }
+    }, this.DUR.reveal * 1000 + 1200);
+  },
   // One path for every control that replaces the list's contents wholesale, so page, page size and
   // sort cannot drift into three different behaviours. The reveal runs in setState's callback —
   // after the DOM is committed but before the browser paints — so the rows are never shown at rest
