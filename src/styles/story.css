@@ -357,6 +357,40 @@
   padding:0;
 }
 [data-story-picks] li{ display:flex }
+/* THE CELL'S WORDS AS ONE CAPTION UNDER THE SWATCH (19.09.26, audit W2, by request: "better visual
+   hierarchy and optical balance"). The hex and the share were 11px under a 13px role name, each 10px from
+   the next, so the three lines read as three loose items rather than as one caption. The name and the
+   hex stand 2px apart at 13px, and the rules below place the hex and the share. The picker's buttons no
+   longer set their words in capitals (global.css lifts [data-story-pick] out of the [data-ix] case).
+   Both the picker and the Role panel take this, as they are one component. */
+[data-mobile-story] .about-role{gap:2px;padding-bottom:5px}
+/* THE FIRST LINE HANGS AS FAR UNDER THE SWATCH AS IT STANDS IN FROM THE LEFT (19.09.26, by request:
+   "equal padding for hex code left and top"). Measured to the cap line, not the box: the hex's ink is
+   8.4px in from the border, and 2.5px of margin (with the card's 2px gap and the line box's 4px above
+   the caps) puts its cap line 8.65px under the swatch. Role's name, in the Medium face, sits 8px under
+   it. The swatch is 8px in from the border above and to the sides, so the card has one inset. */
+[data-mobile-story] .about-role__swatch{margin-bottom:2.5px}
+[data-mobile-story] .about-role__hex{font-size:var(--fs-body);line-height:1.3}
+/* THE HEX AT THE CAPTION'S TOP LEFT, THE SHARE AT THE CARD'S BOTTOM RIGHT (19.09.26, by request: "let hex
+   code sit top left and % bottom right", and "don't decrease the height on the card because we remove
+   text"). One line each, so the card keeps the height its second line gave it once "of the Frame" left.
+   The hex is Regular and the share Medium at 15px, two rungs up the ladder, so the share is the figure
+   and the hex is the notation under the colour.
+   THE SHARE HAS THE SAME AIR TO THE RIGHT AND BELOW (by request: "make sure padding for the % on right
+   and bottom is equal"), measured to the ink rather than the box. Its line box keeps 3.5px under the
+   baseline, so the card's 5px of bottom padding (above) sets the figures 9.5px off the bottom edge, as
+   the % sign is 9.4px off the right one: 8 of padding, the border, and the glyph's own bearing. What the
+   padding and the swatch's margin gave up (15px and 9.5px) stands between the hex and the share, so the
+   card keeps its height: 138px in the picker, 156px in Role. */
+[data-mobile-story] .about-role__foot{display:flex;flex-direction:column;align-items:flex-start;gap:26.5px;align-self:stretch}
+[data-mobile-story] .about-role__pct{
+  align-self:flex-end;
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);font-weight:500;line-height:1.3;
+  letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
+}
+/* THE CONTRAST ROWS DRAW THEIR PAIR (19.09.26, by request): the Aa chip and the ratio as one unit, 8px
+   apart as they are under Best Pair Sample, and the verdict at the row's end on the same line. */
+[data-mobile-story] .about-checks__pair{gap:8px}
 [data-story-pick]{
   width:100%;
   font:inherit;
@@ -364,7 +398,14 @@
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
-[data-story-pick]:not(button){ cursor:default }
+/* A COLOUR THE PHOTOGRAPH CANNOT LOCATE IS NOT DRAWN AS A CARD (19.09.26, interface review, by request:
+   "fix all"). It wore the pressable cells' edge, so on Frozen Slate three of five colours looked tappable
+   under "Select a colour to find it in the photograph" and did nothing. Only a pressable cell keeps the
+   edge now; an unlocatable one is its swatch and caption, and the geometry does not move (the border
+   stays, transparent). data-unlocatable is set only once the case's masks are built, since until then
+   every cell is a div; the edge leaves on the state beat. */
+[data-story-pick]:not(button){ cursor:default; transition:border-color var(--dur-state) var(--ease-standard) }
+[data-story-pick][data-unlocatable]{ border-color:transparent }
 /* Selected is stated by the cell's border going to full ink — not by a tint, because the cell is
    mostly a block of the palette's colour and tinting it would change the very thing it shows. */
 [data-story-pick][aria-pressed="true"]{ border-color:var(--on-surface) }

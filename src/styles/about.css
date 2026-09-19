@@ -190,9 +190,12 @@
    here invents a second one. The hero's eyebrow, its two figcaptions and the gallery's head row were
    consumers until they were removed from the page; the list is what is left. How it Works' figure
    labels left it too (18.09.26) — see the rule below this one. */
+/* THE PHONE STORY'S ONE FIGURE LABEL LEFT THIS VOICE ON 19.09.26 (audit W3, by request: "2 of 10 Pairs
+   Reach 4.5:1" in Title Case). It is How it Works' figure-label voice now, 13px Medium on flat tracking,
+   in the case renderVals writes it; the capitals and the 11px step went. */
 [data-mobile-story] .about-figure__label{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);
   line-height:1.2;
   /* FULL INK, so the figure's NAME outranks the terms inside it without a second scale step. The
      lens label, its dt terms and its unit were all 10px, all uppercase, all --on-surface-muted —
@@ -207,8 +210,8 @@
    they were the uppercase label voice above. Full ink stays, for the reason given there: the
    figure's name outranks the muted terms inside it, and now by size and weight as well.
    Five of them: OKLCH and WCAG Contrast over 1.2's lenses, Lightness, Chroma and Hue over 1.3's
-   ramps. The phone story's figure label keeps the label voice — it is a finding, a sentence, where
-   these are names. */
+   ramps. The phone story's figure label kept the label voice as a finding, a sentence, until 19.09.26,
+   when it took this voice in Title Case (audit W3, by request). */
 .about-route .about-figure__label{
   font-family:'Neue Montreal',system-ui,sans-serif;
   font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);
@@ -549,9 +552,12 @@
    value it needed a fixed 6.5em gutter to keep the three numbers on one edge — an edge that belonged
    to the longest word rather than to the grid. Stacked, the numbers start on the track. */
 .about-route .about-lens__read > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+/* THE RESULT STAGE'S LABEL VOICE (19.09.26, audit W2, by request): 13px in the Title Case they are
+   written in, muted, where they were 11px capitals. A label that names a value is set as the tool's
+   metrics are; capitals name a surface, a group or a state (the Q5 rule). */
 .about-route .about-lens__read dt{
   font-family:'Neue Montreal',system-ui,sans-serif;
-  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-size:var(--fs-body);letter-spacing:var(--track-flat);
   color:var(--on-surface-muted);
 }
 .about-route .about-lens__read dd{
@@ -559,8 +565,7 @@
   font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
-/* One number, so it gets to be the biggest thing in the figure. The unit rides at label size beside
-   it rather than at the same weight, because "5.56" is the measurement and "to 1" is its notation. */
+/* One number, so it gets to be the biggest thing in the figure, written 6.09:1 since 19.09.26. */
 /* ALIGNED TO THE BOTTOM OF THE SHARED ROW, which is where the other lens's numerals are. This lens
    has no term to set over its value — the figure label above the band already says WCAG CONTRAST, and
    a second "RATIO" under it would name the same thing twice — so the row is as tall as the other
@@ -579,10 +584,8 @@
   font-size:var(--fs-section);line-height:1.1;letter-spacing:var(--track-statement);
   color:var(--on-surface);font-variant-numeric:tabular-nums;
 }
-.about-route .about-lens__ratio span{
-  font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
-  color:var(--on-surface-muted);margin-inline-start:.6em;
-}
+/* "6.09:1" (19.09.26, by request): written as the tool writes a ratio, one string in one ink, where it
+   was "6.09" with "to 1" beside it as notation. The span that styled the notation went with it. */
 /* TWO THIRDS OF THE LENS, so the note ends on a column line like everything else in the figure. A ch
    cap is a measure but it is not a place: at 42ch the note stopped 312px into a 684px column, an edge
    belonging to nothing. Two of the readout's three tracks plus the gutter between them is
@@ -756,8 +759,19 @@
   gap:clamp(12px,2vw,28px);
   padding:11px 0;border-bottom:1px solid var(--line);
 }
-.about-matrix__pair{display:flex;gap:4px}
-.about-matrix__pair .about-key__chip{width:22px;height:14px}
+/* A PAIR IS ITS TEXT COLOUR ON ITS GROUND (19.09.26, by request: "Aa chip everywhere"). "Aa" in the
+   first colour on a stadium of the second, so which colour is the text and which the background reads off
+   the mark itself; the two chips and the two discs before it left that to a convention. The same mark is
+   in the contrast checker's Best Pair Sample and the phone story's contrast rows (AppView PairMark), at
+   the same 40 by 26, 13px Medium and 14% edge. */
+.about-pair{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  width:40px;height:26px;border-radius:var(--radius-pill);
+  background:var(--pair-bg);color:var(--pair-fg);
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;
+  letter-spacing:var(--track-flat);line-height:1;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent);
+}
 .about-route .about-matrix__val,
 [data-mobile-story] .about-matrix__val{
   font-family:'Neue Montreal',system-ui,sans-serif;
@@ -846,12 +860,12 @@
   box-shadow:inset 0 0 0 1px rgb(255 255 255 / .1);
 }
 .about-route .about-role__name{position:relative;z-index:1;font-size:var(--fs-subtitle);color:var(--role-ink,#fff)}
-/* The phone story's role cards: the name's annotations stay a size below it (18.09.26, by request:
-   "keep each line's own size"), at Medium and in their own case like the name. How it Works' cards
-   carry neither any more. The hex keeps its capitals because the story hands some hexes over in
-   lower case, and notation on this site is written #6881AE wherever it comes from. */
-.about-role__hex,.about-role__note{
-  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;
+/* The phone story's role cards: the hex under the name, Regular since 19.09.26 (by request: "let hex
+   code be regular weight"), so the share is the figure. How it Works' cards no longer carry
+   it. The hex keeps its capitals because the story hands some hexes over in lower case, and notation
+   on this site is written #6881AE wherever it comes from. */
+.about-role__hex{
+  font-family:'Neue Montreal',system-ui,sans-serif;font-weight:400;
   font-size:var(--fs-fine);letter-spacing:var(--track-flat);
   color:var(--on-surface-muted);font-variant-numeric:tabular-nums;
 }
@@ -929,6 +943,16 @@
   display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:16px;
   padding:12px 0;border-bottom:1px solid var(--line);
 }
+/* ON HOW IT WORKS THE COLUMNS ARE THE LIST'S, NOT EACH ROW'S (19.09.26, interface review, by request:
+   "fix all"). Each li was its own grid, so every row sized its tracks from its own verdict, and in 3.2
+   the last ratio ended 116px left of the other three because "Meaningful Non-Text Elements at AA" is
+   the widest pill. The list is the grid now and each row a subgrid of it, so the ratios end on one
+   edge and the pills on another, the row's end. The phone story's rows keep their own tracks: there
+   the ratio rides with its chip. The 820px block below turns this back into a row per grid. */
+.about-route .about-checks{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:16px}
+.about-route .about-checks li{grid-column:1/-1;grid-template-columns:subgrid}
+.about-route .about-checks__val,
+.about-route .about-checks__verdict{justify-self:end}
 .about-checks__pair{display:flex;align-items:center;gap:10px;min-width:0;font-size:var(--fs-body);letter-spacing:var(--track-body)}
 .about-checks__val{font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-flat)}
 /* .about-checks__use, the plain uppercase label in See Frozen Slate in Use (3.3 then, 3.2 since
@@ -1558,6 +1582,15 @@
   .about-roles{grid-template-columns:repeat(2, minmax(0, 1fr))}
   .about-checks li{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
   .about-checks__verdict{grid-column:2}
+  /* HOW IT WORKS' VERDICT TAKES ITS OWN LINE, THE ROW'S FULL WIDTH (19.09.26, interface review, by
+     request: "fix all"). In column 2 the widest pill set that column for its row, so 3.2's "Accent
+     against background" wrapped to three lines beside a column of air. Spanning the row and ending on
+     its edge, the pill still finishes where the ratio does, and column 2 is the ratio's alone. The list
+     is one grid per row again at this width (the subgrid above is desktop's). The phone story keeps the
+     rule above: its verdict shares the chip's line. */
+  .about-route .about-checks{display:block}
+  .about-route .about-checks li{grid-template-columns:minmax(0,1fr) auto}
+  .about-route .about-checks__verdict{grid-column:1/-1}
   /* THE MEASUREMENT AND ITS VERDICT ARE ONE COLUMN, SO THEY END ON ONE EDGE. Each li is its own
      grid, so this second track is sized by whichever of the two is wider — always the verdict, at
      four or five uppercase words against "10.3 to 1". The ratio then sat at that track's LEFT edge,
@@ -1571,9 +1604,8 @@
      makes the tabular figures already declared on .about-checks__val do the job they are for: right
      aligned and tabular, the decimal points stack and the six ratios can be read down as a set.
 
-     ONLY HERE. Above 820 the row is three tracks and the ratio has one to itself, sized to its own
-     content — there is no slack for an alignment to take up, and this would be a no-op stating a
-     decision that is not being made. */
+     Above 820 How it Works shares its columns across the list (the subgrid rule by the base rule), so
+     the ratios end on one edge there too, and the same justify-self does it. */
   .about-checks__val{justify-self:end}
   .about-route .about-ui__actions{flex-wrap:wrap}
   /* THE STACK IS NOT RELEASED HERE, and the two rules that used to be are gone.

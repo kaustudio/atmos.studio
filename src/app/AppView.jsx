@@ -325,7 +325,7 @@ const RowMain = ({ c, inv }) => (
         <span style={inv ? c.metricValueInv : c.metricValue}><span style={sx('display:inline-block;min-width:1ch;text-align:end')}>{c.aaNum}</span>{c.aaDen}</span>
       </span>
       {/* MAX CONTRAST — a separate measurement, so a separate column */}
-      <span data-row-cell="contrast" style={inv ? c.contrastCellInv : c.contrastCell}>{c.contrastValueText}</span>
+      <span data-row-cell="contrast" style={inv ? c.contrastCellInv : c.contrastCell}>{withRatios(c.contrastValueText)}</span>
       {/* absolute stamp as the value, relative as the hover layer; the row's aria
           sentence still ends "Generated 3h ago", so both forms reach every modality.
           data-row-time is the hook for the one movement in this row: on hover it steps
@@ -911,13 +911,13 @@ function MobileStory({ st }) {
         <section id="story-where" data-story-ch="where" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>See Where Each Colour Comes From</h2>
-            <p data-reveal>
-              {st.allRegion
-                ? 'Select a colour to find it in the photograph.'
-                : st.anyRegion
-                  ? 'Select a colour to find it in the photograph. The finest shares are marked as too spread to locate.'
-                  : 'These colours are spread too finely to locate. Everything below still applies.'}
-            </p>
+            {/* ONE SENTENCE, WHATEVER THE MASKS SAY (19.09.26). It told a case with no locatable colour
+                that they were "spread too finely to locate", and that note went by request ("we
+                overexplain too much"). Every example locates at least two colours once its masks are
+                built. A constant also can't go stale: data-reveal splits this paragraph and writes back
+                the markup it split when the reveal ends, so a sentence React set mid-reveal was
+                written over, and a case chosen before its masks were built kept the no-region one. */}
+            <p data-reveal>Select a colour to find it in the photograph.</p>
           </div>
           {st.hasImage && (
             <figure className="about-figure about-figure--full">
@@ -939,14 +939,21 @@ function MobileStory({ st }) {
                       <button type="button" className="about-role" data-story-pick="1" data-ix="cell" data-focus="value"
                         aria-pressed={r.selected} aria-label={r.aria} onClick={r.onPick}>
                         <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
-                        <span className="about-role__hex">{r.hex}</span>
-                        <span className="about-role__note">{r.pct + ' of the frame'}</span>
+                        {/* THE SHARE, BARE, AT THE CELL'S BOTTOM RIGHT (19.09.26, by request: "just write % in
+                            the bottom right", and "of the frame" goes everywhere, since it took too much room).
+                            The hex holds the caption's top left and the share its own last line, on the right;
+                            story.css places them. */}
+                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </button>
                     ) : (
-                      <div className="about-role" data-story-pick="1">
+                      <div className="about-role" data-story-pick="1" data-unlocatable={st.masksReady ? '' : undefined}>
                         <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
-                        <span className="about-role__hex">{r.hex}</span>
-                        <span className="about-role__note">{r.pct + ', spread too finely to locate'}</span>
+                        {/* NO NOTE SAYING WHY (19.09.26, by request: "We don't need to explicitly say 'Spread
+                            too finely to locate'… We overexplain too much"). NOR THE CARD'S EDGE (same day,
+                            interface review, by request: "fix all"): looking like its pressable neighbours, it
+                            promised a tap that did nothing. data-unlocatable waits for the masks, because
+                            until they are built every cell is a div; story.css takes the edge away. */}
+                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </div>
                     )}
                   </li>
@@ -1050,8 +1057,7 @@ function MobileStory({ st }) {
                     <div key={c.key} className="about-role">
                       <span className="about-role__swatch" style={{ background: c.swatch }} aria-hidden="true"></span>
                       <span className="about-role__name">{c.name}</span>
-                      <span className="about-role__hex">{c.hex}</span>
-                      <span className="about-role__note">{c.note}</span>
+                      <span className="about-role__foot"><span className="about-role__hex">{c.hex}</span><span className="about-role__pct">{c.pct}</span></span>
                     </div>
                   ))}
                 </div>
@@ -1065,20 +1071,22 @@ function MobileStory({ st }) {
                     not a sentence. aaCount says the same thing and says it whole, so the line survives
                     the other two by carrying something the toggle does not already say. It is also
                     the only place the overall verdict appears: the list below is per pair. */}
-                <p className="about-figure__label">{st.aaCount}</p>
-                {/* `.about-checks` — About's narrow-column form of the pair row, right here twice over:
-                    it fits one phone column, and its `__pair` slot holds the pair's NAME as text beside
-                    the chips. The matrix form left "which two colours" to two unlabelled swatches,
-                    which is the one thing this page may not do — state something in colour alone. */}
+                <p className="about-figure__label">{withRatios(st.aaCount)}</p>
+                {/* `.about-checks` — About's narrow-column form of the pair row. THE PAIR IS DRAWN, NOT
+                    SPELLED (19.09.26, by request: "remove the hex here and apply the same visual as we use
+                    for Best pairs"): the checker's two overlapping discs with the ratio beside them, one
+                    unit, and the verdict at the row's end, so each pair takes one line where it took
+                    two. The row used to name its pair as text beside two square chips, "#0A2944 on
+                    #D0D2C6", on the argument that a pair shown only in colour says it in colour alone;
+                    the name is still there for a screen reader, visually hidden, as the checker's is. */}
                 <ul className="about-checks" data-cascade>
                   {st.pairs.map((pr) => (
                     <li key={pr.key} className={pr.cls}>
                       <span className="about-checks__pair">
-                        <span className="about-key__chip" style={{ background: pr.a }} aria-hidden="true"></span>
-                        <span className="about-key__chip" style={{ background: pr.b }} aria-hidden="true"></span>
-                        {pr.pair}
+                        <PairMark fg={pr.a} bg={pr.b} />
+                        <span style={visuallyHidden}>{pr.pair}, </span>
+                        <span className="about-checks__val">{withRatios(pr.val)}</span>
                       </span>
-                      <span className="about-checks__val">{pr.val}</span>
                       <span className="about-checks__verdict">{pr.use}</span>
                     </li>
                   ))}
@@ -1409,6 +1417,33 @@ function MobileShareView({ ms }) {
    the live region and is now also what the contrast matrix's per-cell descriptions ride, so the two
    cannot drift into two slightly different ways of hiding the same kind of text. */
 const visuallyHidden = sx('position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:-1px;padding:0;border:0');
+/* THE PAIR, AS ITS TEXT ON ITS GROUND (19.09.26, by request: "Aa chip everywhere"). "Aa" in the text
+   colour on a stadium of the background, so which colour is which reads off the mark. It replaced two
+   overlapping discs, which asked a reader to know that the one behind was the background. The contrast
+   checker's Best Pair Sample and the phone story's contrast rows use it, and How it Works draws the same
+   chip from about.css (.about-pair), at the same 40 by 26, 13px Medium and 14% edge. The hexes are still
+   said, visually hidden, by whoever places the mark. */
+const PairMark = ({ fg, bg }) => (
+  <span aria-hidden="true" style={{ ...sx("display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:26px;border-radius:var(--radius-pill);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)"), background: bg, color: fg }}>Aa</span>
+);
+/* EVERY "4.5:1" IN A STRING IS DRAWN AS WRITTEN AND SAID "4.5 TO 1" (19.09.26, interface review, by
+   request: "fix all"). The figure goes in a [data-ratio] span whose ":1" global.css generates with " to 1"
+   as its alternative text. renderVals keeps its strings whole, since titles and sorting read them there;
+   only what is rendered as text passes through here. A string without a ratio comes back untouched. */
+const RATIO_IN_TEXT = /(\d+(?:\.\d+)?):1(?!\d)/g;
+const hasRatio = (s) => typeof s === 'string' && s.indexOf(':1') >= 0 && /\d:1(?!\d)/.test(s);
+const withRatios = (s) => {
+  if (!hasRatio(s)) return s;
+  const out = []; let last = 0;
+  s.replace(RATIO_IN_TEXT, (m, n, at) => { if (at > last) out.push(s.slice(last, at)); out.push(<span key={at} data-ratio="">{n}</span>); last = at + m.length; return m; });
+  if (last < s.length) out.push(s.slice(last));
+  return out;
+};
+/* A SPLIT TARGET CANNOT TAKE THE SPAN. _maskLineReveal splits an element and writes its markup back by
+   innerHTML, so a React element inside one goes inert, and a later value would never reach the page (a
+   lone text child is safe: React sets textContent on the parent). There the string stays whole, is hidden
+   from a screen reader, and this is said beside it, visually hidden. */
+const spokenRatios = (s) => s.replace(RATIO_IN_TEXT, '$1 to 1');
 const liveRegionStyle = visuallyHidden;
 
 /* FIRST IN THE TAB ORDER, ON EVERY BRANCH. Rendered ahead of each return's live region rather than
@@ -2525,7 +2560,8 @@ export default function AppView({ vals }) {
                           <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
-                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')}>{m.value}</span>
+                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')} aria-hidden={hasRatio(m.value) ? 'true' : undefined}>{m.value}</span>
+                            {hasRatio(m.value) && <span style={visuallyHidden}>{spokenRatios(m.value)}</span>}
                           </dd>
                         </div>
                         <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
@@ -3226,7 +3262,7 @@ function ContrastDrawer({ vals }) {
         <div data-cx-sec="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:16px var(--page-gutter) 0')}>
           {/* The rule's other label (19.09.26, audit U8, by request): 13px Title Case, muted, where it was
               11px capitals. "Minimum" names the value beside it. */}
-          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
+          <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{withRatios(contrast.minText)}</span>
           <span data-cx-summary="1" data-drawer-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
         </div>
 
@@ -3285,7 +3321,8 @@ function ContrastDrawer({ vals }) {
             {contrast.textOn.map((t, ti) => (
               <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
                 <span style={{ fontSize: 'var(--fs-label)' }}>{t.hex}</span>
-                <span style={sx('text-transform: uppercase; font-size:var(--fs-label)')}>{t.onLabel} · {t.ratio}:1</span>
+                {/* No capitals (19.09.26, audit W2): a value, in the Title Case of the Q5 rule. */}
+                <span style={sx('font-size:var(--fs-label)')}>{t.onLabel} · <span data-ratio="">{t.ratio}</span></span>
               </div>
             ))}
           </div>
@@ -3295,18 +3332,14 @@ function ContrastDrawer({ vals }) {
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
             {/* THE BUTTONS' TYPE (18.09.26, by request): the label at 13px Medium in its own Title Case,
                 where it was 11px capitals; the ratio beside it keeps its own smaller step, at Medium.
-                THE PAIR IS DRAWN, NOT SPELLED (same day, by request, option C of three): the background's
-                disc behind, the text colour's disc over it, ringed in the drawer's own --surface so the
-                two read as two; both carry the swatch idiom's 14% edge so a colour near the drawer's own
-                stays visible. The hexes are still said — visually hidden, ahead of the ratio. */}
+                THE PAIR IS DRAWN, NOT SPELLED (same day, by request, option C of three), as "Aa" in the text
+                colour on the background since 19.09.26 (PairMark), where it was two overlapping discs. The
+                hexes are still said, visually hidden, ahead of the ratio. */}
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Best Pair Sample</span>
             <span style={sx('display:inline-flex;align-items:center;gap:8px;font-family:Neue Montreal;font-size:var(--fs-label);font-weight:500;color:var(--on-surface-muted)')}>
-              <span aria-hidden="true" style={sx('position:relative;display:inline-block;flex:none;width:28px;height:18px')}>
-                <span style={{ position: 'absolute', left: 0, top: 0, width: 18, height: 18, borderRadius: 'var(--radius-pill)', background: contrast.sampleBg, boxShadow: 'inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)' }} />
-                <span style={{ position: 'absolute', left: 10, top: 0, width: 18, height: 18, borderRadius: 'var(--radius-pill)', background: contrast.sampleFg, boxShadow: '0 0 0 2px var(--surface), inset 0 0 0 1px color-mix(in srgb,var(--on-surface) 14%,transparent)' }} />
-              </span>
+              <PairMark fg={contrast.sampleFg} bg={contrast.sampleBg} />
               <span style={visuallyHidden}>{contrast.sampleFg} on {contrast.sampleBg}, </span>
-              <span>{contrast.sampleRatio}:1</span>
+              <span>{withRatios(contrast.sampleRatio + ':1')}</span>
             </span>
           </div>
           {/* The words have a box of their own so their size can step while the sample's box
@@ -3973,11 +4006,13 @@ function ExportDialog({ vals }) {
             bottom edge. Same figure, moved up one row. */}
         <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 22px')}>
           <div style={{ minWidth: 0 }}>
-            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-detail); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
+            {/* The rows' voice, 13px Medium (19.09.26, audit W4, by request): it names the switch beside it,
+                as Passing Only's words name its control, and at 12px Regular it read as description. */}
+            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface); text-transform: capitalize")}>Semantic scaffold</div>
             {/* What the switch adds, said once and left standing: the toggle used to be a bare
                 label, and a reader met six roles in the file with nothing on the sheet saying they
                 were suggestions. */}
-            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-fine); line-height:1.5; color: var(--on-surface-muted); text-wrap:pretty; margin-top:4px")}>Adds six suggested roles per palette, background to text. Suggestions to review, not decisions.</div>
+            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-fine); line-height:1.5; color: var(--on-surface-muted); text-wrap:pretty; margin-top:4px")}>Adds six suggested roles per palette, background to text.</div>
           </div>
           {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
               the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
@@ -4281,11 +4316,15 @@ function ToastLayer({ vals }) {
    the toast where it is; the toast coming or going moves the notice by its own height and the gap,
    and the notice glides there (_noticeRide in overlays.js) rather than jumping.
    The notice was at 128 on its own; it shares the toast's 158 now, which clears the library panel
-   (156) it can be raised from and stays under the wipe, the lightbox and the loader. */
+   (156) it can be raised from and stays under the wipe, the lightbox and the loader.
+   IT STANDS CLEAR OF THE BOTTOM BARS (19.09.26, audit W1, by request). A notice sat on the grid's dock
+   and hid its close, the toast stood in the palette detail's action row like a sixth act, and at
+   1024px it touched the analytics banner. --lane-lift raises the lane a gutter above whichever bar is
+   under it (_syncLaneLift in overlays.js), gliding on the state beat. */
 function MessageLane({ vals }) {
   if (!vals.hasToast && !vals.hasNotice) return null;
   return (
-    <div data-message-lane="1" style={sx('position:fixed;left:0;right:0;bottom:var(--page-gutter);z-index:158;display:flex;flex-direction:column;align-items:center;gap:8px;padding-inline:var(--page-gutter);pointer-events:none')}>
+    <div data-message-lane="1" style={sx('position:fixed;left:0;right:0;bottom:calc(var(--page-gutter) + var(--lane-lift, 0px));z-index:158;display:flex;flex-direction:column;align-items:center;gap:8px;padding-inline:var(--page-gutter);pointer-events:none;transition:bottom var(--dur-state) var(--ease-standard)')}>
       <NoticeLayer vals={vals} />
       <ToastLayer vals={vals} />
     </div>

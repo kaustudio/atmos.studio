@@ -205,6 +205,40 @@ export const overlayMethods = {
   // it arrives and after every ride, so a toast replaced by another plays no move that did not happen.
   _noticeLayoutTop() { const n = document.querySelector('[data-notice]'); if (!n) return null; const lane = n.offsetParent; return (lane ? lane.getBoundingClientRect().top : 0) + n.offsetTop; },
   _noticeRide() { const was = this._noticeY, now = this._noticeLayoutTop(); this._noticeY = now; const g = window.gsap; const n = document.querySelector('[data-notice]'); if (this._reduce || !g || !n || was == null || now == null) return; const dy = was - now; if (Math.abs(dy) < 1) return; g.fromTo(n, { y: dy }, { y: 0, duration: this.DUR.state, ease: this.EASE.standard, clearProps: 'transform' }); },
+  // THE LANE STANDS CLEAR OF THE BOTTOM BARS (19.09.26, audit W1, by request). Three surfaces keep a bar
+  // at the bottom edge: the grid's dock, the palette detail's footer, and the analytics banner, which
+  // shares that edge with the lane at narrow widths. When one sits under the lane, the lane rises to a
+  // gutter above it (--lane-lift, gliding on the lane's own transition); when it goes, the lane settles
+  // back. Measured rather than assumed, so a taller footer or a wrapped banner is still cleared, and
+  // measured again once the surfaces' own arrivals are over, since a rect taken mid-arrival is not
+  // where the bar lands. A bar only counts where it overlaps the messages across, so the banner in its
+  // corner at 1440 leaves the lane alone.
+  _syncLaneLift() {
+    if (!document.querySelector('[data-message-lane]')) return;
+    this._laneLiftNow();
+    clearTimeout(this._laneT);
+    this._laneT = setTimeout(() => { this._laneT = null; this._laneLiftNow(); }, this.DUR.overlay * 1000 + 60);
+  },
+  _laneLiftNow() {
+    const lane = document.querySelector('[data-message-lane]');
+    if (!lane) return;
+    const items = [...lane.children].map((e) => e.getBoundingClientRect()).filter((q) => q.width);
+    if (!items.length) return;
+    const l = Math.min(...items.map((q) => q.left)), r = Math.max(...items.map((q) => q.right));
+    const bars = [];
+    if (this.state.feedView === 'grid') { const d = document.querySelector('[data-grid-dock]'); if (d) bars.push(...d.children); }
+    if (this.state.overlay) { const f = document.querySelector('[data-overlay-stage] footer'); if (f) bars.push(f); }
+    const c = document.querySelector('[data-consent]'); if (c) bars.push(c);
+    let top = Infinity;
+    for (const b of bars) {
+      const q = b.getBoundingClientRect(); if (!q.width || !q.height || q.right <= l || q.left >= r) continue;
+      const st = getComputedStyle(b); if (st.visibility === 'hidden' || +st.opacity < 0.05) continue;
+      top = Math.min(top, q.top);
+    }
+    // lane bottom = gutter + lift, and it should end a gutter above the bar: lift = innerHeight - top.
+    const lift = top === Infinity ? 0 : Math.max(0, Math.round(window.innerHeight - top));
+    lane.style.setProperty('--lane-lift', lift + 'px');
+  },
   // The ✕ on the toast: letting the undo go is a decision, so it discards the held record — the
   // same forfeit the old timer performed silently. If focus was inside the toast it would die with
   // it (the control disappears mid-press), so it is handed to the first row's own hit surface —

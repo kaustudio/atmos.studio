@@ -234,7 +234,7 @@ export const renderValsMethods = {
         const textOn = sw.map((b) => {
           const on = this.onColor(b.hex); const r = this.contrastRatio(b.hex, on);
           return {
-            hex: b.hex.toUpperCase(), onLabel: on === '#000000' ? 'Black text' : 'White text', ratio: r.toFixed(1),
+            hex: b.hex.toUpperCase(), onLabel: on === '#000000' ? 'Black Text' : 'White Text', ratio: r.toFixed(1),
             style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', background: b.hex, color: on, padding: '10px 12px', minWidth: 0, borderRadius: 'var(--radius-swatch)' },
             metaStyle: { fontFamily: sans, fontSize: 'var(--fs-label)', opacity: 0.85, whiteSpace: 'nowrap' },
           };
@@ -1424,8 +1424,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         litMask: selected && selected.mask ? selected.mask : null,
         litHex: selected ? selected.hex : '',
         litPct: selected ? selected.pct : '',
-        anyRegion: swatchRows.some((r) => r.hasRegion),
-        allRegion: swatchRows.length > 0 && swatchRows.every((r) => r.hasRegion),
+        // Whether the masks for THIS case are built. Until they are, every swatch renders as a plain
+        // cell because none has a region yet, so "not a button" only means "cannot be located" once
+        // this is true (the picker's unlocatable cells drop their edge on it; see story.css).
+        masksReady: !!masks,
 
         /* CHAPTER 5 — three readings, one palette. Segmented buttons carrying aria-pressed, not a
            tablist: there is no tab primitive in this codebase and a control that announces itself
@@ -1455,8 +1457,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           return {
             key: r.role, name: ROLE_LABEL[r.role], hex: r.hex.toUpperCase(), swatch: r.hex,
             // The note /about's own role cells carry: what share of the frame this colour holds.
-            note: share === null ? '' : share + '% of the frame',
-            aria: ROLE_LABEL[r.role] + ', ' + r.hex.toUpperCase() + (share === null ? '' : ', ' + share + ' percent of the frame'),
+            // The share alone, set at the cell's bottom right (19.09.26, by request: "of the frame" went).
+            pct: share === null ? '' : share + '%',
           };
         }),
         /* The strongest pairs, ranked, classified in WORDS as well as by fill — the matrix figure's
@@ -1472,7 +1474,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
                 key: i + '-' + j, a: p.swatches[i].hex, b: p.swatches[j].hex, ratio,
                 // the band edge this pair was judged against, so the printed figure cannot
                 // appear to cross it the wrong way (see RATIO_TEXT).
-                val: RATIO_TEXT(ratio, ratio >= 4.5 ? 4.5 : 3) + ' to 1',
+                // ":1", as the tool writes a ratio (19.09.26, by request). AppView renders it through
+                // withRatios, so the ":1" is drawn and a screen reader hears "to 1" ([data-ratio]).
+                val: RATIO_TEXT(ratio, ratio >= 4.5 ? 4.5 : 3) + ':1',
                 // .about-checks' own three states, not .about-matrix's — see the note on the panel.
                 cls: ratio >= 4.5 ? 'is--pass' : ratio >= 3 ? 'is--part' : 'is--fail',
                 /* "DECORATIVE", NOT "GRAPHIC", AND THE DIFFERENCE IS A SUCCESS CRITERION. The third
@@ -1486,8 +1490,6 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
                 use: ratio >= 4.5 ? 'Body Text at AA' : ratio >= 3 ? 'Large Text at AA' : 'Decorative Only',
                 // NAMED, not left to two colour chips. The chips are decoration beside this.
                 pair: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase(),
-                aria: p.swatches[i].hex.toUpperCase() + ' on ' + p.swatches[j].hex.toUpperCase() + ', '
-                  + RATIO_TEXT(ratio, ratio >= 4.5 ? 4.5 : 3) + ' to 1, ' + (ratio >= 4.5 ? 'usable for body text' : ratio >= 3 ? 'usable for large text' : 'decorative use only'),
               });
             }
           }
@@ -1504,7 +1506,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // A11Y_LABEL, not A11Y_TITLE: the caption wants the NAME (Text-Ready); A11Y_TITLE is that
         // name plus its definition, which is a tooltip's job and a full line of type here.
         aaLabel: A11Y_LABEL[met.aaState],
-        aaCount: met.aaPairs + ' of ' + met.totalPairs + ' pairs reach 4.5:1',
+        // Title Case (19.09.26, audit W3, by request), at the figure labels' 13px Medium (about.css).
+        aaCount: met.aaPairs + ' of ' + met.totalPairs + ' Pairs Reach 4.5:1',
 
         /* CHAPTER 7 — the other cases, as a swipeable row. The same records the library shows and
            the example list shows; a third way of describing a palette would be a third thing to

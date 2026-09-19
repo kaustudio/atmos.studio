@@ -146,7 +146,7 @@
         <div class="about-lens__body" style="--lens-swatch:#EAE8DD"></div>
         <div class="about-lens__body" style="--lens-swatch:#3C5E19"></div>
       </div>
-      <p class="about-lens__ratio">6.09<span> to 1</span></p>
+      <p class="about-lens__ratio"><span data-ratio>6.09</span></p>
       <p class="about-lens__note">Describes what a pair can do. It has no meaning until a second colour is named.</p>
     </div>
   </figure>
@@ -190,17 +190,17 @@
 <section id="reading-wcag-contrast" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">1.4</span>Reading WCAG Contrast</h2>
-    <p data-reveal>Contrast compares two colours, such as text and its background. Atmos calculates their contrast ratio using the WCAG formula for relative luminance. Results range from 1 to 1 for equal luminance to 21 to 1 for black and white.</p>
-    <p data-reveal>The contrast you need depends on how you use the pair. At WCAG AA, normal text requires at least 4.5 to 1 and large text at least 3 to 1. Visual details needed to identify controls or understand graphics generally require 3 to 1 against adjacent colours.</p>
-    <p data-reveal>Pairs below 3 to 1 can still be used for decoration where the colour difference is not needed to read content, identify a control or understand information.</p>
+    <p data-reveal>Contrast compares two colours, such as text and its background. Atmos calculates their contrast ratio using the WCAG formula for relative luminance. Results range from <span data-ratio>1</span> for equal luminance to <span data-ratio>21</span> for black and white.</p>
+    <p data-reveal>The contrast you need depends on how you use the pair. At WCAG AA, normal text requires at least <span data-ratio>4.5</span> and large text at least <span data-ratio>3</span>. Visual details needed to identify controls or understand graphics generally require <span data-ratio>3</span> against adjacent colours.</p>
+    <p data-reveal>Pairs below <span data-ratio>3</span> can still be used for decoration where the colour difference is not needed to read content, identify a control or understand information.</p>
     <p class="about-lead" data-reveal>Meeting a contrast requirement does not make the whole design accessible. Check each pair in the context where you use it.</p>
   </div>
 
   <figure class="about-figure about-figure--full">
     <ul class="about-thresholds" data-cascade>
-      <li><span class="about-thresholds__role">Body text</span><span class="about-thresholds__val">4.5 to 1 or higher</span></li>
-      <li><span class="about-thresholds__role">Large text</span><span class="about-thresholds__val">3 to 1 or higher</span></li>
-      <li><span class="about-thresholds__role">Meaningful graphics and interface elements</span><span class="about-thresholds__val">3 to 1 or higher against adjacent colours</span></li>
+      <li><span class="about-thresholds__role">Body text</span><span class="about-thresholds__val"><span data-ratio>4.5</span> or higher</span></li>
+      <li><span class="about-thresholds__role">Large text</span><span class="about-thresholds__val"><span data-ratio>3</span> or higher</span></li>
+      <li><span class="about-thresholds__role">Meaningful graphics and interface elements</span><span class="about-thresholds__val"><span data-ratio>3</span> or higher against adjacent colours</span></li>
     </ul>
     <!-- No rule between the list and its caption, by request. The caption is already set apart by
          its own type, and .about-figure .about-divider adds 22px above what the figcaption's own
@@ -416,12 +416,12 @@
         </div>
       </div>
       <ul class="about-checks">
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on background</span><span class="about-checks__val">8.53 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on surface</span><span class="about-checks__val">8.20 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#8ca6d5"></span>Text on primary</span><span class="about-checks__val">4.51 to 1</span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-key__chip" style="background:#6881ae"></span>Accent against background</span><span class="about-checks__val">5.34 to 1</span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#000000">Aa</span>Text on background</span><span class="about-checks__val"><span data-ratio>8.53</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#090606">Aa</span>Text on surface</span><span class="about-checks__val"><span data-ratio>8.20</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#383B49">Aa</span>Text on primary</span><span class="about-checks__val"><span data-ratio>4.51</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#6881AE;--pair-bg:#000000">Aa</span>Accent against background</span><span class="about-checks__val"><span data-ratio>5.34</span></span><span class="about-checks__verdict">Meaningful Non-Text Elements at AA</span></li>
       </ul>
-      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least 4.5 to 1. They can support body text at AA when used as foreground and background.</p>
+      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least <span data-ratio>4.5</span>. They can support body text at AA when used as foreground and background.</p>
     </div>
   </figure>
 </section>
@@ -447,16 +447,16 @@
        NAMED for a screen reader, as the phone story's are, because two chips tell it nothing. -->
   <figure class="about-figure about-figure--full">
     <ul class="about-matrix" data-cascade>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #361905"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">10.26 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #361905"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">4.92 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
-      <li class="is--text"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #933913"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">4.70 to 1</span><span class="about-matrix__use">Body Text at AA</span></li>
-      <li class="is--large"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #A74B1B"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">3.63 to 1</span><span class="about-matrix__use">Large Text and UI at AA</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #361905"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.82 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #933913"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">2.25 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#933913 and #361905"><span class="about-key__chip" style="background:#933913"></span><span class="about-key__chip" style="background:#361905"></span></span><span class="about-matrix__val">2.18 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#D5CDBF and #AB8766"><span class="about-key__chip" style="background:#d5cdbf"></span><span class="about-key__chip" style="background:#ab8766"></span></span><span class="about-matrix__val">2.08 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#AB8766 and #A74B1B"><span class="about-key__chip" style="background:#ab8766"></span><span class="about-key__chip" style="background:#a74b1b"></span></span><span class="about-matrix__val">1.74 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
-      <li class="is--none"><span class="about-matrix__pair" role="img" aria-label="#A74B1B and #933913"><span class="about-key__chip" style="background:#a74b1b"></span><span class="about-key__chip" style="background:#933913"></span></span><span class="about-matrix__val">1.29 to 1</span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--text"><span class="about-matrix__pair about-pair" role="img" aria-label="#D5CDBF on #361905" style="--pair-fg:#D5CDBF;--pair-bg:#361905">Aa</span><span class="about-matrix__val"><span data-ratio>10.26</span></span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair about-pair" role="img" aria-label="#AB8766 on #361905" style="--pair-fg:#AB8766;--pair-bg:#361905">Aa</span><span class="about-matrix__val"><span data-ratio>4.92</span></span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--text"><span class="about-matrix__pair about-pair" role="img" aria-label="#D5CDBF on #933913" style="--pair-fg:#D5CDBF;--pair-bg:#933913">Aa</span><span class="about-matrix__val"><span data-ratio>4.70</span></span><span class="about-matrix__use">Body Text at AA</span></li>
+      <li class="is--large"><span class="about-matrix__pair about-pair" role="img" aria-label="#D5CDBF on #A74B1B" style="--pair-fg:#D5CDBF;--pair-bg:#A74B1B">Aa</span><span class="about-matrix__val"><span data-ratio>3.63</span></span><span class="about-matrix__use">Large Text and UI at AA</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#A74B1B on #361905" style="--pair-fg:#A74B1B;--pair-bg:#361905">Aa</span><span class="about-matrix__val"><span data-ratio>2.82</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#AB8766 on #933913" style="--pair-fg:#AB8766;--pair-bg:#933913">Aa</span><span class="about-matrix__val"><span data-ratio>2.25</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#933913 on #361905" style="--pair-fg:#933913;--pair-bg:#361905">Aa</span><span class="about-matrix__val"><span data-ratio>2.18</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#D5CDBF on #AB8766" style="--pair-fg:#D5CDBF;--pair-bg:#AB8766">Aa</span><span class="about-matrix__val"><span data-ratio>2.08</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#AB8766 on #A74B1B" style="--pair-fg:#AB8766;--pair-bg:#A74B1B">Aa</span><span class="about-matrix__val"><span data-ratio>1.74</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
+      <li class="is--none"><span class="about-matrix__pair about-pair" role="img" aria-label="#A74B1B on #933913" style="--pair-fg:#A74B1B;--pair-bg:#933913">Aa</span><span class="about-matrix__val"><span data-ratio>1.29</span></span><span class="about-matrix__use">No WCAG Contrast Role</span></li>
     </ul>
     <figcaption data-reveal>Contrast between all ten colour pairs in Dry Season.</figcaption>
   </figure>

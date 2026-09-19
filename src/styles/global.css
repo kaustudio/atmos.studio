@@ -43,6 +43,15 @@ input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0;font
    in it. Stated once, here, where the appearance reset for the same four selectors already lives.
    The inline declarations are now redundant rather than wrong; removing them is a separate sweep. */
 body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+/* A RATIO IS WRITTEN 4.5:1 AND SAID "4.5 TO 1" (19.09.26, interface review, by request: "fix all"). The
+   figure sits in [data-ratio] (AppView's withRatios, and by hand in about.html) and the ":1" is generated
+   here with " to 1" as its alternative text. So the page keeps the notation, a screen reader says the
+   ratio in words, and the tool, the phone story and How it Works say it one way (the checker's matrix
+   always said "to 1"). The first declaration is for a browser without alternative text in `content`: it
+   draws ":1" and says it as written. No visually hidden span: How it Works splits paragraphs into line
+   masks by offsetTop, and a positioned span inside one would be measured as a line of its own. Copied
+   text loses the ":1", as generated content is never copied. */
+[data-ratio]::after{content:":1";content:":1" / " to 1"}
 /* @keyframes hue and blink, which nothing animated, went on 17.09.26 (audit H3). */
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 /* focus-visible rings — cannot be expressed inline; keyboard-only, high-contrast, distinct from hover */
@@ -153,7 +162,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    chips and Clear Filters under them. Set like the analytics banner's buttons, 13px Medium, from
    viewToggleOptStyle (the applied row inline, AppView); this lifts the capitals the voice above
    gives every control. */
-[data-toggle-btn][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix]{text-transform:none!important}
+[data-toggle-btn][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-story-pick][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
 /* The anchor dock's own case exemption went with the dock (17.09.26). */
 /* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").
@@ -2690,6 +2699,7 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    --consent-glass). An element's own opacity does not: measured in Chrome, a pane at .5 shows its
    blurred copy at half strength over the page, a crossfade, never a sharp frame. -webkit- first,
    standard last; see .button-006. */
+@media (prefers-reduced-motion: reduce){ [data-message-lane]{transition:none!important} }
 [data-toast],
 [data-notice]{
   background-color:color-mix(in srgb, var(--surface) 70%, transparent);

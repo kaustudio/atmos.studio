@@ -551,6 +551,120 @@ ink ground and surface text, where it was an ink ring. The Library's sort header
 `toggleStyle` and keeps its ink-only state. **Kept, by request:** the harmony glyph (Q7), and
 sentence case on Privacy, Terms and "Start here" (Q8).
 
+**The second pass, on the live site (19.09, after 3c94dc9).** All twelve fixes held in production.
+Four new findings (W1–W4) and one question (Q9) came out of it, and all were done the same day, by
+request:
+
+**The message lane stands clear of the bottom bars (W1).** Moving the notice beside the toast (U7)
+brought in the toast's collisions. A notice sat on the grid's dock and hid its close, the toast stood
+in the palette detail's action row like a sixth act, and at 1024px it touched the analytics banner.
+`_syncLaneLift` (overlays.js) measures whichever of those bars is under the messages across, and
+`--lane-lift` raises the lane a gutter above it, gliding on the state beat. It runs after every
+commit, again once the surfaces' own arrivals are over, and on resize. The banner in its corner at
+1440 does not overlap the lane, so it leaves the lane alone.
+
+**The phone story's colour cells caption their swatch as one group (W2, "better visual hierarchy and
+optical balance", "13px medium, but capitalize").** The picker's buttons no longer set their words in
+capitals: the `[data-ix]` default caught only the tappable cells, so one grid spoke in two voices.
+**The hex stays, by request:** it tells look-alike swatches apart and shows two roles sharing one
+colour. The caption's layout was reworked later the same day; see the hex and the share, below.
+
+**The rest of W2:** the contrast checker's rows read "White Text · 20.3:1" without capitals. On How
+it Works 1.2, Lightness, Chroma and Hue take the result stage's 13px Title Case, muted. **"to 1" is
+the figure's own size** (by request: "no need for to 1 to be smaller"), muted, where it was 11px
+capitals set .6em off the number.
+
+**"2 of 10 Pairs Reach 4.5:1" (W3, Q9).** It is the phone's one figure label, and it takes How it
+Works' figure-label voice: 13px Medium in Title Case. It had kept the label voice as "a finding, a
+sentence".
+
+**The phone's contrast rows draw their pair (by request: "remove the hex here and apply the same
+visual as we use for Best pairs").** `PairMark` is the Best Pair Sample's two overlapping discs, now
+one component. With the ratio beside the discs and the verdict at the end, each pair is one 56px
+line where it was two. The hexes are still spoken, visually hidden. The discs became the Aa chip
+later the same day (below).
+
+**Semantic Scaffold's name is 13px Medium (W4),** the rows' voice. "Suggestions to review, not
+decisions." left its description, by request.
+
+**The hex at the top left, the share at the bottom right (19.09, by request).** The user's words,
+in order:
+- "just write % in the bottom right";
+- "globally we should remove 'of the frame'";
+- "let hex code sit top left and % bottom right";
+- "don't decrease the height on the card because we remove text";
+- "let hex code be regular weight and % medium weight a couple of font-sizes higher";
+- "make sure padding for the % on right and bottom is equal";
+- "equal padding for hex code left and top. give top same padding as left".
+
+In the phone picker and the Role cells, every inset is about 8px, measured to the ink rather than the
+line box:
+- The hex is 13px Regular. Its cap line hangs 8.65px under the swatch, as its ink stands 8.4px in from
+  the left; the swatch's margin is 2.5px for that. In Role the name takes that place (8px under the
+  swatch, in the Medium face) with the hex 2px below it.
+- The share is 15px Medium (`--fs-lead`, two rungs up from 13 counting the CTA's 14), alone on the
+  card's last line at the right. 20px was offered as the other reading of "a couple".
+- The share's ink stands 9.4px off the card's right edge and 9.5px off its bottom. The phone's cards
+  take 5px of bottom padding, where they had 20px, because the share's line box keeps 3.5px under its
+  baseline.
+- What the padding and the swatch's margin gave up (15px and 9.5px) stands between the hex and the
+  share, 26.5px. So the cards keep the height their second line gave them: 138px in the picker and
+  156px in Role, where round 3 had 136 and 155.
+
+"Of the frame" is gone from what the cells show. The story's sentence "Each colour holds a share of
+the frame" stays, as prose. A screen reader reads a Role cell as it is shown ("Background, #D0D2C6,
+3%"): the cells ship bare, as How it Works' do, and the unused spoken name was deleted on review.
+
+**Nothing says a colour is too spread to locate (19.09, by request: "We don't need to explicitly say
+'Spread too finely to locate'. Remove it. We overexplain too much").** A cell that can't be located
+is the same caption as its neighbours, and only not a button. Chapter 1.3's lead is one sentence,
+"Select a colour to find it in the photograph." It had a second variant for a case with some
+unlocatable colours and a third for a case with none.
+- On 19.09 all eight examples located at least two colours once their masks were built.
+- The lead is a `data-reveal` split target, and the reveal writes back the markup it split when it
+  ends. So a variant React set mid-reveal was written over, and a case chosen before its masks
+  existed kept the none-locatable sentence.
+
+**Every ratio is written 6.09:1 (19.09, by request: "write :1 instead of to 1 … globally").** That
+covers How it Works (the lens, the thresholds, the prose, and 3.2's and 3.3's rows) and the phone
+story's contrast rows, as the tool already wrote them. The lightness scale "from 0 to 1" is not a
+ratio and stays. A screen reader was then given ":1" everywhere but the checker's matrix, which
+always said "to 1"; the interface review put that right (below).
+
+**A pair is "Aa" in its text colour on its background (19.09, by request: "Aa chip everywhere").**
+The overlapping discs asked the reader to know that the disc behind was the background (the user:
+"how do we know which color goes for background and foreground"). `PairMark` (AppView) and
+`.about-pair` (about.css) are one mark: a 40 by 26 stadium of the background with "Aa" at 13px Medium
+in the text colour, on the 14% edge. It appears in four places:
+- the contrast checker's Best Pair Sample;
+- the phone story's contrast rows;
+- How it Works 3.2, where the role pair is still named in words;
+- How it Works 3.3, where each pair's first colour is set as the text.
+
+**The interface review of rounds 3 and 4 (19.09, all seven better-* domains, by request: "fix all").**
+Three findings, all fixed:
+- **A colour the photograph can't locate isn't drawn as a card (UX, medium).** It wore the pressable
+  cells' edge, so on Frozen Slate three of five colours looked tappable under "Select a colour to find
+  it in the photograph" and did nothing (Law of Similarity; a tap with no response). Only pressable
+  cells keep the edge: `data-unlocatable` goes on a plain cell once its case's masks are built, and
+  story.css makes that border transparent, fading on the state beat. No copy came back.
+- **3.2's columns are the list's (layout, medium).** Each row was its own grid, so each verdict pill
+  sized its row's tracks. At 1440 the last ratio ended 116px left of the others, and under 820px
+  "Accent against background" wrapped to three lines. Above 820px How it Works' `.about-checks` is one
+  grid and each row a subgrid, so the ratios share an edge and the pills end the row. Under 820px the
+  verdict takes its own full-width line. The phone story's rows are untouched.
+- **A ratio is written 4.5:1 and said "4.5 to 1" (accessibility, low).** `[data-ratio]::after` in
+  global.css draws ":1" with " to 1" as its alternative text. AppView's `withRatios` puts the figure
+  in the span wherever a ratio is rendered as text: the list's Max Contrast, the checker's Minimum,
+  swatch rows and Best Pair, and the phone's figure label and rows. about.html's 25 ratios carry it by
+  hand. The detail's metric value is a split target, so it keeps its text, hidden from a screen
+  reader, with a visually hidden twin that says it. Copied text loses the ":1". The spoken strings
+  nothing rendered (the phone rows' `aria`, Role's `aria`) are deleted.
+
+Considered and kept: the verdict pills' filled weights (A5, H6), the phone's verdict names beside
+3.3's, "Aa" on the accent pair, the share's 15px beside Role's 13px name, and AppView's inline font
+stacks without a fallback (101 of them, a sweep of its own).
+
 **The page arrows behave like the design system's buttons (18.09, by request).** The pair under
 the list (and the scope rail's, while it lasted) rolls its chevron up through its mask on hover, as
 the list icon, the close marks and every label do. Their hover fill is the primary

@@ -429,6 +429,9 @@ export default class PaletteApp extends React.Component {
     // read "9m ago" for anything under a day old, and nothing else here re-renders on a clock, so
     // "Just now" would stand for as long as the page stayed still. Once a minute, while a stamp is on
     // screen and a palette is young enough to need it, the view is drawn again.
+    // The message lane re-measures the bars under it when the window changes shape (audit W1).
+    this._laneResize = () => { if (document.querySelector('[data-message-lane]')) this._laneLiftNow(); };
+    window.addEventListener('resize', this._laneResize);
     this._stampT = setInterval(() => {
       if (document.hidden || !document.querySelector('[data-row-time], [data-overlay-stage]')) return;
       const reach = 864e5 + 6e4;
@@ -606,6 +609,7 @@ export default class PaletteApp extends React.Component {
     this._syncLandingCover();
     this._syncConsent();
     this._syncFilteredEmpty();
+    this._syncLaneLift();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close
     // remembering to say so. Driven from state so a dialog that is added later is covered by adding
     // its flag here, and can never be half-wired: opened with the background inert, closed without.
@@ -892,6 +896,8 @@ export default class PaletteApp extends React.Component {
   componentWillUnmount() {
     this._alive = false;
     if (this._stampT) { clearInterval(this._stampT); this._stampT = null; }
+    if (this._laneResize) { window.removeEventListener('resize', this._laneResize); this._laneResize = null; }
+    if (this._laneT) { clearTimeout(this._laneT); this._laneT = null; }
     if (this._killPicker) { try { this._killPicker(); } catch (e) { } this._killPicker = null; }
     if (this._storyT) { clearTimeout(this._storyT); this._storyT = null; }
     if (this._maskT) { clearTimeout(this._maskT); this._maskT = null; }
