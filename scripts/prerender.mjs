@@ -178,7 +178,17 @@ for (const [route, meta] of Object.entries(ROUTES)) {
      rewrites the first meta[name=theme-color] it finds from the live --surface token, so a pair
      would have its light half overwritten with the dark value the moment the app mounted, leaving
      two tags that both say #141413. One tag, owned by script from first paint onward, is the only
-     shape that stays correct. */
+     shape that stays correct.
+
+     EDITING THIS SCRIPT MEANS EDITING vercel.json. It is the one inline script the document routes
+     carry, and Content-Security-Policy admits it by the SHA-256 of its exact bytes —
+     'sha256-Z9B7vGa1PNrkiGf9oe1O/PzBUpB09c0OfCl3gxuowtk=' — rather than by 'unsafe-inline', which
+     would have opened every inline script on every route to keep this one alive. A single changed
+     character, whitespace included, invalidates the hash: the browser then refuses the script and
+     a dark-mode reader gets the flash of white this whole block exists to prevent, on the three
+     routes least able to hide it. 404.html carries its own shorter variant and therefore its own
+     second hash. Recompute with:
+       printf '%s' '<the script body, without the tags>' | openssl dgst -sha256 -binary | base64 */
   html = swapTag(
     html,
     /<meta name="theme-color" content="[^"]*"\s*\/>/,

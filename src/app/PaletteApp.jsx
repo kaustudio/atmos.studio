@@ -495,9 +495,17 @@ export default class PaletteApp extends React.Component {
       const waitLocal = () => { if ((window.Observer && window.Flip && window.ScrollToPlugin) || tries >= 40) { finishGsap(); return; } tries++; setTimeout(waitLocal, 50); };
       waitLocal();
     } else {
-      const cdn = 'https://cdn.jsdelivr.net/npm/gsap@3.13/dist/';
+      /* THE RETRY IS SAME-ORIGIN, and it used to be jsdelivr. The six vendored scripts in
+         index.html are `defer`, so they run in document order before this module ever mounts —
+         which means reaching this branch requires one of them to have failed outright. Refetching
+         the identical file from /vendor is the honest response to that: the copy the design was
+         authored against, not whatever gsap@3.13 resolves to on a public CDN today.
+         It is also what lets script-src stay 'self'. Allowing cdn.jsdelivr.net would have opened
+         the policy to every package on it — a whole npm mirror admitted as a trusted script
+         source to keep a path alive that, by construction, almost never runs. */
+      const vendor = '/vendor/';
       const loadSeq = (list) => { if (!list.length) { finishGsap(); return; } const sc = document.createElement('script'); sc.src = list[0]; sc.onload = () => loadSeq(list.slice(1)); sc.onerror = () => loadSeq(list.slice(1)); document.head.appendChild(sc); };
-      loadSeq([cdn + 'gsap.min.js', cdn + 'Observer.min.js', cdn + 'Flip.min.js', cdn + 'ScrollToPlugin.min.js']);
+      loadSeq([vendor + 'gsap.min.js', vendor + 'Observer.min.js', vendor + 'Flip.min.js', vendor + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
       if (e.key === 'Escape') {

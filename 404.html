@@ -16,7 +16,15 @@
      sets at mount. This page has no app and no toggle, so it states the reader's own appearance
      itself, once, before first paint. Inline and blocking on purpose: as a stylesheet link this
      would be a second file to fetch before anything is legible, and as a deferred script it would
-     paint light and then correct itself in front of the reader. -->
+     paint light and then correct itself in front of the reader.
+
+     EDITING THIS LINE MEANS EDITING vercel.json. Content-Security-Policy admits this script by the
+     SHA-256 of its exact bytes — 'sha256-rbf6qhHuZn75ElXI6oR8L/Z9dBbBKOH0JugcqeC0DU8=' — and one
+     changed character, whitespace included, invalidates it: the browser refuses the script and this
+     page paints light for a dark-mode reader. It is a near neighbour of the document routes' script
+     (scripts/prerender.mjs) but NOT the same bytes — that one also rewrites the theme-color tag,
+     which this page does not need because its two tags above are media-scoped — so the two carry
+     two separate hashes and neither edit covers the other. -->
 <script>try{if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="icon" type="image/png" sizes="94x94" href="/assets/atmos-gallery-fav.png" />
 <link rel="apple-touch-icon" href="/assets/atmos-gallery-fav.png" />
