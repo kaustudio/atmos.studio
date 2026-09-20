@@ -5,6 +5,13 @@
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* NO AUTOMATIC TEXT INFLATION (19.09.26, by request: "the font-size for hex and LCH on my phone doesn't
+   reflect the design. Font-size seem too big compared to the localhost"). iOS Safari boosts small text
+   inside wide blocks on its own, and nothing in a desktop browser's phone emulation does — which is why
+   the story's colour tiles set their hex at --fs-body and their OKLCH at --fs-fine here and arrived
+   half again as large on a real iPhone. 100%, not none: this turns the automatic boost off and leaves
+   the reader's own zoom and Dynamic Type exactly as they were. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* NATIVE CONTROLS ARRIVE ROUNDED, and on this site a corner is designed, never inherited.
 
    `appearance:auto` is the default on every button and text field, and what that means is engine

@@ -950,6 +950,55 @@ written. One CopySwap in AppView carries all of it, so the result stage, the det
 harmony drawer cannot drift; the second restart keyframe (val-mask-b) is gone, since remounting both
 spans restarts them.
 
+**The image chooser keeps the story's place (19.09, by request: "when the user scrolls down to the bottom
+the first time they land, they get send to the top").** Pressing Explore Another Example at the foot of the
+story opened the chooser and sent the story underneath to the top — measured at 7694px down, it came back
+at 0, and closing the chooser left the reader at the top of a page they had just read to the end, which is
+the opposite of what closeStoryPicker's own note promises. The cause is the page transition rather than the
+chooser: the window takes the document out of flow for the length of the gesture, which collapses its
+height and drops the offset. A route change wants exactly that — a new document starts at the top — so the
+cover now takes `keepScroll`, and only the surfaces that cover the SAME document ask for it. Choosing a
+palette still lands at the top, deliberately: a story re-told about another image starts at its beginning.
+
+**Explore Atmos opens the example itself on a phone (19.09, by request).** Below the supported width there
+is no tool to open, so the close of How it Works crossed to the front page — and landed the reader on the
+hero with "Explore an Example" under it, the step they had just spent a whole page earning. It lands on the
+story's first chapter now, where the hero's own act lands. It could not be one jump: the chapter is not
+somewhere to land until the story's pins have given the document its height, and a ScrollTrigger refresh
+puts the page back to the top on the way (traced: the first jump landed at 844 and was taken back to 0, with
+a second refresh 1.2s later as the local faces landed). So the landing re-applies after every refresh until
+the chapter holds still, and it is dropped by a wheel, a touch, a key, six seconds, or the story being torn
+down. A plain visit to the front page still opens on the hero.
+
+**Nothing is inflated on a real phone any more (19.09, by request: "the font-size for hex and LCH on my
+phone doesn't reflect the design. Font-size seem too big compared to the localhost").** iOS Safari boosts
+small text inside wide blocks on its own, and no desktop browser's phone emulation does — so the story's
+tiles, whose hex is 13px and whose OKLCH is 11px here, arrived about half again as large on the reader's
+iPhone while the headings around them were untouched, which is the signature of the boost. `html` now
+carries `text-size-adjust:100%`. 100% rather than none: it turns the automatic boost off and leaves the
+reader's own zoom and Dynamic Type exactly as they were. It is a root rule, so every small figure on the
+site — the checker's rows, the labels, the notation — is now the size it was designed at on iOS. Verified
+in Chrome only (the rule computes, nothing moves); the behaviour it corrects cannot be reproduced without
+WebKit.
+
+**The picks' hex is Medium and its share is the key's size (19.09, by request).** Under the photograph the
+hex is what names each card, so it takes the Medium face beside the share; in the Role panel the card is
+led by the role's name and the hex stays the Regular notation under it (the 19.09 request "let hex code be
+regular weight" still stands there). The share on the picks moves from --fs-lead to --fs-subtitle, which is
+what the chapter above prints the same figure at: one screen apart, the same number was set two ways.
+
+**The phone story's colour cards are the colour (19.09, by request: "the visual presentation adjustment i
+asked for was the color percentage cards below frozen slate on mobile").** How it Works' role cells have
+been the colour itself since 18.09; on the phone this was the last place a palette colour was shown as a
+chip on a --surface card with a 1px edge. The cell carries --role-colour and --role-ink now, the swatch
+element is gone because the cell IS the swatch, and the hex and share sit on the colour in the ink that
+reads there — one rule for the picks and the Role panel, which are one component. The heights do not move
+(138px in the picks, 156px in Role), so the arrangement set on 19.09 — hex at the top left, share at the
+bottom right — is unchanged. Selection moves from the border going to full ink to a 2px ring inset in the
+card's own ink, for the reason the border rule gave: the cell is a block of the palette's colour, and
+tinting it would change the very thing it shows. The name's colour is stated at (0,3,0), because about.css
+sets it at (0,2,0) and comes later in the bundle.
+
 **The takeover's statements take the column on phones (19.09, by request: "extend width. typography is
 cramped").** Their measure is eight of twelve tracks, which at 375 came to 223px of a 343px column: the
 28px statement broke every two or three words, ten lines deep. At 600px and below it takes the column, so

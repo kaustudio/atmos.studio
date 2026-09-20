@@ -693,6 +693,15 @@ export const wipeMethods = {
     // The short crossing. Everything above this line is shared; everything below is the window's.
     if (opts.quick) { this._wipeQuick({ commit, arm, release, focusDestination }); return; }
 
+    /* WHERE THE READER WAS STANDING, for a cover that does not change document (19.09.26, by
+       request: "when the user scrolls down to the bottom the first time they land, they get send to
+       the top"). The window takes the page out of flow for the length of the gesture, which collapses
+       its height and drops the scroll offset to zero. A route change WANTS that — a new document
+       starts at the top, and navigateTo says so — but the image chooser covers the story it was
+       opened from. Measured: opened at the foot of the story, 7694px down, the story came back at 0
+       and closing the chooser left the reader at the top of a page they had read to the end.
+       Recorded before the ghost, spent in settle(). */
+    const keepY = opts.keepScroll ? (window.scrollY || 0) : null;
     // The ghost first, while the departing page is still the live one: from here the reader is
     // looking at the snapshot, and everything the commit does to the document happens behind it.
     this._wipeTeardownDom();
@@ -711,6 +720,8 @@ export const wipeMethods = {
     const settle = () => {
       // The document is back in flow at the top; anything that measured it through the window
       // re-measures now. Both are no-ops for a page that owns neither.
+      // The offset goes back FIRST, so the pins are measured against where the reader actually is.
+      if (keepY != null) this._scrollToY(keepY);
       try { if (window.ScrollTrigger) window.ScrollTrigger.refresh(); } catch (e) { }
       try { if (this._lenis) this._lenis.resize(); } catch (e) { }
     };

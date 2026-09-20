@@ -1484,6 +1484,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           const share = sw ? Math.round((sw.weight / totW) * 100) : null;
           return {
             key: r.role, name: ROLE_LABEL[r.role], hex: r.hex.toUpperCase(), swatch: r.hex,
+            // The tile's ink, as the picks carry it: this cell is a block of its colour now.
+            ink: this.onColor(r.hex) === '#ffffff' ? '#ffffff' : (this.contrastRatio(r.hex, '#1a1a1a') >= 4.5 ? '#1a1a1a' : '#000000'),
             // The note /about's own role cells carry: what share of the frame this colour holds.
             // The share alone, set at the cell's bottom right (19.09.26, by request: "of the frame" went).
             pct: share === null ? '' : share + '%',

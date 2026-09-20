@@ -24,7 +24,12 @@ export const miscMethods = {
     // builds the rolled example's set, or does nothing when they already match.
     const recast = this.state.storyCaseId !== null;
     const go = () => { if (recast) this.buildStoryMasks(); this.navigateTo('/'); };
-    if (this.state.narrow) { this._resetToolState(start, go); return; }
+    /* AND ON A PHONE IT OPENS THE EXAMPLE ITSELF (19.09.26, by request). There is no tool to open
+       below the supported width, so this crossed to the front page — and landed the reader on the hero
+       with "Explore an Example" under it, which is the step they have just spent a whole page earning.
+       The mark is spent by the story once it is built and while the cover is still down
+       (PaletteApp._storyEntryJump), because only then is the chapter somewhere to land. */
+    if (this.state.narrow) { this._storyEntry = Date.now(); this._resetToolState(start, go); return; }
     // Persisted even when the state already reads dismissed: a visit that STARTED on /about is let
     // past the landing in state only (see the initial state in PaletteApp), so without this a reload
     // of the tool put the landing back in front of it.

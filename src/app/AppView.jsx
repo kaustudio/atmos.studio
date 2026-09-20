@@ -1005,10 +1005,15 @@ function MobileStory({ st }) {
                     ships this component as a plain div. So do we, where there is nothing to press. */}
                 {st.swatches.map((r) => (
                   <li key={r.key}>
+                    {/* THE CARD IS THE COLOUR (19.09.26, by request), as How it Works' role cells have
+                        been since 18.09: the colour fills the cell and its words sit on it in the ink that
+                        reads there, where this was a white card with an edge and the colour as a swatch
+                        inside it. story.css places them; the swatch element is gone, because the cell IS
+                        the swatch. */}
                     {r.hasRegion ? (
                       <button type="button" className="about-role" data-story-pick="1" data-ix="cell" data-focus="value"
+                        style={{ '--role-colour': r.hex, '--role-ink': r.ink }}
                         aria-pressed={r.selected} aria-label={r.aria} onClick={r.onPick}>
-                        <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
                         {/* THE SHARE, BARE, AT THE CELL'S BOTTOM RIGHT (19.09.26, by request: "just write % in
                             the bottom right", and "of the frame" goes everywhere, since it took too much room).
                             The hex holds the caption's top left and the share its own last line, on the right;
@@ -1016,12 +1021,12 @@ function MobileStory({ st }) {
                         <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </button>
                     ) : (
-                      <div className="about-role" data-story-pick="1">
-                        <span className="about-role__swatch" style={{ background: r.hex }} aria-hidden="true"></span>
+                      <div className="about-role" data-story-pick="1" style={{ '--role-colour': r.hex, '--role-ink': r.ink }}>
                         {/* NO NOTE SAYING WHY (19.09.26, by request: "We don't need to explicitly say 'Spread
                             too finely to locate'… We overexplain too much"). The cell is the same card as its
-                            neighbours; that it is not a button is the whole difference (the edge stays, by
-                            request, the same day: see story.css). */}
+                            neighbours; that it is not a button is the whole difference. Taking the edge off
+                            only these was tried and reversed the same day ("That doesn't make any sense. bring
+                            it back"); now no card has one, and they still look alike. */}
                         <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
                       </div>
                     )}
@@ -1123,8 +1128,7 @@ function MobileStory({ st }) {
                     replaced by one string. About ships this cell bare. */}
                 <div className="about-roles" data-cascade>
                   {st.roleCells.map((c) => (
-                    <div key={c.key} className="about-role">
-                      <span className="about-role__swatch" style={{ background: c.swatch }} aria-hidden="true"></span>
+                    <div key={c.key} className="about-role" style={{ '--role-colour': c.swatch, '--role-ink': c.ink }}>
                       <span className="about-role__name">{c.name}</span>
                       <span className="about-role__foot"><span className="about-role__hex">{c.hex}</span><span className="about-role__pct">{c.pct}</span></span>
                     </div>

@@ -363,16 +363,39 @@
    hex stand 2px apart at 13px, and the rules below place the hex and the share. The picker's buttons no
    longer set their words in capitals (global.css lifts [data-story-pick] out of the [data-ix] case).
    Both the picker and the Role panel take this, as they are one component. */
-[data-mobile-story] .about-role{gap:2px;padding-bottom:5px}
-/* THE FIRST LINE HANGS AS FAR UNDER THE SWATCH AS IT STANDS IN FROM THE LEFT (19.09.26, by request:
-   "equal padding for hex code left and top"). Measured to the cap line, not the box: the hex's ink is
-   8.4px in from the border, and 2.5px of margin (with the card's 2px gap and the line box's 4px above
-   the caps) puts its cap line 8.65px under the swatch. Role's name, in the Medium face, sits 8px under
-   it. The swatch is 8px in from the border above and to the sides, so the card has one inset. */
-[data-mobile-story] .about-role__swatch{margin-bottom:2.5px}
+/* THE CARD IS THE COLOUR (19.09.26, by request: the same pass that made the tool's swatches tiles).
+   How it Works' role cells have been the colour itself since 18.09; on the phone this was still a
+   --surface card with a 1px edge and the colour as a swatch inside it, which is the last place a
+   palette colour was shown as a chip on a card rather than as a surface of its own. The cell now
+   carries --role-colour and --role-ink (AppView), the swatch element is gone, and the words sit on
+   the colour in the ink that reads there — one rule for both lists, since the picks and the Role
+   panel are one component.
+   THE HEIGHT DOES NOT MOVE (the standing rule from the 19.09 pass: "don't decrease the height on the
+   card because we remove text"). The swatch gave these cards 138px in the picks and 156px in Role;
+   they keep them, and the foot fills the card so the hex still holds the top left and the share the
+   bottom right. */
+[data-mobile-story] .about-role{
+  gap:2px;padding:10px 12px 9px;
+  background:var(--role-colour);border:0;border-radius:var(--radius-card);
+  color:var(--role-ink);min-height:138px;
+}
+[data-mobile-story] [data-story-panel] .about-role{min-height:156px}
+[data-mobile-story] .about-roles{gap:6px}
+/* TOMBSTONE: the swatch's 2.5px margin, which set the hex's cap line 8.65px under it ("equal padding
+   for hex code left and top", 19.09.26). There is no swatch on this surface any more — the card is the
+   colour — and the padding above states that inset directly. */
 /* Ink, not muted, since 19.09.26 (audit X1, by request): the weights table in 1.2 prints the same hex
    and share in ink, and the two now share one voice. The picked card still shows its state in its edge. */
-[data-mobile-story] .about-role__hex{font-size:var(--fs-body);line-height:1.3;color:var(--on-surface)}
+[data-mobile-story] .about-role__hex{font-size:var(--fs-body);line-height:1.3;color:var(--role-ink)}
+/* MEDIUM UNDER THE PHOTOGRAPH, REGULAR IN ROLE (19.09.26, by request). The picks are a set of colours
+   read as colours — the hex is what names each card, so it carries the Medium face with the share. The
+   Role panel's cards are led by the role's name, and their hex stays the Regular notation under it
+   (about.css's own note, from the 19.09 request "let hex code be regular weight"). */
+[data-mobile-story] [data-story-picks] .about-role__hex{font-weight:500}
+/* (0,3,0), because about.css states `[data-mobile-story] .about-role__name{color:var(--on-surface)}`
+   at (0,2,0) and comes later in the bundle — the same order trap this file records for the picks grid.
+   State the exception rather than win on order. */
+[data-mobile-story] .about-role .about-role__name{color:var(--role-ink)}
 /* THE HEX AT THE CAPTION'S TOP LEFT, THE SHARE AT THE CARD'S BOTTOM RIGHT (19.09.26, by request: "let hex
    code sit top left and % bottom right", and "don't decrease the height on the card because we remove
    text"). One line each, so the card keeps the height its second line gave it once "of the Frame" left.
@@ -384,12 +407,19 @@
    the % sign is 9.4px off the right one: 8 of padding, the border, and the glyph's own bearing. What the
    padding and the swatch's margin gave up (15px and 9.5px) stands between the hex and the share, so the
    card keeps its height: 138px in the picker, 156px in Role. */
-[data-mobile-story] .about-role__foot{display:flex;flex-direction:column;align-items:flex-start;gap:26.5px;align-self:stretch}
+/* The foot takes the rest of the card, so the two lines hold its corners rather than a fixed gap
+   holding them apart (the gap was measured against the swatch that used to stand above them). */
+[data-mobile-story] .about-role__foot{display:flex;flex:1;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:10px;align-self:stretch}
 [data-mobile-story] .about-role__pct{
-  align-self:flex-end;
+  align-self:flex-end;margin-top:auto;
   font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);font-weight:500;line-height:1.3;
-  letter-spacing:var(--track-flat);color:var(--on-surface);font-variant-numeric:tabular-nums;
+  letter-spacing:var(--track-flat);color:var(--role-ink);font-variant-numeric:tabular-nums;
 }
+/* THE PICKS' SHARE IS THE KEY'S SHARE (19.09.26, by request: "make percentage the same font-size as the
+   color list above"). The chapter above these cards prints the same figure on its tiles at
+   --fs-subtitle; these were a rung lower at --fs-lead, so the same number was set two ways one screen
+   apart. The Role panel keeps --fs-lead: its card is led by the role's name, not by the share. */
+[data-mobile-story] [data-story-picks] .about-role__pct{font-size:var(--fs-subtitle)}
 /* THE CONTRAST ROWS DRAW THEIR PAIR (19.09.26, by request): the Aa chip and the ratio as one unit, 8px
    apart as they are under Best Pair Sample, and the verdict at the row's end on the same line. */
 [data-mobile-story] .about-checks__pair{gap:8px}
@@ -404,9 +434,12 @@
    the colours a photograph cannot locate, so that only what can be tapped looked tappable, and it was
    reversed the same day by request: "That doesn't make any sense. bring it back". Don't propose it again. */
 [data-story-pick]:not(button){ cursor:default }
-/* Selected is stated by the cell's border going to full ink — not by a tint, because the cell is
-   mostly a block of the palette's colour and tinting it would change the very thing it shows. */
+/* Selected is stated by a ring INSIDE the cell, in the cell's own ink — not by a tint, because the
+   cell is a block of the palette's colour and tinting it would change the very thing it shows, and no
+   longer by the border, because the card has none since it became the colour (19.09.26). The ink is
+   the one already proven to read on this colour, so the ring is legible on every swatch in the set. */
 [data-story-pick][aria-pressed="true"]{ border-color:var(--on-surface) }
+[data-mobile-story] [data-story-pick][aria-pressed="true"]{ box-shadow:inset 0 0 0 2px var(--role-ink) }
 
 /* ===== THE GALLERY RAIL ===================================================================== */
 

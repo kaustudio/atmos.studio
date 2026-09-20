@@ -45,6 +45,8 @@ import { initNumberOdometer } from './methods/numberOdometer.js';
 // Module scope, so the component is handed one function for its whole life rather than a new one
 // per render.
 const sendVital = whenAllowed(withoutFragment);
+// Any of these means the reader has taken the page, so the arrival stops placing it (_storyEntryJump).
+const ENTRY_LET_GO = ['wheel', 'touchstart', 'keydown'];
 
 /* ===== THE SUPPORTED MINIMUM WIDTH ==========================================================
    1024px, NAMED AND STATED ONCE. The gate used to ask "is this a phone" — `max-width:720px` — and
@@ -786,7 +788,7 @@ export default class PaletteApp extends React.Component {
        that no longer existed, which is exactly "it is not possible to switch between the three".
        Rebuild on a genuine case change; leave the surface alone for a tab. */
     const key = want ? (this._storyCase() || {}).id : null;
-    if (root && this._storyRoot === root && this._storyKey === key && root.hasAttribute('data-story-live')) return;
+    if (root && this._storyRoot === root && this._storyKey === key && root.hasAttribute('data-story-live')) { this._storyEntryJump(); return; }
     this._killStory();
     if (!root) return;
     this._storyRoot = root; this._storyKey = key;
@@ -883,8 +885,54 @@ export default class PaletteApp extends React.Component {
         try { window.ScrollTrigger.refresh(); } catch (e) { }
       });
     }
+    this._storyEntryJump();
     try { root.setAttribute('data-story-live', '1'); } catch (e) { }
     } finally { this._syncingStory = false; }
+  }
+
+  /* WHERE EXPLORE ATMOS LANDS ON A PHONE (19.09.26, by request). misc.js openCreate marks the
+     crossing; this spends the mark on the story's first chapter, so the window opens on the example
+     itself rather than on the hero with "Explore an Example" under it — the step the reader has just
+     spent a whole page earning.
+
+     It cannot be one jump, and this is measured rather than defensive. The chapter is not somewhere
+     to land until the story's pins have given the document its height, and a ScrollTrigger refresh
+     puts the page back to the top on its way: traced on a phone, the first jump landed at 844 and was
+     taken back to 0 by the refresh that follows, with a second refresh 1.2s later when the local faces
+     land. So the mark is re-applied after every refresh and on a short interval until the chapter
+     holds still at the top of the screen, and only then spent.
+
+     Three ways out, so this can never be a page that moves under someone: the reader touching it in
+     any way (a wheel, a touch or a key) drops the mark where it is, so does six seconds, and so does
+     the story being torn down. */
+  _storyEntryJump() {
+    if (!this._storyEntry || this._storyEntryStop) return;
+    if (Date.now() - this._storyEntry > 8000) { this._storyEntry = 0; return; }
+    const SEL = '[data-story-ch="image"]';
+    const ST = window.ScrollTrigger;
+    let held = 0;
+    const land = () => {
+      const el = document.querySelector(SEL);
+      if (!el) return false;
+      // arrived when the chapter sits at the top of the screen AND the page is actually down there
+      if (Math.abs(el.getBoundingClientRect().top) < 4 && window.scrollY > 4) { held += 1; return held > 1; }
+      held = 0;
+      this.scrollStoryTo(SEL, true);
+      return false;
+    };
+    const onRefresh = () => { if (this._storyEntry) land(); };
+    const stop = () => {
+      this._storyEntry = 0; this._storyEntryStop = null;
+      clearInterval(this._storyEntryT); this._storyEntryT = 0;
+      try { if (ST) ST.removeEventListener('refresh', onRefresh); } catch (e) { }
+      ENTRY_LET_GO.forEach((t) => window.removeEventListener(t, stop));
+    };
+    this._storyEntryStop = stop;
+    try { if (ST) ST.addEventListener('refresh', onRefresh); } catch (e) { }
+    ENTRY_LET_GO.forEach((t) => window.addEventListener(t, stop, { passive: true }));
+    const at = this._storyEntry;
+    this._storyEntryT = setInterval(() => { if (!this._storyEntry || Date.now() - at > 6000 || land()) stop(); }, 120);
+    land();
   }
 
   // The armed half of the above. Held on the instance rather than passed through the wipe, because
@@ -898,6 +946,7 @@ export default class PaletteApp extends React.Component {
 
   // Torn down in reverse of the order they were built.
   _killStory() {
+    if (this._storyEntryStop) this._storyEntryStop();
     if (this._storyKills) {
       this._storyKills.slice().reverse().forEach((k) => { if (typeof k === 'function') { try { k(); } catch (e) { } } });
       this._storyKills = null;

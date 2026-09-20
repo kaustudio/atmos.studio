@@ -896,11 +896,16 @@ export const persistenceMethods = {
      layeredSlider.js's transitionDuration of 1 and EASE.fold, and this now travels on the same pair,
      so every move on the phone's story has one character: the case swap and the colour pick come
      through here too. */
-  scrollStoryTo(sel) {
+  /* `now` is for an ARRIVAL rather than a press (19.09.26): Explore Atmos crosses onto this surface
+     already inside the story, and the second of travel that answers a press so well is, under a cover
+     the reader cannot see through, a page that moves on its own before they have touched it. Reports
+     whether it found the chapter, so a caller that is early can come back. */
+  scrollStoryTo(sel, now) {
     const el = document.querySelector(sel);
-    if (!el) return;
-    if (this._lenis && this._lenis.scrollTo) { try { this._lenis.scrollTo(el, { offset: 0, duration: 1, easing: this.EASE.fold }); return; } catch (e) { } }
-    try { el.scrollIntoView({ behavior: this._reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+    if (!el) return false;
+    if (this._lenis && this._lenis.scrollTo) { try { this._lenis.scrollTo(el, now ? { offset: 0, immediate: true, force: true } : { offset: 0, duration: 1, easing: this.EASE.fold }); return true; } catch (e) { } }
+    try { el.scrollIntoView({ behavior: now || this._reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+    return true;
   },
   beginStory() { this.scrollStoryTo('[data-story-ch="image"]'); },
 
@@ -966,6 +971,9 @@ export const persistenceMethods = {
     if (!this._examples().length) return;
     if (this._wipeRunning) return;
     this._wipeCover({
+      // The story keeps its place under the cover: this surface is opened FROM the story and closes
+      // back onto it (see _wipeCover's keepY note, and closeStoryPicker below).
+      keepScroll: true,
       commit: (after) => this.setState({
         storyPicker: true,
         announce: 'Choose an image. Swipe or use the arrows, then pick the one in the middle.',
