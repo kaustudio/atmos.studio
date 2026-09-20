@@ -224,7 +224,18 @@ export const wipeMethods = {
       this.killOrbit();
       // The landing covers the tool rather than replacing it, so the offset left behind here was
       // invisible until now. Spend it before the window opens on the tool.
-      this.setState({ landingDismissed: true }, () => { this._scrollToTop(); if (afterCb) afterCb(); });
+      this.setState({ landingDismissed: true }, () => {
+        this._scrollToTop();
+        if (afterCb) afterCb();
+        /* THE TOUR IS OFFERED HERE AND NOWHERE ELSE — at the tail of the one act that means "a
+           visitor has just pressed Create". Not on mount (the visitor may be arriving on a share
+           link or a document), not on the first render of the list (a returning visitor lands there
+           every time). maybeOfferTour makes the first-visit check itself and does nothing on a
+           second one. After the window has opened on the tool, so the dialog arrives over a list
+           the reader can already see — an invitation to look around an overview that has not
+           painted yet is an invitation to look at nothing. */
+        this.maybeOfferTour();
+      });
     };
     this._wipeCover({
       commit: persist,
@@ -239,7 +250,13 @@ export const wipeMethods = {
       },
       reveal: () => { this._dropLinesReveal(g); this._listRowsReveal({ delay: 0.12 }); },
       reduced: () => { },
-      focusTarget: () => document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'),
+      /* THE INVITATION WINS THE HANDOFF WHEN IT IS UP. maybeOfferTour runs inside the commit above,
+         so on a first visit the dialog is mounted by the time this resolves — and without naming it
+         here the wipe's own handoff lands on the chrome's first control and takes the keyboard OFF
+         the dialog that has just opened over it, a second after openTourInvite put it there. One
+         answer, written where the wipe asks for it, rather than two focus calls racing. */
+      focusTarget: () => document.querySelector('[data-tour-dialog] [data-tour-take]')
+        || document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'),
     });
   },
 

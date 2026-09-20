@@ -289,11 +289,25 @@ export const motionMethods = {
     // Anchor-scroll: bring the viewport UP to the result region as the palette reveals (one eased
     // motion, coordinated with the band wipe). With a stable stage height there is no reflow to pin.
     this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Loaded ' + p.name + ' into the result.' }, () => {
+      /* THE TOUR'S ENTRY POINT IS THE READER'S OWN CHOICE. `choose` waits here rather than
+         selecting a palette for them, so all four steps run on whichever of the eight they opened —
+         which is also why no step's copy may name a colour, a ratio or a harmony. No-ops unless the
+         tour is actually waiting (methods/tour.js), so this costs an ordinary open nothing. */
+      this._tourPaletteOpened();
       // move focus to the result region so focus follows the viewport (announce carries via aria-live)
       const region = this.resultRef.current || document.querySelector('main');
       requestAnimationFrame(() => {
         const target = document.querySelector('main'); if (!target) return;
-        const focusRegion = () => { if (region && region.focus) { try { region.setAttribute('tabindex', '-1'); region.focus({ preventScroll: true }); } catch (e) { } } };
+        /* NOT WHILE THE TOUR IS MID-STEP. This hands focus to the result region when the scroll
+           lands, which is right for a reader who opened a palette and wrong when the thing that
+           opened it was the tour: the card has already taken focus by then, and this would quietly
+           take it back to a region behind the card, so the next Tab starts from the top of the
+           stage rather than from the step's own controls. Same rule the two drawers follow — the
+           tour owns focus for the length of a step change, and says so with one flag. */
+        const focusRegion = () => {
+          if (this._tourOwnsFocus) return;
+          if (region && region.focus) { try { region.setAttribute('tabindex', '-1'); region.focus({ preventScroll: true }); } catch (e) { } }
+        };
         // Selection anchors the palette to the very top of the page under the sticky header.
         const dest = 0;
         // only skip when already at the very top

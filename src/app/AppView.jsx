@@ -1584,7 +1584,7 @@ function SkipLink() {
    breakpoint. The landing no longer draws a footer at all (see the tombstone in LandingStage), so
    the prop went with it and the credit carries its own three lines of layout instead. If something
    ever needs a cell at the head of this row again, that is the shape it had. */
-function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = true }) {
+function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landmark = true }) {
   const Root = landmark ? 'footer' : 'div';
   const link = (href, label) => (
     <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
@@ -1626,6 +1626,12 @@ function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = tru
               which is the opposite of the rule the paragraph above states. Privacy is what a reader
               is looking for and what every other surface already called it. */}
           {link('/about', 'How it Works')}
+          {/* SECOND, BETWEEN How it Works AND THE TWO STATEMENTS (20.09.26, by request). It sat last,
+              after Privacy Settings, on the argument that an offer goes after the things a reader
+              came looking for. Wrong grouping: How it Works and a tour of the tool are the two ways
+              into understanding the product, and the two statements plus the analytics door are the
+              legal tail. The row now reads product, product, statement, statement, setting. */}
+          {onTour && <button type="button" className="site-foot__consent" onClick={onTour} aria-haspopup="dialog"><TextSwap>Take a Tour</TextSwap></button>}
           {link('/privacy', 'Privacy')}
           {link('/terms', 'Terms')}
           {/* THE WAY BACK TO THE ANALYTICS QUESTION, on every page that has a footer. Withdrawing has
@@ -1633,6 +1639,11 @@ function SiteFooter({ route, onNavigate, onConsent, brand = true, landmark = tru
               standing door. A button among links because it opens something rather than going
               somewhere; site-foot.css gives it the links' type, target and swap so the row stays one
               row. The privacy statement carries a second door for the surfaces with no footer. */}
+          {/* A button among links, for Privacy Settings' reason — it opens something rather than going
+              somewhere — and it takes that same class, so the row stays one row in one voice. Only
+              passed by the tool's own footer: on the landing and the three documents there is
+              nothing above it to tour, and a control that opens a dialog about a surface the reader
+              cannot see is a control that lies about where it leads. */}
           {onConsent && <button type="button" className="site-foot__consent" onClick={onConsent}><TextSwap>Privacy Settings</TextSwap></button>}
         </nav>
         <p className="site-foot__rights">All Rights Reserved &copy; 2026</p>
@@ -2293,6 +2304,13 @@ export default function AppView({ vals }) {
             left-to-right scan landed on. The theme switch takes the corner instead — it is the
             control that changes how everything else on the page is READ. It is outlined, not
             filled, so it holds the edge without competing with the mark. */}
+        {/* THE TOUR'S SECOND DOOR IS IN THE FOOTER, not here. It stood in this corner for one round,
+            beside the theme switch, and read as the switch's own label — two controls sharing an
+            edge with nothing between them, one of them a bare word (19.09 pattern: a thing sits
+            with the thing it acts on, and nothing is placed to balance a corner). The switch changes
+            how the page is read; a tour is about the product. See site-foot__consent's note in
+            SiteFooter, which is the row it belongs to and the precedent for a button standing among
+            those links. */}
         <ThemeSwitch vals={vals} />
         {/* RIGHT — the acts. New generation drives the core loop, so it stays filled and leads the
             cluster in the DOM (and therefore in the tab order); the backup pair follows behind a
@@ -2484,7 +2502,12 @@ export default function AppView({ vals }) {
             {/* The shares count up out of the blur, as How it Works 2.1's tiles do (19.09.26, by request):
                 motion.js _countShares plays the group on each arrival. The rolling strips are hidden
                 from a screen reader, which reads the twin beside them. */}
-            <div role="group" aria-label="Generated palette swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;height:340px;width:100%;gap:6px')}>
+            {/* data-tour="swatches" — step 1's anchor. On the GROUP, never on a band: the ring the
+                tour draws would then sit on one of the palette's own colours, where a single-hue
+                outline is legible against five colours and invisible against the sixth. The group's
+                edge stands on the page surface, where --on-surface is the contrasting ink by
+                definition, in either theme and for any of the eight. */}
+            <div role="group" aria-label="Generated palette swatches" data-tour="swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;height:340px;width:100%;gap:6px')}>
               {vals.result.bands.map((b, bi) => (
                 <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
                   <span data-ring="1" aria-hidden="true" style={b.bandRingStyle}></span>
@@ -2518,7 +2541,9 @@ export default function AppView({ vals }) {
                 dialogs' buttons — --fs-body, Medium, Title Case, flat tracking — where they were the
                 uppercase --fs-label voice. The row is the same object on the detail overlay, which
                 carries the attribute too. */}
-            <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
+            {/* data-tour="actions" — not an anchor, a thing to keep clear of. Step 1's card would
+                otherwise land across this row (see `clear` in methods/tour.js). */}
+            <div data-voice="banner" data-tour="actions" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
               {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
                   gives: first in the sequence and available, organise then validate then output.
                   It held the second tier here only because one creative act stood ahead of it, and
@@ -2544,7 +2569,7 @@ export default function AppView({ vals }) {
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
                 <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-                <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
+                <B006 data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2723,7 +2748,7 @@ export default function AppView({ vals }) {
           page ended one way on the dropzone and another way the moment a palette was on screen, which
           is the footer "being visible and other times not". It is the whole footer in every state now,
           which also gives the stage back its <footer> landmark. */}
-      <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+      <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} onTour={vals.tour && vals.tour.showRestart ? vals.tour.onRestart : null} />
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />
@@ -2732,6 +2757,14 @@ export default function AppView({ vals }) {
       <RecogniseDialog vals={vals} />
       <AssignDialog vals={vals} />
       <RestoreDialog vals={vals} />
+
+      {/* THE TOUR, LAST AND IN TWO PIECES. The invitation takes the dialogs' own z-126 because it
+          IS one of them; the guidance card sits at 124, under every dialog and drawer and over the
+          page — so a card standing beside the contrast drawer is in front of the page and behind
+          anything the reader opens on top of it. Mounted after the surfaces it points at, which is
+          also the reading order a screen reader meets: the thing, then the note about the thing. */}
+      <TourInvite vals={vals} />
+      <TourGuide vals={vals} />
 
       <MessageLane vals={vals} />
 
@@ -4053,7 +4086,11 @@ function HarmonyDrawer({ vals }) {
               the button's own ink (the swatch's black or white), eased on the contract like the
               value rows. The drawer's hooks (data-hx-cell, data-ov-band) go on the wrapper, because
               the band reveal and the model crossfade have to move the colour, not only the words. */}
-          <div style={sx('display:flex;gap:1px;width:100%')}>
+          {/* 6px, THE BANDS' OWN GAP. It was 1px — a hairline seam, which is what a row of square
+              tiles wants and the opposite of what a row of rounded ones does: at 12px corners the
+              adjacent curves would have met across a single pixel and read as a printing error.
+              Same figure as the result stage's swatch group, because this is the same row. */}
+          <div style={sx('display:flex;gap:6px;width:100%')}>
             {harmony.cells.map((cell, ci) => (
               <div key={ci} data-hx-cell="1" data-ov-band="1" style={cell.wrapStyle}>
                 <button type="button" data-ix="cell" data-focus="value" onClick={cell.onCopy} aria-label={cell.aria} style={cell.style}>
@@ -4567,6 +4604,197 @@ function RestoreDialog({ vals }) {
               <B006 data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Add to Library</B006Text></span>} />
             </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ===== THE TOUR'S TWO SURFACES ================================================================
+
+   THE INVITATION IS ONE OF THE DIALOGS, not a new kind of thing. Same frame as Already Extracted
+   and Restore from a File, to the pixel: z-126 over the 55% scrim and its 6px blur, 420px on
+   --radius-surface, the header's h2 beside the app's one close mark, the body line at --fs-body,
+   and the pair in the footer's banner voice with the outlined answer first. It is opened twice in
+   the app's life — once by Create on a first visit, and again by Take a Tour in the masthead — and
+   it is the same dialog both times, because it is the same offer.
+
+   THE GUIDANCE CARD IS NOT A DIALOG, and the difference is the whole design. A dialog takes the
+   screen: backdrop, aria-modal, a focus trap, nothing else reachable. This card stands BESIDE the
+   working interface with that interface live — no backdrop, no trap, no aria-modal — because every
+   step invites the reader to try the thing it is naming, and a trap would make that impossible.
+   What it borrows from the dialogs is the surface: --surface on --line-strong at --radius-surface
+   with --shadow-surface, so it reads as the same system floating rather than as a foreign object.
+
+   role="group", NOT role="dialog". aria-modal="false" on a role=dialog is a well-known way to be
+   announced as modal anyway by some screen readers, and this surface genuinely is not one. The
+   group is named by its own heading, focus is MOVED to it on every step (so a keyboard reader
+   arrives at the instruction rather than hunting for it) and the step change is spoken through the
+   app's existing polite live region — never through role="alert", which would interrupt. */
+function TourInvite({ vals }) {
+  if (!vals.tour || vals.tour.stage !== 'invite') return null;
+  const t = vals.tour;
+  return (
+    <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
+      <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      {/* GLASS, LIKE THE ANALYTICS BANNER (20.09.26, by request: "modal should be in the same glass
+          design as cookie banner"). It shipped for one round as the solid dialog plate — --surface,
+          --line-strong, --shadow-surface — which is the recipe for the five dialogs that act ON
+          something: Export, Add to Projects, Restore. This one asks a question and takes an answer,
+          which is the banner's job, and the banner is the surface the site already answers questions
+          on. Same recipe, stated the same way: the .glass-effect pane as the FIRST child so
+          everything after it paints above, background:transparent so nothing opaque is laid over the
+          blur, the 12% ink hairline instead of --line-strong (an opaque edge around a see-through
+          pane is the heaviest thing on it), --radius-surface passed to the pane through
+          border-radius:inherit, and NO SHADOW — glass reads from its fill, and a shadow under it is
+          a smudge seen through the glass. The .tour-invite block in global.css carries the rest. */}
+      <div className="tour-invite" data-tour-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-labelledby="tour-invite-title" onKeyDown={t.onInviteKey} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)')}>
+        <GlassEffect />
+        <header style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
+          {/* No eyebrow, for Already Extracted's reason: a label over this line would say what the
+              line says. "Take a Tour" where it read "A Quick Look Around?" (21.09.26, by request):
+              it names the thing being offered rather than asking a question about it, and it is the
+              same words the footer control that reopens this dialog is labelled with — one act, one
+              name, wherever it is met. text-wrap:balance stays for the narrow viewports where a
+              420px dialog clamps to 94vw and the line can still wrap. */}
+          <h2 id="tour-invite-title" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);text-wrap:balance")}>Take a Tour</h2>
+          {/* The same close mark as every other dialog, and it means the same as Skip for Now:
+              nothing starts, nothing is taken away, the answer is remembered. */}
+          <button type="button" data-ix="press" data-focus="chrome" onClick={t.onSkipInvite} aria-label="Close, and stay in the overview" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+        </header>
+        <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
+          {/* 75% OF THE COLUMN, NOT ALL OF IT (21.09.26, by request). The line ran the dialog's full
+              372px and broke wherever that landed; held to three quarters it breaks earlier and
+              reads as a block set under the title rather than as text filling a box. Stated as a
+              proportion rather than a pixel cap so it stays right if the dialog is ever resized. */}
+          <span style={sx("max-width:75%;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Start with an example and explore colours, contrast and harmonies.</span>
+        </div>
+        {/* THE PAIR, IN THE DIALOGS' ORDER: outlined first, filled last, right-aligned under the
+            rule. Title Case, like every other button in the app — the brief wrote these two in
+            sentence case, and one dialog spelling its buttons differently from the other four is
+            the inconsistency the one-policy rule exists to stop. */}
+        <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
+          <B006 data-emphasis="secondary" onClick={t.onSkipInvite} aria-label="Skip the tour and stay in the overview" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Skip for Now</B006Text></span>} />
+          <B006 data-tour-take="1" data-emphasis="primary" onClick={t.onTake} aria-label="Take the tour of an example palette" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Take the Tour</B006Text></span>} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TourGuide({ vals }) {
+  if (!vals.tour || !vals.tour.card) return null;
+  const c = vals.tour.card;
+  return (
+    /* transform is the solver's (methods/tour.js writes translate3d on every scroll frame), so the
+       box itself sits at 0,0 and is moved from there. left/top would be a layout write per frame;
+       a transform is composited. The transition is on transform ALONE — never `all` — so the card
+       travels between two anchors as one object rather than cutting, and it is dropped entirely
+       under reduced motion (see [data-tour-card] in global.css). */
+    <div className="tour-card" data-tour-card="1" data-lenis-prevent="1" role="group" aria-labelledby="tour-card-title" tabIndex={-1} ref={c.cardRef} onKeyDown={c.onKey}
+      style={{ ...sx('position:fixed;left:0;top:0;width:320px;max-width:calc(100vw - 48px);background:transparent;border-radius:var(--radius-surface);display:flex;flex-direction:column;pointer-events:auto'), zIndex: c.z }}>
+      {/* GLASS, LIKE THE INVITATION AND THE BANNER (20.09.26, by request: "make the card glass too").
+          It was the one tour surface still on the solid plate, held back on a legibility worry —
+          three lines of --fs-detail over five bands of somebody's palette. The worry turns out not
+          to apply: the solver never lets this card stand on the swatches (step 1 clears past the
+          action row, step 4 goes to Export's trailing side), so what is actually behind it is page,
+          list or a drawer's scrim. Measured on all five stops in both themes before this shipped.
+          Same recipe as .tour-invite: the pane FIRST so everything after it paints above, no opaque
+          fill over the blur, the 12% ink hairline, and no shadow — glass reads from its fill. */}
+      <GlassEffect />
+      <div style={sx('padding:16px 16px 0;display:flex;flex-direction:column;gap:8px')}>
+        {/* THE COUNTER IS THE FIRST THING, and it is the only thing on this surface set in the
+            chrome label voice: it is metadata about the tour, not part of the instruction. Absent
+            on Choose a palette, which is the way in rather than one of the four — a counter there
+            would promise five steps and deliver four. tabular-nums because the figure changes in
+            place and proportional digits would shift the line under it. */}
+        {/* THE PHONE CHOOSER'S STEPPER, NOT A SENTENCE (20.09.26, by request: "add the same stepper we
+            have on explore palette on mobile and same animation principles").
+
+            "1 OF 4" was a line of prose doing a counter's job. This is .layered-slider__counter's
+            form — the current number, a position bar, the total — and its animation principle, which
+            is the part worth carrying over: the number is NOT a tween of its own. Every number is a
+            line stacked in one clipped cell, and the step being shown places all four at a line
+            height each from it, so the figure rolls through the same beat the card moves on rather
+            than keeping a second clock (see [ATMOS 6] in methods/layeredSlider.js, which records two
+            versions that did have their own tween and read as bouncy for it).
+
+            NO CHILDREN ON THE CELL. Its lines are built and placed by _tourStepper; a React child
+            here would be reconciled on every step and wipe them. aria-hidden on the whole row, with
+            the fact stated in words beside it — a rolling stack of figures is not something to read
+            out, and "Step 1 of 4" is. */}
+        {c.counter && (<>
+          <div className="tour-step" aria-hidden="true">
+            <span data-tour-count="1" className="tour-step__span"></span>
+            <span className="tour-step__track"><span data-tour-fill="1" className="tour-step__fill"></span></span>
+            <span className="tour-step__span">{c.totalText}</span>
+          </div>
+          <span style={visuallyHidden}>{c.counter}</span>
+        </>)}
+        {/* MEDIUM, AND ITS OWN STEP. The weight was already 500 — what did not read as a heading was
+            the SIZE: --fs-body over a --fs-detail body is 13 over 12, and one pixel of difference
+            is not a hierarchy whatever the weight does. --fs-lead is the next rung up and the one
+            the site already spends on a lead line, so the card now runs 15/500 over 12/400, which
+            is a step you can see. Every line keeps its own size rather than being flattened into
+            one; --track-flat, like the rest of the control voice. */}
+        {/* data-tour-line MARKS THE TWO THINGS THE MASK REVEAL SPLITS, and both hold PLAIN TEXT on
+            purpose: splitLines rebuilds by innerHTML, so a React element inside one of these would
+            come back as an inert copy that never updates again. Text only, here and below. */}
+        <h2 id="tour-card-title" data-tour-line="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.25;letter-spacing:var(--track-flat);color:var(--on-surface)")}>{c.title}</h2>
+        {/* --fs-detail, a step under the heading, at 1.5 because every one of these wraps to three
+            lines or more. text-wrap:pretty keeps the last line from ending on one word. */}
+        {/* --fs-body, ONE RUNG UP (20.09.26, by request: "increase the onboarding copy font-size to
+            the nearest token, no more than 1-2px"). --fs-detail is 12 and the next rung is 13, so
+            this is the whole of the move: 12 → 13, the same size the invitation's own line has
+            always been set in, which makes the two tour surfaces agree. The heading keeps --fs-lead
+            at 15, so the step still reads 15/500 over 13/400 — a step you can see, which is what
+            the earlier size change was for. */}
+        <p data-tour-line="2" style={sx("margin:0;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{c.body}</p>
+      </div>
+      {/* THE FOOT CARRIES THE WAY OUT AND THE WAY ON, and they sit at opposite ends because they
+          are opposite acts — Skip Tour is not a sibling of Next. Same rule and same banner voice as
+          the dialogs' footers, at the card's own smaller padding. Back is absent, not disabled, on
+          the first step: a control that cannot do anything is a target that wastes a Tab. */}
+      <div data-voice="banner" style={sx('margin-top:14px;padding:12px 16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px')}>
+        {/* SKIP TOUR IS THE THIRD TIER, NOT THE SECOND (20.09.26, by request: "skip tour shouldn't be
+            such a highlighted button"). As an outlined B006 it was drawn exactly like Back — same
+            border, same ink, same size — so a row meant to read "here is the way on, and here is the
+            way out" read as three peers, and the emphasis that should have been on Next was spread
+            across the row. Emphasis only works while it is scarce.
+
+            The tier it drops to is the masthead's, not a new one: [data-tier3-action], the borderless
+            label Back Up and Restore wear, with their hover (the ink goes to --on-surface-muted) and
+            their ::after hit area, which keeps the target at a proper size while the mark shrinks to
+            the words. The app HAD a lighter bordered tier and removed it for failing its own hover
+            on contrast — this is the surviving quiet control, and the reason nothing new is invented
+            here. The gap goes 10 → 16, because a borderless control needs more air beside a bordered
+            one than two bordered ones need between them.
+
+            The INVITATION keeps its outlined Skip for Now: that dialog is a question with two real
+            answers, and the pair is the five dialogs' own. Only a tour in progress demotes it. */}
+        <button type="button" data-ix="press" data-tier3-action="" data-focus="chrome" onClick={c.onSkip} aria-label={c.skipAria} style={c.skipStyle}><TextSwap>Skip Tour</TextSwap></button>
+        {/* THE PAIR KEEPS ITS OWN BOXES, AND THE ROW HOLDS ANYWAY (21.09.26, by request: the primary
+            should carry the same padding as Back and "extend naturally when Finish Tour arrives").
+
+            A min-width stood here for one round, reserving the widest state so nothing could shift.
+            It bought a stable Back at the cost of the thing it was protecting: an 88px box around a
+            53px "Next" is a button whose ink sits 17px from either edge while Back's sits at 13 —
+            the same tier, visibly differently inset. The padding is the shared figure; the width
+            follows the word.
+
+            What holds the row without it is the row itself: justify-content:space-between pins this
+            group to the trailing edge, so the primary's own trailing edge never moves whatever it
+            contains. Back's arrival on 1 → 2 extends the group leftwards into empty space rather
+            than pushing the primary along, and 'Finish Tour' on step 5 extends it the same way. The
+            one thing that does move is Back, 35px, on the last crossing — which is the natural
+            extension that was asked for rather than a reflow. */}
+        {c.hasNext && (
+          <span style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px')}>
+            {c.hasBack && (
+              <B006 data-emphasis="secondary" onClick={c.onBack} aria-label={c.backAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Back</B006Text></span>} />
+            )}
+            <B006 data-emphasis="primary" onClick={c.onNext} aria-label={c.nextAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{c.nextLabel}</B006Text></span>} />
+          </span>
         )}
       </div>
     </div>

@@ -588,11 +588,14 @@ export const renderValsMethods = {
        they are the figures the list exists to be sorted and scanned by, read DOWN a column across
        every row on the page. They sat at --fs-label (10) and --fs-fine (11), sizes this ladder
        reserves for the words that NAME a value, so the name and the number were the same weight of
-       thing. --fs-detail is the first rung above the label floor and the size the ticket's baseline
-       asks of a compared value. All three keep tabular-nums, which is what makes a column of them
-       line up at any size. */
-    const metricValue = { minWidth: '2ch', textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
-    const contrastCell = { textAlign: 'end', paddingRight: '0', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+       thing. All three keep tabular-nums, which is what makes a column of them line up at any size.
+
+       --fs-body SINCE 20.09.26 (by request: "increase AA Text pairs, max contrast and created copy
+       from 12 to 13"), from --fs-detail. The three HEADERS over them have been 13 since they became
+       toggleStyle pills, so a column read as a 13px name over a 12px number — the label louder than
+       the figure it labels, in a list whose whole job is comparing those figures. They now match. */
+    const metricValue = { minWidth: '2ch', textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
+    const contrastCell = { textAlign: 'end', paddingRight: '0', fontFamily: sans, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface)', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' };
     // The same inset as its neighbours — the difference is what it is measured against. For them
     // it is space before the next column; for this one there is no next column, so it pairs with
     // the row's own 8px to make the 16px margin the palette keeps on the other side. The stamp has
@@ -604,7 +607,7 @@ export const renderValsMethods = {
     // No private inset any more: the row grid's own --row-inset padding is the 16px this cell used
     // to carry itself, back when it was the only edge of the row that kept one.
     // No capitals (19.09.26, audits U6 and U8): the stamp is a value, and "9m ago" read 9M AGO.
-    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-detail)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
+    const timeCell = { textAlign: 'end', fontFamily: sans, fontSize: 'var(--fs-body)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' };
     // The same three cells on the hover fill's ink ground (AppView RowMain with `inv`): identical
     // metrics, only the colour swapped for the surface's. --ink-fill-muted is the muted step on
     // ink, defined beside the fill's other colours in global.css.
@@ -931,7 +934,15 @@ export const renderValsMethods = {
           onCopy: () => this.copy(c.hex, 'hx-' + active.id + '-' + ci, 'Copied ' + c.hex),
           // The colour on the wrapper, the button transparent over it: data-ix="cell" tints the
           // button's own background from its ink (see the markup in AppView).
-          wrapStyle: { flex: 1, minWidth: 0, display: 'flex', background: c.hex },
+          /* A CORNER, LIKE EVERY OTHER COLOUR TILE ON THE SITE (20.09.26, by request: "colour
+             harmonies examples needs border radius as well to maintain consistency"). These were
+             the last square colour samples left: the result stage's bands take --radius-card, the
+             contrast checker's pair sample takes --radius-card and its 24px chips take half of it,
+             and this row — the same object, a colour you can press to copy with its hex on it —
+             was a hard-edged strip. The corner goes on the WRAPPER because the wrapper is what
+             carries the colour; the button over it is transparent, and its own overflow has to be
+             clipped or the ink tint [data-ix="cell"] lays down would square the corner off again. */
+          wrapStyle: { flex: 1, minWidth: 0, display: 'flex', background: c.hex, borderRadius: 'var(--radius-card)', overflow: 'hidden' },
           style: { flex: 1, minWidth: 0, height: '104px', background: 'transparent', border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', padding: '9px 10px', cursor: 'pointer', position: 'relative' },
           // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
           // colour the harmony can produce rather than on most of them.
@@ -945,7 +956,9 @@ export const renderValsMethods = {
         modelName: active.name,
         // The whole set, in the order it is shown, for the two actions below.
         hexList: active.cells.map((c) => c.hex),
-        swatchStyle: { width: '26px', height: '26px', flex: 'none', background: baseHex, border: '1px solid var(--line-strong)' },
+        // The drawer's own title swatch, at the contrast checker's chip corner — half --radius-card,
+        // the figure that file derives for a 24px chip, and this is the same object one pixel wider.
+        swatchStyle: { width: '26px', height: '26px', flex: 'none', background: baseHex, border: '1px solid var(--line-strong)', borderRadius: 'calc(var(--radius-card) / 2)' },
         // METHOD ON DEMAND. The mapping sentence led the drawer, which put implementation detail
         // above what the user can do here. It says something specific now — how many of THESE
         // colours were adjusted — which is the only form in which it is actionable.
@@ -1975,6 +1988,21 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       showFacet: tagPool.length > 0 || activeTags.length > 0 || activeA11y.length > 0,
       showProjectsBar: s.feed.length > 0 || s.projects.length > 0,
       assign: assignView, hasAssign: !!s.assignPalette, closeAssign: () => this.closeAssign(), confirmAssign: () => this.confirmAssign(), trapAssign: (e) => this.trapFocusIn('[data-assign-dialog]', e),
+      /* THE TOUR. `stage` is 'invite' or null for the dialog; `card` is null unless a guidance card
+         is up, which is the only thing TourGuide branches on. The two are separate keys rather than
+         one because they are two surfaces with two lifetimes — the dialog is modal and short, the
+         card stands for as long as the reader keeps stepping.
+
+         EVERY STEP'S NEXT IS A LABEL AND AN ACCESSIBLE NAME, not a bare "Next": on the last step it
+         reads Finish Tour, and the accessible name says which step it goes to, so a screen reader
+         hears where the press leads rather than just that it leads somewhere. The aria-labels carry
+         the destination; the visible labels stay short, which is the same split the sort headers
+         and the close marks already make.
+
+         DESKTOP ONLY, and it is stated here rather than in the view so there is one place that
+         knows: below the supported minimum there is no result stage, no drawers and no library
+         table for a card to stand beside. */
+      tour: s.narrow ? null : this._tourView(),
       // Re-upload recognition. The strip reuses the archive card's value shape, so the palette the
       // user is being asked about looks the way it looks everywhere else — recognition is the whole
       // point of the dialog. Counting: `count` includes every entry already made from this image,

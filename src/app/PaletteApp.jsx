@@ -21,6 +21,7 @@ import { wipeMethods } from './methods/wipe.js';
 import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
+import { tourMethods } from './methods/tour.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
@@ -153,6 +154,10 @@ export default class PaletteApp extends React.Component {
   spaceRef = React.createRef();
   planeRef = React.createRef();
   universeCloseRef = React.createRef();
+  // The guidance card, so a step change can put focus on the new instruction without querying for
+  // it. The card is the only tour surface that needs one: the invitation is a dialog and focuses
+  // its own recommended act, the way the other five do.
+  tourCardRef = React.createRef();
 
   // An incoming share link, decoded and validated once. Declared before `state` because the state
   // initializer branches on it — a link must open ON the palette, never on the landing first.
@@ -216,6 +221,10 @@ export default class PaletteApp extends React.Component {
     storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyMasks: null,
     // The image chooser, which covers the story rather than replacing it (see chooseStoryCase).
     storyPicker: false,
+    /* THE TOUR'S ONE PIECE OF STATE: null, 'invite', 'choose', or 1..4. Not persisted — a tour is a
+       thing you are in the middle of, and a reader who reloads has left it. What IS persisted is the
+       single fact that the offer was made (methods/tour.js), which is what stops it arriving twice. */
+    tourStep: null,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', gridLeaving: false, uOpen: null, overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
@@ -549,6 +558,15 @@ export default class PaletteApp extends React.Component {
         // result stage behind it: one Escape, one step out, even while the exit is still playing.
         if (this.state.gridLeaving) { e.preventDefault(); return; }
         if (this.state.feedView === 'grid') { e.preventDefault(); this.setFeedView('list'); return; }
+        /* THE TOUR SITS AT THE BOTTOM OF THE LADDER, under every drawer and dialog and above only
+           the stage itself — because the guidance card is the only surface here that is NOT modal.
+           A reader with the contrast drawer open and a tour card beside it means the drawer when
+           they press Escape; the card is what is left when there is nothing else to shut. (Escape
+           with focus inside the card is the card's own, and stops before it reaches this — see
+           onKey in _tourView. The invitation is a dialog and answers for itself the same way.)
+           Ahead of closeResult for the same reason it is behind the drawers: the palette is the
+           thing the tour is standing on, so the tour leaves before the thing it stands on does. */
+        if (this.state.tourStep != null) { e.preventDefault(); this.skipTour(); return; }
         // Close rather than reset: a palette opened from a row goes back to that row (pipeline.js
         // closeResult); one with no row behind it resets exactly as before.
         if (this.state.stage === 'result') { e.preventDefault(); this.closeResult(); }
@@ -697,6 +715,17 @@ export default class PaletteApp extends React.Component {
     if (s.stage === 'processing' && prev.stage !== 'processing') this.startCanvas();
     if (s.stage !== 'processing' && prev.stage === 'processing') this.stopCanvas();
     if (s.stage !== 'result' && prev.stage === 'result') this._stopShares();
+    /* THE TOUR LEAVES WITH THE PALETTE IT WAS STANDING ON. Every numbered step is about something on
+       the result stage — the swatches, a drawer opened over them, the action row, the masthead act
+       that replaces them — so a stage that is no longer 'result' is a tour with nothing left to
+       point at. Without this the card simply stayed: measured by walking out of a tour two ways,
+       and both stranded it. Pressing New Palette on step 5 — which is the act step 5 exists to
+       invite — left "Make Your Own" floating over the image chooser with its ring still on the
+       button that had already been pressed; the mark's return-to-start on step 2 left "Check
+       Contrast" over the library with no anchor at all.
+       'choose' is deliberately exempt: it is the one stop that belongs to the library, and it is
+       waiting for exactly this stage. */
+    if (s.stage !== 'result' && typeof s.tourStep === 'number') this._tourAbandon();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
     this._prev = { stage: s.stage, curId: curId };
     if (enteredResult) {
@@ -1071,5 +1100,6 @@ Object.assign(
   shareMethods,
   miscMethods,
   consentMethods,
+  tourMethods,
   renderValsMethods,
 );

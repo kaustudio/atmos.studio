@@ -180,7 +180,10 @@ export function NavNewPalette({ show, onPress }) {
 
   if (!present) return null;
   return (
-    <B006 btnRef={ref} data-emphasis="primary"
+    /* data-tour="new" — the tour's last stop anchors here. An attribute rather than a class because
+       it is a HOOK, not a style: the button is unchanged by it, and methods/tour.js is the only
+       reader. It sits on the control itself so the ring follows the pill's own corner. */
+    <B006 btnRef={ref} data-emphasis="primary" data-tour="new"
       onClick={() => { if (!leaving.current) onPress(); }}
       style={sx("font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat)")}
       label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><B006Text>New Palette</B006Text></span>} />

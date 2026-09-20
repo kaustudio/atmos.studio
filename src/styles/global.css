@@ -534,7 +534,12 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      the controls that move the work forward below the 11px floor the note beneath argues for the
      labels beside them. Measured on the result stage: actions at 10, metric labels at 11, body at
      15 — the hierarchy inverted. The floor is the floor for a label too. */
-  --fs-label:0.6875rem;       /* 11 — uppercase labels; the workhorse */
+  /* 12 SINCE 20.09.26 (by request: "increase label size to 12px also"), from 11. The workhorse of
+     the chrome — every uppercase label, the drawers' eyebrows, the sort chevrons' row, the tour's
+     stepper — and it sat one rung under the smallest thing anyone reads as prose. It now shares a
+     figure with --fs-detail, which is not a collision but a pair: the same size doing two jobs that
+     are already told apart by case, weight and tracking. --fs-fine keeps 11 as the floor under it. */
+  --fs-label:0.75rem;         /* 12 — uppercase labels; the workhorse */
   /* ===== 11, AND THE FLOOR FOR ANYTHING A READER HAS TO READ =================================
      --fs-micro (9) and --fs-nano (8) held every metric LABEL on this site — Hue, Chroma, Max
      contrast, AA text pairs, the list's column heads, its dates. Measured on the grid card in the
@@ -559,7 +564,14 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      that has to be looked at again; the rest of the ladder holds.
      Everything else this token used to carry (the swatch value labels and a dozen more) is at
      --fs-fine. */
-  --fs-nano:0.5rem;           /*  8 — decorative glyphs, and the EXAMPLE chip (see above) */
+  /* 10 SINCE 20.09.26 (by request: "increase the example/source pill to 10px", and Viewing with
+     them). It was 8, which is the size this ladder had left over after --fs-micro and --fs-nano
+     were retired as text sizes — and the four things still wearing it are not decoration: the
+     Example chip on a library row and on a grid card, the harmonies' Source/Mapped badge, and the
+     Viewing mark. Those NAME what a palette is, which is a label's job, and they were doing it two
+     rungs below the label floor. The one genuinely decorative user, the ✕ inside the AA badge,
+     grows with them and still clears --row-aa-mark (re-measured; see the note there). */
+  --fs-nano:0.625rem;         /* 10 — the identity pills: Example, Source, Mapped, Viewing */
   /* ===== BUTTON GEOMETRY =====
      Three sizes. It was twelve paddings across the forty buttons that declared one, and ten of
      those sat within a pixel of a neighbour in each direction — 8px 13px beside 9px 14px beside
@@ -2747,6 +2759,232 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   background-color:color-mix(in srgb, var(--surface) 70%, transparent);
   -webkit-backdrop-filter:blur(var(--glass-blur));backdrop-filter:blur(var(--glass-blur));
   border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
+}
+
+/* ===== THE TOUR'S CARD AND ITS RING ===========================================================
+
+   SOLID, NOT GLASS, AND THAT IS THE ONE PLACE THIS SURFACE PARTS FROM THE TOAST. The toast and the
+   notice are glass because they report something that just happened and then leave; this card is
+   read, and it is read while standing over the busiest surface in the app — five bands of arbitrary
+   colour, or a drawer's matrix. Three lines of --fs-detail over a 70% pane with a palette moving
+   under it is a legibility problem the reader cannot fix, and glass is fill-defined: the fill here
+   has to be opaque for the text to hold, and a pane you cannot see through is not glass. So it
+   takes the dialogs' plate instead — which is also what it IS: the invitation's surface, moved
+   beside the thing it is talking about.
+
+   --radius-surface, LIKE THE BANNER AND THE INVITATION (20.09.26, by request: "border radius should
+   match cookie banner"). It shipped at --radius-card for one round on the argument this file makes
+   twice — a corner is sized for its box, 28 is Start here's figure and reads as a lozenge on a
+   170px panel, 12 is what the short boxes take. Measured before changing it: the banner is 28, and
+   so was the invitation already, so the card at 12 was the only tour surface with a corner of its
+   own. The three are one family and now carry one corner; consistency across the set won over the
+   per-box rule here, and it is a request rather than a derivation, so it is written down as one.
+
+   IT TRAVELS RATHER THAN CUTS. The card is one object moving from the swatches to the drawer to
+   Export, so the transform the solver writes is eased — --dur-fold on --ease-fold, the pair the
+   travelling selection marker already uses, which is the same gesture: one mark, moving to the next
+   thing it marks. transform ALONE is named; never `all`, which would sweep up the box-shadow and
+   the border on every scroll frame. On a scroll the transform is rewritten every frame anyway, so
+   the ease has nothing to smooth and costs nothing. */
+/* ===== THE STAGE DOES NOT ANCHOR ITS OWN SCROLL ===============================================
+
+   (20.09.26, by request: "make sure step 1 lands naturally and doesn't bounce off the selected
+   swatch when starting the tour".)
+
+   Opening a palette from the library swaps a tall list for a taller result stage, and Chrome's
+   scroll anchoring does what it is designed to do: content appeared above the viewport, so it adds
+   the difference to scrollY to keep what you were looking at where it was. Then the app's own
+   scroll-to-top runs and eases all the way back. Traced from a parked 680: one frame to 996, then
+   a smooth ride down to 0 — a 1312px path for a 680px journey, with a direction reversal in it.
+   That reversal is the bounce, and it is on every palette opened from the list, not just the one
+   the tour opens.
+
+   Anchoring is the right default for content arriving under a reader who is not expecting it. It is
+   the wrong one here: every scroll on this site is already driven, by Lenis and by the transitions
+   that call it, so the browser's correction is a second authority moving a viewport that something
+   else is mid-way through moving.
+
+   ON THE SCROLL CONTAINER, WHICH IS THE ONLY PLACE IT WORKS. It went on #main first, on the
+   reasoning that the content changing is inside #main — and it changed nothing, because
+   overflow-anchor on a descendant only excludes that subtree from being CHOSEN as the anchor; the
+   adjustment itself belongs to the scrolling box. Here that is the viewport, so it belongs on the
+   root. Confirmed by instrumenting every scroll entry point: the only call in the frame was the
+   app's own lenis.scrollTo(0), whose first update wrote 519 — nothing asked for 996, the browser
+   simply moved it. */
+html,body{overflow-anchor:none}
+[data-tour-card]{
+  /* THE PIN IS RIGID, THE STEP CHANGE IS NOT. transform carries NO transition at rest: this card is
+     pinned to its anchor and re-solved every frame, and a pin that eases toward its target is a pin
+     visibly lagging the thing it is attached to while the page scrolls under it. The one move the
+     reader is meant to read — the short settle onto a new anchor — turns a transition on for its own
+     length ([data-tour-glide], written by _tourGlide). Opacity is always eased, because that is the
+     other half of a step change and the half that survives reduced motion. */
+  transition:opacity var(--dur-state) var(--ease-standard);
+  border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent);
+}
+/* --dur-overlay / --ease-overlay, NOT --dur-fold / --ease-fold (21.09.26, measured).
+
+   --ease-fold is cubic-bezier(0.625,0.05,0,1) — an ease-IN-out solved for the travelling selection
+   marker, a 20px mark moving behind a toggle. Over 455–757px it is the wrong shape entirely: traced
+   per frame on 1 → 2, the card sat motionless for the first 116ms of its own 500ms, then covered
+   80% of the distance in 171ms — 245px in a single frame, a peak of 5.93x its own average velocity
+   — and crawled the last 16%. That hang-then-whip is precisely the "lack" being reported; the curve
+   was never wrong at 20px and is badly wrong at 700.
+
+   --ease-overlay is the pair the app already uses for a surface that arrives and settles: an
+   expo-out with a long tail, no slow start, and --dur-overlay is the length it is solved for. Every
+   utility overlay on the site travels on it. At 800ms the card sets off with the drawer beside it
+   and lands as the copy finishes arriving, so the whole step change reads as one gesture. */
+[data-tour-card][data-tour-glide]{transition:transform var(--dur-overlay) var(--ease-overlay),opacity var(--dur-state) var(--ease-standard)}
+/* THE BODY RESERVES THREE LINES, WHICH IS WHAT STOPS THE BOX RESIZING.
+
+   Four of the eight crossings changed the card's height by exactly 19.50px — one line of body copy
+   at 13px on a 1.5 line-height — in a single frame, with nothing transitioning height anywhere on
+   the card or in its subtree. It fired 71–305ms BEFORE the card started to move, so the reader saw
+   the box jolt where it stood and then, a beat later, watched it set off: two movements out of one
+   press, the first of them an instant pop. The cause is step 4's copy wrapping to two lines where
+   every other step's wraps to three.
+
+   Reserving the taller case is this system's own answer to a box that must not shift — the sort
+   header reserves a 9px chevron slot on every column, the AA badge reserves 44px for its widest
+   state. 4.5em is three lines at this element's own line-height, so it follows the type rather than
+   being a measured pixel figure that goes stale: the figure only needs revisiting if a step's copy
+   ever runs to four lines. Nothing animates, because nothing changes. */
+[data-tour-card] p[data-tour-line]{min-height:4.5em}
+/* ===== THE STEPPER — .layered-slider__counter's FORM, AT THE TOOL'S OWN SCALE ==================
+
+   The phone chooser's counter (story.css): the number, a position bar, the total. Its geometry is
+   reproduced rather than shared because that block is scoped to the story and painted in --on-photo
+   — white ink over somebody's photograph — where this stands on a surface and takes --on-surface-
+   muted. Same shape, same principle, the one thing that has to differ being the ink.
+
+   THE CELL IS A MASK, and it is a grid so that every number sits in the same box: all four are
+   stacked in cell 1/1 and _tourStepper places them a line height apart from the one being shown.
+   Tabular figures keep the box from resizing as they roll. The track is 64px where the chooser's is
+   96 — that one is a thumb's whole screen wide, this is one line of a 320px card. */
+.tour-step{display:flex;align-items:center;gap:8px}
+.tour-step__span{
+  font-family:'Neue Montreal',system-ui,sans-serif;
+  font-size:var(--fs-label);
+  letter-spacing:var(--track-flat);
+  font-variant-numeric:tabular-nums;
+  line-height:1.2;
+  color:var(--on-surface-muted);
+}
+[data-tour-count]{display:inline-grid;overflow:hidden;vertical-align:top}
+.tour-step__line{grid-area:1 / 1;display:block}
+.tour-step__track{display:block;width:64px;height:2px;overflow:hidden;background:color-mix(in srgb, var(--on-surface) 20%, transparent)}
+.tour-step__fill{display:block;width:100%;height:100%;background:var(--on-surface-muted);transform-origin:0%;transform:scale3d(0,1,1)}
+/* THE TINT IS RAISED ON THIS ONE SURFACE, AND ONLY BECAUSE IT STANDS ON A SCRIM.
+
+   The pane is the banner's recipe, and the banner's 70% is right everywhere the banner goes —
+   over the page, over the list. Steps 2 and 3 put this card over a DRAWER BACKDROP instead: 55% of
+   --scrim plus a 6px blur, which in light mode is a dark sheet under a light pane. Measured at 3x
+   with the ink hidden: the pane rendered between L 0.49 and L 0.60, and --on-surface-muted at
+   --fs-detail came out at 3.1:1 against it — under the 4.5:1 that size needs. 88%
+   brought it to 4.45, which is still a fail; 93% is the figure that clears the threshold on the
+   worst pixel in the whole text column rather than on the median. Everywhere else the same card
+   measures 5.4:1 or better, and dark mode was never below 6.7:1.
+
+   Raising the tint is the documented per-surface move here, not a departure: the landing's own bar
+   overrides --glass-tint to 40% eleven hundred lines up, for the opposite reason. The blur, the
+   hairline, the corner and the absence of a shadow are all still the banner's. */
+[data-tour-card] > .glass-effect{--glass-tint:color-mix(in srgb, var(--surface) 93%, transparent)}
+/* THE ACTS SIT 2px SHORTER TOP AND BOTTOM (20.09.26, by request, twice: the tour's pair first, then
+   "give these buttons, including the cookie banner, the same decrease").
+
+   0.75em at 13px is 9.75px, the figure every button-006 in the app stands at. It reads tall wherever
+   the button sits in a ROW OF ACTS rather than alone — the palette's action bar under the bands, the
+   fullscreen detail's footer, the five dialogs' commit pairs, the tour's two surfaces and the
+   analytics banner. [data-voice="banner"] is exactly that set and already exists to name it: it is
+   the attribute those rows carry to say they speak the dialogs' voice rather than the chrome's. The
+   banner is not inside one, so it is named beside it.
+
+   A CALC OFF THE SHARED TOKEN, not a new number, so these stay 2px under whatever the app's own
+   button padding becomes. */
+[data-voice="banner"] .button-006,.consent .button-006{--button-006-padding:calc(0.75em - 2px) 1em}
+/* NO will-change ON A GLASS BOX. It was here for the travel between anchors, and it has to go now
+   that the card carries a pane: will-change:transform promotes the element into its own backdrop
+   root in Chrome, and a backdrop-filter inside a backdrop root has nothing behind it to sample —
+   the blur silently becomes a flat tint. The same trap the banner's --consent-glass note records
+   from the opacity side. The transform still composites; it simply is not announced. */
+.tour-card > *:not(.glass-effect){position:relative;z-index:1}
+/* THE CARD IS A SHEET, NOT A TOOLBAR, so it keeps the case its strings are authored in.
+
+   [data-ix] carries text-transform:uppercase!important across the whole app — that is the default
+   control voice — and Skip Tour landed in it the moment it became a borderless [data-ix] button,
+   printing SKIP TOUR beside a Title Case Back and Next in the same row. Exempted exactly the way
+   the library panel is a few hundred lines up, and for the same stated reason: this surface is
+   something you read, with a heading and a sentence, and the one control in it should speak the
+   row's voice rather than the toolbar's. `none`, never `capitalize` — the strings already carry
+   the capitals they should have. */
+[data-tour-card] [data-ix]{text-transform:none!important}
+
+/* ===== THE INVITATION'S GLASS ==================================================================
+
+   The analytics banner's recipe, transplanted (.consent above): the pane is a child, so the box
+   itself paints nothing and the blur has nothing opaque over it. What this adds is the two things
+   the banner gets from its own layout and this dialog cannot — the children have to be lifted out
+   of the pane's stacking context, and a dialog that can outgrow the viewport has to scroll its
+   CONTENTS rather than itself, because a scrolling box with a fixed pane inside it would slide the
+   glass up with the text. */
+.tour-invite > *:not(.glass-effect){position:relative;z-index:1}
+/* THE EDGE IS THE BANNER'S, not --line-strong: 12% of the page's own ink, mixed rather than opaque,
+   for the reason .glass-bar and .consent both state — a solid hairline drawn around a see-through
+   pane is the heaviest thing on it, and the fill is what separates glass from the page anyway. */
+.tour-invite{max-height:86vh;overflow:hidden;border:1px solid color-mix(in srgb, var(--on-surface) 12%, transparent)}
+.tour-invite > header,.tour-invite > div:not(.glass-effect){flex:none}
+
+/* THE RING ON THE THING BEING EXPLAINED, and it is deliberately NOT the focus ring.
+
+   Focus is 3px of --on-surface at a 3px offset with a --surface ring outside it (the [data-focus]
+   block at the top of this file), and it has to stay the one mark that means "this is where the
+   keyboard is". So this is 2px at a 6px offset with no outer ring: near enough to read as the same
+   system, far enough that the two are never confused when both are on screen — which they are on
+   every step, because focus sits on the card while the ring sits on the subject.
+
+   --on-surface is the page's own ink, so the pair is the page's own contrast in either theme. The
+   ring is drawn OUTSIDE its box (offset 6) precisely so it never lands on one of the five colours:
+   the swatch group's ring stands on the page surface, not on a band, which is the reason step 1's
+   anchor is the group and not a swatch. outline follows border-radius on its own, so a pill anchor
+   rings as a pill and the square band group rings square. */
+[data-tour-lit]{
+  outline:2px solid var(--on-surface);
+  outline-offset:6px;
+  transition:outline-color var(--dur-state) var(--ease-standard),outline-offset var(--dur-state) var(--ease-standard);
+}
+/* THE RING TAKES THE SWATCHES' OWN CURVE (20.09.26, by request: "let the border radius match the
+   curve on the swatches, it's too aggressive").
+
+   It shipped at --radius-surface, the card's 28px, on the argument that the ring should match the
+   surface beside it. Wrong reference: this ring is drawn around five bands that each carry
+   --radius-card, and at 28 it bowed out well past their corners — a curve with nothing in the
+   picture to agree with. --radius-card is the bands' own token, so the arc now runs concentric with
+   the corner it encloses: an outline at offset d around a box of radius R draws at R + d, and with
+   R equal to the band's own radius the ring is simply that corner, d away.
+
+   THE OFFSET GOES BACK TO THE 6px EVERY OTHER STOP USES. The 14 was bought by the 28: an outline
+   clears its box corner only while (R + d) >= R * sqrt(2), i.e. d >= R * 0.414, so 28px of corner
+   needed 12 before it stopped cutting across the first band. At 12px of corner the requirement is
+   5px, which the shared 6 already meets — so step 1 stops being the one stop with a ring of its own
+   distance, and only the curve differs.
+
+   AFTER the base rule, not before it. An attribute selector with a value scores the same as one
+   without — (0,1,0) both — so specificity does not separate these two and source order is the whole
+   of it. Written above, the base rule simply won and the ring kept the offset it was trying to
+   leave: caught by measuring the computed value rather than by reading the file. */
+[data-tour-lit="surface"]{border-radius:var(--radius-card)}
+/* REDUCED MOTION: the card stops travelling and the ring stops easing. Neither is decoration that
+   can simply be dropped — the card still has to arrive at the right place and the ring still has to
+   land on the right box — so what goes is the movement between them, not the states themselves.
+   The card cuts from anchor to anchor, which under this preference is the correct answer. */
+/* REDUCED MOTION KEEPS THE CROSSFADE AND DROPS THE TRAVEL, which is the exchange this preference
+   actually asks for: replace movement with opacity, do not simply delete the transition and let
+   surfaces appear. So [data-tour-glide] loses its transform half and keeps its opacity half, and
+   the card still arrives rather than popping. The ring stops easing; it is a state, not a motion. */
+@media (prefers-reduced-motion: reduce){
+  [data-tour-card][data-tour-glide]{transition:opacity var(--dur-state) var(--ease-standard)}
+  [data-tour-lit]{transition:none}
 }
 /* THE GRID'S DOCK (18.09.26, by request): the hint and the close, one pair at the bottom centre, in
    the front page's glass — the landing's quiet act ([data-landing] .glass-cta above): the page's own
