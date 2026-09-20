@@ -1053,7 +1053,13 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --action-primary-press:color-mix(in srgb,var(--on-surface) 72%,var(--surface));
   --action-primary-line:var(--on-surface);
   --action-primary-weight:400;   /* regular, like every other label on the site — the system's weight for controls */
-  --action-primary-padding:0.75em 1.35em;
+  /* ONE INSET FOR EVERY TIER (19.09.26, by request: "make sure the padding is the same as the other
+     buttons"). The filled tier stood 1.35em from its sides where the outlined ones stand 1em, so in
+     every row the two sit in — the result stage's acts, the detail overlay's, each dialog's pair —
+     the filled label was inset 4.5px further than its neighbours' and the row read as two sizes of
+     button. Fill is what separates the tiers, and it does that without help; the padding does not
+     have to say it twice. The masthead's New Palette keeps its own roomier value (see .glass-bar). */
+  --action-primary-padding:0.75em 1em;
   /* tier 2 — secondary: everything you do WITH the result. No fill, full-strength edge, regular
      weight, full-strength ink. Every unfilled control in the app is this tier.
 
@@ -1681,8 +1687,9 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* New Palette is in the documents' masthead too, so the filled button takes the bar's type in either bar. */
 [data-float-nav] .button-006[data-emphasis],
 .glass-bar .button-006[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
-/* New Palette's sides, 2px in from the primary tier's 1.35em (18.9px at 14px) — by request, and only here:
-   every other primary button keeps --action-primary-padding. The em half stays, so it still scales. */
+/* New Palette's sides, by request and only here: 1.35em less 2px, 16.9px at 14px. That was "2px in from
+   the primary tier", and since 19.09.26 the tier is 1em — this bar keeps the roomier figure it was given,
+   so the value is stated rather than derived. The em half stays, so it still scales. */
 .glass-bar .button-006[data-emphasis="primary"]{--button-006-padding:0.75em calc(1.35em - 2px)}
 
 /* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================

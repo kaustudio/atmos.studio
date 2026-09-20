@@ -970,6 +970,15 @@ a second refresh 1.2s later as the local faces landed). So the landing re-applie
 the chapter holds still, and it is dropped by a wheel, a touch, a key, six seconds, or the story being torn
 down. A plain visit to the front page still opens on the hero.
 
+**The filled tier stands where the outlined ones do (19.09, by request: "make sure the padding is the same
+as the other buttons").** --action-primary-padding was `0.75em 1.35em` against every other tier's
+`0.75em 1em`, so on each row the two share — the result stage's acts, the detail overlay's, every dialog's
+pair — the filled label was inset 4.5px further than its neighbours', and the row read as two sizes of
+button. Fill is what separates the tiers, and it does that on its own; the padding does not have to say it
+twice. Heights are untouched (35.5px); Add to Projects is 9px narrower, Done matches Cancel. The masthead's
+New Palette keeps the roomier figure it was given by request — its rule states the value now rather than
+deriving it from a tier that has moved.
+
 **Nothing is inflated on a real phone any more (19.09, by request: "the font-size for hex and LCH on my
 phone doesn't reflect the design. Font-size seem too big compared to the localhost").** iOS Safari boosts
 small text inside wide blocks on its own, and no desktop browser's phone emulation does — so the story's
