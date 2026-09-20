@@ -776,16 +776,21 @@ export const motionMethods = {
      the click has painted, with the words (animateText's run), since building measures every column;
      the band's clip hides the number until then. The group is React's, so its done-flag is cleared
      for each palette, and the last run is finished first. */
-  _countShares(delay) {
-    this._stopShares();
-    const root = this.resultRef.current;
+  _countShares(delay) { this._countIn(this.resultRef.current, 'stage', delay); },
+  _stopShares() { this._stopCount('stage'); },
+  /* The same count for any surface that shows shares — the stage, and the palette detail, which opens
+     on the same five figures (19.09.26, by request: "add our blur animation to the numbers in grid view
+     as well"). One handle per surface, so opening the detail over a counted stage does not stop it. */
+  _countIn(root, key, delay) {
+    this._stopCount(key);
     const group = root && root.querySelector('[data-odometer-group]');
-    if (!group) return;
+    if (!group || this._reduce || document.hidden) return;
     group.removeAttribute('data-odometer-initialized');
-    this._shareCount = initNumberOdometer(root, { blur: 9, now: delay });
+    this['_count_' + key] = initNumberOdometer(root, { blur: 9, now: delay });
   },
-  _stopShares() {
-    if (this._shareCount) { try { this._shareCount(); } catch (e) { } this._shareCount = null; }
+  _stopCount(key) {
+    const k = '_count_' + key;
+    if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
   },
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then

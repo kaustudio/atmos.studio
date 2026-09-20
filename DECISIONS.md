@@ -970,6 +970,83 @@ a second refresh 1.2s later as the local faces landed). So the landing re-applie
 the chapter holds still, and it is dropped by a wheel, a touch, a key, six seconds, or the story being torn
 down. A plain visit to the front page still opens on the hero.
 
+**The hero photograph arrives (20.09, by request: "image should mask in from the bottom center on the
+current position with a slight parallax, so it's not already visible during page transition").** Everything
+else on How it Works arrives — the statement rises through its masks, the rules draw, the tiles cascade —
+and the largest object on the screen was simply there, whole, the instant the window opened. The plate is
+masked now, the mask opens from the bottom centre (up and outward together, the sides finishing a breath
+sooner so the last movement is the top edge rising), and the picture inside lifts 18px as it happens. It is
+parked from its first frame and played by the same controller the page's copy uses: the cover's trailing
+edge on a wiped arrival, at once on a cold load.
+
+Neither obvious shortcut survived this element. A clip-path string tween pairs the wrong numbers, for the
+reason the result stage recorded. The custom-property version — which the stage uses happily — wrote its END
+value on every frame here: traced with the tween reporting progress 0.06 while the property already read
+0%, which makes the var substitution invalid and the whole clip-path with it, so the picture stood there
+unmasked. The two insets are tweened on a plain object and the module writes the string in onUpdate: one
+writer, nothing to parse.
+
+**The Best Pair Sample takes the card's corner (20.09, by request: "add same border radius to best pair
+sample for consistency").** It was --radius-swatch, 3px, in a drawer whose rows and tiles have been
+--radius-card since 19.09 — the one square-ish box left in it.
+
+**The contrast checker's eyebrow is gone (20.09, by request: "Delete label").** It read "Contrast Checker"
+over the palette's name, in a drawer whose own controls say what it measures and whose dialog is named for
+a screen reader. The same overexplaining the dialog leads went for on 19.09.
+
+**The palette detail counts its shares too (20.09, by request: "add our blur animation to the numbers in
+grid view as well").** The stage's count now belongs to any surface that shows shares: `_countIn(root, key,
+delay)` with a handle per surface, so opening the detail over a counted stage does not stop it. The detail
+plays on the beat its chrome arrives on (reveal × 0.45, the offset its own timeline uses for the value rows
+and the header), and the count stops when the detail closes. Its strips are aria-hidden with a twin beside
+them, as on the stage.
+
+**A week of words, then a date (20.09, by request: "saying 1 day ago up to 7 days. after that we can just
+show the dates as they are presented now. remove time stamp from this state").** The Created column
+answered in minutes and hours for a day and in a date-and-clock for everything older, so a palette made on
+Tuesday read "19.09.26, 11.00" on Wednesday. Words carry the first week now — "1 day ago", "4 days ago",
+spelled out, because a day is read once and can afford its word where minutes repeat all day — and past a
+week the date alone, without the clock. Measured across the ladder: 5h → "5h ago", 26h → "1 day ago", 3d →
+"3 days ago", 6.5d → "7 days ago", 7.5d → "13.09.26", 40d → "11.08.26". The clock is not lost: the cell's
+title carries the full stamp, which is what tells this morning's five generations apart, and the column
+still sorts on the timestamp. Spoken names take the same words ("Generated 3 days ago").
+
+**Every export was run, and every one produces a valid file (20.09, asked).** Driven through the interface
+and the bytes read back, on Garnet (#0F0302 #E12409 #F17645 #AA0906 #540604):
+- Tailwind v4 — 264b, `@theme` block, 5/5 hexes as `--color-palette-garnet-01…05`.
+- Design Tokens (W3C) — 388b, parses, 5 `$value` entries, `$type: color`.
+- Figma Variables — 454b, parses, 6 entries.
+- CSS Custom Properties — 213b primitive (5 variables) / 300b with the semantic scaffold on (6 roles, and
+  the header says so). The toggle was exercised both ways.
+- Adobe Swatches — 446b, magic `ASEF`, version 1.0, 6 blocks.
+- Project folder — `project_check-folder_css.css`, 272b, headed "Check Folder — 1 palette".
+- Share → Download Image — 86.9kB PNG, decoded at 1080×1350.
+- Back Up — 11.7kB JSON, parses, keys schema/version/exportedAt/projects/palettes, 8 palettes.
+- The three clipboard acts, captured at `navigator.clipboard.writeText`: the hex list (5 lines), the CSS
+  block, and a value row's own hex.
+
+**The copy mark travels with the word (19.09, by request: "the same mask animation for copied should also
+influence the icon").** The row's copy mark and its check swapped in one frame while the words beside them
+rode the mask, so half the row moved and half of it cut. The mark now takes the same two keyframes and the
+same clipping box at its own size: the leaving glyph goes up and out as the arriving one rises into place.
+One `useFlip` holds what both swaps need — the state showing, what left on the last change, and the key
+that restarts the pair — so the words and the mark cannot drift apart.
+
+**Labels are Title Case; only notation is in capitals (19.09, by request: "make all labels Title Case").**
+Inventoried at runtime rather than from the stylesheets — every element whose computed text-transform was
+uppercase, across the landing, the tool, the grid, the library panel, five dialogs, the drawers, /about and
+the phone story. What was shouting: six dialog eyebrows (Add to Projects, New Project, Contrast Checker,
+Export Tokens, Colour Harmonies, Share Palette), the chips and section heads (Example, Viewing, Source,
+Mapped, Project, Text Usability, No Reference, the filter groups) and the export format tags. Each one
+carries its case in the source now and the transform is gone. What stays in capitals is notation, because
+it is not a label: hex values, HEX / RGB / CMYK / HSL, AA, and the formats CSS / ASE / JSON.
+
+And two `text-transform: capitalize` rules went with them, which this file and renderVals had both already
+argued against — capitalize shouts at every word in the string. They were rendering "Share Via…" and
+"Tailwind V4" in the share and export dialogs. The strings are Title Cased where they are written instead,
+so "Share via…" reads as it was typed. The only capitalize left is on measured VALUES ("warm", "high key"),
+which are data rather than labels.
+
 **The filled tier stands where the outlined ones do (19.09, by request: "make sure the padding is the same
 as the other buttons").** --action-primary-padding was `0.75em 1.35em` against every other tier's
 `0.75em 1em`, so on each row the two share — the result stage's acts, the detail overlay's, every dialog's

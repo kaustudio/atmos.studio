@@ -298,7 +298,7 @@ export const renderValsMethods = {
           matrixColsStyle: { display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' },
           // The text-on-colour tiles' padding (19.09.26, by request: "add same padding to this"), so the
           // sample's words start on the same inner edge as the hexes above them.
-          sampleStyle: { borderRadius: 'var(--radius-swatch)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '12px 16px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
+          sampleStyle: { borderRadius: 'var(--radius-card)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '12px 16px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
@@ -617,7 +617,7 @@ export const renderValsMethods = {
         // The stamp (19.09.26, audit U6, by request): minutes and hours under a day, the date after.
         // The tooltip carries the other form, so either can be read; the accessible sentence below
         // keeps the relative one.
-        name: p.name, time: this.stampTime(p.time), timeTitle: this.isFresh(p.time) ? this.absTime(p.time) : this.relTime(p.time),
+        name: p.name, time: this.stampTime(p.time), timeTitle: this.absTime(p.time),
         // Tags recede: they repeat down the whole list, so as decoration they were spending the
         // row's flexible middle to say almost nothing. They stay present because the RARE one is
         // the informative one, and because they are the readable form of what the chips above
@@ -870,7 +870,7 @@ export const renderValsMethods = {
       });
       overlay = {
         name: p.name, rationale: p.rationale, descriptors: this.paletteTags(p), bands: obands,
-        time: this.stampTime(p.time), timeTitle: this.isFresh(p.time) ? this.absTime(p.time) : this.relTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
+        time: this.stampTime(p.time), timeTitle: this.absTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
         shareRows: shareRowsFor(p, 'ov-pal-share', 'ov-pal-img'),
@@ -935,7 +935,7 @@ export const renderValsMethods = {
           style: { flex: 1, minWidth: 0, height: '104px', background: 'transparent', border: 'none', color: on, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'flex-start', gap: '6px', padding: '9px 10px', cursor: 'pointer', position: 'relative' },
           // Drawn in the swatch's own guaranteed-AA on-colour, so the label is legible on every
           // colour the harmony can produce rather than on most of them.
-          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', borderRadius: 'var(--radius-pill)', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '2px 6px', whiteSpace: 'nowrap' },
+          badgeStyle: { fontFamily: sans, fontSize: 'var(--fs-nano)', letterSpacing: 'var(--track-flat)', textTransform: 'none', borderRadius: 'var(--radius-pill)', color: on, border: '1px solid ' + (on === '#000000' ? 'rgba(0,0,0,.34)' : 'rgba(255,255,255,.46)'), padding: '2px 6px', whiteSpace: 'nowrap' },
           hexStyle: { fontFamily: sans, fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: on, whiteSpace: 'nowrap' },
         };
       });
@@ -997,10 +997,10 @@ export const renderValsMethods = {
       const pals = pid ? this.projectPalettes(pid) : [p];
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
-const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
-        kicker: pid ? 'Export project' : 'Export tokens',
+        kicker: pid ? 'Export Project' : 'Export Tokens',
         stacked: !!pid,   // opened from the library panel's Projects tab, so it renders above it
         /* WHAT THE FILE WILL HOLD, before a format is chosen. A folder export is the one act here
            whose scale is not obvious from the thing you pressed, and "8 palettes, 40 colours, one
@@ -1022,11 +1022,11 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           ? 'Exporting the semantic scaffold' + (pid ? ', six roles per palette' : '') + '. Refine before shipping.'
           : 'Exporting the primitive layer (swatches by weight)' + (pid ? ', grouped by palette' : '') + '.',
         formats: [
-          mk('tailwind', 'Tailwind v4', '@theme · css'),
-          mk('tokens', 'Design tokens (W3C)', 'json'),
-          mk('figma', 'Figma variables', 'json'),
-          mk('css', 'CSS custom properties', 'css'),
-          mk('ase', 'Adobe swatches', 'ase'),
+          mk('tailwind', 'Tailwind v4', '@theme · CSS'),
+          mk('tokens', 'Design Tokens (W3C)', 'JSON'),
+          mk('figma', 'Figma Variables', 'JSON'),
+          mk('css', 'CSS Custom Properties', 'CSS'),
+          mk('ase', 'Adobe Swatches', 'ASE'),
         ],
         // The switch draws itself from aria-checked now (chrome.jsx SwitchTrack, 19.09.26, audit U5):
         // its track colour, knob position and ON / OFF word went with the ringed pill.

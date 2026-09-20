@@ -492,7 +492,10 @@ export const pipelineMethods = {
       }),
     ];
   },
-  relTime(ts) { const d = Date.now() - ts, m = d / 60000; if (m < 1) return 'just now'; if (m < 60) return Math.round(m) + 'm ago'; const h = m / 60; if (h < 24) return Math.round(h) + 'h ago'; return Math.round(h / 24) + 'd ago'; },
+  /* DAYS ARE SPELLED OUT (19.09.26, by request: "saying 1 day ago up to 7 days"). It said "3d ago",
+     which is the shape minutes and hours take because they repeat all day; a day is read once and can
+     afford its word. Spoken names take this too — "Generated 3 days ago" rather than "Generated 3d ago". */
+  relTime(ts) { const d = Date.now() - ts, m = d / 60000; if (m < 1) return 'just now'; if (m < 60) return Math.round(m) + 'm ago'; const h = m / 60; if (h < 24) return Math.round(h) + 'h ago'; const days = Math.round(h / 24); return days + (days === 1 ? ' day ago' : ' days ago'); },
   // Absolute form for the SORTABLE date column: a sorted column needs values that differ, and
   // relative stamps collapse into ten identical "12M AGO"s within a session. Everything comes from
   // Intl under da-DK — including the same-day variant, which is ONE formatter carrying both date
@@ -527,10 +530,24 @@ export const pipelineMethods = {
   // yesterday's date. The first letter is capitalised because the stamp stands alone in its cell;
   // relTime stays lower case for the sentences that carry it ("Generated 3h ago").
   isFresh(ts) { return Date.now() - ts < 864e5; },
+  /* A WEEK OF WORDS, THEN A DATE (19.09.26, by request: "saying 1 day ago up to 7 days. after that we
+     can just show the dates as they are presented now. remove time stamp from this state"). The column
+     answered in words for a day and in a date-and-clock for everything older, so a palette made on
+     Tuesday read "19.09.26, 11.00" on Wednesday — a precision nobody needs for something that recent.
+     Words carry the first week, where "4 days ago" is what a reader actually wants; past it the date
+     alone, without the clock, because at that distance the hour tells you nothing and the column is
+     quieter without it. The clock is not lost: the cell's title still carries the full stamp, which is
+     what tells this morning's five generations apart, and the column still sorts on the timestamp. */
+  isRecent(ts) { return Date.now() - ts < 6048e5; },
   stampTime(ts) {
-    if (!this.isFresh(ts)) return this.absTime(ts);
+    if (!this.isRecent(ts)) return this.absDate(ts);
     const r = this.relTime(ts);
     return r.charAt(0).toUpperCase() + r.slice(1);
+  },
+  // The date alone, in the stamp's own format minus the clock.
+  absDate(ts) {
+    if (!this._dfDate) this._dfDate = new Intl.DateTimeFormat('da-DK', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    return this._dfDate.format(new Date(ts));
   },
 
   // Downscaled reference thumbnail as a data URL — object URLs are session-only; this survives reload.

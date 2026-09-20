@@ -31,6 +31,7 @@ import { initPageReveal } from './methods/pageReveal.js';
 import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
 import { initFlipOnScroll } from './methods/aboutFlip.js';
+import { initPlateArrival } from './methods/aboutPlate.js';
 import { initDividers } from './methods/aboutDividers.js';
 import { initStackSlides } from './methods/aboutStack.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
@@ -126,6 +127,9 @@ export default class AboutPage extends React.Component {
     this._killStack = initStackSlides(root);
     this._killRail = initHorizontalRail(root);
     this._killFlip = initFlipOnScroll(root);
+    /* Parked before anything else measures: the hero's photograph is masked from its first frame, so
+       the window can never open on a picture that is already whole. It plays with the copy below. */
+    this._plate = initPlateArrival(root, vals.maskMotion);
     this._killParallax = initGlobalParallax(root);
     this._killHighlight = initHighlightText(root);
     this._killDividers = initDividers(root, { motion: vals.maskMotion });
@@ -157,6 +161,7 @@ export default class AboutPage extends React.Component {
     const controller = {
       play: () => {
         try { this._reveal.play(); } catch (e) { }
+        try { if (this._plate) this._plate.play(); } catch (e) { }
       },
       destroy: () => { },
     };
@@ -172,6 +177,7 @@ export default class AboutPage extends React.Component {
       '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
+    if (this._plate) { try { this._plate.destroy(); } catch (e) { } this._plate = null; }
     if (this._reveal) { try { this._reveal.destroy(); } catch (e) { } this._reveal = null; }
     if (this.props.vals.registerPageReveal) this.props.vals.registerPageReveal(null);
   }

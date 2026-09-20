@@ -33,6 +33,9 @@ export const overlayMethods = {
         const root = this._detailRoot();
         if (root) { const btn = root.querySelector('button'); if (btn) try { btn.focus(); } catch (e) { } }   // focus immediately — never delayed by the morph
         try { this.buildOverlayTimeline(); if (this._ovTl) this._ovTl.play(0); } catch (e) { }
+        // ...and the shares count up out of the blur, on the beat the chrome arrives on (the timeline
+        // above puts the value rows and the header at reveal × 0.45).
+        try { this._countIn(root, 'overlay', this.DUR.reveal * 0.45); } catch (e) { }
       });
     });
   },
@@ -61,6 +64,7 @@ export const overlayMethods = {
     this._ovTl = tl;
   },
   closeOverlay() {
+    this._stopCount('overlay');
     // focus returns in the completion callback (never before), so it can't re-render mid-close
     const tileFocusable = this._openTileEl && this._openTileEl.getAttribute('tabindex') !== '-1' && !this._openTileEl.getAttribute('aria-hidden');
     this._ovBack = tileFocusable ? this._openTileEl : this._lastFocus;
