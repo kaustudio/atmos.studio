@@ -2718,9 +2718,12 @@ export default function AppView({ vals }) {
           Compact rather than the whole footer, per the tombstone further up this file: brand and
           landmark off, so this is one nav row and not a second document ending. The upload state
           keeps the full footer, being the end of that composition rather than a strip under it. */}
-      {vals.isUpload
-        ? <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
-        : <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} brand={false} landmark={false} />}
+      {/* ONE ENDING FOR THE WHOLE TOOL (20.09.26, by request: "do the full"). The result stage carried a
+          compact version of this — the nav row with the wordmark and the landmark turned off — so the
+          page ended one way on the dropzone and another way the moment a palette was on screen, which
+          is the footer "being visible and other times not". It is the whole footer in every state now,
+          which also gives the stage back its <footer> landmark. */}
+      <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
       <ContrastDrawer vals={vals} />
       <DetailOverlay vals={vals} />
       <HarmonyDrawer vals={vals} />

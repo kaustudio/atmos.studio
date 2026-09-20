@@ -970,6 +970,31 @@ a second refresh 1.2s later as the local faces landed). So the landing re-applie
 the chapter holds still, and it is dropped by a wheel, a touch, a key, six seconds, or the story being torn
 down. A plain visit to the front page still opens on the hero.
 
+**The tool ends like every other page, in the masthead's type (20.09, by request: "do the full and adjust
+the font styling to the top nav links").** The result stage carried a compact footer — the nav row with the
+wordmark and the landmark turned off — so the page ended one way on the dropzone and another the moment a
+palette was on screen, which is what reads as the footer being there and then not. Measured: 352px against
+71px, and no <footer> landmark on the stage. It is the whole footer in every state now, landmark included.
+And the row takes the bar's type: New Palette, Back Up and Restore are 12px Medium on flat tracking, where
+this row was the same size and tracking at Regular, so the two ends of the page spoke in two weights. The
+size went up a step to --fs-body, 13px (15px was tried first and came back a rung): the bar's 12px is read
+in passing at the top of a screen and this row is read deliberately at the end of one. Measured at 1440,
+1200, 1024 and 820 the three cells still sit on one line with no wrap; at 390 the row stacks as it did, one
+link per line.
+
+**And the line-height went to 1.3, because the labels ride a mask.** Every label here is wrapped in .tswap
+for the hover swap, and .tswap is overflow:hidden at the height of its line box, so `line-height:1` cut
+whatever the face draws below the baseline. Measured in Neue Montreal Medium: 2.3px of ink under the
+baseline against a 13px box took 0.8px off every y, g and p — and 1.16px at 15px, so the row had been
+clipped at its old size too and simply was not looked at. 1.3 leaves 1.15px of clearance at 13px. The swap
+still travels exactly one mask (16.9px, measured at rest and forced hover).
+
+Not changed, and worth stating: the footer is deliberately behind a cover on the landing and in the grid
+view (visibility:hidden), so the legal links cannot be reached from either. On the landing that leaves a
+gap — once the consent banner is answered, its "Learn More" goes with it and nothing on that screen routes
+to Privacy, Terms or the consent choice again. The fix this file has proposed since the footer tombstone is
+a one-line legal row beside the credit; it is still open.
+
 **The hero photograph arrives (20.09, by request: "image should mask in from the bottom center on the
 current position with a slight parallax, so it's not already visible during page transition").** Everything
 else on How it Works arrives — the statement rises through its masks, the rules draw, the tiles cascade —
