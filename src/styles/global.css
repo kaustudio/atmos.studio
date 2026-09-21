@@ -2020,10 +2020,7 @@ button[data-row-cell] .tswap{flex:none}
   [data-tier3-action][data-ix]:active:not(:disabled){
     background:none!important;
   }
-  /* The switch answers through tokens rather than selectors — same gate, same reason. It has no label
-     to swap any more, so under the pointer it answers with its own track (see .theme-switch__track). */
-  .button[data-switch][data-emphasis]{--button-press:var(--button-surface);--button-line-press:transparent}
-  .button[data-switch][data-emphasis]:hover:not(:disabled) .button__bg.is--hover{opacity:0}
+  /* The switch's fill is off on every device now: see the rule after the family's own, below. */
 }
 .button__text{display:block;padding:var(--button-padding);white-space:nowrap;}
 /* COPY TAKES ITS "COPIED" ROOM OUT OF ITS PADDING (19.09.26, by request: "make sure padding on this
@@ -2123,6 +2120,16 @@ button[data-row-cell] .tswap{flex:none}
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
   .button:hover:not(:disabled) .button__bg.is--hover{opacity:0}
 }
+/* THE SWITCH NEVER TAKES THE FAMILY'S FILL, on any device (21.09.26, by request: "On mobile, when
+   clicking the mode toggle it adds a shadow circle on top"). The fill comes back wherever the swap does
+   not run, touch and reduced motion, and a phone keeps the element it tapped in :hover until the next
+   tap somewhere else. So after a tap the switch's whole 32x36 pill stood lit behind its track, a pale
+   circle at 16% that is plain on dark. This was gated with the swap-only rules above, which is right
+   for a Button with a label and wrong for this one: its track answers hover and press itself
+   (.theme-switch__track), so there is nothing for the fill to acknowledge. The press tint goes too,
+   or the same circle flashes for the length of every tap. */
+.button[data-switch][data-emphasis]{--button-press:var(--button-surface);--button-line-press:transparent}
+.button[data-switch][data-emphasis]:hover:not(:disabled) .button__bg.is--hover{opacity:0}
 .button::after{content:'';position:absolute;inset:var(--button-focus-inset);border-radius:var(--button-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow var(--dur-fast) var(--ease-button-focus);}
 .button:focus-visible{outline:none;}
 .button:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-focus);}

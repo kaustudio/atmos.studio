@@ -219,6 +219,9 @@ export default class PaletteApp extends React.Component {
        storyMasks is the built mask set, carrying the id of the case it was built from so a stale
        set can never be painted over a different photograph. */
     storyOpen: true, storyCaseId: null, storySwatch: null, storyTab: 'weight', storyMasks: null,
+    // How many times the story has been told from the top this visit: part of its key, so every new
+    // telling (an example chosen, the mark pressed) starts from fresh markup (see _syncStory).
+    storyTell: 0,
     // The image chooser, which covers the story rather than replacing it (see chooseStoryCase).
     storyPicker: false,
     /* THE TOUR'S ONE PIECE OF STATE: null, 'invite', 'choose', or 1..4. Not persisted — a tour is a
@@ -849,7 +852,13 @@ export default class PaletteApp extends React.Component {
        were replaced underneath the finger. The first press worked and the second landed on a node
        that no longer existed, which is exactly "it is not possible to switch between the three".
        Rebuild on a genuine case change; leave the surface alone for a tab. */
-    const key = want ? (this._storyCase() || {}).id : null;
+    /* AND THE TELLING (21.09.26, by request: "When navigating between explorations on mobile, previous
+       actions and animations are not reset"). Choosing an example, even the one on screen, or pressing
+       the mark tells the story again from the top, and a new telling is a new surface: <main> is keyed
+       on the same pair (renderVals' tellKey), so its markup is fresh and every module is built against
+       it. The rule above still holds, since none of this moves on a tab or a mask: storyTell changes
+       only on those two deliberate acts, under the site's cover. */
+    const key = want ? (this._storyCase() || {}).id + '/' + (this.state.storyTell || 0) : null;
     if (root && this._storyRoot === root && this._storyKey === key && root.hasAttribute('data-story-live')) { this._storyEntryJump(); return; }
     this._killStory();
     if (!root) return;

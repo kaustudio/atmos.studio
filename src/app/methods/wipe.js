@@ -785,6 +785,24 @@ export const wipeMethods = {
          could look at it. The caller passes its own beat (revealAt); the tool keeps 0.2, where the
          copy it releases is one drop rather than a cascade. */
       tl.call(release, null, opts.revealAt != null ? opts.revealAt : 0.2);
+      /* THE CREDIT WAITS FOR THE WINDOW (21.09.26, by request: "analyze the transition from 'Explore
+         another Example' to the story mode as it seems the thumbnail appears at the bottom. just make
+         sure the transition is fluent"). The front page's credit is a photograph at its bottom-left,
+         and the window opens from the bottom: so it was the first solid thing the slot uncovered, a
+         hard-edged square cut by the slot's corner while the rest of the page was still field and
+         centred copy. It is held while the window opens and eases in once the window has landed
+         (1.0s, before the last of the clip clears), on the reveal's length and the entrance curve.
+         Started from a call on the timeline, so it only begins if the window got there, and a
+         zero-length call, so the gesture ends when it always did; the watchdog puts it back. */
+      const credit = document.querySelector('[data-land-credit]');
+      if (credit) {
+        this._wipeCredit = credit;
+        g.set(credit, { autoAlpha: 0, y: 12 });
+        tl.call(() => {
+          g.to(credit, { autoAlpha: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'opacity,visibility,transform' });
+          this._wipeCredit = null;
+        }, null, 1.0);
+      }
       // built paused: a fresh unpaused timeline inserted against a SLEEPING ticker inherits a stale
       // parent playhead — wake the clock FIRST, then pin the playhead to 0.
       try { g.ticker.wake(); } catch (e) { }
@@ -833,6 +851,8 @@ export const wipeMethods = {
       this._wipeTeardownDom();
       clearGuards(); this._wipeClearGuards = null;
       this._arrivingByWipe = false;
+      // A credit held for a window that never landed comes back as it stands.
+      if (this._wipeCredit) { try { g.set(this._wipeCredit, { clearProps: 'opacity,visibility,transform' }); } catch (e) { } this._wipeCredit = null; }
       settle();
       // Through the caller's own reveal, not _playPageReveal directly: on the tool route that call
       // released a document controller belonging to a page that is no longer mounted, so the arriving

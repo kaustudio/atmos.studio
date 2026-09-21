@@ -133,12 +133,21 @@ export function initHorizontalRail(root) {
 
   const triggers = [];
 
+  /* [ATMOS 6] THE PIN IS TAKEN A MOMENT EARLY (21.09.26, by request: on an iPhone the close "jumps or
+     shakes" when scrolling to the footer and back up). Safari scrolls on its own thread, with momentum,
+     and the pin is switched on in JavaScript: coming back up from the footer, the scroll reaches the
+     pin's end before the switch lands, so for a frame the stage is drawn where it would be unpinned and
+     then snaps, with the close laid over it by the handoff above. anticipatePin projects the scroll
+     from its speed and switches the pin ahead of it, in both directions (ScrollTrigger 3.15 applies it
+     entering the start going down and the end coming back up). 1 is the figure GSAP recommends; it
+     changes nothing about where the pin starts or ends. */
   const scrollTween = gsap.to(track, {
     x: () => -distance(),
     ease: 'none',
     scrollTrigger: {
       trigger: container,
       pin: true,
+      anticipatePin: 1,
       scrub: true,
       start: 'top top',
       end: () => '+=' + distance(),

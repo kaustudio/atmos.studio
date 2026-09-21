@@ -6,6 +6,56 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — The credit waits for the page's window, and the story drops its Warm · Dark line
+
+**The front page's credit arrives after the window, not through its corner (by request: "analyze the
+transition from 'Explore another Example' to the story mode as it seems the thumbnail appears at the
+bottom. just make sure the transition is fluent").** The page transition brings the destination up
+inside a rounded window that opens from the bottom centre, and the credit's 128px photograph sits at
+the page's bottom-left: recorded on a phone, it was the first solid thing the window uncovered, a
+hard-edged square cut by the slot's corner from 0.6s while everything else was still field and centred
+copy. `_wipeCover` now holds it while the window opens and eases it in once the window has landed
+(1.0s into the gesture, `DUR.reveal` on `EASE.entrance`, rising 12px), so it is the last beat of the
+arrival: hidden until 1.1s, fully in by 1.6s. The hand-off is a zero-length call on the timeline, so the
+gesture still ends when it did, and the watchdog restores the credit if the window never lands. Every
+crossing onto the front page takes it; a first load is untouched.
+
+**No Warm · Dark on the phone's exploration (by request: "Remove this across color exploration on
+mobile").** The descriptors line under 1.1's sentence is gone from the story, for every example. The
+shared-link view's trait chips and the desktop grid's panel keep theirs.
+
+---
+
+## 2026-09-21 — The theme switch lights nothing on a phone, a new exploration starts from the top, and the gallery pins early
+
+**No circle behind the switch after a tap (by request: "On mobile, when clicking the mode toggle it adds
+a shadow circle on top").** A phone keeps the element it tapped in `:hover` until the next tap
+elsewhere, and Button's hover fill comes back wherever its label swap does not run, touch and reduced
+motion, so a Button with a label still acknowledges a press. The switch has no label: its track
+answers hover and press itself. Its opt-out from the fill (and from the press tint) sat inside the
+swap-only `(hover:hover)` gate, so on a phone its whole 32×36 pill stood lit at 16% behind the track
+after every tap, plain on dark. The opt-out applies on every device now.
+
+**Choosing an example starts the story again (by request: "When navigating between explorations on
+mobile, previous actions and animations are not reset").** The reading tab carried over from the last
+example (a story told about Garnet opened on Role if Hard Gunmetal had been left there), and choosing
+the example already on screen rebuilt nothing, so its reveals and counts stood finished. The story is
+now keyed on the case and the telling (`storyTell`, bumped by choosing an example and by the mark), so
+every new exploration is fresh markup with every module built against it, on Character, with nothing
+picked, at the top.
+
+**The gallery's pin is taken a moment early (by request: on an iPhone, in Safari, the close "jumps or
+shakes" scrolling to the footer and back up).** Nothing re-measures on the way: ScrollTrigger ignores
+the address bar's height-only resizes on touch, and the site's own resize handlers are width-guarded or
+measure nothing. What an iPhone does differently is scroll on its own thread with momentum, while the
+pin is switched on in JavaScript; coming back up, the scroll reaches the pin's end before the switch
+lands, and the stage, with the close laid over its end by the handoff, is drawn a frame unpinned and
+snaps. `anticipatePin: 1` on the rail's pin switches it ahead of the scroll in both directions. The pin's
+range is unchanged on the phone and on /about. It could not be watched in Mobile Safari here (no
+simulator on this machine), so it is confirmed on the phone itself.
+
+---
+
 ## 2026-09-21 — Every share counts up, and the front page's reference image is 128px
 
 **Every share counts up out of the blur (by request: "Make sure all numbers are cohesive so they have

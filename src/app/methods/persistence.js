@@ -1020,10 +1020,17 @@ export const persistenceMethods = {
            would paint one frame of the OLD story behind the gap the picker left. Behind the cover
            that is no longer visible either way, and it stays one commit regardless — a second render
            of a surface this size is worth avoiding on a phone whether or not anyone can see it. */
+        /* A NEW TELLING, FROM ITS FIRST STATE (21.09.26, by request: "When navigating between
+           explorations on mobile, previous actions and animations are not reset"). The reading tab
+           went on showing whatever the last example had been left on, and choosing the example already
+           on screen rebuilt nothing, so its reveals and counts stood finished. storyTell makes the
+           story new markup whichever case it is; the tab starts on Character, as a visit does. */
         this.setState({
           storyPicker: false,
           storyCaseId: id,
           storySwatch: null,
+          storyTab: 'weight',
+          storyTell: (this.state.storyTell || 0) + 1,
           storyMasks: null,
           announce: 'Now exploring ' + ex.name + '. Starting again from the top.',
         }, () => {
@@ -1094,12 +1101,13 @@ export const persistenceMethods = {
     if (recast && rolled) this.setFieldPalette(rolled);
     this._wipeCover({
       commit: (after) => {
-        this._storyKey = null;   // rebuild the story under the cover, case change or not (see above)
+        // A new telling, case change or not (see above): fresh markup, so every module starts over.
         this.setState(Object.assign({
           storyPicker: false,
           storyCaseId: null,
           storySwatch: null,
           storyTab: 'weight',
+          storyTell: (this.state.storyTell || 0) + 1,
           announce: 'Back to the start.',
         }, recast ? { storyMasks: null } : null), () => {
           if (recast) this.buildStoryMasks();

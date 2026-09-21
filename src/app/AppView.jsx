@@ -865,7 +865,7 @@ function MobileStory({ st }) {
           A case change is a rare, deliberate act that also returns the reader to 1.1, so remounting
           costs nothing anyone can perceive; the alternative is asking every dynamic sentence to
           survive being rewritten by a module that does not know React exists. */}
-      <main key={st.caseId} id="main">
+      <main key={st.tellKey} id="main">
       {/* ===== data-reveal IS FOR TEXT, AND NEVER FOR A BLOCK HOLDING A CONTROL =====
 
           pageReveal hands every [data-reveal] block to splitLines(), which rebuilds it: each word
@@ -963,7 +963,6 @@ function MobileStory({ st }) {
           <div className="about-col">
             <h2 data-sec-head>Start With the Whole Image</h2>
             <p data-reveal>{st.name} is a palette of five colours drawn from this image. Explore their proportions, properties and contrast to understand how they relate.</p>
-            <p data-reveal>{st.descriptors && st.descriptors.length ? st.descriptors.join(' · ') : ''}</p>
           </div>
         </section>
 

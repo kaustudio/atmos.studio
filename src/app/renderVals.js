@@ -1422,6 +1422,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
 
       mobileStory = {
         caseId: p.id,
+        // <main>'s key: the case and the telling, the same pair _syncStory builds against.
+        tellKey: p.id + '/' + (s.storyTell || 0),
         name: p.name,
         /* THE HERO NAMES THE PALETTE ONCE THE READER HAS CHOSEN ONE.
 
@@ -1456,7 +1458,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            the first-arrival branch — one is a sentence about the viewport, the other is a verb. */
         beginLabel: s.storyCaseId ? 'Explore ' + p.name : 'Explore an Example',
         image: this.dispUrl(p), hasImage: this.hasImg(p),
-        descriptors: this.paletteTags(p),
+        // No descriptors: the "Warm · Dark" line under 1.1's sentence went (21.09.26, by request).
         rationale: p.rationale || '',
         useLine: composeUse(an, met.aaState, met),
         swatches: swatchRows,
