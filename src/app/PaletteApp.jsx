@@ -35,13 +35,12 @@ import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
 import { initToggleSwitch } from './methods/toggleSwitch.js';
-import { initStickyTitle, markTouchCloses } from './methods/aboutStickyTitle.js';
+import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initLayeredSlider } from './methods/layeredSlider.js';
 import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initTileLines } from './methods/aboutTiles.js';
 import { initNumberOdometer } from './methods/numberOdometer.js';
-import { holdTouchScroll } from './methods/touchScroll.js';
 
 // Speed Insights' beforeSend: nothing without analytics consent, and never the share link's fragment.
 // Module scope, so the component is handed one function for its whole life rather than a new one
@@ -659,7 +658,6 @@ export default class PaletteApp extends React.Component {
     if (this._storyKills && prevState && prevState.storyMasks !== s.storyMasks) this._storyCountLate();
     this._syncShareCount();
     this._syncPicker();
-    this._syncTouchScroll();
     this._syncAppInert();
     this._syncLandingCover();
     this._syncConsent();
@@ -893,7 +891,6 @@ export default class PaletteApp extends React.Component {
        its three pins ahead of everything else. It is /about's 4.1 rail since 16.09.26, and it also
        moves the close up under its own end ([data-rail-handoff]), which is one more reason the sticky
        title below must be built after it: it measures the close where the rail has put it. */
-    markTouchCloses(root);   // before the rail: on a phone the close scrolls through (aboutStickyTitle.js [ATMOS 14])
     this._storyKills.push(initHorizontalRail(root));
     this._storyReveal = initPageReveal(root, {
       motion,
@@ -962,16 +959,6 @@ export default class PaletteApp extends React.Component {
     this._storyEntryJump();
     try { root.setAttribute('data-story-live', '1'); } catch (e) { }
     } finally { this._syncingStory = false; }
-    this._syncTouchScroll();
-  }
-
-  /* THE STORY HOLDS NORMALIZED TOUCH SCROLLING while it is live and its chooser is shut (21.09.26, by
-     request: see methods/touchScroll.js). Run after every update and at the end of a build, since the
-     story can be built from componentDidMount's timers with no update after it. */
-  _syncTouchScroll() {
-    const want = !!this._storyRoot && !this.state.storyPicker;
-    if (want && !this._touchScrollRelease) this._touchScrollRelease = holdTouchScroll('story');
-    else if (!want && this._touchScrollRelease) { this._touchScrollRelease(); this._touchScrollRelease = null; }
   }
 
   /* WHERE EXPLORE ATMOS LANDS ON A PHONE (19.09.26, by request). misc.js openCreate marks the
@@ -1061,7 +1048,6 @@ export default class PaletteApp extends React.Component {
     this._killStory();
     this._stopShares();
     this._stopCount('share');
-    if (this._touchScrollRelease) { this._touchScrollRelease(); this._touchScrollRelease = null; }
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }

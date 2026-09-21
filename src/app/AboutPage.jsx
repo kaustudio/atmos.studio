@@ -35,11 +35,10 @@ import { initPlateArrival } from './methods/aboutPlate.js';
 import { initDividers } from './methods/aboutDividers.js';
 import { initStackSlides } from './methods/aboutStack.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
-import { holdTouchScroll } from './methods/touchScroll.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initTileLines } from './methods/aboutTiles.js';
 import { initNumberOdometer } from './methods/numberOdometer.js';
-import { initStickyTitle, markTouchCloses } from './methods/aboutStickyTitle.js';
+import { initStickyTitle } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
 import aboutHtml from '../about/about.html?raw';
 import '../styles/doc.css';
@@ -126,10 +125,7 @@ export default class AboutPage extends React.Component {
        plates and the reveal pins each block's height while it is split. Everything here also refreshes
        on document.fonts.ready, which is the case that actually bites on this site. */
     this._killStack = initStackSlides(root);
-    markTouchCloses(root);   // before the rail: on a phone the close scrolls through (aboutStickyTitle.js [ATMOS 14])
     this._killRail = initHorizontalRail(root);
-    // The gallery pins, so a touch scroll here runs normalized while it is built (methods/touchScroll.js).
-    this._releaseTouch = holdTouchScroll('about');
     this._killFlip = initFlipOnScroll(root);
     /* Parked before anything else measures: the hero's photograph is masked from its first frame, so
        the window can never open on a picture that is already whole. It plays with the copy below. */
@@ -178,7 +174,7 @@ export default class AboutPage extends React.Component {
      still holding measurements of it. */
   _teardown() {
     ['_killOptical', '_killOdometer', '_killTileLines', '_killCascade', '_killSticky', '_killDividers', '_killHighlight', '_killParallax', '_killFlip',
-      '_killRail', '_killStack', '_releaseTouch'].forEach((k) => {
+      '_killRail', '_killStack'].forEach((k) => {
       if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
     });
     if (this._plate) { try { this._plate.destroy(); } catch (e) { } this._plate = null; }

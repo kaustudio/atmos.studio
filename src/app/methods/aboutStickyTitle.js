@@ -160,29 +160,6 @@ export function splitChars(el) {
   }
 }
 
-/* [ATMOS 14] ON A PHONE THE CLOSE SCROLLS THROUGH (21.09.26, by request: on an iPhone the close "jumps
-   or shakes" scrolling to the footer and back up, and the page was "just figuring out where to continue
-   to the next section or stay in place"). The close was a takeover twice over: it held for a screen
-   while its statement assembled on the scroll, and it began under the end of the gallery's pin, which
-   holds too, so the page stopped under the finger and let go again twice in a row. A flick's momentum
-   runs straight through those points. On a touch-only device the close is marked
-   data-sticky-mode="play" before anything is built: the close no longer slides under the pin to hold,
-   it follows the last photograph out (aboutRail.js [ATMOS 7] overlaps only the pin's empty tail), it is
-   a section that scrolls like any other (about.css, story.css), and its statement assembles once as it
-   arrives, on the same timeline played on its own clock instead of the scroll (below). Called by the phone story and /about ahead of
-   the rail; reduced motion takes the static layout from the same mark, with nothing to play. */
-export function markTouchCloses(root) {
-  if (!root) return;
-  const ST = window.ScrollTrigger;
-  let touchOnly = false;
-  if (ST && typeof ST.isTouch === 'number') touchOnly = ST.isTouch === 1;
-  else { try { touchOnly = window.matchMedia('(hover: none) and (pointer: coarse)').matches; } catch (e) { } }
-  root.querySelectorAll('[data-sticky-title="wrap"][data-rail-handoff]').forEach((wrap) => {
-    if (touchOnly) wrap.setAttribute('data-sticky-mode', 'play');
-    else wrap.removeAttribute('data-sticky-mode');
-  });
-}
-
 export function initStickyTitle(root) {
   const gsap = window.gsap;
   const ScrollTrigger = window.ScrollTrigger;
@@ -256,13 +233,7 @@ export function initStickyTitle(root) {
     wrap.setAttribute('data-sticky-live', '1');
     live.push(wrap);
 
-    // [ATMOS 14] Played, not scrubbed, on a close marked for a phone.
-    const play = wrap.getAttribute('data-sticky-mode') === 'play';
-    const masterTl = gsap.timeline(play ? {
-      paused: true,
-      onStart: () => { try { wrap.setAttribute('data-st-active', '1'); } catch (e) { } },
-      onComplete: () => { try { wrap.removeAttribute('data-st-active'); } catch (e) { } },
-    } : {
+    const masterTl = gsap.timeline({
       scrollTrigger: {
         trigger: wrap,
         start: start,
@@ -414,25 +385,6 @@ export function initStickyTitle(root) {
     }
     if (masterTl.scrollTrigger) triggers.push(masterTl.scrollTrigger);
     triggers.push({ kill: () => { try { masterTl.kill(); } catch (e) { } } });
-
-    /* [ATMOS 14] THE PLAY: once, as the statement's first line comes up into view (95%, so it is assembling
-       while it rises rather than waiting in the empty space the gallery leaves), on the timeline's own
-       clock. With a catch-up, because a trigger created with its start already behind the scroll
-       position never plays here (see numberOdometer.js [ATMOS 4]): a statement already on screen plays
-       at once, and one already above the fold is simply shown, never left parked at nothing. */
-    if (play && headings[0]) {
-      const line = headings[0];
-      const go = () => {
-        if (masterTl.progress() > 0 || masterTl.isActive() || !line.isConnected) return;
-        const r = line.getBoundingClientRect();
-        if (r.bottom < 0) masterTl.progress(1);
-        else if (r.top < window.innerHeight * 0.95) masterTl.play();
-      };
-      triggers.push(ScrollTrigger.create({ trigger: line, start: 'top 95%', once: true, onEnter: go }));
-      ScrollTrigger.addEventListener('refresh', go);
-      triggers.push({ kill: () => { try { ScrollTrigger.removeEventListener('refresh', go); } catch (e) { } } });
-      requestAnimationFrame(go);
-    }
 
     /* [ATMOS 6] THE COLOUR ARC IS OPT-IN, AND THE GUARD BELONGS ABOVE THE TIMELINE.
 

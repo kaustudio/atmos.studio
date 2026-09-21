@@ -6,35 +6,19 @@ doesn't know it was ever made.
 
 ---
 
-## 2026-09-21 — On a phone the close scrolls through: its own screen, no hold
+## 2026-09-21 — The close keeps its takeover on a phone, small jumps and all
 
-**Chosen from two (by request, after the report that on an iPhone the page was "just figuring out
-where to continue to the next section or stay in place").** Nothing in the code decides the scroll —
-instrumented through the close to the footer and back, every write came from ScrollTrigger's own
-normalizer and the page never moved without a finger on it. What the reader felt was the design: the
-close was a takeover that held for a screen while its statement assembled on the scroll, and it began
-under the end of the gallery's pin, which holds too, so the page stopped under the finger and let go
-twice in a row, and a flick's momentum ran through both. "Keep the hold, drop the overlap" was the
-other option; "scroll through" was taken.
-
-**What it is now, on a touch-only device** (`markTouchCloses`, aboutStickyTitle.js [ATMOS 14]): the
-close keeps a whole screen with the statement centred in it, the same space above as below, and
-nothing sticky (by request: "i want same spacing at the top as in the bottom, so we don't get to the
-footer right away. that was what the stop was for"; a first cut as an ordinary banded section brought
-the footer straight up under the act). Measured: 306px above the heading and 306px below the act on
-the phone story, 355 and 355 on /about. Its statement
-assembles once, on the same timeline played on its own clock, as its first line comes up to 95% of the
-screen, with a catch-up for a close that is already on screen or above it; the lead and the act still
-arrive on "Discover". It follows the last photograph out instead of taking over under the pin
-(aboutRail.js [ATMOS 7]): the overlap is only the pin's empty tail, so the close's top meets the bottom
-of the screen as the last card clears the left edge. Without that, the tail and the empty stage stood
-as a screen and a half of blank page before the first word. The phone story and /about on a phone
-both take it; desktop keeps the takeover; reduced motion gets the static section. Measured: the close
-held while the page moved in 0 frames through a swipe to the foot and back.
+**A scroll-through close was built and taken back out (by request: "undo i can live with the small jumps
+it worked better").** After the iPhone report that the close jumps as the page settles between holding
+and moving on, the close was made, on touch-only devices, a centred screen that scrolled with no hold,
+its statement played once as it arrived, handing over at the end of the gallery's empty tail. Tried on
+the phone, the takeover's stop worked better. The close is the takeover again everywhere: the gallery's
+pin, the handoff under it and the sticky statement, as before. Don't propose removing the stop on
+phones again without being asked.
 
 ---
 
-## 2026-09-21 — On a phone, the pages that pin scroll through GSAP's normalizer
+## 2026-09-21 — GSAP's normalized touch scrolling was tried on the pages that pin, and removed
 
 **Tried by request ("try normalizescroll"), after anticipatePin, for the iPhone report that the close
 "jumps or shakes" scrolling to the footer and back up in Safari.** `ScrollTrigger.normalizeScroll`
@@ -50,6 +34,11 @@ holds it, it is switched off and the browser scrolls natively. Measured in phone
 swipe moves the page 413px under the finger and GSAP's momentum carries it on; taps, the chooser and the
 reduced-motion floor are unchanged; swiping to the foot and flicking back up moves nothing in the
 document. The feel of the momentum, and whether the jump is gone, are judged on the phone itself.
+
+**Removed the same day (by request), with the scroll-through close.** It did not cure the jumps, and
+with the takeover's stop kept, small jumps and all, it was not earning its place: phones scroll with
+Safari's own momentum on every page again. `methods/touchScroll.js` is gone. The rail pin's
+`anticipatePin: 1` stays; it changes nothing but when the pin engages.
 
 ---
 
