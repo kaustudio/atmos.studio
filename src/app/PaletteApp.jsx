@@ -225,6 +225,8 @@ export default class PaletteApp extends React.Component {
        thing you are in the middle of, and a reader who reloads has left it. What IS persisted is the
        single fact that the offer was made (methods/tour.js), which is what stops it arriving twice. */
     tourStep: null,
+    // The invitation stays mounted while it leaves, so its exit can play (TourInvite in AppView).
+    tourInviteOut: false,
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', gridLeaving: false, uOpen: null, overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
@@ -547,6 +549,14 @@ export default class PaletteApp extends React.Component {
         if (this.state.copyMenuOpen) { e.preventDefault(); this.closeCopyMenu(); return; }
         if (this.state.shareMenuOpen) { e.preventDefault(); this.closeShareMenu(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
+        /* A DRAWER THE TOUR OPENED IS PART OF ITS STEP, so Escape takes both — the brief's "Escape to
+           exit", which on steps 2 and 3 used to close only the drawer and leave the card standing
+           beside nothing. Ahead of the drawers' own clauses for that reason; a drawer the reader
+           opened some other way still closes on its own below. */
+        if (typeof this.state.tourStep === 'number') {
+          const st = this.TOUR_STEPS[this.state.tourStep - 1];
+          if (st && ((st.view === 'contrast' && this.state.contrast) || (st.view === 'harmony' && this.state.harmony))) { e.preventDefault(); this.exitTour(); return; }
+        }
         if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
         if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
         if (this.state.overlay) { e.preventDefault(); this.closeOverlay(); return; }

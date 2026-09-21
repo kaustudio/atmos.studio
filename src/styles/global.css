@@ -2850,7 +2850,25 @@ html,body{overflow-anchor:none}
    state. 4.5em is three lines at this element's own line-height, so it follows the type rather than
    being a measured pixel figure that goes stale: the figure only needs revisiting if a step's copy
    ever runs to four lines. Nothing animates, because nothing changes. */
-[data-tour-card] p[data-tour-line]{min-height:4.5em}
+/* NUMBERED STEPS ONLY. 'choose' has one line of copy and no stepper, and it inherited the three-line
+   reservation anyway: 39px of empty card under "Open any example to start exploring", reading as a
+   missing sentence. The reservation exists to hold steps 1–5 to one box; choose is not one of them. */
+[data-tour-card][data-tour-numbered] p[data-tour-line]{min-height:4.5em}
+/* THE DEMONSTRATION CUE (21.09.26, by request: "show the user what buttons to press to open check
+   contrast and harmonies"). Before steps 2 and 3 open their drawer, the ring lands on the control
+   that opens it and the control shows the state a pointer resting on it would — no new vocabulary,
+   the exact hover each control already has, so what the reader is taught to look for is what they
+   will actually see when they do it themselves. Check Contrast rolls its label through the mask on
+   --dur-swap; the harmony disc takes its icon tier's 16% tint. Under reduced motion the label does
+   not roll, so its fill comes back instead — the same exchange .button-006 makes for itself. */
+.button-006[data-tour-cue] .button-006__default .b006-swap__in{transform:translateY(-100%)}
+.button-006[data-tour-cue] .button-006__hover .b006-swap__in{transform:translateY(0)}
+[data-ix="icon"][data-tour-cue]{background:color-mix(in srgb,currentColor 16%,transparent)!important}
+@media (prefers-reduced-motion:reduce){
+  .button-006[data-tour-cue] .button-006__default .b006-swap__in{transform:none}
+  .button-006[data-tour-cue] .button-006__hover .b006-swap__in{transform:translateY(100%)}
+  .button-006[data-tour-cue] .button-006__bg.is--hover{opacity:1}
+}
 /* ===== THE STEPPER — .layered-slider__counter's FORM, AT THE TOOL'S OWN SCALE ==================
 
    The phone chooser's counter (story.css): the number, a position bar, the total. Its geometry is
@@ -2889,7 +2907,14 @@ html,body{overflow-anchor:none}
    Raising the tint is the documented per-surface move here, not a departure: the landing's own bar
    overrides --glass-tint to 40% eleven hundred lines up, for the opposite reason. The blur, the
    hairline, the corner and the absence of a shadow are all still the banner's. */
-[data-tour-card] > .glass-effect{--glass-tint:color-mix(in srgb, var(--surface) 93%, transparent)}
+/* --surface-white, NOT --surface (21.09.26, by request: "after clicking Take the Tour the modal
+   blends in too much, and it becomes unclear where it lands"). A pane of the page's own surface laid
+   over the page is the page: the card had a 12% hairline and no fill difference at all, so over the
+   library it read as a region of the list rather than as an object that had arrived. --surface-white
+   is the token this system names for "cards that pop / current row" — #fff over #f5f5f3 in light,
+   #2a2a28 over #141413 in dark — so the pane now reads from its fill, which is the rule glass lives
+   by. The travel in from the invitation (_tourEnterFrom, spent in _tourPut) answers "where"; this answers "what". */
+[data-tour-card] > .glass-effect{--glass-tint:color-mix(in srgb, var(--surface-white) 93%, transparent)}
 /* THE ACTS SIT 2px SHORTER TOP AND BOTTOM (20.09.26, by request, twice: the tour's pair first, then
    "give these buttons, including the cookie banner, the same decrease").
 

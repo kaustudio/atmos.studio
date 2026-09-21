@@ -74,12 +74,21 @@ const STEPS = [
     body: 'Select a colour to see its values. The percentage shows its estimated share of the image. Copy a value to use it in your design.',
   },
   {
-    n: 2, view: 'contrast', anchor: '[data-contrast-dialog]', place: 'inline-start',
+    /* `via` — THE CONTROL THAT OPENS THIS STEP'S DRAWER (21.09.26, by request: "show the user what
+       buttons to press to open check contrast and harmonies"). Two jobs for one fact. Before the
+       drawer opens, the ring lands on it and it shows the state a pointer resting on it would, so
+       the reader is shown the way in rather than being carried past it. And if the reader closes the
+       drawer themselves, the card falls back to it instead of describing a tool that is no longer
+       on screen. _tourVia resolves it. */
+    // viaPlace is the side of the CONTROL the card takes while it is being shown, which is not the
+    // drawer's side: inline-start of Check Contrast is off the left of the screen, and inline-end
+    // of it lands across Copy and Export. Below it is where the reader's eye already is.
+    n: 2, view: 'contrast', via: 'contrast', viaPlace: 'block-end', anchor: '[data-contrast-dialog]', place: 'inline-start',
     title: 'Check Contrast',
     body: 'Compare two colours to see whether they meet the contrast requirement for your intended use. Try another pair to see how the result changes.',
   },
   {
-    n: 3, view: 'harmony', anchor: '[data-harmony-dialog]', place: 'inline-start',
+    n: 3, view: 'harmony', via: 'harmony', viaPlace: 'block-end', anchor: '[data-harmony-dialog]', place: 'inline-start',
     title: 'Explore Harmonies',
     body: 'Choose a colour from your palette and explore related colours. Switch between harmonies to see different combinations.',
   },
@@ -155,7 +164,12 @@ export const tourMethods = {
 
   openTourInvite() {
     this._tourBack = document.activeElement;
-    this.setState({ tourStep: 'invite' }, () => {
+    this.setState({ tourStep: 'invite', tourInviteOut: false }, () => {
+      /* _dialogIn, the five dialogs' own arrival: the scrim on DUR.state, the panel up 12px from 0.98
+         on EASE.entrance. It used to simply be there — measured at one opacity value across ~190
+         frames, where Export in the same run eased through seventeen. On a first visit it arrives
+         under the page wipe and the wipe is what is seen; from the footer this is the whole entrance. */
+      this._dialogIn('[data-tour-dialog]');
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-tour-dialog]');
         if (!d) return;
@@ -174,7 +188,16 @@ export const tourMethods = {
      visit; the masthead's Take a Tour is the way back. */
   skipTourInvite() {
     this._tourRemember();
-    this._tourClose('Tour skipped. Take a Tour in the top bar reopens it.');
+    if (this._tourInviteLeaving) return;
+    this._tourInviteLeaving = true;
+    this.setState({ tourInviteOut: true });
+    // _dialogOut first, then the state that unmounts it — an exit that has to outlive the state
+    // change, which is the same reason every dialog here closes this way.
+    this._dialogOut('[data-tour-dialog]', () => {
+      this._tourInviteLeaving = false;
+      this.setState({ tourInviteOut: false });
+      this._tourClose('Tour skipped. Take a Tour in the footer reopens it.');
+    });
   },
 
   /* TAKE THE TOUR, FROM EITHER DOOR — the first-visit invitation, and the masthead control that
@@ -187,8 +210,25 @@ export const tourMethods = {
      touches the library. */
   takeTour() {
     this._tourRemember();
-    if (this.state.stage === 'result' && this.state.current) { this._tourGo(1); return; }
-    this.setState({ tourStep: 'choose', announce: 'Tour started. Open any example to begin.' }, () => { this._tourFrozen = false; this._tourAttach(); this._tourFocusCard(); });
+    /* WHERE IT LANDS (21.09.26, by request: "after clicking Take the Tour it becomes unclear to the
+       user where the modal lands"). The invitation used to vanish in one frame and the card appear
+       in another, 400px away, with nothing joining them. Now the card rises out of the
+       invitation's own centre and travels to its anchor on the glide while the invitation leaves on
+       the dialogs' exit behind it: the eye was already on the invitation, and it is carried to where
+       the card settles. _tourPut spends _tourEnterFrom on the card's first placement. */
+    const d = document.querySelector('[data-tour-dialog]');
+    if (d) {
+      const r = d.getBoundingClientRect();
+      this._tourEnterFrom = { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+      this._tourInviteLeaving = true;
+      this._dialogOut('[data-tour-dialog]', () => { this._tourInviteLeaving = false; this.setState({ tourInviteOut: false }); });
+    }
+    if (this.state.stage === 'result' && this.state.current) {
+      this.setState({ tourInviteOut: !!d });
+      this._tourGo(1);
+      return;
+    }
+    this.setState({ tourStep: 'choose', tourInviteOut: !!d, announce: 'Tour started. Open any example to begin.' }, () => { this._tourFrozen = false; this._tourAttach(); this._tourFocusCard(); });
   },
 
   // ===== moving between steps ===============================================================
@@ -289,8 +329,16 @@ export const tourMethods = {
        the ANCHOR and waits for it. The card is never empty, and its 20px nudge onto the new drawer
        lands quietly under copy that is already being read. */
     // The surfaces behind the card change on their own. Nothing about the CARD waits on this any
-    // more — see the note on the settle below.
-    this._tourSyncView(step, () => { });
+    // more — see the note on the settle below. A step with a `via` holds its drawer back: it opens
+    // once the demonstration has shown the control that opens it, and not before the drawer being
+    // replaced has finished leaving. Both gates, in either order, then one open.
+    let viewClear = false, demoDone = !step.via;
+    const openWhenReady = () => {
+      if (!viewClear || !demoDone || !live()) return;
+      if (step.via) this._tourOpenDrawer(step);
+      this._tourSettle(step, () => { if (live()) this._tourMove(step); });
+    };
+    this._tourSyncView(step, () => { viewClear = true; if (step.via) openWhenReady(); }, !!step.via);
 
     // BEAT 1 — the words leave, and only then does the state carrying them change
     this._tourTextOut(() => {
@@ -302,11 +350,17 @@ export const tourMethods = {
          _tourArmText is about to set anyway. */
       this._tourHideLines();
       this._tourDropText(true);
+      // The box is held at its current height across the commit, so a step with a different shape
+      // cannot resize it in one frame; _tourFold then eases it to the new one. See the note there.
+      const card0 = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
+      const h0 = card0 ? card0.getBoundingClientRect().height : 0;
+      if (card0 && h0) card0.style.height = h0 + 'px';
       this.setState({ tourStep: n }, () => {
-        if (!live()) return;
+        if (!live()) { if (card0) card0.style.height = ''; return; }
         this._tourAttach();
         this._tourReveal(step);
         this._tourContent(n, step);
+        this._tourFold(card0, h0);
         /* THE SETTLE WATCHES THE NEW ANCHOR, NOT THE OLD SURFACE LEAVING (20.09.26, second pass).
 
            It used to hang off _tourSyncView's completion, which meant the card could not be placed
@@ -320,7 +374,8 @@ export const tourMethods = {
            both simpler and correct: a stable anchor settles on the third frame and the card travels
            under the arriving copy, and one that is still sliding in is waited for exactly as before.
            Five of the ten crossings drop from ~1.2s to ~0.75s on this alone. */
-        this._tourSettle(step, () => { if (live()) this._tourMove(step); });
+        if (step.via) this._tourDemo(step, live, () => { demoDone = true; openWhenReady(); });
+        else this._tourSettle(step, () => { if (live()) this._tourMove(step); });
       });
     });
   },
@@ -374,10 +429,12 @@ export const tourMethods = {
        the card detached from its anchor for the whole 800ms of any step change a reader scrolled
        through, and the page scrolls freely at every step. */
     /* AND THE KEYBOARD, AGAIN. _tourContent focuses the card as soon as the words are there, which
-       is right for a reader waiting on it — but openContrast and openHarmony each focus their own
-       first control when they arrive, and they arrive AFTER that. Measured at step 3: focus was on
-       the harmony drawer, not the card. The tour owns focus for the length of a step change, and
-       this is the end of the change. */
+       is right for a reader waiting on it — but openContrast and openHarmony each focused their own
+       first control when they arrived, and they arrive AFTER that. Measured at step 3: focus was on
+       the harmony drawer, not the card. Since 21.09.26 the tour opens them with keepFocus and they
+       leave focus alone, so this no longer has anything to take back on the normal path; it stays
+       as the end-of-change guarantee, because the tour owns focus for the length of a step change
+       and this is where the change ends. */
     this._tourFocusCard();
   },
 
@@ -410,7 +467,7 @@ export const tourMethods = {
      has to put back whatever the last step opened. Closing is animated (a reversed timeline that
      setStates on completion), so the open waits on the flag rather than on a guessed delay —
      _tourWhenClear polls the state the close actually writes. */
-  _tourSyncView(step, done) {
+  _tourSyncView(step, done, hold) {
     const s = this.state;
     const needContrast = step.view === 'contrast';
     const needHarmony = step.view === 'harmony';
@@ -433,18 +490,65 @@ export const tourMethods = {
     this._tourWhenClear(
       () => (needContrast || !this.state.contrast) && (needHarmony || !this.state.harmony) && !this.state.exportOpen,
       () => {
-        if (needContrast && !this.state.contrast) this.openContrast();
-        // The DOMINANT swatch, which every palette has and no palette shares — so "a palette colour
-        // is selected" is true of all eight without naming one.
-        if (needHarmony && !this.state.harmony) {
-          const p = this.state.current;
-          const sw = p && p.swatches && p.swatches[0];
-          if (sw) this.openHarmony(sw.hex);
-        }
-        // The drawer has to be in the DOM before the card can be placed beside it.
+        // HELD for the demonstration: the drawer opens when _tourDemo says so, not here.
+        if (!hold) this._tourOpenDrawer(step);
         requestAnimationFrame(() => requestAnimationFrame(done));
       },
     );
+  },
+
+  _tourOpenDrawer(step) {
+    // keepFocus: the card keeps it. See openContrast in methods/overlays.js.
+    if (step.view === 'contrast' && !this.state.contrast) this.openContrast({ keepFocus: true });
+    // The DOMINANT swatch, which every palette has and no palette shares — so "a palette colour is
+    // selected" is true of all eight without naming one.
+    if (step.view === 'harmony' && !this.state.harmony) {
+      const p = this.state.current;
+      const sw = p && p.swatches && p.swatches[0];
+      if (sw) this.openHarmony(sw.hex, { keepFocus: true });
+    }
+  },
+
+  // The control that opens a drawer step's drawer. The harmony disc is the dominant band's, because
+  // the dominant swatch is the one _tourOpenDrawer opens the drawer for.
+  _tourVia(step) {
+    if (!step || !step.via) return null;
+    if (step.via === 'contrast') return document.querySelector('[data-tour="via-contrast"]');
+    if (step.via === 'harmony') {
+      const p = this.state.current;
+      const sw = p && p.swatches && p.swatches[0];
+      return sw ? document.querySelector('[data-band][data-sid="' + sw.sid + '"] button[data-info]') : null;
+    }
+    return null;
+  },
+
+  /* THE DEMONSTRATION BEAT. The ring moves onto the control, the control shows its own hover, a beat
+     passes, and only then does the drawer open — as though the control had been pressed, which is
+     the thing being taught. The length is the counter-roll and the copy's arrival together, so the
+     reader is reading "Check Contrast" with the ring on Check Contrast; after it the drawer slides
+     in and the card travels with it. Under reduced motion nothing rolls, so the cue is the fill
+     (global.css), and the beat is kept: this is information, not decoration. */
+  _tourDemo(step, live, done) {
+    const via = this._tourVia(step);
+    if (!via) { done(); return; }
+    /* THE CARD GOES TO THE CONTROL, NOT JUST THE RING (21.09.26, measured on 2 → 3). With only the
+       ring moving, the card held where step 2 had put it — beside a contrast drawer that was already
+       gone, across two of the palette's bands and ~400px from the disc it was describing. 1 → 2 only
+       looked right because step 1's card happens to sit under Check Contrast already.
+       Unfreezing is all it takes: the step's drawer is not open yet, so the solver's own fallback
+       resolves the anchor to this control, on viaPlace, and the anchor switch starts the glide. When
+       the drawer then opens, the same switch carries the card on to it: the button, then what it
+       opens, as two moves the eye can follow. */
+    this._tourFrozen = false;
+    this._tourSolveNow();
+    this._tourRingTo(via, '');
+    via.setAttribute('data-tour-cue', '');
+    clearTimeout(this._tourDemoT);
+    this._tourDemoT = setTimeout(() => {
+      try { via.removeAttribute('data-tour-cue'); } catch (e) { }
+      if (!live()) return;
+      done();
+    }, (this.DUR.overlay + this.DUR.state) * 1000);
   },
 
   /* FOCUS FOLLOWS THE STEP. The card is tabIndex=-1 and takes focus on every change, so a keyboard
@@ -558,6 +662,32 @@ export const tourMethods = {
     clearTimeout(this._tourRedT);
     const card = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
     if (card) card.style.opacity = '';
+  },
+
+  /* A CARD THAT CHANGES SHAPE UNFOLDS INTO IT (21.09.26, measured). Steps 1–5 are held to one box
+     by the three-line reservation, so between them this does nothing — the height it measures after
+     the commit is the height it had before. 'choose' is not held to it, and should not be: it has one
+     line of copy and no stepper. So choose → 1 is the one crossing where the card genuinely becomes
+     a different shape, and it did so in a single frame, 118px to 196px.
+     _foldIn's own figures (methods/persistence.js), because this is a disclosure — a box opening to
+     show more than it did — and the app already has one way of doing that: the height measured from
+     the real content, tweened on DUR.reveal x 0.62 and EASE.fold, then handed back to the layout so
+     nothing is left pinned to a stale pixel value. overflow is hidden only for the length of it, so
+     the footer is uncovered as the box reaches it rather than hanging below the glass.
+     Both heights are the same box, measured the same way. The first version pinned offsetHeight,
+     which is whole pixels and includes the 1px border, and read scrollHeight, which leaves the
+     border out: every numbered crossing then "folded" 196 -> 194 and sprang back to 196.15 on
+     release, a 2px shiver on a card that was not changing shape at all. The new height is read
+     with the pin lifted, in the same task, so no frame ever paints the unpinned box. */
+  _tourFold(card, h0) {
+    if (!card) return;
+    const release = () => { card.style.height = ''; card.style.overflow = ''; };
+    card.style.height = '';
+    const h1 = card.getBoundingClientRect().height;
+    const g = window.gsap;
+    if (!h0 || Math.abs(h1 - h0) < 1 || this._reduce || !g) { release(); return; }
+    card.style.height = h0 + 'px'; card.style.overflow = 'hidden';
+    g.fromTo(card, { height: h0 }, { height: h1, duration: this.DUR.reveal * 0.62, ease: this.EASE.fold, onComplete: release });
   },
 
   _tourHideLines() {
@@ -712,15 +842,54 @@ export const tourMethods = {
      control belonging to the screen they just left. */
   _tourAbandon() {
     if (typeof this.state.tourStep !== 'number') return;
+    // componentDidUpdate calls this on every commit while the stage is not 'result', and the card's
+    // exit spans several of them — so it runs once and waits for its own fade.
+    if (this._tourLeaving) return;
     this._tourSeq = (this._tourSeq || 0) + 1;      // supersede any change still in flight
     this._tourDetach();
     this._tourDropText();
     this._tourClearOpacity();
-    this._tourFrozen = false;
+    this._tourRingTo(null);
+    this._tourFrozen = true;
     this._tourOwnsFocus = false;
     this._tourBusy = false;
     this._tourBack = null;
-    this.setState({ tourStep: null });
+    this._tourCardOut(() => { this._tourFrozen = false; this.setState({ tourStep: null }); });
+  },
+
+  /* ESCAPE MEANS LEAVE (21.09.26, audit — the brief: "Escape to exit"). On steps 2 and 3 the first
+     Escape used to close the drawer and leave the tour standing beside nothing, because the drawers
+     sit above the tour in the key ladder. A drawer the TOUR opened is part of its step, so Escape
+     now takes the step and its drawer together, in one press, back to the palette. Skip Tour keeps
+     its own meaning — close the tour, stay where you are — and leaves an open drawer open. */
+  exitTour() {
+    const step = this._tourStepDef();
+    const tourDrawer = !!(step && ((step.view === 'contrast' && this.state.contrast) || (step.view === 'harmony' && this.state.harmony)));
+    this._tourClose('Tour closed.', { closeDrawer: tourDrawer });
+  },
+
+  /* THE CARD LEAVES THE WAY THE DIALOGS DO. _dialogOut's figures — opacity and 10px down on
+     DUR.overlayOut and EASE.overlay — because Finish Tour is the act the whole tour builds to and
+     the last thing a reader keeps of it, and it was ending in one frame. The glide and the base
+     opacity transition are taken off for the length of it, or the CSS transitions would re-ease
+     every value GSAP writes and the exit would crawl behind itself. React removes the node after,
+     so nothing inline is left to clean. Under reduced motion it is the opacity half only. */
+  _tourCardOut(cb) {
+    const card = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
+    const g = window.gsap;
+    this._tourLeaving = true;
+    const finish = () => { this._tourLeaving = false; cb(); };
+    if (!card) { finish(); return; }
+    card.style.pointerEvents = 'none';
+    if (this._reduce || !g) {
+      card.style.opacity = '0';
+      setTimeout(finish, this.DUR.state * 1000);
+      return;
+    }
+    clearTimeout(this._tourGlideT);
+    card.removeAttribute('data-tour-glide');
+    card.style.transition = 'none';
+    g.to(card, { opacity: 0, y: '+=10', duration: this.DUR.overlayOut, ease: this.EASE.overlay, onComplete: finish });
   },
 
   /* FINISH LEAVES THE READER ON THE PALETTE, which is the ending the tour has been building to:
@@ -745,30 +914,67 @@ export const tourMethods = {
 
      The opener is still the answer from the invitation, where nothing has been shown yet and the
      honest thing is to put the reader back where they pressed. */
-  _tourClose(announce) {
+  _tourClose(announce, opts) {
+    if (this._tourLeaving) return;
     const wasStep = this._tourStepDef();
-    const subject = wasStep && wasStep.n ? document.querySelector(wasStep.anchor) : null;
+    const closeDrawer = !!(opts && opts.closeDrawer);
+    // Leaving with its drawer, the step's own subject is on its way out too, so focus goes to the
+    // control that opens it — the thing the reader has just been shown — rather than into a drawer
+    // that is closing.
+    const subject = closeDrawer ? this._tourVia(wasStep) : (wasStep && wasStep.n ? document.querySelector(wasStep.anchor) : null);
+    this._tourSeq = (this._tourSeq || 0) + 1;
+    clearTimeout(this._tourDemoT);
+    const cued = document.querySelector('[data-tour-cue]');
+    if (cued) cued.removeAttribute('data-tour-cue');
     this._tourDetach();
     this._tourClearOpacity();
-    this._tourFrozen = false;
+    this._tourFrozen = true;
     this._tourOwnsFocus = false;
     this._tourBusy = false;
     this._tourDropText();
+    this._tourRingTo(null);
+    if (closeDrawer) {
+      // The drawers hand focus back to whatever opened them, which was the card; it is leaving.
+      this._contrastBack = null; this._harmonyBack = null;
+      if (this.state.contrast) this.closeContrast();
+      if (this.state.harmony) this.closeHarmony();
+    }
+    this._tourCardOut(() => { this._tourFrozen = false; this._tourCloseCommit(announce, subject); });
+  },
+
+  _tourCloseCommit(announce, subject) {
     this.setState({ tourStep: null, announce: announce || '' }, () => {
       const back = this._tourBack;
       this._tourBack = null;
-      requestAnimationFrame(() => {
-        if (subject && document.contains(subject)) {
-          try {
-            if (subject.tabIndex < 0) subject.setAttribute('tabindex', '-1');
-            subject.focus({ preventScroll: true });
-            if (document.activeElement === subject) return;
-          } catch (e) { }
-        }
-        if (back && document.contains(back)) { try { back.focus(); return; } catch (e) { } }
-        const main = document.querySelector('[data-app] main');
-        if (main) { try { if (main.tabIndex < 0) main.setAttribute('tabindex', '-1'); main.focus({ preventScroll: true }); } catch (e) { } }
-      });
+      /* RETRIED UNTIL IT TAKES, on the wipe's own cadence (focusDestination: 60ms, twelve tries).
+
+         Leaving with a drawer, the card's exit and the drawer's close both run on DUR.overlayOut,
+         and the card's can finish first — measured three milliseconds ahead on step 3. At that
+         moment the drawer is still modal and <main> is still inert, and focus() on an element inside
+         an inert subtree fails without an error: the harmony disc was present, enabled and
+         tab-reachable, the call ran, and document.activeElement stayed <body>. Step 2 only ever
+         worked because the contrast drawer happened to commit first. So each candidate is tried
+         only once it is out of an inert subtree, and the whole chain waits for one to take. */
+      /* <body> IS NOT A PLACE TO LAND. _tourBack is whatever held focus when the tour opened, and a
+         pointer press on the footer's Take a Tour does not focus the button in every browser — so
+         it can be <body>. focus() on <body> "succeeds" (activeElement is <body> afterwards), which
+         ended this chain on its first attempt, before the drawer had released <main>, having put
+         focus nowhere. Measured on step 3: the harmony disc skipped as inert, then <body> taken. */
+      const take = (el) => {
+        if (!el || el === document.body || el === document.documentElement) return false;
+        if (!document.contains(el) || el.closest('[inert]')) return false;
+        try {
+          if (el.tabIndex < 0) el.setAttribute('tabindex', '-1');
+          el.focus({ preventScroll: true });
+        } catch (e) { return false; }
+        return document.activeElement === el;
+      };
+      let tries = 12;
+      const land = () => {
+        if (take(subject) || take(back) || take(document.querySelector('[data-app] main'))) return;
+        if (--tries > 0) setTimeout(land, 60);
+      };
+      requestAnimationFrame(land);
     });
   },
 
@@ -785,7 +991,8 @@ export const tourMethods = {
     const step = this._tourStepDef();
     const n = STEPS.length;
     return {
-      stage: s.tourStep === 'invite' ? 'invite' : null,
+      stage: (s.tourStep === 'invite' || s.tourInviteOut) ? 'invite' : null,
+      leaving: !!s.tourInviteOut,
       showRestart: !this._landingUp() && s.tourStep == null && !s.sharedView,
       onRestart: () => this.openTourInvite(),
       onTake: () => this.takeTour(),
@@ -809,6 +1016,7 @@ export const tourMethods = {
         z: (step.view === 'contrast' || step.view === 'harmony') ? 157 : 124,
         // Spoken, not drawn: the stepper beside it is aria-hidden, so this carries the fact.
         counter: step.n ? 'Step ' + step.n + ' of ' + n : null,
+        numbered: !!step.n,
         totalText: String(n).padStart(2, '0'),
         title: step.title,
         body: step.body,
@@ -830,7 +1038,7 @@ export const tourMethods = {
            this one fires when focus is INSIDE the card (where the ladder's drawer clauses would
            otherwise close the drawer the card is standing beside, which is not what a reader
            pressing Escape on the card means). stopPropagation keeps it from reaching the ladder. */
-        onKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.skipTour(); } },
+        onKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.exitTour(); } },
       },
     };
   },
@@ -907,8 +1115,42 @@ export const tourMethods = {
        back, for a move of 20px. They belong to the tour's lifetime, so they are cleared where the
        tour ends (_tourClose). */
     if (this._tourRafId) { try { cancelAnimationFrame(this._tourRafId); } catch (e) { } this._tourRafId = null; this._tourRaf = null; }
-    const lit = document.querySelectorAll('[data-tour-lit]');
-    for (let i = 0; i < lit.length; i++) lit[i].removeAttribute('data-tour-lit');
+    /* THE RING IS NOT TOUCHED HERE ANY MORE. It stripped every [data-tour-lit] on the page, and
+       _tourAttach calls this at the start of every step — so the ring vanished in one frame at each
+       crossing and reappeared in another. _tourRingTo moves it now, fading out where it was and in
+       where it is going, and the close paths fade it off on the way out. */
+  },
+
+  /* THE RING MOVES; IT DOES NOT BLINK. Off where it was — outline-color to transparent on the
+     [data-tour-lit] rule's own --dur-state transition, the attribute taken away only once it has
+     faded, since removing it removes the transition with it — and on where it is going, committed
+     transparent for one frame and then released to --on-surface. */
+  _tourRingTo(el, ring) {
+    const cur = this._tourRingEl || null;
+    const want = ring || '';
+    if (cur === el && (!el || el.getAttribute('data-tour-lit') === want)) return;
+    if (cur && cur !== el) this._tourRingOff(cur);
+    this._tourRingEl = el || null;
+    if (!el) return;
+    clearTimeout(el._tourRingT);
+    const fresh = !el.hasAttribute('data-tour-lit');
+    el.setAttribute('data-tour-lit', want);
+    if (fresh && !this._reduce) {
+      el.style.outlineColor = 'transparent';
+      void el.offsetWidth;
+    }
+    el.style.outlineColor = '';
+  },
+
+  _tourRingOff(el) {
+    if (!el) return;
+    el.style.outlineColor = 'transparent';
+    clearTimeout(el._tourRingT);
+    el._tourRingT = setTimeout(() => {
+      if (this._tourRingEl === el) return;         // re-lit while it was fading
+      el.removeAttribute('data-tour-lit');
+      el.style.outlineColor = '';
+    }, this._reduce ? 0 : (this.DUR.state * 1000 + 40));
   },
 
   _tourStepDef() {
@@ -930,20 +1172,21 @@ export const tourMethods = {
     if (this._tourFrozen) return;
     const step = this._tourStepDef(); if (!step) return;
     const card = document.querySelector('[data-tour-card]'); if (!card) return;
-    const el = document.querySelector(step.anchor);
+    let el = document.querySelector(step.anchor);
     const W = window.innerWidth || 0, H = window.innerHeight || 0;
     const cw = card.offsetWidth || CARD_W, ch = card.offsetHeight || CARD_FALLBACK_H;
 
-    // The anchor carries the ring for as long as this step is up. Moved here rather than into the
-    // view because the anchor is frequently not React's to render (the drawers are, the swatch
-    // group is, but the ring has to survive their own re-renders).
-    if (el && el.getAttribute('data-tour-lit') !== (step.ring || '')) {
-      const prev = document.querySelectorAll('[data-tour-lit]');
-      for (let i = 0; i < prev.length; i++) if (prev[i] !== el) prev[i].removeAttribute('data-tour-lit');
-      // The VALUE names the corner the ring should take, so the radius is CSS's to state and there
-      // is no inline style to save and put back when the step moves on.
-      el.setAttribute('data-tour-lit', step.ring || '');
-    }
+    /* THE DRAWER CLOSED BY THE READER IS NOT A STEP WITH NOTHING IN IT (21.09.26, audit). Clicking
+       outside the contrast drawer, or a first Escape, left "Check Contrast" up with no ring and
+       nothing it described on screen. This only runs unfrozen — so never during the tour's own
+       drawer swaps, which freeze the solve — and a missing drawer then means the reader shut it.
+       The card goes to the control that opens it again, and comes back to the drawer on its own if
+       the reader presses it: the step follows the reader instead of stranding them. */
+    const fell = !el && step.via;
+    if (fell) el = this._tourVia(step);
+    if (el) this._tourRingTo(el, fell ? '' : (step.ring || ''));
+    if (el && card._tourAnchor && card._tourAnchor !== el && card._tx != null) this._tourGlide();
+    if (el) card._tourAnchor = el;
 
     /* A MISSING ANCHOR HOLDS THE CARD WHERE IT IS; it does not send it to a corner. The anchor is
        absent for a real reason exactly once — between a drawer leaving and the next one arriving —
@@ -954,7 +1197,7 @@ export const tourMethods = {
     if (!r.width && !r.height) { if (card._tx == null) this._tourPark(card, W, H, cw, ch); return; }
 
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
-    const order = [step.place, 'inline-start', 'inline-end', 'block-end', 'block-start'];
+    const order = [(fell && step.viaPlace) || step.place, 'inline-start', 'inline-end', 'block-end', 'block-start'];
     for (let i = 0; i < order.length; i++) {
       const side = order[i];
       if (side === 'inline-start' && r.left - GAP - GUTTER >= cw) {
@@ -1038,6 +1281,26 @@ export const tourMethods = {
 
   _tourPut(card, x, y) {
     const nx = Math.round(x), ny = Math.round(y);
+    /* THE CARD'S FIRST PLACEMENT, OUT OF THE INVITATION. Committed invisible at the invitation's own
+       centre for one frame, then released onto the glide and the base opacity transition together,
+       so it rises out of where the reader was already looking and travels to where it belongs.
+       transition:none only for the commit frame — without it the start position would itself be
+       eased toward, from 0,0. Under reduced motion there is no glide, so it is placed while still
+       invisible and fades in where it lands, which is the crossfade that preference asks for. */
+    if (card._tx == null && this._tourEnterFrom) {
+      const f = this._tourEnterFrom;
+      this._tourEnterFrom = null;
+      const cw = card.offsetWidth || CARD_W, ch = card.offsetHeight || CARD_FALLBACK_H;
+      const x0 = Math.round(f.cx - cw / 2), y0 = Math.round(f.cy - ch / 2);
+      card.style.transition = 'none';
+      card.style.opacity = '0';
+      card.style.transform = 'translate3d(' + x0 + 'px,' + y0 + 'px,0)';
+      void card.offsetWidth;
+      card.style.transition = '';
+      if (!this._reduce) this._tourGlide();
+      card.style.opacity = '';
+      card._tx = x0; card._ty = y0;
+    }
     if (card._tx === nx && card._ty === ny) return;
     card._tx = nx; card._ty = ny;
     card.style.transform = 'translate3d(' + nx + 'px,' + ny + 'px,0)';

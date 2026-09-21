@@ -605,9 +605,24 @@ export const motionMethods = {
     if (!rows.length) return;
     g.set(rows, { y: 12, opacity: 0 });   // transform+opacity only: the container's height cannot move
   },
+  /* THE WATCHDOG'S HALF OF _listRowsReveal. Leaves a cascade that is running or has finished exactly
+     as it is, and only brings rows up when they are genuinely still hidden — which is the stall this
+     path exists for, and the only case in which a second reveal is not itself the bug. */
+  _listRowsRescue() {
+    const g = window.gsap;
+    const rows = this._listRows();
+    if (!rows.length) return;
+    if (g && rows.some((r) => g.isTweening(r))) return;
+    const hidden = rows.some((r) => parseFloat(getComputedStyle(r).opacity) < 0.99);
+    if (hidden) this._listRowsReveal();
+  },
   _listRowsReveal(opts) {
     const g = window.gsap;
     if (!g || this._reduce || this.state.feedView !== 'list') return;
+    // Behind the landing, nothing to reveal to: _listRowsArm has always made this same check, and
+    // without it here the loader's exit timeline ran a full cascade under the first-visit landing
+    // that nobody could see, only for Create's wipe to run the one they do.
+    if (document.querySelector('[data-land-line]')) return;
     const rows = this._listRows();
     if (!rows.length) return;
     const delay = (opts && opts.delay) || 0;

@@ -64,7 +64,17 @@ export const loaderMethods = {
       // guarantee that armed lines can never be left parked below their masks
       try { this._landingTextReveal(); } catch (e) { }
       try { this._dropLinesReveal(); } catch (e) { }
-      try { this._listRowsReveal(); } catch (e) { }
+      /* RESCUE, NOT REPLAY (21.09.26, reported as "the list view keeps restacking after entering the
+         site"). This line was _listRowsReveal(), on the note above that it is a no-op on the normal
+         path — which is true of the two calls before it and was never true of this one. Those two
+         carry a once-per-arrival flag (_landRevealed, _dropRevealed); _listRowsReveal cannot, because
+         filtering, sorting and paging all replay it on purpose. It is a fromTo, so calling it again
+         snapped every row back to 12px down and invisible and ran the whole cascade a second time.
+         Measured on a returning first-of-session visit: the exit timeline's cascade at ~2.9s, then
+         this one at ~3.6s, the same nine-beat shape twice.
+         The watchdog's actual job is only the stall case — rows still parked below their start
+         because a ticker never woke — and _listRowsRescue does exactly that and nothing more. */
+      try { this._listRowsRescue(); } catch (e) { }
       try { this._playStoryReveal(); } catch (e) { }   // the phone's story, held under the cover
       try { this.setState({ showLoader: false }); } catch (e) { }
     };

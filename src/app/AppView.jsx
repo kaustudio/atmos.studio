@@ -2567,7 +2567,9 @@ export default function AppView({ vals }) {
               {/* The hairline that used to divide the trio from the filing act is gone (by request,
                   02.09.26); the group is still one flex box so it wraps as one. */}
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
-                <B006 data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
+                {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
+                    and the one its card falls back to if the reader dismisses the drawer themselves. */}
+                <B006 data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
                 <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
                 <B006 data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
               </div>
@@ -4635,7 +4637,11 @@ function TourInvite({ vals }) {
   if (!vals.tour || vals.tour.stage !== 'invite') return null;
   const t = vals.tour;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
+    /* STILL MOUNTED WHILE IT LEAVES. `leaving` keeps this rendered for the length of _dialogOut, so
+       the invitation can fade and drop on the dialogs' own exit while the card rises out of its
+       centre — one object handing over to the next rather than one vanishing and another appearing
+       somewhere else. It takes no presses while it goes. */
+    <div style={{ ...sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px'), pointerEvents: t.leaving ? 'none' : undefined }}>
       <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       {/* GLASS, LIKE THE ANALYTICS BANNER (20.09.26, by request: "modal should be in the same glass
           design as cookie banner"). It shipped for one round as the solid dialog plate — --surface,
@@ -4691,7 +4697,7 @@ function TourGuide({ vals }) {
        a transform is composited. The transition is on transform ALONE — never `all` — so the card
        travels between two anchors as one object rather than cutting, and it is dropped entirely
        under reduced motion (see [data-tour-card] in global.css). */
-    <div className="tour-card" data-tour-card="1" data-lenis-prevent="1" role="group" aria-labelledby="tour-card-title" tabIndex={-1} ref={c.cardRef} onKeyDown={c.onKey}
+    <div className="tour-card" data-tour-card="1" data-tour-numbered={c.numbered ? '1' : undefined} data-lenis-prevent="1" role="group" aria-labelledby="tour-card-title" tabIndex={-1} ref={c.cardRef} onKeyDown={c.onKey}
       style={{ ...sx('position:fixed;left:0;top:0;width:320px;max-width:calc(100vw - 48px);background:transparent;border-radius:var(--radius-surface);display:flex;flex-direction:column;pointer-events:auto'), zIndex: c.z }}>
       {/* GLASS, LIKE THE INVITATION AND THE BANNER (20.09.26, by request: "make the card glass too").
           It was the one tour surface still on the solid plate, held back on a legibility worry —

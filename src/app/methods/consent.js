@@ -56,7 +56,15 @@ export const consentMethods = {
   _askConsent() {
     this._consentT = null;
     if (!this._alive || this.state.consent || this.state.consentOpen) return;
-    if (this.state.showLoader || this._wipeRunning) { this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS); return; }
+    /* NOT WHILE THE TOUR IS ON SCREEN (21.09.26). Pressing Create is also the first pointerdown, so
+       it armed this question and the tour's invitation on the same press — measured three runs out
+       of three, the banner at z-165 over the invitation's z-126 layer and clickable through its
+       scrim while the invitation claimed aria-modal. Two decisions at the moment of first contact,
+       and a modal that was modal to the keyboard but not to the pointer.
+       The question waits for the tour to be over, on the same retry that already waits out the
+       loader and the page wipe. Nothing is lost by the wait: analytics do not mount until this is
+       answered either way (lib/consent.js), so a later ask is a later ask, not a gap. */
+    if (this.state.showLoader || this._wipeRunning || this.state.tourStep != null) { this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS); return; }
     if (!this._engaged) { this._consentWaiting = true; return; }
     this._consentAsked = true;
     // No focus move: the question arrives unprompted, and taking focus from whatever the reader is

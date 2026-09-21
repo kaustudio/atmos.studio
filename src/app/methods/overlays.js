@@ -257,8 +257,17 @@ export const overlayMethods = {
 
   // ===== contrast checker (opt-in surface over the current palette) =====
   contrastPalette() { const s = this.state; return s.overlay || s.current || (s.feed && s.feed[0]) || null; },
-  openContrast() {
+  /* opts.keepFocus: THE TOUR OPENED IT (21.09.26, by request: "fix the focus drawers"). A reader who
+     opens a drawer is moved into it — that is the modal's contract, and nothing here changes it. When
+     the tour opens one as part of a step, focus is on the tour card, where the step's instruction and
+     its Back and Next are, and taking it into the drawer was never the intent: the tour took it back
+     44–74ms later, after a screen reader had started announcing "Close contrast checker, button" in
+     the middle of the step and the focus ring had flashed on a button still sliding in. With the
+     option the drawer leaves focus where it is. The return target is still recorded, so a drawer the
+     reader then dismisses gives focus back to the card. openHarmony takes the same option. */
+  openContrast(opts) {
     const p = this.contrastPalette(); if (!p) return; this._contrastBack = document.activeElement; this._cxDone = false;
+    const keepFocus = !!(opts && opts.keepFocus);
     /* THE ANNOUNCEMENT COUNTS AT THE SELECTED CRITERION, and it was the last place that did not.
        This read contrastSummary(), which counts at a hard-coded 4.5 — right for the palette's AA
        metric, wrong for a panel whose level and text size the reader chooses. Open the drawer with
@@ -271,7 +280,7 @@ export const overlayMethods = {
     this.setState({ contrast: true, announce: 'Contrast checker opened for ' + p.name + '. ' + cx.pass + ' of ' + cx.total + ' pairs meet ' + cx.criterion + '.' }, () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-contrast-dialog]');
-        if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }   // focus immediately — never delayed by the slide
+        if (d && !keepFocus) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }   // focus immediately — never delayed by the slide
         try { this.buildContrastTimeline(); if (this._cxTl) this._cxTl.play(0); this._revealDrawerText('[data-contrast-dialog]'); } catch (e) { }
       });
     });
@@ -733,7 +742,15 @@ export const overlayMethods = {
     this._blockPlan = null;   // see _finishHarmonyClose
     const back = this._contrastBack; this._cxTl = null;
     this.setState({ contrast: false, announce: 'Contrast checker closed.' }, () => {
-      const el = (back && back.focus) ? back : this.contrastBtnRef.current; if (el && el.focus) try { el.focus(); } catch (e) { }
+      /* NULL MEANS NOWHERE, as it already does in _finishHarmonyClose (21.09.26). The tour nulls this
+         before a close it performs itself, because it is about to put focus on its own card — and the
+         fallback below turned that into a jump: on 2 -> 3 and 2 -> 1 focus went to the Check Contrast
+         button ~800ms into the crossing, a screen reader announced a control the reader had left, and
+         on 2 -> 3 the harmony drawer then opened with it focused and took it as its own return target,
+         so dismissing that drawer on step 3 sent focus to Check Contrast. Every close a reader makes
+         has its opener recorded by openContrast, so this changes nothing outside the tour; the button
+         stays the fallback for an opener that cannot take focus. */
+      if (back !== null) { const el = (back && back.focus) ? back : this.contrastBtnRef.current; if (el && el.focus) try { el.focus(); } catch (e) { } }
       this._contrastBack = null;
     });
   },
@@ -847,12 +864,13 @@ export const overlayMethods = {
   trapContrast(e) { this.trapFocusIn('[data-contrast-dialog]', e); },
 
   // ===== per-swatch colour harmonies (OKLCH-derived, gamut-mapped) =====
-  openHarmony(hex) {
+  openHarmony(hex, opts) {
     this._harmonyBack = document.activeElement; this._hxDone = false;
+    const keepFocus = !!(opts && opts.keepFocus);   // see openContrast
     this.setState({ harmony: { hex: hex.toUpperCase() }, harmonyModel: 'analogous', harmonyMethodOpen: false, announce: 'Colour harmonies for ' + hex.toUpperCase() + ' opened. Press Escape to close.' }, () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-harmony-dialog]');
-        if (d) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
+        if (d && !keepFocus) { const b = d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
         try { this.buildHarmonyTimeline(); if (this._hxTl) this._hxTl.play(0); this._revealDrawerText('[data-harmony-dialog]'); } catch (e) { }
       });
     });
