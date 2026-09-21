@@ -6,6 +6,16 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — The masthead's links and New Palette are 13px
+
+**Back Up and Restore take --fs-body (by request: "change top navigation font-size links to 13px"), and
+New Palette with them ("change new palette to 13 as well").** All three were --fs-detail (12). The links
+stay Medium, flat-tracked, in their own case, centred in the bar, 12px after New Palette, in the tool's
+bar, on the front page and in the documents' bar. New Palette's inset is in ems, so its pill grows with
+its label: 33.5 × 112.8px (was 32 × 104.9), still centred. The tour card's Skip keeps 12.
+
+---
+
 ## 2026-09-21 — The close keeps its takeover on a phone, small jumps and all
 
 **A scroll-through close was built and taken back out (by request: "undo i can live with the small jumps

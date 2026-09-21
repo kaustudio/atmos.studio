@@ -183,9 +183,11 @@ export function NavNewPalette({ show, onPress }) {
     /* data-tour="new" — the tour's last stop anchors here. An attribute rather than a class because
        it is a HOOK, not a style: the button is unchanged by it, and methods/tour.js is the only
        reader. It sits on the control itself so the ring follows the pill's own corner. */
+    /* 13px, --fs-body, with the masthead's links beside it (21.09.26, by request: "change new palette to
+       13 as well"); it was --fs-detail. The pill's padding is in ems, so it grows with its type. */
     <Button btnRef={ref} data-emphasis="primary" data-tour="new"
       onClick={() => { if (!leaving.current) onPress(); }}
-      style={sx("font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat)")}
+      style={sx("font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)")}
       label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><ButtonText>New Palette</ButtonText></span>} />
   );
 }

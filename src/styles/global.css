@@ -1731,12 +1731,14 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* New Palette is in the documents' masthead too, so the filled button takes the bar's type in either bar. */
 [data-float-nav] .button[data-emphasis],
 .glass-bar .button[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
-/* New Palette's sides, by request and only here: 1.35em less 2px, 14.2px at 12px. That was "2px in from
+/* New Palette's sides, by request and only here: 1.35em less 2px, 15.55px at its 13px (14.2 at the 12 it
+   was until 21.09.26). That was "2px in from
    the primary tier", and since 19.09.26 the tier is 1em — this bar keeps the roomier figure it was given,
    so the value is stated rather than derived. The em half stays, so it still scales.
    AND ITS TOP AND BOTTOM, the one Button taller than the single block inset (21.09.26, by request: "For
    the "New Palette" button, make an exception and add 1-2px top and bottom. Feels a bit cramped"). 2px of
-   the 1-2: 9px at 12px, 32px tall, which is the height it had until the inset shrank that morning; 1px
+   the 1-2: 9px at 12px, 32px tall, which is the height it had until the inset shrank that morning (9.75px
+   and 33.5px since its label went to 13px the same evening, the inset being in ems); 1px
    (30px) was compared and still read tight. Written as the token plus 2px, not as 0.75em, so the
    exception stays what was asked for, 2px roomier than every other Button, if the token moves. */
 .glass-bar .button[data-emphasis="primary"]{--button-padding:calc(var(--button-padding-block) + 2px) calc(1.35em - 2px)}

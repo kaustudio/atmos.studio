@@ -1241,7 +1241,8 @@ export const tourMethods = {
 
   /* Built here rather than read off renderVals' own tier3BtnStyle because that value is composed in
      the same object literal this is called from, and reaching into it from inside would depend on
-     key order. Same call, same arguments — monoLabel is the one definition of this voice. */
+     key order. monoLabel is the one definition of this voice; the size is the one difference since
+     21.09.26, when the masthead's links went to --fs-body by request and the card's skip stayed at 12. */
   tourSkipStyle() {
     return this.monoLabel('var(--fs-detail)', 'var(--track-flat)', {
       display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 0,

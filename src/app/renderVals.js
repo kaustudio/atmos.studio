@@ -1838,11 +1838,12 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // its own hover tint darkened the ground under it), so these take what everything else takes.
       // The demotion from "New generation" is carried by fill: that one is filled, these are not.
       // 15.09.26, by request: standalone text links in the floating bar — Medium and their authored case,
-      // like the landing CTAs, at --fs-detail (12), with no border and no padding. The target is widened invisibly instead; see the
+      // like the landing CTAs, with no border and no padding. At --fs-body (13) since 21.09.26, by request
+      // ("change top navigation font-size links to 13px"); they were --fs-detail (12). The target is widened invisibly instead; see the
       // note beside [data-float-nav] [data-tier3-action] in global.css. line-height 1.25 rather than 1:
       // the text swap's mask clips to the line box, and Neue Montreal's ascent and descent are 1.2em,
       // so at 1 the descender of the p in Back Up was cut off.
-      tier3BtnStyle: this.monoLabel('var(--fs-detail)', 'var(--track-flat)', {
+      tier3BtnStyle: this.monoLabel('var(--fs-body)', 'var(--track-flat)', {
         display: 'inline-flex', alignItems: 'center', gap: '7px', padding: 0,
         background: 'none', border: 'none',
         color: 'var(--on-surface)', cursor: 'pointer',
