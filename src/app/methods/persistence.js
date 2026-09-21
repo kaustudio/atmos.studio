@@ -1147,7 +1147,20 @@ export const persistenceMethods = {
     const href = (typeof location !== 'undefined' ? location.origin + '/' : 'https://atmos.gallery/');
     this.copy(href, 'gate-link', 'Link copied. Open it on a wider screen to read your own image.');
   },
-  trapFocusIn(sel, e) { if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return; const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return; const first = f[0], last = f[f.length - 1]; if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); } },
+  /* A TOUR CARD STANDING BESIDE THE DRAWER IS PART OF ITS LOOP (21.09.26). The trap kept Tab inside
+     the drawer, so a keyboard reader who went into the drawer on a tour step could not get back to
+     the card's Next — and Escape, the only way out, ends the tour. Off either end of the drawer now
+     lands on the card, and the card hands back the same way (_tourCardTab). Only when the card is
+     that drawer's companion: a card waiting under someone else's drawer is not. */
+  trapFocusIn(sel, e) {
+    if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return;
+    const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    const card = this._tourCompanionOf ? this._tourCompanionOf(root) : null;
+    const c = card ? this._tourFocusables(card) : [];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); (c.length ? c[c.length - 1] : last).focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); (c.length ? c[0] : first).focus(); }
+  },
   /* THE DRAFT IS SEEDED FROM THE LIVE RECORD, and the difference is not academic. Callers hand this
      whatever palette object they are holding: the row hands its own, but the result stage hands
      state.current, which confirmAssign does not rewrite — it maps `feed`. So seeding from the

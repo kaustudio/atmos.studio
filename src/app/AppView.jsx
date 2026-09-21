@@ -4784,7 +4784,8 @@ function TourGuide({ vals }) {
 
             The INVITATION keeps its outlined Skip for Now: that dialog is a question with two real
             answers, and the pair is the five dialogs' own. Only a tour in progress demotes it. */}
-        <button type="button" data-ix="press" data-tier3-action="" data-focus="chrome" onClick={c.onSkip} aria-label={c.skipAria} style={c.skipStyle}><TextSwap>Skip Tour</TextSwap></button>
+        {/* Finish Tour on the last step, where leaving is finishing and the primary is New Palette. */}
+        <button type="button" data-ix="press" data-tier3-action="" data-focus="chrome" onClick={c.onSkip} aria-label={c.skipAria} style={c.skipStyle}><TextSwap>{c.skipLabel}</TextSwap></button>
         {/* THE PAIR KEEPS ITS OWN BOXES, AND THE ROW HOLDS ANYWAY (21.09.26, by request: the primary
             should carry the same padding as Back and "extend naturally when Finish Tour arrives").
 
@@ -4800,12 +4801,17 @@ function TourGuide({ vals }) {
             than pushing the primary along, and 'Finish Tour' on step 5 extends it the same way. The
             one thing that does move is Back, 35px, on the last crossing — which is the natural
             extension that was asked for rather than a reflow. */}
+        {/* NEXT IS DISABLED, NOT ABSENT, while a drawer step waits for its act (21.09.26): the row
+            keeps its shape, the button stays where four presses have taught the reader to look, and
+            the copy's first sentence says what turns it on. Native disabled, so it leaves the Tab
+            order and a screen reader reads it as unavailable; the change to live is a fade on
+            opacity ([data-tour-card] .button in global.css), never a pop. */}
         {c.hasNext && (
           <span style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px')}>
             {c.hasBack && (
               <Button data-emphasis="secondary" onClick={c.onBack} aria-label={c.backAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Back</ButtonText></span>} />
             )}
-            <Button data-emphasis="primary" onClick={c.onNext} aria-label={c.nextAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{c.nextLabel}</ButtonText></span>} />
+            <Button data-emphasis="primary" onClick={c.onNext} disabled={c.nextDisabled} aria-label={c.nextAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{c.nextLabel}</ButtonText></span>} />
           </span>
         )}
       </div>

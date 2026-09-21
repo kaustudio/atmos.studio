@@ -6,6 +6,39 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — The tour waits for the reader's press
+
+**The reader opens the drawers (by request: "it's important that the user presses the buttons actively
+that moves them to the next step. Otherwise they start reading and then the modal suddenly moves").**
+Steps 2 and 3 used to demonstrate: the ring and a mirrored hover sat on Check Contrast or a harmony
+button for a beat, then the tour opened the drawer itself and the card travelled to it — a second
+move, a second after the copy had landed, under someone who had just started reading. Now the step
+opens on the control and waits. The card does not move until the reader presses something.
+
+**It says what to press, and then what to do (by request: "we also have to instruct the user", and
+"it doesn't make sense to tell them to press a button after it's pressed").** Each drawer step has
+two sentences: "Press Check Contrast…" / "Press the harmony button on any colour…" while the drawer
+is shut, and what to do inside it once it is open. They swap through the masks, only ever on the
+reader's press; shutting the drawer brings the instruction back. The ring stays on the control and
+one pass of its own hover plays as the step lands. Next is disabled — not absent, so the row keeps
+its shape — until the drawer has been opened in this run, and stays live after.
+
+**The UX review's four findings, fixed.** Steps 1–3 no longer ask for actions the interface does not
+have: there is nothing to select on a tile (the copy points at the copy buttons), no pair to pick in
+the contrast drawer (it points at AA/AAA and the text size), and the reader now really does choose
+the colour whose harmonies open. Step 5's primary is New Palette, the act the step is about — it does
+what the masthead's does, no file dialog — with Finish Tour in the quiet slot. Steps 1–4 share one
+place on the result stage, beside Export, which was the one clear space; step 1 no longer covers the
+palette's name. And coming back to the tool from a document with a step live scrolls the step's
+subject back into view and returns focus to the card.
+
+**The keyboard follows the same path.** Tab from the card reaches the control it points at, and
+Shift+Tab comes back; once the drawer is open, the card joins the drawer's focus loop, so Next can be
+reached without Escape (which ends the tour). With no step opening a drawer any more, the drawers'
+keepFocus option went too.
+
+---
+
 ## 2026-09-21 — The button is called Button, and it has one height
 
 **Renamed (by request: "rename it so it matches design system naming conventions").** B006 was the

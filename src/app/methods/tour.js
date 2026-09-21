@@ -53,12 +53,14 @@ const TOUR_KEY = 'palette-generator/tour';
    place a card can stand and still leave the thing it explains visible is beside them. */
 const STEPS = [
   {
-    /* `clear` IS THE SECOND THING A CARD MUST NOT COVER. The swatch group runs the full width, so
-       block-end is the only side with room — and it lands exactly on the action row, half over Copy,
-       in a step whose own last sentence says "copy a value". The card drops below the row instead.
-       Only the boxes named here get this treatment: a card standing over page copy is ordinary and
-       fine, a card standing over a CONTROL is a card competing with the interface it is explaining. */
-    n: 1, view: 'result', anchor: '[data-tour="swatches"]', place: 'block-end', clear: ['[data-tour="actions"]'],
+    /* THE CARD'S HOME ON THE RESULT STAGE (21.09.26, UX review: step 1's card covered the palette's
+       name, its tags and the start of its reading while the band beside the action row stood
+       empty). It was placed block-end of the swatches and cleared past the action row, which put it
+       at the stage's leading edge — exactly where the palette's name is set. The trailing side of
+       Export is the one clear space on the stage, and step 4 already stood in it; steps 1, 2 and 3
+       wait there too now, so the card only travels when the reader opens a drawer or the tour
+       moves on to New Palette. `anchor` is where the card goes; `ringOn` is what it is about. */
+    n: 1, view: 'result', anchor: '[data-tour="export"]', place: 'inline-end', ringOn: '[data-tour="swatches"]',
     /* `ring: 'surface'` — THE ONE ANCHOR WITH NO CORNER OF ITS OWN (20.09.26, by request).
 
        An outline follows its element's border-radius, so four of the five stops need nothing said:
@@ -71,26 +73,51 @@ const STEPS = [
        the one it encloses — see the note on [data-tour-lit="surface"] in global.css. */
     ring: 'surface',
     title: 'Explore a Colour',
-    body: 'Select a colour to see its values. The percentage shows its estimated share of the image. Copy a value to use it in your design.',
+    /* NOTHING TO SELECT (21.09.26, UX review). "Select a colour to see its values" asked for a press
+       the stage does not take: a band is a static group, and every one of them already shows its
+       values. The action the step can honestly ask for is the copy, which works and keeps the card. */
+    body: 'Each colour shows its values, and the percentage is its estimated share of the image. Copy any value to use it in your design.',
   },
   {
-    /* `via` — THE CONTROL THAT OPENS THIS STEP'S DRAWER (21.09.26, by request: "show the user what
-       buttons to press to open check contrast and harmonies"). Two jobs for one fact. Before the
-       drawer opens, the ring lands on it and it shows the state a pointer resting on it would, so
-       the reader is shown the way in rather than being carried past it. And if the reader closes the
-       drawer themselves, the card falls back to it instead of describing a tool that is no longer
-       on screen. _tourVia resolves it. */
-    // viaPlace is the side of the CONTROL the card takes while it is being shown, which is not the
-    // drawer's side: inline-start of Check Contrast is off the left of the screen, and inline-end
-    // of it lands across Copy and Export. Below it is where the reader's eye already is.
-    n: 2, view: 'contrast', via: 'contrast', viaPlace: 'block-end', anchor: '[data-contrast-dialog]', place: 'inline-start',
+    /* `via` — THE CONTROL THAT OPENS THIS STEP'S DRAWER, AND THE READER PRESSES IT (21.09.26, by
+       request: "it's important that the user presses the buttons actively that moves them to the
+       next step. Otherwise they start reading and then the modal suddenly moves" — and "we also
+       have to instruct the user to make this action").
+
+       It was a demonstration: the ring and a mirrored hover sat on the control for a beat, then the
+       tour opened the drawer itself and the card travelled to it — a second move landing a second
+       after the copy had, under a reader who had just started on it. Now the step opens on the
+       control and waits. The copy says what to press, first; the ring and one pass of the control's
+       own hover say where; Next is disabled until the drawer has been opened (see tourDone). When
+       the reader presses it, the drawer arrives because they asked for it and the card goes with
+       it. The same fallback serves a reader who shuts the drawer again: the card returns to the
+       control, and Next stays available — they have done it once.
+
+       `viaAnchor` is where the card waits while the drawer is shut: the result stage's home beside
+       Export, which is where step 1 left it, so 1 -> 2 does not move the card at all. */
+    n: 2, view: 'contrast', via: 'contrast', viaAnchor: '[data-tour="export"]', viaPlace: 'inline-end', anchor: '[data-contrast-dialog]', place: 'inline-start',
     title: 'Check Contrast',
-    body: 'Compare two colours to see whether they meet the contrast requirement for your intended use. Try another pair to see how the result changes.',
+    /* The actions the drawer has (21.09.26, UX review): no pair can be picked — the matrix shows every
+       pair and the sample is always the best — so "try another pair" had nothing to press. What
+       changes the result is the level (AA / AAA) and the text size (Normal / Large Text). */
+    /* TWO COPIES, ONE PER STATE OF THE STEP (21.09.26, by request: "Copy should adjust after the user
+       have pressed the button... It doesn't make sense to tell them to press a button after it's
+       pressed"). `body` is the instruction, while the drawer is shut; `bodyOpen` is what to do inside
+       it, once it is open. _tourPhaseText swaps them through the masks, only ever because the reader
+       pressed something — and a reader who shuts the drawer again gets the instruction back, since
+       pressing it is again the thing to do. Both fit the card's three reserved lines. */
+    body: 'Press Check Contrast to see which pairs of your colours are readable together.',
+    bodyOpen: 'Each pair of your colours shows its contrast ratio. Switch between AA and AAA, or Normal and Large Text, to see which pairs pass.',
   },
   {
-    n: 3, view: 'harmony', via: 'harmony', viaPlace: 'block-end', anchor: '[data-harmony-dialog]', place: 'inline-start',
+    /* The reader CHOOSES the colour now, which is what the brief's "choose a colour from your
+       palette" always asked for: the tour used to open the drawer on the dominant swatch itself and
+       then tell them to choose one, in a drawer with nothing to choose with. Any band's harmony
+       button opens the step's drawer; the ring shows the dominant's as the example. */
+    n: 3, view: 'harmony', via: 'harmony', viaAnchor: '[data-tour="export"]', viaPlace: 'inline-end', anchor: '[data-harmony-dialog]', place: 'inline-start',
     title: 'Explore Harmonies',
-    body: 'Choose a colour from your palette and explore related colours. Switch between harmonies to see different combinations.',
+    body: 'Press the harmony button on any colour to explore colours related to it.',
+    bodyOpen: 'These colours are built from the one you chose. Switch between harmonies to see different combinations.',
   },
   {
     /* BESIDE Export, NOT OVER THE PALETTE. block-start was the first answer — the card sat directly
@@ -210,6 +237,7 @@ export const tourMethods = {
      touches the library. */
   takeTour() {
     this._tourRemember();
+    this.setState({ tourDone: {} });
     /* WHERE IT LANDS (21.09.26, by request: "after clicking Take the Tour it becomes unclear to the
        user where the modal lands"). The invitation used to vanish in one frame and the card appear
        in another, 400px away, with nothing joining them. Now the card rises out of the
@@ -257,8 +285,24 @@ export const tourMethods = {
     const s = this.state.tourStep;
     if (this._tourBusy) return;
     if (s === 'choose' || s == null) return;
+    // The disabled Next cannot be pressed; this is the same rule for anything else that calls it.
+    if (STEPS[s - 1] && STEPS[s - 1].via && !(this.state.tourDone || {})[s]) return;
     if (s >= STEPS.length) { this.finishTour(); return; }
     this._tourGo(s + 1);
+  },
+
+  /* NEW PALETTE, FROM THE CARD. The tour leaves the quiet way — the card and ring fade, no
+     announcement, no focus of its own — because what follows is the create page, which announces and
+     focuses itself. newPalette is the masthead button's own act; running it here is the same press. */
+  tourMakeOwn() {
+    if (this._tourBusy || this.state.tourStep !== STEPS.length) return;
+    this._tourAbandon();
+    this.newPalette();
+    /* Focus goes where pressing the masthead's New Palette leaves it: on that button. The press was
+       on the card's, which leaves with the card, and focus left behind on a removed node falls to
+       <body> — the next Tab would start from the top of the document. */
+    const np = document.querySelector('[data-tour="new"]');
+    if (np) try { np.focus({ preventScroll: true }); } catch (e) { }
   },
 
   tourBack() {
@@ -266,6 +310,154 @@ export const tourMethods = {
     if (this._tourBusy) return;
     if (typeof s !== 'number' || s <= 1) return;
     this._tourGo(s - 1);
+  },
+
+  /* THE STEP'S ACT, SEEN FROM STATE (21.09.26). Called from PaletteApp's componentDidUpdate on every
+     commit, so it does not matter how the drawer came to be open — the ringed control, another
+     band's harmony button, a keyboard press — or whether it already was when the step began: the
+     step's own drawer being up during the step is what unlocks Next. */
+  _tourWatch() {
+    const s = this.state;
+    if (typeof s.tourStep !== 'number') return;
+    const step = STEPS[s.tourStep - 1];
+    if (!step || !step.via) return;
+    const open = this._tourDrawerOpen(step);
+    if (open && !(s.tourDone || {})[s.tourStep]) this.setState({ tourDone: Object.assign({}, s.tourDone, { [s.tourStep]: true }) });
+    // Not during a step change: _tourGo owns the words then, and sets the phase at its own commit.
+    if (step.bodyOpen && !this._tourBusy) {
+      const want = open ? 'open' : 'shut';
+      if (want !== s.tourPhase && want !== this._tourPhaseTo) this._tourPhaseText(want);
+    }
+  },
+
+  // The copy on the card for the step as it stands.
+  _tourBody(step) {
+    return (step.bodyOpen && this.state.tourPhase === 'open') ? step.bodyOpen : step.body;
+  },
+
+  /* THE BODY CHANGES WITH THE READER'S PRESS, THROUGH THE MASKS (21.09.26). The same two halves as a
+     step change, on the body line alone, because the heading and the counter still describe the same
+     step: the sentence leaves up through its window (DUR.state, EASE.exit), the phase commits, and
+     the new sentence rises on the drawers' figures while the card is travelling to the drawer.
+     The reveal still running from the step's own arrival is finished first — _maskLineReveal
+     restores by writing back the text it captured, and one firing after React has written the new
+     sentence puts the old one back over it ([[split-targets-must-be-text]]). */
+  _tourPhaseText(want) {
+    const card = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
+    const body = card && card.querySelector('[data-tour-line="2"]');
+    const seq = this._tourSeq;
+    this._tourPhaseAbort();
+    this._tourPhaseTo = want;
+    const g = window.gsap;
+    const commit = () => {
+      if (seq !== this._tourSeq || this._tourPhaseTo !== want) return;
+      if (this._tourPhaseSplit) { try { this._tourPhaseSplit.restore(); } catch (e) { } this._tourPhaseSplit = null; }
+      if (body) body.style.visibility = 'hidden';
+      this.setState({ tourPhase: want }, () => {
+        this._tourPhaseTo = null;
+        if (seq !== this._tourSeq || !body) return;
+        body.style.visibility = '';
+        if (!g || this._reduce) return;
+        try { this._maskLineReveal(body, 0, { duration: this.DUR.reveal, ease: this.EASE.overlay, stagger: this.DUR.line }); } catch (e) { }
+      });
+    };
+    if (!body) { commit(); return; }
+    if (body._splitRevert) { try { body._splitRevert(); } catch (e) { } }
+    if (!g || this._reduce) { commit(); return; }
+    const sp = splitLines(body);
+    if (!sp) { commit(); return; }
+    this._tourPhaseSplit = sp;
+    sp.lines.forEach((line, i) => g.to(line, { yPercent: -110, duration: this.DUR.state, ease: this.EASE.exit, delay: i * 0.02 }));
+    this._tourPhaseT = setTimeout(commit, (this.DUR.state + (sp.lines.length - 1) * 0.02 + 0.02) * 1000);
+  },
+
+  // A swap cut short — by a step change, or by the reader reversing it — puts its words back first.
+  _tourPhaseAbort() {
+    clearTimeout(this._tourPhaseT);
+    if (this._tourPhaseSplit) {
+      const g = window.gsap;
+      try { if (g) this._tourPhaseSplit.lines.forEach((l) => g.killTweensOf(l)); } catch (e) { }
+      try { this._tourPhaseSplit.restore(); } catch (e) { }
+      this._tourPhaseSplit = null;
+    }
+    this._tourPhaseTo = null;
+  },
+
+  /* BACK FROM A DOCUMENT WITH A STEP LIVE (21.09.26, UX review: a reader who followed How it Works
+     from the footer on step 4 and came back with the browser's Back found the card alone at the top
+     of the viewport — the tool restores the scroll it was left at, Export was 500px above, and the
+     reveal only ever ran on a step change). Once the page window has finished crossing, the step's
+     target is scrolled back into view and the card takes focus again, the two things a step change
+     does for a reader arriving at a step. */
+  _tourResume() {
+    const step = this._tourStepDef();
+    if (!step || !step.n) return;
+    let tries = 120;
+    const go = () => {
+      if (this._tourStepDef() !== step) return;
+      if ((this._wipeRunning || !document.querySelector('[data-tour-card]')) && --tries > 0) { setTimeout(go, 25); return; }
+      requestAnimationFrame(() => {
+        if (this._tourStepDef() !== step) return;
+        this._tourReveal(step);
+        this._tourSolveNow();
+        this._tourFocusCard();
+      });
+    };
+    go();
+  },
+
+  /* THE KEYBOARD PATH BETWEEN THE CARD AND WHAT IT POINTS AT (21.09.26). Two cases, because a drawer
+     step has two states.
+     Waiting, drawer shut: the card's last control and the control it rings are made neighbours, so
+     Tab from Back (Next is disabled, so Back is last) goes straight to Check Contrast or the harmony
+     button, and Shift+Tab from there comes back (_tourViaKey). The ring and the copy point a mouse at
+     the control; this points the keyboard at it, without which it was a dozen Tabs up the page.
+     Drawer open: the drawer's own trap cycles inside it, so the card beside it was unreachable once
+     focus was in — pressing Escape to get out ended the tour. The card joins the loop instead: Tab
+     off either end of one lands on the other (trapFocusIn in methods/persistence.js asks
+     _tourCompanionOf for the card). */
+  _tourFocusables(root) {
+    return root ? [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null) : [];
+  },
+
+  _tourCardTab(e) {
+    if (e.key !== 'Tab') return;
+    const step = this._tourStepDef();
+    if (!step || !step.via) return;
+    const card = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
+    const f = this._tourFocusables(card);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1], at = document.activeElement;
+    const drawer = this._tourDrawerOpen(step) ? document.querySelector(step.anchor) : null;
+    if (drawer) {
+      const d = this._tourFocusables(drawer);
+      if (!d.length) return;
+      if (!e.shiftKey && at === last) { e.preventDefault(); d[0].focus(); }
+      else if (e.shiftKey && at === first) { e.preventDefault(); d[d.length - 1].focus(); }
+      return;
+    }
+    const via = this._tourVia(step);
+    if (via && !e.shiftKey && at === last) { e.preventDefault(); via.focus(); }
+  },
+
+  // Shift+Tab on the ringed control, while its step is waiting, goes back to the card.
+  _tourViaKey(e) {
+    if (e.key !== 'Tab' || !e.shiftKey) return;
+    const step = this._tourStepDef();
+    if (!step || !step.via || this._tourDrawerOpen(step)) return;
+    if (document.activeElement !== this._tourVia(step)) return;
+    const card = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
+    const f = this._tourFocusables(card);
+    if (!f.length) return;
+    e.preventDefault();
+    f[f.length - 1].focus();
+  },
+
+  // The card, when it stands beside this drawer as the step's companion; null otherwise.
+  _tourCompanionOf(root) {
+    const step = this._tourStepDef();
+    if (!step || !step.via || !root || !this._tourDrawerOpen(step) || !root.matches(step.anchor)) return null;
+    return (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
   },
 
   /* ONE DOOR INTO A STEP: set the state, bring the view the step needs, place the card, say what
@@ -328,17 +520,11 @@ export const tourMethods = {
        So the words belong to the CARD and arrive as soon as they are ready; the position belongs to
        the ANCHOR and waits for it. The card is never empty, and its 20px nudge onto the new drawer
        lands quietly under copy that is already being read. */
-    // The surfaces behind the card change on their own. Nothing about the CARD waits on this any
-    // more — see the note on the settle below. A step with a `via` holds its drawer back: it opens
-    // once the demonstration has shown the control that opens it, and not before the drawer being
-    // replaced has finished leaving. Both gates, in either order, then one open.
-    let viewClear = false, demoDone = !step.via;
-    const openWhenReady = () => {
-      if (!viewClear || !demoDone || !live()) return;
-      if (step.via) this._tourOpenDrawer(step);
-      this._tourSettle(step, () => { if (live()) this._tourMove(step); });
-    };
-    this._tourSyncView(step, () => { viewClear = true; if (step.via) openWhenReady(); }, !!step.via);
+    this._tourPhaseAbort();
+    // The surfaces behind the card change on their own: whatever this step does not want is shut.
+    // Nothing is OPENED for the reader any more — a drawer step waits for them to press the control
+    // that opens it (see the note on step 2 in STEPS).
+    this._tourSyncView(step);
 
     // BEAT 1 — the words leave, and only then does the state carrying them change
     this._tourTextOut(() => {
@@ -355,7 +541,7 @@ export const tourMethods = {
       const card0 = (this.tourCardRef && this.tourCardRef.current) || document.querySelector('[data-tour-card]');
       const h0 = card0 ? card0.getBoundingClientRect().height : 0;
       if (card0 && h0) card0.style.height = h0 + 'px';
-      this.setState({ tourStep: n }, () => {
+      this.setState({ tourStep: n, tourPhase: this._tourDrawerOpen(step) ? 'open' : 'shut' }, () => {
         if (!live()) { if (card0) card0.style.height = ''; return; }
         this._tourAttach();
         this._tourReveal(step);
@@ -374,8 +560,8 @@ export const tourMethods = {
            both simpler and correct: a stable anchor settles on the third frame and the card travels
            under the arriving copy, and one that is still sliding in is waited for exactly as before.
            Five of the ten crossings drop from ~1.2s to ~0.75s on this alone. */
-        if (step.via) this._tourDemo(step, live, () => { demoDone = true; openWhenReady(); });
-        else this._tourSettle(step, () => { if (live()) this._tourMove(step); });
+        if (step.via && !this._tourDrawerOpen(step)) this._tourCue(step);
+        this._tourSettle(step, () => { if (live()) this._tourMove(step); });
       });
     });
   },
@@ -397,7 +583,7 @@ export const tourMethods = {
        so the two still arrive in order and the card is only briefly empty. */
     this._tourRevealText(0);
     this._tourFocusCard();
-    this.setState({ announce: 'Step ' + n + ' of ' + STEPS.length + '. ' + step.title + '. ' + step.body });
+    this.setState({ announce: 'Step ' + n + ' of ' + STEPS.length + '. ' + step.title + '. ' + this._tourBody(step) });
   },
 
   // BEAT 4 — the position, whenever the anchor is finally still. One eased move, then the pin is
@@ -431,10 +617,10 @@ export const tourMethods = {
     /* AND THE KEYBOARD, AGAIN. _tourContent focuses the card as soon as the words are there, which
        is right for a reader waiting on it — but openContrast and openHarmony each focused their own
        first control when they arrived, and they arrive AFTER that. Measured at step 3: focus was on
-       the harmony drawer, not the card. Since 21.09.26 the tour opens them with keepFocus and they
-       leave focus alone, so this no longer has anything to take back on the normal path; it stays
-       as the end-of-change guarantee, because the tour owns focus for the length of a step change
-       and this is where the change ends. */
+       the harmony drawer, not the card. Since 21.09.26 no step change opens a drawer at all — the
+       reader does, and is rightly moved into it — so this has nothing to take back on the normal
+       path; it stays as the end-of-change guarantee, because the tour owns focus for the length of a
+       step change and this is where the change ends. */
     this._tourFocusCard();
   },
 
@@ -448,6 +634,11 @@ export const tourMethods = {
      as a change, and nothing travels. */
   _tourMoveReduced(card) {
     this._tourFocusCard();
+    this._tourFadeMove(card);
+  },
+
+  // The crossfade itself, without the focus: a reader who opened a drawer is working in it.
+  _tourFadeMove(card) {
     if (!card) { this._tourSolveNow(); return; }
     this._tourFrozen = true;
     card.style.opacity = '0';
@@ -460,14 +651,11 @@ export const tourMethods = {
     }, this.DUR.state * 1000);
   },
 
-  /* WHAT EACH STEP NEEDS OPEN, AND WHAT IT NEEDS SHUT.
-
-     The two drawers are the same 
-     right-hand slot, so 2 → 3 is a close and an open rather than a stack, and every other crossing
-     has to put back whatever the last step opened. Closing is animated (a reversed timeline that
-     setStates on completion), so the open waits on the flag rather than on a guessed delay —
-     _tourWhenClear polls the state the close actually writes. */
-  _tourSyncView(step, done, hold) {
+  /* WHAT EACH STEP NEEDS SHUT. The tour opens nothing (see step 2 in STEPS); what it still does on a
+     step change is put away whatever the last step left open that this one does not want, so 2 -> 3
+     shuts the contrast drawer and 3 -> 4 the harmony one. A drawer the reader opened for THIS step is
+     left alone. */
+  _tourSyncView(step) {
     const s = this.state;
     const needContrast = step.view === 'contrast';
     const needHarmony = step.view === 'harmony';
@@ -486,31 +674,18 @@ export const tourMethods = {
     if (s.contrast && !needContrast) { this._contrastBack = null; this.closeContrast(); }
     if (s.harmony && !needHarmony) { this._harmonyBack = null; this.closeHarmony(); }
     if (s.exportOpen) this.closeExport();
-
-    this._tourWhenClear(
-      () => (needContrast || !this.state.contrast) && (needHarmony || !this.state.harmony) && !this.state.exportOpen,
-      () => {
-        // HELD for the demonstration: the drawer opens when _tourDemo says so, not here.
-        if (!hold) this._tourOpenDrawer(step);
-        requestAnimationFrame(() => requestAnimationFrame(done));
-      },
-    );
   },
 
-  _tourOpenDrawer(step) {
-    // keepFocus: the card keeps it. See openContrast in methods/overlays.js.
-    if (step.view === 'contrast' && !this.state.contrast) this.openContrast({ keepFocus: true });
-    // The DOMINANT swatch, which every palette has and no palette shares — so "a palette colour is
-    // selected" is true of all eight without naming one.
-    if (step.view === 'harmony' && !this.state.harmony) {
-      const p = this.state.current;
-      const sw = p && p.swatches && p.swatches[0];
-      if (sw) this.openHarmony(sw.hex, { keepFocus: true });
-    }
+  /* NOTHING OPENS A DRAWER FOR THE READER (21.09.26). _tourOpenDrawer stood here and did; it went
+     with the demonstration, and so did the keepFocus option it passed the drawers — a drawer is only
+     ever opened by the reader now, and a reader who opens one is moved into it. */
+  _tourDrawerOpen(step) {
+    const s = this.state;
+    return !!step && ((step.view === 'contrast' && s.contrast) || (step.view === 'harmony' && s.harmony));
   },
 
-  // The control that opens a drawer step's drawer. The harmony disc is the dominant band's, because
-  // the dominant swatch is the one _tourOpenDrawer opens the drawer for.
+  // The control that opens a drawer step's drawer. The harmony button shown is the dominant band's —
+  // every palette has one and no two share it — but any band's opens the step's drawer.
   _tourVia(step) {
     if (!step || !step.via) return null;
     if (step.via === 'contrast') return document.querySelector('[data-tour="via-contrast"]');
@@ -522,33 +697,39 @@ export const tourMethods = {
     return null;
   },
 
-  /* THE DEMONSTRATION BEAT. The ring moves onto the control, the control shows its own hover, a beat
-     passes, and only then does the drawer open — as though the control had been pressed, which is
-     the thing being taught. The length is the counter-roll and the copy's arrival together, so the
-     reader is reading "Check Contrast" with the ring on Check Contrast; after it the drawer slides
-     in and the card travels with it. Under reduced motion nothing rolls, so the cue is the fill
-     (global.css), and the beat is kept: this is information, not decoration. */
-  _tourDemo(step, live, done) {
+  /* THE CUE: ONE PASS OF THE CONTROL'S OWN HOVER, AND NOTHING ELSE MOVES (21.09.26).
+
+     This was the demonstration beat, which ended by opening the drawer on the reader's behalf and
+     sending the card after it. The opening is theirs now (see step 2 in STEPS), so what is left is
+     the pointer: the control shows the state a cursor resting on it would, once, for the length of
+     the copy's arrival, while the ring — placed by the solver, which resolves the step to this
+     control while its drawer is shut — stays on for as long as the step waits. Under reduced motion
+     nothing rolls and the cue is the fill (global.css). */
+  _tourCue(step) {
     const via = this._tourVia(step);
-    if (!via) { done(); return; }
-    /* THE CARD GOES TO THE CONTROL, NOT JUST THE RING (21.09.26, measured on 2 → 3). With only the
-       ring moving, the card held where step 2 had put it — beside a contrast drawer that was already
-       gone, across two of the palette's bands and ~400px from the disc it was describing. 1 → 2 only
-       looked right because step 1's card happens to sit under Check Contrast already.
-       Unfreezing is all it takes: the step's drawer is not open yet, so the solver's own fallback
-       resolves the anchor to this control, on viaPlace, and the anchor switch starts the glide. When
-       the drawer then opens, the same switch carries the card on to it: the button, then what it
-       opens, as two moves the eye can follow. */
-    this._tourFrozen = false;
-    this._tourSolveNow();
-    this._tourRingTo(via, '');
+    if (!via) return;
     via.setAttribute('data-tour-cue', '');
     clearTimeout(this._tourDemoT);
     this._tourDemoT = setTimeout(() => {
       try { via.removeAttribute('data-tour-cue'); } catch (e) { }
-      if (!live()) return;
-      done();
     }, (this.DUR.overlay + this.DUR.state) * 1000);
+  },
+
+  /* WHERE THE CARD GOES AND WHAT IT RINGS, for the step as the page stands right now. One answer,
+     read by the solver, the settle and the scroll into view, so the three cannot disagree.
+     A drawer step with its drawer shut waits at `viaAnchor` with the ring on the control that opens
+     it; with the drawer open, both go to the drawer. Any other step goes to `anchor` and rings
+     `ringOn` when it names one (step 1: the card beside Export, the ring on the swatches). */
+  _tourTargets(step) {
+    if (!step) return { placeEl: null, ringEl: null, place: null, ring: '' };
+    const own = step.anchor ? document.querySelector(step.anchor) : null;
+    if (step.via && !own) {
+      const via = this._tourVia(step);
+      const home = step.viaAnchor ? document.querySelector(step.viaAnchor) : null;
+      return { placeEl: home || via, ringEl: via, place: step.viaPlace || step.place, ring: '', waiting: true };
+    }
+    const ringEl = step.ringOn ? (document.querySelector(step.ringOn) || own) : own;
+    return { placeEl: own, ringEl, place: step.place, ring: step.ring || '', waiting: false };
   },
 
   /* FOCUS FOLLOWS THE STEP. The card is tabIndex=-1 and takes focus on every change, so a keyboard
@@ -794,7 +975,7 @@ export const tourMethods = {
     const q = Math.round;
     const tick = () => {
       if (this.state.tourStep == null) return;      // left mid-settle
-      const el = document.querySelector(step.anchor);
+      const el = this._tourTargets(step).placeEl;
       const r = el && this._tourRest(el);
       const key = r ? (q(r.left) + ':' + q(r.top) + ':' + q(r.width) + ':' + q(r.height)) : null;
       same = (key && key === last) ? same + 1 : 0;
@@ -805,19 +986,14 @@ export const tourMethods = {
     requestAnimationFrame(tick);
   },
 
-  _tourWhenClear(pred, cb, tries) {
-    const n = tries == null ? 40 : tries;
-    if (pred() || n <= 0) { cb(); return; }
-    setTimeout(() => this._tourWhenClear(pred, cb, n - 1), 25);
-  },
-
   /* BRING THE ANCHOR INTO VIEW. A step whose subject is below the fold is a card pointing at
      nothing. Lenis owns the scroll here, so this goes through it when it is there (a bare
      window.scrollTo is overridden within a frame — see the note in PaletteApp), and lands
      immediately under reduced motion. */
   _tourReveal(step) {
-    if (step.view !== 'result') return;
-    const el = document.querySelector(step.anchor); if (!el) return;
+    // The card's own target, which on a drawer step with its drawer shut is the home beside Export.
+    // A drawer is fixed to the viewport and needs no scrolling to.
+    const el = this._tourTargets(step).placeEl; if (!el || el.closest('[role="dialog"]')) return;
     const r = el.getBoundingClientRect();
     const vh = window.innerHeight || 0;
     if (r.top >= 80 && r.bottom <= vh - 80) return;      // already comfortably on screen
@@ -854,7 +1030,7 @@ export const tourMethods = {
     this._tourOwnsFocus = false;
     this._tourBusy = false;
     this._tourBack = null;
-    this._tourCardOut(() => { this._tourFrozen = false; this.setState({ tourStep: null }); });
+    this._tourCardOut(() => { this._tourFrozen = false; this.setState({ tourStep: null, tourDone: {} }); });
   },
 
   /* ESCAPE MEANS LEAVE (21.09.26, audit — the brief: "Escape to exit"). On steps 2 and 3 the first
@@ -921,7 +1097,9 @@ export const tourMethods = {
     // Leaving with its drawer, the step's own subject is on its way out too, so focus goes to the
     // control that opens it — the thing the reader has just been shown — rather than into a drawer
     // that is closing.
-    const subject = closeDrawer ? this._tourVia(wasStep) : (wasStep && wasStep.n ? document.querySelector(wasStep.anchor) : null);
+    // Otherwise it is what the step was ABOUT — the thing it rings — which on step 1 is the swatches,
+    // not Export, the card's home beside them.
+    const subject = closeDrawer ? this._tourVia(wasStep) : (wasStep && wasStep.n ? this._tourTargets(wasStep).ringEl : null);
     this._tourSeq = (this._tourSeq || 0) + 1;
     clearTimeout(this._tourDemoT);
     const cued = document.querySelector('[data-tour-cue]');
@@ -943,7 +1121,7 @@ export const tourMethods = {
   },
 
   _tourCloseCommit(announce, subject) {
-    this.setState({ tourStep: null, announce: announce || '' }, () => {
+    this.setState({ tourStep: null, tourDone: {}, announce: announce || '' }, () => {
       const back = this._tourBack;
       this._tourBack = null;
       /* RETRIED UNTIL IT TAKES, on the wipe's own cadence (focusDestination: 60ms, twelve tries).
@@ -1013,32 +1191,50 @@ export const tourMethods = {
            blurred, and swallowing every press aimed at Next. Caught in the first end-to-end run —
            the click on step 2's Next never landed. Still under the toast at 158: a status about
            something the reader just did outranks a note about something they might do. */
-        z: (step.view === 'contrast' || step.view === 'harmony') ? 157 : 124,
+        /* WITH ANY DRAWER UP, not "on a drawer step" (21.09.26). A drawer step now spends part of its
+           life with its drawer shut, waiting on the result stage, and there it is an ordinary card at
+           124. It rises to 157 the moment a drawer is up — the step's own, opened by the reader, or
+           the one the last step left closing behind the card, whose scrim would otherwise dim it for
+           the length of the close. */
+        z: (s.contrast || s.harmony) ? 157 : 124,
         // Spoken, not drawn: the stepper beside it is aria-hidden, so this carries the fact.
         counter: step.n ? 'Step ' + step.n + ' of ' + n : null,
         numbered: !!step.n,
         totalText: String(n).padStart(2, '0'),
         title: step.title,
-        body: step.body,
+        body: this._tourBody(step),
         /* CHOOSE HAS NO NEXT, and that is the design rather than an omission: the way on is opening
            a palette, and a Next beside that instruction would offer a way past the one act the step
            is asking for. Skip Tour is still there, so the step is not a trap. */
         hasNext: !!step.n,
+        /* NEXT WAITS FOR THE STEP'S OWN ACT on a drawer step (21.09.26, by request: the reader presses
+           the control, and is told to). Disabled rather than absent, so the row keeps its shape and
+           the button stays where four presses have taught the reader to look; the copy's first
+           sentence says what unlocks it. Once the drawer has been opened in this run it stays
+           unlocked — shutting the drawer again, or coming back with Back, does not take it away. */
+        nextDisabled: !!(step.via && !(s.tourDone || {})[step.n]),
         hasBack: step.n > 1,
-        nextLabel: step.n === n ? 'Finish Tour' : 'Next',
-        nextAria: step.n === n ? 'Finish the tour and stay on this palette' : 'Next step: ' + STEPS[step.n].title,
+        /* THE LAST STEP'S PRIMARY IS ITS ACT (21.09.26, UX review: Peak-End). It was Finish Tour, in
+           the spot the reader had pressed Next four times, so the filled button ended the tour on the
+           example while New Palette, the thing the step is about, sat ringed in the masthead. The
+           primary is New Palette now and does exactly what the masthead's does — it opens the create
+           page, no file dialog, so the reader still presses it themselves. Finish Tour takes the quiet
+           slot Skip Tour holds on every other step: at the last step, leaving IS finishing. */
+        nextLabel: step.n === n ? 'New Palette' : 'Next',
+        nextAria: step.n === n ? 'New Palette: start a palette from your own image, and finish the tour' : 'Next step: ' + STEPS[step.n].title,
         backAria: step.n > 1 ? 'Back to step ' + (step.n - 1) + ': ' + STEPS[step.n - 2].title : null,
-        skipAria: 'Close the tour and stay where you are',
+        skipLabel: step.n === n ? 'Finish Tour' : 'Skip Tour',
+        skipAria: step.n === n ? 'Finish the tour and stay on this palette' : 'Close the tour and stay where you are',
         // The masthead's borderless label, reused rather than re-declared, so the two cannot drift.
         skipStyle: this.tourSkipStyle(),
-        onNext: () => this.tourNext(),
+        onNext: step.n === n ? () => this.tourMakeOwn() : () => this.tourNext(),
         onBack: () => this.tourBack(),
-        onSkip: () => this.skipTour(),
+        onSkip: step.n === n ? () => this.finishTour() : () => this.skipTour(),
         /* ESCAPE IS HANDLED HERE TOO, not only in the app's key ladder, and the two do not disagree:
            this one fires when focus is INSIDE the card (where the ladder's drawer clauses would
            otherwise close the drawer the card is standing beside, which is not what a reader
            pressing Escape on the card means). stopPropagation keeps it from reaching the ladder. */
-        onKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.exitTour(); } },
+        onKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.exitTour(); return; } this._tourCardTab(e); },
       },
     };
   },
@@ -1064,13 +1260,15 @@ export const tourMethods = {
   _tourAttach() {
     this._tourDetach();
     this._tourSolveNow();
+    this._tourOnViaKey = (e) => this._tourViaKey(e);
+    document.addEventListener('keydown', this._tourOnViaKey, true);
     this._tourOnMove = () => this._tourSolveNow();
     window.addEventListener('scroll', this._tourOnMove, { passive: true });
     window.addEventListener('resize', this._tourOnMove);
     try {
       this._tourRo = new ResizeObserver(this._tourOnMove);
       const step = this._tourStepDef();
-      const el = step && document.querySelector(step.anchor);
+      const el = step && this._tourTargets(step).placeEl;
       if (el) this._tourRo.observe(el);
       const card = document.querySelector('[data-tour-card]');
       if (card) this._tourRo.observe(card);
@@ -1100,6 +1298,7 @@ export const tourMethods = {
   },
 
   _tourDetach() {
+    if (this._tourOnViaKey) { document.removeEventListener('keydown', this._tourOnViaKey, true); this._tourOnViaKey = null; }
     if (this._tourOnMove) {
       window.removeEventListener('scroll', this._tourOnMove);
       window.removeEventListener('resize', this._tourOnMove);
@@ -1172,7 +1371,8 @@ export const tourMethods = {
     if (this._tourFrozen) return;
     const step = this._tourStepDef(); if (!step) return;
     const card = document.querySelector('[data-tour-card]'); if (!card) return;
-    let el = document.querySelector(step.anchor);
+    const t = this._tourTargets(step);
+    const el = t.placeEl;
     const W = window.innerWidth || 0, H = window.innerHeight || 0;
     const cw = card.offsetWidth || CARD_W, ch = card.offsetHeight || CARD_FALLBACK_H;
 
@@ -1182,10 +1382,15 @@ export const tourMethods = {
        drawer swaps, which freeze the solve — and a missing drawer then means the reader shut it.
        The card goes to the control that opens it again, and comes back to the drawer on its own if
        the reader presses it: the step follows the reader instead of stranding them. */
-    const fell = !el && step.via;
-    if (fell) el = this._tourVia(step);
-    if (el) this._tourRingTo(el, fell ? '' : (step.ring || ''));
-    if (el && card._tourAnchor && card._tourAnchor !== el && card._tx != null) this._tourGlide();
+    if (t.ringEl) this._tourRingTo(t.ringEl, t.ring);
+    /* A NEW PLACE IS TRAVELLED TO, never cut to — including the moves the reader causes by opening
+       or shutting a step's drawer. Under reduced motion the travel is the crossfade _tourMoveReduced
+       uses for a step change, for the same reason: a 700px cut is an appearance. */
+    if (el && card._tourAnchor && card._tourAnchor !== el && card._tx != null) {
+      card._tourAnchor = el;
+      if (this._reduce) { this._tourFadeMove(card); return; }
+      this._tourGlide();
+    }
     if (el) card._tourAnchor = el;
 
     /* A MISSING ANCHOR HOLDS THE CARD WHERE IT IS; it does not send it to a corner. The anchor is
@@ -1197,7 +1402,7 @@ export const tourMethods = {
     if (!r.width && !r.height) { if (card._tx == null) this._tourPark(card, W, H, cw, ch); return; }
 
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
-    const order = [(fell && step.viaPlace) || step.place, 'inline-start', 'inline-end', 'block-end', 'block-start'];
+    const order = [t.place, 'inline-start', 'inline-end', 'block-end', 'block-start'];
     for (let i = 0; i < order.length; i++) {
       const side = order[i];
       if (side === 'inline-start' && r.left - GAP - GUTTER >= cw) {

@@ -227,6 +227,10 @@ export default class PaletteApp extends React.Component {
     tourStep: null,
     // The invitation stays mounted while it leaves, so its exit can play (TourInvite in AppView).
     tourInviteOut: false,
+    // Which drawer steps the reader has done in this run (their drawer opened) — Next waits on it.
+    tourDone: {},
+    // Whether the current drawer step's drawer is open, as the card's copy shows it ('shut' | 'open').
+    tourPhase: 'shut',
     pending: null, copied: null, errorTitle: '', errorMsg: '', announce: '', feedView: 'list', gridLeaving: false, uOpen: null, overlay: null,
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
@@ -651,6 +655,12 @@ export default class PaletteApp extends React.Component {
     this._syncConsent();
     this._syncFilteredEmpty();
     this._syncLaneLift();
+    /* THE TOUR WATCHES EVERY COMMIT, not only the stage changes further down (which return early when
+       neither the stage nor the palette moved — and opening a drawer moves neither). A drawer step's
+       act, however it was done (methods/tour.js _tourWatch); and back on the tool from a document
+       with a step live, the step is brought back into view (_tourResume). */
+    this._tourWatch();
+    if (prevState && isDoc(prevState.route) && !isDoc(s.route) && typeof s.tourStep === 'number') this._tourResume();
     // The contrast checker's minimum and summary rise again when the lens or the size rewrites them.
     if (prevState && (prevState.contrastLens !== s.contrastLens || prevState.contrastLarge !== s.contrastLarge)) this._revealContrastLines();
     // One place decides whether a modal owns the screen, rather than each dialog's own open/close

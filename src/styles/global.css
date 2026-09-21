@@ -2871,6 +2871,13 @@ html,body{overflow-anchor:none}
    reservation anyway: 39px of empty card under "Open any example to start exploring", reading as a
    missing sentence. The reservation exists to hold steps 1–5 to one box; choose is not one of them. */
 [data-tour-card][data-tour-numbered] p[data-tour-line]{min-height:4.5em}
+/* NEXT COMES ON, IT DOES NOT POP (21.09.26). A drawer step's Next is disabled until the reader has
+   opened the drawer (methods/tour.js); .button:disabled is opacity .42 with nothing to carry the
+   change, so the moment the drawer opened the button snapped to full strength beside a card that was
+   gliding. Opacity only, on the state pair. Scoped to the card: Button declares no transition of its
+   own, and the masthead's New Palette runs its own opacity animation that a rule on every Button
+   would fight. */
+[data-tour-card] .button{transition:opacity var(--dur-state) var(--ease-standard)}
 /* THE DEMONSTRATION CUE (21.09.26, by request: "show the user what buttons to press to open check
    contrast and harmonies"). Before steps 2 and 3 open their drawer, the ring lands on the control
    that opens it and the control shows the state a pointer resting on it would — no new vocabulary,
