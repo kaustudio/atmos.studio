@@ -6,6 +6,25 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — On a phone, the pages that pin scroll through GSAP's normalizer
+
+**Tried by request ("try normalizescroll"), after anticipatePin, for the iPhone report that the close
+"jumps or shakes" scrolling to the footer and back up in Safari.** `ScrollTrigger.normalizeScroll`
+takes a touch scroll off the browser's own thread and runs it in JavaScript with GSAP's momentum, so
+the gallery's pin and the scrubs move in the same frame as the page instead of a frame behind a scroll
+Safari has already drawn, and the address bar stops collapsing and reappearing under the reader.
+Pinch-zoom is kept (`touch-action: pan-x pinch-zoom`).
+
+**Held, not global** (`methods/touchScroll.js`): only on a touch-only device, never under reduced
+motion, and only while a surface that pins is on screen: the phone story, which lets go while its image
+chooser is open so the chooser keeps its own swipes, and /about while its gallery is built. When nothing
+holds it, it is switched off and the browser scrolls natively. Measured in phone emulation: a 450px
+swipe moves the page 413px under the finger and GSAP's momentum carries it on; taps, the chooser and the
+reduced-motion floor are unchanged; swiping to the foot and flicking back up moves nothing in the
+document. The feel of the momentum, and whether the jump is gone, are judged on the phone itself.
+
+---
+
 ## 2026-09-21 — The credit waits for the page's window, and the story drops its Warm · Dark line
 
 **The front page's credit arrives after the window, not through its corner (by request: "analyze the

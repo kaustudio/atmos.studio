@@ -41,6 +41,7 @@ import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initTileLines } from './methods/aboutTiles.js';
 import { initNumberOdometer } from './methods/numberOdometer.js';
+import { holdTouchScroll } from './methods/touchScroll.js';
 
 // Speed Insights' beforeSend: nothing without analytics consent, and never the share link's fragment.
 // Module scope, so the component is handed one function for its whole life rather than a new one
@@ -658,6 +659,7 @@ export default class PaletteApp extends React.Component {
     if (this._storyKills && prevState && prevState.storyMasks !== s.storyMasks) this._storyCountLate();
     this._syncShareCount();
     this._syncPicker();
+    this._syncTouchScroll();
     this._syncAppInert();
     this._syncLandingCover();
     this._syncConsent();
@@ -959,6 +961,16 @@ export default class PaletteApp extends React.Component {
     this._storyEntryJump();
     try { root.setAttribute('data-story-live', '1'); } catch (e) { }
     } finally { this._syncingStory = false; }
+    this._syncTouchScroll();
+  }
+
+  /* THE STORY HOLDS NORMALIZED TOUCH SCROLLING while it is live and its chooser is shut (21.09.26, by
+     request: see methods/touchScroll.js). Run after every update and at the end of a build, since the
+     story can be built from componentDidMount's timers with no update after it. */
+  _syncTouchScroll() {
+    const want = !!this._storyRoot && !this.state.storyPicker;
+    if (want && !this._touchScrollRelease) this._touchScrollRelease = holdTouchScroll('story');
+    else if (!want && this._touchScrollRelease) { this._touchScrollRelease(); this._touchScrollRelease = null; }
   }
 
   /* WHERE EXPLORE ATMOS LANDS ON A PHONE (19.09.26, by request). misc.js openCreate marks the
@@ -1048,6 +1060,7 @@ export default class PaletteApp extends React.Component {
     this._killStory();
     this._stopShares();
     this._stopCount('share');
+    if (this._touchScrollRelease) { this._touchScrollRelease(); this._touchScrollRelease = null; }
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }
