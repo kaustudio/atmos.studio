@@ -27,7 +27,22 @@
 
    The drift on the photograph (aboutFlip.js, scrubbed on scroll) writes yPercent; this writes y in
    pixels, so the two compose on the same transform instead of fighting over one property. Both are
-   cleared when the arrival lands, which leaves the element exactly as the flip expects to find it. */
+   cleared when the arrival lands, which leaves the element exactly as the flip expects to find it.
+
+   THE PARK IS HELD UNTIL THE ARRIVAL PLAYS (21.09.26, by request: "it doesn't animate correctly during
+   the page transition"). The flip (aboutFlip.js) rebuilds on document.fonts.ready, and its rebuild is the
+   resource's own `gsap.set(target, { clearProps: "all" })` — on the plate, which IS its target — while
+   the drift's rebuild clears the photograph's transform. On a crossing the faces are already loaded, so
+   that promise settles ~50ms after mount: the mask and the lift were wiped before the window had even
+   started to open. Measured on the front page's How it Works: the photograph stood whole in the rising
+   window for 0.65s, then snapped to 92% masked when the page released it, and opened again — a picture
+   that appeared, vanished and arrived. The flip is Osmo's and keeps its clear; the park is this module's,
+   so it is this module that holds it: a cleared mask is put straight back, at whatever the arrival has
+   reached, and a cleared lift while it is still parked. A MutationObserver's callback runs before the
+   next paint, so no frame shows the picture whole. It holds THROUGH the arrival, not just up to it: on a
+   cold load the arrival starts at mount, the flip's clear lands inside it, and the mount's own work then
+   stalls the ticker — measured, the photograph stood whole for 0.7s before the next frame masked it at
+   70%. It lets go only as the arrival finishes, so its own clear() at the end stands. */
 
 function noop() { }
 
@@ -54,22 +69,37 @@ export function initPlateArrival(root, motion) {
   if (reduce) return dead;                      // no mask at all: the picture is simply there
   park();
 
-  let played = false;
+  let played = false, done = false;
+  let hold = null;
+  const reHold = () => {
+    if (done) return;
+    if (!box.style.clipPath) apply();
+    // The lift is the timeline's to write once it plays; before that, the park's.
+    if (!played && img && Math.abs(Number(gsap.getProperty(img, 'y')) || 0) < 0.5) gsap.set(img, { y: 18 });
+  };
+  try {
+    hold = new MutationObserver(reHold);
+    hold.observe(box, { attributes: true, attributeFilter: ['style'] });
+    if (img) hold.observe(img, { attributes: true, attributeFilter: ['style'] });
+  } catch (e) { hold = null; }
+  const letGo = () => { if (hold) { try { hold.disconnect(); } catch (e) { } hold = null; } };
+
   const play = () => {
     if (played || !box.isConnected) return;
     played = true;
-    const tl = gsap.timeline({ onComplete: clear });
+    const land = () => { done = true; letGo(); clear(); };
+    const tl = gsap.timeline({ onComplete: land });
     tl.to(at, { up: 0, duration: M.duration, ease: M.ease, onUpdate: apply }, 0);
     // The sides finish a breath sooner, so the last of the movement is the top edge rising rather
     // than the frame still widening under it.
     tl.to(at, { side: 0, duration: M.duration * 0.8, ease: M.ease, onUpdate: apply }, 0);
     if (img) tl.to(img, { y: 0, duration: M.duration * 1.15, ease: M.ease }, 0);
     // A stalled run (a backgrounded tab) is finished rather than left holding the picture back.
-    setTimeout(() => { if (tl.progress() < 1) { try { tl.progress(1); } catch (e) { clear(); } } }, (M.duration * 1.15 + 1.4) * 1000);
+    setTimeout(() => { if (tl.progress() < 1) { try { tl.progress(1); } catch (e) { land(); } } }, (M.duration * 1.15 + 1.4) * 1000);
   };
 
   return {
     play,
-    destroy: () => { try { if (!played) clear(); } catch (e) { } },
+    destroy: () => { done = true; letGo(); try { if (!played) clear(); } catch (e) { } },
   };
 }
