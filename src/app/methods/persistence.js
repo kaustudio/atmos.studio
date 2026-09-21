@@ -843,6 +843,10 @@ export const persistenceMethods = {
     // gets no other signal that the answer changed — so the change is spoken.
     this.setState({ storyTab: id, announce: id === 'role' ? 'Showing the roles this palette would take.' : id === 'contrast' ? 'Showing the contrast this palette can carry.' : "Showing the palette's character." }, () => {
       const next = document.querySelector('[data-story-panel]');
+      // The Role panel's shares count up out of the blur as its cells rise (21.09.26, by request: "Make
+      // sure all numbers are cohesive so they have this progressive blur animation"). A panel with no
+      // shares finds no group, and the call only finishes the last run.
+      this._countIn(next, 'storyTab', 0);
       if (!next || this._reduce || !window.gsap || !from) return;
       const g = window.gsap;
       const to = next.getBoundingClientRect().height;

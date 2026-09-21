@@ -821,6 +821,20 @@ export const motionMethods = {
     const k = '_count_' + key;
     if (this[k]) { try { this[k](); } catch (e) { } this[k] = null; }
   },
+  /* THE SHARED VIEW'S SHARES COUNT TOO (21.09.26, by request: "Make sure all numbers are cohesive so
+     they have this progressive blur animation"). Once per palette the phone's shared view shows, keyed
+     by its figures, and played as the view appears: it has no entrance of its own, and a share link
+     never shows the page loader (showLoader in PaletteApp's state), so there is nothing to wait for.
+     Leaving the view stops a run it cuts short. Called from componentDidMount and every
+     componentDidUpdate, so the idle path is one comparison. */
+  _syncShareCount() {
+    const p = this._mobileShare() ? this.state.current : null;
+    const key = p && p.swatches ? p.swatches.map((b) => b.hex + ':' + b.weight).join(',') : null;
+    if (key === this._shareCountKey) return;
+    this._shareCountKey = key;
+    if (!key) { this._stopCount('share'); return; }
+    this._countIn(document.querySelector('[data-mobile-share]'), 'share', 0.1);
+  },
   // Masked line reveal (Osmo SplitText mechanic, hand-split — no plugin): measure the rendered line
   // breaks via word spans, rebuild as overflow:hidden line masks, slide each line up from 110%, then
   // restore the plain text node so line-clamp, editing and future re-renders are untouched.
@@ -923,8 +937,8 @@ export const motionMethods = {
     });
   },
   /* _shareIn and _listIn — the phone's example view and example list arriving — went with both
-     surfaces on 17.09.26 (audit C5). A shared link's view mounts on the first paint, under the loader,
-     and never had an entrance of its own. */
+     surfaces on 17.09.26 (audit C5). A shared link's view mounts on the first paint (a share link
+     skips the loader) and never had an entrance of its own. */
   /* THE STORY'S OWN ENTRANCE, REMOVED — and the reason is worth keeping.
 
      It existed because chooseStoryCase called _shareIn() (since removed), which was a silent no-op:

@@ -391,10 +391,11 @@ export const pipelineMethods = {
     const k = p && p.example === true && p.exampleKey;
     return (typeof k === 'string' && Object.prototype.hasOwnProperty.call(this.EXAMPLE_SRC, k)) ? this.EXAMPLE_SRC[k] : '';
   },
-  /* THE SAME EIGHT, CUT TO THE LANDING CREDIT'S BOX. That box is at most 96x64 and was drawing the
+  /* THE SAME EIGHT, CUT TO THE LANDING CREDIT'S BOX. That box (96x64 then, 128x85 now) was drawing the
      900px originals, up to 93 KB each, so on a slow connection the front page's largest early paint
-     arrived at 4.1s. These are the centre 3:2 crop object-fit: cover shows, at 288x192 (three
-     times the box), 2 to 8 KB each. Same lookup as exampleUrl, so the H1 invariant holds; a key
+     arrived at 4.1s. These are the centre 3:2 crop object-fit: cover shows, at 384x256, three
+     times the 128px box (21.09.26; 288x192 for the 96px one before), WebP at q 0.8 from the 900px
+     files, 3 to 12 KB each. Same lookup as exampleUrl, so the H1 invariant holds; a key
      with no cut here falls back to the original rather than to nothing. */
   EXAMPLE_THUMB: {
     'profile-ember': '/assets/examples/thumbs/profile-ember.webp',

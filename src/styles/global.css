@@ -538,7 +538,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      the chrome — every uppercase label, the drawers' eyebrows, the sort chevrons' row, the tour's
      stepper — and it sat one rung under the smallest thing anyone reads as prose. It now shares a
      figure with --fs-detail, which is not a collision but a pair: the same size doing two jobs that
-     are already told apart by case, weight and tracking. --fs-fine keeps 11 as the floor under it. */
+     are already told apart by case, weight and tracking. --fs-fine kept 11 as the floor under it
+     until 21.09.26, when it came up to 12 as well (see the note there). */
   --fs-label:0.75rem;         /* 12 — uppercase labels; the workhorse */
   /* ===== 11, AND THE FLOOR FOR ANYTHING A READER HAS TO READ =================================
      --fs-micro (9) and --fs-nano (8) held every metric LABEL on this site — Hue, Chroma, Max
@@ -549,7 +550,16 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      0.6875rem, and it is not a new number — the weights key on /about and the story already needed
      11 and wrote it as a literal, which is the second call site the note above says turns a decision
      into a rung. This is that rung, so the literal goes. */
-  --fs-fine:0.6875rem;        /* 11 — metric labels, dates, column heads: the smallest READABLE size */
+  /* 12 SINCE 21.09.26 (by request: "are the labels inside the drawer the same size as other labels?
+     If possible token-wise increase them 1-2px maximum globally"), from 11. They were not: Manage
+     Library's group headings and counts sat at 11 while the harmony drawer's own heading, the chrome's
+     labels and --fs-detail stood at 12, and the list's column heads at 13. One pixel, on the token, so
+     every label wearing it moves together — the drawer's headings and counts, the tiles' value labels,
+     the contrast rows' "White Text", the harmony hexes, the cards' metric labels, the badges and the
+     /about tiles. Not two: at 13 it would be body text, and the tiles' capitals would outweigh the
+     values they name. It now shares 12 with --fs-label and --fs-detail; the three are told apart by
+     case, weight, tracking and colour, as the note on --fs-label already says of two of them. */
+  --fs-fine:0.75rem;          /* 12 — metric labels, dates, column heads, the drawer's group labels */
   --fs-micro:0.5625rem;       /*  9 — retired as a text size; no informative use remains */
   /* PURE, not a tinted neutral. An image outline picks up whatever it is drawn over, so a near-white
      like --on-surface (#f3f3ef) reads as dirt along the edge of a photograph rather than as an edge.
@@ -836,7 +846,12 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      + "AA" at 8px + 12px of padding. At --fs-fine the same content measures 40px, so the glyph was
      being pushed out of the start edge — and invisibly to scrollWidth, which only reports overflow
      at the END edge, so the box measured "not overflowing" while the icon was visibly cut. 44 is 40
-     plus the extra 4 the padding below adds. Re-measure this if the badge's type moves again. */
+     plus the extra 4 the padding below adds. Re-measure this if the badge's type moves again.
+     50 SINCE 21.09.26, RE-MEASURED when --fs-fine came up to 12: glyph + gap + "AA" is 31.4px, plus
+     16 of padding and 2 of border is 49.4. It was already short at 11 — 29.8px of content in 26px of
+     room, the glyph 3.8px into the left padding, so the pill read 4px on its leading side and 8 on its
+     trailing one — which the new figure corrects as well. The column (--row-aa-col, 104) still holds
+     the badge, its 8px gap and the widest count, "10/10". */
   /* THE CONTRAST PANEL'S CONTROL ROW, ONE HEIGHT. Three controls stand in that row and only two of
      them were ever the same shape: the two segmented rails are a bordered box around a button
      (1 + 2 + 27 + 2 + 1 = 33), while Passing only is a single bordered button and arrived at 29 from
@@ -844,7 +859,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      set of controls. Stated once here and read by both, so a change to either cannot leave them
      disagreeing again — which is what happens when a height is a coincidence of padding. */
   --cx-control-h:33px;
-  --row-aa-mark:44px;
+  --row-aa-mark:50px;
   --row-contrast-col:88px;    /* the maximum contrast ratio */
   --row-time-ink:100px;       /* the stamp itself — sized for the widest value the cell can hold, a
                                  same-day da-DK stamp ("14.06.26, 14.32"), which measures 100px in
@@ -1716,10 +1731,15 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* New Palette is in the documents' masthead too, so the filled button takes the bar's type in either bar. */
 [data-float-nav] .button[data-emphasis],
 .glass-bar .button[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
-/* New Palette's sides, by request and only here: 1.35em less 2px, 16.9px at 14px. That was "2px in from
+/* New Palette's sides, by request and only here: 1.35em less 2px, 14.2px at 12px. That was "2px in from
    the primary tier", and since 19.09.26 the tier is 1em — this bar keeps the roomier figure it was given,
-   so the value is stated rather than derived. The em half stays, so it still scales. */
-.glass-bar .button[data-emphasis="primary"]{--button-padding:var(--button-padding-block) calc(1.35em - 2px)}
+   so the value is stated rather than derived. The em half stays, so it still scales.
+   AND ITS TOP AND BOTTOM, the one Button taller than the single block inset (21.09.26, by request: "For
+   the "New Palette" button, make an exception and add 1-2px top and bottom. Feels a bit cramped"). 2px of
+   the 1-2: 9px at 12px, 32px tall, which is the height it had until the inset shrank that morning; 1px
+   (30px) was compared and still read tight. Written as the token plus 2px, not as 0.75em, so the
+   exception stays what was asked for, 2px roomier than every other Button, if the token moves. */
+.glass-bar .button[data-emphasis="primary"]{--button-padding:calc(var(--button-padding-block) + 2px) calc(1.35em - 2px)}
 
 /* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================
    The projects rail and its chips, Manage Projects, the list/grid/3D rail and its buttons, Filter,
@@ -2527,6 +2547,115 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
 
 /* [data-disc-chev], the turning disclosure chevron, went on 17.09.26 (audit H3): its last wearer was
    the unreachable traits list's Show All. */
+/* ===== ANIMATED CHECKBOX (Osmo Supply — Animated Checkbox, CSS) ================================
+   The tick boxes in Manage Library's rows and in Add to Projects (FacetMark in AppView), by request:
+   "our manage library drawer with checkboxes needs the following animation when checking off the
+   box". The tick draws itself in two strokes — the short one along the foot, then the long one rising
+   with the resource's overshoot — rather than appearing whole. The resource's rules are kept as
+   delivered below; every site change is marked [ATMOS n] here and at the line.
+
+   [ATMOS 1] THE CONTROL IS NOT AN <input>. The rows are buttons carrying aria-pressed (role=checkbox
+   and aria-checked in Add to Projects), so the resource's
+   `.checkbox:has(.checkbox__input:checked) .checkbox__custom` is the mark's own [data-checked], which
+   FacetMark sets from the same state. The two parts are spans, because a button holds phrasing
+   content only, so the check is display:block for its aspect-ratio to apply. `.checkbox`, the label and
+   the input are not used: the row, its hover plate and its focus ring are already the app's.
+   [ATMOS 2] NO JUMP (by request: "Checkbox shouldn't scale, it's only the icon that needs animated").
+   The box's checkbox-jump keyframes and the scale/rotate that served them are left out; the box only
+   changes colour, which is also the house rule for a press.
+   [ATMOS 3] THE TICK LEAVES THE WAY IT CAME (by request: "Same animation in and revert it out"). The
+   resource fades both strokes out at once. Here the unchecked transitions are the checked ones played
+   backwards in time: the long stroke retracts first on the mirror of its overshoot curve
+   (cubic-bezier(.35,1.5,.6,1) reversed is (.4,0,.65,-.5)), the short one follows on its own symmetric
+   curve, and the whole takes the same 0.55s as the arrival. The box keeps its fill until the tick has
+   gone, because the tick is drawn in the page's surface colour and would vanish into an empty box.
+   [ATMOS 4] SIZED AND COLOURED BY THE SYSTEM. The resource's 1.5em box is the app's 12px mark, so one
+   resource em is --check-u (8px) and its em lengths are written as multiples of that — the numbers
+   stay the resource's own. Fill and edge are --on-surface (the edge matches the fill, where the
+   resource's goes transparent, so the filled box is the same 12px as the empty one), the empty edge
+   is the mark's 38% ink, the tick is --surface, and the corner is --radius-tick.
+   [ATMOS 5] UNDER REDUCED MOTION THE TICK IS THERE OR IT ISN'T. The global reduce rule cannot reach
+   this block: `*` never matches ::before/::after, where both strokes live, and it shortens durations
+   but keeps delays, so the strokes would still draw and the fill would still wait 0.4s to clear. The
+   state changes at once instead; the fill and the tick are the whole signal, as they were before. */
+.checkbox__custom {
+  --check-u: 8px;                                                  /* [ATMOS 4] */
+  color: var(--surface);                                           /* [ATMOS 4] */
+  background-color: transparent;
+  border: 1px solid color-mix(in srgb, var(--on-surface) 38%, transparent);   /* [ATMOS 4] */
+  border-radius: var(--radius-tick);                               /* [ATMOS 4] */
+  justify-content: center;
+  align-items: center;
+  width: 12px;                                                     /* [ATMOS 4] */
+  height: 12px;                                                    /* [ATMOS 4] */
+  flex: none;
+  display: inline-flex;                                            /* [ATMOS 1] */
+  /* [ATMOS 3] the fill clears after the tick has retracted: the arrival's 0-0.15s, mirrored */
+  transition: background-color 0.15s ease 0.4s, border-color 0.1s ease 0.45s;
+}
+
+.checkbox__custom[data-checked] {                                  /* [ATMOS 1] */
+  background-color: var(--on-surface);                             /* [ATMOS 4] */
+  border-color: var(--on-surface);                                 /* [ATMOS 4] */
+  transition: background-color 0.15s ease, border-color 0.1s ease;
+}
+
+.checkbox__custom-check {
+  display: block;                                                  /* [ATMOS 1] */
+  aspect-ratio: 2 / 3;
+  width: calc(.4375 * var(--check-u));                             /* [ATMOS 4] .4375em */
+  position: relative;
+  transform: translateY(-12.5%)rotate(45deg);
+}
+
+.checkbox__custom-check::before,
+.checkbox__custom-check::after {
+  content: "";
+  position: absolute;
+  background-color: currentColor;
+  width: calc(0.125 * var(--check-u));                             /* [ATMOS 4] 0.125em */
+  height: calc(0.125 * var(--check-u));                            /* [ATMOS 4] 0.125em */
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease 0.15s;
+}
+
+.checkbox__custom-check::before {
+  width: 100%;
+  bottom: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  /* [ATMOS 3] out: second, 0.35-0.55s, on its own symmetric curve */
+  transition: transform 0.2s cubic-bezier(0.76, 0, 0.24, 1) 0.35s, opacity 0s linear 0.55s;
+}
+
+.checkbox__custom-check::after {
+  height: 100%;
+  right: 0;
+  transform-origin: bottom center;
+  transform: scaleY(0);
+  /* [ATMOS 3] out: first, 0-0.4s, on the overshoot curve played backwards */
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.65, -0.5), opacity 0s linear 0.55s;
+}
+
+.checkbox__custom[data-checked] .checkbox__custom-check::before { /* [ATMOS 1] */
+  transition: transform 0.2s cubic-bezier(0.76, 0, 0.24, 1);
+  transform: scaleX(1);
+  opacity: 1;
+}
+
+.checkbox__custom[data-checked] .checkbox__custom-check::after {  /* [ATMOS 1] */
+  transition: transform 0.4s cubic-bezier(0.35, 1.5, 0.6, 1);
+  transform: scaleY(1);
+  transition-delay: 0.15s;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {                          /* [ATMOS 5] */
+  .checkbox__custom,
+  .checkbox__custom-check::before,
+  .checkbox__custom-check::after { transition: none !important; }
+}
+
 /* ===== GLASS EFFECT (Osmo Supply — Glass Effect / Background) ==================================
    Ported verbatim. Every declaration below .glass-bar is the resource's own: the same seven layers,
    the same em-based box-shadows, the same blend modes and the same order. Nothing is retuned to

@@ -640,6 +640,7 @@ export default class PaletteApp extends React.Component {
        second is four property reads. */
     requestAnimationFrame(() => this._syncStory());
     this._storyT = setTimeout(() => this._syncStory(), 400);
+    this._syncShareCount();
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -649,6 +650,10 @@ export default class PaletteApp extends React.Component {
        chapters that are no longer in the document — the failure aboutStack records, where one
        surviving pin refreshes every trigger on the next surface against a detached element. */
     this._syncStory();
+    // A count group that arrived after the story's modules were built: the picks, once their masks
+    // settle (see AppView). The story's own odometer only reads the groups there were at the time.
+    if (this._storyKills && prevState && prevState.storyMasks !== s.storyMasks) this._storyCountLate();
+    this._syncShareCount();
     this._syncPicker();
     this._syncAppInert();
     this._syncLandingCover();
@@ -992,6 +997,14 @@ export default class PaletteApp extends React.Component {
     land();
   }
 
+  // Built into the story's kills, so it goes when the story does. Only groups nothing has built yet:
+  // the odometer skips every group that carries its flag.
+  _storyCountLate() {
+    const root = this._storyRoot;
+    if (!root || !root.querySelector('[data-odometer-group]:not([data-odometer-initialized])')) return;
+    this._storyKills.push(initNumberOdometer(root, { blur: 9 }));
+  }
+
   // The armed half of the above. Held on the instance rather than passed through the wipe, because
   // the module that gets armed is built by componentDidUpdate — after the caller that started the
   // cover has already returned.
@@ -1010,6 +1023,7 @@ export default class PaletteApp extends React.Component {
     }
     this._storyReveal = null;
     this._storyArmed = false;
+    this._stopCount('storyTab');   // a Role panel's count, started by setStoryTab outside the kills
     if (this._storyRoot) { try { this._storyRoot.removeAttribute('data-story-live'); } catch (e) { } }
     this._storyRoot = null; this._storyKey = null;
   }
@@ -1024,6 +1038,7 @@ export default class PaletteApp extends React.Component {
     if (this._maskT) { clearTimeout(this._maskT); this._maskT = null; }
     this._killStory();
     this._stopShares();
+    this._stopCount('share');
     if (this._loaderPace) { clearInterval(this._loaderPace); this._loaderPace = null; }
     if (this._loaderFill) { try { window.gsap && window.gsap.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
     if (this._loaderTl) { try { this._loaderTl.kill(); } catch (e) { } this._loaderTl = null; }

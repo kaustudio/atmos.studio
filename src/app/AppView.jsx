@@ -480,17 +480,18 @@ const UniversePanel = ({ c }) => (<>
 // square with a check (both on --radius-tick since 17.09.26, audit Q4), and a bare rule — so the unavailable state is never carried by colour or
 // dimming alone (SC 1.4.1). A rule rather than a greyed box because a box, however faint, still
 // says "this is a thing you tick"; a rule says the tick is not on offer.
+// THE TICK DRAWS ITSELF, IN AND OUT (21.09.26, by request): Osmo Supply's Animated Checkbox, the box
+// still and only the tick moving — see the ANIMATED CHECKBOX block in global.css. The check is always
+// rendered and the state is an attribute, so a transition has something to run on in both directions;
+// it used to mount with the state and unmount without it, which left nothing to animate out.
 const FacetMark = ({ active, unavailable }) => (
   unavailable
     ? <span aria-hidden="true" style={sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center')}>
         <span style={sx('width:8px;height:1px;background:var(--on-surface-muted)')}></span>
       </span>
-    : <span aria-hidden="true" style={{
-      ...sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--radius-tick)'),
-      border: '1px solid ' + (active ? 'var(--on-surface)' : 'color-mix(in srgb, var(--on-surface) 38%, transparent)'),
-      background: active ? 'var(--on-surface)' : 'transparent',
-      color: 'var(--surface)',
-    }}>{active && <IconCheck size={9} />}</span>
+    : <span aria-hidden="true" className="checkbox__custom" data-checked={active ? '' : undefined}>
+        <span className="checkbox__custom-check"></span>
+      </span>
 );
 
 /* COPYING SWAPS THE WORDS THROUGH THE LINE'S MASK (19.09.26, by request: "when pressing a value on a
@@ -1019,7 +1020,16 @@ function MobileStory({ st }) {
                 <img className="story-mask__lit" src={st.image} alt="" decoding="async"
                   style={lit ? { opacity: 1, WebkitMaskImage: 'url(' + st.litMask + ')', maskImage: 'url(' + st.litMask + ')' } : { opacity: 0 }} />
               </div>
-              <ul className="about-roles" data-story-picks="1" data-cascade aria-label="The palette's colours">
+              {/* THE SHARES COUNT UP HERE TOO (21.09.26, by request: "Make sure all numbers are cohesive so
+                  they have this progressive blur animation"). The key's tiles count theirs out of the blur
+                  and these cards print the same figures a screen later, so they take the same odometer,
+                  trigger and stagger. The roll is aria-hidden and each share keeps a hidden twin.
+                  A GROUP ONLY ONCE THE CARDS ARE FINAL. The masks settle after the story is built, and
+                  settling turns a cell into a button, which React builds new: an odometer built before
+                  then counts the cards it replaced, off the page, and the ones on it never move (three
+                  runs in four, measured). So the group is declared when the masks have settled, and
+                  PaletteApp builds a count for a group that arrives after the story's modules. */}
+              <ul className="about-roles" data-story-picks="1" data-cascade data-odometer-group={st.picksFinal ? '' : undefined} data-odometer-trigger-start="top 88%" data-odometer-stagger="0.2" aria-label="The palette's colours">
                 {/* A SWATCH WITH NO REGION IS NOT A DISABLED BUTTON, IT IS A CELL. `[data-ix]:disabled`
                     sets opacity:.42, which repaints the swatch — the one element whose whole job is to
                     be an exact colour — and takes its note to roughly 2.5:1 at 10px. /about's rule for
@@ -1040,7 +1050,7 @@ function MobileStory({ st }) {
                             the bottom right", and "of the frame" goes everywhere, since it took too much room).
                             The hex holds the caption's top left and the share its own last line, on the right;
                             story.css places them. */}
-                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
+                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct"><span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">{r.pct}</span><span className="about-sr">{r.pct}</span></span></span>
                       </button>
                     ) : (
                       <div className="about-role" data-story-pick="1" style={{ '--role-colour': r.hex, '--role-ink': r.ink }}>
@@ -1049,7 +1059,7 @@ function MobileStory({ st }) {
                             neighbours; that it is not a button is the whole difference. Taking the edge off
                             only these was tried and reversed the same day ("That doesn't make any sense. bring
                             it back"); now no card has one, and they still look alike. */}
-                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct">{r.pct}</span></span>
+                        <span className="about-role__foot"><span className="about-role__hex">{r.hex}</span><span className="about-role__pct"><span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">{r.pct}</span><span className="about-sr">{r.pct}</span></span></span>
                       </div>
                     )}
                   </li>
@@ -1148,11 +1158,13 @@ function MobileStory({ st }) {
 {/* No role="img"/aria-label on the cells: that makes the subtree presentational, so the
                     name, the hex and the share — all real text — would be dropped from the tree and
                     replaced by one string. About ships this cell bare. */}
-                <div className="about-roles" data-cascade>
+                {/* The shares count as the picks' do (21.09.26, by request): on their trigger when the story
+                    is built with Role already chosen, and at once when the tab is pressed (setStoryTab). */}
+                <div className="about-roles" data-cascade data-odometer-group data-odometer-trigger-start="top 88%" data-odometer-stagger="0.2">
                   {st.roleCells.map((c) => (
                     <div key={c.key} className="about-role" style={{ '--role-colour': c.swatch, '--role-ink': c.ink }}>
                       <span className="about-role__name">{c.name}</span>
-                      <span className="about-role__foot"><span className="about-role__hex">{c.hex}</span><span className="about-role__pct">{c.pct}</span></span>
+                      <span className="about-role__foot"><span className="about-role__hex">{c.hex}</span><span className="about-role__pct">{c.pct ? <><span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">{c.pct}</span><span className="about-sr">{c.pct}</span></> : null}</span></span>
                     </div>
                   ))}
                 </div>
@@ -1475,7 +1487,13 @@ function MobileShareView({ ms }) {
       </div>
 
       {/* the palette itself: full-bleed rows, each tappable to take its hex */}
-      <div role="group" aria-label="Palette swatches. Tap a colour to copy its hex" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
+      {/* THE SHARES COUNT UP OUT OF THE BLUR, as the result stage's do (21.09.26, by request: "Make sure
+          all numbers are cohesive so they have this progressive blur animation"): once per palette the
+          view shows, as it appears (_syncShareCount).
+          Keyed by the figures, because the odometer rebuilds a share's text into its own columns and
+          React must not write a new palette's numbers into text it no longer owns. The row's
+          aria-label already says the share, so the roll is aria-hidden with no twin. */}
+      <div key={ms.rows.map((r) => r.hex + r.pct).join(' ')} role="group" aria-label="Palette swatches. Tap a colour to copy its hex" data-odometer-group="" data-odometer-stagger="0.2" style={sx('flex:none;display:flex;flex-direction:column;width:100%')}>
         {ms.rows.map((r) => (
           <button key={r.key} type="button" data-ms-row="1" data-ix="cell" data-focus="value" onClick={r.onCopy} aria-label={r.aria} style={r.style}>
             <span style={r.hexStyle}>{r.hex}</span>
@@ -1483,7 +1501,7 @@ function MobileShareView({ ms }) {
                 figure was swapped for the confirmation in one frame. */}
             <span style={r.metaStyle}>
               <span style={sx('display:inline-grid')}>
-                <span data-done-mark="1" style={{ gridArea: '1 / 1', justifySelf: 'end', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 0 : 1 }}>{r.pct}</span>
+                <span data-done-mark="1" style={{ gridArea: '1 / 1', justifySelf: 'end', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 0 : 1 }}><span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true">{r.pct}</span></span>
                 <span data-done-mark="1" aria-hidden={!r.copied} style={{ gridArea: '1 / 1', justifySelf: 'end', display: 'inline-flex', alignItems: 'center', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: r.copied ? 1 : 0 }}>Copied</span>
               </span>
             </span>
@@ -1963,11 +1981,11 @@ function LandingStage({ vals, covered, quiet }) {
                 footer row allowed, the image was a 48px chip being read as an icon — a decoration in
                 front of a sentence rather than the thing the sentence is about. Over the line it is
                 a photograph with a caption under it, which is what this actually is, and it takes a
-                real width: ONE COLUMN OF THE PAGE'S OWN GRID, re-derived from --grid-cols and
-                --grid-gutter so it follows the phone breakpoint (12/24 to 4/16) without a second
-                rule, and clamped at both ends so it stays a thumbnail. Measured from the viewport
-                rather than from `100%`: a percentage resolves against this shrink-to-fit column and
-                would be circular.
+                real width: 128PX, on every screen (21.09.26, by request: "Increase reference image
+                size on the frontpage (128px)"). It was one column of the page's own grid, clamped at
+                56 and 96px, which came to 94px on a 1440 screen and 74 to 78 on a phone; the request names
+                the figure, so it is stated. Measured before it went in: on a 375x667 phone the credit
+                still sits 70px under Explore an Example, and on every screen well under the hero.
 
                 No entrance of its own — the thing it describes is the field, and the field has its
                 own dissolve out of the painted floor to make.
@@ -1981,9 +1999,8 @@ function LandingStage({ vals, covered, quiet }) {
             {vals.landingCredit && (
               <div data-land-credit="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 var(--page-gutter) 26px')}>
                 {/* A CORNER FOR ITS SIZE (17.09.26, by request): --radius-swatch, the site's smallest,
-                    on a thumbnail 56 to 96px wide. Start here's proportion gives about 4px at this
-                    height; 3 is the figure the system already has. The ring below takes it too. */}
-                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;border-radius:var(--radius-swatch);width:clamp(56px, (100vw - 2 * var(--page-gutter) - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols), 96px);aspect-ratio:3/2;background:var(--surface-raised)')}>
+                    set when the thumbnail was 56 to 96px wide. The ring below takes it too. */}
+                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;border-radius:var(--radius-swatch);width:128px;aspect-ratio:3/2;background:var(--surface-raised)')}>
                   {/* No fetchPriority="low": this is the landing's largest early paint, so a low
                       priority only queued it behind everything else. The file is the small cut. */}
                   <img src={vals.landingCredit.image} alt="" decoding="async" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
@@ -1992,9 +2009,11 @@ function LandingStage({ vals, covered, quiet }) {
                 {/* THE BUTTONS' TYPE (17.09.26, by request): --fs-body at Medium with flat tracking,
                     as the app's buttons read, where this was a 12px regular line borrowed from the
                     footer's old meta row. The name still takes full ink and "Based on" does not: the
-                    palette is the information here, and the preposition is the grammar around it. */}
+                    palette is the information here, and the preposition is the grammar around it.
+                    TWO LINES, the name under "Based on" (21.09.26, by request: "add a break after
+                    Based on"). */}
                 <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>
-                  Based on <span style={sx('color:var(--on-surface)')}>{vals.landingCredit.name}</span>
+                  Based on<br /><span style={sx('color:var(--on-surface)')}>{vals.landingCredit.name}</span>
                 </div>
               </div>
             )}

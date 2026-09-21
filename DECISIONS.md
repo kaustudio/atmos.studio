@@ -6,6 +6,60 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — Every share counts up, and the front page's reference image is 128px
+
+**Every share counts up out of the blur (by request: "Make sure all numbers are cohesive so they have
+this progressive blur animation").** "The numbers" has meant the colour shares both times this was
+asked before (the result stage, then grid view), and three of them still just appeared, all on the
+phone: the story's colour picks, the story's Role tab, and a shared link's view. They take Osmo's
+odometer with the figures the rest use (1.4s a count, 0.2s between counts, the 9px focus blur). The
+picks count on the same trigger as the key's tiles above them; the Role tab counts when it is
+pressed, as its cells rise; a shared link counts as its view appears, since it has no entrance of its
+own and a share link never shows the loader. Contrast ratios count nowhere in the product, on
+/about, in the story's Contrast tab or in the tool's drawer, so they were left alone.
+
+**The picks wait for their masks.** A pick is drawn as a plain cell until the photograph's masks
+settle, and settling turns a colour with a region into a button, which React builds new. An odometer
+built before that counted the cards it had replaced, off the page, while the ones on screen never
+moved: three runs in four, measured. The picks become a count group only once the masks have settled
+(`picksFinal`), and a group that arrives after the story's modules are built gets its own count
+(`_storyCountLate`). Six runs after the change, all six rolled.
+
+**The front page's reference image is 128px (by request: "Increase reference image size on the
+frontpage (128px) and add a break after Based on").** It was one grid column clamped at 56 and 96px,
+so 94px on a 1440 screen and 74 to 78 on a phone; now it is 128 by 85 everywhere, with the name on
+its own line under "Based on". On a 375×667 phone it still sits 70px under Explore an Example. The
+thumbnails were re-cut at 384×256, three times the new box, with the crop and quality of the first
+cut (q 0.8 reproduced all eight old files to the byte): 3 to 12 KB each.
+
+---
+
+## 2026-09-21 — The smallest labels are 12px, and the tick draws itself
+
+**The smallest labels went up a pixel, on the token (by request: "Are the labels inside the drawer
+same size as other labels? If possible token-wise increase them 1-2px maximum globally").** They were
+not: the Library drawer's group heads and counts were `--fs-fine`, 11px, beside the harmony drawer's
+12px heading (`--fs-label`) and the list's 13px column heads. `--fs-fine` is now 12px everywhere it
+is used (the tiles' value labels, "White Text", the harmony hexes, the cards' metric labels, the
+badges, /about's tiles) and shares its size with `--fs-label` and `--fs-detail`. The three names stay:
+they are roles, and a later change may move one without the others. One pixel, not two: at 13px the
+labels would be `--fs-body`, the size of the values the tiles' capitals name, and capitals at the
+same size read larger than what they label.
+
+**Nothing new wraps or clips.** Every 11px element on live was set against this build at 12px (the
+list, the Library drawer, the result, both drawers, /about, and the phone's OKLCH lines) and none
+wraps, clips or spills. The AA badge did not fit, and never had: at 11px its content already sat
+3.8px into its padding. Its slot, `--row-aa-mark`, went from 44 to 50px, which fixes both.
+
+**The tick draws itself, in and out (by request).** Osmo Supply's Animated Checkbox, on the Library's
+rows and in Add to Projects. The box does not jump ("Checkbox shouldn't scale, it's only the icon that
+needs animated"), and the tick leaves the way it came ("Same animation in and revert it out"): the
+long stroke retracts first on its overshoot curve played backwards, then the short one, then the
+fill. With reduced motion on, the tick is there or it is not; the global reduce rule cannot reach
+::before/::after and keeps delays, so the block carries its own.
+
+---
+
 ## 2026-09-21 — The tour waits for the reader's press
 
 **The reader opens the drawers (by request: "it's important that the user presses the buttons actively
@@ -68,6 +122,14 @@ instead of the 12 and 13 it was tuned to; with the override gone it is back at 1
 to look like one — `--btn-pad-md` inside a 1px border — and had drifted to 35.5px. As Buttons they take
 the inset, the hover and the two tiers from the component, and their row speaks the dialogs' voice like
 every other pair of acts.
+
+**New Palette is the second exception (later the same day, by request: "For the "New Palette" button,
+make an exception and add 1-2px top and bottom. Feels a bit cramped").** Of the 1-2px, 2: its block is
+the token plus 2px, 9px at its 12px type, so it is 32px tall again, the height the one-height change
+took it from. 1px (30px) was compared on the bar and still read tight. The rule is the masthead's own
+(`.glass-bar .button[data-emphasis="primary"]`, which only New Palette matches, in the tool's bar and
+the documents'), written as a step on the token so it stays 2px roomier than every other Button if the
+token moves. Every other Button keeps the one height.
 
 ## 2026-09-18 — The orb is twelve points, not the reference
 

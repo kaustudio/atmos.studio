@@ -1460,6 +1460,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         rationale: p.rationale || '',
         useLine: composeUse(an, met.aaState, met),
         swatches: swatchRows,
+        // Whether the picks' cards are final: until this case's masks settle, a colour with a region is
+        // drawn as a plain cell, and settling swaps it for a button. The picks' odometer waits for it.
+        picksFinal: !!masks,
         /* The bar is one role="img", so it needs one sentence describing the whole figure — /about's
            weight bar carries exactly this ("Dusk Slate by area: darkest green 44.1 per cent, …").
            Without it a screen reader meets five unlabelled spans. */
