@@ -953,7 +953,7 @@
   max-width:36ch;font-size:var(--fs-body);line-height:1.6;letter-spacing:var(--track-body);
 }
 .about-route .about-ui__actions{display:flex;align-items:center;gap:8px;margin:0}
-/* The two tiers as .button-006 draws them, in the palette's roles. Primary is its own fill with no
+/* The two tiers as .button draws them, in the palette's roles. Primary is its own fill with no
    edge (--action-primary-line is the surface's own colour); secondary is transparent on the tier's
    48% edge, mixed from the accent where the site mixes from its ink. Padding and weight are the
    tiers' tokens, the type is the banner voice (CONSENT_BTN_TYPE and [data-voice="banner"]), and the

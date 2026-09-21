@@ -148,7 +148,7 @@
 
    DIRECTLY AFTER THE RULE IT ANSWERS, and that placement is load-bearing rather than tidy. Both
    selectors are (0,2,0), so this wins on document order alone — the same trap that made the
-   button-006 override sit in a correct media block and never apply, because an identical-specificity
+   Button override sit in a correct media block and never apply, because an identical-specificity
    declaration lived further down the file. Anything inserted between these two lines breaks it. */
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
   .site-foot__meta a:hover,.site-foot__meta .site-foot__consent:hover{color:inherit}

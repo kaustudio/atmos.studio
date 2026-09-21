@@ -179,7 +179,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
        Works' Explore Atmos (.about-cta, about.css) and the 404's button (.nf-cta, notfound.css).
        Medium, --fs-cta, --track-statement: they are set as statements, one per screen.
      · the floating bar's links: Medium, --fs-detail, flat.
-     · the banner voice: the analytics banner's buttons and every B006 in a [data-voice="banner"]
+     · the banner voice: the analytics banner's buttons and every Button in a [data-voice="banner"]
        container, the segmented controls and the library's tabs. Medium, --fs-body, flat.
    A new control takes the default or one of these, rather than a voice of its own. */
 /* THE FILTER DRAWER, ENTIRELY. This began as an exemption for the Character traits head alone, on
@@ -320,7 +320,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 [data-ix="cell"]:active:not(:disabled){background:color-mix(in srgb,currentColor 20%,transparent)!important}
 [data-ix="press"]:active:not(:disabled){background:color-mix(in srgb,var(--on-surface) 24%,transparent)!important;border-color:var(--action-line-press)!important}
 /* ===== the two sanctioned specializations (richer motion the declarative rules above can't express) =====
-   button-006 — the masked text-swap CTA: the label rises through a mask on hover (own CSS block below).
+   Button — the masked text-swap CTA: the label rises through a mask on hover (own CSS block below).
    rich-tint  — feed rows, universe cards, export items: JS brightness tint for continuous motion.
    (A third, lift, was the hero dropzone's GSAP rise; nothing wore it, and its rule went on 17.09.26,
    audit H3.) */
@@ -634,7 +634,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      glass. */
   --shadow-surface:0 24px 60px rgba(0,0,0,.28);
   /* ONE BLUR FOR GLASS (17.09.26, audit D3): the masthead's pane, the banner, the theme switch, the
-     landing's buttons, button-006 and the two pages' calls to action, which took 12px, .75em and 18px
+     landing's buttons, Button and the two pages' calls to action, which took 12px, .75em and 18px
      between them. 12 is the masthead's, the glass most of the site is looking through. */
   --glass-blur:12px;
   /* CHROME'S OWN COLOURS, named (17.09.26, audit H2). The wordmark's drifting greys (the app's mark and
@@ -1057,7 +1057,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      everything else and no tier owns a colour of its own. Emphasis is never carried by colour
      alone: primary is FILLED, secondary is OUTLINED — the two stay distinguishable in greyscale,
      at any zoom, and to anyone who cannot separate the two inks by hue. There is no third tier:
-     see the note below. Consumed by the button-006 variants below. */
+     see the note below. Consumed by the Button variants below. */
   /* tier 1 — primary: the payoff. Inverted fill; the one dominant control in its region. */
   --action-primary-surface:var(--on-surface);
   --action-primary-ink:var(--surface);
@@ -1071,7 +1071,15 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      the filled label was inset 4.5px further than its neighbours' and the row read as two sizes of
      button. Fill is what separates the tiers, and it does that without help; the padding does not
      have to say it twice. The masthead's New Palette keeps its own roomier value (see .glass-bar). */
-  --action-primary-padding:0.75em 1em;
+  /* ONE HEIGHT FOR EVERY BUTTON (21.09.26, by request: "every button that is built on the b006
+     should match the design"). The 2px-shorter inset the rows of acts took on 20.09 — the result
+     stage's bar, the dialogs' pairs, the tour, the analytics banner — is the Button's own block
+     padding now, stated once here and read by every tier and variant. The masthead's New Palette,
+     the switches and the copy trigger change only their SIDES; none of them may restate the top and
+     bottom. em-relative on purpose: a custom property is substituted where it is used, so this
+     resolves at each button's own size — 7.75px at the acts' 13px, 7px at the masthead's 12px. */
+  --button-padding-block:calc(0.75em - 2px);
+  --action-primary-padding:var(--button-padding-block) 1em;
   /* tier 2 — secondary: everything you do WITH the result. No fill, full-strength edge, regular
      weight, full-strength ink. Every unfilled control in the app is this tier.
 
@@ -1088,7 +1096,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --action-secondary-line:var(--action-line);
   --action-secondary-weight:400;
   /* hover/press tints for the unfilled tier — the sanctioned 16% → 24% spectrum, the same one
-     [data-ix="press"] and button-006's own rest state already ride. Text stays
+     [data-ix="press"] and Button's own rest state already ride. Text stays
      --on-surface across all three states, so the worst case is 11.49:1 (light) / 10.56:1 (dark). */
   --action-quiet-hover:color-mix(in srgb,var(--on-surface) 16%,transparent);
   --action-quiet-press:color-mix(in srgb,var(--on-surface) 24%,transparent);
@@ -1373,12 +1381,12 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    page's own text contrast, whatever the gas does behind it.
 
    CREATE IS FILLED, NOT GLASS, by request — the app's primary tier, the same tokens the analytics
-   banner's Accept takes through button-006: --on-surface as the fill and the edge, --surface as the
+   banner's Accept takes through Button: --on-surface as the fill and the edge, --surface as the
    label, so black in light and inverting on dark as every filled action does. A pane of the page's
    own colour has no deeper version of itself to give the lead act, so emphasis steps out of the glass
    rather than into a heavier pane. No blur under it: an opaque fill has nothing to show through.
 
-   HOVER IS THE LABEL SWAP, as it is for button-006: the pane holds still under the pointer. Where the
+   HOVER IS THE LABEL SWAP, as it is for Button: the pane holds still under the pointer. Where the
    swap does not run — touch, or reduced motion — a tenth of ink goes into the pane on press and, under
    reduced motion, on hover, so the control still answers. Every selector here is written after the
    rules it overrides, at equal or higher specificity: the primary tier's hover and press are (0,4,0),
@@ -1498,8 +1506,8 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-gate-actions] .glass-cta:not(:only-child),
 [data-cta-row] .glass-cta:not(:only-child){flex:1 1 auto}
 
-/* ===== button-006 (masked text-swap CTA), remapped to system tokens ===== */
-.button-006{
+/* ===== Button (masked text-swap CTA), remapped to system tokens ===== */
+.button{
   /* THE WHOLE FAMILY IS A STADIUM NOW, which is the decision the note beside the theme switch below
      said would have to be made here rather than there. Roughly fifteen controls take it in one
      declaration — New palette in the masthead, the result stage's Add to Project / Check Contrast /
@@ -1513,26 +1521,26 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      the thing the corner was supposed to prevent.
      --radius-pill, not a length: it clamps to half the shorter side, so these stay stadiums if the
      type or the padding ever moves. */
-  --button-006-border-radius:var(--radius-pill);
-  --button-006-surface:color-mix(in srgb, var(--on-surface) 7%, transparent);   /* rest bg  → glass */
-  --button-006-on-surface:var(--on-surface);   /* rest text → on-surface */
-  --button-006-accent:color-mix(in srgb, var(--on-surface) 16%, transparent);   /* hover bg → glass, strengthened */
-  --button-006-on-accent:var(--on-surface);    /* hover text → same (no invert) */
-  --button-006-focus:var(--on-surface);        /* focus ring → WCAG focus token */
+  --button-border-radius:var(--radius-pill);
+  --button-surface:color-mix(in srgb, var(--on-surface) 7%, transparent);   /* rest bg  → glass */
+  --button-on-surface:var(--on-surface);   /* rest text → on-surface */
+  --button-accent:color-mix(in srgb, var(--on-surface) 16%, transparent);   /* hover bg → glass, strengthened */
+  --button-on-accent:var(--on-surface);    /* hover text → same (no invert) */
+  --button-focus:var(--on-surface);        /* focus ring → WCAG focus token */
   /* edge + press, hoisted out of the rules below so an emphasis tier can remap them without
-     restating any of button-006's structure. Defaults are the untiered button's own values. */
-  --button-006-line:var(--action-line);
-  --button-006-line-hover:var(--action-line-hover);
-  --button-006-press:color-mix(in srgb, var(--on-surface) 24%, transparent);
-  --button-006-line-press:var(--action-line-press);
-  /* --button-006-default-text-scale, --button-006-hover-text-scale and --button-006-dur went with
+     restating any of Button's structure. Defaults are the untiered button's own values. */
+  --button-line:var(--action-line);
+  --button-line-hover:var(--action-line-hover);
+  --button-press:color-mix(in srgb, var(--on-surface) 24%, transparent);
+  --button-line-press:var(--action-line-press);
+  /* --button-default-text-scale, --button-hover-text-scale and --button-dur went with
      the clip-path swap (08.26). The two scales had both been 1 for some time — a knob wired to
      nothing — and the 0.42s was the last duration in the app that answered to no scale; the swap
      runs on --dur-chrome now, with the tint it moves with. */
-  --button-006-padding:0.75em 1em;
-  --button-006-focus-inset:-0.125em;
+  --button-padding:var(--button-padding-block) 1em;   /* the block inset is :root's, see --button-padding-block */
+  --button-focus-inset:-0.125em;
   position:relative;display:inline-block;border:0;margin:0;padding:0;background:transparent;cursor:pointer;
-  border-radius:var(--button-006-border-radius);
+  border-radius:var(--button-border-radius);
 
   /* Uppercase, by decision (03.08.26, second thought after a Title Case day): controls speak the
      uppercase label voice, prose stays in sentence case. Sources are written in natural case and
@@ -1556,9 +1564,9 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 /* NO PRESS GEOMETRY, here or anywhere (08.26). This carried scale:0.955 0.925 on :active — a
    non-uniform squash, ~3x the depth of the shared press token that briefly existed beside it — and
    the house rule now is that a press does not move the control. The press is still fully stated:
-   .button-006:active below swaps both background layers to --button-006-press and their inset ring
-   to --button-006-line-press, which is a louder state change than the squash ever was.
-   The scale on .button-006__text is a DIFFERENT mechanic and stays — that is the hover text swap,
+   .button:active below swaps both background layers to --button-press and their inset ring
+   to --button-line-press, which is a louder state change than the squash ever was.
+   The scale on .button__text is a DIFFERENT mechanic and stays — that is the hover text swap,
    not a press. */
 /* THE LABEL SWAPS THROUGH A MASK, rising. This was a clip-path fill sweeping DOWN from the top —
    the resource's own mechanic, and the last motion on the site that belonged to no family. Every
@@ -1572,15 +1580,15 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    --dur-chrome, not the old bespoke 0.42s: the tint underneath runs on that token on every control
    in the app, and text and tint arriving together is what makes this one gesture instead of two.
    --ease-entrance is the masked-reveal curve, so the label lands exactly as a revealed line does. */
-.button-006__default,.button-006__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
-.button-006__hover{position:absolute;inset:0;z-index:2;}
+.button__default,.button__hover{display:block;position:relative;overflow:hidden;border-radius:inherit;}
+.button__hover{position:absolute;inset:0;z-index:2;}
 /* THE LIGHT/DARK SWITCH USED TO BE THE ONE ROUNDED ONE. It carried --radius-pill here on the
    argument that it alone sits in the masthead beside the wordmark rather than in a toolbar, while
    the rest of the family was the tool's chrome and the tool's chrome was square. That premise is
    gone — the corner moved to the family's own declaration above, exactly as this note said it would
    have to — so all that is left here is the switch's edge.
 
-   [data-emphasis] IS ALSO ON THIS BUTTON and also remaps --button-006-line, at the same (0,2,0) as
+   [data-emphasis] IS ALSO ON THIS BUTTON and also remaps --button-line, at the same (0,2,0) as
    a lone [data-theme-switch] — so the emphasis block further down won on document order and the
    switch kept the 48% edge while the two buttons beside it went to 32%. Naming both attributes takes
    this to (0,3,0) and settles it by specificity rather than by position in the file. */
@@ -1589,8 +1597,17 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    why both attributes are named; the reason still holds for the specificity. What the ring used to
    say, "this is a control", the track now says by being one (see .theme-switch__track below).
    No side padding either, for the links' reason: it belonged to the outlined pill. The bar's inset now
-   places the track, the vertical padding keeps the target 34px tall, and the track is 32 wide. */
-.button-006[data-switch][data-emphasis]{--button-006-line:transparent;--button-006-line-hover:transparent;--button-006-line-press:transparent;--button-006-padding:0.75em 0}
+   places the track, the vertical padding keeps the target taller than the track (32px on the shared
+   inset, 36px for the theme switch below), and the track is 32 wide. */
+.button[data-switch][data-emphasis]{--button-line:transparent;--button-line-hover:transparent;--button-line-press:transparent;--button-padding:var(--button-padding-block) 0}
+/* THE FRONT PAGE STAYS AS IT IS (21.09.26, by request: "buttons on the front page should stay as-is
+   with the glass effect"). The theme switch — the glass one, data-switch="" — is the only Button the
+   landing carries, in its floating bar, and it is the same control on every route. So it keeps the
+   0.75em block it had before --button-padding-block, everywhere, rather than being one size on the
+   front page and another in the tool. Its glass is the track and was never touched; this holds its
+   target at the 36px it was. Export's filled switch is not on the front page and takes the shared
+   inset. Same (0,3,0) as the rule above, so it has to stay after it. */
+.button[data-switch=""][data-emphasis]{--button-padding:0.75em 0}
 /* THE TRACK IS GLASS, AND THE KNOB CARRIES THE STATE.
 
    The track wears the navigation's glass (by request, 15.09.26): the recipe the bar, the analytics
@@ -1605,13 +1622,13 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    the state (start for light, end for dark), as it is on every switch; the hairline is the glass's,
    not an edge the state depends on.
 
-   ONE TRACK ON SCREEN. button-006 renders its label twice — the hover layer sits exactly on the
+   ONE TRACK ON SCREEN. Button renders its label twice — the hover layer sits exactly on the
    default one — and two translucent panes stacked compound into a heavier pill with a doubled
    hairline, so the hover layer's copy is hidden. The pointer is answered by the track that is seen.
 
    UNDER THE POINTER A TENTH OF INK GOES INTO THE PANE — the answer the landing's glass actions give
    under reduced motion and on press — colour, never geometry. The same on press. The focus ring is
-   button-006's own, around the whole target. */
+   Button's own, around the whole target. */
 .theme-switch__row{display:flex;align-items:center;height:18px}
 .theme-switch__track{
   position:relative;display:block;flex:none;width:32px;height:18px;
@@ -1628,15 +1645,15 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
   transition:transform var(--dur-chrome) var(--ease-standard),background-color var(--dur-chrome) var(--ease-standard);
 }
 [data-switch][aria-checked="true"] .theme-switch__dot{transform:translateX(14px)}
-[data-switch] .button-006__hover .theme-switch__track{visibility:hidden}
-.button-006[data-switch][data-emphasis] .button-006__bg.is--hover{opacity:0}
+[data-switch] .button__hover .theme-switch__track{visibility:hidden}
+.button[data-switch][data-emphasis] .button__bg.is--hover{opacity:0}
 @media (hover:hover){
   [data-switch]:hover:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
 }
 [data-switch]:active:not(:disabled) .theme-switch__track{background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) 70%, transparent)}
 /* ONE SWITCH, TWO PLACES (19.09.26, audit U5, by request). [data-switch] was [data-theme-switch]
    until Export's Semantic Scaffold, a ringed pill reading OFF, took this form: both are chrome.jsx's
-   SwitchTrack in an unringed button-006. The contrast checker's Passing Only was made one too and
+   SwitchTrack in an unringed Button. The contrast checker's Passing Only was made one too and
    put back as a pill the same day, by request. */
 /* A SETTING'S SWITCH SAYS ITS STATE IN FILL AS WELL AS POSITION (19.09.26, by request: "the
    active/inactive state needs to be more clear"). The masthead's switch sits on glass and turns the
@@ -1692,17 +1709,17 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    source and nothing transforms them. [data-ix] forces uppercase with !important for the whole tier
    (see the top of this file), so this states the exception at higher specificity, the way the
    library's tabs state theirs. Tracking stays flat: controls keep --track-flat.
-   Back Up and Restore take the size and weight inline (tier3BtnStyle); New Palette is button-006,
+   Back Up and Restore take the size and weight inline (tier3BtnStyle); New Palette is Button,
    whose size is inline in its component, so AppView hands that one instance its own style. */
 /* .glass-bar rather than [data-float-nav]: the documents' masthead carries the same two links. */
 .glass-bar [data-tier3-action][data-ix]{text-transform:none!important}
 /* New Palette is in the documents' masthead too, so the filled button takes the bar's type in either bar. */
-[data-float-nav] .button-006[data-emphasis],
-.glass-bar .button-006[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
+[data-float-nav] .button[data-emphasis],
+.glass-bar .button[data-emphasis="primary"]{text-transform:none;font-weight:500;line-height:1}
 /* New Palette's sides, by request and only here: 1.35em less 2px, 16.9px at 14px. That was "2px in from
    the primary tier", and since 19.09.26 the tier is 1em — this bar keeps the roomier figure it was given,
    so the value is stated rather than derived. The em half stays, so it still scales. */
-.glass-bar .button-006[data-emphasis="primary"]{--button-006-padding:0.75em calc(1.35em - 2px)}
+.glass-bar .button[data-emphasis="primary"]{--button-padding:var(--button-padding-block) calc(1.35em - 2px)}
 
 /* ===== THE LIBRARY TOOLBAR TAKES THE CORNER TOO ================================================
    The projects rail and its chips, Manage Projects, the list/grid/3D rail and its buttons, Filter,
@@ -1950,8 +1967,8 @@ button[data-row-cell] .tswap{flex:none}
    buttons, the switch, both segmented rails, and the drawer's Done. Focus-visible is untouched: it
    is a different question with a different reader, and data-focus="chrome" still draws its ring.
 
-   THE SWITCH IS DONE WITH TOKENS, NOT SELECTORS. button-006 paints its press through
-   --button-006-press and --button-006-line-press on two stacked layers; pointing those at the rest
+   THE SWITCH IS DONE WITH TOKENS, NOT SELECTORS. Button paints its press through
+   --button-press and --button-line-press on two stacked layers; pointing those at the rest
    values it already uses is one declaration and cannot miss a layer, where matching the two :active
    selectors would have to.
 
@@ -1960,7 +1977,7 @@ button[data-row-cell] .tswap{flex:none}
    Naming both attributes takes this to (0,4,0), above the tier's (0,3,0), and the !important then
    settles the tie at the same weight rather than outranking it by accident.
 
-   THE SWITCH is button-006 and works differently: its hover is a whole layer, __bg.is--hover, faded
+   THE SWITCH is Button and works differently: its hover is a whole layer, __bg.is--hover, faded
    from 0 to 1. Holding that layer at 0 is cleaner than trying to neutralise its colours, and it
    also takes the layer's inset ring out with it. [data-emphasis] is named again purely for the
    extra point of specificity — see the note where its radius is set. */
@@ -1985,20 +2002,20 @@ button[data-row-cell] .tswap{flex:none}
   }
   /* The switch answers through tokens rather than selectors — same gate, same reason. It has no label
      to swap any more, so under the pointer it answers with its own track (see .theme-switch__track). */
-  .button-006[data-switch][data-emphasis]{--button-006-press:var(--button-006-surface);--button-006-line-press:transparent}
-  .button-006[data-switch][data-emphasis]:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
+  .button[data-switch][data-emphasis]{--button-press:var(--button-surface);--button-line-press:transparent}
+  .button[data-switch][data-emphasis]:hover:not(:disabled) .button__bg.is--hover{opacity:0}
 }
-.button-006__text{display:block;padding:var(--button-006-padding);white-space:nowrap;}
+.button__text{display:block;padding:var(--button-padding);white-space:nowrap;}
 /* COPY TAKES ITS "COPIED" ROOM OUT OF ITS PADDING (19.09.26, by request: "make sure padding on this
    button reflects the others"). Its label is centred inside a hidden glyph-and-"Copied", so the row
-   never moves when it confirms (see copyB006Label in AppView), and at rest that spare, 12px, sat as
+   never moves when it confirms (see copyButtonLabel in AppView), and at rest that spare, 12px, sat as
    6px more air on each side: 18.7 and 19.3px from ink to edge, where Check Contrast reads 13.3 and 13
    and Export 12.7. The padding gives the spare back, split so the ink lands 13px from both edges
    (measured from pixels at 3x); "Copied" spends it for the moment it shows. */
-.button-006[data-copy-trigger]{--button-006-padding:0.75em 6.67px 0.75em 7.33px}
-.button-006__default .button-006__text{color:var(--button-006-on-surface);}
-.button-006__hover .button-006__text{color:var(--button-006-on-accent);}
-/* TEXT ONLY. .b006-swap is the per-line mask (see B006Text in chrome.jsx); the row around it — icon,
+.button[data-copy-trigger]{--button-padding:var(--button-padding-block) 6.67px var(--button-padding-block) 7.33px}
+.button__default .button__text{color:var(--button-on-surface);}
+.button__hover .button__text{color:var(--button-on-accent);}
+/* TEXT ONLY. .button-swap is the per-line mask (see ButtonText in chrome.jsx); the row around it — icon,
    chevron, toggle track — never moves. vertical-align:top keeps the mask on the row's baseline box
    rather than letting an inline-block sink to the text baseline and shift the label by a pixel. */
 /* --ease-fold, not --ease-entrance. Entrance is an expo-out: ~48% of the travel in the first tenth
@@ -2007,16 +2024,16 @@ button[data-row-cell] .tswap{flex:none}
    ends, and it is already the site's curve for the interface moving something on your behalf: the
    sliding selection marker, the disclosure fold. A label handing over to the next one is that.
    --dur-state, the scale's step for "a control changing what it says it is", which is this exactly. */
-.b006-swap{display:inline-block;overflow:hidden;vertical-align:top;}
-.b006-swap__in{display:block;transition:transform var(--dur-swap) var(--ease-fold);will-change:transform;}
+.button-swap{display:inline-block;overflow:hidden;vertical-align:top;}
+.button-swap__in{display:block;transition:transform var(--dur-swap) var(--ease-fold);will-change:transform;}
 /* parked one full line below its mask — the next label, waiting under the floor of the line */
-.button-006__hover .b006-swap__in{transform:translateY(100%);}
-.button-006:hover:not(:disabled) .button-006__default .b006-swap__in{transform:translateY(-100%);}
-.button-006:hover:not(:disabled) .button-006__hover .b006-swap__in{transform:translateY(0);}
+.button__hover .button-swap__in{transform:translateY(100%);}
+.button:hover:not(:disabled) .button__default .button-swap__in{transform:translateY(-100%);}
+.button:hover:not(:disabled) .button__hover .button-swap__in{transform:translateY(0);}
 /* ===== the same swap, for single-layer controls and links (TextSwap in chrome.jsx) =====
-   button-006 gets its second copy of the label from its second LAYER; everything else — a
+   Button gets its second copy of the label from its second LAYER; everything else — a
    [data-ix] button, a sort header, a footer link — renders its label once, so TextSwap stacks the
-   twin itself. Same duration and same curve as .b006-swap above, deliberately: two structures, one
+   twin itself. Same duration and same curve as .button-swap above, deliberately: two structures, one
    motion, and if the tokens move both move together.
    The trigger is the ancestor control rather than a component class, so a link and a button take it
    identically. Gated on (hover:hover) for the same reason the [data-ix] tiers are — a tap leaves
@@ -2035,40 +2052,40 @@ button[data-row-cell] .tswap{flex:none}
 /* The hover layer's glyphs are hidden rather than removed: the row still has to reserve their space
    so its words line up with the layer beneath, but painting a second identical icon over the first
    is two copies of a thing that never moves. The default layer's icon is the one you see, always. */
-.button-006__hover .button-006__text [aria-hidden="true"]{visibility:hidden;}
+.button__hover .button__text [aria-hidden="true"]{visibility:hidden;}
 /* Reduced motion keeps the tint and drops the swap outright. The global rule only collapses the
    DURATION, which would leave the two labels jumping a full line height between frames — the exact
    thing the preference is asking not to happen. Parked stays parked. */
 @media (prefers-reduced-motion:reduce){
-  .button-006__default .b006-swap__in,
-  .button-006:hover:not(:disabled) .button-006__default .b006-swap__in{transform:none}
-  .button-006__hover .b006-swap__in,
-  .button-006:hover:not(:disabled) .button-006__hover .b006-swap__in{transform:translateY(100%)}
+  .button__default .button-swap__in,
+  .button:hover:not(:disabled) .button__default .button-swap__in{transform:none}
+  .button__hover .button-swap__in,
+  .button:hover:not(:disabled) .button__hover .button-swap__in{transform:translateY(100%)}
 }
 /* The press tint has to EASE, and until the squash was removed nothing here said so: these layers
    carried no transition at all, and the scale was doing the felt work while the colour cut
    instantly underneath it. With the geometry gone that cut is the entire press, and an unanimated
    one reads as a fault rather than as a response. Same properties, duration and curve the [data-ix]
    tiers use, so the signature CTA and ordinary chrome answer a press at the same speed. */
-.button-006__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;transition:background-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover);}
-.button-006__bg.is--default{background:var(--button-006-surface);box-shadow:inset 0 0 0 1px var(--button-006-line);}
+.button__bg{position:absolute;inset:0;z-index:-1;border-radius:inherit;transition:background-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover);}
+.button__bg.is--default{background:var(--button-surface);box-shadow:inset 0 0 0 1px var(--button-line);}
 /* The hover fill FADES now. It used to be uncovered by the clip-path sweeping down the layer above
    it, so the tint had a direction and a leading edge — which is the part that read as foreign: no
    other control on the site fills from a side. Every [data-ix] tier answers a hover by changing
    colour in place, and this one does the same, on the same token and curve. The label carries the
    direction; the surface underneath just deepens. */
-.button-006__bg.is--hover{background:var(--button-006-accent);box-shadow:inset 0 0 0 1px var(--button-006-line-hover);opacity:0;}
-.button-006:hover:not(:disabled) .button-006__bg.is--hover{opacity:1;}
+.button__bg.is--hover{background:var(--button-accent);box-shadow:inset 0 0 0 1px var(--button-line-hover);opacity:0;}
+.button:hover:not(:disabled) .button__bg.is--hover{opacity:1;}
 /* pressed: the deepest step of the same tint spectrum — clearly distinct from rest and hover in both themes */
-.button-006:active .button-006__bg.is--default,.button-006:active .button-006__bg.is--hover{background:var(--button-006-press);box-shadow:inset 0 0 0 1px var(--button-006-line-press);}
+.button:active .button__bg.is--default,.button:active .button__bg.is--hover{background:var(--button-press);box-shadow:inset 0 0 0 1px var(--button-line-press);}
 
 /* ===== THE FAMILY'S HOVER FILL IS OFF, and it has to be stated HERE rather than up in the
-   swap-only block with its siblings. The rule it overrides — .button-006:hover .is--hover{opacity:1}
+   swap-only block with its siblings. The rule it overrides — .button:hover .is--hover{opacity:1}
    three lines above — carries the same specificity, so the one that wins is the one that comes
    later in the file. Placed with the declaration it answers, at the cost of sitting away from the
    other swap-only rules; the alternative was inventing specificity to win an argument about order.
 
-   WHY AT ALL: every button-006 carries .b006-swap, the label that rises through a mask on hover,
+   WHY AT ALL: every Button carries .button-swap, the label that rises through a mask on hover,
    which is the same argument that took the fill off the masthead acts, the rails, the drawer's
    close and the library trigger. New palette, Add to Project, Check Contrast, Copy, Export, Share
    Link and the shared-link pair were the last controls in the app answering a pointer twice.
@@ -2084,48 +2101,48 @@ button[data-row-cell] .tswap{flex:none}
    swap does not run, so the fill has to come back — a control that acknowledges nothing is worse
    than one that acknowledges twice. */
 @media (hover:hover) and (prefers-reduced-motion:no-preference){
-  .button-006:hover:not(:disabled) .button-006__bg.is--hover{opacity:0}
+  .button:hover:not(:disabled) .button__bg.is--hover{opacity:0}
 }
-.button-006::after{content:'';position:absolute;inset:var(--button-006-focus-inset);border-radius:var(--button-006-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow var(--dur-fast) var(--ease-button-focus);}
-.button-006:focus-visible{outline:none;}
-.button-006:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-006-focus);}
-/* disabled — same value the [data-ix] contract uses, restated here because button-006 is outside
+.button::after{content:'';position:absolute;inset:var(--button-focus-inset);border-radius:var(--button-border-radius);box-shadow:0 0 0 0 transparent;pointer-events:none;transition:box-shadow var(--dur-fast) var(--ease-button-focus);}
+.button:focus-visible{outline:none;}
+.button:focus-visible::after{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--button-focus);}
+/* disabled — same value the [data-ix] contract uses, restated here because Button is outside
    it. Now that a tier can be FILLED or OUTLINED, an unavailable control that renders at full
    strength claims an emphasis it cannot honour (contrast is disabled whenever the palette has no
    pair to check); the tiers only stay readable if unavailability is legible too. */
-.button-006:disabled{opacity:.42;cursor:default;}
-/* B006 drawn as a link (its href prop) keeps a button's face: no UA underline under the label. */
-a.button-006{text-decoration:none;}
-/* ===== emphasis variants — the three action tiers, expressed ONLY as remapped button-006
+.button:disabled{opacity:.42;cursor:default;}
+/* Button drawn as a link (its href prop) keeps a button's face: no UA underline under the label. */
+a.button{text-decoration:none;}
+/* ===== emphasis variants — the three action tiers, expressed ONLY as remapped Button
    properties. Nothing about the masked text swap or the focus ring is
    restated, so every tier inherits the same motion and the same keyboard affordance: a quiet
-   button is quiet at rest, never quiet when focused. An untagged .button-006 is untouched. */
-.button-006[data-emphasis="primary"]{
-  --button-006-surface:var(--action-primary-surface);
-  --button-006-on-surface:var(--action-primary-ink);
-  --button-006-accent:var(--action-primary-hover);
-  --button-006-on-accent:var(--action-primary-ink);
-  --button-006-line:var(--action-primary-line);
-  --button-006-line-hover:var(--action-primary-hover);
-  --button-006-press:var(--action-primary-press);
-  --button-006-line-press:var(--action-primary-press);
-  --button-006-padding:var(--action-primary-padding);
+   button is quiet at rest, never quiet when focused. An untagged .button is untouched. */
+.button[data-emphasis="primary"]{
+  --button-surface:var(--action-primary-surface);
+  --button-on-surface:var(--action-primary-ink);
+  --button-accent:var(--action-primary-hover);
+  --button-on-accent:var(--action-primary-ink);
+  --button-line:var(--action-primary-line);
+  --button-line-hover:var(--action-primary-hover);
+  --button-press:var(--action-primary-press);
+  --button-line-press:var(--action-primary-press);
+  --button-padding:var(--action-primary-padding);
   font-weight:var(--action-primary-weight);
 }
-.button-006[data-emphasis="secondary"]{
-  --button-006-surface:var(--action-secondary-surface);
-  --button-006-on-surface:var(--action-secondary-ink);
-  --button-006-accent:var(--action-quiet-hover);
-  --button-006-on-accent:var(--action-secondary-ink);
-  --button-006-line:var(--action-secondary-line);
-  --button-006-line-hover:var(--action-line-hover);
-  --button-006-press:var(--action-quiet-press);
-  --button-006-line-press:var(--action-line-press);
+.button[data-emphasis="secondary"]{
+  --button-surface:var(--action-secondary-surface);
+  --button-on-surface:var(--action-secondary-ink);
+  --button-accent:var(--action-quiet-hover);
+  --button-on-accent:var(--action-secondary-ink);
+  --button-line:var(--action-secondary-line);
+  --button-line-hover:var(--action-line-hover);
+  --button-press:var(--action-quiet-press);
+  --button-line-press:var(--action-line-press);
   font-weight:var(--action-secondary-weight);
 }
 /* [data-emphasis="utility"] used to live here. It is deliberately NOT aliased to secondary: an
    alias would let the attribute keep spreading, and the whole point is that there is one outlined
-   tier to reach for. An unknown emphasis value now falls through to the untiered .button-006
+   tier to reach for. An unknown emphasis value now falls through to the untiered .button
    above, which carries the same 50% edge and the same --on-surface ink, so nothing renders
    illegibly while a stray attribute is still in the tree. */
 /* Sort direction is a rotation, not a glyph swap: the chevron rests pointing down (descending) and
@@ -2752,7 +2769,7 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    at opacity below 1, which becomes the backdrop root and cuts the blur off (the banner's
    --consent-glass). An element's own opacity does not: measured in Chrome, a pane at .5 shows its
    blurred copy at half strength over the page, a crossfade, never a sharp frame. -webkit- first,
-   standard last; see .button-006. */
+   standard last; see .button. */
 @media (prefers-reduced-motion: reduce){ [data-message-lane]{transition:none!important} }
 [data-toast],
 [data-notice]{
@@ -2860,14 +2877,14 @@ html,body{overflow-anchor:none}
    the exact hover each control already has, so what the reader is taught to look for is what they
    will actually see when they do it themselves. Check Contrast rolls its label through the mask on
    --dur-swap; the harmony disc takes its icon tier's 16% tint. Under reduced motion the label does
-   not roll, so its fill comes back instead — the same exchange .button-006 makes for itself. */
-.button-006[data-tour-cue] .button-006__default .b006-swap__in{transform:translateY(-100%)}
-.button-006[data-tour-cue] .button-006__hover .b006-swap__in{transform:translateY(0)}
+   not roll, so its fill comes back instead — the same exchange .button makes for itself. */
+.button[data-tour-cue] .button__default .button-swap__in{transform:translateY(-100%)}
+.button[data-tour-cue] .button__hover .button-swap__in{transform:translateY(0)}
 [data-ix="icon"][data-tour-cue]{background:color-mix(in srgb,currentColor 16%,transparent)!important}
 @media (prefers-reduced-motion:reduce){
-  .button-006[data-tour-cue] .button-006__default .b006-swap__in{transform:none}
-  .button-006[data-tour-cue] .button-006__hover .b006-swap__in{transform:translateY(100%)}
-  .button-006[data-tour-cue] .button-006__bg.is--hover{opacity:1}
+  .button[data-tour-cue] .button__default .button-swap__in{transform:none}
+  .button[data-tour-cue] .button__hover .button-swap__in{transform:translateY(100%)}
+  .button[data-tour-cue] .button__bg.is--hover{opacity:1}
 }
 /* ===== THE STEPPER — .layered-slider__counter's FORM, AT THE TOOL'S OWN SCALE ==================
 
@@ -2915,19 +2932,10 @@ html,body{overflow-anchor:none}
    #2a2a28 over #141413 in dark — so the pane now reads from its fill, which is the rule glass lives
    by. The travel in from the invitation (_tourEnterFrom, spent in _tourPut) answers "where"; this answers "what". */
 [data-tour-card] > .glass-effect{--glass-tint:color-mix(in srgb, var(--surface-white) 93%, transparent)}
-/* THE ACTS SIT 2px SHORTER TOP AND BOTTOM (20.09.26, by request, twice: the tour's pair first, then
-   "give these buttons, including the cookie banner, the same decrease").
-
-   0.75em at 13px is 9.75px, the figure every button-006 in the app stands at. It reads tall wherever
-   the button sits in a ROW OF ACTS rather than alone — the palette's action bar under the bands, the
-   fullscreen detail's footer, the five dialogs' commit pairs, the tour's two surfaces and the
-   analytics banner. [data-voice="banner"] is exactly that set and already exists to name it: it is
-   the attribute those rows carry to say they speak the dialogs' voice rather than the chrome's. The
-   banner is not inside one, so it is named beside it.
-
-   A CALC OFF THE SHARED TOKEN, not a new number, so these stay 2px under whatever the app's own
-   button padding becomes. */
-[data-voice="banner"] .button-006,.consent .button-006{--button-006-padding:calc(0.75em - 2px) 1em}
+/* THE ACTS SAT 2px SHORTER TOP AND BOTTOM from 20.09.26 (by request, twice: the tour's pair first,
+   then "give these buttons, including the cookie banner, the same decrease"), through an override
+   here on [data-voice="banner"] rows and .consent. Since 21.09.26 that inset is every Button's own
+   (--button-padding-block at :root), so the override had nothing left to say and is gone. */
 /* NO will-change ON A GLASS BOX. It was here for the travel between anchors, and it has to go now
    that the card carries a pane: will-change:transform promotes the element into its own backdrop
    root in Chrome, and a backdrop-filter inside a backdrop root has nothing behind it to sample —
@@ -3054,7 +3062,7 @@ html,body{overflow-anchor:none}
   [data-grid-dock] [data-grid-close]:hover:not(:disabled){background-color:color-mix(in srgb, color-mix(in srgb, var(--on-surface) 10%, var(--surface)) calc(70% * var(--dock-glass)), transparent)}
 }
 /* The pane's blur and tint, restated against the same number. -webkit- first, standard last — the
-   order the build keeps; see .button-006. */
+   order the build keeps; see .button. */
 .consent > .glass-effect{
   --glass-tint:color-mix(in srgb, var(--surface) calc(70% * var(--consent-glass, 1)), transparent);
   -webkit-backdrop-filter:blur(calc(var(--glass-blur) * var(--consent-glass, 1)));
@@ -3079,20 +3087,20 @@ html,body{overflow-anchor:none}
    something. It wraps rather than overflows if a narrow screen ever runs out of row. */
 .consent__row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 .consent__acts{display:flex;align-items:center;gap:8px}
-/* Learn more is an outlined button now, so its type, hover and focus are button-006's own; all this
-   wrapper adds is the push to the far end. A wrapper rather than a class on the button, because B006
+/* Learn more is an outlined button now, so its type, hover and focus are Button's own; all this
+   wrapper adds is the push to the far end. A wrapper rather than a class on the button, because Button
    owns its className. */
 .consent__more{display:inline-flex;margin-inline-start:auto}
 /* THE BANNER'S BUTTONS SET LIKE THE BAR'S LINKS (by request, 15.09.26): Medium, and the case their labels
    carry in the source rather than capitals — Accept, Decline, Learn More — with flat tracking, which
-   button-006 already states inline. The SIZE is theirs: --fs-body, 13px, set inline by ConsentBanner
+   Button already states inline. The SIZE is theirs: --fs-body, 13px, set inline by ConsentBanner
    (two pixels up from --fs-label, by a later request the same day). (0,3,0) outranks both the untiered
-   uppercase on .button-006 and the emphasis tiers' weight. */
+   uppercase on .button and the emphasis tiers' weight. */
 /* THE BANNER'S VOICE, WHEREVER IT IS ASKED FOR (17.09.26, by request): the create page's error panel
    (audit A2), the library's "No palette matches" (A3) and the shared-link strip (A8). Each sets
    CONSENT_BTN_TYPE inline and carries data-voice="banner"; this rule gives the weight and the case. */
-.consent .button-006[data-emphasis],
-[data-voice="banner"] .button-006[data-emphasis]{text-transform:none;font-weight:500}
+.consent .button[data-emphasis],
+[data-voice="banner"] .button[data-emphasis]{text-transform:none;font-weight:500}
 /* Reopened, the close sits in the top corner, 12px in, level with the sentence's first line — which
    gives up the width the disc needs so the two never touch. */
 .consent__close{position:absolute;top:12px;inset-inline-end:12px;z-index:1}

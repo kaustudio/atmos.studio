@@ -11,18 +11,18 @@ import { IconPlus } from './icons.jsx';
 
 /* THE PART THAT SWAPS. Wrap the WORDS of a label in this and nothing else — an icon, a chevron or a
    toggle track passed as a sibling stays exactly where it is while the text rises through its mask.
-   The first cut of the masked swap slid .button-006__text, which is the whole label row, so every
+   The first cut of the masked swap slid .button__text, which is the whole label row, so every
    glyph travelled with the words: a control's icon is part of its identity, not part of its
    sentence, and moving it made the button look like it was reloading rather than answering.
-   The mask has to hug the TEXT, not the button. .button-006__default / __hover are the full button
+   The mask has to hug the TEXT, not the button. .button__default / __hover are the full button
    box, and translateY(100%) on a 14px line inside a 29px box only clears the line's own height —
    the words would slide into the padding and sit there half-visible. A mask the size of the line
    means 100% is exactly one line, which is the same arithmetic _maskLineReveal does per line. */
-export function B006Text({ children }) {
-  return <span className="b006-swap"><span className="b006-swap__in">{children}</span></span>;
+export function ButtonText({ children }) {
+  return <span className="button-swap"><span className="button-swap__in">{children}</span></span>;
 }
 
-/* THE SAME SWAP, for controls that do not have button-006's two layers. B006Text can carry one copy
+/* THE SAME SWAP, for controls that do not have Button's two layers. ButtonText can carry one copy
    of the words because the button already renders the whole label twice; an ordinary [data-ix]
    button or a footer link renders it once, so this supplies the second copy itself and stacks them.
    The twin is aria-hidden — it is the same word arriving, not a second thing to read.
@@ -38,19 +38,19 @@ export function TextSwap({ children }) {
   );
 }
 
-// The project's button, remapped to system tokens in global.css (.button-006). The two stacked
+// The project's button, remapped to system tokens in global.css (.button). The two stacked
 // spans are load-bearing: they are the two copies of the label the hover swap slides between, each
 // clipped by its own layer. `hover` gives the second copy different words; omitted, both spans hold
 // the same label and the swap reads as the line refreshing itself.
 // `href` draws the same button as a link, for an act that goes somewhere: a real address a middle
 // click or a new tab can follow, with the look, swap and focus ring unchanged — they key off the
 // class, not the element.
-export function B006({ label, hover, btnRef, href, ...props }) {
+export function Button({ label, hover, btnRef, href, ...props }) {
   const Tag = href ? 'a' : 'button';
   return (
-    <Tag {...(href ? { href } : { type: 'button' })} data-button-006="" className="button-006" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
-      <span className="button-006__hover"><span className="button-006__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button-006__bg is--hover"></span></span>
-      <span className="button-006__default"><span aria-hidden="true" className="button-006__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button-006__bg is--default"></span></span>
+    <Tag {...(href ? { href } : { type: 'button' })} data-button="" className="button" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
+      <span className="button__hover"><span className="button__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button__bg is--hover"></span></span>
+      <span className="button__default"><span aria-hidden="true" className="button__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button__bg is--default"></span></span>
     </Tag>
   );
 }
@@ -82,7 +82,7 @@ export function B006({ label, hover, btnRef, href, ...props }) {
    THE WORDS BLUR, NEVER THE PILL (by request again: it should not pop or scale up, it should just
    fade). A blur on the whole button spread its solid fill past its own edge, so even at 6px the pill
    read as swelling on its way out, and as shrinking into place on its way in. Now the button only
-   fades, and the blur is on .button-006__text, the words, which the layer around them clips to the
+   fades, and the blur is on .button__text, the words, which the layer around them clips to the
    pill (overflow hidden, the pill's own radius): the silhouette never changes size. Nor does the
    exit take the pointer away: pointer-events:none dropped :hover the moment it was set, and the hover
    label rolled back down through the fade, two copies of the words at once.
@@ -107,7 +107,7 @@ const navBlur = (px) => 'blur(' + px + 'px)';
    request: "decrease button padding on the left to maintain optical balance"). The glyph fills the
    middle half of its 16px box, so 4px of nothing stood between the padding and the ink, and the
    left of the pill read 4px wider than the right. -4px here is the same 4px taken off the left
-   padding, stated on the icon so it cannot drift from the glass bar's --button-006-padding. */
+   padding, stated on the icon so it cannot drift from the glass bar's --button-padding. */
 const NAV_PLUS_SLOT = { display: 'inline-flex', marginLeft: '-4px' };
 
 export function NavNewPalette({ show, onPress }) {
@@ -120,12 +120,12 @@ export function NavNewPalette({ show, onPress }) {
   const wasPresent = React.useRef(present);
 
   const stop = () => { anims.current.forEach((a) => { try { a.cancel(); } catch (e) { } }); anims.current = []; };
-  // Opacity on the button; blur on its words, both copies B006 renders (resting and hover). Every
+  // Opacity on the button; blur on its words, both copies Button renders (resting and hover). Every
   // target starts from where it is on screen, read BEFORE the running motion is cancelled, so a
   // reversal turns round in place. `fromGone` is the mount, which has nothing on screen to read.
   const play = (el, arriving, fromGone) => {
     const m = navMotion();
-    const words = [].slice.call(el.querySelectorAll('.button-006__text'));
+    const words = [].slice.call(el.querySelectorAll('.button__text'));
     const opacity = fromGone ? 0 : +getComputedStyle(el).opacity;
     const blurs = words.map((w) => {
       if (fromGone) return navBlur(NAV_GONE_BLUR_PX);
@@ -183,10 +183,10 @@ export function NavNewPalette({ show, onPress }) {
     /* data-tour="new" — the tour's last stop anchors here. An attribute rather than a class because
        it is a HOOK, not a style: the button is unchanged by it, and methods/tour.js is the only
        reader. It sits on the control itself so the ring follows the pill's own corner. */
-    <B006 btnRef={ref} data-emphasis="primary" data-tour="new"
+    <Button btnRef={ref} data-emphasis="primary" data-tour="new"
       onClick={() => { if (!leaving.current) onPress(); }}
       style={sx("font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat)")}
-      label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><B006Text>New Palette</B006Text></span>} />
+      label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><ButtonText>New Palette</ButtonText></span>} />
   );
 }
 
@@ -217,7 +217,7 @@ export function GlassEffect() {
 }
 
 /* THE APP'S ONE SWITCH, since 19.09.26 (audit U5, by request: "drop the off to match the theme
-   switch"). The theme switch and Export's Semantic Scaffold both draw this track inside a button-006
+   switch"). The theme switch and Export's Semantic Scaffold both draw this track inside a Button
    carrying data-switch, role="switch" and aria-checked; the scaffold's was a ringed pill reading OFF.
    (Passing Only, in the contrast checker, stays a pill by request.) The theme-switch__ class names
    are where it started.
@@ -242,9 +242,9 @@ export function SwitchTrack() {
 // a different page.
 export function ThemeSwitch({ vals }) {
   return (
-    <B006
+    <Button
       data-emphasis="secondary"
-      /* The hook the switch's styles are scoped to — see .button-006[data-switch] in global.css. It
+      /* The hook the switch's styles are scoped to — see .button[data-switch] in global.css. It
          was data-theme-switch until the other two switches took the same form (19.09.26, audit U5). */
       data-switch=""
       data-focus="chrome"

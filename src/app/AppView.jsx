@@ -4,7 +4,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
-import { B006, B006Text, DocHead, GlassEffect, NavNewPalette, SwitchTrack, TextSwap, ThemeSwitch } from './chrome.jsx';
+import { Button, ButtonText, DocHead, GlassEffect, NavNewPalette, SwitchTrack, TextSwap, ThemeSwitch } from './chrome.jsx';
 import { IconPlus } from './icons.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
 
@@ -62,20 +62,20 @@ const sendPageview = whenAllowed(stripFragment);
 // HBtn, a small stateful button that applied style-hover / style-active objects from JS, went on
 // 17.09.26: its last users (the wordmark, the harmony swatches) take the [data-ix] contract now.
 
-// button-006 — the masked text-swap CTA (chrome in global.css). `label` renders in both layers
+// Button — the masked text-swap CTA (chrome in global.css). `label` renders in both layers
 // unless a distinct `hover` node is given.
 
 // Copy confirmation: 'Hex list' ⇄ ✓ Copied. Both states are stacked in one grid cell with the
 // inactive one hidden, so the cell is always sized to the WIDER of the two and the row can never
 // reflow at the moment of the swap — which is exactly when the pointer is still over the button.
-// The check stays outside B006Text on purpose: it is a glyph, and glyphs hold still through the
+// The check stays outside ButtonText on purpose: it is a glyph, and glyphs hold still through the
 // hover swap while the word beside them travels.
 const CopiedMark = () => (
-  <span style={sx('display:inline-flex;align-items:center;gap:6px')}><IconCheck /><B006Text>Copied</B006Text></span>
+  <span style={sx('display:inline-flex;align-items:center;gap:6px')}><IconCheck /><ButtonText>Copied</ButtonText></span>
 );
 const SwapLabel = ({ copied, idle }) => (
   <span style={sx('display:inline-grid;align-items:center;height:14px;justify-items:center')}>
-    <span style={{ gridArea: '1/1' }}>{copied ? <CopiedMark /> : <B006Text>{idle}</B006Text>}</span>
+    <span style={{ gridArea: '1/1' }}>{copied ? <CopiedMark /> : <ButtonText>{idle}</ButtonText>}</span>
     <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}>{idle}</span>
     <span aria-hidden="true" style={{ gridArea: '1/1', visibility: 'hidden' }}><CopiedMark /></span>
   </span>
@@ -462,7 +462,7 @@ const UniversePanel = ({ c }) => (<>
     <CardMetrics c={c} />
   </div>
   {/* The foot: the door to the detail leads, the close mark trails — the same 32px mark every
-      surface in the app closes with, on the same tier. Detail is a B006 because it LEAVES this
+      surface in the app closes with, on the same tier. Detail is a Button because it LEAVES this
       surface for a fullscreen one (aria-haspopup says so), where the close only changes this one.
       While a card is open this is the ONLY close mark on screen: the view's own, in the corner,
       is put away for the duration (universe.js openTile), because leaving the field with a card
@@ -471,7 +471,7 @@ const UniversePanel = ({ c }) => (<>
     {/* THE BANNER'S VOICE (17.09.26, by request): the dialogs' button type and Title Case, where this
         was the uppercase action voice. An open card is a surface with a question at its foot, like
         the dialogs, so its one act speaks as theirs do. */}
-    <B006 data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Open Detail</B006Text></span>} />
+    <Button data-emphasis="secondary" onClick={c.onDetail} aria-haspopup="dialog" aria-label={c.detailAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Open Detail</ButtonText></span>} />
     <button type="button" data-ix="press" data-focus="chrome" data-upanel-close="1" onClick={c.onClose} aria-label={c.closeAria} title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
   </div>
 </>);
@@ -565,8 +565,8 @@ function ValueRow({ v, showCaveat }) {
    3 land on at 2x); Add to Projects was already even, and
    Copy's -1.5px is split by its centred unit into 0.75 a side. The same move New Palette makes in
    chrome.jsx. */
-const contrastB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1px' }}><IconContrast /></span><B006Text>Check Contrast</B006Text></span>
+const contrastButtonLabel = (
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1px' }}><IconContrast /></span><ButtonText>Check Contrast</ButtonText></span>
 );
 // EXPORT'S CHEVRON IS GONE. It was there to promise a chooser — press this and you will be asked
 // something — and that promise is the one thing this control did not need to make: what opens is a
@@ -575,8 +575,8 @@ const contrastB006Label = (
 // changes what each one emits, which is why it is a dialog in the first place.
 // Copy keeps its ▾, and that is the distinction now rather than an inconsistency: Copy really does
 // drop a menu under the button, so the mark points at where the menu will appear.
-const exportB006Label = (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-3px' }}><IconExport /></span><B006Text>Export</B006Text></span>
+const exportButtonLabel = (
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-3px' }}><IconExport /></span><ButtonText>Export</ButtonText></span>
 );
 // COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
 // rather than saying "Copied", because from a menu that is the only part still in question — and it
@@ -601,17 +601,17 @@ const exportB006Label = (
    "Copied" of the same build: the gap is the shared 7px, the spare splits evenly to both sides, and
    the button is as wide in both states as before.
    A GRID, NOT AN INLINE GRID (19.09.26, audit U11, by request: "find the extra pixel"). Inline, the
-   label sat on a line of text inside .button-006__text and that line kept its strut's descent under
+   label sat on a line of text inside .button__text and that line kept its strut's descent under
    the 16px box, so Copy stood 36.5 beside four 35.5 buttons and 0.5px higher. The others' labels are
    block-level flex rows of exactly 16; this is a block-level grid of the same height, and it shrinks
    to the same width, because the button sizes to its content either way. */
-const copyB006Label = (done) => (
+const copyButtonLabel = (done) => (
   <span style={sx('display:grid;align-items:center;justify-items:center;height:16px')}>
     <span style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px')}>
       {/* ITS OWN ICON THROUGH THE COPIED STATE (19.09.26, by request: "keep their own icon"): the word
           says Copied, and the copy glyph stays, where it swapped to a tick. */}
       <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1.5px' }}><IconCopy /></span>
-      <B006Text>{done ? 'Copied' : 'Copy'}</B006Text>
+      <ButtonText>{done ? 'Copied' : 'Copy'}</ButtonText>
     </span>
     <span aria-hidden="true" style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px;visibility:hidden')}>
       <span style={{ display: 'inline-flex' }}><IconCopy /></span>Copied
@@ -666,9 +666,9 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
      component tree, so nothing about the handlers changes; only where the DOM lands. */
   const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
   return (<>
-    <B006 data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
+    <Button data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
       onClick={onToggle} onKeyDown={onKey} aria-label="Copy the whole palette, in a format you choose"
-      style={CONSENT_BTN_TYPE} label={copyB006Label(done)} />
+      style={CONSENT_BTN_TYPE} label={copyButtonLabel(done)} />
     {open && owns && host && createPortal(
       /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
       <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
@@ -745,9 +745,9 @@ function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, it
 function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint }) {
   const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
   return (<>
-    <B006 data-share-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
+    <Button data-share-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
       onClick={onToggle} onKeyDown={onKey} aria-label="Share this palette: copy a link, send it, or download an image"
-      style={CONSENT_BTN_TYPE} label={shareB006Label()} />
+      style={CONSENT_BTN_TYPE} label={shareButtonLabel()} />
     {open && owns && host && createPortal(
       <div data-share-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
         <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
@@ -783,8 +783,8 @@ function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint
 
 // Filing takes the same folder glyph the archive row and the overlay header already use — one
 // concept, one mark — and a label that changes with the state rather than an icon that doesn't.
-const assignB006Label = (text) => (
-  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconFolder /></span><B006Text>{text}</B006Text></span>
+const assignButtonLabel = (text) => (
+  <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex' }}><IconFolder /></span><ButtonText>{text}</ButtonText></span>
 );
 /* Share carries an icon AND swaps its text, and it used to compose the icon wrapper with SwapLabel
    — a grid cell holding the label, a hidden copy of it and a hidden "✓ Copied", so the button was
@@ -804,10 +804,10 @@ const assignB006Label = (text) => (
    thing the reader does not have yet; the verb names the act, which is what a label is for. */
 /* SINCE 19.09.26 THE BUTTON OPENS THE SHARE DIALOG and always says Share: the rows inside confirm
    what was done, so the label no longer swaps to Copied. */
-const shareB006Label = () => (
+const shareButtonLabel = () => (
   <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
     <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-2.75px' }}><IconLink /></span>
-    <B006Text>Share</B006Text>
+    <ButtonText>Share</ButtonText>
   </span>
 );
 
@@ -1679,22 +1679,22 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    aria-pressed states the standing answer either way, and a close appears that keeps it. The close is never offered before an answer exists, so dismissing can never
    be mistaken for one. */
 /* THE BANNER'S BUTTON TYPE: --fs-body, 13px (by request, 15.09.26 — two pixels up from --fs-label's
-   11, which lands exactly on a step of the scale). button-006 writes its size inline, so the three
+   11, which lands exactly on a step of the scale). Button writes its size inline, so the three
    buttons hand it this style rather than a stylesheet shouting over an inline value. Weight and case
-   are in global.css (.consent .button-006[data-emphasis]). The label rows are 16px, one line of 13. */
+   are in global.css (.consent .button[data-emphasis]). The label rows are 16px, one line of 13. */
 const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
 /* No check mark on Accept when the banner is reopened (17.09.26, by request): the pressed state
    (aria-pressed, and the filled button) already says which answer stands. */
 export function ConsentBanner({ vals }) {
   const choice = vals.consentChoice;
   const act = (value, label, aria, emphasis, onClick) => (
-    <B006
+    <Button
       data-emphasis={emphasis}
       {...(choice ? { 'aria-pressed': choice === value } : null)}
       onClick={onClick}
       aria-label={aria}
       style={CONSENT_BTN_TYPE}
-      label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{label}</B006Text></span>}
+      label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{label}</ButtonText></span>}
     />
   );
   return (
@@ -1713,8 +1713,8 @@ export function ConsentBanner({ vals }) {
         {/* Outlined like Decline, by request, and still a link: it goes somewhere rather than deciding
             anything, so it is an <a> with a real address drawn as the secondary tier. */}
         <span className="consent__more">
-          <B006 href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics" style={CONSENT_BTN_TYPE}
-            label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Learn More</B006Text></span>} />
+          <Button href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics" style={CONSENT_BTN_TYPE}
+            label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Learn More</ButtonText></span>} />
         </span>
       </div>
       {/* The toast's dismiss, drawn the same: a 28px outlined disc whose glyph swaps under its mask. In
@@ -2494,8 +2494,8 @@ export default function AppView({ vals }) {
                       banner's buttons, Save to Library filled as Accept is there. The strip is fully
                       round, and its padding follows the pill: the text clears the curve, the buttons
                       sit 10px in from it. */}
-                  <B006 data-emphasis="primary" onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Save to Library</B006Text></span>} />
-                  <B006 data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Make Your Own</B006Text></span>} />
+                  <Button data-emphasis="primary" onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save to Library</ButtonText></span>} />
+                  <Button data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Make Your Own</ButtonText></span>} />
                 </span>
               </div>
             )}
@@ -2553,7 +2553,7 @@ export default function AppView({ vals }) {
                   filing changes the archive, so it stays on the committing side of the hairline.
                   Disabled while the palette is only in the URL — a shared palette has no record to
                   file until it is saved, and the strip above already offers that. */}
-              <B006 data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignB006Label(vals.assignLabel)} />
+              <Button data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(vals.assignLabel)} />
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
@@ -2569,9 +2569,9 @@ export default function AppView({ vals }) {
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
                     and the one its card falls back to if the reader dismisses the drawer themselves. */}
-                <B006 data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
+                <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
                 <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-                <B006 data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
+                <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2708,7 +2708,7 @@ export default function AppView({ vals }) {
 
         {vals.isError && (
           /* THE DROPZONE'S SHAPE, AND THE APP'S BUTTON (17.09.26, audit A2). This panel stands where the
-             dropzone was, so it takes the dropzone's corner, and the act is the filled button-006, set
+             dropzone was, so it takes the dropzone's corner, and the act is the filled Button, set
              like the analytics banner's (by request: CONSENT_BTN_TYPE and the [data-voice="banner"] rule in
              global.css). Text only: the "!" above the title went, ring and all, by request. */
           <div role="alert" data-error-panel="1" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;min-height:420px;padding:40px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-surface)')}>
@@ -2716,7 +2716,7 @@ export default function AppView({ vals }) {
               <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:var(--track-title)")}>{vals.errorTitle}</div>
               <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
             </div>
-            <B006 data-emphasis="primary" onClick={vals.onBrowse} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Choose Another Image</B006Text></span>} />
+            <Button data-emphasis="primary" onClick={vals.onBrowse} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Choose Another Image</ButtonText></span>} />
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
           </div>
         )}
@@ -2960,7 +2960,7 @@ function FeedSection({ vals }) {
           group order — each removable on its own, so a narrowing can be undone from either end.
           THE APP'S CLOSE GLYPH, IN THE SWAP (17.09.26, audit C2, by request). The cross was a typed
           "✕" and nothing moved on hover; it is IconClose now, and the label and the glyph slide
-          through one mask together, the way a button-006 carries its icon inside its label.
+          through one mask together, the way a Button carries its icon inside its label.
           THE SCOPE CHIPS' VOICE (18.09.26, by request): the chips and Clear Filters are set like the
           scope chips above them, 13px Medium in the case their labels are written in (global.css lifts
           the capitals for [data-applied-filters]), where they were the tool's 11px capitals. The ×
@@ -3022,10 +3022,10 @@ function FeedSection({ vals }) {
           {/* ONE WAY OUT HERE (19.09.26, audit U1): undo the most recent narrowing. Clear Filters left
               this panel; it is on the applied-filters row directly above, where it stands in every
               filtered state, and two of it a few lines apart was one act offered twice.
-              button-006 set like the analytics banner's (17.09.26, audit A3, by request). No aria-label:
+              Button set like the analytics banner's (17.09.26, audit A3, by request). No aria-label:
               the visible text is the name (SC 2.5.3). */}
           <span style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:2px')}>
-            <B006 data-emphasis="primary" onClick={vals.onRemoveLast} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Remove Last Filter</B006Text></span>} />
+            <Button data-emphasis="primary" onClick={vals.onRemoveLast} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Remove Last Filter</ButtonText></span>} />
           </span>
         </div>
       )}
@@ -3587,11 +3587,11 @@ function DetailOverlay({ vals }) {
         <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           {/* Filing leads here, as it does on the result view: the act that is first in the
               sequence and available — organise, then validate, then output. */}
-          <B006 data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignB006Label(overlay.assignLabel)} />
+          <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
-            <B006 data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastB006Label} />
+            <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
             <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-            <B006 data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportB006Label} />
+            <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
             <ShareControl open={vals.shareMenuOpen} owns name={overlay.name} rows={overlay.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
@@ -4110,10 +4110,16 @@ function HarmonyDrawer({ vals }) {
             version of what a swatch already does and stays quiet beside it. Both act on the model
             currently shown, which is why the label names it. */}
         {/* The two acts take the models' type (17.09.26, by request): --fs-body at Medium, in the case
-            their labels are written in, as the dialogs' buttons and the drawer's own pills read. */}
-        <div data-hx-sec="1" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
-          <button type="button" data-hx-cell="1" data-ix="cta" data-focus="chrome" onClick={harmony.onUse} aria-label={harmony.useAria} style={sx('background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer;white-space:nowrap')}><TextSwap>Save as Palette</TextSwap></button>
-          <button type="button" data-hx-cell="1" data-ix="press" data-focus="chrome" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-md);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;white-space:nowrap')}><TextSwap>{harmony.copyAllLabel}</TextSwap></button>
+            their labels are written in, as the dialogs' buttons and the drawer's own pills read.
+            BUILT ON Button (21.09.26, by request: "every button that is built on the b006 should match
+            the design"). They were ordinary buttons drawn to look like one — --btn-pad-md inside a 1px
+            border — and had drifted to 35.5px against the 31.5px every other act stands at. As Buttons
+            they take its inset, its hover and its two tiers instead of restating them, and the row
+            carries the dialogs' voice like every other pair of acts. data-hx-cell keeps them in the
+            drawer's arrival. */}
+        <div data-hx-sec="1" data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
+          <Button data-hx-cell="1" data-emphasis="primary" onClick={harmony.onUse} aria-label={harmony.useAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save as Palette</ButtonText></span>} />
+          <Button data-hx-cell="1" data-emphasis="secondary" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{harmony.copyAllLabel}</ButtonText></span>} />
         </div>
 
         {/* THE "HOW HARMONIES ARE CALCULATED" FOLD STOOD HERE and is removed by request. It was a
@@ -4187,12 +4193,12 @@ function ExportDialog({ vals }) {
           </div>
           {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
               the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
-              it is the masthead's switch now, the same SwitchTrack in the same unringed button-006,
+              it is the masthead's switch now, the same SwitchTrack in the same unringed Button,
               and the label on the left names what it turns on.
               data-switch="fill": ITS STATE IS IN THE FILL TOO (same day, by request: "the active/inactive
               state needs to be more clear"). On the dialog's plain surface the glass track barely
               showed and position alone carried the state; see [data-switch="fill"] in global.css. */}
-          <B006 data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Semantic scaffold: add six suggested roles per palette, background to text" title="Adds six suggested roles per palette, background to text" label={<SwitchTrack />} />
+          <Button data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Semantic scaffold: add six suggested roles per palette, background to text" title="Adds six suggested roles per palette, background to text" label={<SwitchTrack />} />
         </div>
       </div>
     </div>
@@ -4236,7 +4242,7 @@ function RecogniseDialog({ vals }) {
         </div>
         {/* THE PAIR, AS THE PROJECT PICKER SETS ITS OWN (16.09.26, by request). Two full-width slabs
             stood here, a filled square and an outlined one, the last of their kind in a dialog.
-            button-006 at the app's two emphases now, right-aligned under the rule: the filled tier
+            Button at the app's two emphases now, right-aligned under the rule: the filled tier
             for the act this dialog recommends, the unfilled one for the other way, in the order the
             picker's Cancel and Confirm take. The note stays under the pair it explains, in
             --fs-fine, the size the export dialog's switch explains itself in. */}
@@ -4246,8 +4252,8 @@ function RecogniseDialog({ vals }) {
           {/* "Extract Again" (17.09.26, by request: "anyway" went). Not "as a variation": extraction is
               deterministic as of this deploy, so a second run of the same image returns the same
               colours. This adds a separate entry; it does not produce a different palette. */}
-          <B006 data-emphasis="secondary" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Extract Again</B006Text></span>} />
-          <B006 data-emphasis="primary" onClick={vals.recogniseOpen} aria-label={r.openAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Open Existing Palette</B006Text></span>} />
+          <Button data-emphasis="secondary" onClick={vals.recogniseVariation} aria-label={r.variationAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Extract Again</ButtonText></span>} />
+          <Button data-emphasis="primary" onClick={vals.recogniseOpen} aria-label={r.openAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Open Existing Palette</ButtonText></span>} />
         </div>
       </div>
     </div>
@@ -4356,7 +4362,7 @@ function AssignDialog({ vals }) {
           </div>
           {/* THE COMMIT PAIR. The picker is a draft now (see pickAssign), so it needs a way to say
               yes and a way to walk away, and the two have to read as a pair rather than as one
-              button beside a close mark. button-006 at the app's two emphases: the filled tier for
+              button beside a close mark. Button at the app's two emphases: the filled tier for
               the act that writes, the unfilled one for the way out — the same pairing the export and
               restore dialogs already use, so a reader who has confirmed anything else in this app
               knows which is which without being told.
@@ -4377,12 +4383,12 @@ function AssignDialog({ vals }) {
             itself puts the rule edge to edge and the buttons back on the same inline edge as
             everything above, the same construction the restore dialog's footer uses. */}
         <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:18px var(--page-gutter) 22px;border-top:1px solid var(--line)')}>
-          <B006 data-emphasis="secondary" onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Cancel</B006Text></span>} />
+          <Button data-emphasis="secondary" onClick={vals.closeAssign} aria-label="Cancel, leaving the projects unchanged" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Cancel</ButtonText></span>} />
           {/* No check before the word (17.09.26, by request): the word says it; the glyph repeated it.
               DONE, NOT CONFIRM (18.09.26, by request). The act is unchanged — this still commits
               the pending set and Cancel still drops it — so the spoken name keeps the visible word
               first and says what it saves, the way Cancel's says what it leaves. */}
-          <B006 data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Done, saving the projects for ' + assign.name} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Done</B006Text></span>} />
+          <Button data-emphasis="primary" onClick={vals.confirmAssign} aria-label={'Done, saving the projects for ' + assign.name} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Done</ButtonText></span>} />
         </div>
       </div>
     </div>
@@ -4592,7 +4598,7 @@ function RestoreDialog({ vals }) {
           </dl>
         </div>
         {/* THE COMMIT PAIR, the project picker's (16.09.26, by request): Cancel and the filled Add to
-            Library, button-006 at the app's two emphases, right-aligned under the rule, where a full-
+            Library, Button at the app's two emphases, right-aligned under the rule, where a full-
             width square slab stood. Cancel is the header's close mark said in words, as the picker's
             is. When nothing in the file is new there is no act left to offer, so there is no footer
             at all rather than a pair that would commit nothing; the close mark is the way out. */}
@@ -4602,8 +4608,8 @@ function RestoreDialog({ vals }) {
         {r.hasAct && (
           <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px')}>
             <div style={sx('display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
-              <B006 data-emphasis="secondary" onClick={vals.closeRestore} aria-label={r.cancelAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{r.cancelLabel}</B006Text></span>} />
-              <B006 data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Add to Library</B006Text></span>} />
+              <Button data-emphasis="secondary" onClick={vals.closeRestore} aria-label={r.cancelAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{r.cancelLabel}</ButtonText></span>} />
+              <Button data-emphasis="primary" onClick={vals.confirmRestore} aria-label={r.confirmAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Add to Library</ButtonText></span>} />
             </div>
           </div>
         )}
@@ -4680,8 +4686,8 @@ function TourInvite({ vals }) {
             sentence case, and one dialog spelling its buttons differently from the other four is
             the inconsistency the one-policy rule exists to stop. */}
         <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
-          <B006 data-emphasis="secondary" onClick={t.onSkipInvite} aria-label="Skip the tour and stay in the overview" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Skip for Now</B006Text></span>} />
-          <B006 data-tour-take="1" data-emphasis="primary" onClick={t.onTake} aria-label="Take the tour of an example palette" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Take the Tour</B006Text></span>} />
+          <Button data-emphasis="secondary" onClick={t.onSkipInvite} aria-label="Skip the tour and stay in the overview" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Skip for Now</ButtonText></span>} />
+          <Button data-tour-take="1" data-emphasis="primary" onClick={t.onTake} aria-label="Take the tour of an example palette" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Take the Tour</ButtonText></span>} />
         </div>
       </div>
     </div>
@@ -4763,7 +4769,7 @@ function TourGuide({ vals }) {
           the first step: a control that cannot do anything is a target that wastes a Tab. */}
       <div data-voice="banner" style={sx('margin-top:14px;padding:12px 16px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px')}>
         {/* SKIP TOUR IS THE THIRD TIER, NOT THE SECOND (20.09.26, by request: "skip tour shouldn't be
-            such a highlighted button"). As an outlined B006 it was drawn exactly like Back — same
+            such a highlighted button"). As an outlined Button it was drawn exactly like Back — same
             border, same ink, same size — so a row meant to read "here is the way on, and here is the
             way out" read as three peers, and the emphasis that should have been on Next was spread
             across the row. Emphasis only works while it is scarce.
@@ -4797,9 +4803,9 @@ function TourGuide({ vals }) {
         {c.hasNext && (
           <span style={sx('display:inline-flex;align-items:center;justify-content:flex-end;gap:8px')}>
             {c.hasBack && (
-              <B006 data-emphasis="secondary" onClick={c.onBack} aria-label={c.backAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>Back</B006Text></span>} />
+              <Button data-emphasis="secondary" onClick={c.onBack} aria-label={c.backAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Back</ButtonText></span>} />
             )}
-            <B006 data-emphasis="primary" onClick={c.onNext} aria-label={c.nextAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><B006Text>{c.nextLabel}</B006Text></span>} />
+            <Button data-emphasis="primary" onClick={c.onNext} aria-label={c.nextAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{c.nextLabel}</ButtonText></span>} />
           </span>
         )}
       </div>

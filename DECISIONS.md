@@ -6,6 +6,36 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-21 — The button is called Button, and it has one height
+
+**Renamed (by request: "rename it so it matches design system naming conventions").** B006 was the
+Osmo Supply resource's catalogue number, Button 006, and the number had spread into the component
+(`B006`, `B006Text`), its classes (`.button-006`, `.b006-swap`), its fifteen custom properties
+(`--button-006-*`) and the label helpers (`contrastB006Label` and the rest). It is `Button` now:
+`ButtonText`, `.button` with its elements (`__default`, `__hover`, `__text`, `__bg`), `.button-swap`,
+`--button-*` and `data-button` — the word the system's own vocabulary already used for it, beside the
+action tiers and `data-emphasis`. This departs on purpose from keeping Osmo code verbatim: the
+resource's structure and behaviour are unchanged, only its names are the system's. Entries below this
+one keep the old name, as history.
+
+**One height (by request: "every button that is built on the b006 should match the design").** The
+2px-shorter inset the rows of acts took on 20.09, through an override on `[data-voice="banner"]` and
+`.consent`, is every Button's own now: `--button-padding-block: calc(0.75em - 2px)` at :root, read by
+the default, by the primary tier's `--action-primary-padding` and by every variant, which state only
+their sides. Measured after: every act still 31.5px; the masthead's New Palette 28px (was 32) and
+Export's filled switch 32px (was 36), the same inset at their 12px type. The front page is the one
+exception, by request ("buttons on the front page should stay as-is with the glass effect"): its only
+Button is the glass theme switch in the floating bar, and since that is one control on every route it
+keeps its 0.75em block and its 36px everywhere. The landing's glass calls to action are `.glass-cta`,
+not Buttons, and were never touched. The override had the same specificity as
+Copy's optical sides and came later in the file, so from 20.09 Copy stood 17.7 and 19.2px ink to edge
+instead of the 12 and 13 it was tuned to; with the override gone it is back at 12 and 12.9.
+
+**The harmony drawer's acts are Buttons.** Save as Palette and Copy Harmony were ordinary buttons drawn
+to look like one — `--btn-pad-md` inside a 1px border — and had drifted to 35.5px. As Buttons they take
+the inset, the hover and the two tiers from the component, and their row speaks the dialogs' voice like
+every other pair of acts.
+
 ## 2026-09-18 — The orb is twelve points, not the reference
 
 **Asked for "less circles, or in some way adjust it — I don't want it to be 1:1 to the original

@@ -182,7 +182,7 @@ export const consentMethods = {
      theme crossfade and the close's [data-ix] transitions while it runs, so neither chases the tween
      a frame behind. Reduced motion and no GSAP take the instant path, and the exit still calls back
      synchronously there. */
-  _consentParts(el) { return [].slice.call(el.querySelectorAll('.consent__text, .button-006, .consent__close')); },
+  _consentParts(el) { return [].slice.call(el.querySelectorAll('.consent__text, .button, .consent__close')); },
   // Tweens the banner to glass 1 (present) or 0 (dissolved) from wherever it is, and returns the
   // timeline so a caller can chain what follows. Kills whatever was running first, so a reversal
   // mid-flight turns round in place.
