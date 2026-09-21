@@ -118,13 +118,22 @@ export function initHorizontalRail(root) {
     const d = distance();
     if (!line || !lastCard || !d) return;
     const vw = window.innerWidth, vh = window.innerHeight;
-    const textLeft = vw / 2 - line.offsetWidth / 2;
+    /* [ATMOS 7] ON A PHONE THE CLOSE FOLLOWS THE LAST PHOTOGRAPH OUT, it does not take over under the pin
+       (aboutStickyTitle.js [ATMOS 14], by request, 21.09.26). Without any overlap the pin's empty tail,
+       from the last card clearing the screen to the pin's end, and then the empty stage scrolling away
+       stood as a screen and a half of blank page before the close's first word. So the overlap there is
+       only that tail: the close's top reaches the bottom of the screen as the last card's right edge
+       clears its left edge. The close scrolls up over a stage with nothing on it and never holds, and
+       the pin lets go while the stage is already empty. Measured from layout, without the card's
+       leftward drift, so it errs toward arriving just after the card has gone. */
+    const play = handoff.getAttribute('data-sticky-mode') === 'play';
+    const textLeft = play ? 0 : vw / 2 - line.offsetWidth / 2;
     const clearFromEnd = (lastCard.offsetLeft + lastCard.offsetWidth - textLeft) - d;
     // Where on the screen the close's top must be for its reveal to begin: its own data-sticky-start
-    // ('top top' on /about, so 0), or the resource's 40% when a wrap states none.
+    // ('top top' on /about, so 0), or the resource's 40% when a wrap states none. On a phone, the bottom.
     const startAttr = handoff.getAttribute('data-sticky-start') || 'top 40%';
     const pct = /top\s+(\d+(?:\.\d+)?)%/.exec(startAttr);
-    const startAt = /top\s+top/.test(startAttr) ? 0 : (pct ? parseFloat(pct[1]) / 100 : 0.4);
+    const startAt = play ? 1 : /top\s+top/.test(startAttr) ? 0 : (pct ? parseFloat(pct[1]) / 100 : 0.4);
     const overlap = Math.max(0, Math.min(handoff.offsetHeight, vh * (1 - startAt) - clearFromEnd));
     handoff.style.setProperty('--handoff-overlap', Math.round(overlap) + 'px');
   };

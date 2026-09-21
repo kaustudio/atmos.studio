@@ -1459,8 +1459,12 @@
 .about-end[data-st-active] .about-end__line [data-st-char]{will-change:opacity}
 /* THE FLOOR — no JavaScript, no GSAP, or reduced motion: the wrap has no reason to be two viewports
    tall, and the close is what it was, one viewport, centred, readable. */
-.about-end:not([data-sticky-live]){height:auto;min-height:100svh;display:grid;align-content:center;padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
-.about-end:not([data-sticky-live]) .about-end__container{position:static;height:auto;display:block}
+.about-end:not([data-sticky-live]),.about-end[data-sticky-mode="play"]{height:auto;min-height:100svh;display:grid;align-content:center;padding-block:var(--band-gap) calc(var(--band-gap) * 1.2)}
+.about-end:not([data-sticky-live]) .about-end__container,.about-end[data-sticky-mode="play"] .about-end__container{position:static;height:auto;display:block}
+/* On a phone, where the close scrolls through (21.09.26, by request; aboutStickyTitle.js [ATMOS 14]): the
+   floor's one centred screen, static, with the same band above and below ("i want same spacing at the
+   top as in the bottom, so we don't get to the footer right away"). */
+.about-end[data-sticky-mode="play"]{padding-block:var(--band-gap)}
 .about-route .about-end__line{
   margin:0;max-width:18ch;
   font-size:var(--fs-chapter);font-weight:500;line-height:1.08;

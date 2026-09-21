@@ -757,6 +757,15 @@
   padding-block:0;
 }
 .story-cta::before{ display:none }
+/* ON A PHONE IT SCROLLS THROUGH, AND STILL HAS ITS SCREEN (21.09.26, by request; aboutStickyTitle.js
+   [ATMOS 14]). Nothing sticky, so the page never holds under the finger here; but the statement keeps a
+   whole screen to itself, centred, with the same space above it as below ("i want same spacing at the
+   top as in the bottom, so we don't get to the footer right away. that was what the stop was for"). The
+   stop gave the close its moment before the footer; a screen of room gives it the same without holding.
+   The gallery hands over at its empty tail (aboutRail.js [ATMOS 7]), so the space above is the close's
+   own, not the stage's. */
+.story-cta[data-sticky-mode="play"]{height:auto;min-height:100svh}
+.story-cta[data-sticky-mode="play"] .story-cta__container{position:relative;height:auto;min-height:100svh}
 .story-cta__container{
   position:sticky;
   top:0;

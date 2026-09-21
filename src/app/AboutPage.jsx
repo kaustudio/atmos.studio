@@ -39,7 +39,7 @@ import { holdTouchScroll } from './methods/touchScroll.js';
 import { initCascade } from './methods/aboutCascade.js';
 import { initTileLines } from './methods/aboutTiles.js';
 import { initNumberOdometer } from './methods/numberOdometer.js';
-import { initStickyTitle } from './methods/aboutStickyTitle.js';
+import { initStickyTitle, markTouchCloses } from './methods/aboutStickyTitle.js';
 import { initOptical } from './methods/aboutOptical.js';
 import aboutHtml from '../about/about.html?raw';
 import '../styles/doc.css';
@@ -126,6 +126,7 @@ export default class AboutPage extends React.Component {
        plates and the reveal pins each block's height while it is split. Everything here also refreshes
        on document.fonts.ready, which is the case that actually bites on this site. */
     this._killStack = initStackSlides(root);
+    markTouchCloses(root);   // before the rail: on a phone the close scrolls through (aboutStickyTitle.js [ATMOS 14])
     this._killRail = initHorizontalRail(root);
     // The gallery pins, so a touch scroll here runs normalized while it is built (methods/touchScroll.js).
     this._releaseTouch = holdTouchScroll('about');

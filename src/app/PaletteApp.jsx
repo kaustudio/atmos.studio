@@ -35,7 +35,7 @@ import { initGlobalParallax } from './methods/aboutParallax.js';
 import { initHighlightText } from './methods/aboutHighlight.js';
 import { initHorizontalRail } from './methods/aboutRail.js';
 import { initToggleSwitch } from './methods/toggleSwitch.js';
-import { initStickyTitle } from './methods/aboutStickyTitle.js';
+import { initStickyTitle, markTouchCloses } from './methods/aboutStickyTitle.js';
 import { initLayeredSlider } from './methods/layeredSlider.js';
 import { initHeroExit } from './methods/heroExit.js';
 import { initCascade } from './methods/aboutCascade.js';
@@ -893,6 +893,7 @@ export default class PaletteApp extends React.Component {
        its three pins ahead of everything else. It is /about's 4.1 rail since 16.09.26, and it also
        moves the close up under its own end ([data-rail-handoff]), which is one more reason the sticky
        title below must be built after it: it measures the close where the rail has put it. */
+    markTouchCloses(root);   // before the rail: on a phone the close scrolls through (aboutStickyTitle.js [ATMOS 14])
     this._storyKills.push(initHorizontalRail(root));
     this._storyReveal = initPageReveal(root, {
       motion,
