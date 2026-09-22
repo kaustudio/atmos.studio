@@ -27,17 +27,17 @@
    describes the whole site's grid rather than this layout, four documents read it (the tool, these
    routes, /about and 404.html), and so it lives in global.css with the rest of the system.
 
-   --toc-col is the sidebar track. The hero's copy and the article share the second track, so the
-   left edge of the title and the left edge of the body are the same line down the whole page, and
-   the table of contents sits in a column of its own rather than in stolen margin.
+   --toc-col and --grid-gap went on 22.09.26 (grid audit, by request: "Build it all"). The sidebar's
+   13.75em ended 8px past the page grid's second column, and the hero's two tracks with their own
+   4em gap were declared for a layout nothing used any more: the hero spans both and centres its
+   measure. The sidebar is now two of the page's columns wide (.toc-sidebar below), and the hero is
+   one track.
 
    SCOPED to .legal-route, not on :root, and that is a correction rather than tidying. About defines a
    --measure of its own — a different one, because its headline is set at display scale and reads on a
    wider column — and two files declaring the same custom property on :root means the later import
    wins for BOTH pages. Neither document should be able to retune the other by load order. */
 .legal-route{
-  --toc-col:13.75em;
-  --grid-gap:4em;
   --measure:40em;      /* prose measure — the one thing that must NOT be full width */
 }
 
@@ -48,8 +48,7 @@
    already there. The animation only ever removes and restores something already correct. */
 .legal-hero{
   display:grid;
-  grid-template-columns:var(--toc-col) minmax(0,1fr);
-  column-gap:var(--grid-gap);
+  grid-template-columns:minmax(0,1fr);
   padding:0 var(--page-gutter);
   position:relative;--rule:1;
 }
@@ -111,9 +110,10 @@
    have to be centred inside, which is centred-in-what's-left, not centred on the page. So both are
    placed in the same cell and overlap: the sidebar sits at its own width against the left gutter, the
    article floats centred over the rest. They never actually touch above 1200px, which is exactly why
-   the stacking breakpoint moved there from 900 (see the responsive block) — at 1200 the article's left
-   edge is 280px and the sidebar ends at 242. Below that they would collide, so the sidebar stops
-   overlapping and goes back to being stacked above the article. */
+   the stacking breakpoint moved there from 900 (see the responsive block) — just above 1200 the
+   article's left edge is 280px and the sidebar ends at 196 (two columns since 22.09.26; it ended at
+   242 at 13.75em). Below that the sidebar stops overlapping and goes back to being stacked above the
+   article. */
 .toc-layout{
   display:grid;
   grid-template-columns:minmax(0,1fr);
@@ -122,9 +122,13 @@
 }
 .toc-article{grid-area:1/1;width:100%;max-width:var(--measure);margin-inline:auto;min-width:0}
 
+/* TWO OF THE PAGE'S COLUMNS WIDE (22.09.26, grid audit): two columns and the gutter between them,
+   worked out from the grid's own tokens against this cell, which is the page less its margins. So
+   its right edge is the second column's line at every width it floats at (212px at 1440), where
+   13.75em ran 8px into the gutter. */
 .toc-sidebar{
   grid-area:1/1;
-  width:var(--toc-col);
+  width:calc((100% - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols) * 2 + var(--grid-gutter));
   display:flex;flex-flow:column;justify-content:flex-start;align-items:flex-start;
   gap:1em;
   /* The floating bar's whole footprint (its air and its height) + breathing room, so the sticky
@@ -253,7 +257,7 @@
 /* ---------------------------------------------------------------- responsive */
 
 /* Two thresholds now, because two different things give way at two different widths. The gutter
-   stays the app's 22px at every one of them — it is the page's grid, not a breakpoint's.
+   stays the page's 24px at every one of them — it is the page's grid, not a breakpoint's.
 
    1200 is where the overlap stops working. Above it the sidebar sits against the left gutter and the
    centred article clears it (280px vs 242px at exactly 1200); below it the two would cross, so the

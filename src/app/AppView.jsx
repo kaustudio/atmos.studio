@@ -281,8 +281,13 @@ const RowMain = ({ c, inv }) => (
           the same kind of thing — the name of a choosable, the subject of its row — and
           13/500 is what that is called in this app. Still full --on-surface ink, not
           muted: it is the row's only text identifier and the one thing a screen reader
-          leads with, so the demotion is a size step and never a fade. */}
-      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);flex:none;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
+          leads with, so the demotion is a size step and never a fade.
+          THE NAME GIVES WAY, THE LABELS DO NOT (22.09.26, grid audit). Below 1280 the name has three
+          columns, 226px at 1024, since AA pairs took one of its four. A long name beside Example or
+          Viewing would have been cut off at the cell's edge, labels first, so the name shrinks
+          with an ellipsis while the labels stay whole. The full name is the row's accessible name,
+          and one press away. */}
+      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
       {c.isExample && (
         <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
       )}
@@ -2562,9 +2567,15 @@ export default function AppView({ vals }) {
                 horizontal band. Inside, three GROUPS (Colour / Accessibility / Reading), each a
                 heading over an aligned label:value column — definition lists, because that is
                 literally what the content is, and a screen reader then pairs each term with its
-                value for free. Groups are the wrap unit: min-width per group, so a narrow window
-                stacks whole groups instead of shuffling seven pairs mid-line. data-fx joins the
-                pane's existing staggered reveal — no motion of its own. */}
+                value for free. data-fx joins the pane's existing staggered reveal — no motion of
+                its own.
+                ON THE PAGE GRID (22.09.26, grid audit, by request: "Build it all"). The groups were a
+                flex row, 280px each and 44px apart, and not one of their edges met a column, directly
+                above a library table that has stood on the columns since 18.09. Each group now spends
+                three columns (1–3, 4–6, 7–9) on the page's own gutter, so every edge lands on a line;
+                the last quarter stays empty, as the row's end did before. The gap between groups is
+                the gutter, 24 where it was 44. At 1024 a group is 226px, which still holds AA Text
+                Pairs with its badge and count, so the groups never need to wrap. */}
             {/* Every tier speaks --track-flat — the design's single flat-tracking source, the same
                 voice the action row's labels use. Hierarchy: weight 500→400, size 9→8→13, ink
                 full→muted→full, case. Structure: ruled rows and heading underlines only — no left
@@ -2575,10 +2586,10 @@ export default function AppView({ vals }) {
                 down the block from one delay in animateText, so the readout assembles as a
                 sequence rather than appearing at once. Statically (no GSAP, reduced motion) they
                 are plain visible hairlines and plain visible text. */}
-            <div data-meta="1" role="group" aria-label="Palette metrics" style={sx('display:flex;flex-wrap:wrap;align-items:flex-start;gap:22px 44px;margin-top:18px')}>
-              <span data-meta-line="1" aria-hidden="true" style={sx('display:block;flex:none;width:100%;height:1px;background:var(--line)')}></span>
+            <div data-meta="1" role="group" aria-label="Palette metrics" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:start;column-gap:var(--grid-gutter);row-gap:22px;margin-top:18px')}>
+              <span data-meta-line="1" aria-hidden="true" style={sx('display:block;grid-column:1 / -1;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
-                <div key={gi} style={sx('flex:1;min-width:200px;max-width:280px;display:flex;flex-direction:column')}>
+                <div key={gi} style={sx('grid-column:span 3;min-width:0;display:flex;flex-direction:column')}>
                   <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>
@@ -3194,9 +3205,13 @@ function FeedSection({ vals }) {
           {vals.universeReduced && (
             /* Reduced motion's plain grid scrolls under the bar and above the dock like everything else,
                and starts clear of the bar (the bar, the air) and ends clear of the dock (the air, its
-               32px, the air again). */
+               32px, the air again).
+               THE PAGE'S GUTTER AND WIDTH (22.09.26, grid audit, by request: "Build it all"). It had a
+               20px gap and a centred 1200px frame, the only view in the tool with either; it runs from
+               margin to margin on the 24px gutter now, as every other view does. The cards still size
+               themselves (auto-fill): a set of equal cards is what an intrinsic grid is for. */
             <div data-lenis-prevent="1" style={sx('position:absolute;top:0;left:0;right:0;bottom:0;overflow:auto;padding:calc(var(--nav-top) * 2 + var(--nav-h)) var(--page-gutter) calc(var(--page-gutter) * 2 + 32px)')}>
-              <div style={sx('display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;max-width:1200px;margin:0 auto')}>
+              <div style={sx('display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--grid-gutter)')}>
                 {vals.feedNodes.map((c, ci) => (
                   <button key={ci} type="button" data-feed="1" data-focus="card" aria-current={c.ariaCurrent} aria-label={c.aria} onClick={c.onClick} style={sx('position:relative;display:block;text-align:left;width:100%;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-card);padding:0;margin:0;cursor:pointer;font:inherit;overflow:hidden')}>
                     <div style={sx('position:relative;height:170px;width:100%;overflow:hidden;background:var(--line)')} aria-hidden="true">
@@ -4142,8 +4157,8 @@ function ExportDialog({ vals }) {
   const ex = vals.export;
   /* TWO COLUMNS WHEN THERE IS A COPY GROUP (22.09.26, by request, to try: "can we do 2 columns side by side
      to meet the height troubles"). Stacked, the dialog was 517px and at the smallest supported window,
-     1024 x 640, its top edge met the fixed wordmark; side by side it is 394px (439 with Palette Image),
-     and the clipboard and the file stand in two places. A folder's export has no Copy group and stays
+     1024 x 640, its top edge met the fixed wordmark; side by side it is 394px (439 with the Image row,
+     479 with the scaffold note), and the clipboard and the file stand in two places. A folder's export has no Copy group and stays
      one column at 440. */
   const twoCol = ex.copies.length > 0;
   return (

@@ -128,10 +128,14 @@
    child to a row again brings the hole back with it.
 
    The rhythm down the right-hand side is the paragraphs' own margins — this grid sets no row-gap —
-   so the alignment moves where the copy starts and nothing else. */
+   so the alignment moves where the copy starts and nothing else.
+
+   The track count is the page grid's own token, not a second 12 (22.09.26, grid audit). It is safe
+   on a phone because every explicit span below is released to 1 / -1 at 820px, before the four
+   phone columns begin at 720. */
 .about-col{
   grid-column:1 / -1;min-width:0;
-  display:grid;grid-template-columns:repeat(12, minmax(0, 1fr));column-gap:var(--grid-gutter);
+  display:grid;grid-template-columns:repeat(var(--grid-cols), minmax(0, 1fr));column-gap:var(--grid-gutter);
 }
 .about-col > *{grid-column:8 / -1;min-width:0}
 .about-col > h2,.about-col > h3{grid-column:1 / span 5}

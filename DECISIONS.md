@@ -7,6 +7,40 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — The grid audit's fixes: the readout and AA on the columns, one gutter, one name
+
+**By request, after a grid audit of the live site with the Shift+G overlay: "Build it all".** The
+page grid (12 columns, 24px margin and gutter; 4 at 16px on phones) held almost everywhere. Twelve is
+the right count, because the content uses twelfths, quarters, thirds and How it Works' 5/12 columns.
+
+- **The palette's metrics readout** (Colour, Accessibility, Reading) was a flex row of 280px groups
+  44px apart, and none of its edges met a column. It is now on the page grid, three columns a group
+  (1–3, 4–6, 7–9), directly above a library table that has stood on the columns since 18.09. The gap
+  between groups is the gutter, 24px.
+- **AA Text Pairs takes two columns at 1280px and below.** Its badge and count need 84px and its label
+  75, against a 59px column at 1024, so both spilled into the gutter and stood 10px from the name. The
+  name gives up the column, as it did for Max Contrast and Created: 2 · 3 · 2 · 2 · 3.
+  - The cost: from 1024 to about 1090px the longest example name, "Scorched Clear Morning", loses a
+    few letters.
+  - To make that graceful, names now shrink with an ellipsis while their Example and Viewing labels
+    stay whole. Before, an overlong row would have been clipped at the cell's edge, labels first.
+- **The reduced-motion Grid view** had a 20px gap and a centred 1200px frame, the only view with
+  either. It uses the page gutter and runs margin to margin now.
+- **Privacy and Terms.** The contents list is two page columns wide; at 13.75em it ended 8px past the
+  second column's line. The hero's unused two-track layout and its 4em gap (`--toc-col`,
+  `--grid-gap`) are gone.
+- **One source of truth.** How it Works' text grid reads `--grid-cols` instead of a literal 12, and
+  the `--row-grid` comment lists the spans the table actually uses.
+- **One name for the picture.** Export's row was "Palette Image" while Share's said "Download Image".
+  It is "Image" now, so under Export's Download heading it reads as Share's row does.
+- **Kept, by earlier request:** the 8px gap between How it Works' six role cards.
+- **Verified in Chrome, on the build:**
+  - Every readout edge is on a line at 1440 and 1024.
+  - AA's badge and label sit inside their track at 1440, 1366, 1280, 1152 and 1024.
+  - The contents list ends on column 2's line at 1440 and 1280, and stacks at 1100.
+  - How it Works has 12 tracks on a desktop and 4 on a phone, with the copy where it was.
+  - There are no console errors.
+
 ## 2026-09-22 — Library takes Start here's size
 
 **By request: "Make Library same size as Start here."** The Library title goes from 32px

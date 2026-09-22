@@ -859,7 +859,10 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      Now it IS the page grid — twelve equal tracks on the same 24px gutter — and each cell spends a
      whole number of them:
 
-       strip 2 · name and tags 4 · AA pairs 2 · max contrast 2 · date 2
+       strip 2 · name and tags 6 · AA pairs 1 · max contrast 1 · date 2        above 1280px
+       strip 2 · name and tags 3 · AA pairs 2 · max contrast 2 · date 3        at 1280px and below
+
+     (The spans live with the [data-row-cell] rules further down, which say why each one moved.)
 
      The metric block keeps the even pitch it was designed with, because three equal spans give it
      for free: what --row-metric-pitch was hand-building out of --row-time-col is now just what a
@@ -2286,12 +2289,18 @@ a.button{text-decoration:none;}
 
    Below 1280 two things stop fitting at one column: "Max contrast" is 81px of ink against an 81px
    track, and the date column has to hold the stamp plus the 82px the hover buttons step into. Both
-   take a second column there and the name gives them back. */
+   take a second column there and the name gives them back.
+   AA PAIRS IS THE THIRD (22.09.26, grid audit, by request: "Build it all"). Its badge and count are
+   84px and its label 75, against a column of 59px at 1024, so both spilled into the gutter and stood
+   10px from the name instead of 24. It takes a second column as well, and the name gives that one
+   back too: three columns, 226px at 1024, which holds every example name with its tag (the longest,
+   "Scorched Clear Morning", just fits). */
 @media (max-width:1280px){
-  [data-row-cell="name"]{grid-column:span 4}
+  [data-row-cell="name"]{grid-column:span 3}
+  [data-row-cell="aa"]{grid-column:span 2}
   [data-row-cell="contrast"]{grid-column:span 2}
   [data-row-cell="date"]{grid-column:span 3}
-  [data-row-cell="head"]{grid-column:span 6}
+  [data-row-cell="head"]{grid-column:span 5}
 }
 /* THE DATE BREATHES. It is the only metric ending against the page margin, so both the header chip
    and the stamp sit 16px inside their column while the column itself still runs to the grid line.
