@@ -434,12 +434,19 @@
    the colours a photograph cannot locate, so that only what can be tapped looked tappable, and it was
    reversed the same day by request: "That doesn't make any sense. bring it back". Don't propose it again. */
 [data-story-pick]:not(button){ cursor:default }
-/* Selected is stated by a ring INSIDE the cell, in the cell's own ink — not by a tint, because the
-   cell is a block of the palette's colour and tinting it would change the very thing it shows, and no
-   longer by the border, because the card has none since it became the colour (19.09.26). The ink is
-   the one already proven to read on this colour, so the ring is legible on every swatch in the set. */
+/* SELECTED IS A RING OUTSIDE THE CARD, IN THE PAGE'S INK (22.09.26, by request: "we can't have a dark
+   border in dark mode. add 1-2px padding outside the selected swatch and make it white in dark mode and
+   black in light mode"). It was a 2px ring inside the cell in the cell's own ink, which could not be
+   seen where that ink sat close to the page around it — and the reader looks for the ring against the
+   PAGE, not against the colour. Not a tint either: the cell is a block of the palette's colour, and
+   tinting it would change the very thing it shows.
+   An outline 2px off the card: --on-surface is black on the light page and white on the dark one, so it
+   reads against the ground in both, and the 2px of page between ring and card keeps it from reading as
+   the colour's own edge. An outline rather than a shadow because the keyboard's focus ring on this
+   control is an inset shadow ([data-focus="value"]); both can show at once. It clears the grid's 6px
+   gap, so it never touches the neighbouring card. */
 [data-story-pick][aria-pressed="true"]{ border-color:var(--on-surface) }
-[data-mobile-story] [data-story-pick][aria-pressed="true"]{ box-shadow:inset 0 0 0 2px var(--role-ink) }
+[data-mobile-story] [data-story-pick][aria-pressed="true"]{ outline:2px solid var(--on-surface); outline-offset:2px }
 
 /* ===== THE GALLERY RAIL ===================================================================== */
 

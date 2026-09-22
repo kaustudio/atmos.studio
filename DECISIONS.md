@@ -7,6 +7,22 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — The phone picks show their selection outside the card, in the page's ink
+
+**By request: "we can't have a dark border in dark mode. add 1-2px padding outside the selected swatch and
+make it white in dark mode and black in light mode."** Under the photograph in See Where Each Colour Comes
+From, the selected card was marked by a 2px ring inside it in the card's own ink — legible against the
+colour, but the reader looks for the mark against the page, and a dark ink ring on the dark page read as
+no mark at all. It is an outline 2px off the card now, in --on-surface: black on the light page, white on
+the dark one, with 2px of page between ring and card so it never reads as the colour's own edge.
+
+- An outline, not a shadow: the keyboard's focus ring on this control is an inset shadow ([data-focus=
+  "value"]), and both show at once — verified with a forced :focus-visible on the selected card.
+- It sits inside the grid's 6px gap, so it never touches the next card, and it is not clipped at the
+  grid's edges (checked on the left-hand column in both themes).
+- Measured: 2px solid rgb(26,26,26) at a 2px offset on the light page; 2px solid rgb(243,243,239) on the
+  dark one, around a #0F0302 card.
+
 ## 2026-09-22 — How it Works' headings break where the sense does, the rest at half ink
 
 **By request: "change the headlines on How it works so we make a break where it makes sense in the copy and
@@ -40,6 +56,16 @@ the dark. Every soft line below the boundary takes 62%, the hero included, so on
 tint").** It was 58%, set lighter so it would read as the headline's thought continuing. With the
 headline's own second line at half ink, the tint said the same thing twice and the thesis became the
 quietest line on the screen; its smaller size carries the subordination now.
+
+**The closing statement takes the same half (by request: "Apply the same tint for the copy here").** "Start
+with an image." stays at full ink and "Discover its palette." drops to the soft line. That statement is not
+revealed by the line splitter but by the sticky title, which splits into characters — and its splitter
+took every node's textContent, so a tinted span was flattened out of existence the moment the scroll
+began. It now builds an element's characters inside a shallow copy of it ([ATMOS 14] in
+aboutStickyTitle.js), carrying the class onto the characters the reveal animates; plain text and <br>
+split exactly as before, so the gallery rail's statement, which shares the splitter, is untouched.
+Measured: 19 characters inside the shell at 50% on the desktop and 62% on a phone, every character at
+full opacity once the pin has passed, the spoken label unchanged.
 
 ## 2026-09-22 — One undo for every deletion, the tool's places in history, one question at a time
 

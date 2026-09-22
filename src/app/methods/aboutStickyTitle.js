@@ -121,9 +121,9 @@ export function splitChars(el) {
   try {
     const frag = document.createDocumentFragment();
     const chars = [];
-    const addText = (part) => {
+    const addText = (into) => (part) => {
       if (!part) return;
-      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+      if (/^\s+$/.test(part)) { into.appendChild(document.createTextNode(part)); return; }
       const word = document.createElement('span');
       word.setAttribute('data-st-word', '');
       // The resource hides the split words from assistive tech and puts the sentence on the parent.
@@ -135,11 +135,23 @@ export function splitChars(el) {
         word.appendChild(c);
         chars.push(c);
       });
-      frag.appendChild(word);
+      into.appendChild(word);
     };
+    /* [ATMOS 14] AN INLINE ELEMENT KEEPS ITS SHELL (22.09.26). The closing statement's second line is
+       a <span class="about-head__soft"> at half ink, by request ("apply the same tint for the copy
+       here"), and taking every node's textContent flattened it: the words were split out of the span
+       and the tint went with it. An element's characters are now built inside a shallow copy of it,
+       carrying its class and attributes, so whatever it sets — here the ink — applies to the characters
+       the reveal animates. Plain text and <br> are handled exactly as before. */
     nodes.forEach((node) => {
       if (node.nodeName === 'BR') { frag.appendChild(document.createElement('br')); return; }
-      (node.textContent || '').split(/(\s+)/).forEach(addText);
+      if (node.nodeType === 1) {
+        const shell = node.cloneNode(false);
+        (node.textContent || '').split(/(\s+)/).forEach(addText(shell));
+        frag.appendChild(shell);
+        return;
+      }
+      (node.textContent || '').split(/(\s+)/).forEach(addText(frag));
     });
     if (!chars.length) return null;
     el.setAttribute('aria-label', spoken.replace(/\s+/g, ' ').trim());
