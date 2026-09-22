@@ -89,7 +89,7 @@ export const consentMethods = {
       || s.exportOpen || s.shareMenuOpen || s.contrast || s.harmony);
   },
   /* ROOM UNDER THE LIBRARY PANEL WHILE THE BANNER IS UP (22.09.26). Manage Library is non-modal and
-     ends on Backup since the same day, and the banner floats over the panel's foot: on a 768px window
+     ends on Library File (Back Up, Restore) since the same day, and the banner floats over the panel's foot: on a 768px window
      it covered Restore with nothing left to scroll. --consent-foot is the banner's footprint, read
      once when it arrives and dropped when it leaves; the panel's last group pads by it. */
   _syncConsentFoot() {

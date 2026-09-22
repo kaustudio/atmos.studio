@@ -3926,10 +3926,13 @@ function LibraryDrawer({ vals }) {
             look like the filters above them. The glyph at the row's end says which way the file goes.
             Back Up only when there is something to back up; Restore always, because an empty library
             is exactly when it is needed. The file input stays in the masthead, which is always
-            mounted under the tool; Restore's dialog opens above this panel (157). */}
+            mounted under the tool; Restore's dialog opens above this panel (157).
+            NAMED "LIBRARY FILE" (22.09.26, by request, chosen from mocks). "Backup" named only its first
+            row, so Restore read as filed under it. The heading names what both rows move, the library as
+            a file, and is a noun like the headings above it (Project, Text Usability, Lightness). */}
         <div data-sec="1" style={sx('padding:14px var(--page-gutter) calc(20px + var(--consent-foot, 0px))')}>
-          <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Backup</span>
-          <div role="group" aria-label="Backup" style={sx('display:flex;flex-direction:column;gap:6px')}>
+          <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Library File</span>
+          <div role="group" aria-label="Library File" style={sx('display:flex;flex-direction:column;gap:6px')}>
             {vals.showProjectsBar && (
               /* It confirms in place, as Export's rows do (22.09.26, interface audit): the glyph gives
                  way to "Backed Up" on the shared timer. It only downloaded, so the one act that protects
