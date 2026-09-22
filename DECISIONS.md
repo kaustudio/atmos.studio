@@ -7,6 +7,80 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — Share Palette, and its words swap through the mask
+
+**By request: "please add text mask animation when pressing share for copy, we don't want any instant
+animations", then "I think the copy should say "Share Palette" as this is what it does. If we just say
+"Share" the user have no idea what they are sharing", then yes to "Link Copied".**
+
+- **The button says Share Palette.** The label names what it shares: the palette in front of the
+  reader. The link stays out of it (the argument against "Share Link" still holds). The accessible
+  names lead with the label: "Share Palette: copy its link", and "Share Palette: link copied" while it
+  confirms. The live region is unchanged.
+- **It confirms with Link Copied.** A bare "Copied" left open what had gone to the clipboard, the
+  colours or a link. Export's rows keep "Copied", because each row's own name already says what.
+- **The press swaps through the text mask**, as a swatch value's copy has since 19.09:
+  - the leaving words go up out of the line as the arriving ones rise in (`val-mask-a` /
+    `val-mask-out`, `--dur-swap`, `--ease-entrance`);
+  - the mark rides MarkSwap (share mark to check) in a fixed 14px box, so the word never shifts;
+  - it swaps back the same way when the confirmation ends after 1.5 s.
+
+  `WordSwap` in AppView does the words. Each word keeps its own ButtonText, so the hover swap still runs.
+- **The width eases. It makes room before a longer word arrives and closes after a longer word
+  leaves.** Share Palette is 120px wide and Link Copied 112px; Copy Harmony is 111px and its Copied
+  67px. On the words' own curve, the closing edge cut through the leaving word while it was still half
+  in the line.
+  - Closing takes `--ease-fold` over `--dur-swap`: the edge moves under 7% while the word is visible.
+  - Opening takes `--ease-entrance` over `--dur-state`.
+  - The anchored edge holds: Share's right edge (the row's free gap is in front of it), Copy Harmony's
+    left.
+- **Copy Harmony takes the same swap.** The harmony drawer's copy also cut to Copied in one frame.
+- **Reduced motion:** an instant swap and no width animation.
+- **Verified in Chrome**, with real pointer presses recorded at quarter speed:
+  - forward and back, on the result page, the Full Swatch View and the harmony drawer;
+  - both names, the link on the clipboard, and Copy Harmony's hex lines;
+  - one line at 1024px, with Share Palette ending on the 24px gutter;
+  - no console errors, and the production build passes.
+
+## 2026-09-22 — No picture of the palette, and Share is one press again
+
+**By request: "It doesn't serve a purpose this feature. Leave it.", then "What are we actively solving
+here? Analyze and fix it up, because we messing up the structure."**
+
+- **The picture went.** The downloadable picture had just been redesigned (three directions, then a
+  full-bleed poster, briefly a simple card in Export). Then the user asked "What are we solving with the
+  download image feature? People just need the tokens and variables etc." Its only job was sharing:
+  a shared link previews as the site's generic card, because the palette rides in the URL fragment. No
+  analytics recorded its use, and the user judged it doesn't earn its place. Removed:
+  - Share's Download Image row;
+  - the picture Share via… attached;
+  - Export's picture row;
+  - `lib/paletteCard.js`.
+- **Then the structure question: what does each act solve?**
+  - Add to Projects keeps a palette.
+  - Check Contrast tests it.
+  - Export uses it: copy two ways, download five.
+  - Share sends it, and what it sends is a link, which opens the palette itself.
+- **The Share dialog (19.09) had been built around the picture** ("go with the download image and build
+  a"). Without the picture it was a modal for one link, and a single row where the browser has no share
+  sheet. So Share is one press again, as it was before 19.09:
+  - it copies the link, and the button answers ✓ Copied on the Copied timer, the word Export's rows use;
+  - the live region says "Share link copied to your clipboard.";
+  - the same holds on the result stage and in the palette detail.
+- **Gone with the dialog:**
+  - Share via… (on a desktop it handed the same link to the system sheet);
+  - the dialog's rows, focus trap, Escape step and `shareMenuOpen`;
+  - the checks that read it (consent banner, tour, wipe).
+- **Each act is now the size of its job.** Two acts open a surface because they hold choices (Add to
+  Projects, Export), one opens a drawer (Check Contrast), and one does its one thing (Share).
+- **Verified in Chrome:**
+  - Share copies the link and says Copied, then Share again after 1.5s, by pointer and by Enter, with
+    focus kept on the button.
+  - The detail's Share does the same.
+  - Escape still closes Export, and there are no console errors.
+- **Don't re-add a Share dialog or a downloadable picture** without new sharing options the user asks
+  for.
+
 ## 2026-09-22 — The grid audit's fixes: the readout and AA on the columns, one gutter, one name
 
 **By request, after a grid audit of the live site with the Shift+G overlay: "Build it all".** The

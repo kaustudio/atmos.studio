@@ -1393,9 +1393,6 @@ export const overlayMethods = {
     else if (format === 'figma') this.download(fn('json'), this.buildFigmaTokens(pal, entries), 'application/json');
     else if (format === 'css') this.download(fn('css'), this.buildCssFile(pal, entries, semantic), 'text/css;charset=utf-8');
     else if (format === 'ase') this.download('palette_' + slug + '.ase', this.buildASE(entries), 'application/octet-stream');
-    // The card is drawn asynchronously; downloadShareImage names the file to a screen reader and holds
-    // this row's confirmation itself once the picture exists, so nothing is confirmed before it is.
-    else if (format === 'png') { this.downloadShareImage(pal, 'ex-png'); return; }
     this._confirmRow('ex-' + format);
   },
   /* THE ROW REPORTS, AND THE SHEET STAYS (22.09.26). A download used to close this dialog while

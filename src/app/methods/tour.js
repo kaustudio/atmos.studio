@@ -208,7 +208,7 @@ export const tourMethods = {
       this._tourAfterConsentT = null;
       const s = this.state;
       if (!this._alive || !s.landingDismissed || s.stage !== 'upload' || s.overlay || s.uOpen || this._wipeRunning) return;
-      if (s.tagMenuOpen || s.exportOpen || s.shareMenuOpen || s.backupMenuOpen) return;
+      if (s.tagMenuOpen || s.exportOpen || s.backupMenuOpen) return;
       this.maybeOfferTour();
     }, 400);
   },

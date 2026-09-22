@@ -2,7 +2,6 @@
 // original CSS strings (parsed by sx()) so the layout stays byte-faithful; computed styles come
 // from renderVals() untouched. No logic lives here.
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { sx } from '../lib/sx.js';
 import { Button, ButtonText, DocHead, GlassEffect, NavNewPalette, SwitchTrack, TextSwap, ThemeSwitch } from './chrome.jsx';
 import { IconPlus } from './icons.jsx';
@@ -536,14 +535,68 @@ function CopySwap({ copied, value, arrive, style }) {
    them rode the mask, so half the row moved and half of it cut. It is the same two keyframes and the
    same clipping box, at the size of the mark: the leaving glyph goes up and out as the arriving one
    rises into its place, and the pair reads as one strip. aria-hidden, as it was — the button's name
-   says what it does and the live region says what happened. */
-function MarkSwap({ copied, style }) {
-  const { gone, n } = useFlip(copied, copied ? <IconCopy /> : <IconCheck />);
+   says what it does and the live region says what happened. `rest` is the glyph the check stands in
+   for: the copy mark on a value, the share mark on Share (23.09.26). */
+function MarkSwap({ copied, style, rest }) {
+  const idle = rest || <IconCopy />;
+  const { gone, n } = useFlip(copied, copied ? idle : <IconCheck />);
   const layer = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' };
   return (
     <span style={{ ...style, position: 'relative', overflow: 'hidden' }} aria-hidden="true">
-      <span key={'in' + n} style={{ ...layer, animation: n ? MASK_IN : 'none' }}>{copied ? <IconCheck /> : <IconCopy />}</span>
+      <span key={'in' + n} style={{ ...layer, animation: n ? MASK_IN : 'none' }}>{copied ? <IconCheck /> : idle}</span>
       {gone != null && (<span key={'out' + n} style={{ ...layer, position: 'absolute', left: 0, top: 0, animation: MASK_OUT }}>{gone}</span>)}
+    </span>
+  );
+}
+/* A BUTTON'S WORDS TAKE THE SAME MASK (23.09.26, by request: "please add text mask animation when
+   pressing share for copy, we don't want any instant animations"). Share's label cut from Share to
+   Copied in one frame, and back again when the confirmation ended. Now the leaving word goes up out of
+   the line as the arriving one rises in, on CopySwap's two keyframes, and MarkSwap carries the mark
+   beside it. Each word keeps its own ButtonText, so the hover swap still runs on whichever one shows.
+   The harmony drawer's Copy Harmony made the same cut to Copied, and takes the same swap.
+
+   THE WIDTH EASES WITH THEM. The two words are not the same length, and a label that changes width in
+   one frame is the same cut somewhere else. The box runs from the leaving word's width to the arriving
+   word's, so the pill's free edge travels while its anchored edge holds. Web Animations, so nothing is
+   left on the element when it lands, and a flip mid-flight starts from where the box is. The mask
+   clips the line and not the length (overflow-y only).
+   IT MAKES ROOM BEFORE A LONGER WORD ARRIVES AND CLOSES AFTER A LONGER WORD LEAVES. On the words' own
+   curve the closing edge cut through the leaving word: Share Palette lost its tail while it was still
+   half in the line. Closing takes --ease-fold on the swap's length, which holds the edge (under 7% of
+   its travel) until the word has gone; opening takes --ease-entrance on --dur-state, a control changing
+   what it says it is, so the box stays ahead of the word rising into it. */
+function cssToken(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function cssMs(name, fallback) {
+  // Unit-aware: the minifier writes .4s as 400ms (see cssSeconds in methods/aboutCascade.js).
+  const v = cssToken(name);
+  const n = parseFloat(v);
+  if (isNaN(n)) return fallback;
+  return v.endsWith('ms') ? n : n * 1000;
+}
+function WordSwap({ on, rest, done }) {
+  const { gone, n } = useFlip(on, on ? rest : done);
+  const box = React.useRef(null);
+  const run = React.useRef(null);
+  React.useLayoutEffect(() => {
+    const el = box.current;
+    if (!n || !el || typeof el.animate !== 'function') return;
+    const live = run.current && run.current.playState === 'running';
+    const from = live ? el.getBoundingClientRect().width : el.lastElementChild.getBoundingClientRect().width;
+    if (run.current) { run.current.cancel(); run.current = null; }
+    const to = el.firstElementChild.getBoundingClientRect().width;
+    let reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { }
+    if (reduce || Math.abs(from - to) < 0.5) return;
+    const timing = to > from
+      ? { duration: cssMs('--dur-state', 240), easing: cssToken('--ease-entrance') || 'ease-out' }
+      : { duration: cssMs('--dur-swap', 400), easing: cssToken('--ease-fold') || 'ease-in-out' };
+    run.current = el.animate([{ width: from + 'px' }, { width: to + 'px' }], timing);
+  }, [n]);
+  const word = { display: 'flex', flex: 'none' };
+  return (
+    <span ref={box} style={{ display: 'flex', position: 'relative', overflowX: 'visible', overflowY: 'clip' }}>
+      <span key={'in' + n} style={{ ...word, animation: n ? MASK_IN : 'none' }}><ButtonText>{on ? done : rest}</ButtonText></span>
+      {gone != null && (<span key={'out' + n} style={{ ...word, position: 'absolute', left: 0, top: 0, animation: MASK_OUT }}><ButtonText>{gone}</ButtonText></span>)}
     </span>
   );
 }
@@ -593,57 +646,9 @@ const exportButtonLabel = (
    CopyControl, its label, its sheet, its trigger's padding rule in global.css and the copyMenuOpen flag
    went with it. Share stays its own door: sending a palette to someone is a different intent. */
 
-/* THE SHARE DIALOG (19.09.26, by request: "go with the download image and build a"). Share copied a
-   link on the press and said nothing about what else a share could be; it opens a sheet now, the
-   export dialog's layer, corner, header and rows, with three ways out:
-   - Copy Link, answering "Copied" in the row, as the export dialog's rows do;
-   - Share via…, the device's share sheet, only where the browser has one;
-   - Download Image, the palette as a 1080 by 1350 picture (lib/paletteCard.js), answering "Downloaded".
-   No social buttons: a link previews as the site's card, never the palette (it rides in the fragment),
-   and the share sheet already reaches the apps people have. The labels are written in their Title
-   Case, so the rows set no text-transform and "via" stays lower case.
-   TWO CALL SITES, ONE SHEET. The result stage and the palette detail both mount this off one flag, and
-   a centred dialog drawn by both stacks two scrims and hands a screen reader two aria-modal dialogs for
-   one choice. `owns` settles it at the call site: the overlay takes it whenever it is up, the stage
-   otherwise. */
-function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint }) {
-  const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
-  return (<>
-    <Button data-share-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
-      onClick={onToggle} onKeyDown={onKey} aria-label="Share this palette: copy a link, send it, or download an image"
-      style={CONSENT_BTN_TYPE} label={shareButtonLabel()} />
-    {open && owns && host && createPortal(
-      <div data-share-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
-        <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-        <div data-share-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Share ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
-          <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
-            <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Share Palette</span>
-              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{name}</h2>
-            </div>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close share options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
-          </header>
-          {/* No lead (19.09.26, audit X4, by request): "Anyone with the link sees this palette as it
-              is now." went with Copy's and Export's, so the three sheets open the same way. */}
-          <div style={sx('padding:16px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:6px')}>
-            {rows.map((r) => (
-              /* Focus goes back to the row after the pick, as in Copy's sheet: the copy fallback and
-                 the download's anchor both take it for a moment. */
-              <button key={r.key} type="button" data-ex-item="1" data-focus="chrome" onClick={(e) => { const el = e.currentTarget; r.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
-                onMouseEnter={tint && tint.onEnter} onMouseLeave={tint && tint.onLeave} onFocus={tint && tint.onFocus} onBlur={tint && tint.onBlur}
-                aria-label={r.label + (r.done && r.doneWord ? ', ' + r.doneWord.toLowerCase() : '')} style={itemStyle}>
-                <span style={sx('font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat)')}><TextSwap>{r.label}</TextSwap></span>
-                {r.doneWord && (
-                  <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;flex:none;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: r.done ? 1 : 0, transform: r.done ? 'translateX(0)' : 'translateX(4px)' }}>{r.doneWord}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    , host)}
-  </>);
-}
+/* THE SHARE DIALOG STOOD HERE (19.09.26–22.09.26), a sheet with Copy Link, Share via… and Download
+   Image. It went with the picture it was built around, and Share is one press again: see
+   shareButtonLabel below and methods/share.js. */
 
 // Filing takes the same folder glyph the archive row and the overlay header already use — one
 // concept, one mark — and a label that changes with the state rather than an icon that doesn't.
@@ -665,13 +670,27 @@ const assignButtonLabel = (text) => (
    argument holds for Copy, which sits between two other controls; it never held for this one.
 
    "Share", not "Share Link": the noun named the ARTEFACT the button produces, which is the one
-   thing the reader does not have yet; the verb names the act, which is what a label is for. */
-/* SINCE 19.09.26 THE BUTTON OPENS THE SHARE DIALOG and always says Share: the rows inside confirm
-   what was done, so the label no longer swaps to Copied. */
-const shareButtonLabel = () => (
+   thing the reader does not have yet; the verb names the act, which is what a label is for.
+   "SHARE PALETTE" SINCE 23.09.26, by request: "I think the copy should say "Share Palette" as this is
+   what it does. If we just say "Share" the user have no idea what they are sharing". The object it
+   gains is the palette, the thing in front of the reader, not the link; the argument above still
+   keeps the artefact out of the label. */
+/* ONE PRESS AGAIN, AND IT SAYS COPIED (22.09.26, by request: "What are we actively solving here? … we
+   messing up the structure"). From 19.09 the button opened a dialog and always said Share; with the
+   picture gone that dialog held one link, so the press copies it, as it did before, and the label
+   answers ✓ Copied on the Copied timer, the word Export's rows use. The width change is taken by the
+   flexible gap in front of the button, as the note above says.
+   Since 23.09.26 both halves swap through the mask, the mark in MarkSwap and the words in WordSwap, and
+   the width eases with them. The mark's box is fixed at the share mark's 14px so the 12px check sits in
+   its middle and the word never shifts.
+   IT SAYS LINK COPIED (23.09.26, by request, once the label became Share Palette): a bare "Copied" left
+   open what had gone to the clipboard, the colours or a link. Export's rows keep "Copied" because
+   each row's own name already says what. */
+const SHARE_MARK = { display: 'inline-flex', flex: 'none', width: '14px', height: '14px', marginLeft: '-2.75px' };
+const shareButtonLabel = (copied) => (
   <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}>
-    <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-2.75px' }}><IconLink /></span>
-    <ButtonText>Share</ButtonText>
+    <MarkSwap copied={copied} rest={<IconLink />} style={SHARE_MARK} />
+    <WordSwap on={copied} rest="Share Palette" done="Link Copied" />
   </span>
 );
 
@@ -2489,7 +2508,7 @@ export default function AppView({ vals }) {
                   (It was moved into the group above for one revision and moved back: the placement
                   was never the thing that looked wrong — see the label's own note for what was.) */}
               <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-                <ShareControl open={vals.shareMenuOpen} owns={!vals.hasOverlay} name={vals.result.name} rows={vals.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.sheetItemStyle} tint={vals.sheetRowTint} />
+                <Button data-emphasis="secondary" onClick={vals.onShare} aria-label={vals.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(vals.shareCopied)} />
               </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
@@ -3522,7 +3541,7 @@ function DetailOverlay({ vals }) {
             <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-            <ShareControl open={vals.shareMenuOpen} owns name={overlay.name} rows={overlay.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.sheetItemStyle} tint={vals.sheetRowTint} />
+            <Button data-emphasis="secondary" onClick={overlay.onShare} aria-label={overlay.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(overlay.shareCopied)} />
           </span>
         </div>
       </footer>
@@ -4087,7 +4106,7 @@ function HarmonyDrawer({ vals }) {
             drawer's arrival. */}
         <div data-hx-sec="1" data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px var(--page-gutter) 0')}>
           <Button data-hx-cell="1" data-emphasis="primary" onClick={harmony.onUse} aria-label={harmony.useAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save as Palette</ButtonText></span>} />
-          <Button data-hx-cell="1" data-emphasis="secondary" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{harmony.copyAllLabel}</ButtonText></span>} />
+          <Button data-hx-cell="1" data-emphasis="secondary" onClick={harmony.onCopyAll} aria-label={harmony.copyAllAria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><WordSwap on={harmony.copyAllDone} rest="Copy Harmony" done="Copied" /></span>} />
         </div>
 
         {/* THE "HOW HARMONIES ARE CALCULATED" FOLD STOOD HERE and is removed by request. It was a
@@ -4157,9 +4176,9 @@ function ExportDialog({ vals }) {
   const ex = vals.export;
   /* TWO COLUMNS WHEN THERE IS A COPY GROUP (22.09.26, by request, to try: "can we do 2 columns side by side
      to meet the height troubles"). Stacked, the dialog was 517px and at the smallest supported window,
-     1024 x 640, its top edge met the fixed wordmark; side by side it is 394px (439 with the Image row,
-     479 with the scaffold note), and the clipboard and the file stand in two places. A folder's export has no Copy group and stays
-     one column at 440. */
+     1024 x 640, its top edge met the fixed wordmark; side by side it is 434px with the scaffold note (the
+     picture row it held for a day went back out), and the clipboard and the file stand in two places. A
+     folder's export has no Copy group and stays one column at 440. */
   const twoCol = ex.copies.length > 0;
   return (
     // 125 as it always was, EXCEPT when this was opened from the library panel's Projects tab — a

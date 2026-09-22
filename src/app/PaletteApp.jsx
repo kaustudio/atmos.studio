@@ -212,7 +212,7 @@ export default class PaletteApp extends React.Component {
        instead and commits it once, so nothing changes until it is confirmed and Cancel is a real
        way out. null while the dialog is shut; an array of project ids while it is open. */
     assignPending: null,
-    assignPalette: null, backupMenuOpen: false, shareMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, backupMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or
        arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
@@ -575,7 +575,6 @@ export default class PaletteApp extends React.Component {
            stage, where Escape means what it means everywhere else in the tool and the last line of
            this ladder is the right answer. */
         if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
-        if (this.state.shareMenuOpen) { e.preventDefault(); this.closeShareMenu(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         /* A DRAWER THE TOUR OPENED IS PART OF ITS STEP, so Escape takes both — the brief's "Escape to
            exit", which on steps 2 and 3 used to close only the drawer and leave the card standing
@@ -712,7 +711,7 @@ export default class PaletteApp extends React.Component {
     // the library panel now, and that panel is deliberately non-modal — the library stays visible
     // and operable behind it. Nothing here regressed; a member of this set left the app.
     const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony || s.shareMenuOpen);
+      || s.exportOpen || s.contrast || s.harmony);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {

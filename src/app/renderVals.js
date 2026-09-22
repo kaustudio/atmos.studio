@@ -495,18 +495,11 @@ export const renderValsMethods = {
         traits: allTraits, hasTraits: allTraits.length > 0,
       };
     }
-    // THE SHARE DIALOG'S ROWS (19.09.26, by request): one list, drawn by the stage and by the palette
-    // detail with their own palette and their own confirmation keys. Share via… is the device's share
-    // sheet, and it is only offered where there is one (Safari, Chrome and Edge on a Mac or Windows,
-    // every phone). Email Link stood in for it elsewhere and was dead in an in-app browser, which
-    // swallows mailto: without a word (reported the same day); a page cannot tell whether a mail app
-    // opened, so the row went rather than promise one. Copy Link covers a mail there.
-    const canShareSheet = typeof navigator !== 'undefined' && !!navigator.share;
-    const shareRowsFor = (pal, linkKey, imgKey) => [
-      { key: 'link', label: 'Copy Link', doneWord: 'Copied', done: s.copied === linkKey, onPick: () => this.shareCurrent(pal || undefined, linkKey) },
-      canShareSheet && { key: 'via', label: 'Share via…', doneWord: '', done: false, onPick: () => this.shareVia(pal || undefined) },
-      { key: 'img', label: 'Download Image', doneWord: 'Downloaded', done: s.copied === imgKey, onPick: () => this.downloadShareImage(pal || undefined, imgKey) },
-    ].filter(Boolean);
+    // SHARE IS ONE PRESS (22.09.26, by request: "What are we actively solving here? … we messing up the
+    // structure"): it copies the palette's link, which opens the palette itself, and the button says
+    // Link Copied (Share Palette and Link Copied since 23.09.26). The dialog that held Copy Link, Share
+    // via… and Download Image (19.09.26) went when the picture did: it had become a sheet for one link.
+    // shareCurrent (methods/share.js) does the copy.
 
     /* THE FOUR STEPS, AND WHAT THE ORB IS DOING WHILE EACH ONE RUNS. The states are the Thinking Orbs'
        own six (thinkingOrbs.js); these four are the ones that describe this work, in the order the
@@ -885,7 +878,7 @@ export const renderValsMethods = {
         time: this.stampTime(p.time), timeTitle: this.absTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
-        shareRows: shareRowsFor(p, 'ov-pal-share', 'ov-pal-img'),
+        onShare: () => this.shareCurrent(p, 'ov-pal-share'), shareCopied: s.copied === 'ov-pal-share',
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
@@ -978,7 +971,8 @@ export const renderValsMethods = {
         // The names open with the visible labels, "Save as Palette" and "Copy Harmony" (SC 2.5.3).
         useAria: 'Save as Palette: the ' + active.name.toLowerCase() + ' harmony becomes a new palette in your library, ' + active.cells.length + ' colours',
         onCopyAll: () => this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'),
-        copyAllLabel: s.copied === 'hx-all' ? 'Copied' : 'Copy Harmony',
+        // Copy Harmony ⇄ Copied through the text mask (WordSwap in AppView, 23.09.26).
+        copyAllDone: s.copied === 'hx-all',
         copyAllAria: 'Copy Harmony: all ' + active.cells.length + ' colours in this harmony, as a hex list',
       };
     }
@@ -1051,13 +1045,12 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
           mk('figma', 'Figma Variables', 'JSON'),
           mk('css', 'CSS Custom Properties', 'CSS'),
           mk('ase', 'Adobe Swatches', 'ASE'),
-          /* THE PALETTE AS A PICTURE (22.09.26, by request, to try): the card Share's Download Image
-             makes, offered here too because Download is where people look for a file. A palette only;
-             a folder has no single picture. The two-column dialog is what made room for the row.
-             "IMAGE", SHARE'S WORD (22.09.26, audit, by request: "Build it all"). It was "Palette Image"
-             here and "Download Image" in Share, two names for one file; under this dialog's Download
-             heading the row now reads as Share's does. */
-          ...(pid ? [] : [mk('png', 'Image', 'PNG')]),
+          /* NO PICTURE HERE (22.09.26, by request: "Remove image"). A picture of the palette stood last
+             in this list for a day, as a trial ("What are we solving with the download image feature?
+             People just need the tokens and variables etc."). Every row here is a file a design or code
+             tool opens. The picture then went from Share as well ("It doesn't serve a purpose this
+             feature. Leave it."), so nothing on the site draws one: Share sends the link
+             (methods/share.js). */
         ],
         // The switch draws itself from aria-checked now (chrome.jsx SwitchTrack, 19.09.26, audit U5):
         // its track colour, knob position and ON / OFF word went with the ringed pill.
@@ -1810,22 +1803,10 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // toward responsiveness (a tap reaches this as a compatibility mouseover); drags ask directly.
       dropEnter: (e) => { this._procFieldIntent(); if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
-      /* The share sheet's rows wear the export dialog's row: same object, same style, and the same
-         hover and focus tint (17.09.26, audit C1), so every sheet in the tool answers a pointer alike.
-         Copy's own sheet, which these were written for, folded into Export on 22.09.26. */
-      sheetItemStyle: itemBase,
-      sheetRowTint: {
-        onEnter: (e) => this.rowTintOn(e.currentTarget),
-        onLeave: (e) => this.rowTintOff(e.currentTarget),
-        onFocus: (e) => this.rowTintOn(e.currentTarget),
-        onBlur: (e) => this.rowTintOff(e.currentTarget),
-      },
-      // THE SHARE DIALOG (19.09.26): the button opens it; the rows copy the link (the
-      // palette rides in its fragment, which never reaches a server), hand it to the device, or draw it.
-      shareMenuOpen: !!s.shareMenuOpen,
-      toggleShareMenu: () => { if (this.state.shareMenuOpen) this.closeShareMenu(); else this.openShareMenu(); },
-      shareMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeShareMenu(); } else this.trapFocusIn('[data-share-dialog]', e); },
-      shareRows: shareRowsFor(null, 'pal-share', 'pal-img'),
+      // SHARE: one press copies the link (the palette rides in its fragment, which never reaches a
+      // server), and the button says Link Copied on the Copied timer.
+      onShare: () => this.shareCurrent(),
+      shareCopied: s.copied === 'pal-share',
       // viewing someone else's palette: nothing is in this browser's archive until they say so
       isSharedView: !!s.sharedView,
       onSaveShared: () => this.saveShared(),
