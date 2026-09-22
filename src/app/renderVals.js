@@ -1935,12 +1935,12 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // scope chips carry theirs, so the two rows report themselves the same way. It survived the
       // word: the trigger is a glyph now, and a glyph reports state even less than a noun does.
       filterCount: appliedRaw.length ? String(appliedRaw.length) : '',
-      /* THE TRIGGER'S WHOLE SENTENCE, because there is no visible label to read it from. Both jobs
-         are named — a control that opens two things and announces one of them is a control that
-         hides the other — and the applied count is spoken as well as printed. Label-in-name (SC
-         2.5.3) does not bite here: there is no visible text for the accessible name to disagree
-         with, which is exactly the trade this button makes. The title carries the short form to the
-         pointer; the panel's own heading says it again the moment it arrives. */
+      /* THE TRIGGER'S WHOLE SENTENCE, because its word names one of its two jobs. Both are named here
+         — a control that opens two things and announces one of them is a control that hides the other
+         — and the applied count is spoken as well as printed. Label-in-name (SC 2.5.3) holds since the
+         button took the word Manage (22.09.26): every form of this name opens with it, so the visible
+         label is the start of the spoken one. The title carries the short form to the pointer; the
+         panel's own heading says it again the moment it arrives. */
       libraryTitle: 'Manage Library',
       libraryAria: s.tagMenuOpen
         ? 'Close Manage Library'

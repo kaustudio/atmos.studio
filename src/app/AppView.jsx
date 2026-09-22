@@ -2774,11 +2774,17 @@ function FeedSection({ vals }) {
           {/* THE ONE DOOR INTO THE LIBRARY PANEL. It replaced two controls: Manage Projects ended the
               old scope rail and Filter began the row under it.
 
-              IT IS THE ONLY CONTROL IN THIS CHROME WITH NO WORD ON IT. That is a real cost — an icon
-              has to be recognised where a label is read — and it is paid for the reason set out at the
-              top of this section: the panel behind it holds two jobs, and every honest label names
-              one of them. The mark is the list it acts on, the hover title and the accessible name
-              say the whole sentence, and the panel names itself in its heading the moment it arrives.
+              IT SAYS MANAGE (22.09.26, by request: "Library icon should just say Manage", with the
+              section title and this door "each others opposite end"). It was the only control in this
+              chrome with no word on it — an icon has to be recognised where a label is read — and the
+              silence was paid for because the panel holds two jobs and every honest label named one of
+              them. "Library" would have been the honest name for the surface and is already the title
+              at the other end of this row, so the door takes the half its mark cannot draw: the list
+              names filtering, the word names managing. The hover title and the accessible name still
+              say the whole sentence.
+              THE TOGGLE'S VOICE, NOT THE CHROME'S: 13px Medium in Title Case, as List and Grid beside
+              it speak (viewToggleOptStyle), so the two controls at this end read as one pair rather
+              than as two. Its case exemption is with the segmented controls' in global.css.
 
               flex:none is load-bearing, not tidiness. This is the only door to filtering AND to
               creating, renaming, deleting and exporting a project, so it must never be the thing on
@@ -2794,7 +2800,7 @@ function FeedSection({ vals }) {
               so --radius-pill draws a circle; A STADIUM WHEN A FILTER IS ON, and that is the shape
               saying so: the count needs room the circle does not have, so the button widens by 12px
               each side of its contents and the same 999px reads as a pill. */}
-          <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;' + (vals.filterCount ? 'padding:0 12px;height:35.5px' : 'padding:0;width:35.5px;height:35.5px'))}>
+          <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
             {/* THE MARK ANSWERS A HOVER, THE NUMBER DOES NOT. The glyph takes the masked swap every
                 other control in this chrome uses — it lifts out and its twin rises into place — which
                 is what pays for this button's exemption from the [data-ix="press"] tint a few rules
@@ -2804,7 +2810,9 @@ function FeedSection({ vals }) {
                 a figure that lifts and re-enters on hover reads as the number CHANGING, which is the
                 one thing it must never appear to do. The glyph names the surface, the number names what
                 filtering is holding back, and they are two facts that change on different occasions. */}
-            <TextSwap><IconList size={12} /></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+            {/* The mark and the word are ONE unit inside the swap, so they lift and re-enter together
+                as every other label in this chrome does; the count stays outside it, below. */}
+            <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconList size={12} />Manage</span></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
           </button>
           {/* HOW the section is drawn, the last thing on the row. It sat on the heading row once
               before and went down to the scope rail's row, to line up with the bordered controls

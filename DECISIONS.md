@@ -7,6 +7,27 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — The Library row's door says Manage
+
+**By request, after a mock of the door carrying the word "Library": "We would have Library sit each
+others opposite end. Library icon should just say Manage."** The row's title stays "Library" at one end
+and the door takes "Manage" at the other, so the row names the surface once and the control names the
+act.
+
+- **Why it had no word.** The panel behind it does two jobs, filtering and managing projects, and every
+  honest label named one of them; the mark drew the list and the accessible name said the sentence.
+  "Manage" names the half the mark cannot draw, and "Library" would have repeated the title opposite.
+- **It speaks the toggle's voice, not the chrome's**: 13px Medium in Title Case, as List and Grid
+  beside it, so the two controls at that end read as one pair. Its case exemption sits with the
+  segmented controls' in global.css.
+- **The mark and the word are one unit inside the swap**, so they lift and re-enter together on hover;
+  the applied count stays outside it, as it was, and follows the word.
+- **Label in name** (SC 2.5.3) now holds by construction: every form of the accessible name opens with
+  "Manage" ("Manage Library: filter palettes and organise projects", "Close Manage Library").
+- **Measured at 1440×900:** 35.5px wide to 90.8, or 102.2 with a filter applied; the height stays 35.5,
+  the gap to the toggle stays 8px, and the two centres are level. Checked at rest, on hover, on
+  keyboard focus and with a filter on, in both themes.
+
 ## 2026-09-22 — The phone landing's headings break where the sense does, the rest in the soft ink
 
 **By request: "adjust headlines on the mobile landing in same way as how it works."** The phone story's
