@@ -2741,8 +2741,10 @@ function FeedSection({ vals }) {
   // and a chip per project, with arrows once they overflowed); it went by request ("it only adds
   // inconvenience"), the title moved down into its place, and the door, first set 8px after the
   // title, moved over to the toggle ("let Library sit alone").
-  // THE TITLE IS 32 (--fs-statement), NOT 24 (19.09.26, by request: title and door "don't seem to
-  // have visual balance" while they stood together). Kept at 32 when the door moved away.
+  // THE TITLE IS 24 (--fs-title), START HERE'S SIZE (22.09.26, by request: "Make Library same size as
+  // Start here"). It was 32 (--fs-statement) from 19.09.26, when title and door stood together and
+  // "don't seem to have visual balance"; the door has since moved to the far edge, so nothing beside
+  // the title asks for the larger step, and the page's two section headings share one.
   // THE WORD'S INK IS CENTRED, NOT ITS CAPITALS (19.09.26, by request: "the list button seem to sit
   // above the Library text"). Centring line boxes puts the controls' centre on the capitals' centre,
   // but "Library" is lowercase after its L and hangs a y below the baseline, so its mass sits lower
@@ -2755,7 +2757,7 @@ function FeedSection({ vals }) {
   // they did on the band (showProjectsBar, feedHasItems).
   const libraryRow = (
     <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
-      <h2 id="feed-heading" style={sx("position:relative; top:-0.1em; font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-statement); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
+      <h2 id="feed-heading" style={sx("position:relative; top:-0.1em; font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
       {/* THE STORAGE MARKER STOOD HERE and is removed by request. It was a 16px toggletip beside
           the heading carrying the one fact no control on this page states — where the library
           lives: saved in this browser, on this machine, no account and no server copy, and gone

@@ -7,6 +7,19 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — Library takes Start here's size
+
+**By request: "Make Library same size as Start here."** The Library title goes from 32px
+(`--fs-statement`) back to 24px (`--fs-title`), the step Start here and the empty states use. The
+token's own comment always listed Library under it. It went to 32 on 19.09, while the list button
+stood beside it (at 24 its capitals were half the button's height), and it stayed there when the
+button moved to the far edge. With nothing beside it now, the larger step only set Library apart from
+the page's other section heading.
+
+- The row stays 35.5px tall, set by Manage and List | Grid, so nothing below it moves.
+- The 0.1em lift still centres the word's ink on the controls: 0.09px off at 24, where it was 0.20
+  at 32.
+
 ## 2026-09-22 — Export stands Copy beside Download, and Semantic Scaffold says what it does
 
 **By request: "We need to be careful the modal doesn't exceed viewport height", then "can we do 2
