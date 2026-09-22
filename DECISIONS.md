@@ -7,6 +7,45 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — Export stands Copy beside Download, and Semantic Scaffold says what it does
+
+**By request: "We need to be careful the modal doesn't exceed viewport height", then "can we do 2
+columns side by side to meet the height troubles".** Stacked, a palette's Export was 517px tall. At the
+smallest supported window, 1024×640, its top sat 62px down, inside the fixed wordmark (39–65px), which is
+drawn over dialogs. One more row would have put it under the wordmark.
+
+- **Two columns for a palette.** Copy on the left, Download on the right, and the dialog is 760px wide.
+  The clipboard and the file now stand in two places, so the two CSS Custom Properties rows differ by
+  position as well as by their end mark (Common Region). A project's export has no Copy group and stays
+  one column at 440px.
+- **Palette Image joins Download** (PNG, a palette only). It is the card Share's Download Image makes,
+  offered where people look for a file, and the two columns made room for the row.
+- **The switch sits beside its name** ("Semantic Scaffold and toggle is too far from each other"), under
+  both columns, since it governs both.
+- **Its description is back, in two lines under the name.** "scaffold needs explaining for what it does,
+  it just sits bottom left with no meaning." It went on 19.09 (audit X4), and after that nothing said
+  what the switch changes: the names in every file and in the copied CSS, 01 to 05 by weight or six
+  roles. A named choice at the top ("Token Names", By Weight | By Role, with the names shown beside it)
+  was mocked and set aside for the sentence. It sits under the name rather than in the name's column,
+  where it made the column as wide as itself and stood the switch 393px from its name ("it send the
+  toggle too far away and let the copy sit below the headline"). The two lines break where the sense
+  does: "Names colours by role instead of 01–05:" / "background, surface, primary, secondary, accent,
+  text." It is set in the voice the note had: 12px, muted, 4px under its name.
+- **The switch's accessible name was wrong.** It said the switch "adds six suggested roles", but it
+  replaces the numbered names. It is now named by the words beside it and described by the lines under
+  it, and the title that repeated the old claim is gone.
+- **Measured:**
+  - A palette's Export is 760×479. At 1024×640 its top is at 81px, 16px clear of the wordmark, with no
+    scrolling. A project's is 440×414.
+  - The switch is 16px from its name.
+  - The note measures 5.55:1 in light and 7.17:1 in dark.
+- **Verified in Chrome:**
+  - Screen readers hear "Semantic Scaffold", switch, with the two lines as its description, checked
+    false or true.
+  - Tab runs Copy, Download, the switch, then close.
+  - Switched on, the copied CSS carries the role names.
+  - Checked in both themes, with no console errors.
+
 ## 2026-09-22 — The Library row's door says Manage
 
 **By request, after a mock of the door carrying the word "Library": "We would have Library sit each

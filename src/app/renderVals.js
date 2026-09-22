@@ -1051,6 +1051,10 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
           mk('figma', 'Figma Variables', 'JSON'),
           mk('css', 'CSS Custom Properties', 'CSS'),
           mk('ase', 'Adobe Swatches', 'ASE'),
+          /* THE PALETTE AS A PICTURE (22.09.26, by request, to try): the card Share's Download Image
+             makes, offered here too because Download is where people look for a file. A palette only;
+             a folder has no single picture. The two-column dialog is what made room for the row. */
+          ...(pid ? [] : [mk('png', 'Palette Image', 'PNG')]),
         ],
         // The switch draws itself from aria-checked now (chrome.jsx SwitchTrack, 19.09.26, audit U5):
         // its track colour, knob position and ON / OFF word went with the ringed pill.

@@ -4114,6 +4114,8 @@ function DoneSwap({ done, word, restStyle, rise, children }) {
   );
 }
 
+const EX_COPY_MARK = { display: 'inline-flex', color: 'var(--on-surface-muted)', flex: 'none' };
+
 function ExportRow({ f }) {
   /* THE NAME CARRIES THE ACT (22.09.26, interface audit). Copy and Download each hold a "CSS Custom
      Properties" row, and a screen reader's list of buttons showed two identical names doing different
@@ -4126,7 +4128,9 @@ function ExportRow({ f }) {
       onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur}
       aria-label={f.label + (act ? ', ' + act : '')} style={f.style}>
       <span style={sx('font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat)')}><TextSwap>{f.label}</TextSwap></span>
-      <DoneSwap done={f.done} word={f.doneWord} restStyle={f.extStyle}>{f.ext || ''}</DoneSwap>
+      {/* A Copy row ends in the copy mark the swatches' values use; a Download row ends in its file type.
+          So the two CSS Custom Properties rows differ before the press, not only after (22.09.26). */}
+      <DoneSwap done={f.done} word={f.doneWord} restStyle={f.act === 'copy' ? EX_COPY_MARK : f.extStyle}>{f.act === 'copy' ? <IconCopy size={14} /> : (f.ext || '')}</DoneSwap>
     </button>
   );
 }
@@ -4134,6 +4138,12 @@ function ExportRow({ f }) {
 function ExportDialog({ vals }) {
   if (!vals.hasExport) return null;
   const ex = vals.export;
+  /* TWO COLUMNS WHEN THERE IS A COPY GROUP (22.09.26, by request, to try: "can we do 2 columns side by side
+     to meet the height troubles"). Stacked, the dialog was 517px and at the smallest supported window,
+     1024 x 640, its top edge met the fixed wordmark; side by side it is 394px (439 with Palette Image),
+     and the clipboard and the file stand in two places. A folder's export has no Copy group and stays
+     one column at 440. */
+  const twoCol = ex.copies.length > 0;
   return (
     // 125 as it always was, EXCEPT when this was opened from the library panel's Projects tab — a
     // folder's export is a sub-decision of the surface that raised it, so it has to sit over that
@@ -4143,7 +4153,7 @@ function ExportDialog({ vals }) {
     // Every other route into this surface stacks exactly where it did.
     <div style={{ ...sx('position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px'), zIndex: ex.stacked ? 157 : 125 }}>
       <div data-ex-backdrop="1" data-modal-backdrop="1" onClick={vals.closeExport} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
+      <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={{ ...sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column'), width: twoCol ? '760px' : '440px' }}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
             <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>{ex.kicker}</span>
@@ -4165,13 +4175,13 @@ function ExportDialog({ vals }) {
             THE GROUP IS SAID TO A SCREEN READER TOO: two rows share the name CSS Custom Properties, so
             each group is a role="group" named by its visible label, announced on the way in. One export
             dialog is ever mounted, so the two ids are unique. 18px between the groups, 6 inside them. */}
-        <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
-          {ex.copies.length > 0 ? (<>
+        <div style={sx(twoCol ? 'padding:16px var(--page-gutter) 0;display:grid;grid-template-columns:1fr 1fr;column-gap:24px;align-items:start' : 'padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
+          {twoCol ? (<>
             <div role="group" aria-labelledby="ex-copy-head" style={sx('display:flex;flex-direction:column;gap:6px')}>
               <span id="ex-copy-head" data-ex-group="1" style={EX_GROUP_HEAD}>Copy</span>
               {ex.copies.map((f, fi) => (<ExportRow key={fi} f={f} />))}
             </div>
-            <div role="group" aria-labelledby="ex-download-head" style={sx('display:flex;flex-direction:column;gap:6px;padding-top:12px')}>
+            <div role="group" aria-labelledby="ex-download-head" style={sx('display:flex;flex-direction:column;gap:6px')}>
               <span id="ex-download-head" data-ex-group="1" style={EX_GROUP_HEAD}>Download</span>
               {ex.formats.map((f, fi) => (<ExportRow key={fi} f={f} />))}
             </div>
@@ -4182,25 +4192,37 @@ function ExportDialog({ vals }) {
             it — `padding:14px var(--page-gutter) 22px` on its own wrapper — so removing that line
             took the dialog's last piece of breathing room with it and stood the switch on the sheet's
             bottom edge. Same figure, moved up one row. */}
-        <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px var(--page-gutter) 22px')}>
-          <div style={{ minWidth: 0 }}>
+        {/* THE SWITCH BESIDE ITS NAME (22.09.26, by request: "Semantic Scaffold and toggle is too far from
+            each other"). Pushed to the far end of a 760px row, the control was a row's width from the words
+            that name it. It still spans both columns beneath them, since it governs both. */}
+        <div style={sx('padding:18px var(--page-gutter) 22px')}>
+          <div style={sx('display:flex;align-items:center;justify-content:flex-start;gap:16px')}>
             {/* The rows' voice, 13px Medium (19.09.26, audit W4, by request): it names the switch beside it,
                 as Passing Only's words name its control, and at 12px Regular it read as description. */}
-            <div style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface)")}>Semantic Scaffold</div>
-            {/* THE NOTE UNDER IT WENT (19.09.26, audit X4, by request: "We are overexplaining too many
-                places"). "Adds six suggested roles per palette, background to text." stood here, so a
-                reader met the six roles in the file knowing they were suggestions. That fact is not
-                dropped: the switch's name and title carry it, the way the Text usability rows carry
-                theirs, and the visible line goes. */}
+            <div id="ex-scaffold-name" style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface)")}>Semantic Scaffold</div>
+            {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
+                the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
+                it is the masthead's switch now, the same SwitchTrack in the same unringed Button,
+                and the label on the left names what it turns on.
+                data-switch="fill": ITS STATE IS IN THE FILL TOO (same day, by request: "the active/inactive
+                state needs to be more clear"). On the dialog's plain surface the glass track barely
+                showed and position alone carried the state; see [data-switch="fill"] in global.css.
+                NAMED BY THE WORDS BESIDE IT, DESCRIBED BY THE LINES UNDER IT (22.09.26). Its own label
+                said the switch "adds six suggested roles", but it replaces the numbered names, and its
+                title repeated that; the visible text is the whole account now. */}
+            <Button data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-labelledby="ex-scaffold-name" aria-describedby="ex-scaffold-note" label={<SwitchTrack />} />
           </div>
-          {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
-              the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
-              it is the masthead's switch now, the same SwitchTrack in the same unringed Button,
-              and the label on the left names what it turns on.
-              data-switch="fill": ITS STATE IS IN THE FILL TOO (same day, by request: "the active/inactive
-              state needs to be more clear"). On the dialog's plain surface the glass track barely
-              showed and position alone carried the state; see [data-switch="fill"] in global.css. */}
-          <Button data-emphasis="secondary" data-switch="fill" data-focus="chrome" role="switch" aria-checked={ex.semanticChecked} onClick={vals.toggleExportSemantic} aria-label="Semantic scaffold: add six suggested roles per palette, background to text" title="Adds six suggested roles per palette, background to text" label={<SwitchTrack />} />
+          {/* THE NOTE IS BACK, UNDER THE NAME (22.09.26, by request: "scaffold needs explaining for what it
+              does, it just sits bottom left with no meaning"). It went on 19.09.26 (audit X4, "We are
+              overexplaining too many places"), and without it nothing on the sheet said what the switch
+              changes: the names, 01 to 05 by weight or six roles, in every file and in the copied CSS. A
+              named choice at the top ("Token Names", By Weight | By Role) was mocked and set aside for it.
+              UNDER THE NAME, NOT BESIDE THE SWITCH ("break up the description to two lines, it send the
+              toggle too far away and let the copy sit below the headline"): in the name's column the
+              sentence made the column as wide as itself and stood the switch 393px from its name. Two
+              lines, broken where the sense does, what it does and then the six names, in the voice the
+              note had before it went. */}
+          <p id="ex-scaffold-note" style={sx("margin:4px 0 0;font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Names colours by role instead of 01–05:<br />background, surface, primary, secondary, accent, text.</p>
         </div>
       </div>
     </div>
