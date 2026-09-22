@@ -1317,7 +1317,7 @@ function MobileStory({ st }) {
               {/* /about's closing statement, word for word and broken where it breaks there, so the
                   two surfaces end on the same sentence (by request). The split keeps the <br> and
                   writes the sentence onto the heading as its aria-label — see aboutStickyTitle.js. */}
-              <h2 data-sticky-title="heading" className="story-cta__title">Start with an image.<br />Discover its palette.</h2>
+              <h2 data-sticky-title="heading" className="story-cta__title">Start with an image.<br /><span className="about-head__soft">Discover its palette.</span></h2>
               <p className="story-cta__lead" data-sticky-title="after" data-sticky-after-word="Discover">{st.handoffLine}</p>
               <div className="story-actions" data-sticky-title="after" data-sticky-after-word="Discover">
                 {/* THE SUFFIX NAMED A SURFACE THIS DOES NOT OPEN. It read "open the example

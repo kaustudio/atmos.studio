@@ -65,7 +65,11 @@ began. It now builds an element's characters inside a shallow copy of it ([ATMOS
 aboutStickyTitle.js), carrying the class onto the characters the reveal animates; plain text and <br>
 split exactly as before, so the gallery rail's statement, which shares the splitter, is untouched.
 Measured: 19 characters inside the shell at 50% on the desktop and 62% on a phone, every character at
-full opacity once the pin has passed, the spoken label unchanged.
+full opacity once the pin has passed, the spoken label unchanged. The phone story's close says the same sentence through
+the same module, and takes the same half by request ("apply the same tint to the phone"): 62% there,
+as every soft line under 923px, in both themes. The span is React's and static, so the split and
+restore leave React nothing to reconcile — checked across a case change, which rebuilds the story around
+it with no errors and the tint intact.
 
 ## 2026-09-22 — One undo for every deletion, the tool's places in history, one question at a time
 
