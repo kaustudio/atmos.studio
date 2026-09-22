@@ -67,21 +67,32 @@ export const overlayMethods = {
     this._ovTl = tl;
   },
   closeOverlay() {
+    if (this._ovClosing) return;   // one exit at a time: a second press would restart it from mid-flight
     this._stopCount('overlay');
     // focus returns in the completion callback (never before), so it can't re-render mid-close
     const tileFocusable = this._openTileEl && this._openTileEl.getAttribute('tabindex') !== '-1' && !this._openTileEl.getAttribute('aria-hidden');
     this._ovBack = tileFocusable ? this._openTileEl : this._lastFocus;
     if (!this._ovTl) { this._finishOverlayClose(); return; }   // no timeline (shouldn't happen) → last-resort unmount
     /* THE CLOSE IS WRITTEN, NOT REVERSED. It was `this._ovTl.reverse()` — "close IS open reversed,
-       nothing hand-written" — and measured, that is what was wrong with it: a reversed expo-out is
-       an expo-in, so the first 300ms of the close moved nothing the eye could see, the chrome then
-       faded between 400 and 700ms, the bands sank between 500 and 900ms and the backdrop went last,
-       a second after the press. closeTile learned the same lesson (universe.js) and so did the
-       result stage's own reset (pipeline.js doReset), and this is that exit's grammar: the chrome
-       leaves first and fast, the bands sink bottom-first on the exit curve with the stage's own
-       stagger, the backdrop fades over the last stretch so nothing is left to pop at the cut, and
-       the dialog is released at 0.8 of the run — about 0.55s from the press, with the first frame
-       already moving. Reduced motion keeps the reversed fade, which is a fade either way. */
+       nothing hand-written" — and a reversed expo-out is an expo-in, so the first 300ms of the close
+       moved nothing the eye could see. closeTile learned the same lesson (universe.js).
+       AND IT IS THE CREATE PAGE'S EXIT (22.09.26, by request: "Make sure the Full Swatch View in the
+       Grid View reflects the animation out as smooth as the create page"). The written close kept the
+       grammar the result stage dropped on 18.09: the bands sank on EASE.exit, an ease-in, so by 154ms
+       the first was 10% down and the rest had not moved, and the sheet dissolved over the last stretch
+       with the bands 100/93/78/64/50% down — gone at 600ms, measured. Now it is doReset's exit,
+       figures and all (_exitSink, motion.js): every band sinks from the first frame on EASE.reveal over
+       DUR.state, the ripple fitted to land the last by 0.36s, the chrome leaving on the same curve and
+       length, and the sheet released as the last band is down. The one thing doReset never has to do
+       is uncover a different surface: this sheet covers the grid, so its ground fades over the same
+       run, and the field arrives through it as the dropzone arrives while the stage's bands go. The
+       ground is a colour going to no alpha rather than an opacity on the sheet, so nothing on it
+       dissolves and nothing is left to pop at the release. The sink rides a custom property for the
+       reason _bandWipe gives (motion.js), with a square edge because these bands are full-bleed
+       columns, and from wherever each band is if the arrival was still running. Reduced motion keeps
+       the reversed fade, which is a fade either way.
+       THE SINK IS NOW THE FALLBACK (22.09.26): a view opened from a card that is still open goes home
+       into that card instead (_ovFoldHome, below), and this exit runs only when there is no such card. */
     const g = window.gsap, root = this._detailRoot();
     const bands = root ? [...root.querySelectorAll('[data-oband]')] : [];
     if (this._reduce || !g || !root || !bands.length) {
@@ -92,20 +103,94 @@ export const overlayMethods = {
     }
     const chrome = [...root.querySelectorAll('[data-ochrome]')];
     this._ovTl.kill();
-    const total = this.DUR.reveal * 0.8 + this.DUR.stagger * (bands.length - 1);
+    this._ovClosing = true;
+    // HOME, when the card this view was opened from is still open in the field (_ovFoldHome)
+    const home = this._ovHome(bands.length);
+    if (home) { this._ovFoldHome(root, bands, chrome, home); return; }
+    const { D, step, end } = this._exitSink(bands.length);
+    bands.forEach((b) => {
+      const at = /inset\(\s*([\d.]+)%/.exec(b.style.clipPath || '');
+      b.style.setProperty('--wipe', (at ? parseFloat(at[1]) : 0) + '%');
+      b.style.clipPath = 'inset(var(--wipe) 0% 0% 0%)';
+    });
+    root.style.setProperty('--ov-ground', '100%');
+    root.style.background = 'color-mix(in srgb, var(--surface) var(--ov-ground), transparent)';
     const tl = this._ovTl = g.timeline();
-    if (chrome.length) tl.to(chrome, { opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, stagger: .02 }, 0);
-    tl.to(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal * 0.8, ease: this.EASE.exit, stagger: this.DUR.stagger }, 0);
-    tl.to(root, { opacity: 0, duration: total * 0.3, ease: this.EASE.exit }, total * 0.5);
-    tl.call(() => this._finishOverlayClose(), null, total * 0.8);
+    if (chrome.length) tl.to(chrome, { opacity: 0, y: 8, duration: D, ease: this.EASE.reveal }, 0);
+    tl.to(bands, { '--wipe': '100%', duration: D, ease: this.EASE.reveal, stagger: step }, 0);
+    tl.to(root, { '--ov-ground': '0%', duration: end, ease: this.EASE.reveal }, 0);
+    tl.call(() => this._finishOverlayClose(), null, end);
     // one generous safety fallback only, in case the call never lands
     clearTimeout(this._closeGuard);
-    this._closeGuard = setTimeout(() => this._finishOverlayClose(), (total + 0.8) * 1000);
+    this._closeGuard = setTimeout(() => this._finishOverlayClose(), (end + 0.8) * 1000);
+  },
+  /* THE CARD THE VIEW CAME FROM, if it is still open in the field: the palette's own card, its panel,
+     and the strip at the panel's head with one band per swatch. Only the card's own palette counts,
+     and only a strip that is on screen; anything else closes by the sink above. */
+  _ovHome(n) {
+    const o = this._uOpenCard, ov = this.state.overlay;
+    if (!o || !ov || !o.p || o.p.id !== ov.id || this._uClosing) return null;
+    const panel = document.querySelector('[data-universe-panel]');
+    const strip = panel && panel.querySelector('[data-strip]');
+    const bands = strip ? [...strip.children] : [];
+    if (bands.length !== n) return null;
+    const r = strip.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return null;
+    return { panel, strip, bands };
+  },
+  /* CLOSING HOME (22.09.26, by request: "I don't like the fact that it closes on an empty surface. Can we
+     accomodate so it closes on some sort of surface within the interface"). The sink left the swatches
+     to fall away through a bare ground. When the view was opened from a card in the field, that card is
+     still open under it, with the same swatches in the strip at the head of its panel, so the view goes
+     back into it:
+     - the words and marks leave first and fast, because the bands are about to change shape under them;
+     - the view's ground fades at once, on the stage's exit curve and length, so the card and the field
+       are there for the whole flight and nothing lands on an empty surface;
+     - each band flies to its own band in the strip on the card's own curve and length (fold, DUR.fold,
+       the curve a box that changes size runs on: universe.js openTile), the first and last taking the
+       panel's outer corners as they land, pre-divided by the scale they land at, so each corner is the
+       panel's own on the last frame. Measured: every band within 0.02px of its strip band, landscape and
+       portrait.
+     The view is released as they land, over an identical strip, so the handover cannot be seen.
+     Folding the ground into the panel as well was shown beside this and not chosen: the panel read as a
+     blank box until its words came back. */
+  _ovFoldHome(root, bands, chrome, home) {
+    const g = window.gsap, D = this.DUR.fold, E = this.EASE.fold;
+    const from = bands.map((b) => b.getBoundingClientRect());
+    const to = home.bands.map((b) => b.getBoundingClientRect());
+    const pcs = getComputedStyle(home.panel);
+    const rTL = parseFloat(pcs.borderTopLeftRadius) || 0, rTR = parseFloat(pcs.borderTopRightRadius) || 0;
+    const tl = this._ovTl = g.timeline();
+    const marks = chrome.concat([...root.querySelectorAll('[data-info]')]);
+    // data-leaving lifts the controls' own opacity transition for the exit (global.css), or the harmony
+    // marks, which are [data-ix] controls, would trail this fade by a beat
+    root.setAttribute('data-leaving', '');
+    tl.to(marks, { opacity: 0, duration: this.DUR.fast, ease: this.EASE.reveal }, 0);
+    root.style.setProperty('--ov-ground', '100%');
+    root.style.background = 'color-mix(in srgb, var(--surface) var(--ov-ground), transparent)';
+    tl.to(root, { '--ov-ground': '0%', duration: this.DUR.state, ease: this.EASE.reveal }, 0);
+    bands.forEach((b, i) => {
+      const a = from[i], z = to[i];
+      const sx = z.width / a.width, sy = z.height / a.height;
+      // an arrival still running: the band's wipe goes back to whole as it flies
+      const wipe = /inset\(\s*([\d.]+)%/.exec(b.style.clipPath || '');
+      if (wipe) {
+        b.style.setProperty('--wipe', wipe[1] + '%'); b.style.clipPath = 'inset(var(--wipe) 0% 0% 0%)';
+        tl.to(b, { '--wipe': '0%', duration: D, ease: E }, 0);
+      }
+      tl.to(b, { x: z.left - a.left, y: z.top - a.top, scaleX: sx, scaleY: sy, transformOrigin: '0 0', duration: D, ease: E }, 0);
+      const corner = (prop, r) => { if (r) tl.fromTo(b, { [prop]: '0px 0px' }, { [prop]: (r / sx) + 'px ' + (r / sy) + 'px', duration: D, ease: E }, 0); };
+      if (i === 0) corner('borderTopLeftRadius', rTL);
+      if (i === bands.length - 1) corner('borderTopRightRadius', rTR);
+    });
+    tl.call(() => this._finishOverlayClose(), null, D);
+    clearTimeout(this._closeGuard);
+    this._closeGuard = setTimeout(() => this._finishOverlayClose(), (D + 0.8) * 1000);
   },
   _finishOverlayClose() {
     // release the open latch BEFORE the _ovDone guard, so this function is unconditionally a
     // latch-release — a call arriving with _ovDone already true must still leave overlays openable
-    this._ovOpen = false;
+    this._ovOpen = false; this._ovClosing = false;
     if (this._ovDone) return; this._ovDone = true;
     clearTimeout(this._closeGuard);
     const back = this._ovBack;
@@ -157,7 +242,7 @@ export const overlayMethods = {
         this._histReplace = true;
       }
       const overlayDeleted = st.overlay && st.overlay.id === id;
-      if (overlayDeleted) { patch.overlay = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
+      if (overlayDeleted) { patch.overlay = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._ovClosing = false; this._openTileEl = null; }
       /* ONE UNDO FOR EVERYTHING DELETED WHILE THE TOAST IS UP (22.09.26, by request). The toast used to
          hold one deletion and the next replaced it, so a second deletion (a palette, or a project in the
          drawer) made the first permanent. Each deletion now joins the run the toast is holding, and
@@ -1308,7 +1393,17 @@ export const overlayMethods = {
     else if (format === 'figma') this.download(fn('json'), this.buildFigmaTokens(pal, entries), 'application/json');
     else if (format === 'css') this.download(fn('css'), this.buildCssFile(pal, entries, semantic), 'text/css;charset=utf-8');
     else if (format === 'ase') this.download('palette_' + slug + '.ase', this.buildASE(entries), 'application/octet-stream');
-    this.closeExport(true);
+    this._confirmRow('ex-' + format);
+  },
+  /* THE ROW REPORTS, AND THE SHEET STAYS (22.09.26). A download used to close this dialog while
+     Share's Download Image and every copy row kept theirs open and said so on the row — and with Copy
+     folded in here, the same dialog would have answered two ways. "Downloaded" on the row for as long
+     as a copy says "Copied", on the same timer, so one confirmation shows at a time; the live region
+     already names the file (download() above). Escape and the close mark are the way out. */
+  _confirmRow(key) {
+    if (this._copyT) clearTimeout(this._copyT);
+    this.setState({ copied: key });
+    this._copyT = setTimeout(() => this.setState({ copied: null }), 1500);
   },
   // THE SAME FIVE FORMATS, over a whole folder. Everything above writes one palette; this writes a
   // project as one file per format, and it is deliberately the same surface and the same five
@@ -1328,7 +1423,7 @@ export const overlayMethods = {
     else if (format === 'figma') this.download(fn('json'), this.buildFigmaTokensSet(title, groups), 'application/json');
     else if (format === 'css') this.download(fn('css'), this.buildCssFileSet(title, groups, semantic), 'text/css;charset=utf-8');
     else if (format === 'ase') this.download('project_' + slug + '.ase', this.buildASESet(groups), 'application/octet-stream');
-    this.closeExport(true);
+    this._confirmRow('exp-' + format);
   },
   openExport(p) {
     if (!p) return;
@@ -1354,7 +1449,8 @@ export const overlayMethods = {
     this.setState(Object.assign({ exportOpen: true, announce }, patch), () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-export-dialog]');
-        // On the first format, as Copy and Share open on their first rows (19.09.26, audit X5).
+        // On the first row, as Share opens on its first (19.09.26, audit X5): Hex List since Copy
+        // folded in here (22.09.26), so Export then Enter still does this sheet's job.
         if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
         // THE DIALOGS' ARRIVAL (17.09.26, audit F1). This played a timeline of its own on the
         // overlay curve, 0.8s with a staggered list, while the other four dialogs arrive on

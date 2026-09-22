@@ -37,7 +37,8 @@ function shares(swatches) {
   return swatches.map((s, i) => ({
     hex: String(s.hex || '').toUpperCase(),
     part: (weighted ? ws[i] : 1) / total,
-    pct: weighted ? Math.round((ws[i] / total) * 100) + '%' : '',
+    // "<1%" under half a percent, as the app prints it (renderVals sharePct), never "0%".
+    pct: weighted ? ((ws[i] / total) * 100 > 0 && (ws[i] / total) * 100 < 0.5 ? '<1%' : Math.round((ws[i] / total) * 100) + '%') : '',
   }));
 }
 

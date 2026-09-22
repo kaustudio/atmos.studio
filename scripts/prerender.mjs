@@ -42,7 +42,7 @@ const ROUTES = {
     // The route wrapper's second class — see AppView's document-route branch and src/styles/doc.css.
     scope: 'about-route',
     title: 'Atmos Gallery | How Images Become Colour Palettes',
-    description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
+    description: 'Discover how Atmos Gallery turns an image into a palette of five colours, describes their properties, measures contrast between pairs and suggests design roles.',
     // <meta name="description"> only; `description` stays on the og:/twitter: pair. See HEAD in routes.js.
     searchDescription: 'Learn how Atmos Gallery extracts five colours from an image, describes their properties, checks contrast between pairs and suggests possible design roles.',
     ld: {
@@ -136,14 +136,15 @@ const head = () => `
 const foot = (route) => `
 <footer class="site-foot">
   <div class="site-foot__brand">
-    <a href="/" aria-label="Atmos Gallery — home"><span class="site-foot__mark" aria-hidden="true"></span></a>
+    <a href="/" aria-label="Atmos Gallery, home"><span class="site-foot__mark" aria-hidden="true"></span></a>
   </div>
   <div class="site-foot__meta">
     <p class="site-foot__origin">A Part of <a href="https://kau.studio">KauStudio</a></p>
     <nav class="site-foot__nav" aria-label="Site">
-      <a href="/about"${route === 'about' ? ' aria-current="page"' : ''}>About</a>
-      <a href="/privacy"${route === 'privacy' ? ' aria-current="page"' : ''}>Privacy Policy</a>
-      <a href="/terms"${route === 'terms' ? ' aria-current="page"' : ''}>Terms and Conditions</a>
+      <a href="/create">Create</a>
+      <a href="/about"${route === 'about' ? ' aria-current="page"' : ''}>How it Works</a>
+      <a href="/privacy"${route === 'privacy' ? ' aria-current="page"' : ''}>Privacy</a>
+      <a href="/terms"${route === 'terms' ? ' aria-current="page"' : ''}>Terms</a>
     </nav>
     <p class="site-foot__rights">All Rights Reserved &copy; 2026</p>
   </div>

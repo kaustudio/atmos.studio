@@ -718,11 +718,8 @@ export const pipelineMethods = {
          length. The cut still lands inside the press's half second, which keeps the page shortening
          out of the layout-shift count (the 16.09 figure: 0.068 when it landed at ~560ms); the
          Library's own move is played as a transform (_settleBelowStage), which is not counted. */
-      const D = this.DUR.state, FIT = 0.36, n = bands.length;
-      const step = n > 1 ? Math.min(this.DUR.stagger, Math.max(0, (FIT - D) / (n - 1))) : 0;
-      // The swap lands as the last band is all but down: EASE.reveal is an out-cubic, past 99.6% at
-      // 0.85 of its length, so what the cut removes is under a pixel of a 340px swatch.
-      const cut = Math.min(D * 0.85 + step * Math.max(0, n - 1), 0.38);
+      // The figures live in _exitSink (motion.js) since 22.09.26, shared with the palette detail's close.
+      const n = bands.length, { D, step, cut } = this._exitSink(n);
       if (rest.length) g.to(rest, { opacity: 0, y: 8, duration: D, ease: this.EASE.reveal });
       if (n) {
         // The arrival's rounded edge on the way down, from wherever each band is (_bandWipe, motion.js).

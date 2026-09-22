@@ -342,26 +342,14 @@ export function DocHead({ vals, floating, onField, onMark }) {
           <span className="mark" role="img" aria-label="Atmos Gallery"></span>
         </a>
       </span>
-      {/* BACK UP AND RESTORE, ON EVERY PAGE THE BAR IS ON (by request, 15.09.26): the same two links, the
-          same handlers and the same style as the tool's bar, in the third track the grid always had.
-          Not below the tool's own width (vals.narrow): the library they act on is the tool's, and a
-          phone is offered the tool nowhere else either — and at a phone's width there is no room for
-          them beside the centred mark. Not in the prerendered masthead, for the switch's reason: a
-          control that does nothing without a script is worse than none. The file input is the tool's
-          ref; only one of the two bars is ever mounted. */}
       {/* NEW PALETTE LEADS THE TRACK, AS IT DOES IN THE TOOL'S BAR (by request, 15.09.26). Here it
           opens the create page in its default state: openCreate resets what the tool was holding and
-          crosses to it, the same act as Explore Atmos. Unlike Back Up and Restore it needs no library,
-          so it stands whether or not there is anything to back up. Not below the tool's width, for
-          the same reason as the pair: there is no create page there to open. */}
+          crosses to it, the same act as Explore Atmos. Alone in the track since 22.09.26: Back Up and
+          Restore, which followed it here from 15.09, are Manage Library's last group now. Not below
+          the tool's width: there is no create page there to open. */}
       {!vals.narrow && (
         <span className="doc-head__acts">
           <NavNewPalette show onPress={vals.openCreate} />
-          {vals.showProjectsBar && (<>
-            <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back Up</TextSwap></button>
-            <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
-            <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
-          </>)}
         </span>
       )}
     </div>

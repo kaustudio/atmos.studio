@@ -21,10 +21,18 @@ export const TERMS = 'terms';
 
 export const LEGAL_ROUTES = [PRIVACY, TERMS];
 
+/* THE TOOL'S OWN ADDRESS (22.09.26, by request: the analytics had no way to tell a visit that only
+   saw the landing from one that used the tool, because both lived at /). It is still the APP route,
+   not a fifth one: the landing covers the tool rather than replacing it, so which of the two addresses
+   the bar shows is decided by what is on screen (PaletteApp._appPath), not by which route is set. A
+   typed /create opens straight onto the tool, past the landing. */
+export const CREATE_PATH = '/create';
+
 // path → route. Anything unrecognised is the app: a deployment that serves this document at all has
 // already decided the address is ours, and rendering the tool beats rendering nothing.
 export function routeFor(pathname) {
   var p = String(pathname || '/').replace(/\/+$/, '') || '/';
+  if (p === CREATE_PATH) return APP;
   if (p === '/about' || p === '/about.html') return ABOUT;
   if (p === '/privacy' || p === '/privacy.html') return PRIVACY;
   if (p === '/terms' || p === '/terms.html') return TERMS;
@@ -96,7 +104,7 @@ export const HEAD = {
   [ABOUT]: {
     title: 'Atmos Gallery | How Images Become Colour Palettes',
     path: '/about',
-    description: 'Discover how Atmos creates a palette from an image, describes its colour properties, measures contrast between pairs and suggests possible roles.',
+    description: 'Discover how Atmos Gallery turns an image into a palette of five colours, describes their properties, measures contrast between pairs and suggests design roles.',
     searchDescription: 'Learn how Atmos Gallery extracts five colours from an image, describes their properties, checks contrast between pairs and suggests possible design roles.',
     ogType: 'article',
   },

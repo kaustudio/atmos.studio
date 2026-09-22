@@ -676,40 +676,6 @@ export const persistenceMethods = {
       if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert');
     });
   },
-  _focusCopyTrigger(defer) {
-    // Two CopyControls mount their trigger (stage and overlay); the one that opened the sheet is
-    // remembered, and the selector is only the fallback for a trigger that has since unmounted.
-    const go = () => { const back = this._copyBack; const b = (back && back.isConnected) ? back : document.querySelector('[data-copy-trigger]'); if (b && b.focus) try { b.focus(); } catch (e) { } };
-    if (defer) requestAnimationFrame(go); else go();
-  },
-  /* THE SAME ARRIVAL AS ASSIGN AND RESTORE. Copy is a modal dialog, so it opens the way the other
-     centred dialogs do: the opener is remembered, focus moves INTO the sheet, and the landmarks behind
-     it go inert through the flag in PaletteApp's modal set.
-     FOCUS LANDS ON THE FIRST ROW, Hex List, not on the close mark (19.09.26, audit X5, by request). Share
-     opened on Copy Link while this opened on Close, so Copy then Enter shut the sheet it had just
-     opened. Now either button then Enter does its sheet's job, and so does Export (overlays.js).
-     Focus must move in, because the trigger it would otherwise stay on is inside <main> and is inert
-     for as long as the sheet is up.
-     On the way out the order matters: the state flips first, which lifts inert from the landmarks,
-     and only then does focus return — focus() on an element that is still inert is a silent no-op,
-     which left the next Tab starting from the top of the document. */
-  openCopyMenu() {
-    if (this.state.copyMenuOpen) return;
-    this._copyBack = document.activeElement;
-    this.setState({ copyMenuOpen: true }, () => requestAnimationFrame(() => {
-      const d = document.querySelector('[data-copy-dialog]');
-      if (d) { const b = d.querySelector('[data-ex-item]') || d.querySelector('button'); if (b) try { b.focus(); } catch (e) { } }
-      this._dialogIn('[data-copy-dialog]');
-    }));
-  },
-  closeCopyMenu() {
-    if (!this.state.copyMenuOpen || this._copyClosing) return;
-    this._copyClosing = true;
-    this._dialogOut('[data-copy-dialog]', () => {
-      this._copyClosing = false;
-      this.setState({ copyMenuOpen: false }, () => this._focusCopyTrigger(true));
-    });
-  },
   // The eight seeded examples, in library order. One place, because the story, its chooser and the
   // colour field all read it. (The phone's example view and example list that also read it went on
   // 17.09.26, audit C5: the story is how a phone sees the examples.)

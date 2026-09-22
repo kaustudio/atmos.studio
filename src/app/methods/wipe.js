@@ -2,7 +2,7 @@
 // four routes: the page that is leaving scales up and dims underneath, and the page that is arriving
 // rises from below inside a rounded window that opens to the full screen. With rAF-stall pumps and
 // watchdogs so a throttled frame can never strand the ghost or lock the app. See _wipeCover.
-import { routeFor, pathFor, isDoc, applyHead, routeName } from '../routes.js';
+import { routeFor, pathFor, isDoc, applyHead, routeName, APP } from '../routes.js';
 
 export const wipeMethods = {
   /* A SURFACE ARRIVES AT ITS OWN TOP.
@@ -74,7 +74,7 @@ export const wipeMethods = {
     // again.' and focusing a detached tile, which steals focus from the CTA showIntroAgain is
     // retrying to reach. It is also what keeps the open latch from stranding across the journey
     // open a card → logo → Get Started.
-    this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; this._ovBack = null;
+    this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._ovClosing = false; this._openTileEl = null; this._ovBack = null;
     clearTimeout(this._closeGuard);
     // The grid, up or still leaving, goes down with the rest under the cover (universe.js _gridOff):
     // no exit of its own, and nothing pending that could pull the reader back into it after the wipe.
@@ -90,7 +90,7 @@ export const wipeMethods = {
     this._genId = (this._genId || 0) + 1; this.stopCanvas();
     if (this._t) clearInterval(this._t); if (this._end) clearTimeout(this._end);
     this.setState(Object.assign({
-      backupMenuOpen: false, copyMenuOpen: false, shareMenuOpen: false,
+      backupMenuOpen: false, shareMenuOpen: false,
       stage: 'upload', current: null, imageUrl: null, pending: null,
       feedView: 'list', gridLeaving: false, overlay: null, harmony: null, contrast: false, exportOpen: false, exportPalette: null, exportProject: null, assignPalette: null,
       restorePending: null,
@@ -194,12 +194,18 @@ export const wipeMethods = {
 
   // Logo / menu return path: the tool leaves, the landing arrives in the window. Falls back to the
   // instant showIntroAgain reset when there is nothing to animate with.
-  returnToIntro() {
+  /* opts.quick: Back or Forward between / and /create (22.09.26, UX audit), which takes the short
+     crossfade every history move takes, and adds no entry because the browser has already moved.
+     Pressed, it adds one: the landing and the tool are two addresses, and Back goes between them. */
+  returnToIntro(opts) {
     this._wipeRecoverStuck();
     if (!this.state.landingDismissed || this._wipeRunning) return;
+    const fromPop = !!(opts && opts.fromPop);
+    this._pathPush = !fromPop;
     const g = window.gsap;
     if (this._reduce || !g || !this._windowEl()) { this.showIntroAgain(); return; }
     this._wipeCover({
+      quick: fromPop,
       // Arm the statement lines the moment the landing mounts, before the window opens on it — the
       // same reason as the loader: the window must never open onto text already sitting at its
       // final position.
@@ -211,9 +217,12 @@ export const wipeMethods = {
       focusTarget: () => document.querySelector('button[data-glass-cta]'),
     });
   },
-  getStarted() {
+  // opts: returnToIntro's, for Forward from the landing onto /create.
+  getStarted(opts) {
     this._wipeRecoverStuck();
     if (this.state.landingDismissed || this._wipeRunning) return;
+    const fromPop = !!(opts && opts.fromPop);
+    this._pathPush = !fromPop;
     const g = window.gsap;
     // 'palette-generator/landing' is PERMANENT dismissal, not session-scoped: '1' survives reloads so
     // a returning visitor lands straight in the tool. Reversible — see _resetIntroState.
@@ -238,6 +247,7 @@ export const wipeMethods = {
       });
     };
     this._wipeCover({
+      quick: fromPop,
       commit: persist,
       // The tool arrives here exactly as it does under the page loader: its own copy rises out of
       // the masks inside the window, rather than simply being there when it opens. instant=true is
@@ -328,7 +338,9 @@ export const wipeMethods = {
       // The address bar moves with the content, not before it — a pushState that lands ahead of the
       // swap is a URL describing a page that is not on screen yet, and a reload in that window
       // serves the wrong one.
-      if (push) { try { history.pushState({ route: next, scrollY: 0 }, '', pathFor(next)); } catch (e) { } }
+      // The tool's route has two addresses, / and /create, and the one pushed is the one the arriving
+      // screen will show (PaletteApp._appPath), so the pageview the push reports names it correctly.
+      if (push) { try { history.pushState({ route: next, scrollY: 0 }, '', next === APP ? this._appPath() : pathFor(next)); } catch (e) { } }
       applyHead(next);
       // A new document starts at the top — see _scrollToTop, which the landing pair now shares. A
       // history move goes back to where it was, once the document is there to scroll (below).

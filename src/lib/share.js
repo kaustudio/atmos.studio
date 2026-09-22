@@ -73,7 +73,9 @@ export function shareUrl(pal, loc) {
   if (!code) return null;
   const l = loc || (typeof window !== 'undefined' ? window.location : null);
   if (!l) return null;
-  return l.origin + l.pathname + l.search + '#' + HASH_KEY + '=' + code;
+  // Always the front page, never the /create the sender is on: a recipient is not using the tool,
+  // and a link that pointed there would count every opened share as a visit to it.
+  return l.origin + '/' + l.search + '#' + HASH_KEY + '=' + code;
 }
 
 // ---- decode (UNTRUSTED) -------------------------------------------------------------------------

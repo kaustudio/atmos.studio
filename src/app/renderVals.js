@@ -5,6 +5,20 @@ import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
 import { CONTRAST_MIN, CRITERION, CRITERION_TITLE, RATIO_TEXT } from '../lib/wcag.js';
+import { isDoc, CREATE_PATH } from './routes.js';
+
+/* A COLOUR'S SHARE OF THE FRAME, as every surface prints it (22.09.26, UX audit). Rounded to a whole
+   number it could print "0%" for a colour the palette still holds, which reads as a broken result at
+   the moment a reader has just been waiting for it. Under half a percent it says "<1%"; the odometer
+   rolls the digit and keeps the "<" still. `spoken` is the same figure for a screen reader. */
+function sharePct(w, tot) {
+  const r = tot > 0 ? (w / tot) * 100 : 0;
+  return r > 0 && r < 0.5 ? '<1%' : Math.round(r) + '%';
+}
+function shareSpoken(w, tot) {
+  const t = sharePct(w, tot);
+  return t === '<1%' ? 'under 1 percent' : t.replace('%', ' percent');
+}
 
 const MONO = 'Neue Montreal';
 
@@ -345,7 +359,7 @@ export const renderValsMethods = {
         });
         return {
           sid,
-          weightPct: Math.round((b.weight / totW) * 100) + '%',
+          weightPct: sharePct(b.weight, totW),
           groupAria: 'Swatch ' + (i + 1) + ' of ' + n + ', ' + fmt.hex.display,
           values,
           onHarmony: () => this.openHarmony(b.hex),
@@ -481,11 +495,6 @@ export const renderValsMethods = {
         traits: allTraits, hasTraits: allTraits.length > 0,
       };
     }
-    // palette-level copy affordances. palBtn / palBtnHover / palBtnActive lived here and are gone
-    // (08.26) with the two standalone copy buttons they styled — the formats moved into a menu on a
-    // single Copy control, and the styles were left behind exported but unrendered. copyPal stays:
-    // the menu calls it.
-    const copyPal = (kind) => { if (!s.current) return; if (kind === 'hex') this.copy(this.paletteHexList(s.current), 'pal-hex', 'Copied all ' + s.current.swatches.length + ' colours as a hex list'); else this.copy(this.paletteCss(s.current), 'pal-css', 'Copied palette as CSS custom properties'); };
     // THE SHARE DIALOG'S ROWS (19.09.26, by request): one list, drawn by the stage and by the palette
     // detail with their own palette and their own confirmation keys. Share via… is the device's share
     // sheet, and it is only offered where there is one (Safari, Chrome and Edge on a Mac or Windows,
@@ -858,7 +867,7 @@ export const renderValsMethods = {
         return {
           sid: typeof b.sid === 'number' ? b.sid : i,
           groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
-          weightPct: Math.round((b.weight / tw2) * 100) + '%',
+          weightPct: sharePct(b.weight, tw2),
           style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
           // The detail overlay's copy of the band label — same decision as the result stage's, see
           // the note there.
@@ -887,16 +896,6 @@ export const renderValsMethods = {
         // Always the same words. A palette can be in several projects now, so the button is never
         // reporting a single state — it is the way IN to the set, whatever the set already holds.
         assignLabel: 'Add to Projects',
-        // Which format was copied, drawn by the view on the trigger that was pressed.
-        copyDone: s.copied === 'ov-pal-hex' ? 'Hex list' : s.copied === 'ov-pal-css' ? 'CSS variables' : '',
-        /* THE SHEET STAYS UP AND THE ROW ANSWERS. Both of these used to close the surface and throw
-           focus back to the trigger, which is what a MENU does — you pick, it goes away, and the
-           button behind it tells you what happened. A dialog is not a menu: it is a place you are
-           standing in, and taking it away is a poor way to say "done". The row you pressed reports
-           instead (see CopyControl), so the confirmation is on the thing you acted on, you can take
-           the other format without reopening anything, and focus stays where you left it. */
-        copyHexList: () => this.copy(this.paletteHexList(p), 'ov-pal-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'),
-        copyCss: () => this.copy(this.paletteCss(p), 'ov-pal-css', 'Copied palette as CSS custom properties'),
       };
     }
 
@@ -995,9 +994,9 @@ export const renderValsMethods = {
        same way, with the same inset correction: 14px of horizontal padding put "Tailwind v4"
        against the widest point of a 21px arc, so it goes to 18. The raised plate stays, because a
        row you choose from is not the sheet it sits on.
-       HOISTED OUT OF exportView because the copy dialog wears it too. Copy stopped being a dropdown
-       and became the same surface as Export, and "the same surface" has to mean one style object
-       rather than two that currently agree. */
+       HOISTED OUT OF exportView because another sheet wears it too — Copy's, until it folded into
+       Export (22.09.26), and Share's — and "the same surface" has to mean one style object rather
+       than two that currently agree. */
     // 11px of block padding, where it was 12: the 13px label the rows took on 19.09.26 (audit U3)
     // grew them to 41.5, and 11 lands them on the 39.5 of Add to Projects' rows and field.
     const itemBase = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', textAlign: 'left', background: 'var(--surface-raised)', borderRadius: 'var(--radius-pill)', border: '1px solid var(--line)', padding: '11px 18px', cursor: 'pointer', font: 'inherit', color: 'var(--on-surface)' };
@@ -1010,10 +1009,12 @@ export const renderValsMethods = {
       const pals = pid ? this.projectPalettes(pid) : [p];
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
-const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const rowKey = (id) => (pid ? 'exp-' : 'ex-') + id;
+const mk = (id, label, ext) => ({ label, ext, done: s.copied === rowKey(id), doneWord: 'Downloaded', onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
-        kicker: pid ? 'Export Project' : 'Export Tokens',
+        // "Export", not "Export Tokens", since Copy lives here too (22.09.26): a hex list is not a token.
+        kicker: pid ? 'Export Project' : 'Export',
         stacked: !!pid,   // opened from the library panel's Projects tab, so it renders above it
         /* WHAT THE FILE WILL HOLD, before a format is chosen. A folder export is the one act here
            whose scale is not obvious from the thing you pressed, and "8 palettes, 40 colours, one
@@ -1029,11 +1030,21 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           : null,
         aria: pid
           ? 'Export the project ' + this.projectName(pid) + ' as design tokens, ' + n + ' palette' + (n === 1 ? '' : 's') + ' in one file'
-          : 'Export ' + p.name + ' as design tokens',
+          : 'Export ' + p.name + ': copy it, or download it as design tokens',
         semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
         layerLabel: semantic
           ? 'Exporting the semantic scaffold' + (pid ? ', six roles per palette' : '') + '. Refine before shipping.'
           : 'Exporting the primitive layer (swatches by weight)' + (pid ? ', grouped by palette' : '') + '.',
+        /* COPY IS THE FIRST GROUP OF EXPORT (22.09.26, by request: "fold copy into export"). Copy and
+           Export were two doors to one job — take this palette into your work — split only by where it
+           lands, the clipboard or a file, while Share is a different job. The two copies sit above the
+           downloads with the same row, the same confirmation and the same scaffold switch below them,
+           so the CSS on the clipboard is the CSS in the file (paletteCss, exporters.js). A single
+           palette only: a folder's export has no clipboard form. */
+        copies: pid ? [] : [
+          { label: 'Hex List', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list') },
+          { label: 'CSS Custom Properties', ext: 'CSS', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties') },
+        ].map((c) => Object.assign(c, { onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' } })),
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · CSS'),
           mk('tokens', 'Design Tokens (W3C)', 'JSON'),
@@ -1156,27 +1167,39 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       { id: 'temperature', key: 'activeTemp', label: 'Temperature', pick: (m) => m.temp.toLowerCase(),
         values: [{ id: 'warm', label: 'Warm' }, { id: 'cool', label: 'Cool' }, { id: 'neutral', label: 'Neutral' }] },
     ];
+    /* EVERY VALUE STAYS (22.09.26, by request: "It should stay visible", then "So elements still
+       disappear completely"). A value nothing here has used to leave the list, so the group changed
+       shape under the reader and Dark was simply gone from a library of light palettes. It stays now,
+       disabled at 0, as a project with nothing in it always did: the set of answers is fixed, and
+       which ones are empty is itself the answer (the disabled look is global.css [data-sec-row]
+       [aria-disabled]). A disabled row does nothing: these rows still applied their filter on a
+       click while they said they could not. */
     const measuredGroups = MEASURED.map((g) => {
       const base = others(g.id === 'lightness' ? 'light' : 'temp');
       const active = s[g.key] || [];
       const options = g.values.map((v) => {
         const n = base.filter((p) => g.pick(this.paletteMetrics(p)) === v.id).length;
         const on = active.indexOf(v.id) >= 0;
-        const disabled = !on && n > 0 && n === base.length;
+        const empty = !on && n === 0;
+        const whole = !on && n > 0 && n === base.length;
+        const disabled = empty || whole;
+        const word = v.label.toLowerCase();
         return {
           key: v.id, label: v.label, count: String(n), active: on, pressed: on ? 'true' : 'false',
-          disabled, reason: disabled ? 'Every palette here' : '',
-          aria: (on ? 'Remove the ' : 'Show only ') + v.label.toLowerCase() + ' palettes, ' + n + ' of them',
-          onToggle: () => this.setFacet(g.key, v.id),
+          disabled, reason: whole ? 'Every palette here' : '',
+          aria: empty ? 'No palettes here are ' + word
+            : whole ? 'Every palette here is ' + word + ', so this cannot narrow them further'
+            : (on ? 'Remove the ' : 'Show only ') + word + ' palettes, ' + n + ' of them',
+          onToggle: disabled ? () => {} : () => this.setFacet(g.key, v.id),
         };
-      }).filter((o) => o.active || parseInt(o.count, 10) > 0);
+      });
       return { id: g.id, label: g.label, options, has: options.length > 0 };
-    }).filter((g) => g.has);
+    });
 
     // ---- the Text usability facet: OR within the group, exhaustive over the archive ----
     // Ordered most-capable first, which is the order anyone shopping for a usable palette wants.
-    // Zero-result suppression applies as it does to tags: a state nothing has is not offered,
-    // unless it is already selected (it must stay reachable to be removed).
+    // A state nothing has stays, disabled at 0 (22.09.26, by request): see the note on the measured
+    // groups above. It used to be suppressed, as tags were, unless it was selected.
     // The universal case reaches this group too, and matters more here than in tags: because the
     // bands partition the archive, "every palette here is Limited Text" can be the whole truth about
     // a view. Suppressed, it left one lone checkbox that did nothing and no clue why; stated, it
@@ -1184,7 +1207,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
     const a11yOptions = ['flexible', 'limited', 'none'].map((v) => {
       const n = a11yBase.filter((p) => this.paletteMetrics(p).aaState === v).length;
       const active = activeA11y.indexOf(v) >= 0;
-      const disabled = !active && n > 0 && n === a11yBase.length;
+      const empty = !active && n === 0;
+      const disabled = empty || (!active && n > 0 && n === a11yBase.length);
       return {
         key: v, label: A11Y_LABEL[v], count: String(n), active, pressed: active ? 'true' : 'false',
         // The definition rides on the row itself — as its title for a pointer, and on the end of its
@@ -1195,15 +1219,15 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         title: A11Y_DEFINITION[v],
         // The reason is a different fact and survives alongside it: not what this band means, but
         // why THIS row cannot be picked, which is true of one row at a time and only sometimes.
-        disabled, reason: disabled ? 'Every palette here' : '',
-        aria: (disabled
+        disabled, reason: disabled && !empty ? 'Every palette here' : '',
+        aria: (empty ? 'No palettes here are ' + A11Y_SPOKEN[v]
+          : disabled
           ? 'All ' + n + ' of these palettes are ' + A11Y_SPOKEN[v] + ', so this cannot narrow them further'
           : (active ? 'Remove the ' : 'Filter to ') + A11Y_SPOKEN[v] + ' palettes, ' + n + ' of them')
           + '. ' + A11Y_DEFINITION[v],
         onPick: disabled ? () => {} : () => this.setA11yFilter(v),
-        show: n > 0 || active,
       };
-    }).filter((o) => o.show);
+    });
 
     let assignView = null;
     if (s.assignPalette) {
@@ -1398,7 +1422,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         // frame is worse than one that is not there.
         const mask = masks ? masks.urls[i] : null;
         return {
-          key: 'st-' + i, sid: i, hex: HX, pct: pct + '%', pctNum: pct,
+          key: 'st-' + i, sid: i, hex: HX, pct: sharePct(b.weight, totW), pctNum: pct,
           // The bar's own width — the real share, to one decimal, exactly as /about's figure states
           // it. Rounded to a whole number in `pct` for the key, because that is the figure the rest
           // of the app quotes.
@@ -1413,7 +1437,7 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           onPick: () => this.pickStorySwatch(i),
           // Never colour alone: the accessible name carries the hex, the share and whether this one
           // can be located in the picture at all.
-          aria: HX + ', ' + pct + ' percent of the palette'
+          aria: HX + ', ' + shareSpoken(b.weight, totW) + ' of the palette'
             + (mask ? '. Show where this colour appears in the photograph' : '. Too little of the frame to locate'),
         };
       });
@@ -1499,14 +1523,14 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
            the analysis bands. All three were hand-rolled label/value rows before this pass. */
         roleCells: roles.map((r) => {
           const sw = p.swatches.find((x) => x.hex.toUpperCase() === r.hex.toUpperCase());
-          const share = sw ? Math.round((sw.weight / totW) * 100) : null;
+          const share = sw ? sharePct(sw.weight, totW) : null;
           return {
             key: r.role, name: ROLE_LABEL[r.role], hex: r.hex.toUpperCase(), swatch: r.hex,
             // The tile's ink, as the picks carry it: this cell is a block of its colour now.
             ink: this.onColor(r.hex) === '#ffffff' ? '#ffffff' : (this.contrastRatio(r.hex, '#1a1a1a') >= 4.5 ? '#1a1a1a' : '#000000'),
             // The note /about's own role cells carry: what share of the frame this colour holds.
             // The share alone, set at the cell's bottom right (19.09.26, by request: "of the frame" went).
-            pct: share === null ? '' : share + '%',
+            pct: share === null ? '' : share,
           };
         }),
         /* The strongest pairs, ranked, classified in WORDS as well as by fill — the matrix figure's
@@ -1680,8 +1704,8 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
           const on = this.onColor(b.hex);   // guaranteed-AA on-colour for THIS swatch
           return {
             key, hex: HX, copied: s.copied === key,
-            pct: Math.round((b.weight / totW) * 100) + '%',
-            aria: 'Copy ' + HX + ', ' + Math.round((b.weight / totW) * 100) + ' percent of the palette',
+            pct: sharePct(b.weight, totW),
+            aria: 'Copy ' + HX + ', ' + shareSpoken(b.weight, totW) + ' of the palette',
             onCopy: () => this.copy(HX, key, 'Copied ' + HX),
             style: {
               display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
@@ -1779,33 +1803,17 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
       // toward responsiveness (a tap reaches this as a compatibility mouseover); drags ask directly.
       dropEnter: (e) => { this._procFieldIntent(); if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'color-mix(in srgb, var(--on-surface) 1%, var(--surface-raised))'; el.style.borderColor = 'color-mix(in srgb, var(--on-surface) 45%, transparent)'; },
       dropLeave: (e) => { if (this.state.dragOver) return; const el = e.currentTarget; el.style.background = 'var(--surface-raised)'; el.style.borderColor = 'var(--line-strong)'; },
-      // palette-level copy
-      // COPY IS ONE ACT WITH A FORMAT. Hex list and CSS variables sat in the row as peers of
-      // Export, which told the user the app has two copy features; it has one, and the format is
-      // a detail of it. The formats move into a menu on a single Copy control, and the confirmation
-      // lands on that control rather than in a status line somewhere else on the page.
-      /* The copy dialog's rows wear the export dialog's row: same object, same style, one source.
-         Copy is no longer a dropdown — see CopyControl in AppView — so the two surfaces have to be
-         the same surface rather than two that resemble each other. */
-      copyItemStyle: itemBase,
-      // The export rows' hover and focus tint, for the copy rows (17.09.26, audit C1): the two lists
-      // are one object and now answer a pointer the same way.
-      copyRowTint: {
+      /* The share sheet's rows wear the export dialog's row: same object, same style, and the same
+         hover and focus tint (17.09.26, audit C1), so every sheet in the tool answers a pointer alike.
+         Copy's own sheet, which these were written for, folded into Export on 22.09.26. */
+      sheetItemStyle: itemBase,
+      sheetRowTint: {
         onEnter: (e) => this.rowTintOn(e.currentTarget),
         onLeave: (e) => this.rowTintOff(e.currentTarget),
         onFocus: (e) => this.rowTintOn(e.currentTarget),
         onBlur: (e) => this.rowTintOff(e.currentTarget),
       },
-      copyMenuOpen: !!s.copyMenuOpen,
-      toggleCopyMenu: () => { if (this.state.copyMenuOpen) this.closeCopyMenu(); else this.openCopyMenu(); },
-      closeCopyMenu: () => this.closeCopyMenu(),
-      copyMenuKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeCopyMenu(); } else this.trapFocusIn('[data-copy-dialog]', e); },
-      copyDone: s.copied === 'pal-hex' ? 'Hex list' : s.copied === 'pal-css' ? 'CSS variables' : '',
-      // Neither closes the dialog any more, and neither moves focus — see the note on the overlay's
-      // pair above. The row reports; the sheet is left where the reader put it.
-      copyHexList: () => copyPal('hex'),
-      copyCss: () => copyPal('css'),
-      // THE SHARE DIALOG (19.09.26): the button opens it, as Copy's does; the rows copy the link (the
+      // THE SHARE DIALOG (19.09.26): the button opens it; the rows copy the link (the
       // palette rides in its fragment, which never reaches a server), hand it to the device, or draw it.
       shareMenuOpen: !!s.shareMenuOpen,
       toggleShareMenu: () => { if (this.state.shareMenuOpen) this.closeShareMenu(); else this.openShareMenu(); },
@@ -2301,6 +2309,9 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
         try { url = new URL(a.href, location.href); } catch (err) { return; }
         if (url.origin !== location.origin) return;
         e.preventDefault();
+        // /create from a document opens the tool the way /about's closing act does (openCreate), so a
+        // reader who met the landing first is not crossed back onto it.
+        if ((url.pathname.replace(/\/+$/, '') || '/') === CREATE_PATH && isDoc(this.state.route)) { this.openCreate(); return; }
         this.navigateTo(url.pathname);
       },
       /* The same swap, addressed directly. AboutPage's copy is injected HTML, so its links are not

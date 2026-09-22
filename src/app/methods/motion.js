@@ -743,6 +743,19 @@ export const motionMethods = {
     });
     return g.to(list, Object.assign({ '--wipe': to + '%' }, vars));
   },
+  /* THE EXIT'S TIMING, ONE PLACE FOR BOTH DOORS OUT OF A PALETTE (22.09.26): the result stage's reset
+     (pipeline.js doReset) and the palette detail's close (overlays.js closeOverlay) read it, so the two
+     cannot drift apart again. Each band sinks over DUR.state on EASE.reveal, and the ripple's step
+     shrinks so the last one lands by 0.36s however many bands there are. `end` is when the last band
+     is down; `cut` is the stage's swap, which lands as the last band is all but down: EASE.reveal is
+     an out-cubic, past 99.6% at 0.85 of its length, so the cut removes under a pixel of a 340px
+     swatch. */
+  _exitSink(n) {
+    const D = this.DUR.state, FIT = 0.36;
+    const step = n > 1 ? Math.min(this.DUR.stagger, Math.max(0, (FIT - D) / (n - 1))) : 0;
+    const last = step * Math.max(0, n - 1);
+    return { D, step, end: D + last, cut: Math.min(D * 0.85 + last, 0.38) };
+  },
   animateText(delay) {
     const g = window.gsap, root = this.resultRef.current;
     if (!g || !root || document.hidden) return;

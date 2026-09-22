@@ -30,7 +30,7 @@ if (typeof window !== 'undefined') {
 // is one of AppView's early-return branches, not a route — and it is scoped entirely under
 // [data-mobile-story], so nothing it holds can reach a viewport that never mounts that surface.
 import '../styles/story.css';
-import { isDoc, isLegal, pathFor } from './routes.js';
+import { isDoc, isLegal, pathFor, APP, CREATE_PATH } from './routes.js';
 import { thinkingOrbs } from './thinkingOrbs.js';
 // PAGE VIEWS ONLY. Do not add track() / custom events, and do not instrument generation, export or
 // any in-app action. Behavioural instrumentation is a separate decision with its own copy
@@ -174,6 +174,8 @@ const IconContrast = ({ size = 14 }) => (<svg width={size} height={size} viewBox
    the tray-and-arrow drawing is unchanged in meaning, and the second use (the result stage's Export
    menu, beside its own label) takes the new weight for the same reason: one glyph, one voice. */
 const IconExport = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zm-1-4l-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59L7 11l5 5z"></path></svg>);
+// Export's tray with the arrow turned up: Restore reads a file in where Back Up writes one out.
+const IconImport = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3zM7 9l1.41 1.41L11 7.83V16h2V7.83l2.59 2.58L17 9l-5-5z"></path></svg>);
 /* FOLDER AND BIN, OUTLINED — and the solid pair that stood here for one revision is the reason to
    say why. Both sit on the library row's actions, which lost their plate and their edge, and the
    first answer to "a bare glyph has to hold on its own" was to fill them in. It over-corrected: a
@@ -487,7 +489,8 @@ const UniversePanel = ({ c }) => (<>
 const FacetMark = ({ active, unavailable }) => (
   unavailable
     ? <span aria-hidden="true" style={sx('width:12px;height:12px;flex:none;display:inline-flex;align-items:center;justify-content:center')}>
-        <span style={sx('width:8px;height:1px;background:var(--on-surface-muted)')}></span>
+        {/* In the row's own ink, which a row that cannot narrow sets at the disabled tier (global.css). */}
+        <span style={sx('width:8px;height:1px;background:currentColor')}></span>
       </span>
     : <span aria-hidden="true" className="checkbox__custom" data-checked={active ? '' : undefined}>
         <span className="checkbox__custom-check"></span>
@@ -574,175 +577,30 @@ const contrastButtonLabel = (
 // DIALOG, not a menu, and a dialog announces itself by covering the screen. The formats behind it
 // are not five equivalents either; they carry extensions and a semantic-scaffold decision that
 // changes what each one emits, which is why it is a dialog in the first place.
-// Copy keeps its ▾, and that is the distinction now rather than an inconsistency: Copy really does
-// drop a menu under the button, so the mark points at where the menu will appear.
 const exportButtonLabel = (
   <span style={sx('display:flex;align-items:center;gap:7px;height:16px')}><span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-3px' }}><IconExport /></span><ButtonText>Export</ButtonText></span>
 );
-// COPY holds its formats in a menu and its confirmation on itself. The confirmation names the format
-// rather than saying "Copied", because from a menu that is the only part still in question — and it
-// stops at the format name: reserving room for the word "copied" as well would have made the widest
-// state ("CSS variables copied") the permanent width of a button that usually reads "Copy". The verb
-// is carried by the check mark and by the live region, which announces the whole sentence.
-// Copy carried the same three parts as Export — glyph, word, chevron — and now carries the first
-// two, because Export dropped its chevron and Copy stopped being a menu on the same day: what opens
-// is a dialog, and a dialog does not need pointing at.
-// Two earlier shapes did not. Naming the copied format on the button meant sizing the label against
-// "CSS variables" so the row could not reflow mid-copy, which left Copy a third wider than anything
-// beside it. SwapLabel's ✓ Copied was closer but still added its own check mark to a button that
-// already had a glyph, and paid for it in width. So the confirmation reuses the slots that are
-// already there: the glyph becomes the check, the word becomes Copied, and the only reserve is the
-// two characters between them. The chevron holds its place, so the row still never moves, and which
-// format landed on the clipboard is said by the live region and by the menu item just pressed.
-/* THE UNIT IS CENTRED, NOT THE WORD (18.09.26, by request, twice). The reserve that keeps the row
-   still while "Copied" shows used to centre the WORD in a Copied-wide cell, which put half the spare
-   width (about 6.5px) between the glyph and "Copy" — its gap read 14 against the other buttons' 8.
-   Holding the word to the start fixed the gap and piled all the spare after it (the right side read
-   9.5px wider than the left). Now glyph-and-word is one unit, centred inside a hidden glyph-and-
-   "Copied" of the same build: the gap is the shared 7px, the spare splits evenly to both sides, and
-   the button is as wide in both states as before.
-   A GRID, NOT AN INLINE GRID (19.09.26, audit U11, by request: "find the extra pixel"). Inline, the
-   label sat on a line of text inside .button__text and that line kept its strut's descent under
-   the 16px box, so Copy stood 36.5 beside four 35.5 buttons and 0.5px higher. The others' labels are
-   block-level flex rows of exactly 16; this is a block-level grid of the same height, and it shrinks
-   to the same width, because the button sizes to its content either way. */
-const copyButtonLabel = (done) => (
-  <span style={sx('display:grid;align-items:center;justify-items:center;height:16px')}>
-    <span style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px')}>
-      {/* ITS OWN ICON THROUGH THE COPIED STATE (19.09.26, by request: "keep their own icon"): the word
-          says Copied, and the copy glyph stays, where it swapped to a tick. */}
-      <span aria-hidden="true" style={{ display: 'inline-flex', marginLeft: '-1.5px' }}><IconCopy /></span>
-      <ButtonText>{done ? 'Copied' : 'Copy'}</ButtonText>
-    </span>
-    <span aria-hidden="true" style={sx('grid-area:1/1;display:flex;align-items:center;gap:7px;height:16px;visibility:hidden')}>
-      <span style={{ display: 'inline-flex' }}><IconCopy /></span>Copied
-    </span>
-  </span>
-);
-// One dialog, both surfaces. The result bar and the archive's fullscreen detail draw the same row, so
-// they draw the same chooser from the same state — only one of the two is ever mounted, which is why
-// a single flag and a single [data-copy-menu] selector are enough for the tween to find its panel.
-/* COPY IS A DIALOG NOW, NOT A DROPDOWN — the same surface as Export, because it is the same act:
-   pick a format, get the palette in it. The two were built differently for no reason anyone could
-   state — Copy dropped a 210px menu under its button while Export covered the screen — so the
-   choice looked like two different kinds of decision depending on which button you pressed.
-
-   WHAT IT COST AND WHAT IT BOUGHT. A menu is cheaper: it opens at the button and closes on the next
-   press. A dialog costs a covering layer for a two-item choice, which is the honest objection to
-   this. What it buys is that the formats can be READ: the menu had to keep its second line short
-   enough for a 210px box, while these rows carry the same label-and-kind pair the export list uses,
-   at the same size, on the same stadium. And it removes the last surface in the tool that answered
-   a press with a floating list.
-
-   THE ROW STYLE IS THE EXPORT DIALOG'S OWN (vals.copyItemStyle → itemBase in renderVals), and
-   data-ex-item is on these buttons deliberately: that attribute carries the rich-tint transition in
-   global.css, so the two lists answer a pointer identically rather than nearly so.
-
-   TWO CALL SITES, ONE COMPONENT, AND ONLY ONE OF THEM MAY DRAW THE SHEET. The result stage and the
-   palette detail overlay both mount this with their own handlers and their own `copied` key, off
-   one shared flag (copyMenuOpen). That was harmless while the surface was a menu — each was
-   positioned against its own trigger and the stage's was buried under the overlay — and it is not
-   harmless for a centred dialog: both instances rendered one, so the overlay path put two stacked
-   sheets and two scrims on the screen, doubling the dim and handing a screen reader two aria-modal
-   dialogs for one choice. `owns` settles it at the call site: the overlay takes it whenever it is
-   up, the stage takes it otherwise. The one on top was always the right one — the overlay's markup
-   comes later — so this changes nothing about which handler runs, only how many sheets exist. */
-function CopyControl({ open, owns, done, name, onToggle, onKey, onHex, onCss, itemStyle, tint }) {
-  /* THE FORMAT TAGS ARE GONE. Each row carried its shape on the right — ONE PER LINE against Hex
-     list, CUSTOM PROPERTIES against CSS variables — and both were the label again in other words.
-     The export dialog's tags stay, and the difference is the point: @THEME · CSS, JSON, ASE name a
-     FILE the row will write, which the label does not. Nothing here writes a file.
-     What the empty slot is for now: the confirmation. It was sharing that space with the tag and
-     had to be stacked in a grid cell so the row could not reflow; with the tag gone it simply
-     appears, and the row still cannot move because the row is the full width of the sheet. */
-  const fmt = [
-    { label: 'Hex list', onPick: onHex },
-    { label: 'CSS variables', onPick: onCss },
-  ];
-  /* OUT OF THE LANDMARKS, LIKE EVERY OTHER MODAL. The sheet used to render where its trigger is,
-     inside <main>. The export dialog it is modelled on sits beside <main>, as a child of [data-app],
-     and that placement is what lets _bgInert take the landmarks out of the tree while it is open —
-     inert the wrapper the sheet is inside and the sheet goes with it. So the layer is portalled to
-     the same host the other dialogs are rendered under. React events still bubble through the
-     component tree, so nothing about the handlers changes; only where the DOM lands. */
-  const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
-  return (<>
-    <Button data-copy-trigger="1" data-emphasis="secondary" aria-haspopup="dialog" aria-expanded={open}
-      onClick={onToggle} onKeyDown={onKey} aria-label="Copy the whole palette, in a format you choose"
-      style={CONSENT_BTN_TYPE} label={copyButtonLabel(done)} />
-    {open && owns && host && createPortal(
-      /* 125, the centred-dialog band, exactly where the export dialog sits when it is not stacked. */
-      <div data-copy-layer="1" style={sx('position:fixed;inset:0;z-index:125;display:flex;align-items:center;justify-content:center;padding:24px')}>
-        <div data-modal-backdrop="1" onClick={onToggle} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
-        <div data-copy-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Copy ' + name} onKeyDown={onKey} style={sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
-          <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
-            <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Copy palette</span>
-              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{name}</h2>
-            </div>
-            <button type="button" data-ix="press" data-focus="chrome" onClick={onToggle} aria-label="Close copy options" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
-          </header>
-          {/* NO LEAD (19.09.26, audit X4, by request: "Delete the copy. We are overexplaining too many
-              places"). "Every swatch in the palette, in the shape you pick. It goes to the clipboard, so
-              nothing is downloaded." stood here; the rows name the shapes, and the word Copy says where
-              they go. Share and Export lost theirs the same day, and the rows sit 16px under the title,
-              as Assign's do. */}
-          {/* THE ROW REPORTS, AND THE SHEET STAYS. Picking a format used to close the dialog and
-              leave the confirmation on the button behind it — a menu's manners on a surface that is
-              not a menu. The right-hand slot already held the format's kind, and that is the slot
-              the answer belongs in: it swaps to a check and COPIED for as long as the copied state
-              lasts, then goes back to saying what the format is.
-              The pair and its transition came from the project picker's ADDED, which that dialog's
-              rows no longer carry: since 19.09.26 (audit U4) they take the library panel's tick box.
-              Sized so it cannot reflow: the tag and the confirmation stack in one grid cell, the
-              wider of the two sets the width, and only visibility changes — a row that got shorter
-              on being pressed would move the row under it. */}
-          <div style={sx('padding:16px var(--page-gutter) 22px;display:flex;flex-direction:column;gap:6px')}>
-            {fmt.map((f, fi) => {
-              const isDone = !!done && done === f.label;
-              return (
-              /* FOCUS IS PUT BACK ON THE ROW, and that is not belt and braces. copy() always calls
-                 fallbackCopy, which mounts a textarea, selects it and removes it — so every copy
-                 drops focus on the body. That never showed while the surface closed on pick and
-                 handed focus to the trigger; with the sheet staying up, a keyboard reader was left
-                 standing in an open dialog with no focus in it. One rAF after the pick, so it lands
-                 behind the textarea's teardown rather than racing it. */
-              <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={(e) => { const el = e.currentTarget; f.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
-                onMouseEnter={tint && tint.onEnter} onMouseLeave={tint && tint.onLeave} onFocus={tint && tint.onFocus} onBlur={tint && tint.onBlur}
-                aria-label={f.label + (isDone ? ', copied' : '')} style={itemStyle}>
-                {/* The label answers the hover; the confirmation does not. A mark that lifts and
-                    re-enters while it is saying COPIED would read as the confirmation arriving
-                    twice. Same division the scope chips make between their label and their count.
-                    THE LIBRARY PANEL'S ROW VOICE (19.09.26, audit U3, by request): 13px Medium, flat,
-                    where these were 12px Regular, so every option row in the app speaks alike. */}
-                <span style={sx('font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat)')}><TextSwap>{f.label}</TextSwap></span>
-                {/* ALWAYS MOUNTED, AND EASED (17.09.26, audit E6): Add to Projects' "Added" recipe, the
-                    mark sliding 4px in as it fades, on --dur-chrome. It popped in and out with the
-                    render, and carried a .06em of its own where every label is flat. */}
-                {/* "Copied" IN TITLE CASE, WITHOUT THE CHECK (19.09.26, by request: "Copied should be in title case.
-                    Remove the checkmark"). It takes the phone share rows' voice for the same word, 13px
-                    Medium, where it was an 11px capital tag behind a tick. */}
-                <span aria-hidden="true" data-done-mark="1" style={{ ...sx('display:inline-flex;align-items:center;flex:none;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: isDone ? 1 : 0, transform: isDone ? 'translateX(0)' : 'translateX(4px)' }}>Copied</span>
-              </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    , host)}
-  </>);
-}
+/* COPY FOLDED INTO EXPORT (22.09.26, by request: "fix the mismatch and fold copy into export"). Copy
+   and Export were one act, taking the palette out in a format, split by where it lands, and Copy's CSS
+   was not Export's CSS: a --<slug>-1 list against the --palette-<slug>-01 file, two answers under one
+   name. The export dialog now holds a Copy group over its Download group, the clipboard CSS is the
+   downloaded file byte for byte (paletteCss in lib/exporters.js), and every row confirms in place.
+   CopyControl, its label, its sheet, its trigger's padding rule in global.css and the copyMenuOpen flag
+   went with it. Share stays its own door: sending a palette to someone is a different intent. */
 
 /* THE SHARE DIALOG (19.09.26, by request: "go with the download image and build a"). Share copied a
-   link on the press and said nothing about what else a share could be; it opens Copy's sheet now, the
-   same layer, corner, header and rows, with three ways out:
-   - Copy Link, answering "Copied" in the row, as Copy's formats do;
+   link on the press and said nothing about what else a share could be; it opens a sheet now, the
+   export dialog's layer, corner, header and rows, with three ways out:
+   - Copy Link, answering "Copied" in the row, as the export dialog's rows do;
    - Share via…, the device's share sheet, only where the browser has one;
    - Download Image, the palette as a 1080 by 1350 picture (lib/paletteCard.js), answering "Downloaded".
    No social buttons: a link previews as the site's card, never the palette (it rides in the fragment),
    and the share sheet already reaches the apps people have. The labels are written in their Title
-   Case, so the rows set no text-transform and "via" stays lower case. Two call sites, one sheet: the
-   same `owns` rule as Copy's. */
+   Case, so the rows set no text-transform and "via" stays lower case.
+   TWO CALL SITES, ONE SHEET. The result stage and the palette detail both mount this off one flag, and
+   a centred dialog drawn by both stacks two scrims and hands a screen reader two aria-modal dialogs for
+   one choice. `owns` settles it at the call site: the overlay takes it whenever it is up, the stage
+   otherwise. */
 function ShareControl({ open, owns, name, rows, onToggle, onKey, itemStyle, tint }) {
   const host = typeof document !== 'undefined' ? (document.querySelector('[data-app]') || document.body) : null;
   return (<>
@@ -1601,10 +1459,13 @@ function SkipLink() {
    breakpoint. The landing no longer draws a footer at all (see the tombstone in LandingStage), so
    the prop went with it and the credit carries its own three lines of layout instead. If something
    ever needs a cell at the head of this row again, that is the shape it had. */
-function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landmark = true }) {
+function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landmark = true, create = true }) {
   const Root = landmark ? 'footer' : 'div';
+  // The tool's footer is only ever under the tool, never the landing (which draws none), so on the
+  // APP route the page this footer sits on is /create.
+  const here = route === APP ? CREATE_PATH : pathFor(route);
   const link = (href, label) => (
-    <a href={href} onClick={onNavigate} {...(pathFor(route) === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
+    <a href={href} onClick={onNavigate} {...(here === href ? { 'aria-current': 'page' } : null)}><TextSwap>{label}</TextSwap></a>
   );
   return (
     <Root className="site-foot">
@@ -1642,6 +1503,13 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
               this footer chose is the half that names the document type rather than the subject,
               which is the opposite of the rule the paragraph above states. Privacy is what a reader
               is looking for and what every other surface already called it. */}
+          {/* CREATE LEADS (22.09.26, by request). The tool is what the site is for, and from Privacy,
+              Terms or How it Works the only way back to it was the mark, which for a first visit
+              lands on the front page, one press short of the tool. First in the row because the
+              first and last items are the ones remembered. navigate() sends it through openCreate
+              from a document, like /about's closing act. `create={false}` on the phone story, where
+              there is no tool for it to open and the link would do nothing. */}
+          {create && link(CREATE_PATH, 'Create')}
           {link('/about', 'How it Works')}
           {/* SECOND, BETWEEN How it Works AND THE TWO STATEMENTS (20.09.26, by request). It sat last,
               after Privacy Settings, on the argument that an offer goes after the things a reader
@@ -1997,9 +1865,10 @@ function LandingStage({ vals, covered, quiet }) {
                 reader saying the name twice. */}
             {vals.landingCredit && (
               <div data-land-credit="1" style={sx('display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:0 var(--page-gutter) 26px')}>
-                {/* A CORNER FOR ITS SIZE (17.09.26, by request): --radius-swatch, the site's smallest,
-                    set when the thumbnail was 56 to 96px wide. The ring below takes it too. */}
-                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;border-radius:var(--radius-swatch);width:128px;aspect-ratio:3/2;background:var(--surface-raised)')}>
+                {/* A CORNER FOR ITS SIZE: --radius-thumb, 8px since 22.09.26, by request. It was
+                    --radius-swatch (3px), set when the thumbnail was 56 to 96px wide; at 128 x 85 it
+                    read as square. The ring below takes it too. */}
+                <span aria-hidden="true" style={sx('position:relative;display:block;overflow:hidden;border-radius:var(--radius-thumb);width:128px;aspect-ratio:3/2;background:var(--surface-raised)')}>
                   {/* No fetchPriority="low": this is the landing's largest early paint, so a low
                       priority only queued it behind everything else. The file is the small cut. */}
                   <img src={vals.landingCredit.image} alt="" decoding="async" style={sx('display:block;width:100%;height:100%;object-fit:cover')} />
@@ -2011,10 +1880,37 @@ function LandingStage({ vals, covered, quiet }) {
                     palette is the information here, and the preposition is the grammar around it.
                     TWO LINES, the name under "Based on" (21.09.26, by request: "add a break after
                     Based on"). */}
-                <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty")}>
-                  Based on<br /><span style={sx('color:var(--on-surface)')}>{vals.landingCredit.name}</span>
+                {/* BOTH LINES IN FULL INK SINCE 22.09.26 (by request: "fix the based on contrast too").
+                    "Based on" was --on-surface-muted over the field and measured about 3.2:1 in light
+                    and 2.9:1 in dark, under the 4.5 text needs, so the label and the name are told
+                    apart by weight now rather than by ink: the label Regular, the name Medium. */}
+                <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:400;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty")}>
+                  Based on<br /><span style={sx('font-weight:500')}>{vals.landingCredit.name}</span>
                 </div>
               </div>
+            )}
+            {/* THE LEGAL ROW, OPPOSITE THE CREDIT (22.09.26, by request, mocked first). The landing covers
+                the document's footer, so once the analytics banner was answered nothing on this screen
+                led to Privacy, Terms or the analytics choice again: the gap the footer's tombstone above
+                recorded, and closed the way it said, one line beside the credit rather than the footer
+                back. Privacy Settings is here because withdrawing has to be as easy as allowing was.
+                The credit's type, in full ink: muted measured about 2.3:1 on the field in light and 2.0
+                in dark, ink about 6.6 and 4.8. The footer's link contract (target, hover, swap, ring)
+                through .land-legal in site-foot.css. Line-height 1.3 for the swap's mask, as the footer
+                (1.2 clips descenders), so its bottom sits 0.65px lower than the credit's 26 to share the
+                credit name's baseline. Desktop only: the phone story ends in the real footer. The band
+                is pointer-events:none; the row takes them back.
+                IT STEPS ASIDE UNDER THE BANNER. The analytics banner stands in this same corner, over
+                the row, and left the end of "Settings" showing under its edge and the links beneath it
+                unreachable. While the banner is up the row fades out (inert, so it cannot be tabbed into
+                under the glass) and returns when the banner goes. The banner carries Learn More to
+                Privacy meanwhile, and Privacy Settings is what raised it. */}
+            {!vals.narrow && (
+              <nav className="land-legal" aria-label="Legal" {...(vals.consentOpen ? { inert: true } : null)} style={sx("position:absolute;right:var(--page-gutter);bottom:calc(26px - 0.65px);display:flex;gap:16px;pointer-events:auto;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1.3;letter-spacing:var(--track-flat);color:var(--on-surface);transition:opacity var(--dur-state) var(--ease-standard);opacity:" + (vals.consentOpen ? 0 : 1))}>
+                <a href="/privacy" onClick={vals.navigate}><TextSwap>Privacy</TextSwap></a>
+                <a href="/terms" onClick={vals.navigate}><TextSwap>Terms</TextSwap></a>
+                <button type="button" className="site-foot__consent" onClick={vals.openConsent}><TextSwap>Privacy Settings</TextSwap></button>
+              </nav>
             )}
           </div>
         </div>
@@ -2171,7 +2067,7 @@ export default function AppView({ vals }) {
             the two statements specifically, a route that has to exist. MobileStory is itself a
             .doc-route, and site-foot.css is scoped to nothing above .site-foot, so it lands here
             styled exactly as it does on /about. */}
-        <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} />
+        <SiteFooter route={vals.route} onNavigate={vals.navigate} onConsent={vals.openConsent} create={false} />
         {/* THE LOADER ON THE PHONE TOO (19.09.26, by request: "make sure the page loader is active on
             mobile"). This branch never mounted it, so a first visit on a phone got no loader while the
             run still waited out its 4s search for one, holding the consent ask back. The story's
@@ -2330,55 +2226,19 @@ export default function AppView({ vals }) {
             SiteFooter, which is the row it belongs to and the precedent for a button standing among
             those links. */}
         <ThemeSwitch vals={vals} />
-        {/* RIGHT — the acts. New generation drives the core loop, so it stays filled and leads the
-            cluster in the DOM (and therefore in the tab order); the backup pair follows behind a
-            hairline, outlined rather than filled, so the two never read as peers.
-
-            Backing up and restoring moved UP here from the archive heading line. Both act on the
-            library as a whole rather than on the list they used to sit beside, and down there they
-            were read as one more list control — a filter or a scope. In the bar they get their own
-            space, next to the other things that act rather than describe, and the Library heading
-            keeps only what belongs to the list.
-
-            They used to read Save file and Open file. Those name a file dialog, not a consequence:
-            the thing at stake is a library that exists in exactly one browser, and "save" already
-            means four other things in this app (a palette is saved the instant it is generated, a
-            share link saves nothing, Export writes tokens). Back up and Restore name the act by
-            what it protects. Export was the other candidate and lost on the same ground — the
-            palette screen already spends that word on token export.
-
-            Show intro again used to be the third item in this menu. It was never a file action, and
-            under a button called Back up it would read as one; it is also the brand mark's job, and
-            the mark carries the same aria-label and calls the same returnToIntro() on every screen
-            this menu appears on. One act, one door. */}
-        {/* 12 BETWEEN EVERY LINK IN THE BAR, by request (15.09.26): New Palette to the pair, and Back Up
-            to Restore — it was 14 and 8. */}
+        {/* RIGHT — the act. New Palette drives the core loop, so it stays filled and alone.
+            Back Up and Restore stood here from 15.09 to 22.09.26 and are Manage Library's last group
+            now (see the note there). Show intro again was once a third item in their menu; it is the
+            brand mark's job, which calls returnToIntro() on every screen. One act, one door. */}
         <div style={sx('display:flex;align-items:center;gap:12px')}>
           {/* "New generation" named the machinery. What the button makes is a palette, and the rest of
               the app has spent five rounds learning to say so: the Library holds palettes, and Add to
               project files one. On the create page in every state and off the landing, and it
-              always starts a palette — see NavNewPalette. No rule between it and the library pair
-              (removed by request, 02.09.26): the gap carries the grouping on its own. */}
+              always starts a palette — see NavNewPalette. */}
           <NavNewPalette show={!vals.showLanding} onPress={vals.newPalette} />
-          {vals.showProjectsBar && (
-            <div style={sx('display:flex;align-items:center;gap:12px')}>
-              {/* ONE ACT, NO MENU. This was a disclosure: a trigger carrying aria-haspopup and a
-                  chevron, opening a two-item menu whose items were "Back up this project" and "Back
-                  up whole library". Removed by request — a menu is the right shape when a choice has
-                  to be made and the wrong one when the common case is the only case anyone reaches.
-                  The label now says what the single act does rather than naming a category, which is
-                  what let the chevron go.
-
-                  WHAT THIS COSTS, stated rather than buried: per-project backup is no longer
-                  reachable from the masthead. toggleBackupMenu and backupMenuOpen are still in
-                  renderVals.js, uncalled; backUpProject, showBackUpProject and activeScopeLabel went
-                  on 19.09.26 with the single project scope they read (projects are a filter now), and
-                  saveProjectFile(id) still writes one project's file if the menu comes back. */}
-              <button type="button" data-ix="press" data-focus="chrome" data-tier3-action="" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={vals.tier3BtnStyle}><TextSwap>Back Up</TextSwap></button>
-              <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" data-tier3-action="" style={vals.tier3BtnStyle}><TextSwap>Restore</TextSwap></button>
-              <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
-            </div>
-          )}
+          {/* Restore's file input. It stays in the bar, which is always mounted under the tool; the
+              drawer that holds Restore is not. */}
+          <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
         </div>
       </header>
 
@@ -2578,18 +2438,18 @@ export default function AppView({ vals }) {
               {/* nowrap INSIDE the group. The row may wrap — it has to, between the supported
                   minimum width and the width this bar was drawn for; that gap is a good deal
                   narrower than it was, since the gate went from 721 to 1024 and took the worst of
-                  these widths off the board — but the validate/output trio wraps as
+                  these widths off the board — but the validate/output pair wraps as
                   one block or not at all. Letting it break internally put Export on a line of its
-                  own under a hairline that stayed behind with Copy, which reads as two groups where
-                  there is one. Core acts stay put; the output cluster is what moves. */}
+                  own under a hairline that stayed behind with Copy (folded into Export since
+                  22.09.26), which reads as two groups where there is one. Core acts stay put; the
+                  output cluster is what moves. */}
               {/* The hairline that used to divide the trio from the filing act is gone (by request,
                   02.09.26); the group is still one flex box so it wraps as one. */}
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
                     and the one its card falls back to if the reader dismisses the drawer themselves. */}
                 <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-                <CopyControl open={vals.copyMenuOpen} owns={!vals.hasOverlay} done={vals.copyDone} name={vals.result.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={vals.copyHexList} onCss={vals.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-                <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+                <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2598,7 +2458,7 @@ export default function AppView({ vals }) {
                   (It was moved into the group above for one revision and moved back: the placement
                   was never the thing that looked wrong — see the label's own note for what was.) */}
               <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-                <ShareControl open={vals.shareMenuOpen} owns={!vals.hasOverlay} name={vals.result.name} rows={vals.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
+                <ShareControl open={vals.shareMenuOpen} owns={!vals.hasOverlay} name={vals.result.name} rows={vals.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.sheetItemStyle} tint={vals.sheetRowTint} />
               </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
@@ -3596,7 +3456,7 @@ function DetailOverlay({ vals }) {
         </div>
         {/* The same row as the result view's, deliberately: same order, same division, same
             weights. A palette opened fullscreen from the archive must not re-teach the user a
-            different set of controls. Filing leads because it leaves something behind; the trio
+            different set of controls. Filing leads because it leaves something behind; the pair
             after it only reads the palette back to you, Contrast first because inspecting comes
             before copying. SHARE CLOSES THE ROW HERE TOO (19.09.26, audit U6, by request), at the far
             end behind the same flexible gap: a share link is sealed from the palette itself, so
@@ -3608,11 +3468,10 @@ function DetailOverlay({ vals }) {
           <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
             <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-            <CopyControl open={vals.copyMenuOpen} owns done={overlay.copyDone} name={overlay.name} onToggle={vals.toggleCopyMenu} onKey={vals.copyMenuKey} onHex={overlay.copyHexList} onCss={overlay.copyCss} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
-            <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+            <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
-            <ShareControl open={vals.shareMenuOpen} owns name={overlay.name} rows={overlay.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.copyItemStyle} tint={vals.copyRowTint} />
+            <ShareControl open={vals.shareMenuOpen} owns name={overlay.name} rows={overlay.shareRows} onToggle={vals.toggleShareMenu} onKey={vals.shareMenuKey} itemStyle={vals.sheetItemStyle} tint={vals.sheetRowTint} />
           </span>
         </div>
       </footer>
@@ -3798,8 +3657,12 @@ function LibraryDrawer({ vals }) {
           {/* The heading stays text alone: the reveal splits it into lines and restores it as markup,
               and a control inside it would go inert (the tick-box bug of 17.09). Edit stands beside
               it, at the rows' trailing edge. */}
+          {/* NEW PROJECT WHILE THE FIELD IS ALL THE GROUP HOLDS (22.09.26, by request): with no project
+              yet the heading names the one act here, where "Project" over "Project Name" said the same
+              word twice. Once a project exists it heads the list again. A lone text child, so the
+              reveal's restore cannot strand it (see split-targets in maskLines.js). */}
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px')}>
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px')}>Project</span>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px')}>{vals.canEditProjects ? 'Project' : 'New Project'}</span>
             {vals.canEditProjects && (
               <button type="button" data-ix="press" data-focus="chrome" aria-pressed={vals.projectsEditing} aria-label={vals.projectsEditing ? 'Done editing projects' : 'Edit projects'} onClick={vals.toggleProjectsEdit} style={sx('flex:none;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>{vals.projectsEditing ? 'Done' : 'Edit'}</TextSwap></button>
             )}
@@ -3813,7 +3676,7 @@ function LibraryDrawer({ vals }) {
                   {/* A name may run to 60 characters, so this label may shrink and end in an ellipsis,
                       where the measured labels are short and never do. */}
                   <span data-reveal="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;font-weight:500;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis')}>{o.label}</span>
-                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
               {vals.projectMore && (
@@ -3940,8 +3803,8 @@ function LibraryDrawer({ vals }) {
         {/* ACCESSIBILITY — a facet, and the first one, because "can I build with this?" outranks
             "what mood is it?". Exhaustive: every palette holds exactly one state, so the group
             always partitions the archive. OR within the group (a palette cannot be two states, so
-            AND would be unsatisfiable); AND against tags. Same checkbox, count and zero-suppression
-            rules as the tag rows — one grammar for every facet. */}
+            AND would be unsatisfiable); AND against tags. Same checkbox and count as every facet
+            row, and since 22.09.26 every state stays, disabled at 0 when nothing here has it. */}
         {vals.hasA11yOptions && (
           /* data-sec / data-sec-head / data-sec-row / data-reveal / data-row-rule: the mobile story's
              section hooks, read by overlays.js _syncLibraryReveal — the eyebrow rises out of its
@@ -3979,7 +3842,7 @@ function LibraryDrawer({ vals }) {
                       margin-inline-start:auto sends it to the row's trailing edge, tabular-nums
                       keeps the digits on one grid, and the row's own --btn-pad-lg puts every number
                       on the same 16px inset the rest of the panel uses. */}
-                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                   {/* A fourth span stood here on all three facet lists, right-aligned and holding
                       o.reason — "Every palette here" — whenever an option was disabled. Removed by
                       request. It was also the row's flex spacer at flex:1, and nothing takes that
@@ -4022,12 +3885,39 @@ function LibraryDrawer({ vals }) {
                       as the label and count rise through their line masks (pageReveal.js). */}
                   <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
                   <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
-                  <span data-reveal="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
             </div>
           </div>
         ))}
+
+        {/* BACKUP, THE LAST GROUP (22.09.26, UX audit, by request "fix all four"). Back Up and Restore
+            stood in every masthead beside New Palette since 15.09, and on the document pages too: a
+            rare act given the primary's weight on every screen. They act on the Library as a whole,
+            which is what this panel is the one door for, so they are its last group. Rows in the
+            group's own grammar, but with no tick box: they act, they do not narrow, so they must not
+            look like the filters above them. The glyph at the row's end says which way the file goes.
+            Back Up only when there is something to back up; Restore always, because an empty library
+            is exactly when it is needed. The file input stays in the masthead, which is always
+            mounted under the tool; Restore's dialog opens above this panel (157). */}
+        <div data-sec="1" style={sx('padding:14px var(--page-gutter) calc(20px + var(--consent-foot, 0px))')}>
+          <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Backup</span>
+          <div role="group" aria-label="Backup" style={sx('display:flex;flex-direction:column;gap:6px')}>
+            {vals.showProjectsBar && (
+              <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
+                <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
+                <span data-reveal="1" style={measuredLabelStyle}>Back Up</span>
+                <span data-reveal="1" style={sx('margin-inline-start:auto;display:inline-flex;color:var(--on-surface-muted)')}><IconExport size={16} /></span>
+              </button>
+            )}
+            <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
+              <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
+              <span data-reveal="1" style={measuredLabelStyle}>Restore</span>
+              <span data-reveal="1" style={sx('margin-inline-start:auto;display:inline-flex;color:var(--on-surface-muted)')}><IconImport size={16} /></span>
+            </button>
+          </div>
+        </div>
 
         {/* THE CHARACTER TRAITS DISCLOSURE WAS HERE and has been removed by request: the
             heading-and-chevron row that opened the interpretive facets. The section it opened (the
@@ -4153,6 +4043,30 @@ function HarmonyDrawer({ vals }) {
 }
 
 // ============================== TOKEN EXPORT DIALOG ==============================
+/* ONE ROW FOR A COPY OR A DOWNLOAD (22.09.26). The label rides the hover swap in the panel's row voice
+   (13px Medium, audit U3); the right slot stacks the format tag and the confirmation in one grid cell,
+   so the row cannot move when it confirms — the wider of the two sets the slot, and only their opacity
+   changes. The confirmation is Copy's own recipe: "Copied" or "Downloaded" in the row voice, sliding
+   4px in as it fades on --dur-chrome, always mounted. FOCUS IS PUT BACK ON THE ROW one frame after the
+   pick, because copy() mounts, selects and removes a textarea, which drops focus on the body — a keyboard
+   reader would be left in an open dialog with nothing focused. */
+// The library drawer's section-head voice, inset to the rows' text edge.
+const EX_GROUP_HEAD = sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px');
+function ExportRow({ f }) {
+  return (
+    <button type="button" data-ex-item="1" data-focus="chrome"
+      onClick={(e) => { const el = e.currentTarget; f.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
+      onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur}
+      aria-label={f.label + (f.done ? ', ' + f.doneWord.toLowerCase() : '')} style={f.style}>
+      <span style={sx('font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat)')}><TextSwap>{f.label}</TextSwap></span>
+      <span style={sx('display:grid;align-items:center;justify-items:end;flex:none')}>
+        <span style={{ ...f.extStyle, gridArea: '1 / 1', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: f.done ? 0 : 1 }}>{f.ext || ''}</span>
+        <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: f.done ? 1 : 0, transform: f.done ? 'translateX(0)' : 'translateX(4px)' }}>{f.doneWord}</span>
+      </span>
+    </button>
+  );
+}
+
 function ExportDialog({ vals }) {
   if (!vals.hasExport) return null;
   const ex = vals.export;
@@ -4180,18 +4094,24 @@ function ExportDialog({ vals }) {
             places"). "Every export contains HEX, RGB and HSL. The CMYK shown on screen is an
             approximation, so it is never included." stood here; the files carry what they carry. */}
 
+        {/* COPY, THEN DOWNLOAD (22.09.26, by request: "fold copy into export"). Two groups under the
+            drawers' section-head voice, because CSS Custom Properties appears in both — once for the
+            clipboard, once as a file — and only the group says which. Copy first: it is the act taken
+            most, and the one that asks for nothing further. A folder's export has no Copy group.
+            THE GROUP IS SAID TO A SCREEN READER TOO: two rows share the name CSS Custom Properties, so
+            each group is a role="group" named by its visible label, announced on the way in. One export
+            dialog is ever mounted, so the two ids are unique. 18px between the groups, 6 inside them. */}
         <div style={sx('padding:16px var(--page-gutter) 0;display:flex;flex-direction:column;gap:6px')}>
-          {ex.formats.map((f, fi) => (
-            <button key={fi} type="button" data-ex-item="1" data-focus="chrome" onClick={f.onPick} onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur} style={f.style}>
-              {/* Swapped like the copy dialog's rows, because they are the same list: two surfaces
-                  that were made to look identical and then answered a pointer differently would be
-                  a worse inconsistency than the one the shared row style was written to fix.
-                  The panel's row voice, 13px Medium (19.09.26, audit U3, by request); the format tag
-                  beside it keeps the tag voice. */}
-              <span style={sx('font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat)')}><TextSwap>{f.label}</TextSwap></span>
-              <span style={f.extStyle}>{f.ext}</span>
-            </button>
-          ))}
+          {ex.copies.length > 0 ? (<>
+            <div role="group" aria-labelledby="ex-copy-head" style={sx('display:flex;flex-direction:column;gap:6px')}>
+              <span id="ex-copy-head" data-ex-group="1" style={EX_GROUP_HEAD}>Copy</span>
+              {ex.copies.map((f, fi) => (<ExportRow key={fi} f={f} />))}
+            </div>
+            <div role="group" aria-labelledby="ex-download-head" style={sx('display:flex;flex-direction:column;gap:6px;padding-top:12px')}>
+              <span id="ex-download-head" data-ex-group="1" style={EX_GROUP_HEAD}>Download</span>
+              {ex.formats.map((f, fi) => (<ExportRow key={fi} f={f} />))}
+            </div>
+          </>) : ex.formats.map((f, fi) => (<ExportRow key={fi} f={f} />))}
         </div>
 
         {/* 22px OF BOTTOM PADDING, INHERITED RATHER THAN INVENTED. The line under this row carried
@@ -4579,7 +4499,9 @@ function RestoreDialog({ vals }) {
   if (!vals.hasRestore) return null;
   const r = vals.restore;
   return (
-    <div style={sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px')}>
+    /* 157, with Export and Assign: Restore is opened from Manage Library (z 156) since 22.09.26, so it
+       has to stand above the panel it came from. */
+    <div style={sx('position:fixed;inset:0;z-index:157;display:flex;align-items:center;justify-content:center;padding:24px')}>
       <div data-modal-backdrop="1" onClick={vals.closeRestore} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
       <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>

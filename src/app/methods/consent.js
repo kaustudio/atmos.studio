@@ -30,6 +30,7 @@ export const consentMethods = {
   // no answer: a visitor who has chosen is never asked again, and one who has not is asked once.
   _syncConsent() {
     const s = this.state;
+    this._syncConsentAside();
     if (s.consent) return;
     this._watchEngagement();
     // Waiting means the beat has passed and the first input will ask; nothing to arm meanwhile.
@@ -64,13 +65,60 @@ export const consentMethods = {
        The question waits for the tour to be over, on the same retry that already waits out the
        loader and the page wipe. Nothing is lost by the wait: analytics do not mount until this is
        answered either way (lib/consent.js), so a later ask is a later ask, not a gap. */
-    if (this.state.showLoader || this._wipeRunning || this.state.tourStep != null) { this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS); return; }
+    if (this.state.showLoader || this._wipeRunning || this._consentBlocked()) { this._consentT = setTimeout(() => this._askConsent(), CONSENT_RETRY_MS); return; }
     if (!this._engaged) { this._consentWaiting = true; return; }
     this._consentAsked = true;
     // No focus move: the question arrives unprompted, and taking focus from whatever the reader is
     // doing would make it modal in all but name. It is first in the document instead, so the next
     // Tab from the top of the page reaches it before anything else.
     this.setState({ consentOpen: true }, () => this._consentIn());
+  },
+  /* ONE QUESTION AT A TIME, FOR EVERY DIALOG (22.09.26, UX audit, by request "fix all four"). The
+     21.09 rule above kept the banner from arriving over the tour; it still arrived first and then
+     stood beside whatever the reader opened next. Measured on a first visit: Create asks, the reader
+     chooses one of the eight example images, and "already in your Library" (Extract Again / Open
+     Existing Palette) claims aria-modal while the banner beside it stays clickable. The same holds
+     for Restore, Export, Assign, Share, the contrast checker and the harmonies.
+     So while any of them is open the banner is not asked, and one already up steps aside: it
+     dissolves on its own exit (no pointer, inert, hidden from assistive technology) and comes back
+     on its own entrance when the dialog closes. It is still unanswered; nothing is chosen for the
+     reader, and analytics stay off until they answer. */
+  _consentBlocked() {
+    const s = this.state;
+    return !!(s.tourStep != null || s.recognised || s.restorePending || s.assignPalette
+      || s.exportOpen || s.shareMenuOpen || s.contrast || s.harmony);
+  },
+  /* ROOM UNDER THE LIBRARY PANEL WHILE THE BANNER IS UP (22.09.26). Manage Library is non-modal and
+     ends on Backup since the same day, and the banner floats over the panel's foot: on a 768px window
+     it covered Restore with nothing left to scroll. --consent-foot is the banner's footprint, read
+     once when it arrives and dropped when it leaves; the panel's last group pads by it. */
+  _syncConsentFoot() {
+    const on = !!(this.state.consentOpen && !this._consentAside);
+    if (on === !!this._consentFootOn) return;
+    this._consentFootOn = on;
+    const root = document.documentElement;
+    if (!on) { root.style.removeProperty('--consent-foot'); return; }
+    const el = document.querySelector('[data-consent]');
+    if (el) root.style.setProperty('--consent-foot', Math.round(window.innerHeight - el.getBoundingClientRect().top) + 'px');
+  },
+  _syncConsentAside() {
+    this._syncConsentFoot();
+    const aside = !!(this.state.consentOpen && !this._consentClosing && this._consentBlocked());
+    if (aside === !!this._consentAside) return;
+    this._consentAside = aside;
+    this._syncConsentFoot();
+    const el = document.querySelector('[data-consent]');
+    if (!el) return;
+    const g = window.gsap;
+    if (aside) {
+      el.setAttribute('inert', ''); el.setAttribute('aria-hidden', 'true'); el.style.pointerEvents = 'none';
+      if (this._reduce || !g) { el.style.visibility = 'hidden'; return; }
+      this._consentTurn(el, 0, this.EASE.exit);
+      return;
+    }
+    el.removeAttribute('inert'); el.removeAttribute('aria-hidden'); el.style.pointerEvents = ''; el.style.visibility = '';
+    if (this._reduce || !g) return;
+    this._consentTurn(el, 1, this.EASE.entrance).eventCallback('onComplete', () => this._consentSettle(el));
   },
   /* LEARN MORE, AND THE QUESTION STAYS UP. The privacy statement's Analytics section, reached the way
      every in-document link is: a plain left-click is taken in-app, anything else follows the address.
@@ -147,6 +195,7 @@ export const consentMethods = {
       this._consentClosing = false;
       const pending = this._consentPending || {};
       this._consentPending = null;
+      this._consentAside = false;
       this.setState({ ...pending, consentOpen: false }, () => {
         if (hadFocus && back && back.isConnected) { try { back.focus(); } catch (e) { } }
         // The tour's invitation, if Create was pressed while this was up (tour.js maybeOfferTour).

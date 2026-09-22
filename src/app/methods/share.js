@@ -49,11 +49,11 @@ export const shareMethods = {
   },
 
   /* THE SHARE DIALOG (19.09.26, by request: "go with the download image and build a"). Share opened
-     nothing and copied a link; it opens the Copy dialog's sheet now, with three ways out: Copy Link,
+     nothing and copied a link; it opens a sheet like Export's now, with three ways out: Copy Link,
      Share via… (the device's own share sheet, or Email Link where the browser has none) and Download
-     Image (the palette as a picture, lib/paletteCard.js). It opens and closes exactly as Copy does:
-     the opener is remembered, the landmarks go inert through PaletteApp's modal set, and focus comes
-     back to the button once they are live again.
+     Image (the palette as a picture, lib/paletteCard.js). It opens and closes as the centred dialogs
+     do: the opener is remembered, the landmarks go inert through PaletteApp's modal set, and focus
+     comes back to the button once they are live again.
      ONE DIFFERENCE: focus lands on Copy Link rather than on the close mark, so the press this button
      used to be is still two keys away, Share and then Enter. */
   openShareMenu() {

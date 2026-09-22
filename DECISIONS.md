@@ -7,6 +7,183 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — A grid card closes on the reference's damped flip
+
+**By request: "The close animation for the card needs improving as well. it's not as smooth as the
+original reference."** The reference is Osmo's Infinite Dome Grid, whose spec is
+`~/Downloads/no-gl-grid-skill.md`. It drives its flip from one progress value, damped toward its target
+every frame at 0.1–0.14, and derives the side panel and the caption from that same value.
+
+Ours tweened that value on the fold curve after a 60ms beat. Measured in Chrome at 1440×900 (frame
+pacing was clean at 120Hz, so this is the curve, not jank):
+
+| | Before (fold) | After (damped) |
+| --- | --- | --- |
+| Visible movement starts | ~125ms after the press | on the first frame |
+| Shape of the travel | most of it in one 125ms burst (215 to 340ms), then a creep | fastest at the start, eases all the way in |
+| Home | 600ms | ~730ms, the last ~200ms under a pixel |
+| Frame pacing (six runs) | | every frame under 10ms, none over 12ms |
+
+What changed:
+
+- **The close is damped, the open is not.** `closeTile` now hands the value to the render loop, which
+  damps it toward 0 at the reference's rate (`FLIP_EASE` 0.14, frame-rate independent like the pan). The
+  card's live size, `--slide` and `--dim` follow from it as before. The caption and the photograph's
+  blurred copies come back as a remap of it over the last stretch of the landing (a smoothstep over
+  k 0.3 to 0). The open keeps its fold tween.
+- **The words go behind the photograph.** With the panel now retracting from the first frame, its words
+  (a layer above the card) were drawn across the photograph while they faded. While the card closes they
+  are clipped at the photograph's edge, as the reference clips its text box at the image edge. They
+  slide behind the picture with their panel, in wide and tall windows.
+- **The words' box is the drawn card.** It was the element's width and height, which match the drawn
+  card only at rest and when open. In flight the words rode up to 60px off their panel, which the old
+  close had hidden by fading them before anything moved. The box is now the quad less the half gutter,
+  so it matches the panel every frame. The open state is unchanged, and the Full Swatch View still lands
+  on the strip within 0.02px.
+
+**The corners where the photograph and panel meet follow the slide (by request: "we can't have it make
+an instant switch to 0 during the transition").** Those four corners were forced to 0 for as long as
+the card was open:
+
+- A card squared them off in one frame as it began to open.
+- On the way home, the photograph kept square corners long after its panel had gone behind it, then
+  snapped back to 12px when the card landed.
+
+They are now the card's corner times what is left of the slide (`--slide`, which the engine already
+writes). Square while the panel is fully out, rounding back as it slides home, and already whole when
+the open state comes off. Measured frame by frame at 1440×900 and 1024×1366:
+- They stay at 12px as the open starts and are 12px on landing.
+- The largest step between two frames is 1.5px (2px in a tall window).
+- The outer corners never move.
+
+## 2026-09-22 — The Full Swatch View closes home, into the card it came from
+
+**The request came in two steps.** The Full Swatch View is the palette detail opened from a grid card.
+
+**First: "Make sure the Full Swatch View in the Grid View reflects the animation out as smooth as the
+create page."** Its close still used the exit the result stage dropped on 18.09:
+
+- The bands sank on EASE.exit, an ease-in, so the first was 10% down at 154ms.
+- The sheet then dissolved with the bands 100/93/78/64/50% down, and was gone at 600ms.
+
+It took the create page's exit instead. The figures now live in `_exitSink` (motion.js), which the
+result stage's `doReset` reads too.
+
+**Then: "I don't like the fact that it closes on an empty surface. Can we accomodate so it closes on
+some sort of surface within the interface".** The card the view was opened from is still open under
+it, with the same swatches in the strip at the head of its panel, so the view now goes back into it
+(`_ovFoldHome`, overlays.js):
+
+- **Words first.** The words and the harmony marks leave first, over DUR.fast, because the bands are
+  about to change shape under them.
+- **No empty surface.** The view's background fades at once (DUR.state, EASE.reveal), so the card and
+  the grid are there for the whole flight.
+- **Each swatch lands on its own band.** Each band flies to its band in the strip on the card's own
+  curve and length (EASE.fold, DUR.fold), the curve used for anything that changes size.
+- **Corners and handover.** The first and last bands take the panel's outer corners as they land. The
+  view is released over an identical strip, so the handover can't be seen.
+
+**Measured in Chrome:**
+- Every band lands within 0.02px of its strip band, at 1440×900 (landscape) and 1024×1366 (portrait,
+  square corners there, as the panel has).
+- The first change is on the first frame, every frame is under 16ms, and the view is released at
+  ~510ms. Focus goes back to the card.
+- A second Escape doesn't restart the exit (it runs once).
+- A close pressed while the view is still arriving un-wipes each band as it flies.
+
+**Details:**
+- **The harmony marks.** They are `[data-ix]` controls, whose opacity transition chased the exit's fade
+  a beat behind. They were still on the flying bands after the words had gone. `[data-overlay-stage]
+  [data-leaving] [data-ix]{transition:none}` lifts the transition for the half second the view is
+  leaving.
+- **Not chosen.** Folding the view's background into the panel as well was shown beside this. The
+  panel read as a blank box until its words came back.
+- **The fallback.** The create-page sink stays as the way out only when there is no open card to go
+  home to.
+- **Reduced motion is unchanged**: the fade.
+
+## 2026-09-22 — "New Project" heads the Project group while it is only the field
+
+**By request ("should say Add New Project", then "Rename it to New Project").** With no project yet, the
+Library panel's Project group is only the new-project field. Its heading read "Project" over a
+"Project Name" placeholder, the same word twice. It reads "New Project" in that state. Once a project
+exists, the group lists projects again and the heading is "Project". Edit mode also keeps "Project",
+because the field there sits above the rename, export and delete rows.
+
+## 2026-09-22 — A filter row that cannot narrow is disabled, and looks it
+
+**By request: "put it in a disabled state, so the user get the idea nothing matches".** A row that cannot
+narrow the library looks like this:
+
+- **When it happens.** Every palette in view already has that value, so pressing the row can't narrow
+  the library. The example was Text-Ready 4 in a library of four text-ready palettes.
+- **Before.** The row kept its raised plate at full strength and only muted its words, so it read as a
+  live row in grey.
+- **Now.** The whole row takes the app's disabled look, the 0.42 of `[data-ix]:disabled` (the disabled
+  Check Contrast button): plate, dash, label and count together.
+- **Why the fade is in the colours.** It is done with ink and a plate opacity, never an opacity on the
+  row. The row stays focusable, so a screen reader still hears why it can't be picked. An opacity on
+  the button would also fade its focus ring, and the panel's reveal controls its contents' own opacity.
+- **Where it applies.** It's one rule in global.css, so it covers every filter group's rows that can't
+  narrow: Project, Text Usability, Lightness and Temperature. Measured in both themes: the ink is
+  on-surface at 42% alpha and the plate is at 0.42.
+
+**Every value stays, too (by request: "So elements still disappear completely").** Before, a value no
+palette had was removed from Text Usability, Lightness and Temperature, so a group changed shape under
+the reader: Dark simply left a library of light palettes. Every value stays now, disabled at 0, as an
+empty project always did. The set of answers is fixed, and which ones are empty is the answer.
+
+Measured on a library of four Text-Ready, warm palettes:
+
+| Group | Rows |
+| --- | --- |
+| Text Usability | Text-Ready 4, Limited Text 0 and Accent Only 0, all three disabled |
+| Lightness | Dark 0 disabled, Balanced 2, Light 2 |
+| Temperature | Warm 4, Cool 0 and Neutral 0, all three disabled |
+
+A click on any disabled row leaves every filter as it was. Lightness and Temperature rows used to apply
+their filter on a click while they said they could not.
+
+## 2026-09-22 — Copy lives inside Export, and its CSS is the file's CSS
+
+**By request: "fix the mismatch and fold copy into export"**, after a Laws of UX review of Copy and Share.
+The result row and the palette detail's footer each carried Copy, Export and Share, and Copy and Export
+did the same job, getting the palette into your work in some format. The only difference was where it
+landed. Two things were actually wrong:
+
+- **The mismatch.** Copy's "CSS variables" and Export's "CSS Custom Properties" were two different files
+  under two names: `--garnet-1` with a "Generated by" header on the clipboard, `--palette-garnet-01` in
+  the download. Copy also ignored the Semantic Scaffold switch. Now there is one builder:
+  `paletteCss(pal, semantic)` returns `buildCssFile`'s output, so the clipboard and the file match byte
+  for byte in both modes.
+- **Two doors for one intent.** Copy is now the first group of the Export dialog: Hex List and CSS
+  Custom Properties under "Copy", then the five formats under "Download", then the scaffold switch,
+  which governs both groups. The two labels are there because CSS Custom Properties appears in both
+  groups, and only the group label says where it goes (Similarity, Common Region). The labels use the
+  drawers' section-head style, and the gap between groups is three times the gap between rows
+  (Proximity).
+
+**Every row confirms in place, and the dialog stays open.** A download used to close Export while Copy
+and Share stayed open and confirmed on the row, so this dialog would have answered in two ways. Now
+every row says "Copied" or "Downloaded" for 1.5s, using the same timer, and focus goes back to the row.
+Escape and the close button are the way out.
+
+**Share stays its own button**, because sending a palette to someone is a different intent from using
+it. The row is Add to Projects · Check Contrast · Export · Share. The folder export has no Copy group,
+since there is no clipboard form for a whole project. Focus still opens on the first row, now Hex
+List, so Export then Enter still does the dialog's job (audit X5).
+
+- Removed with Copy: `CopyControl` and its label, the `copyMenuOpen` flag (state, Escape ladder, modal
+  set, tour gate, wipe), `openCopyMenu`/`closeCopyMenu`, and the trigger's padding rule. The share
+  sheet keeps the row style as `sheetItemStyle`/`sheetRowTint`.
+- Verified in Chrome at 1440×900:
+  - Primitive and semantic CSS on the clipboard equal the downloaded files: 213 and 300 bytes for
+    Garnet.
+  - All seven rows confirm and the dialog stays open.
+  - Escape returns focus to Export from both the result stage and the palette detail.
+  - A folder's export shows its five rows with no group labels.
+  - Checked in both themes, with no console errors.
+
 ## 2026-09-22 — The phone picks show their selection outside the card, in the page's ink
 
 **By request: "we can't have a dark border in dark mode. add 1-2px padding outside the selected swatch and

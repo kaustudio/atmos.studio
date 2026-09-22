@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Canonical URLs only: /create is the same document as / and canonicalises to it, so it is not
+     listed. No <priority> (Google ignores it). <lastmod> is read when it is accurate, so move a
+     page's date when its content changes, and only then. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://atmos.gallery/</loc>
-    <priority>1.0</priority>
+    <lastmod>2026-09-22</lastmod>
   </url>
   <url>
     <loc>https://atmos.gallery/about</loc>
-    <priority>0.8</priority>
+    <lastmod>2026-09-22</lastmod>
   </url>
   <url>
     <loc>https://atmos.gallery/privacy</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-09-19</lastmod>
   </url>
   <url>
     <loc>https://atmos.gallery/terms</loc>
-    <priority>0.3</priority>
+    <lastmod>2026-09-19</lastmod>
   </url>
 </urlset>

@@ -27,7 +27,7 @@ something only a browser can discover.
 ## Facts worth stating plainly
 
 - **Free.** No account, no payment, no trial.
-- **Desktop.** A narrow viewport shows a read-only view of a shared palette rather than the tool.
+- **Desktop.** A narrow viewport shows a guided example and shared palettes rather than the tool.
 - **The image stays local.** Palette extraction runs on the visitor's machine and the full-size image
   is never uploaded. One exception, stated because it is the only one: when an image is chosen, a
   smaller copy is automatically sent to Anthropic's API with the palette's colour values and
@@ -41,8 +41,9 @@ something only a browser can discover.
 
 ## Pages
 
-- [Atmos Gallery](https://atmos.gallery/): the tool itself.
-- [About](https://atmos.gallery/about): the long-form argument — why an image's atmosphere is read
+- [Atmos Gallery](https://atmos.gallery/): the front page, which opens onto the tool.
+- [Create](https://atmos.gallery/create): the tool itself, reached directly.
+- [How it Works](https://atmos.gallery/about): the long-form argument — why an image's atmosphere is read
   rather than its most common pixels, how OKLCH and WCAG contrast are used, and how a sampled
   palette is turned into a working colour system with semantic roles. Prerendered in full, so it is
   readable without executing JavaScript.

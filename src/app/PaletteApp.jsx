@@ -23,7 +23,7 @@ import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { tourMethods } from './methods/tour.js';
 import { renderValsMethods } from './renderVals.js';
-import { routeFor, pathFor, isDoc, applyHead, APP } from './routes.js';
+import { routeFor, pathFor, isDoc, applyHead, APP, CREATE_PATH } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
 /* THE STORY'S MOTION IS /about's MOTION — the same modules, not a second set.
    src/app/methods/story.js is gone with the surface it drove. Every one of these takes a root, so
@@ -168,6 +168,8 @@ export default class PaletteApp extends React.Component {
   // loader and the landing both branch on it: neither belongs on a legal route, and deciding that
   // after they have already been scheduled means showing them and then taking them away.
   _entryRoute = routeFor(typeof location !== 'undefined' ? location.pathname : '/');
+  // Opened at /create: the visitor asked for the tool by name, so the landing is not put in front of it.
+  _entryCreate = typeof location !== 'undefined' && (location.pathname.replace(/\/+$/, '') || '/') === CREATE_PATH;
 
   state = {
     route: this._entryRoute,
@@ -210,7 +212,7 @@ export default class PaletteApp extends React.Component {
        instead and commits it once, so nothing changes until it is confirmed and Cancel is a real
        way out. null while the dialog is shut; an array of project ids while it is open. */
     assignPending: null,
-    assignPalette: null, backupMenuOpen: false, copyMenuOpen: false, shareMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, backupMenuOpen: false, shareMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or
        arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
@@ -244,7 +246,7 @@ export default class PaletteApp extends React.Component {
     consent: readConsent(), consentOpen: false,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A document route arrives past them for a different reason: there is no tool on it to introduce.
-    landingDismissed: (this._shared || isDoc(this._entryRoute)) ? true : this._landingDismissed(),
+    landingDismissed: (this._shared || isDoc(this._entryRoute) || this._entryCreate) ? true : this._landingDismissed(),
     showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
     /* WHICH OF THE EIGHT THE LANDING FIELD IS A READING OF — a MIRROR, not the source of truth.
        methods/orbit.js holds the answer on the instance (`_fieldPalId`), because the ramp is baked
@@ -492,6 +494,11 @@ export default class PaletteApp extends React.Component {
        falls back to the shell — where without it /privacy would wear the tool's title in the tab, in
        the history entry and in anything the reader copies out of the address bar. */
     safe(() => applyHead(this.state.route), 'head');
+    // A typed /create counts as pressing Create: persisted, so a reload of / does not put the landing
+    // back in front of a tool the visitor has already reached (the same reason as openCreate).
+    // Not on a phone, where the landing is the surface and there is no tool to have reached.
+    if (this._entryCreate && !this.state.narrow) { try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { } }
+    safe(() => this._syncAppPath(), 'path');
     // Back and forward are real navigations between these routes, so the swap is wiped exactly as a
     // click is. popstate has already moved the address bar by the time it fires, which is why
     // navigateTo is told not to push a second entry for it.
@@ -503,7 +510,20 @@ export default class PaletteApp extends React.Component {
       // Whatever the pop changes next is the browser's move, not a new place (see _syncToolHistory).
       this._histPop = performance.now();
       const next = routeFor(location.pathname);
-      if (next === this.state.route) { this._applyPlace(history.state && history.state.place); return; }
+      if (next === this.state.route) {
+        /* BETWEEN THE LANDING AND THE TOOL (22.09.26, UX audit). Same route, two addresses: Back from
+           /create to / brings the landing back, Forward takes it away again, each on the short
+           crossfade. Not on a phone, where / is the story and there is no tool to reach. */
+        const s = this.state;
+        if (next === APP && !s.narrow && !s.sharedView) {
+          const here = location.pathname.replace(/\/+$/, '') || '/';
+          const up = this._landingUp();
+          if (here === '/' && !up) { this.returnToIntro({ fromPop: true }); return; }
+          if (here === CREATE_PATH && up) { this.getStarted({ fromPop: true }); return; }
+        }
+        this._applyPlace(history.state && history.state.place);
+        return;
+      }
       this.navigateTo(pathFor(next), { push: false, scrollY: (history.state && history.state.scrollY) || 0 });
     };
     window.addEventListener('popstate', this._onPop);
@@ -555,7 +575,6 @@ export default class PaletteApp extends React.Component {
            stage, where Escape means what it means everywhere else in the tool and the last line of
            this ladder is the right answer. */
         if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
-        if (this.state.copyMenuOpen) { e.preventDefault(); this.closeCopyMenu(); return; }
         if (this.state.shareMenuOpen) { e.preventDefault(); this.closeShareMenu(); return; }
         if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
         /* A DRAWER THE TOUR OPENED IS PART OF ITS STEP, so Escape takes both — the brief's "Escape to
@@ -676,6 +695,7 @@ export default class PaletteApp extends React.Component {
     this._syncConsent();
     this._syncFilteredEmpty();
     this._syncLaneLift();
+    this._syncAppPath();
     this._syncToolHistory();
     /* THE TOUR WATCHES EVERY COMMIT, not only the stage changes further down (which return early when
        neither the stage nor the palette moved — and opening a drawer moves neither). A drawer step's
@@ -692,7 +712,7 @@ export default class PaletteApp extends React.Component {
     // the library panel now, and that panel is deliberately non-modal — the library stays visible
     // and operable behind it. Nothing here regressed; a member of this set left the app.
     const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony || s.copyMenuOpen || s.shareMenuOpen);
+      || s.exportOpen || s.contrast || s.harmony || s.shareMenuOpen);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
@@ -793,6 +813,46 @@ export default class PaletteApp extends React.Component {
      reopening its palette) only rewrites the current entry, and so does a palette taking the place of
      one just deleted. Stored on history.state beside the route and scroll navigateTo already keeps
      there, which it merges into rather than replaces, so a place survives a trip to /about and back. */
+/* WHICH ADDRESS THE TOOL'S ROUTE SHOWS (22.09.26): /create while the tool is what is on screen, / while
+     the landing (or on a phone the story, or a shared palette) is. Read after every commit, so the bar
+     changes in the same commit as the content, inside whatever transition made it: the landing's
+     Create wipe, the logo's return, Explore Atmos at the close of /about.
+     PUSHED WHEN THE READER CROSSED (Create, the mark: _pathPush, set by getStarted and returnToIntro),
+     so Back goes between the landing and the tool (22.09.26, UX audit: Back from the tool left the
+     site while the bar visibly said two places). The entry left behind is marked `landing`, and the
+     tool's places below tag the new one as usual. Every other switch REPLACES the address: a pop has
+     already moved it, and a reload or a shared palette closing is not a step anyone took.
+     Web Analytics counts a pushState or a pop as a new page (its script patches pushState and nothing
+     else), so only a replaced switch onto /create reports its own pageview, through the window.va the
+     SDK calls; the consent gate's beforeSend still decides whether it is sent. Not at mount, and not
+     after a pop: the script reads the address when it loads, and counts pops itself. */
+  _appPath() {
+    return (!this.state.sharedView && !this._landingUp()) ? CREATE_PATH : '/';
+  }
+  _syncAppPath() {
+    if (this.state.route !== APP) return;
+    const want = this._appPath();
+    let here;
+    try { here = location.pathname.replace(/\/+$/, '') || '/'; } catch (e) { return; }
+    const seen = this._pathSeen;
+    this._pathSeen = true;
+    if (here === want) return;
+    // Consumed only by the switch itself: commits land between a press and its crossing's commit.
+    const push = this._pathPush;
+    this._pathPush = false;
+    const url = want + location.search + location.hash;
+    if (push) {
+      try {
+        history.replaceState(Object.assign({}, history.state || {}, { landing: want === CREATE_PATH, scrollY: window.scrollY || 0 }), '');
+        history.pushState({ route: APP, scrollY: 0 }, '', url);
+      } catch (e) { }
+      return;
+    }
+    try { history.replaceState(history.state, '', url); } catch (e) { return; }
+    const popped = this._histPop && performance.now() - this._histPop < 4000;
+    if (seen && !popped && want === CREATE_PATH) { try { if (window.va) window.va('pageview', {}); } catch (e) { } }
+  }
+
   _historyView() {
     const s = this.state;
     if (isDoc(s.route) || s.sharedView) return null;

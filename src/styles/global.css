@@ -132,6 +132,11 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
    between two frames is the same fault as one that snaps: every state this contract can enter has
    to be reachable by a transition, or the contract is only describing some of itself. */
 [data-ix]{transition:background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),opacity var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard)}
+/* WHILE THE FULL SWATCH VIEW GOES HOME its controls are the exit's alone (22.09.26): the harmony marks
+   fade on the exit's own tween (overlays.js _ovFoldHome), and the opacity transition above would chase
+   that tween a beat behind, leaving the marks on the flying bands after the words had gone. The view is
+   released half a second later, so the contract is only lifted from controls that are leaving. */
+[data-overlay-stage][data-leaving] [data-ix]{transition:none}
 /* ===== CONTROLS SPEAK THE UPPERCASE LABEL VOICE, /about EXCEPTED =====
    The app's chrome is uppercase — the header bar, the library's segments and sort heads, the trait
    chips, the menus, the palette's own row of actions. It sits beside apparatus that is uppercase
@@ -334,17 +339,24 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 /* AN OPEN GRID CARD AND ITS PANEL ARE ONE OBJECT (17.09.26, with the card corner): the panel slides out
    flush against the card, so the two corners where they meet are square and the pair keeps its outer
    corners. Landscape opens to the right, portrait downward (universe.js openTile sets the attribute).
-   !important because the corners are inline (renderVals cardBox and friends). */
+   !important because the corners are inline (renderVals cardBox and friends).
+   THE MEETING CORNERS FOLLOW THE SLIDE (22.09.26, by request: "we can't have it make an instant switch
+   to 0 during the transition"). They were 0 for as long as the attribute stood, so they squared off in
+   one frame as a card began to open, and on the way home the photograph kept square corners long after
+   its panel had gone behind it, until the attribute came off at the end and they snapped back round.
+   They are the card's corner times what is left of the slide now: square while the panel is fully out,
+   rounding back to --radius-card as it slides home, and already whole when the attribute comes off, so
+   nothing changes at either end. --slide is the engine's (universe.js render), one var on one card. */
 [data-universe-open="landscape"],
 [data-universe-open="landscape"] [data-tile-hero],
 [data-universe-open="landscape"] [data-tile-dim],
-[data-universe-open="landscape"] [data-ring]{border-top-right-radius:0!important;border-bottom-right-radius:0!important}
-[data-universe-open="landscape"] [data-tile-panel]{border-top-left-radius:0!important;border-bottom-left-radius:0!important}
+[data-universe-open="landscape"] [data-ring]{border-top-right-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important;border-bottom-right-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important}
+[data-universe-open="landscape"] [data-tile-panel]{border-top-left-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important;border-bottom-left-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important}
 [data-universe-open="portrait"],
 [data-universe-open="portrait"] [data-tile-hero],
 [data-universe-open="portrait"] [data-tile-dim],
-[data-universe-open="portrait"] [data-ring]{border-bottom-left-radius:0!important;border-bottom-right-radius:0!important}
-[data-universe-open="portrait"] [data-tile-panel]{border-top-left-radius:0!important;border-top-right-radius:0!important}
+[data-universe-open="portrait"] [data-ring]{border-bottom-left-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important;border-bottom-right-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important}
+[data-universe-open="portrait"] [data-tile-panel]{border-top-left-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important;border-top-right-radius:calc(var(--radius-card) * (1 - var(--slide, 0)))!important}
 /* The open card's content rides the panel's whole box (universe.js render) and takes its outer
    corners, so the strip at its head is clipped to the round corner instead of covering it. */
 [data-universe-panel]{border-radius:var(--radius-card)}
@@ -375,6 +387,17 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   [data-sec-row]:not([aria-disabled]):hover>[data-row-plate]{background:var(--surface-white)}
 }
 [data-sec-row]:not([aria-disabled]):focus-visible>[data-row-plate]{background:var(--surface-white)}
+/* A ROW THAT CANNOT NARROW IS DISABLED, AND LOOKS IT (22.09.26, by request: "put it in a disabled state,
+   so the user get the idea nothing matches"). It kept its raised plate at full strength with only its
+   words muted, so it read as a live row in grey. The whole row takes the app's disabled tier now, the
+   .42 of [data-ix]:disabled that Check Contrast wears with no palette: plate, mark, label and count
+   together, one control that is off (similarity with every other disabled control). Drawn as ink and
+   a plate opacity, never an opacity on the row: the row stays focusable so a screen reader still hears
+   why it cannot be picked, an opacity on the button would take its focus ring down with it, and the
+   panel's reveal owns its contents' own opacity. !important because the rows set their ink inline. */
+[data-sec-row][aria-disabled="true"]{color:color-mix(in srgb,var(--on-surface) 42%,transparent)!important}
+[data-sec-row][aria-disabled="true"]>[data-row-plate]{opacity:.42}
+[data-sec-row][aria-disabled="true"] [data-sec-count]{color:color-mix(in srgb,var(--on-surface-muted) 42%,transparent)!important}
 [data-row]:active:not(:disabled),[data-feed]:active,[data-ex-item]:active{filter:brightness(.97)}
 @media (prefers-reduced-motion: reduce){
   [data-ix]{transition:none}
@@ -689,6 +712,11 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      strips until the strips went, radius issue R10.) Samples were square; this keeps them reading as
      samples with the corner the user asked for. */
   --radius-swatch:3px;
+  /* --radius-thumb: the landing credit's thumbnail, 8px (22.09.26, by request: "increase the border
+     radius on the thumbnail"). It wore --radius-swatch. The box is 128 x 85, and 8 is about a tenth of
+     its height, the proportion the 162px panel settled at with 16 (see --radius-panel); the card's 12
+     would be a seventh, strong for a box this small. */
+  --radius-thumb:8px;
   /* --radius-dock-row, the anchor dock's inner corner, went with the dock (17.09.26). */
   /* A third family takes no padding token at all: SQUARE icon buttons, sized by width/height and
      flex-centred, at 26 (an inline close) and 32 (a row action). Padding on
@@ -744,14 +772,17 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      controls were outlined pills. The track and the last word now sit 17px from the bar's outer
      edge, the hairline included. --nav-mark-top centres the fixed wordmark on the bar (the tool and the landing
      draw the mark outside it, see logoStyle in AppView).
-     --nav-inset-end is the RIGHT end's padding, a gutter: 24px on a desktop (16.09.26, by request,
-     right side only). The words there sit beside a round end, where 16px read cramped; the switch on
-     the left is round itself and keeps 16. It steps down to 16 with the gutter on a phone, where
-     that end of the bar holds nothing. */
+     --nav-inset-end is the RIGHT end's padding. It was a gutter, 24px (16.09.26, by request), when
+     that end held the words Back Up and Restore, which read cramped at 16 beside a round end. Since
+     22.09.26 the end holds New Palette alone (the pair is Manage Library's last group), a filled pill
+     inside the bar's pill, and 24 left it sitting 25px from the end against 11.25px above and below
+     ("Make sure New Palette have equal padding"). So the end's padding is the pill's own gap: the
+     bar's 56 less the pill's 33.5, halved, less the 1px hairline. Even on three sides, concentric
+     with the round end. The switch on the left is round itself and keeps 16. */
   --nav-top:var(--page-gutter);
   --nav-h:56px;
   --nav-inset:var(--row-inset);
-  --nav-inset-end:var(--page-gutter);
+  --nav-inset-end:calc((var(--nav-h) - 33.5px) / 2 - 1px);
   --nav-mark-top:calc(var(--nav-top) + (var(--nav-h) - var(--logo-h)) / 2);
   /* ===== archive list rhythm =====
      The list row no longer expands, so its height is a SYSTEM decision rather than a consequence
@@ -2025,13 +2056,6 @@ button[data-row-cell] .tswap{flex:none}
   /* The switch's fill is off on every device now: see the rule after the family's own, below. */
 }
 .button__text{display:block;padding:var(--button-padding);white-space:nowrap;}
-/* COPY TAKES ITS "COPIED" ROOM OUT OF ITS PADDING (19.09.26, by request: "make sure padding on this
-   button reflects the others"). Its label is centred inside a hidden glyph-and-"Copied", so the row
-   never moves when it confirms (see copyButtonLabel in AppView), and at rest that spare, 12px, sat as
-   6px more air on each side: 18.7 and 19.3px from ink to edge, where Check Contrast reads 13.3 and 13
-   and Export 12.7. The padding gives the spare back, split so the ink lands 13px from both edges
-   (measured from pixels at 3x); "Copied" spends it for the moment it shows. */
-.button[data-copy-trigger]{--button-padding:var(--button-padding-block) 6.67px var(--button-padding-block) 7.33px}
 .button__default .button__text{color:var(--button-on-surface);}
 .button__hover .button__text{color:var(--button-on-accent);}
 /* TEXT ONLY. .button-swap is the per-line mask (see ButtonText in chrome.jsx); the row around it — icon,
@@ -2735,6 +2759,20 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
    transition's snapshot keeps it and the bar leaving the landing does not change in the copy. */
 :root:not([data-theme="dark"]) .glass-bar[data-on-landing] > .glass-effect{
   --glass-tint:color-mix(in srgb, var(--surface) 40%, transparent);
+}
+
+
+/* THE LANDING'S LEGAL ROW, IN DARK, CARRIES A HALO (22.09.26). Measured with the row's real ink against
+   what renders behind it over six fields: light passes everywhere (worst 4.8:1), but in dark the field is
+   lighter in that corner, and the row sat at 4.2 to 4.9:1 typical and 3.2 at worst. The ink is already
+   the mode's full --on-surface, so the ground gives instead: a soft halo of the mode's own surface, close
+   around the glyphs, with no plate and no box. The credit opposite measured 5.5:1 or better and does not
+   need it. */
+/* Privacy Settings is a <button>, and the UA sets text-shadow:none on buttons, so it is named here too:
+   inherited alone, the halo stopped at it (measured, its first letters were the row's worst pixels). */
+:root[data-theme="dark"] .land-legal,
+:root[data-theme="dark"] .land-legal .site-foot__consent{
+  text-shadow:0 0 3px color-mix(in srgb, var(--surface) 90%, transparent), 0 0 10px color-mix(in srgb, var(--surface) 75%, transparent);
 }
 
 /* THE EFFECT IS TWO THINGS: A TINT OF THE MODE'S OWN SURFACE, AND A BLUR.

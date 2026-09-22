@@ -292,7 +292,10 @@
    up they are large text, where AA asks 3:1 and half passes; under it they are normal text, where AA asks
    4.5:1 and half does not. 2.6vw crosses 24px at 923px, so that is the boundary rather than a phone
    preset — an 820px tablet sets them at 22px too. 62% measures 4.7:1 there and still reads as the quieter
-   line. Every soft line below it takes the same ink, the hero included, so a screen has one tint. */
+   line. Every soft line below it takes the same ink, so a screen has one tint.
+   THE HEADLINE IS NOT ONE OF THEM (22.09.26, by request: "Don't use the 50% tint on the headline on how
+   it works"). The h1 keeps its sense break but both lines are the heading's full ink; the section
+   headings and the close keep their quieter second line. */
 @media (max-width:923px){
   .about-head__soft{color:color-mix(in srgb, currentColor 62%, transparent)}
 }
@@ -309,12 +312,14 @@
   /* --fs-subtitle is the 20px this wrote, and -0.5px was -0.025em, between two steps (17.09.26, audits G1
      and G2): the statement step. */
   font-size:var(--fs-subtitle);font-weight:500;line-height:1.35;letter-spacing:var(--track-statement);
-  /* THE BASE INK, NO TINT (22.09.26, by request: "This should be our base black no tint"). It was 58%
-     while the headline above it was solid, and the lighter ink was what kept it the headline's thought
-     continuing. Since the headline's own second line went to half ink, the tint said the same thing
-     twice and the thesis read as the quietest line on the screen; the reduced size carries the
-     subordination now. */
-  color:var(--on-surface);
+  /* 62% OF THE HEADING INK (22.09.26, by request: the headline lost its half-ink second line, "and then
+     make the body copy to 50% tint", then "62% only for that copy below the headline"). The tint moved
+     from the headline's second line to this one, so the headline is solid and the thought continuing is
+     quieter again. 62% rather than half: this is 20px Medium, normal text for contrast, where half
+     measures about 3.3:1 on the page and 62% about 4.7:1, the same figure the section headings take
+     wherever they are normal text. It was the base ink for a round ("This should be our base black no
+     tint") while the headline's second line carried the tint. */
+  color:color-mix(in srgb, var(--on-surface) 62%, transparent);
   text-wrap:balance;
 }
 /* The opening image, centred under the opening headline — the plate the scroll then grows into the

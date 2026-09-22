@@ -19,6 +19,7 @@ const SHADE = 0.7;          // how far the field outside the torch fades toward 
 const PAN_EASE = 0.08;      // the flat engine's lerp, now frame-rate independent
 const CURSOR_EASE = 0.12;
 const BULGE_EASE = 0.08;
+const FLIP_EASE = 0.14;     // the open card's damped close, the reference's flip rate (its table: 0.1–0.14)
 const clamp = (min, max, v) => Math.min(Math.max(v, min), max);
 const damp = (from, to, rate, dt) => from + (to - from) * (1 - Math.pow(1 - rate, dt * 60));
 const smooth = (t) => t * t * (3 - 2 * t);
@@ -419,8 +420,8 @@ export const universeMethods = {
             // THE CONTENT RIDES THE PANEL. It used to be parked at the panel's final box from the
             // first frame, so for the last stretch of the open and the whole of the close the strip
             // hung past the edge of a panel that was still travelling. Its box is the panel's box
-            // now, derived from the same card corner and the same size and the same slide, every
-            // frame — the two cannot come apart, because there is only one box.
+            // now, derived from the same card corner and the same drawn size and the same slide,
+            // every frame — the two cannot come apart, because there is only one box.
             if (open.panel) {
               // the card's corner is the cell's corner plus half the gutter cellMatrix takes back
               // the panel's WHOLE box: the panel is the card's box, slid by its width less one pixel
@@ -428,10 +429,27 @@ export const universeMethods = {
               // inside them (17.09.26): the card has no stroke, so the strip at the head has to start
               // on the photograph's top edge, and it is clipped to the panel's outer corners
               // (global.css [data-upanel-side]) so a square strip cannot cover a round corner.
-              const px = q.tl.x + mid.x + GAP / 2 + (open.portrait ? 0 : (open.w - 1) * slide);
-              const py = q.tl.y + mid.y + GAP / 2 + (open.portrait ? (open.h - 1) * slide : 0);
+              // THE CARD AS DRAWN, NOT AS SIZED (22.09.26). The box was the element's width and height,
+              // which are the drawn card's only at rest and open: in flight the quad is still easing out
+              // of its grid slot, so the words rode a box up to 60px off the panel they sit on. That hid
+              // while the old close faded the words before anything moved, and showed once the damped one
+              // moved at once. The drawn card is the quad less the half gutter cellMatrix takes back.
+              const L = (q.tl.x + q.bl.x) / 2 + mid.x + GAP / 2, T = (q.tl.y + q.tr.y) / 2 + mid.y + GAP / 2;
+              const W = (q.tr.x + q.br.x) / 2 - (q.tl.x + q.bl.x) / 2 - GAP, H = (q.bl.y + q.br.y) / 2 - (q.tl.y + q.tr.y) / 2 - GAP;
+              const px = L + (open.portrait ? 0 : (W - 1) * slide);
+              const py = T + (open.portrait ? (H - 1) * slide : 0);
               open.panel.style.left = px.toFixed(2) + 'px'; open.panel.style.top = py.toFixed(2) + 'px';
-              open.panel.style.width = open.w.toFixed(2) + 'px'; open.panel.style.height = open.h.toFixed(2) + 'px';
+              open.panel.style.width = W.toFixed(2) + 'px'; open.panel.style.height = H.toFixed(2) + 'px';
+              // CLOSING, THE WORDS GO BEHIND THE PHOTOGRAPH WITH THEIR PANEL (22.09.26). This layer sits
+              // above the card, so a panel sliding home carried its words across the picture while they
+              // faded: with the damped close the slide starts at once, and at 80ms the metrics were
+              // half-drawn over the face. It is clipped at the photograph's edge instead, the way the
+              // reference clips its text box at the image edge, so what slides under the picture is hidden
+              // by it. Only on the way home: open, the layer overlaps the photograph by its one pixel.
+              if (open.home) {
+                const under = ((open.portrait ? H : W) - 1) * (1 - slide);
+                open.panel.style.clipPath = under > 0.5 ? (open.portrait ? 'inset(' + under.toFixed(1) + 'px 0 0 0)' : 'inset(0 0 0 ' + under.toFixed(1) + 'px)') : '';
+              }
             }
             drift(cd, q, 1 - k);
             continue;
@@ -458,6 +476,21 @@ export const universeMethods = {
         lens.c = damp(lens.c, lens.t * calm, BULGE_EASE, dt);
         // A hand pan has settled: the ring comes back on whatever card the pointer is resting over.
         if (view.panning && vel < 0.5 && wrapper.getAttribute('data-universe-status') !== 'dragging') { view.panning = false; this._uRingAtPointer(); }
+        /* THE CLOSE IS THE REFERENCE'S DAMPED FLIP (22.09.26, closeTile). k eases home on the
+           reference's own rate, frame-rate independent like the pan, so the card moves on the first
+           frame and settles without a snap; its live size, --slide and --dim are remaps of k as
+           before (render), and so are the caption and the photograph's blurred copies, which come
+           back over the last stretch of the landing. Under 0.002 the card is less than a pixel from
+           its rest size, and it lands. */
+        if (open.home && open.cell) {
+          open.k = damp(open.k, 0, FLIP_EASE, dt);
+          const k = open.k < 0.002 ? 0 : open.k;
+          open.k = k; open.w = TW + (open.B - TW) * k; open.h = TH + (open.B - TH) * k;
+          const back = smooth(clamp(0, 1, 1 - k / 0.3)).toFixed(3);
+          if (open.cap) open.cap.style.opacity = back;
+          if (open.fades) for (let i = 0; i < open.fades.length; i++) open.fades[i].style.opacity = back;
+          if (k === 0) { const land = open.home; open.home = null; land(); }
+        }
         const still = Math.abs(pos.tx - pos.x) < 0.1 && Math.abs(pos.ty - pos.y) < 0.1
           && Math.abs(cursor.x - cursor.cx) < 0.1 && Math.abs(cursor.y - cursor.cy) < 0.1
           && Math.abs(lens.t * calm - lens.c) < 0.001;
@@ -604,7 +637,8 @@ export const universeMethods = {
      out from behind it carrying the readout the card used to wear — the reference's lightbox, on
      this app's tokens. The reference drives it from one damped scalar (open.c) inside its render
      loop, with the cell's corners lerped toward the box; that is exactly what happens here, except
-     the scalar is tweened rather than damped, so it runs on a token curve and a token duration.
+     the scalar is tweened rather than damped on the way OUT, so it runs on a token curve and a token
+     duration. On the way back it is damped, as the reference's is (closeTile, 22.09.26).
 
      THE CURVE IS `fold`, NOT `entrance`. Everything else in this file arrives on an expo-out, and
      motion.js says why that is wrong here: the card CHANGES SIZE. A box growing on a front-loaded
@@ -626,8 +660,8 @@ export const universeMethods = {
 
      The close is written out, not reverse(): fold is symmetric so the box's own travel would
      survive a reverse, but the contents' expo-out would come back as an expo-in and spend most of
-     the exit invisible (the closeUniverse note, same lesson). Contents leave first and fast, then
-     the pair folds back, then the caption returns. The render loop keeps running throughout — the
+     the exit invisible (the closeUniverse note, same lesson). Contents leave first and fast while
+     the pair eases back on the reference's damping, and the caption returns as it lands. The render loop keeps running throughout — the
      torch and the lens still follow the cursor around an open card, as they do in the reference —
      and only the PAN is held (Observer's onChange). */
   openTile(p, el) {
@@ -654,7 +688,7 @@ export const universeMethods = {
     // the render's view of the open card: the box as cell corners about the stage centre, grown by
     // half a gutter because cellMatrix takes half a gutter back
     const open = this._uOpenK;
-    open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.panel = panel; open.portrait = portrait;
+    open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.B = B; open.panel = panel; open.portrait = portrait; open.home = null;
     open.box = { l: cardX - V.mid.x - V.GAP / 2, t: cardY - V.mid.y - V.GAP / 2, r: cardX + B - V.mid.x + V.GAP / 2, b: cardY + B - V.mid.y + V.GAP / 2 };
     el.setAttribute('data-universe-open', portrait ? 'portrait' : 'landscape'); el.style.zIndex = '4';
     panel.setAttribute('data-upanel-side', portrait ? 'portrait' : 'landscape');
@@ -721,11 +755,13 @@ export const universeMethods = {
     const back = orig || (this.universeCloseRef && this.universeCloseRef.current) || null;
     const finish = () => {
       if (this._uOpenCard !== o) return;   // a reset got here first
-      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null; open.panel = null;
+      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null;
       el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : ''; el.style.width = TW + 'px'; el.style.height = TH + 'px';
       el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');
+      // whole again, whichever way it landed (the tick's last frame, or the floor on a stalled loop)
+      g.set([cap].concat(fades).filter(Boolean), { opacity: 1 });
       if (this._uRender) this._uRender();   // back under the shade at its rest transform, this frame
-      g.set(panel, { opacity: 0, x: 0, y: 0 });
+      g.set(panel, { opacity: 0, x: 0, y: 0 }); panel.style.clipPath = '';
       this._uOpenTl = null; this._uOpenCard = null; this._uClosing = false;
       this._uViewClose(true);
       // Focus moves BEFORE the state flips: the flip re-renders the panel aria-hidden, and a panel
@@ -739,14 +775,19 @@ export const universeMethods = {
        INSIDE the card (data-tile-panel), so it moves, bends and shrinks with the card and is hidden
        by the picture the moment it is home; nothing fades and nothing is left behind. Only the
        contents go, first and fast, because they are a separate layer and the panel is sliding out
-       from under them. The scalar runs on fold; --slide is derived from it in render(). */
+       from under them. --slide is derived from the scalar in render().
+       AND THE SCALAR IS DAMPED NOW, AS THE REFERENCE DAMPS IT (22.09.26, by request: "The close
+       animation for the card needs improving as well. it's not as smooth as the original reference").
+       It ran on fold after a 60ms beat: measured, nothing moved for the first 125ms, most of the
+       travel then went in one 125ms burst, and the card crept home until 600ms. The reference damps
+       its flip progress toward the target every frame (no-gl-grid: "flip progress (damped 0→1)",
+       rates 0.1–0.14), which moves on the first frame and eases all the way in, so the tick does that
+       here on FLIP_EASE and lands the card itself (tick, above). The open keeps its fold tween. */
     if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } }
-    const AT = 0.06;   // the card lets go a beat after the contents have started to go
-    const tl = this._uOpenTl = g.timeline({ defaults: { ease: this.EASE.fold }, onComplete: this._exitFloor ? this._exitFloor('ut', AT + this.DUR.fold + 0.4, finish) : finish });
-    tl.to(parts, { opacity: 0, y: 4, duration: this.DUR.fast, ease: this.EASE.exit, stagger: 0.02 }, 0);
-    tl.to(open, { k: 0, w: TW, h: TH, duration: this.DUR.fold }, AT);
-    if (cap) tl.to(cap, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }, AT + this.DUR.fold * 0.55);
-    if (fades.length) tl.to(fades, { opacity: 1, duration: this.DUR.state, ease: this.EASE.entrance }, AT + this.DUR.fold * 0.55);
+    this._uOpenTl = g.to(parts, { opacity: 0, y: 4, duration: this.DUR.fast, ease: this.EASE.exit, stagger: 0.02 });
+    open.cap = cap; open.fades = fades;
+    // the tick lands it; the floor lands it anyway if the loop has stalled (a hidden tab)
+    open.home = this._exitFloor('ut', 1.4, finish);
   },
   // The instant path: a rebuild, a resize, a teardown. Puts every style the open wrote back to its
   // rest value in one frame, releases the hold, and drops the panel's content.
@@ -754,8 +795,9 @@ export const universeMethods = {
     const g = window.gsap, o = this._uOpenCard, open = this._uOpenK;
     if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } this._uOpenTl = null; }
     const panel = document.querySelector('[data-universe-panel]');
-    if (panel) { if (g) g.set(panel, { opacity: 0, x: 0, y: 0 }); panel.style.pointerEvents = 'none'; }
-    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; open.panel = null; }
+    if (panel) { if (g) g.set(panel, { opacity: 0, x: 0, y: 0 }); panel.style.pointerEvents = 'none'; panel.style.clipPath = ''; }
+    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null; }
+    clearTimeout(this._exitFloorT_ut); this._exitFloorT_ut = null;
     if (o && g) {
       const el = o.el; el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : '';
       el.style.width = UNIVERSE_TILE.W + 'px'; el.style.height = UNIVERSE_TILE.H + 'px'; el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');

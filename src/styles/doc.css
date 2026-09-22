@@ -94,9 +94,10 @@
    box, and the strut under its baseline sat the switch 3.5px high in the bar — unnoticed on a flat
    bar, plain as day once the bar's ends are round and meant to be concentric with it. */
 .doc-head__theme{grid-column:1;justify-self:start;display:flex}
-/* The third track holds New Palette, Back Up and Restore, 12 apart.
-   THE RIGHT END'S EXTRA 8px IS SPENT HERE, NOT IN THE PADDING. .glass-bar pads its right end by
-   --nav-inset-end (24) and its left by --nav-inset (16), which is right for the tool's bar, whose mark
+/* The third track holds New Palette alone (Back Up and Restore went to Manage Library, 22.09.26).
+   THE RIGHT END'S DIFFERENCE IS SPENT HERE, NOT IN THE PADDING (negative since 22.09.26, when the end
+   became the pill's own 10.25). .glass-bar pads its right end by --nav-inset-end and its left by
+   --nav-inset (16), which is right for the tool's bar, whose mark
    is fixed outside the flow. This bar centres its mark in the middle track of `1fr auto 1fr`, and
    uneven padding would carry the mark 4px left of the bar's centre. So the masthead keeps its padding
    even and moves the actions in by the difference instead. (0,2,0), to outrank .glass-bar whichever

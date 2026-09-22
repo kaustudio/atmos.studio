@@ -133,7 +133,7 @@ export const miscMethods = {
     const backdropColor = this._cssVar('--lightbox-scrim') || 'rgba(0,0,0,.9)', transparent = 'rgba(0,0,0,0)';
     /* A WAY OUT YOU CAN SEE. The overlay closed on a click anywhere and on Escape, and neither is
        something a control announces: a keyboard user arrived in a dialog with no button in it, and
-       the next Tab left it for the theme switch behind. This is the copy dialog's 32px Close, in
+       the next Tab left it for the theme switch behind. This is the centred dialogs' 32px Close, in
        the overlay's own colours — white on the black backdrop, since the surface tokens read against
        the page, not against this. It is also the one thing focus rests on while the image is up:
        there is nothing else here to tab to, so Tab stays put rather than wrapping around a list of
