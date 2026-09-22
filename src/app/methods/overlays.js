@@ -6,6 +6,9 @@ import { hashBytes } from '../../lib/hash.js';
 import { CONTRAST_MIN, CRITERION } from '../../lib/wcag.js';
 import { initPageReveal } from './pageReveal.js';
 
+// How long a press on the spot of a deletion counts as the same gesture (see deletePalette).
+const DEL_GUARD_MS = 700;
+
 export const overlayMethods = {
   // ================= fullscreen detail =================
   // Freeze the universe under the detail so the originating tile stays put (stable return rect).
@@ -122,28 +125,52 @@ export const overlayMethods = {
   },
 
   // ===== delete with undo (reversible, no confirm dialog) =====
-  deletePalette(id, rowEl) {
-    const s = this.state;
-    const idx = s.feed.findIndex((p) => p.id === id);
-    if (idx < 0) return;
-    const removed = s.feed[idx];
+  deletePalette(id, rowEl, ev) {
+    /* A DOUBLE PRESS DELETES ONE PALETTE (22.09.26, by request: the review's HIGH finding). The row folds
+       away and the next one slides up with its Delete under the pointer, so the second press of an
+       impatient double press deleted a second palette, and the undo held only the last. A press on the
+       same spot within DEL_GUARD_MS of a deletion is the tail of that gesture and is ignored; a
+       deliberate next deletion moves the pointer or waits a moment. A keyboard press has no position
+       (detail 0), and focus goes to the next row's own surface rather than its Delete, so it is never
+       held. */
+    const at = ev && ev.detail > 0 && typeof ev.clientX === 'number' ? { x: ev.clientX, y: ev.clientY } : null;
+    const now = performance.now(), last = this._delGuard;
+    if (at && last && now - last.t < DEL_GUARD_MS && Math.hypot(at.x - last.x, at.y - last.y) < 12) return;
+    if (at) this._delGuard = { x: at.x, y: at.y, t: now };
+    if (this.state.feed.findIndex((p) => p.id === id) < 0) return;
     const g = window.gsap;
+    /* THE LIBRARY AS IT STANDS WHEN THE DELETION LANDS, not as it stood when the row began to fold.
+       The fold runs DUR.state first, and a second deletion inside it used to commit a copy of the list
+       taken before the first had landed, putting the first palette back. */
     const commit = () => {
-      const feed = s.feed.slice(0, idx).concat(s.feed.slice(idx + 1));
+      const st = this.state;
+      const idx = st.feed.findIndex((p) => p.id === id);
+      if (idx < 0) return;
+      const removed = st.feed[idx];
+      const feed = st.feed.slice(0, idx).concat(st.feed.slice(idx + 1));
       const patch = { feed };
-      if (s.current && s.current.id === id) {
+      if (st.current && st.current.id === id) {
         const next = feed[idx] || feed[idx - 1] || null;
         if (next) { patch.current = next; patch.imageUrl = this.dispUrl(next); patch.stage = 'result'; }
         else { patch.current = null; patch.imageUrl = null; patch.stage = 'upload'; }
+        // The palette that takes its place takes its history entry too (PaletteApp _syncToolHistory).
+        this._histReplace = true;
       }
-      const overlayDeleted = s.overlay && s.overlay.id === id;
+      const overlayDeleted = st.overlay && st.overlay.id === id;
       if (overlayDeleted) { patch.overlay = null; this._ovTl = null; this._ovDone = true; this._ovOpen = false; this._openTileEl = null; }
-      this._deleted = { palette: removed, index: idx };
-      patch.toast = { name: removed.name };
-      patch.announce = 'Palette ' + removed.name + ' deleted. Undo available.';
+      /* ONE UNDO FOR EVERYTHING DELETED WHILE THE TOAST IS UP (22.09.26, by request). The toast used to
+         hold one deletion and the next replaced it, so a second deletion (a palette, or a project in the
+         drawer) made the first permanent. Each deletion now joins the run the toast is holding, and
+         Undo puts every one back (undoDelete). */
+      const turned = this._keepToast();
+      const standing = !!st.toast && !turned;
+      this._deleted = this._undoRun(st).concat([{ palette: removed, index: idx }]);
+      patch.toast = this._undoToast(this._deleted);
+      patch.announce = 'Palette ' + removed.name + ' deleted. ' + this._undoHint(this._deleted);
       this.setState(patch, () => {
         this.persist({ immediate: true });
-        this._toastIn();
+        // A toast already up takes the new count in place; replaying its entrance would flash it.
+        if (!standing) this._toastIn();
         if (overlayDeleted) this.resumeUniverse();
         requestAnimationFrame(() => {
           if (this.state.feedView === 'grid') { this.buildUniverse(); }
@@ -160,32 +187,61 @@ export const overlayMethods = {
       // deletion of data that exists nowhere but this browser — and an action-bearing toast that
       // dismisses itself is a race against the reader (WCAG 2.2.1; it lost that race twice during
       // the 03.08.26 audit). It stays until the user acts: Undo restores, Dismiss (the ✕) lets it
-      // go, and the next deletion replaces it. Info-only notices (showNotice) keep their timer —
-      // nothing is lost when one of those goes unread.
+      // go. Info-only notices (showNotice) keep their timer — nothing is lost when one of those goes
+      // unread.
     };
-    if (!this._reduce && g && rowEl && s.feedView === 'list') {
+    if (!this._reduce && g && rowEl && this.state.feedView === 'list') {
       g.set(rowEl, { height: rowEl.offsetHeight, overflow: 'hidden' });
       g.to(rowEl, { height: 0, opacity: 0, duration: this.DUR.state, ease: this.EASE.exit, onComplete: commit });
     } else { commit(); }
   },
   undoDelete() {
-    // A PROJECT'S UNDO REFILES THROUGH withProjects (19.09.26). It wrote the legacy projectId alone,
-    // which nothing reads since membership became the projectIds set, so the project came back empty
-    // while the toast said it was restored.
-    if (this._deletedProject) {
-      const dp = this._deletedProject; this._deletedProject = null;
-      this.setState((st) => { const projects = st.projects.slice(); projects.splice(Math.min(dp.index, projects.length), 0, dp.project); const feed = st.feed.map((p) => dp.palIds.indexOf(p.id) >= 0 ? this.withProjects(p, this.palProjects(p).concat([dp.project.id])) : p); return { projects, feed, announce: 'Restored project ' + dp.project.name + '.' }; }, () => { this.persist({ immediate: true }); this._dismissToast(); });
-      return;
-    }
-    const d = this._deleted; this._deleted = null;
-    if (!d) { this._dismissToast(); return; }
-    this.setState((st) => { const feed = st.feed.slice(); feed.splice(Math.min(d.index, feed.length), 0, d.palette); return { feed, announce: 'Restored ' + d.palette.name + '.' }; }, () => {
-      this._revealRestoredRow(d.palette.id);
+    const run = this._deleted; this._deleted = null;
+    if (!run || !run.length) { this._dismissToast(); return; }
+    /* BACK IN REVERSE, each to the index it left from, which walks the library back through the states
+       it passed through, so every palette and project lands where it stood and in the order it stood.
+       A PROJECT'S UNDO REFILES THROUGH withProjects (19.09.26). It wrote the legacy projectId alone,
+       which nothing reads since membership became the projectIds set, so the project came back empty
+       while the toast said it was restored. */
+    this.setState((st) => {
+      let feed = st.feed.slice();
+      const projects = st.projects.slice();
+      for (let i = run.length - 1; i >= 0; i--) {
+        const d = run[i];
+        if (d.project) {
+          if (!projects.some((x) => x.id === d.project.id)) projects.splice(Math.min(d.index, projects.length), 0, d.project);
+          feed = feed.map((p) => d.palIds.indexOf(p.id) >= 0 && !this.inProject(p, d.project.id) ? this.withProjects(p, this.palProjects(p).concat([d.project.id])) : p);
+        } else if (!feed.some((p) => p.id === d.palette.id)) feed.splice(Math.min(d.index, feed.length), 0, d.palette);
+      }
+      const one = run.length === 1 ? run[0] : null;
+      const announce = one ? (one.project ? 'Restored project ' + one.project.name + '.' : 'Restored ' + one.palette.name + '.') : 'Restored ' + this._undoPhrase(run) + '.';
+      return { feed, projects, announce };
+    }, () => {
+      run.forEach((d) => { if (d.palette) this._revealRestoredRow(d.palette.id); });
       this.persist({ immediate: true });
       if (this.state.feedView === 'grid') this.buildUniverse();
       this._dismissToast();
     });
   },
+  // The run the toast is holding: everything deleted since it came up, oldest first.
+  _undoRun(st) { return st.toast && Array.isArray(this._deleted) ? this._deleted : []; },
+  // What a run holds, for its toast and its announcements: "2 palettes", "1 project and 3 palettes".
+  _undoPhrase(run) {
+    const pals = run.filter((d) => d.palette).length, projs = run.length - pals;
+    const part = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
+    return [projs ? part(projs, 'project') : '', pals ? part(pals, 'palette') : ''].filter(Boolean).join(' and ');
+  },
+  /* 'Project deleted', not 'Project Deleted', and '2 palettes deleted' the same way. A status line is
+     prose, and prose is sentence case: a single palette's label is built as `name + ' deleted'`
+     (renderVals toastLabel), and a capitalize transform was once removed from the toast for turning
+     whole sentences into 'Dry Season Deleted'. The notice bar beside it carries full sentences for the
+     same reason. */
+  _undoToast(run) {
+    const last = run[run.length - 1];
+    if (run.length > 1) return { name: '', count: run.length, label: this._undoPhrase(run) + ' deleted' };
+    return last.project ? { name: last.project.name + ' project', count: 1, label: 'Project deleted' } : { name: last.palette.name, count: 1 };
+  },
+  _undoHint(run) { return run.length > 1 ? 'Undo restores all ' + run.length + '.' : 'Undo available.'; },
   /* UNDO ARRIVES THE WAY DELETE LEFT. The row folded away on height and opacity (deletePalette above)
      and came back in a single frame at full height, every row beneath it jumping 48px — measured, and
      the one place in the list where a surface appeared rather than arrived. The same tween, reversed,
@@ -199,8 +255,30 @@ export const overlayMethods = {
     g.from(row, { height: 0, opacity: 0, duration: this.DUR.state, ease: this.EASE.entrance, onComplete: () => { try { g.set(row, { clearProps: 'height,opacity,overflow' }); } catch (e) { } } });
   },
   // toast enter/exit — fade + small slide, --ease-standard; instant under reduced motion
-  _toastIn() { const g = window.gsap; this._noticeRide(); if (this._reduce || !g) return; const el = document.querySelector('[data-toast]'); if (el) g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' }); },
-  _dismissToast() { const g = window.gsap; const el = document.querySelector('[data-toast]'); const clear = () => this.setState({ toast: null }, () => this._noticeRide()); if (this._reduce || !g || !el) { clear(); return; } g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear }); },
+  _toastIn() {
+    const g = window.gsap; this._noticeRide(); if (this._reduce || !g) return;
+    const el = document.querySelector('[data-toast]'); if (!el) return;
+    // Turned round on its way out (_keepToast): it comes back from where it is, not from nothing.
+    if (this._toastTurned) { this._toastTurned = false; g.to(el, { opacity: 1, y: 0, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'opacity,transform' }); return; }
+    g.from(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.entrance, clearProps: 'transform' });
+  },
+  _dismissToast() {
+    const g = window.gsap; const el = document.querySelector('[data-toast]');
+    const clear = () => { this._toastOut = null; this.setState({ toast: null }, () => this._noticeRide()); };
+    if (this._reduce || !g || !el) { clear(); return; }
+    if (this._toastOut) return;
+    this._toastOut = g.to(el, { opacity: 0, y: 16, duration: this.DUR.state, ease: this.EASE.exit, onComplete: clear });
+  },
+  // A DELETION THAT LANDS WHILE THE TOAST IS LEAVING turns it round rather than letting it go: the
+  // exit's last act clears the toast, and it would have taken the new deletion's Undo with it.
+  _keepToast() {
+    const out = this._toastOut;
+    if (!out) return false;
+    this._toastOut = null;
+    out.kill();
+    this._toastTurned = true;
+    return true;
+  },
   // THE NOTICE RIDES ABOVE THE TOAST (19.09.26, audit U7). They share one lane at the bottom centre
   // (AppView MessageLane), the toast at its foot, so the toast arriving lifts a notice by its height and
   // the gap, and the toast leaving drops it again. The commit has already moved it; this plays the
@@ -248,7 +326,7 @@ export const overlayMethods = {
   // it (the control disappears mid-press), so it is handed to the first row's own hit surface —
   // the list the deletion just edited; a mouse user's focus, elsewhere, is left alone.
   dismissUndoToast() {
-    this._deleted = null; this._deletedProject = null;
+    this._deleted = null;
     const el = document.querySelector('[data-toast]');
     const hadFocus = !!(el && el.contains(document.activeElement));
     this._dismissToast();
@@ -1018,6 +1096,10 @@ export const overlayMethods = {
     // selectors: any modal that opens above this panel is a surface it is standing behind, not a
     // press somewhere else on the page.
     if (e.target.closest && e.target.closest('[role="dialog"],[data-modal-backdrop],[data-ex-backdrop]')) return;
+    // NOR THE TOAST (22.09.26). A project is deleted from inside this panel and its Undo is on the
+    // toast: pressing Undo put the panel away, and "Manage Library closed." replaced "Restored
+    // project …", so the reader heard the panel close rather than the project come back.
+    if (e.target.closest && e.target.closest('[data-message-lane]')) return;
     this.closeTagFilter();
   },
   openTagFilter() {

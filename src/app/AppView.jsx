@@ -4491,12 +4491,12 @@ function ToastLayer({ vals }) {
                     8px inside the group against 16 to the message: the ratio the rest of the app uses
                     to mean "these belong together, that is something else". */}
                 <div style={sx('display:flex;align-items:center;gap:8px;flex:none')}>
-                  <button type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete} aria-label="Undo the deletion" title="Undo"
+                  <button type="button" data-undo-btn="1" data-ix="press" data-focus="chrome" onClick={vals.undoDelete} aria-label={vals.undoAria} title="Undo"
                     style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconUndo /></TextSwap></button>
                   {/* The toast no longer times out (it holds an action — see the note in overlays.js),
                       so letting the undo go needs a control of its own. Icon-only, so it carries a name;
                       a 28px disc clears the 24px hit floor. */}
-                  <button type="button" data-ix="press" data-focus="chrome" aria-label="Dismiss, keep the deletion" onClick={vals.onDismissToast} style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
+                  <button type="button" data-ix="press" data-focus="chrome" aria-label={vals.dismissAria} onClick={vals.onDismissToast} style={sx('width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
                 </div>
               </div>
             </>

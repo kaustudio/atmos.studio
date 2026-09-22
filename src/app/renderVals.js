@@ -660,7 +660,7 @@ export const renderValsMethods = {
         aaCell, metricValue, contrastCell, timeCell, metricValueInv, contrastCellInv, timeCellInv,
         aria: (isCur ? 'Currently viewing ' + p.name + '. ' : 'Load ' + p.name + ' into the result. ') + this.tagsSpoken(p) + '. Dominant hue ' + met.hue + ' degrees, ' + met.temp.toLowerCase() + '. ' + met.aaPairs + ' of ' + met.totalPairs + ' colour pairs meet AA contrast for normal text. Maximum contrast ' + met.contrastMax.toFixed(1) + ' to 1. Generated ' + this.relTime(p.time),
         onClick: (e) => { if (!busy) this.loadIntoResult(p, e && e.currentTarget); },
-        onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap); },
+        onDelete: (e) => { if (e && e.stopPropagation) e.stopPropagation(); const wrap = e && e.currentTarget && e.currentTarget.closest('[data-row-wrap]'); this.deletePalette(p.id, wrap, e); },
         deleteAria: 'Delete ' + p.name,
         onAssign: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.openAssign(p); },
         // "Move" is left over from the single-slot model, where filing a palette in a second project
@@ -2332,7 +2332,10 @@ const mk = (id, label, ext) => ({ label, ext, onPick: () => (pid ? this.doProjec
          from a panel that lists every project by name, so the row that vanished is the answer to
          "which one", and the sentence has one job: to be the handle on Undo. The spoken form still
          names it (see the announce in deleteProject), so nothing is lost to a screen reader. */
-      hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.label || s.toast.name + ' deleted') : '', undoDelete: () => this.undoDelete(),
+      hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.label || s.toast.name + ' deleted') : '',
+      // A run of deletions is undone together (overlays.js deletePalette), and its two answers say so.
+      undoAria: s.toast && s.toast.count > 1 ? 'Undo all ' + s.toast.count + ' deletions' : 'Undo the deletion',
+      dismissAria: s.toast && s.toast.count > 1 ? 'Dismiss, keep the deletions' : 'Dismiss, keep the deletion', undoDelete: () => this.undoDelete(),
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',

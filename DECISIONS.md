@@ -6,6 +6,47 @@ doesn't know it was ever made.
 
 ---
 
+## 2026-09-22 — One undo for every deletion, the tool's places in history, one question at a time
+
+**From the UX review (by request: "fix the high and two mediums").**
+
+**A double press deletes one palette, and Undo puts back everything deleted while the toast is up.**
+The row folds away in 240ms and the next row slides up with its Delete under the pointer, so an
+impatient second press, measured 350ms later, deleted a second palette. The toast held one deletion
+and the next replaced it, so Undo brought back only the last one. Now:
+- A pointer press on the same spot (within 12px) within 700ms of a deletion counts as the tail of that
+  gesture and is ignored. A keyboard press has no position and is never held.
+- Each deletion joins the run the toast is holding, palettes and projects alike. The toast counts them
+  ("3 palettes deleted", "1 project and 1 palette deleted"), and Undo is named "Undo all 3 deletions".
+  One Undo restores them in reverse, each to the index it left from, so the library comes back in its
+  old order with its projects' members re-filed. The ✕ still lets the whole run go.
+- A deletion that lands while the toast is leaving turns it round instead of losing its Undo.
+- A deletion commits against the library as it stands when the fold ends, not as it stood when the
+  press began.
+- Pressing the toast no longer counts as a press outside the library drawer. A project is deleted
+  inside the drawer, and its Undo used to put the drawer away and announce "Manage Library closed."
+  over "Restored project …".
+
+**The tool's places are in the browser's history.** Landing → Create → a palette used to add no entry,
+so Back from a palette left the site, Forward came back without it, and a refresh landed on the start.
+- The places are the start, an open palette, and, on a phone, the example the story is telling. Opening
+  a palette or choosing an example adds an entry. Back and Forward reopen the place the entry names.
+- A refresh reopens the palette the entry names, if the library still holds it.
+- Processing is not a place. Back during processing abandons the reading, as New Palette does.
+- The first place tags the entry the page opened on, so Back from the start still leaves the site. A
+  palette that takes the place of one just deleted takes its entry too.
+- The place is stored beside the route and scroll navigateTo keeps, so it survives a trip to /about and
+  back.
+
+**The tour's invitation waits for the analytics banner's answer.** The banner already waited for the
+tour, but not the other way round: a visitor who scrolled the landing was asked there, pressed Create
+with the banner up, and got both at once. The invitation now comes 400ms after the banner has gone, and
+only if the reader is still on the overview with nothing open. A reader who opened a palette in the
+meantime has already started, so the offer is dropped rather than held; it is not recorded as given,
+and Take a Tour in the footer is there either way.
+
+---
+
 ## 2026-09-21 — The masthead's links and New Palette are 13px
 
 **Back Up and Restore take --fs-body (by request: "change top navigation font-size links to 13px"), and

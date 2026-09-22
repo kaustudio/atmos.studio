@@ -184,7 +184,33 @@ export const tourMethods = {
     if (this.state.narrow || this.state.sharedView) return;
     if (this._tourOffered()) return;
     if (this.state.tourStep != null) return;
+    /* ONE QUESTION AT A TIME (22.09.26). The consent banner already waits for the tour to be over
+       (consent.js _askConsent), but not the other way round: a visitor who scrolled the landing was
+       asked about analytics there, pressed Create with the banner still up, and got the invitation
+       on top of it — measured, both on screen at once, the invitation claiming aria-modal while the
+       banner stayed clickable. Now the invitation waits for the banner's answer, and _closeConsent
+       offers it once the banner has left. */
+    if (this.state.consentOpen || this._consentClosing) { this._tourAfterConsent = true; return; }
     this.openTourInvite();
+  },
+
+  /* THE WAITING INVITATION, after the banner has gone. A beat later, so the banner's exit and the
+     invitation's arrival read as two things rather than one turning into the other; and only while
+     the reader is still where the invitation makes sense — on the overview, with nothing else open.
+     A reader who opened a palette or a menu while the banner was up has already started, and the
+     offer is dropped rather than held: it is not remembered as given, and Take a Tour in the footer
+     is there either way. */
+  _offerTourAfterConsent() {
+    if (!this._tourAfterConsent) return;
+    this._tourAfterConsent = false;
+    clearTimeout(this._tourAfterConsentT);
+    this._tourAfterConsentT = setTimeout(() => {
+      this._tourAfterConsentT = null;
+      const s = this.state;
+      if (!this._alive || !s.landingDismissed || s.stage !== 'upload' || s.overlay || s.uOpen || this._wipeRunning) return;
+      if (s.tagMenuOpen || s.exportOpen || s.shareMenuOpen || s.copyMenuOpen || s.backupMenuOpen) return;
+      this.maybeOfferTour();
+    }, 400);
   },
 
   // ===== the invitation =====================================================================

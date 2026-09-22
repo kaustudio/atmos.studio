@@ -446,24 +446,22 @@ export const persistenceMethods = {
   deleteProject(id) {
     const st = this.state; const idx = st.projects.findIndex((p) => p.id === id); if (idx < 0) return;
     const project = st.projects[idx]; const palIds = st.feed.filter((p) => this.inProject(p, id)).map((p) => p.id);
-    this._deleted = null; this._deletedProject = { project, index: idx, palIds };
+    // Joins the run the toast is holding, as a palette's deletion does (overlays.js deletePalette).
+    const turned = this._keepToast();
+    const standing = !!st.toast && !turned;
+    this._deleted = this._undoRun(st).concat([{ project, index: idx, palIds }]);
     const projects = st.projects.slice(0, idx).concat(st.projects.slice(idx + 1));
     const feed = st.feed.map((p) => this.inProject(p, id) ? this.withProjects(p, this.palProjects(p).filter((x) => x !== id)) : p);
-    // 'Project deleted', not 'Project Deleted'. This is the only toast label written by hand — every
-    // other one is built as `name + ' deleted'` and arrives in sentence case — so Title Case here made
-    // one status line in the app speak differently from the rest of them. It also contradicted the
-    // rule recorded on the toast itself, where a capitalize transform was removed for turning whole
-    // sentences into 'Dry Season Deleted': a status line is prose, and prose is sentence case. The
-    // notice bar beside it carries full sentences for the same reason.
-    const patch = { projects, feed, toast: { name: project.name + ' project', label: 'Project deleted' } };
+    // The label is sentence case, as every status line is (overlays.js _undoToast).
+    const patch = { projects, feed, toast: this._undoToast(this._deleted) };
     if ((st.activeProjects || []).indexOf(id) >= 0) patch.activeProjects = st.activeProjects.filter((x) => x !== id);
-    patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) stay in your library. Undo available.';
-    // No auto-dismiss: the toast holds an action, so it stays until Undo, the ✕, or the next
-    // deletion replaces it — see the note in overlays.js where the palette path says the same.
+    patch.announce = 'Project ' + project.name + ' deleted. Its ' + palIds.length + ' palette(s) stay in your library. ' + this._undoHint(this._deleted);
+    // No auto-dismiss: the toast holds an action, so it stays until Undo or the ✕, and a further
+    // deletion joins it — see the note in overlays.js where the palette path says the same.
     // A deletion reflows the row, and if the deleted project WAS the scope the app has just fallen
     // back to All — which sits at the far left of a group that may be scrolled well past it. Same
     // reveal, same reason: the active chip should never be the one you cannot see.
-    this.setState(patch, () => { this.persist({ immediate: true }); this._toastIn(); if (this.state.feedView === 'grid') this.buildUniverse(); });
+    this.setState(patch, () => { this.persist({ immediate: true }); if (!standing) this._toastIn(); if (this.state.feedView === 'grid') this.buildUniverse(); });
   },
   // ---- portable project file (accountless permanence) — DISTINCT from token export ----
   /* ONE PROJECT OR EVERYTHING (18.09.26, by request: "even if a palette doesn't live in a folder,

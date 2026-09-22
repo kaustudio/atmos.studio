@@ -149,6 +149,8 @@ export const consentMethods = {
       this._consentPending = null;
       this.setState({ ...pending, consentOpen: false }, () => {
         if (hadFocus && back && back.isConnected) { try { back.focus(); } catch (e) { } }
+        // The tour's invitation, if Create was pressed while this was up (tour.js maybeOfferTour).
+        this._offerTourAfterConsent();
       });
     });
   },

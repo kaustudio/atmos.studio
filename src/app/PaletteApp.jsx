@@ -500,8 +500,10 @@ export default class PaletteApp extends React.Component {
     // navigateTo restores the offset itself, after the swap, from the entry's own state.
     try { history.scrollRestoration = 'manual'; } catch (e) { }
     this._onPop = () => {
+      // Whatever the pop changes next is the browser's move, not a new place (see _syncToolHistory).
+      this._histPop = performance.now();
       const next = routeFor(location.pathname);
-      if (next === this.state.route) return;
+      if (next === this.state.route) { this._applyPlace(history.state && history.state.place); return; }
       this.navigateTo(pathFor(next), { push: false, scrollY: (history.state && history.state.scrollY) || 0 });
     };
     window.addEventListener('popstate', this._onPop);
@@ -643,6 +645,17 @@ export default class PaletteApp extends React.Component {
        second is four property reads. */
     requestAnimationFrame(() => this._syncStory());
     this._storyT = setTimeout(() => this._syncStory(), 400);
+    // A REFRESH REOPENS THE PALETTE (22.09.26; see _syncToolHistory): the entry still names it, and the
+    // library still holds it. Not over the front page, and not on a phone, which has no result stage.
+    try {
+      const place = history.state && history.state.place;
+      const s0 = this.state;
+      if (place && place.palette && !s0.narrow && !isDoc(s0.route) && !s0.sharedView && !this._landingUp()) {
+        const p = (s0.feed || []).find((x) => x.id === place.palette);
+        // Held until it lands: the start it passes through on the way is not a place anyone visited.
+        if (p) { this._histPop = performance.now(); this._histRestoring = { id: p.id, until: performance.now() + 3000 }; this.loadIntoResult(p, null); }
+      }
+    } catch (e) { }
     this._syncShareCount();
   }
 
@@ -663,6 +676,7 @@ export default class PaletteApp extends React.Component {
     this._syncConsent();
     this._syncFilteredEmpty();
     this._syncLaneLift();
+    this._syncToolHistory();
     /* THE TOUR WATCHES EVERY COMMIT, not only the stage changes further down (which return early when
        neither the stage nor the palette moved — and opening a drawer moves neither). A drawer step's
        act, however it was done (methods/tour.js _tourWatch); and back on the tool from a document
@@ -766,6 +780,81 @@ export default class PaletteApp extends React.Component {
       } catch (err) { }
       this._fromRects = null;
     }
+  }
+
+  /* THE TOOL'S PLACE IS IN THE BROWSER'S HISTORY (22.09.26, by request: the review found that going from
+     the front page to Create to a palette never added an entry, so Back from a palette left the site,
+     Forward came back without it, and a refresh landed on Start here). The places are the start, an
+     open palette, and on a phone the example the story is telling. Processing is a moment, not a place;
+     the front page, a document and a shared link keep the entries they already had.
+     A change the reader makes adds an entry, so Back returns to the place before it. The first place
+     the page shows tags the entry it opened on rather than adding one, so Back from the start still
+     leaves the site the way a front door does. A change the browser made (a pop, and a refresh
+     reopening its palette) only rewrites the current entry, and so does a palette taking the place of
+     one just deleted. Stored on history.state beside the route and scroll navigateTo already keeps
+     there, which it merges into rather than replaces, so a place survives a trip to /about and back. */
+  _historyView() {
+    const s = this.state;
+    if (isDoc(s.route) || s.sharedView) return null;
+    if (this._mobileStory()) return { story: s.storyCaseId || null };
+    if (s.narrow || this._landingUp()) return null;
+    if (s.stage === 'result' && s.current && s.current.id) return { palette: s.current.id };
+    if (s.stage === 'upload') return { start: true };
+    return null;
+  }
+  _syncToolHistory() {
+    const view = this._historyView();
+    const rest = this._histRestoring;
+    if (rest) {
+      if (performance.now() < rest.until && !(view && view.palette === rest.id)) return;
+      this._histRestoring = null;
+    }
+    const key = view ? JSON.stringify(view) : null;
+    if (key === this._histKey) return;
+    this._histKey = key;
+    if (!view) return;
+    const cur = (window.history && history.state) || {};
+    const entry = Object.assign({}, cur, { route: this.state.route, scrollY: 0, place: view });
+    const fromBrowser = this._histPop && performance.now() - this._histPop < 4000;
+    const replace = !cur.place || fromBrowser || this._histReplace;
+    this._histPop = 0; this._histReplace = false;
+    try {
+      if (replace) history.replaceState(entry, '');
+      else { history.replaceState(Object.assign({}, cur, { scrollY: window.scrollY || 0 }), ''); history.pushState(entry, ''); }
+    } catch (e) { }
+  }
+  /* Back or Forward within the tool: open the place the entry names. A palette since deleted, or one
+     this browser no longer holds, falls back to the start. */
+  _applyPlace(place) {
+    // A pop that changes nothing leaves nothing to attribute to the browser.
+    if (!this._applyPlaceNow(place)) this._histPop = 0;
+  }
+  _applyPlaceNow(place) {
+    if (!place) return false;
+    const s = this.state;
+    if ('story' in place) {
+      if (!this._mobileStory()) return false;
+      const want = place.story || null;
+      if ((s.storyCaseId || null) === want) return false;
+      if (want === null) this.returnToStoryStart(); else this.chooseStoryCase(want);
+      return true;
+    }
+    if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
+    if (place.palette) {
+      const p = (s.feed || []).find((x) => x.id === place.palette);
+      if (p) {
+        if (s.stage === 'result' && s.current && s.current.id === p.id) return false;
+        // Back during a reading abandons it, as New Palette does (pipeline.js doReset). The list is
+        // closed to a second palette while one is being read, and without this the reading carried
+        // on under the palette Back opened and took the stage from it when it finished.
+        if (s.stage === 'processing') this._genId = (this._genId || 0) + 1;
+        this.loadIntoResult(p, null); return true;
+      }
+      if (s.stage === 'upload') return false;
+      this.doReset(); return true;
+    }
+    if (place.start && s.stage !== 'upload') { this.doReset(); return true; }
+    return false;
   }
 
   /* One place decides whether the story module is up, so it can never be armed twice or left behind.
@@ -1057,6 +1146,7 @@ export default class PaletteApp extends React.Component {
     if (this._landRevealT) { clearTimeout(this._landRevealT); this._landRevealT = null; }
     if (this._consentT) { clearTimeout(this._consentT); this._consentT = null; }
     if (this._consentLearnT) { clearTimeout(this._consentLearnT); this._consentLearnT = null; }
+    if (this._tourAfterConsentT) { clearTimeout(this._tourAfterConsentT); this._tourAfterConsentT = null; }
     if (this._textRevealCancel) this._textRevealCancel();
     if (this._engageOff) this._engageOff();
     if (this._wipeBeginFloor) { clearTimeout(this._wipeBeginFloor); this._wipeBeginFloor = null; }
