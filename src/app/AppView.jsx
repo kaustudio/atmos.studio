@@ -792,7 +792,7 @@ function MobileStory({ st }) {
             <div className="story-hero__block">
               <span aria-hidden="true" style={sx('position:absolute;inset:-140px -120px;z-index:0;pointer-events:none;background:radial-gradient(ellipse closest-side at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
               <h1 data-story-hero-line>{st.heroTitle}</h1>
-              <p className="story-hero__lead" data-story-hero-line>Atmos shows how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024 px or wider.</p>
+              <p className="story-hero__lead" data-story-hero-line>Atmos shows how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024&nbsp;px or wider.</p>
               {/* The label names the palette once there is one to name — see beginLabel in
                   renderVals. `data-case="own"` for the same reason the picker's titles carry it: the
                   name is a string the reading invented, so nothing downstream may case it. */}
@@ -1432,8 +1432,10 @@ const liveRegionStyle = visuallyHidden;
    Every branch's own <main> carries id="main", and exactly one branch renders at a time, so the one
    id is never ambiguous. Styles are in global.css, with the reasoning for the z-index and the
    transform. */
-function SkipLink() {
-  return <a className="skip-link" href="#main" data-focus="chrome">Skip to Main Content</a>;
+// `target` is the id of what the page's main content is on this screen: the tool's <main>, or the
+// landing's region while the landing covers the tool (22.09.26).
+function SkipLink({ target = 'main' }) {
+  return <a className="skip-link" href={'#' + target} data-focus="chrome">Skip to Main Content</a>;
 }
 
 /* The site footer, closing the tool and both legal routes — styles from /site-foot.css, which
@@ -1665,7 +1667,7 @@ function LandingStage({ vals, covered, quiet }) {
            could not. Nothing else sits between the page and 100 on that branch. The phone's ladder
            (the story at 152, its footer at 151, the share view and the list tying at 150) is built on
            this stage at 150 and is left exactly as it was. */
-        <div data-landing="1" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Larger screen recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:' + (vals.narrow ? 150 : 90) + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
+        <div data-landing="1" id="landing-main" {...(vals.narrow ? { 'data-desk-gate': '1' } : {})} {...((covered || quiet) ? { inert: true, 'aria-hidden': 'true' } : { role: 'region', 'aria-label': vals.narrow ? 'Larger screen recommended' : 'Welcome to Atmos Gallery' })} style={sx('position:fixed;inset:0;height:100dvh;z-index:' + (vals.narrow ? 150 : 90) + ';display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:clip;background:var(--surface)')}>
           {/* THE FIELD (decorative). Two elements and nothing else in the markup: the air, and the
               stage the engine appends its canvas to. Where a hundred and sixteen orb tiles used to
               be — each with a float wrapper, a clip and five shading layers — there is one painted
@@ -1719,7 +1721,7 @@ function LandingStage({ vals, covered, quiet }) {
                     a computer (a palette from your own image), which explains the width by the
                     capability behind it. Supplied copy, 14.09.26. */}
                 <p style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:none;text-wrap:pretty")}>
-                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Explore example palettes here. To create a palette from your own image, open Atmos on your computer in a window at least 1024 px wide.</span></span>
+                  <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Explore example palettes here. To create a palette from your own image, open Atmos on your computer in a window at least 1024&nbsp;px wide.</span></span>
                 </p>
                 {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
                     arriving from a link with a sentence and no next move. Two acts that are honest
@@ -2156,7 +2158,88 @@ export default function AppView({ vals }) {
   return (
     <div data-app="1" {...(vals.hasOverlay ? { 'data-detail-open': '' } : null)} style={sx('min-height:100vh;display:flex;flex-direction:column;background:var(--surface)')}>
 
-      <SkipLink />
+      {/* THE FIRST SLOT: THE SKIP LINK, THE MARK AND THE BAR, IN THAT ORDER (22.09.26, UX audit). The bar
+          stood seventh, after the landing, so on the landing the keyboard met Create, How it Works and
+          the legal row before the theme switch at the top of the screen. The landing cannot move up to
+          fix that: its slot is load-bearing (see the note on LandingStage below), so the mark and the bar
+          move into this first slot instead, as one fragment, and their old slots are held empty below so
+          every later sibling keeps the index it reconciles by. The tool's order is unchanged (skip link,
+          mark, switch, New Palette); the landing's is now skip link, switch, Create, How it Works, the
+          legal row. The skip link names the landing's region while the landing is up: #main is the
+          covered tool's, hidden there, and following it sent focus past everything on the screen. */}
+      <>
+        <SkipLink target={vals.showLanding ? 'landing-main' : 'main'} />
+        {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
+            composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
+        {/* ON THE FLOATING BAR'S CENTRE LINE: --nav-mark-top, on this branch only. logoStyle's 18.5
+            is the phone's band and stays theirs; the desktop bar floats lower now (global.css). */}
+        {vals.showLogoDecor && (
+          <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, top: 'var(--nav-mark-top)', pointerEvents: 'none' }}></div>
+        )}
+        {vals.showLogoButton && (
+          <>
+            {/* data-ix="mark" (17.09.26, audit E4): hover and press from the mark tier in global.css,
+                eased, where an HBtn opacity cut in and out. data-detail-open on the root hides it
+                while the palette detail is open (audit C4). */}
+            <button type="button" data-logo="1" data-ix="mark" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
+              style={{ ...logoStyle, top: 'var(--nav-mark-top)', border: 0, padding: 0, cursor: 'pointer' }} />
+            <LogoRing top="var(--nav-mark-top)" />
+          </>
+        )}
+
+        {/* THE BAR IS GLASS NOW. Same 64px, same two clusters in the same corners — the only thing
+            that changed is what fills it. Two declarations left this string, both because the glass
+            replaces them rather than because they were wrong:
+
+            `background:var(--surface)` was an opaque plate, and a backdrop-filter under an opaque
+            plate blurs nothing. GlassEffect's __fill layer is the tint now.
+
+            `border-bottom:1px solid var(--line-strong)` was the boundary, and the pane already draws
+            one — a hairline plus the glass's own bottom shade stacked two edges on top of each other
+            at the one place the bar meets the page, which is the heaviest line on the screen for a
+            surface that is supposed to be barely there. The fill is what separates the bar from what
+            scrolls beneath it. Removing it also hands the pane the last pixel: inset:0 resolves
+            against the padding box, so the glass now fills all 64px rather than stopping at 63. */}
+        {/* IT FLOATS, AND IT STAYS UP ON THE LANDING. The box — sticky at --nav-top, a gutter in from
+            either side so its ends sit on the grid's outer lines, the stadium and its shadow — is
+            .glass-bar's, shared with the documents' masthead (global.css). What is this bar's own is
+            the flex row and the height it stands at: 95, over the desktop landing (90, see
+            LandingStage) and under everything that covers the page on purpose — the palette overlay
+            (100), the dialogs (126), the notice (128), the drawers and the toast. So on the landing the
+            switch, Back up and Restore all work, and what Restore opens still arrives in front of it.
+            data-float-nav is what _syncAppInert exempts, so the landing's guard leaves it live.
+            data-on-landing thins its pane over the field in light mode — see the rule in global.css. */}
+        <header className="glass-bar" data-float-nav="1" {...(vals.showLanding ? { 'data-on-landing': '1' } : {})} style={sx('display:flex;align-items:center;justify-content:space-between;z-index:95')}>
+          <GlassEffect />
+          {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
+              nothing about the palette, the archive or the work, yet it was the first thing every
+              left-to-right scan landed on. The theme switch takes the corner instead — it is the
+              control that changes how everything else on the page is READ. It is outlined, not
+              filled, so it holds the edge without competing with the mark. */}
+          {/* THE TOUR'S SECOND DOOR IS IN THE FOOTER, not here. It stood in this corner for one round,
+              beside the theme switch, and read as the switch's own label — two controls sharing an
+              edge with nothing between them, one of them a bare word (19.09 pattern: a thing sits
+              with the thing it acts on, and nothing is placed to balance a corner). The switch changes
+              how the page is read; a tour is about the product. See site-foot__consent's note in
+              SiteFooter, which is the row it belongs to and the precedent for a button standing among
+              those links. */}
+          <ThemeSwitch vals={vals} />
+          {/* RIGHT — the act. New Palette drives the core loop, so it stays filled and alone.
+              Back Up and Restore stood here from 15.09 to 22.09.26 and are Manage Library's last group
+              now (see the note there). Show intro again was once a third item in their menu; it is the
+              brand mark's job, which calls returnToIntro() on every screen. One act, one door. */}
+          <div style={sx('display:flex;align-items:center;gap:12px')}>
+            {/* "New generation" named the machinery. What the button makes is a palette, and the rest of
+                the app has spent five rounds learning to say so: the Library holds palettes, and Add to
+                project files one. On the create page in every state and off the landing, and it
+                always starts a palette — see NavNewPalette. */}
+            <NavNewPalette show={!vals.showLanding} onPress={vals.newPalette} />
+            {/* Restore's file input. It stays in the bar, which is always mounted under the tool; the
+                drawer that holds Restore is not. */}
+            <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
+          </div>
+        </header>
+      </>
         <div aria-live="polite" role="status" style={liveRegionStyle}>{vals.announce}</div>
 
       {/* One surface, two copies. On a phone the landing IS the small-screen gate — same ring stage,
@@ -2173,81 +2256,17 @@ export default function AppView({ vals }) {
           is z-155 or higher (logo, wipe, lightbox, loader), so nothing lost cover by moving up. */}
       {vals.showLanding && <LandingStage vals={vals} />}
 
-      {/* brand mark: fixed at top-centre; the wordmark shape masks a drifting GRAYSCALE gradient,
-          composited with mix-blend difference. Landing: decorative; in the tool: a button back to the start. */}
-      {/* ON THE FLOATING BAR'S CENTRE LINE: --nav-mark-top, on this branch only. logoStyle's 18.5
-          is the phone's band and stays theirs; the desktop bar floats lower now (global.css). */}
-      {vals.showLogoDecor && (
-        <div data-logo="1" role="img" aria-label="Atmos Gallery" style={{ ...logoStyle, top: 'var(--nav-mark-top)', pointerEvents: 'none' }}></div>
-      )}
-      {vals.showLogoButton && (
-        <>
-          {/* data-ix="mark" (17.09.26, audit E4): hover and press from the mark tier in global.css,
-              eased, where an HBtn opacity cut in and out. data-detail-open on the root hides it
-              while the palette detail is open (audit C4). */}
-          <button type="button" data-logo="1" data-ix="mark" data-focus="chrome" onClick={vals.showIntroAgain} aria-label="Atmos Gallery, return to the start screen" title="Return to the start screen"
-            style={{ ...logoStyle, top: 'var(--nav-mark-top)', border: 0, padding: 0, cursor: 'pointer' }} />
-          <LogoRing top="var(--nav-mark-top)" />
-        </>
-      )}
+      {/* Slots 3 and 4, held empty: the mark and its button moved into the first slot (see there). */}
+      {null}
+      {null}
 
       {/* click-to-zoom lightbox: fixed overlay the zoomed reference image FLIPs into */}
       <div data-click-zoom-lightbox="1" style={sx('z-index:170;cursor:zoom-out;background-color:var(--lightbox-scrim);justify-content:center;align-items:center;padding:3em;display:none;position:fixed;inset:0')}></div>
 
       <LogoLoader show={vals.showLoader} />
 
-      {/* THE BAR IS GLASS NOW. Same 64px, same two clusters in the same corners — the only thing
-          that changed is what fills it. Two declarations left this string, both because the glass
-          replaces them rather than because they were wrong:
-
-          `background:var(--surface)` was an opaque plate, and a backdrop-filter under an opaque
-          plate blurs nothing. GlassEffect's __fill layer is the tint now.
-
-          `border-bottom:1px solid var(--line-strong)` was the boundary, and the pane already draws
-          one — a hairline plus the glass's own bottom shade stacked two edges on top of each other
-          at the one place the bar meets the page, which is the heaviest line on the screen for a
-          surface that is supposed to be barely there. The fill is what separates the bar from what
-          scrolls beneath it. Removing it also hands the pane the last pixel: inset:0 resolves
-          against the padding box, so the glass now fills all 64px rather than stopping at 63. */}
-      {/* IT FLOATS, AND IT STAYS UP ON THE LANDING. The box — sticky at --nav-top, a gutter in from
-          either side so its ends sit on the grid's outer lines, the stadium and its shadow — is
-          .glass-bar's, shared with the documents' masthead (global.css). What is this bar's own is
-          the flex row and the height it stands at: 95, over the desktop landing (90, see
-          LandingStage) and under everything that covers the page on purpose — the palette overlay
-          (100), the dialogs (126), the notice (128), the drawers and the toast. So on the landing the
-          switch, Back up and Restore all work, and what Restore opens still arrives in front of it.
-          data-float-nav is what _syncAppInert exempts, so the landing's guard leaves it live.
-          data-on-landing thins its pane over the field in light mode — see the rule in global.css. */}
-      <header className="glass-bar" data-float-nav="1" {...(vals.showLanding ? { 'data-on-landing': '1' } : {})} style={sx('display:flex;align-items:center;justify-content:space-between;z-index:95')}>
-        <GlassEffect />
-        {/* LEFT — the one display preference. A running clock used to hold this corner: it reported
-            nothing about the palette, the archive or the work, yet it was the first thing every
-            left-to-right scan landed on. The theme switch takes the corner instead — it is the
-            control that changes how everything else on the page is READ. It is outlined, not
-            filled, so it holds the edge without competing with the mark. */}
-        {/* THE TOUR'S SECOND DOOR IS IN THE FOOTER, not here. It stood in this corner for one round,
-            beside the theme switch, and read as the switch's own label — two controls sharing an
-            edge with nothing between them, one of them a bare word (19.09 pattern: a thing sits
-            with the thing it acts on, and nothing is placed to balance a corner). The switch changes
-            how the page is read; a tour is about the product. See site-foot__consent's note in
-            SiteFooter, which is the row it belongs to and the precedent for a button standing among
-            those links. */}
-        <ThemeSwitch vals={vals} />
-        {/* RIGHT — the act. New Palette drives the core loop, so it stays filled and alone.
-            Back Up and Restore stood here from 15.09 to 22.09.26 and are Manage Library's last group
-            now (see the note there). Show intro again was once a third item in their menu; it is the
-            brand mark's job, which calls returnToIntro() on every screen. One act, one door. */}
-        <div style={sx('display:flex;align-items:center;gap:12px')}>
-          {/* "New generation" named the machinery. What the button makes is a palette, and the rest of
-              the app has spent five rounds learning to say so: the Library holds palettes, and Add to
-              project files one. On the create page in every state and off the landing, and it
-              always starts a palette — see NavNewPalette. */}
-          <NavNewPalette show={!vals.showLanding} onPress={vals.newPalette} />
-          {/* Restore's file input. It stays in the bar, which is always mounted under the tool; the
-              drawer that holds Restore is not. */}
-          <input ref={vals.projectFileRef} type="file" accept="application/json,.json" onChange={vals.onProjectFileChange} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
-        </div>
-      </header>
+      {/* Slot 7, held empty: the bar moved into the first slot (see there). */}
+      {null}
 
       <main id="main" aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
 
@@ -3912,10 +3931,16 @@ function LibraryDrawer({ vals }) {
           <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Backup</span>
           <div role="group" aria-label="Backup" style={sx('display:flex;flex-direction:column;gap:6px')}>
             {vals.showProjectsBar && (
-              <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.backUpLibrary} aria-label="Back up your whole library to a file" style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
+              /* It confirms in place, as Export's rows do (22.09.26, interface audit): the glyph gives
+                 way to "Backed Up" on the shared timer. It only downloaded, so the one act that protects
+                 the library left no trace on screen; download() already names the file to a screen
+                 reader, and the name here says it too while the row confirms. */
+              <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.backUpLibrary} aria-label={'Back up your whole library to a file' + (vals.backupDone ? ', backed up' : '')} style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
                 <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
                 <span data-reveal="1" style={measuredLabelStyle}>Back Up</span>
-                <span data-reveal="1" style={sx('margin-inline-start:auto;display:inline-flex;color:var(--on-surface-muted)')}><IconExport size={16} /></span>
+                <span style={sx('margin-inline-start:auto;display:inline-flex')}>
+                  <DoneSwap rise done={vals.backupDone} word="Backed Up" restStyle={{ display: 'inline-flex', color: 'var(--on-surface-muted)' }}><IconExport size={16} /></DoneSwap>
+                </span>
               </button>
             )}
             <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
@@ -4059,17 +4084,38 @@ function HarmonyDrawer({ vals }) {
    reader would be left in an open dialog with nothing focused. */
 // The library drawer's section-head voice, inset to the rows' text edge.
 const EX_GROUP_HEAD = sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px');
+/* A ROW'S END, CONFIRMING IN PLACE: what the row carries at rest (a format, a glyph) gives way to the word
+   for what just happened ("Copied", "Downloaded", "Backed Up") for as long as _confirmRow holds it. One
+   component since 22.09.26, when Back Up in Manage Library took the same confirmation Export's rows give
+   (UX audit): the same grid, the same 4px arrival and the same timer, so the two never drift apart.
+   `rise`: inside a panel whose contents arrive by pageReveal (Manage Library), the resting part rises as
+   a text-free riser, as the tick boxes do, and the word stays outside the reveal. Marked data-reveal as a
+   whole, the word's text was split into lines and put back by innerHTML, and React's updates went to the
+   detached copy: the row's name said "backed up" while the word never showed (split-targets rule). */
+function DoneSwap({ done, word, restStyle, rise, children }) {
+  return (
+    <span style={sx('display:grid;align-items:center;justify-items:end;flex:none')}>
+      <span style={{ ...restStyle, gridArea: '1 / 1', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: done ? 0 : 1 }}>
+        {rise ? <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;overflow:hidden')}>{children}</span> : children}
+      </span>
+      <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: done ? 1 : 0, transform: done ? 'translateX(0)' : 'translateX(4px)' }}>{word}</span>
+    </span>
+  );
+}
+
 function ExportRow({ f }) {
+  /* THE NAME CARRIES THE ACT (22.09.26, interface audit). Copy and Download each hold a "CSS Custom
+     Properties" row, and a screen reader's list of buttons showed two identical names doing different
+     things; the groups' names only help on the way in. The visible label leads, as every accessible name
+     here does, then the act ("copy", "download"), which the done word replaces while the row confirms. */
+  const act = f.done ? f.doneWord.toLowerCase() : f.act;
   return (
     <button type="button" data-ex-item="1" data-focus="chrome"
       onClick={(e) => { const el = e.currentTarget; f.onPick(); requestAnimationFrame(() => { try { el.focus(); } catch (err) { } }); }}
       onMouseEnter={f.onEnter} onMouseLeave={f.onLeave} onFocus={f.onFocus} onBlur={f.onBlur}
-      aria-label={f.label + (f.done ? ', ' + f.doneWord.toLowerCase() : '')} style={f.style}>
+      aria-label={f.label + (act ? ', ' + act : '')} style={f.style}>
       <span style={sx('font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat)')}><TextSwap>{f.label}</TextSwap></span>
-      <span style={sx('display:grid;align-items:center;justify-items:end;flex:none')}>
-        <span style={{ ...f.extStyle, gridArea: '1 / 1', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: f.done ? 0 : 1 }}>{f.ext || ''}</span>
-        <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: f.done ? 1 : 0, transform: f.done ? 'translateX(0)' : 'translateX(4px)' }}>{f.doneWord}</span>
-      </span>
+      <DoneSwap done={f.done} word={f.doneWord} restStyle={f.extStyle}>{f.ext || ''}</DoneSwap>
     </button>
   );
 }

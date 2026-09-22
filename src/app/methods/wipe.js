@@ -41,12 +41,17 @@ export const wipeMethods = {
       if (this._lenis) this._lenis.reset();
     } catch (e) { }
   },
-  _resetIntroState(afterCb) {
+  _resetIntroState(afterCb, opts) {
     // journey flags only — palettes, projects, theme untouched.
     // 'palette-generator/landing' is PERMANENT dismissal, not session-scoped: '1' survives reloads so
     // a returning visitor lands straight in the tool. It is deliberately reversible — the logo and the
     // file menu's 'Show intro again' both route here, which writes '0' and shows the landing again.
-    try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { }
+    // EXCEPT FOR BACK (22.09.26, UX audit). The browser's Back onto the landing only shows the screen
+    // before the tool; it is not a request to be shown the intro on every visit, and writing '0' there
+    // meant a visitor who had pressed Create once, then Back, met the landing again next time.
+    // opts.keepChoice leaves the stored answer as it is; the logo still resets it.
+    const keep = !!(opts && opts.keepChoice);
+    if (!keep) { try { localStorage.setItem('palette-generator/landing', '0'); } catch (e) { } }
     this._orbitRetry = 0;
     // the landing re-seeds per visit (the wheel's rotation, the baked OKLCH ramp and the floor's
     // hexes are cleared in killOrbit). Tear down explicitly rather than relying on getStarted having
@@ -54,7 +59,8 @@ export const wipeMethods = {
     this.killOrbit();
     // the tool behind the landing returns to its default state — Get Started must always land on
     // 'Drop a reference' (never a left-open grid view, overlay, drawer, or result)
-    this._resetToolState({ landingDismissed: false, announce: 'Intro will show again.' }, () => {
+    // Back says where it arrived, as every route move does; only the logo promises the intro again.
+    this._resetToolState({ landingDismissed: false, announce: keep ? 'Start screen.' : 'Intro will show again.' }, () => {
       // The landing covers the tool, it does not replace it, so the offset left behind here is
       // invisible until Get Started uncovers it again. Spend it now, while the cover is down.
       this._scrollToTop();
@@ -96,7 +102,7 @@ export const wipeMethods = {
       restorePending: null,
     }, extra), afterCb);
   },
-  showIntroAgain() {
+  showIntroAgain(opts) {
     this._wipeRunning = false; this._wipePending = false; this._wipeOnMount = null;
     if (this._wipeClearGuards) { try { this._wipeClearGuards(); } catch (e) { } this._wipeClearGuards = null; }
     // fully reset the transition in case a prior one was interrupted (kill its timeline, drop the
@@ -113,7 +119,7 @@ export const wipeMethods = {
       // and copy is meant to be editable without breaking behaviour. orbit.js already reads this
       // same attribute as a geometry mark.
       let tries = 0; const grab = () => { const cta = document.querySelector('button[data-glass-cta]'); if (cta) { try { cta.focus({ preventScroll: true }); } catch (e) { } if (document.activeElement === cta) return; } if (++tries < 12) setTimeout(grab, 60); }; setTimeout(grab, 0);
-    });
+    }, opts);
   },
   /* Focus waits on the sentinel PaletteApp renders beside the window (see its render note). Nothing
      else is safe to hold it: the ghost is aria-hidden and inert, and a focused descendant of an
@@ -203,13 +209,15 @@ export const wipeMethods = {
     const fromPop = !!(opts && opts.fromPop);
     this._pathPush = !fromPop;
     const g = window.gsap;
-    if (this._reduce || !g || !this._windowEl()) { this.showIntroAgain(); return; }
+    // Back keeps the stored choice (see _resetIntroState); the logo, pressed, resets it.
+    const reset = { keepChoice: fromPop };
+    if (this._reduce || !g || !this._windowEl()) { this.showIntroAgain(reset); return; }
     this._wipeCover({
       quick: fromPop,
       // Arm the statement lines the moment the landing mounts, before the window opens on it — the
       // same reason as the loader: the window must never open onto text already sitting at its
       // final position.
-      commit: (after) => this._resetIntroState(() => { this._landingTextArm(g); after(); }),
+      commit: (after) => this._resetIntroState(() => { this._landingTextArm(g); after(); }, reset),
       reveal: () => this._landingTextReveal(g),
       reduced: () => { },
       // Found by [data-glass-cta], NOT by its aria-label: the label is copy and moved once already

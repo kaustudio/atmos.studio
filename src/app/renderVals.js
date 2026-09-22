@@ -1010,7 +1010,7 @@ export const renderValsMethods = {
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
 const rowKey = (id) => (pid ? 'exp-' : 'ex-') + id;
-const mk = (id, label, ext) => ({ label, ext, done: s.copied === rowKey(id), doneWord: 'Downloaded', onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied === rowKey(id), doneWord: 'Downloaded', onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
         // "Export", not "Export Tokens", since Copy lives here too (22.09.26): a hex list is not a token.
@@ -1042,8 +1042,8 @@ const mk = (id, label, ext) => ({ label, ext, done: s.copied === rowKey(id), don
            so the CSS on the clipboard is the CSS in the file (paletteCss, exporters.js). A single
            palette only: a folder's export has no clipboard form. */
         copies: pid ? [] : [
-          { label: 'Hex List', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list') },
-          { label: 'CSS Custom Properties', ext: 'CSS', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties') },
+          { label: 'Hex List', act: 'copy', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list') },
+          { label: 'CSS Custom Properties', ext: 'CSS', act: 'copy', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties') },
         ].map((c) => Object.assign(c, { onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' } })),
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · CSS'),
@@ -1668,7 +1668,7 @@ const mk = (id, label, ext) => ({ label, ext, done: s.copied === rowKey(id), don
 
            No em dash. The only dash left in product copy is the EN dash in "1\u20132 colour pairs"
            (the contrast readouts), which is a numeric range and the one place it is correct. */
-        handoffLine: 'Explore another example here, or open Atmos on your computer to create a palette from your own image. The full tool requires a window at least 1024 px wide.',
+        handoffLine: 'Explore another example here, or open Atmos on your computer to create a palette from your own image. The full tool requires a window at least 1024\u00a0px wide.',
       };
     }
 
@@ -2049,7 +2049,9 @@ const mk = (id, label, ext) => ({ label, ext, done: s.copied === rowKey(id), don
       // the consequence rather than the file dialog; the file format itself is untouched (see the
       // frozen `schema` note in persistence.js).
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); },
+      // _confirmRow: the row says "Backed Up" on Export's timer (see DoneSwap in AppView).
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); this._confirmRow('lib-backup'); },
+      backupDone: s.copied === 'lib-backup',
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
       // The phone's own way home for the brand mark — see returnToGateOnPhone in persistence.js for
