@@ -1,4 +1,4 @@
-/* Writes dist/about.html, dist/privacy.html and dist/terms.html after `vite build`.
+/* Writes dist/about.html, dist/privacy.html and dist/terms.html after `vite build`, and dist/create.html (the shell, see the end).
 
    THE FLOOR IS VISIBLE TEXT — the same rule pageReveal.js is built around, one level up. The document
    routes are React routes, and a route is nothing without JavaScript. For most of this app that is
@@ -229,3 +229,13 @@ for (const [route, meta] of Object.entries(ROUTES)) {
   if (!html.includes('<h1>')) throw new Error(`prerender(${route}): wrote ${bytes} bytes with no <h1> — the fragment did not make it in.`);
   console.log(`prerender: dist/${route}.html (${(bytes / 1024).toFixed(1)} kB)`);
 }
+
+/* /create IS THE SHELL UNDER A SECOND NAME (22.09.26). The tool's own address is the APP route (see
+   CREATE_PATH in src/app/routes.js); the app decides at mount that the landing stays down. It was a
+   rewrite in vercel.json, `/create` → `/index.html`, and production answered it with the 404: with
+   cleanUrls on, index.html is only served at `/`, so the rewrite's destination resolved to nothing.
+   A file is the mechanism /about, /privacy and /terms already prove in production — cleanUrls serves
+   dist/create.html at /create — so the shell is written there as it is, head untouched: its canonical
+   stays https://atmos.gallery/, which is what /create should declare. */
+writeFileSync(resolve(ROOT, 'dist/create.html'), shell);
+console.log(`prerender: dist/create.html (shell, ${(Buffer.byteLength(shell) / 1024).toFixed(1)} kB)`);
