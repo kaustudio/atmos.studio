@@ -7,6 +7,29 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-22 — The phone landing's headings break where the sense does, the rest in the soft ink
+
+**By request: "adjust headlines on the mobile landing in same way as how it works."** The phone story's
+five section headings were single solid lines. They now read as How it Works' do, and as the story's own
+close already did: the instruction or the subject first, what completes it second, in
+`.about-head__soft`:
+
+- Start With / the Whole Image
+- A Palette Is More Than / a List of Colours
+- See Where / Each Colour Comes From
+- Character, Role / and Contrast
+- What Atmos Says / About This Palette
+
+The soft line is 62% on a phone, because these headings are 22px there, normal text for contrast
+(about.css's media query; 4.73:1 light, 6.89:1 dark). The words themselves are unchanged.
+
+- **The hero is left as it is.** "Colour Read from Light and Atmosphere" already breaks after "from" at
+  320, 375 and 390px, solid on both lines, as How it Works' headline now is. Its `h1` also changes to a
+  palette's name when one is chosen. A split target whose text changes has to stay a lone text child
+  (maskLines.js), so a `<br>` there would be a risk for nothing.
+- **Verified.** At 320, 375 and 390px, in both themes, every heading breaks at the chosen point, the
+  second line measures 62%, and the line reveal restores the markup intact.
+
 ## 2026-09-22 — A grid card closes on the reference's damped flip
 
 **By request: "The close animation for the card needs improving as well. it's not as smooth as the

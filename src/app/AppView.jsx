@@ -817,9 +817,16 @@ function MobileStory({ st }) {
             repeat. The page is ~450px shorter for it. */}
         {/* NO SECTION RULES ON THIS SURFACE (16.09.26, by request, as on /about): no section here carries
             data-rule, so about.css draws no hairline at a chapter's top. */}
+        {/* THE HEADINGS BREAK WHERE THE SENSE DOES, THE REST AT THE SOFT INK (22.09.26, by request: "adjust
+            headlines on the mobile landing in same way as how it works"). How it Works' section headings
+            and this story's close already read this way: the instruction or the subject first, what
+            completes it second, in .about-head__soft, which is 62% here because phones set these at 22px
+            (about.css). The markup is static, so the line reveal's innerHTML restore cannot strand it
+            (see the split-targets note in maskLines.js). The hero keeps its one solid statement, which
+            balance already breaks after "from", as How it Works' does. */}
         <section id="story-image" data-story-ch="image" data-sec className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Start With the Whole Image</h2>
+            <h2 data-sec-head>Start With<br /><span className="about-head__soft">the Whole Image</span></h2>
             <p data-reveal>{st.name} is a palette of five colours drawn from this image. Explore their proportions, properties and contrast to understand how they relate.</p>
           </div>
         </section>
@@ -827,7 +834,7 @@ function MobileStory({ st }) {
         {/* 1.2 — THE STRUCTURE, as /about's weight figure: a bar of true shares, numbers in the key. */}
         <section id="story-structure" data-story-ch="structure" data-sec className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>A Palette Is More Than a List of Colours</h2>
+            <h2 data-sec-head>A Palette Is More Than<br /><span className="about-head__soft">a List of Colours</span></h2>
             <p data-reveal>Each colour holds a share of the frame. These are the real proportions.</p>
           </div>
           {/* THE FIGURE IS HOW IT WORKS 2.1's (19.09.26, by request: "apply it to the phone story", with
@@ -860,7 +867,7 @@ function MobileStory({ st }) {
             figure, because here they are the subject — a colour's region cut out of its own picture. */}
         <section id="story-where" data-story-ch="where" data-sec className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>See Where Each Colour Comes From</h2>
+            <h2 data-sec-head>See Where<br /><span className="about-head__soft">Each Colour Comes From</span></h2>
             {/* ONE SENTENCE, WHATEVER THE MASKS SAY (19.09.26). It told a case with no locatable colour
                 that they were "spread too finely to locate", and that note went by request ("we
                 overexplain too much"). Every example locates at least two colours once its masks are
@@ -929,7 +936,7 @@ function MobileStory({ st }) {
         {/* 2.1 — CHARACTER, ROLE AND CONTRAST. Three /about figures behind one segmented group. */}
         <section id="story-relationships" data-story-ch="relationships" data-sec className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>Character, Role and Contrast</h2>
+            <h2 data-sec-head>Character, Role<br /><span className="about-head__soft">and Contrast</span></h2>
             <p data-reveal>Explore the palette through its visual character, suggested roles and measured contrast between colours.</p>
           </div>
           <div className="about-figure about-figure--full">
@@ -1063,7 +1070,7 @@ function MobileStory({ st }) {
         {/* 2.2 — THE READING. */}
         <section id="story-interpretation" data-story-ch="interpretation" data-sec className="about-sec about-grid">
           <div className="about-col">
-            <h2 data-sec-head>What Atmos Says About This Palette</h2>
+            <h2 data-sec-head>What Atmos Says<br /><span className="about-head__soft">About This Palette</span></h2>
             {/* data-reveal, NOT data-highlight-text — and the paragraph this replaces argued the
                 other way, so it is worth saying why it lost. The highlight (Osmo's resource, ported
                 in methods/aboutHighlight.js) resolved the reading character by character on scroll,
