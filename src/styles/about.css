@@ -278,6 +278,24 @@
   font-size:var(--fs-hero);font-weight:500;line-height:1.04;
   letter-spacing:var(--track-display);text-wrap:balance;
 }
+/* THE SECOND HALF IS QUIETER (22.09.26, by request: "make a break where it makes sense in the copy and
+   tint the fill color to 50% on the bottom copy, so we add a bit of hierarchy"). Every heading on the
+   page breaks at a sense boundary now — the subject or the instruction on the first line, what completes
+   it on the second — and the second line is set at half the heading's own ink: the landing statement's
+   cadence ("Colour Read from Light and Atmosphere." / "In Seconds."), carried onto the document. The
+   break is a <br> and the half an inline span, because the reveal splits by where the browser breaks
+   and reproduces inline elements on both sides of a line (maskLines.js); a block here would have added
+   a line box of its own. currentColor, so it halves whatever ink the heading carries in either theme. */
+.about-head__soft{color:color-mix(in srgb, currentColor 50%, transparent)}
+/* 62% WHERE THE HEADINGS ARE NORMAL TEXT (22.09.26, by request: "use 62% on phones"). Half ink measures
+   3.27:1 on the light page. The section headings are --fs-section, clamp(22px, 2.6vw, 34px): at 24px and
+   up they are large text, where AA asks 3:1 and half passes; under it they are normal text, where AA asks
+   4.5:1 and half does not. 2.6vw crosses 24px at 923px, so that is the boundary rather than a phone
+   preset — an 820px tablet sets them at 22px too. 62% measures 4.7:1 there and still reads as the quieter
+   line. Every soft line below it takes the same ink, the hero included, so a screen has one tint. */
+@media (max-width:923px){
+  .about-head__soft{color:color-mix(in srgb, currentColor 62%, transparent)}
+}
 /* THE THESIS LINE — the sentence the product turns on, and the page's second-largest type.
 
    IT HAS TO OUTRANK AN h2, and for a while it did not: at 34px it was set smaller than the 42px
@@ -291,7 +309,12 @@
   /* --fs-subtitle is the 20px this wrote, and -0.5px was -0.025em, between two steps (17.09.26, audits G1
      and G2): the statement step. */
   font-size:var(--fs-subtitle);font-weight:500;line-height:1.35;letter-spacing:var(--track-statement);
-  color:color-mix(in srgb,var(--on-surface) 58%,transparent);
+  /* THE BASE INK, NO TINT (22.09.26, by request: "This should be our base black no tint"). It was 58%
+     while the headline above it was solid, and the lighter ink was what kept it the headline's thought
+     continuing. Since the headline's own second line went to half ink, the tint said the same thing
+     twice and the thesis read as the quietest line on the screen; the reduced size carries the
+     subordination now. */
+  color:var(--on-surface);
   text-wrap:balance;
 }
 /* The opening image, centred under the opening headline — the plate the scroll then grows into the

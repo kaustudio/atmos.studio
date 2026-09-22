@@ -6,6 +6,41 @@ doesn't know it was ever made.
 
 ---
 
+
+## 2026-09-22 — How it Works' headings break where the sense does, the rest at half ink
+
+**By request: "change the headlines on How it works so we make a break where it makes sense in the copy and
+tint the fill color to 50% on the bottom copy, so we add a bit of hierarchy."** Every section heading was
+a single line with its number above it, and the hero wrapped wherever the balance put it. Each now breaks
+at a sense boundary — the subject or the instruction first, what completes it second — and the second
+line is set at half the heading's own ink: the landing statement's cadence ("Colour Read from Light and
+Atmosphere." / "In Seconds."), carried onto the document.
+
+- Colour Begins / as Atmosphere · Start with / Colours You Like · How Atmos / Reads Colour · Reading /
+  OKLCH · Reading / WCAG Contrast · Small Details / Can Stand Out · Similar Colours, / Different
+  Possibilities · Find a Role / for Each Colour · See Frozen Slate / in Use · Contrast / Creates Hierarchy
+  · Take Your Palette / into Your Design.
+- A `<br>` and an inline span, not a block: the reveal groups words by where the browser breaks them and
+  reproduces inline elements on both sides of a line, then restores the authored markup (maskLines.js), so
+  the half survives the rise; a block would have added a line box of its own.
+- `color-mix(in srgb, currentColor 50%, transparent)`, so it halves whatever ink the heading carries.
+
+**Measured contrast, and the one place it falls short.** Half ink measures 3.27:1 in the light theme and
+4.88:1 in the dark. On the desktop every heading is large text (34px, the hero 86px), where AA asks 3:1,
+so it passes. On a phone the section headings are 22px Medium, which WCAG counts as normal text: 4.5:1,
+and 3.27:1 misses it in the light theme. The hero stays large on a phone (34px) and passes.
+
+**So below 923px it is 62% (by request: "use 62% on phones").** The boundary is where the headings stop
+being large text rather than a phone preset: --fs-section is clamp(22px, 2.6vw, 34px), and 2.6vw crosses
+24px at 923px, so an 820px tablet sets them at 22px too. Measured across it: 924px and up, half ink, 3.27:1
+on 24px-and-larger headings, passing; 923px and down, 62%, 4.73:1 on 22–24px headings, passing; 6.89:1 in
+the dark. Every soft line below the boundary takes 62%, the hero included, so one screen has one tint.
+
+**And the thesis line under the hero is base ink, no tint (by request: "This should be our base black no
+tint").** It was 58%, set lighter so it would read as the headline's thought continuing. With the
+headline's own second line at half ink, the tint said the same thing twice and the thesis became the
+quietest line on the screen; its smaller size carries the subordination now.
+
 ## 2026-09-22 — One undo for every deletion, the tool's places in history, one question at a time
 
 **From the UX review (by request: "fix the high and two mediums").**
