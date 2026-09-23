@@ -38,7 +38,11 @@
    wider column — and two files declaring the same custom property on :root means the later import
    wins for BOTH pages. Neither document should be able to retune the other by load order. */
 .legal-route{
-  --measure:40em;      /* prose measure — the one thing that must NOT be full width */
+  /* The prose's cap, not its width. Since 23.09.26 the article's width is four of the page's
+     columns (below), which is 448px at 1440 — about 72 characters of 15px Neue Montreal. The cap
+     only binds past ~1600px, where four columns would run long again. It was 40em as the width
+     itself: 640px, 103 to 107 characters a line. */
+  --measure:30em;
 }
 
 /* The hero carries the hierarchy: an eyebrow label, a statement-scale title, and a one-line
@@ -46,9 +50,19 @@
 /* Rules are drawn with a scaleX'd pseudo-element rather than a border, so legalReveal.js can
    animate them. --rule defaults to 1: with no JS, no GSAP, or reduced motion, the line is simply
    already there. The animation only ever removes and restores something already correct. */
+/* ON THE PAGE'S COLUMNS (23.09.26, grid audit, by request: "inspect the grid structure on both terms
+   and privacy pages and create a stable and balanced visual hierarchy"). The hero and the article
+   below it were one 40em measure centred on the page: 400 to 1040 at 1440, which is the middle of
+   column 4 to the middle of column 9. Nothing else on the site stands off the columns like that, and
+   with the contents list parked at the left margin the page leaned left: 164px between the list and
+   the text, 376px of nothing to the right of it.
+   Now the document is one block of eight columns, 3 to 10, centred by construction, with two columns
+   of margin on each side. Its left half orients: the title, the summary and the contents list. Its
+   right half is the text, four columns wide. Two vertical lines carry the page, column 3 and column 7. */
 .legal-hero{
   display:grid;
-  grid-template-columns:minmax(0,1fr);
+  grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));
+  column-gap:var(--grid-gutter);
   padding:0 var(--page-gutter);
   position:relative;--rule:1;
 }
@@ -59,25 +73,18 @@
   background:var(--line-strong);
   transform:scaleX(var(--rule));transform-origin:0 50%;
 }
-/* Centred on the PAGE, not parked in the article's track. The hero used to sit in column 2 so its
-   left edge lined up with the prose below it; it now spans both tracks and centres its own measure,
-   which puts the title on the page's centre line while the text inside it stays left-aligned — a
-   centred block of left-aligned copy, not centred type. The article keeps its two-column layout, so
-   the hero's left edge and the body's no longer agree. That is the trade this asks for: the hero reads
-   as the page's own statement rather than as the first paragraph of the document under it. */
+/* The hero WAS CENTRED ON THE PAGE until 23.09.26: one 40em measure with its copy left-aligned
+   inside it, so the title sat on the page's centre line and read as the page's own statement. See
+   the note on .legal-hero for why it went. */
+/* The block's eight columns, handed on to its children as a subgrid, so the summary can be exactly
+   the left half: four columns, the same width the text is set to on the right. (The width:100% and
+   auto margins that centred a measure here went with the measure.) */
 .legal-hero__inner{
-  grid-column:1 / -1;
-  /* width:100% is load-bearing, and the reason is easy to miss: margin-inline:auto on a GRID item
-     stops it stretching and makes it shrink-to-fit instead. Without this the hero collapsed to its
-     widest child's constraint — .legal-hero__sub's 34em — so it measured 544px against the article's
-     640 and the headline sat 48px right of the copy below it. Stating the width restores the measure
-     as the thing that decides the box, which is what puts the h1, the intro and the article on one
-     left edge. .toc-article carries it for the same reason. */
-  width:100%;
-  max-width:var(--measure);
-  margin-inline:auto;
+  grid-column:3 / 11;
+  display:grid;grid-template-columns:subgrid;
   padding:56px 0 40px;
 }
+.legal-hero__inner>*{grid-column:1 / -1}
 /* The eyebrow rule that lived here is gone with the last of its two users. .legal-hero__label went
    first — it repeated the h1 a line above it ("Privacy" over "Privacy"), a label naming its own
    heading rather than adding to it — and .toc-hero__label, the sidebar's "on this page", followed by
@@ -88,7 +95,8 @@
   letter-spacing:var(--track-statement);text-wrap:balance;
 }
 .legal-hero__sub{
-  margin:20px 0 0;max-width:34em;
+  grid-column:1 / span 4;
+  margin:20px 0 0;
   font-size:var(--fs-lead);line-height:1.55;letter-spacing:var(--track-body);
   color:var(--on-surface-muted);text-wrap:pretty;
 }
@@ -99,36 +107,28 @@
 
 /* ------------------------------------------------------- Osmo TOC: layout */
 
-/* Grid rather than the resource's flex row, so this shares the hero's two tracks exactly. Full
-   width, no centred container — the measure cap lives on the article, which is the only element here
-   that must not be full width. */
-/* ONE track, and both children share it. The article is centred on the page like the hero above it,
-   so the whole document sits on a single centre line rather than being pushed right by a sidebar
-   track; the text inside keeps its left edge, so this is a centred column of left-aligned copy.
-
-   The table of contents cannot hold a track of its own any more — a track is width the article would
-   have to be centred inside, which is centred-in-what's-left, not centred on the page. So both are
-   placed in the same cell and overlap: the sidebar sits at its own width against the left gutter, the
-   article floats centred over the rest. They never actually touch above 1200px, which is exactly why
-   the stacking breakpoint moved there from 900 (see the responsive block) — just above 1200 the
-   article's left edge is 280px and the sidebar ends at 196 (two columns since 22.09.26; it ended at
-   242 at 13.75em). Below that the sidebar stops overlapping and goes back to being stacked above the
-   article. */
+/* Grid rather than the resource's flex row. Until 23.09.26 it was ONE track that both children
+   shared: the list at its own width against the left gutter, the article centred on the page over
+   the rest, the two overlapping in one cell. They stacked from 1200 down, where they would have
+   crossed. */
+/* THE CONTENTS LIST HAS ITS OWN COLUMNS AGAIN (23.09.26). The overlap below was how a list and a
+   page-centred article could share one track. On the page's columns each gets its own: the list on
+   3–5 (three columns, so "Your images and palettes stay yours" no longer breaks), column 6 left
+   empty, the text on 7–10. Both sit on row 1, so the list's first item stands level with the first
+   heading. */
 .toc-layout{
   display:grid;
-  grid-template-columns:minmax(0,1fr);
+  grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));
+  column-gap:var(--grid-gutter);
   padding:56px var(--page-gutter) 96px;
   position:relative;
 }
-.toc-article{grid-area:1/1;width:100%;max-width:var(--measure);margin-inline:auto;min-width:0}
+.toc-article{grid-column:7 / span 4;grid-row:1;width:100%;max-width:var(--measure);min-width:0}
 
-/* TWO OF THE PAGE'S COLUMNS WIDE (22.09.26, grid audit): two columns and the gutter between them,
-   worked out from the grid's own tokens against this cell, which is the page less its margins. So
-   its right edge is the second column's line at every width it floats at (212px at 1440), where
-   13.75em ran 8px into the gutter. */
+/* Three of the page's columns since 23.09.26 (see .toc-layout). It was two from 22.09.26, where its
+   13.75em had run 8px into the gutter. */
 .toc-sidebar{
-  grid-area:1/1;
-  width:calc((100% - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols) * 2 + var(--grid-gutter));
+  grid-column:3 / span 3;grid-row:1;
   display:flex;flex-flow:column;justify-content:flex-start;align-items:flex-start;
   gap:1em;
   /* The floating bar's whole footprint (its air and its height) + breathing room, so the sticky
@@ -248,6 +248,9 @@
   font-size:var(--fs-detail);color:var(--on-surface-muted);
 }
 .legal-foot a{text-decoration:underline;text-underline-offset:2px}
+/* Balanced (23.09.26): on the four-column text the line no longer fits in one, and left to itself it
+   broke before its last item, leaving "· Privacy" alone on a line of its own. */
+.legal-foot p{text-wrap:balance}
 .legal-foot__nav{margin:0 0 .5em}
 .legal-foot__nav span{opacity:.5;padding:0 .5em}
 
@@ -256,25 +259,26 @@
 
 /* ---------------------------------------------------------------- responsive */
 
-/* Two thresholds now, because two different things give way at two different widths. The gutter
-   stays the page's 24px at every one of them — it is the page's grid, not a breakpoint's.
-
-   1200 is where the overlap stops working. Above it the sidebar sits against the left gutter and the
-   centred article clears it (280px vs 242px at exactly 1200); below it the two would cross, so the
-   sidebar leaves the shared cell and stacks above the article instead. The article stays centred
-   either way — that is the point of the layout, not a wide-screen luxury.
-
-   900 is the old threshold, and all that is left of it is spacing: less padding, and the measure
-   released so a phone is not reading 40em of column inside 375px of screen. */
+/* The gutter stays the page's 24px at every threshold: it is the page's grid, not a breakpoint's. */
+/* 1200 AND BELOW, ONE COLUMN OF MARGIN (23.09.26). The block widens to 2–11: the list on 2–4, the
+   text on 6–11, six columns (476px at 1024, 77 characters), capped by --measure nearer 1200. The list
+   stays beside the text and sticky down to 901. It used to stack above the article from 1200 down,
+   so on a 1024–1200 laptop one jump sent it off the top of the screen, and the next meant scrolling
+   back for it.
+   900 AND BELOW, ONE COLUMN: the list above the text, both on the page margin, and the text keeps
+   its cap. It was released to full width here, which ran 130 characters a line on a tablet. A phone
+   (≤720, four columns at 16px) never reaches the cap. */
 @media screen and (max-width:1200px){
-  .toc-sidebar{grid-area:auto;position:relative;top:0;width:100%}
-  .toc-article{grid-area:auto}
-  .toc-layout{row-gap:2.5em}
+  .legal-hero__inner{grid-column:2 / 12}
+  .toc-sidebar{grid-column:2 / span 3}
+  .toc-article{grid-column:6 / span 6}
 }
 @media screen and (max-width:900px){
-  .legal-hero__inner{padding:36px 0 28px}
-  .toc-layout{padding:32px var(--page-gutter) 72px}
-  .toc-article{max-width:none}
+  .legal-hero__inner{grid-column:1 / -1;padding:36px 0 28px}
+  .legal-hero__sub{grid-column:1 / -1;max-width:34em}
+  .toc-layout{padding:32px var(--page-gutter) 72px;row-gap:2.5em}
+  .toc-sidebar{grid-column:1 / -1;grid-row:auto;position:relative;top:0}
+  .toc-article{grid-column:1 / -1;grid-row:auto}
 }
 
 /* The sidebar's sticky offset and the headings' scroll-margin both assume the page can scroll

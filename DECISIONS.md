@@ -7,6 +7,38 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — Terms and Privacy stand on the columns as one centred block
+
+**From a grid and UX audit of the live legal pages, by request: "inspect the grid structure on both terms
+and privacy pages and create a stable and balanced visual hierarchy and audit the live site", then "fix
+all".** This replaces the centred 40em reading column that the 22.09 grid audit left off the lines on
+purpose.
+
+- **Live had:**
+  - the text on a 40em measure centred on the page, from mid column 4 to mid column 9 (400–1040 at
+    1440). It was the only document text on the site off the columns;
+  - the contents list pinned to columns 1–2, 164px from the text, with 376px empty to its right, so
+    the page leaned left;
+  - 103–107 characters a line at 15px, and 126 on a tablet, where the measure was released;
+  - at 1200 and below, the list stacked on the margin (24px) over text at 192px, with a 1000px active
+    tint, and one jump sent it off screen.
+- **Now the document is one block of eight columns (3–10),** with two columns of margin on each side.
+  - The title, the summary (four columns) and the contents list stand on column 3.
+  - The text is on columns 7–10, capped at 30em past about 1600px.
+  - At 1200 and below the block is 2–11: list on 2–4, text on 6–11. The list stays beside the text and
+    sticky down to 901.
+  - At 900 and below it is one column on the margin, and the text keeps its cap.
+  - Phones are unchanged.
+- The lines are 63–80 characters long from 1024 up, and 80 on a tablet. The pages are 8–11% longer.
+- **The closing company line is balanced now,** because on four columns it broke before "· Privacy". It
+  stays: it is the E-Commerce Directive Art. 5 trader identification.
+- **Verified in Chrome** against live at 1440, 1280, 1100, 1024, 800 and 390, in light and dark:
+  - the grid overlay and a blur test;
+  - the list's jump and its section marker at 1440 and 1100;
+  - the reveal with motion;
+  - the prerendered pages with JavaScript off;
+  - no console errors, and the production build passes.
+
 ## 2026-09-23 — One empty column between the metrics
 
 **By request: "let aa text pairs and max contrast have one column between them. Allow them to breathe.
