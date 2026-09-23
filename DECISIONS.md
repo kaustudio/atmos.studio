@@ -7,6 +7,130 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The photo shows where a colour lives, and the tour points at it
+
+**By request:** "Are there any minor improvements that could improve the tool based off Adobe's Color
+Palette", then "Build it all", then "go ahead and build" (the tour step).
+
+- **What it borrows.** Adobe Color puts a handle on the photo where each colour was sampled.
+- **In atmos:**
+  - pointing at a tile, or moving focus into one, dims the photo to How it Works' grey
+    (`grayscale(1) brightness(.42)`) and lights that colour's regions;
+  - leaving puts the photo back;
+  - it works on the create page and in the Full Swatch View.
+- **The masks are the story's own** (`lib/masks.js`, the extractor's OKLab metric at 256px). They are
+  built once per palette and photo while the page is idle, and cached.
+- **Hovering writes two attributes and a mask URL straight onto the photo's layers** (`methods/where.js`),
+  so nothing re-renders. Touch is ignored, because a tap on a tile copies.
+- **Masks take the photo's cover crop:** `mask-size: cover`, centred. The story stretches its mask 100%
+  because its frame is 4:3.
+- **Tour step 1:**
+  - The second sentence is now "Point at a colour to see where it sits in the photo." It was about
+    copying, which step 4 already covers. Still three lines, so the card keeps its 196px.
+  - As the step arrives, the photo lights one colour once for the cue's length (`DUR.overlay +
+    DUR.state`). It waits until the photo is fully on screen.
+  - It lights the colour that shows best, not the largest: lightness plus twice the chroma, at least 8%
+    of the photo, with a locatable region. A near-black ground, like Garnet's 36%, lights nothing
+    visible. Garnet lights its orange.
+  - It never takes a light the reader is making (a tile under the pointer or holding focus). Next,
+    Back, close and leave all end it.
+
+## 2026-09-23 — Colour Blind Safe, under Accessibility
+
+**By request, from Adobe Color's colour blindness simulator.**
+
+- **The line:** a third row, in AA Text Pairs' own n/total: the pairs that stay apart under protanopia,
+  deuteranopia and tritanopia. The model is Machado et al. 2009 at full severity, in linear sRGB
+  (`visionConflicts`, `lib/color.js`).
+- **What counts as a conflict:** a pair counts against it only when colour vision merges what typical
+  vision keeps apart. That means closer than 0.07 in OKLab under any of the three, with a loss of at
+  least 0.02, so a pair that is close for everyone is not blamed on colour vision.
+- **Calibration:**
+  - all eight examples read 10/10;
+  - flagged: red against green of similar lightness, blue against purple, orange against olive;
+  - not flagged: pure red against green, because lightness keeps them apart.
+- **Where it runs:** for the palette on screen only, since `paletteMetrics` runs for every library row.
+  A screen reader hears "10 of 10 pairs stay distinct for colour-blind vision".
+
+## 2026-09-23 — Nearest Pass, drawn rather than spelled
+
+**By request, from Adobe Color's Contrast Suggestions.** The first version wrote out hex codes. The user
+said: "we need to find a better way than to write out the hex codes ... guide the user and visualise it
+a more professional way".
+
+- **What it finds:** of the pairs that miss the lens now selected, the one that passes with the
+  smallest move of one colour along OKLCH lightness (`nearestPass`, `lib/color.js`).
+  - The hue is held, and chroma gives only where sRGB cannot hold it.
+  - It is the lighter colour made lighter, or the darker made darker, whichever moves less.
+  - Garnet: #E12409 becomes #E52910, and 4.3:1 becomes 4.5:1.
+- **Drawn with the drawer's own pieces:**
+  - a chip split between the colour as read and as nudged, with a 1px seam of the page, so it stays two
+    colours even when the nudge is too small to see;
+  - the matrix's fail tile becoming its pass tile (fill and weight, no ✓/✕, as on 17.09);
+  - the nudged pair in Best Pair Sample's own box;
+  - a copy button with the tiles' copy-to-check swap.
+- **Hexes:** spoken to screen readers only.
+- **Guidance:** pointing at the section, or moving focus into it, outlines its pair in the matrix
+  (`data-cx-near`, an inset 1.5px ring that eases with the tile's own fill).
+- **Lenses:** it follows AA/AAA and Normal/Large. On AAA with normal text, Garnet moves #F17645 to reach
+  7:1.
+- **Normal/Large growth:** `setContrastSize` and `_growSample` now grow every sample box by its key, so
+  both samples move as one.
+
+## 2026-09-23 — Rename a palette, and the design system's first error state
+
+**By request:**
+- "Build everything ... carefully design the rename icon based on the design system";
+- "hold the user accountable for the length of a renaming palette";
+- "remember wcag compliances in terms of danger/error states. we have not established this yet";
+- the underline: "animate with a cubic bezier from left to right ... reverse the animation to close";
+- "start quick and land slow", then "1.5s cubic-bezier(.19,1,.22,1)".
+
+- **The icon comes from the set actually on screen.** Checked path by path against the Iconify API,
+  every icon is Google's Material Icons (`ic:`). The header claiming Material Symbols Light was wrong
+  and is corrected.
+  - The pencil is `ic:outline-edit`. The set's only sharp pencil is solid, and the outline cut matches
+    Folder and Export beside it.
+  - The error mark is `ic:outline-error-outline`.
+- **The control is the harmony button's icon tier:**
+  - a 14px glyph in a 28px round target;
+  - a 16% tint on hover, with the glyph through its mask;
+  - always in view, 12px after the name and centred on its first line, which leaves its focus ring clear
+    of the last letter;
+  - beside the heading, never inside it, because the heading is a split target;
+  - on the create page and in the Full Swatch View.
+- **The field is the name in the same type,** so nothing moves.
+  - A 2px rule draws in from the left over `--dur-draw` (1.5s, a new token) on `--ease-overlay`, which
+    is exactly `cubic-bezier(.19,1,.22,1)`. It draws back the same way before the heading takes the name
+    back.
+  - Tried and replaced: the entrance curve in and its time-reverse out (the close hung, then snapped),
+    then `--ease-progress` over 0.62s.
+  - The count hangs under the rule's right end, so no row is added.
+- **Exits:**
+  - Enter saves (and waits while the name is too long).
+  - Escape keeps the old name. It is stopped at the field, or the app's Escape would close the page.
+  - Tab or a press elsewhere saves a name that fits, and keeps the old one when it does not, saying so.
+    The field can always be left.
+  - Only Enter and Escape send focus back to the pencil, and only if focus has not moved on.
+- **The length:**
+  - 42 characters, the cap the reading already puts on its names. A name that long still sits on one
+    line from 1024 up (measured).
+  - Nothing is cut: a longer paste arrives whole, and saving waits.
+  - Name From reads You, through a `renamed` flag in the record's allow-list.
+- **The first error state** is built on `--danger`, and the rules are kept in memory for the next one:
+  - the error mark and "Remove 4 Characters", never colour alone (1.4.1, 3.3.1, 3.3.3);
+  - text at 4.88:1 light and 6.72:1 dark, and the rule above 3:1 (1.4.3, 1.4.11);
+  - `aria-invalid` and `aria-describedby`, plus a polite status message as the name crosses the limit and
+    on a blocked Enter (4.1.3).
+
+## 2026-09-23 — The Full Swatch View drops the date beside the name
+
+**By request: "remove the created date next to the palette name in full swatch view".**
+
+- The name now stands with its pencil only, as on the create page.
+- The list and Grid View keep the stamp.
+- The view model's `time` and `timeTitle`, used only there, are gone with it.
+
 ## 2026-09-23 — The control the tour waits on repeats the ring's arrival until it is pressed
 
 **By request: "can we make we action repeat the radiation, so the user becomes more aware of what to

@@ -139,6 +139,71 @@ export function shadeSetMapped(hexStr) {
   const c = hexToRgb(hexStr), lab = rgb2oklab(c[0] / 255, c[1] / 255, c[2] / 255);
   return [0.88, 0.72, 0.56, 0.40, 0.24].map((L) => ({ hex: gamutMap(L, lab.a, lab.b), mapped: !inSrgb(oklabToLinear(L, lab.a, lab.b)) }));
 }
+/* ===== COLOUR VISION (23.09.26, by request: a Colour Blind Safe line, from Adobe Color's simulator) =====
+   The three dichromacies as Machado, Oliveira and Fernandes (2009) model them at full severity, in
+   linear sRGB: protanopia and deuteranopia, the two red-green types, and tritanopia. Full severity is
+   the conservative end: a pair that stays apart for a dichromat stays apart for the milder
+   anomalous forms too. */
+const VISION = {
+  protanopia: [0.152286, 1.052583, -0.204868, 0.114503, 0.786281, 0.099216, -0.003882, -0.048116, 1.051998],
+  deuteranopia: [0.367322, 0.860646, -0.227968, 0.280085, 0.672501, 0.047413, -0.011820, 0.042940, 0.968881],
+  tritanopia: [1.255528, -0.076749, -0.178779, -0.078411, 0.930809, 0.147602, 0.004733, 0.691367, 0.303900],
+};
+const _toLinear = (v) => (v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+const _toGamma = (v) => { v = Math.max(0, Math.min(1, v)); return v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; };
+function _labOfHex(hexStr, kind) {
+  const c = hexToRgb(hexStr).map((v) => v / 255);
+  if (!kind) return rgb2oklab(c[0], c[1], c[2]);
+  const [r, g, b] = c.map(_toLinear), m = VISION[kind];
+  return rgb2oklab(_toGamma(m[0] * r + m[1] * g + m[2] * b), _toGamma(m[3] * r + m[4] * g + m[5] * b), _toGamma(m[6] * r + m[7] * g + m[8] * b));
+}
+/* A PAIR CONFLICTS WHEN COLOUR BLINDNESS MERGES WHAT TYPICAL VISION KEEPS APART. Merged is closer than
+   0.07 in OKLab under any of the three, and the loss has to be at least 0.02 (about one just-noticeable
+   step) so a pair that is already close for everyone is not blamed on colour vision. Calibrated on
+   the eight examples, where no pair conflicts (the closest, Garnet's red and orange under tritanopia,
+   stays at 0.098), and on the classic red-green pairs, which do. */
+export const VISION_MERGE = 0.07;
+export function visionConflicts(hexes) {
+  const n = hexes.length, total = n * (n - 1) / 2, conflicts = [];
+  const typical = hexes.map((h) => _labOfHex(h));
+  const seen = Object.keys(VISION).map((k) => hexes.map((h) => _labOfHex(h, k)));
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const d0 = Math.sqrt(dist2(typical[i], typical[j]));
+    const d = Math.min.apply(null, seen.map((v) => Math.sqrt(dist2(v[i], v[j]))));
+    if (d < VISION_MERGE && d0 - d >= 0.02) conflicts.push({ i, j });
+  }
+  return { total, safe: total - conflicts.length, conflicts };
+}
+
+/* ===== THE NEAREST PASS (23.09.26, by request, from Adobe Color's Contrast Suggestions) =====
+   Of the pairs that miss `target`, the one that passes with the smallest move of one colour: the
+   lighter made lighter or the darker made darker, along OKLCH lightness with the hue held. Chroma
+   gives only where sRGB cannot hold it (gamutMap), so the suggestion is the same colour, lit
+   differently, never a new one. null when every pair passes or none can be moved to. */
+function _shiftToPass(hexStr, otherHex, target, dir) {
+  const lab = _labOfHex(hexStr), end = dir > 0 ? 1 : 0;
+  const at = (L) => gamutMap(Math.max(0, Math.min(1, L)), lab.a, lab.b);
+  if (contrastRatio(at(end), otherHex) < target) return null;
+  let fail = lab.L, pass = end;
+  for (let n = 0; n < 24; n++) { const mid = (fail + pass) / 2; if (contrastRatio(at(mid), otherHex) >= target) pass = mid; else fail = mid; }
+  // Eight-bit rounding can land a hair under the line; step on until it does not.
+  let L = pass, hex = at(L), ratio = contrastRatio(hex, otherHex);
+  for (let n = 0; ratio < target && n < 60; n++) { L += dir * 0.002; hex = at(L); ratio = contrastRatio(hex, otherHex); }
+  return ratio >= target ? { hex, ratio, dL: Math.abs(L - lab.L) } : null;
+}
+export function nearestPass(hexes, target) {
+  let best = null;
+  for (let i = 0; i < hexes.length; i++) for (let j = i + 1; j < hexes.length; j++) {
+    const r = contrastRatio(hexes[i], hexes[j]); if (r >= target) continue;
+    const hi = lumHex(hexes[i]) >= lumHex(hexes[j]) ? i : j, lo = hi === i ? j : i;
+    for (const [k, o, dir] of [[hi, lo, 1], [lo, hi, -1]]) {
+      const f = _shiftToPass(hexes[k], hexes[o], target, dir);
+      if (f && (!best || f.dL < best.dL)) best = { moved: k, other: o, from: hexes[k], to: f.hex, fromRatio: r, toRatio: f.ratio, dL: f.dL };
+    }
+  }
+  return best;
+}
+
 // One entry per model, each carrying a stable `id` — the drawer selects a model now rather than
 // listing all seven, and a selection has to survive a re-render by something other than its label.
 // `base` marks the swatch that IS the source colour, so the drawer can say so in words instead of

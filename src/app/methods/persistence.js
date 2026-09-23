@@ -209,6 +209,8 @@ export const persistenceMethods = {
         archetype: typeof p.archetype === 'string' ? p.archetype : 'seed',
         example: p.example === true,
         fallback: p.fallback === true,
+        // Renamed by the reader (23.09.26), which Name From reads as You. Absent means named by the reading.
+        renamed: p.renamed === true,
         // Migrates on read: a record written before multi-membership has projectId only, and comes
         // back as a one-element set. Both fields are kept in step by withProjects on every write.
         projectIds: Array.isArray(p.projectIds)
@@ -414,6 +416,35 @@ export const persistenceMethods = {
     this.setState((st) => ({ projects: [...st.projects, { id, name: name.slice(0, 60), createdAt: Date.now() }], announce: 'Project ' + name + ' created.' }), () => this.persist({ immediate: true })); return id;
   },
   renameProject(id, name) { name = (name || '').trim(); if (!name) return; this.setState((st) => ({ projects: st.projects.map((p) => p.id === id ? Object.assign({}, p, { name: name.slice(0, 60) }) : p), announce: 'Project renamed to ' + name + '.' }), () => this.persist({ immediate: true })); },
+  /* RENAMING A PALETTE (23.09.26, by request). The field (AppView NameField) holds the length to 42 and
+     will not hand over a longer name; the slice here is only the last line of that. The record takes
+     `renamed`, which the readout's Name From reads as You, and the palette open in either view takes the
+     new name with the library, so the page, the view and the list never disagree. Focus goes back to
+     the pencil the rename started from when the field was left by Enter or Escape. */
+  _renameRef(where) {
+    this._renameRefs = this._renameRefs || {};
+    return this._renameRefs[where] || (this._renameRefs[where] = (el) => { this._renameEls = this._renameEls || {}; this._renameEls[where] = el; });
+  },
+  // The field has just gone, so focus is nowhere; a reader who moved it on while the rule drew back keeps it.
+  _renameFocus(where) {
+    const el = this._renameEls && this._renameEls[where];
+    if (el) requestAnimationFrame(() => { const at = document.activeElement; if (at && at !== document.body) return; try { el.focus({ preventScroll: true }); } catch (e) { } });
+  },
+  startRename(id, where) { this.setState({ renaming: { id, where } }); },
+  // `refocus` only when the field was left by a key inside it (Enter or Escape); `said` is why a name did
+  // not change, for the app's own live region, which outlives the field.
+  cancelRename(where, refocus, said) { this.setState(said ? { renaming: null, announce: said } : { renaming: null }, () => { if (refocus) this._renameFocus(where); }); },
+  renamePalette(id, name, where, refocus) {
+    name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 42);
+    if (!name) { this.cancelRename(where, refocus); return; }
+    this.setState((st) => {
+      const next = (p) => Object.assign({}, p, { name, renamed: true });
+      const patch = { feed: st.feed.map((p) => p.id === id ? next(p) : p), renaming: null, announce: 'Palette renamed to ' + name + '.' };
+      if (st.current && st.current.id === id) patch.current = next(st.current);
+      if (st.overlay && st.overlay.id === id) patch.overlay = next(st.overlay);
+      return patch;
+    }, () => { this.persist({ immediate: true }); if (refocus) this._renameFocus(where); });
+  },
   /* TOGGLE, not move. Picking a project the palette is already in removes it; picking a new one
      adds it. Belonging to nothing is not a project: it is the empty set, reached by clearing,
      never a list to join. */

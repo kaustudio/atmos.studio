@@ -989,41 +989,49 @@ export const overlayMethods = {
     const next = !!large;
     if (!!this.state.contrastLarge === next) return;
     this._cxSampleFirst = null;
-    const box = !this._reduce && window.gsap && document.querySelector('[data-contrast-dialog] [data-cx-sample]');
-    const words = box && box.querySelector('[data-cx-sample-text]');
-    if (box && words) {
+    // EVERY SAMPLE, BY ITS KEY (23.09.26): Best Pair Sample and Nearest Pass grow as one movement.
+    const boxes = !this._reduce && window.gsap ? document.querySelectorAll('[data-contrast-dialog] [data-cx-sample]') : [];
+    const first = {};
+    boxes.forEach((box) => {
+      const words = box.querySelector('[data-cx-sample-text]'); if (!words) return;
       const cs = getComputedStyle(words);
-      this._cxSampleFirst = { h: box.getBoundingClientRect().height, px: parseFloat(cs.fontSize) || 15, weight: cs.fontWeight };
-    }
+      first[box.getAttribute('data-cx-sample')] = { h: box.getBoundingClientRect().height, px: parseFloat(cs.fontSize) || 15, weight: cs.fontWeight };
+    });
+    if (Object.keys(first).length) this._cxSampleFirst = first;
     this.setState({ contrastLarge: next });
   },
   _growSample(root) {
-    const g = window.gsap, first = this._cxSampleFirst;
+    const g = window.gsap, firsts = this._cxSampleFirst;
     this._cxSampleFirst = null;
-    const box = root.querySelector('[data-cx-sample]'), words = box && box.querySelector('[data-cx-sample-text]');
-    if (!g || !box || !words || !first) return;
-    // A reversal mid-flight: stop the running pair and measure the new layout clean.
-    g.killTweensOf(box, 'height,overflow');
-    if (this._cxWordsTw) { this._cxWordsTw.kill(); this._cxWordsTw = null; }
-    box.style.height = ''; box.style.overflow = ''; words.style.fontSize = ''; words.style.fontWeight = '';
-    const h1 = box.getBoundingClientRect().height;
-    const px1 = parseFloat(getComputedStyle(words).fontSize) || first.px;
-    const D = this.DUR.fold, E = this.EASE.fold;
-    g.fromTo(box, { height: first.h, overflow: 'hidden' }, { height: h1, duration: D, ease: E, clearProps: 'height,overflow' });
-    // A proxy, so the size and the weight are written together from one value. Inline for the length
-    // of the move only; at the end the words inherit the box's size and weight again.
-    const size = { px: first.px };
-    const span = px1 - first.px;
-    let held = first.weight !== getComputedStyle(words).fontWeight;
-    words.style.fontSize = first.px + 'px';
-    if (held) words.style.fontWeight = first.weight;
-    this._cxWordsTw = g.to(size, {
-      px: px1, duration: D, ease: E,
-      onUpdate: () => {
-        words.style.fontSize = size.px.toFixed(2) + 'px';
-        if (held && (!span || (size.px - first.px) / span >= 0.5)) { held = false; words.style.fontWeight = ''; }
-      },
-      onComplete: () => { words.style.fontSize = ''; words.style.fontWeight = ''; this._cxWordsTw = null; },
+    if (!g || !firsts) return;
+    this._cxWordsTw = this._cxWordsTw || {};
+    root.querySelectorAll('[data-cx-sample]').forEach((box) => {
+      const key = box.getAttribute('data-cx-sample'), first = firsts[key];
+      const words = box.querySelector('[data-cx-sample-text]');
+      if (!words || !first) return;
+      // A reversal mid-flight: stop the running pair and measure the new layout clean.
+      g.killTweensOf(box, 'height,overflow');
+      if (this._cxWordsTw[key]) { this._cxWordsTw[key].kill(); this._cxWordsTw[key] = null; }
+      box.style.height = ''; box.style.overflow = ''; words.style.fontSize = ''; words.style.fontWeight = '';
+      const h1 = box.getBoundingClientRect().height;
+      const px1 = parseFloat(getComputedStyle(words).fontSize) || first.px;
+      const D = this.DUR.fold, E = this.EASE.fold;
+      g.fromTo(box, { height: first.h, overflow: 'hidden' }, { height: h1, duration: D, ease: E, clearProps: 'height,overflow' });
+      // A proxy, so the size and the weight are written together from one value. Inline for the length
+      // of the move only; at the end the words inherit the box's size and weight again.
+      const size = { px: first.px };
+      const span = px1 - first.px;
+      let held = first.weight !== getComputedStyle(words).fontWeight;
+      words.style.fontSize = first.px + 'px';
+      if (held) words.style.fontWeight = first.weight;
+      this._cxWordsTw[key] = g.to(size, {
+        px: px1, duration: D, ease: E,
+        onUpdate: () => {
+          words.style.fontSize = size.px.toFixed(2) + 'px';
+          if (held && (!span || (size.px - first.px) / span >= 0.5)) { held = false; words.style.fontWeight = ''; }
+        },
+        onComplete: () => { words.style.fontSize = ''; words.style.fontWeight = ''; this._cxWordsTw[key] = null; },
+      });
     });
   },
   /* The count at whatever the panel is currently set to. contrastSummary below is the palette's AA

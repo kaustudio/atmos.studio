@@ -117,13 +117,14 @@ const logoStyle = {
    button's, which is the tool bar's centre line in the tool and logoStyle's own on a phone. */
 const LogoRing = ({ top }) => (<span data-logo-ring="1" aria-hidden="true" style={top ? { top } : undefined}></span>);
 
-/* ===== ICONS — Material Symbols Light, one variant, no exceptions =====
-   Every glyph below is the published path from `material-symbols-light`, taken from the Iconify API
-   rather than transcribed, because transcription is how a set drifts one icon at a time. The sharp
-   cut is used wherever the glyph has curves to square off (copy, download, folder, delete); a check,
-   an X and a chevron have no curves, so the family has no separate sharp variant of them and the
-   base glyph IS the sharp one. Sharp is not a preference here — it is the only cut consistent with a
-   design that carries no border-radius anywhere.
+/* ===== ICONS — Google's Material Icons (Iconify's `ic` set), filled paths on the 24 grid =====
+   CORRECTED 23.09.26: this heading said Material Symbols Light, and the glyphs below are not that set.
+   Checked path by path against the Iconify API: copy, delete and share are `ic:sharp-*`, folder and
+   download `ic:outline-*`, check, close and contrast `ic:baseline-*`; only IconChevron is a
+   `material-symbols-light` glyph. The Light set draws its lines at half this weight, so a glyph taken
+   from it would sit visibly thinner beside these — the next icon comes from `ic`, in the cut its
+   neighbours use, taken from the API rather than transcribed, because transcription is how a set
+   drifts one icon at a time.
 
    What this replaced: four icons were already correct. IconCopy was this set's copy glyph with two
    subpaths deleted, so its inner sheet had no outline. IconCheck and IconLink came from the heavier
@@ -212,6 +213,12 @@ const IconList = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 
    component keeps its name, because every call site passes it as the share affordance and renaming
    it would be a rename with no reader. Two subpaths, both kept: the tray and the arrow. */
 const IconLink = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M20 8h-5v2h3v11H6V10h3V8H4v15h16z"></path><path fill="currentColor" d="M11 16h2V5h3l-4-4l-4 4h3z"></path></svg>);
+/* RENAME AND THE ERROR MARK (23.09.26). The pencil is `ic:outline-edit`: the set's only sharp pencil is
+   solid, and a solid glyph would sit heavier than the hollow folder and download it stands among, so it
+   takes their outline cut. The error mark is `ic:outline-error-outline`, drawn at 12 beside the 12px
+   text of a field's error. */
+const IconRename = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m14.06 9.02l.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83a.996.996 0 0 0 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z"></path></svg>);
+const IconError = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2M12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8s8 3.58 8 8s-3.58 8-8 8"></path></svg>);
 const IconTrash = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M6 21h12V7H6zM8 9h8v10H8zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>);
 
 // The AA verdict badge. ONE component for every surface that reports it — the list row, the detail
@@ -619,6 +626,129 @@ function WordSwap({ on, rest, done }) {
 
 // swatch value row (result bands + overlay bands share it). Neither renders the caveat chip since
 // 19.09.26 (audit U6); the spoken name still carries it.
+/* RENAME (23.09.26, by request: "Build it all, but we need to carefully design the rename icon based on
+   the design system", and "hold the user accountable for the length of a renaming palette").
+
+   THE CONTROL IS THE ICON TIER, as the harmony button is: a bare 14px glyph (the size the icon system
+   sets beside --fs-body and the action row) in a 28px round target, the 16% tint of its ink on hover and
+   the glyph through its mask (TextSwap). Always in view rather than revealed on hover: it is one quiet
+   glyph per view, and a control that only exists under the pointer cannot be found on a phone or read
+   off a screenshot. It stands BESIDE the name, never inside it — the create page's name is a split
+   target, and the line reveal rebuilds whatever it splits from text. While the name is being edited it
+   fades out and leaves the tab order; the field is the control then.
+
+   THE FIELD IS THE NAME. Same face, size, weight, tracking and line box as the heading it replaces, so
+   pressing the pencil moves nothing: the text stays where it was, gains a caret and a 2px rule in the
+   page's ink, and its count hangs under the rule's right end (no row is added under it, so nothing
+   below it moves either). Enter or leaving it saves, Escape keeps the old name, and focus returns to the
+   pencil.
+
+   THE LENGTH IS HELD, NOT CUT. 42 characters, the cap the reading already puts on the names it makes
+   (lib/reading.js), which keeps a name on one line from 1024 up (measured). The field never truncates —
+   a paste over the limit arrives whole — and past 42 it says so in the first error state this design
+   system has (23.09.26: "remember wcag compliances in terms of danger/error states"): the rule and the
+   message turn --danger (4.9:1 on the light page, 6.7:1 on the dark; a 2px rule needs 3:1), the message
+   says the fix ("Remove 3 Characters") beside the error mark so it is never colour alone, the input is
+   aria-invalid and described by that message, a polite live region says it once as the name crosses the
+   limit, and Enter will not save it until it fits. The field can always be left: leaving it while the
+   name is too long keeps the old name, and says so.
+
+   THE RULE DRAWS, AND DRAWS BACK (23.09.26, by request: "The underline that highlights the edit text
+   should animate with a cubic bezier from left to right ... reverse the animation to close", then "start
+   quick and land slow", then "1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge and back to
+   it, both ways on --ease-overlay over --dur-draw (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the
+   heading only takes the name back once the rule has gone. */
+const NAME_LIMIT = 42;
+// The heading's own type, so the field and the name it replaces are the same line of text.
+const NAME_TYPE = "font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface)";
+// The field spans the name's column so a name at the limit is never scrolled inside it; its count hangs
+// under the rule's right end, in the gap above the tags, where a field's count is looked for (no row is
+// added, so nothing under the name moves).
+const NAME_FIELD_STYLE = sx('position:relative;display:flex;flex:1 1 auto;min-width:0');
+const NAME_INPUT_STYLE = sx(NAME_TYPE + ';flex:1 1 auto;min-width:0;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;outline:none');
+const normName = (v) => String(v || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+const plural = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
+function RenameButton({ r }) {
+  return (
+    <button type="button" ref={r.btnRef} data-ix="icon" data-focus="chrome" data-rename="1" data-hidden={r.editing ? '' : undefined} onClick={r.onStart} aria-label={r.aria} tabIndex={r.editing ? -1 : undefined} aria-hidden={r.editing ? 'true' : undefined} style={sx('flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
+      <TextSwap><IconRename /></TextSwap>
+    </button>
+  );
+}
+function NameField({ r, as }) {
+  const [v, setV] = React.useState(r.initial);
+  const [said, setSaid] = React.useState('');
+  // opening → open → closing: the rule draws in once the field has painted, and draws back out before
+  // the field hands the name back to its heading (see the CSS block THE NAME FIELD).
+  const [phase, setPhase] = React.useState('opening');
+  const ref = React.useRef(null);
+  const ruleRef = React.useRef(null);
+  const settled = React.useRef(false);
+  const wasOver = React.useRef(false);
+  const len = Array.from(normName(v)).length, over = len - NAME_LIMIT, invalid = over > 0;
+  React.useEffect(() => {
+    const el = ref.current; if (el) { el.focus({ preventScroll: true }); el.select(); }
+    // Two frames, so scaleX(0) has painted and the draw has somewhere to start from.
+    let f2 = 0; const f1 = requestAnimationFrame(() => { f2 = requestAnimationFrame(() => setPhase((ph) => (ph === 'opening' ? 'open' : ph))); });
+    return () => { cancelAnimationFrame(f1); cancelAnimationFrame(f2); };
+  }, []);
+  // Said once as the name crosses the limit each way, not on every keystroke.
+  React.useEffect(() => {
+    if (invalid && !wasOver.current) setSaid('Name is ' + plural(over, 'character') + ' too long.');
+    else if (!invalid && wasOver.current) setSaid('Name fits.');
+    wasOver.current = invalid;
+  }, [invalid]);
+  // The rule draws back the way it came, and only then does the heading take the name back.
+  const close = (after) => {
+    setPhase('closing');
+    const rule = ruleRef.current;
+    if (!rule || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) { after(); return; }
+    let done = false, timer = 0;
+    const onEnd = (e) => { if (e.target === rule && e.propertyName === 'transform') end(); };
+    const end = () => { if (done) return; done = true; rule.removeEventListener('transitionend', onEnd); clearTimeout(timer); after(); };
+    rule.addEventListener('transitionend', onEnd);
+    // The rule's own duration (--dur-draw) and a little over, should the transition never run.
+    const secs = parseFloat(getComputedStyle(rule).transitionDuration) || 1.5;
+    timer = setTimeout(end, secs * 1000 + 120);
+  };
+  /* How the field was left: 'enter' saves (and waits while the name is too long), 'escape' keeps the old
+     name, 'leave' (Tab, or a press anywhere else) saves a name that fits and keeps the old one when it
+     does not — so the field can always be left. Only a key that stays in the field sends focus back to
+     the pencil; a reader who pressed or tabbed elsewhere keeps the focus they moved. */
+  const finish = (how) => {
+    if (settled.current) return;
+    if (how === 'enter' && invalid) { setSaid((t) => 'Remove ' + plural(over, 'character') + ' to save the name.' + (t.endsWith('.') ? ' ' : '')); return; }
+    settled.current = true;
+    const name = normName(v), refocus = how !== 'leave';
+    const save = how !== 'escape' && !invalid && !!name && name !== r.initial;
+    const lost = how === 'leave' && invalid ? 'Name not changed: it was ' + plural(over, 'character') + ' too long.' : '';
+    if (!save && v !== r.initial) setV(r.initial);
+    close(() => (save ? r.onCommit(name, refocus) : r.onCancel(refocus, lost)));
+  };
+  const Tag = as || 'div';
+  return (
+    <Tag data-name-field="1" data-invalid={invalid ? '' : undefined} data-open={phase === 'open' ? '' : undefined} data-closing={phase === 'closing' ? '' : undefined} style={NAME_FIELD_STYLE}>
+      <input ref={ref} type="text" value={v} readOnly={phase === 'closing'} data-focus="field" aria-label="Palette name" aria-invalid={invalid ? 'true' : undefined} aria-describedby={r.countId} spellCheck={false} autoComplete="off"
+        onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.nativeEvent.isComposing) return;
+          if (e.key === 'Enter') { e.preventDefault(); finish('enter'); }
+          // Kept from the app's Escape, which would otherwise close the page or the view around the field.
+          else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finish('escape'); }
+        }}
+        onBlur={() => finish('leave')}
+        style={NAME_INPUT_STYLE} />
+      <span ref={ruleRef} data-name-rule="1" aria-hidden="true"></span>
+      <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:0;top:calc(100% + 6px);font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
+        {invalid
+          ? (<><span aria-hidden="true" style={sx('display:inline-block;vertical-align:-2px;margin-right:5px')}><IconError /></span>{'Remove ' + plural(over, 'Character')}</>)
+          : (<><span aria-hidden="true">{len + '/' + NAME_LIMIT}</span><span style={visuallyHidden}>{len + ' of ' + NAME_LIMIT + ' characters'}</span></>)}
+      </span>
+      <span role="status" aria-live="polite" style={visuallyHidden}>{said}</span>
+    </Tag>
+  );
+}
+
 function ValueRow({ v, showCaveat }) {
   return (
     <button type="button" data-ix="cell" data-focus="value" onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
@@ -2424,7 +2554,7 @@ export default function AppView({ vals }) {
         )}
 
         {vals.isResult && (
-          <div ref={vals.resultRef} style={sx('display:flex;flex-direction:column')}>
+          <div ref={vals.resultRef} data-where-scope="1" style={sx('display:flex;flex-direction:column')}>
             {/* Shared-link view: someone else's palette, held in the URL and NOT in this archive.
                 Saving is the visitor's choice, so the strip says what is (not) happening and offers
                 both exits — keep it, or go make one. The sentence saying it is not saved went on
@@ -2453,7 +2583,7 @@ export default function AppView({ vals }) {
                 definition, in either theme and for any of the eight. */}
             <div role="group" aria-label="Generated palette swatches" data-tour="swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;height:340px;width:100%;gap:6px')}>
               {vals.result.bands.map((b, bi) => (
-                <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} style={b.style}>
+                <div key={b.sid} data-band="1" data-sid={b.sid} role="group" aria-label={b.groupAria} onMouseEnter={vals.dimEnter} onMouseLeave={vals.dimLeave} {...vals.result.whereTile} style={b.style}>
                   <span data-ring="1" aria-hidden="true" style={b.bandRingStyle}></span>
                   <span data-fx="1" data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true" style={b.weightStyle}>{b.weightPct}</span>
                   <span style={visuallyHidden}>{b.weightPct}</span>
@@ -2529,7 +2659,17 @@ export default function AppView({ vals }) {
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
               <div style={sx('flex:1;min-width:0')}>
-                <h1 data-fx="1" data-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</h1>
+                {/* The name and its pencil (RenameButton): the pencil beside the heading, centred on its first
+                    line, never inside it — the heading is a split target. Editing swaps the heading for a
+                    field in the same type (NameField), so nothing on the page moves. */}
+                <div style={sx('display:flex;align-items:flex-start;gap:12px;min-width:0')}>
+                  {vals.result.rename.editing
+                    ? (<NameField r={vals.result.rename} />)
+                    : (<h1 data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</h1>)}
+                  {vals.result.rename.can && (
+                    <span data-fx="1" style={sx('display:inline-flex;flex:none;margin-top:calc((var(--fs-display) * 1.05 - 28px) / 2)')}><RenameButton r={vals.result.rename} /></span>
+                  )}
+                </div>
                 {/* Two traits, then More. Four capitalised pills read as a legend rather than a
                     description, and the remaining ones are one click away with the reading.
 
@@ -2647,8 +2787,9 @@ export default function AppView({ vals }) {
                           <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
-                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')} aria-hidden={hasRatio(m.value) ? 'true' : undefined}>{m.value}</span>
+                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')} aria-hidden={hasRatio(m.value) || m.spoken ? 'true' : undefined}>{m.value}</span>
                             {hasRatio(m.value) && <span style={visuallyHidden}>{spokenRatios(m.value)}</span>}
+                            {m.spoken && <span style={visuallyHidden}>{m.spoken}</span>}
                           </dd>
                         </div>
                         <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
@@ -3459,7 +3600,7 @@ function ContrastDrawer({ vals }) {
           </div>
         </div>
 
-        <div data-cx-sec="1" style={sx('padding:20px var(--page-gutter) 26px')}>
+        <div data-cx-sec="1" style={{ padding: contrast.bestSecPad }}>
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
             {/* THE BUTTONS' TYPE (18.09.26, by request): the label at 13px Medium in its own Title Case,
                 where it was 11px capitals; the ratio beside it keeps its own smaller step, at Medium.
@@ -3475,8 +3616,31 @@ function ContrastDrawer({ vals }) {
           </div>
           {/* The words have a box of their own so their size can step while the sample's box
               extends around them (_growSample in methods/overlays.js). */}
-          <div data-cx-sample="1" data-cx-cell="sample" style={contrast.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
+          <div data-cx-sample="best" data-cx-cell="sample" style={contrast.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
         </div>
+        {/* NEAREST PASS (23.09.26, by request): the failing pair that one small move of one colour puts
+            over the line, in this drawer's own pieces — a chip split between the colour as read and as
+            nudged, the matrix's fail tile becoming its pass tile, the nudged pair in the sample box —
+            and a copy of the nudged colour. Nothing is spelled; the hexes are said. Pointing at it or
+            into it outlines its pair in the matrix (renderVals, data-cx-near). */}
+        {contrast.near && (
+          <div data-cx-sec="1" data-cx-near-sec="1" onPointerEnter={contrast.near.on} onPointerLeave={contrast.near.off} onFocus={contrast.near.on} onBlur={contrast.near.off} style={sx('padding:0 var(--page-gutter) 26px')}>
+            <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
+              <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Nearest Pass</span>
+              <span data-cx-near-cluster="1" style={sx('display:inline-flex;align-items:center;gap:8px')}>
+                <span aria-hidden="true" style={contrast.near.chipStyle}></span>
+                <span aria-hidden="true" style={contrast.near.failStyle}><span data-ratio="">{contrast.near.fromRatio}</span></span>
+                <span aria-hidden="true" style={sx('display:inline-flex;color:var(--on-surface-muted)')}><IconChevronRight size={12} /></span>
+                <span aria-hidden="true" style={contrast.near.passStyle}><span data-ratio="">{contrast.near.toRatio}</span></span>
+                <span style={visuallyHidden}>{contrast.near.spoken}</span>
+                <button type="button" data-ix="icon" data-focus="chrome" onClick={contrast.near.onCopy} aria-label={contrast.near.copyAria} style={sx('flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
+                  <MarkSwap copied={contrast.near.copied} style={sx('display:inline-flex;width:14px;height:14px')} />
+                </button>
+              </span>
+            </div>
+            <div data-cx-sample="near" data-cx-cell="near-sample" style={contrast.near.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3487,7 +3651,7 @@ function DetailOverlay({ vals }) {
   if (!vals.hasOverlay) return null;
   const overlay = vals.overlay;
   return (
-    <div ref={vals.overlayRef} data-overlay-stage="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
+    <div ref={vals.overlayRef} data-overlay-stage="1" data-where-scope="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
       {/* THE HEADER KEEPS THE TWO CONTROLS (23.09.26, grid audit, by request: "yes show me"). The name and
           its stamp went down to head the block under the actions, where the create page sets its name:
           under the swatches the photograph was the heaviest thing, with only a button and light text to
@@ -3526,7 +3690,7 @@ function DetailOverlay({ vals }) {
           screen reader, which reads the twin beside them. */}
       <div ref={vals.overlayBandsRef} role="group" aria-label="Palette swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;flex:1;min-height:0;width:100%;gap:6px;padding:16px var(--page-gutter) 0')}>
         {overlay.bands.map((b) => (
-          <div key={b.sid} data-oband="1" data-sid={b.sid} role="group" aria-label={b.groupAria} style={b.style}>
+          <div key={b.sid} data-oband="1" data-sid={b.sid} role="group" aria-label={b.groupAria} {...overlay.whereTile} style={b.style}>
             <div data-ochrome="1" style={sx('display:flex;flex-direction:column;gap:8px')}>
               <span data-odometer-element="" data-odometer-start="0" data-odometer-duration="1.4" aria-hidden="true" style={b.weightStyle}>{b.weightPct}</span>
               <span style={visuallyHidden}>{b.weightPct}</span>
@@ -3563,13 +3727,17 @@ function DetailOverlay({ vals }) {
         <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
           <div style={sx('flex:1;min-width:0')}>
             {/* The create page's name, in its type (--fs-display, its tracking, balanced) and at its distance
-                from the actions (26px; 22 held the tags when they led), with the library's stamp at its
-                baseline as it stood beside the name in the header.
-                THE LIBRARY'S STAMP, IN THE LIBRARY'S TYPE (19.09.26, audit U6, by request): minutes and hours
-                under a day, the date after, at the Created column's 12px with no capitals. */}
+                from the actions (26px; 22 held the tags when they led), with its pencil beside it.
+                NO DATE BESIDE IT (23.09.26, by request: "remove the created date next to the palette name in
+                full swatch view"). The library's stamp stood at the name's baseline here since 19.09.26 (audit
+                U6); the list and Grid View still carry it. */}
             <div style={sx('display:flex;align-items:baseline;flex-wrap:wrap;column-gap:14px;row-gap:4px')}>
-              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</h2>
-              <span title={overlay.timeTitle} style={sx('font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color: var(--on-surface-muted); font-variant-numeric: tabular-nums')}>{overlay.time}</span>
+              {overlay.rename.editing
+                ? (<NameField r={overlay.rename} />)
+                : (<h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</h2>)}
+              {/* The pencil, as on the create page: 12px from the name there, so the row's 14px gap less 2. That
+                  leaves its focus ring 6px clear of the last letter. */}
+              {overlay.rename.can && (<span style={sx('display:inline-flex;align-self:center;margin-inline-start:-2px')}><RenameButton r={overlay.rename} /></span>)}
             </div>
             {overlay.descriptors.length > 0 && (
               <div style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-top:18px')}>
@@ -3582,7 +3750,12 @@ function DetailOverlay({ vals }) {
               it larger (the click-zoom lightbox, misc.js, which stands above this view). */}
           {overlay.hasRef && (
             <button type="button" data-click-zoom="1" data-ix="mark" data-focus="chrome" aria-label="View the reference image larger" style={sx('flex:none;border:none;padding:0;background:none;display:block;cursor:zoom-in;border-radius:var(--radius-card)')}>
-              <img src={overlay.refImage} alt={overlay.refAlt} style={sx('display:block;width:156px;height:104px;object-fit:cover;border-radius:var(--radius-card)')} />
+              {/* The photograph and its colours' regions (methods/where.js), as on the create page. */}
+              <span key={overlay.whereKey} data-where="1" style={sx('border-radius:var(--radius-card)')}>
+                <img src={overlay.refImage} alt={overlay.refAlt} data-where-base="1" onLoad={overlay.wherePrime} style={sx('display:block;width:156px;height:104px;object-fit:cover;border-radius:var(--radius-card)')} />
+                <img src={overlay.refImage} alt="" aria-hidden="true" data-where-dim="1" decoding="async" />
+                {Array.from({ length: overlay.whereN }, (_, k) => (<img key={k} src={overlay.refImage} alt="" aria-hidden="true" data-where-sid={String(k)} decoding="async" />))}
+              </span>
             </button>
           )}
         </div>

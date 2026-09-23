@@ -489,6 +489,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --dur-overlay-item:.05s;  /* beat between items inside an overlay (DUR.overlayItem) */
   --dur-overlay-block:.08s; /* beat between blocks inside an overlay (DUR.overlayBlock) */
   --dur-overlay-arrive:1s;  /* an overlay's contents arriving (DUR.overlayArrive) */
+  --dur-draw:1.5s;          /* a rule drawn under a field and drawn back (the name field's, 23.09.26) */
   --dur-line:.09s;          /* beat between masked lines (DUR.line) */
   /* THE SIGNATURE LOOPS AND RUNS, named rather than written in place (17.09.26, audit F3): the
      extraction bar's fill, the wordmark's gradient drift and the processing dot's pulse. */
@@ -1828,6 +1829,46 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-seg-rail] > [aria-hidden="true"],
 [data-seg-btn],
 [data-library-btn]{border-radius:var(--radius-pill)}
+/* NEAREST PASS POINTS AT ITS PAIR (23.09.26). Pointing at or into the Nearest Pass section outlines
+   the matrix tile of the pair it nudges, inside the tile so the 4px between tiles stays clear, in the
+   page's ink. The tile's inline transition lists box-shadow beside its fill (renderVals), so the
+   outline eases on the tile's own --dur-state. */
+[data-cx-cell][data-cx-near]{box-shadow:inset 0 0 0 1.5px var(--on-surface)}
+/* WHERE A COLOUR LIVES (23.09.26, by request; methods/where.js). The photograph beside the tiles holds a
+   grey copy (How it Works' own treatment, .story-mask__dim) and one copy per colour masked to that
+   colour's region. The masks are the photograph's own shape, so they take the image's cover crop
+   exactly — mask-size cover, centred, where the story stretches its 100% because its frame is its
+   photographs' 4:3. Hover timing rather than the story's reveal: this answers a pointer moving across
+   five tiles, not a tap. Opacity only, so every copy stays on the compositor. */
+[data-where]{position:relative;display:block;overflow:hidden}
+[data-where-dim],[data-where-sid]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;opacity:0;pointer-events:none;transition:opacity var(--dur-chrome) var(--ease-standard)}
+[data-where-dim]{filter:grayscale(1) brightness(.42)}
+[data-where-sid]{-webkit-mask-size:cover;mask-size:cover;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+[data-where][data-lit] [data-where-dim],[data-where-sid][data-on]{opacity:1}
+/* THE NAME FIELD (23.09.26; AppView NameField). While a name is being edited, a 2px rule under it in the
+   page's ink — the field's edge and its focus mark in one, drawn below the line box so descenders keep
+   clear of it — and the count under the rule's right end, muted. Past 42 characters, the design system's
+   first ERROR STATE: the rule and the message turn --danger (as text 4.9:1 on the light page and 6.7:1
+   on the dark; the rule, as a boundary, needs 3:1) and the message leads with the error mark, so the
+   state is never colour alone; the change of colour runs on --dur-state. The input's own field ring would
+   draw a second rule inside the first, so under the keyboard it gives way to the row's. */
+/* THE RULE DRAWS IN AND DRAWS BACK (23.09.26, by request: "animate with a cubic bezier from left to
+   right ... reverse the animation to close", "start quick and land slow", then "increase the length to
+   1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge once the field has painted, and back to
+   it, right to left, before the heading takes the name back — both ways over --dur-draw on
+   --ease-overlay, which IS that curve: the overlay system's expo-out, quick off the mark with a long,
+   soft landing. It was --ease-entrance in and that curve played backwards out (the draw threw half its
+   length in 70ms; the close held nearly full for 400ms, then snapped), and for one round --ease-progress
+   over --dur-reveal. The count arrives and goes with it. */
+[data-name-rule]{position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%;pointer-events:none;transition:transform var(--dur-draw) var(--ease-overlay),background-color var(--dur-state) var(--ease-standard)}
+[data-name-field][data-open] [data-name-rule]{transform:scaleX(1)}
+[data-name-field][data-invalid] [data-name-rule]{background:var(--danger)}
+[data-name-field] [data-name-count]{color:var(--on-surface-muted);opacity:0;transition:opacity var(--dur-state) var(--ease-standard),color var(--dur-state) var(--ease-standard)}
+[data-name-field][data-open] [data-name-count]{opacity:1}
+[data-name-field][data-invalid] [data-name-count]{color:var(--danger)}
+:root[data-kbd] [data-name-field] input[data-focus="field"]:focus-visible{box-shadow:none}
+/* The pencil gives way while its field is up, on the contract's opacity. */
+[data-rename][data-hidden]{opacity:0;pointer-events:none}
 
 /* THE 12px INTERACTIVE-LABEL FLOOR WAS HERE AND IS REVERTED. It raised the masthead pills, both
    rails, Manage Projects, Filter and the sort heads from --fs-micro/--fs-label to --fs-detail, on

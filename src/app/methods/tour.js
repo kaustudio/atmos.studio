@@ -76,8 +76,13 @@ const STEPS = [
     title: 'Explore a Colour',
     /* NOTHING TO SELECT (21.09.26, UX review). "Select a colour to see its values" asked for a press
        the stage does not take: a band is a static group, and every one of them already shows its
-       values. The action the step can honestly ask for is the copy, which works and keeps the card. */
-    body: 'Each colour shows its values, and the percentage is its estimated share of the image. Copy any value to use it in your design.',
+       values.
+       POINT AT A COLOUR (23.09.26, by request, with the photograph's lighting, methods/where.js). A
+       colour now does answer the pointer: the photograph beside the tiles lights where it lives, which
+       is its share of the image made visible — and nothing on the stage says so. So the second
+       sentence says it, and the step shows it once (_tourWhereCue); the copy it replaces is step 4's
+       subject, said there. Still three lines at most, so the card keeps its one height. */
+    body: 'Each colour shows its values, and the percentage is its estimated share of the image. Point at a colour to see where it sits in the photo.',
   },
   {
     /* `via` — THE CONTROL THAT OPENS THIS STEP'S DRAWER, AND THE READER PRESSES IT (21.09.26, by
@@ -521,6 +526,7 @@ export const tourMethods = {
      superseded change drops out at its next checkpoint rather than landing on top of a newer one. */
   _tourGo(n) {
     const step = STEPS[n - 1]; if (!step) return;
+    this._tourWhereStop();
     this._tourFrozen = true;
     this._tourBusy = true;
     /* THE TOUR OWNS THE KEYBOARD FOR AS LONG AS IT RUNS, not just for the length of a step.
@@ -591,6 +597,7 @@ export const tourMethods = {
            under the arriving copy, and one that is still sliding in is waited for exactly as before.
            Five of the ten crossings drop from ~1.2s to ~0.75s on this alone. */
         if (step.via && !this._tourDrawerOpen(step)) this._tourCue(step);
+        if (step.n === 1) this._tourWhereCue(live);
         this._tourSettle(step, () => { if (live()) this._tourMove(step); });
       });
     });
@@ -735,6 +742,57 @@ export const tourMethods = {
      the copy's arrival, while the ring — placed by the solver, which resolves the step to this
      control while its drawer is shut — stays on for as long as the step waits. Under reduced motion
      nothing rolls and the cue is the fill (global.css). */
+  /* STEP 1'S CUE IS THE PHOTOGRAPH'S (23.09.26, by request). As step 1's words arrive, the photograph
+     lights one colour once — what pointing at that tile does (methods/where.js) — for the length the
+     controls' own cue holds, then goes back.
+     THE COLOUR THAT SHOWS, NOT THE LARGEST. The light is the colour's region at full strength over a
+     grey dimmed to 42%, and the largest colour is often a near-black ground (Garnet's #0F0302): lit,
+     it looked exactly like the grey around it, and the cue played with nothing to see. So it takes the
+     colour whose light reads most — OKLab lightness plus twice its chroma, since colour against grey
+     reads strongest — among those with at least 8% of the image and a region the masks can locate,
+     falling back to the largest. On Garnet that is the orange, 15%, where the near-black 36% would light
+     nothing; on Hard Gunmetal the pale #A6A188 over its near-black. It waits until the photograph is fully on
+     screen, since step 1 usually arrives with the palette it is showing still rising into place, and
+     it never takes a light the reader is making: a tile under the pointer or holding focus keeps its
+     own. A step change, closing the tour or leaving it ends it at once (_tourWhereStop). */
+  _tourWhereCue(live) {
+    this._tourWhereStop();
+    const p = this.state.current, list = p && p.swatches;
+    if (!list || !list.length) return;
+    const box = document.querySelector('[data-where-scope] [data-where]');
+    const urls = box && this._whereMasks(p, box.querySelector('[data-where-base]'));
+    const total = list.reduce((a, x) => a + (x.weight || 0), 0) || 1;
+    let sw = null, best = -1;
+    list.forEach((x, k) => {
+      if ((x.weight || 0) / total < 0.08 || !(urls && urls[k])) return;
+      const score = x.L + 2 * Math.hypot(x.a, x.b);
+      if (score > best) { best = score; sw = x; }
+    });
+    sw = sw || list[0];
+    const band = box && document.querySelector('[data-where-scope] [data-band][data-sid="' + sw.sid + '"]');
+    if (!band) return;
+    // Fully on screen: no ancestor still fading in, and none parked hidden for the stage's reveal.
+    const seen = (el) => { for (let e = el; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (parseFloat(cs.opacity) < 0.99 || cs.visibility === 'hidden') return false; } return true; };
+    const t0 = performance.now();
+    const wait = () => {
+      if (!live() || !band.isConnected) return;
+      if (!seen(box) && performance.now() - t0 < 2400) { this._tourWhereRaf = requestAnimationFrame(wait); return; }
+      // The reader is already pointing at a tile, or in one: that light is theirs, and it stays.
+      if (band.closest('[data-where-scope]').querySelector('[data-band]:hover, [data-band]:focus-within')) return;
+      this._whereOn(band, p);
+      this._tourWhereEl = band;
+      this._tourWhereT = setTimeout(() => this._tourWhereStop(), (this.DUR.overlay + this.DUR.state) * 1000);
+    };
+    this._tourWhereRaf = requestAnimationFrame(wait);
+  },
+  _tourWhereStop() {
+    cancelAnimationFrame(this._tourWhereRaf); clearTimeout(this._tourWhereT);
+    const band = this._tourWhereEl; this._tourWhereEl = null;
+    if (!band || !band.isConnected) return;
+    const scope = band.closest('[data-where-scope]');
+    if (scope && scope.querySelector('[data-band]:hover, [data-band]:focus-within')) return;
+    this._whereOff(band);
+  },
   _tourCue(step) {
     const via = this._tourVia(step);
     if (!via) return;
@@ -1056,6 +1114,7 @@ export const tourMethods = {
     // exit spans several of them — so it runs once and waits for its own fade.
     if (this._tourLeaving) return;
     this._tourSeq = (this._tourSeq || 0) + 1;      // supersede any change still in flight
+    this._tourWhereStop();
     this._tourDetach();
     this._tourDropText();
     this._tourClearOpacity();
@@ -1139,6 +1198,7 @@ export const tourMethods = {
     clearTimeout(this._tourDemoT);
     const cued = document.querySelector('[data-tour-cue]');
     if (cued) cued.removeAttribute('data-tour-cue');
+    this._tourWhereStop();
     this._tourDetach();
     this._tourClearOpacity();
     this._tourFrozen = true;

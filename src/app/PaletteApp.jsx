@@ -22,6 +22,7 @@ import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { tourMethods } from './methods/tour.js';
+import { whereMethods } from './methods/where.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP, CREATE_PATH } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
@@ -687,6 +688,9 @@ export default class PaletteApp extends React.Component {
        act, however it was done (methods/tour.js _tourWatch); and back on the tool from a document
        with a step live, the step is brought back into view (_tourResume). */
     this._tourWatch();
+    // A rename ends with the palette it was renaming: another palette opened, or the view it was in closed,
+    // and the field goes rather than coming back the next time that palette is shown (23.09.26).
+    if (s.renaming && (s.renaming.where === 'stage' ? !(s.current && s.current.id === s.renaming.id) : !(s.overlay && s.overlay.id === s.renaming.id))) this.setState({ renaming: null });
     if (prevState && isDoc(prevState.route) && !isDoc(s.route) && typeof s.tourStep === 'number') this._tourResume();
     // The contrast checker's minimum and summary rise again when the lens or the size rewrites them.
     if (prevState && (prevState.contrastLens !== s.contrastLens || prevState.contrastLarge !== s.contrastLarge)) this._revealContrastLines();
@@ -1385,5 +1389,6 @@ Object.assign(
   miscMethods,
   consentMethods,
   tourMethods,
+  whereMethods,
   renderValsMethods,
 );

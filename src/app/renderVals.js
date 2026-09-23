@@ -6,6 +6,7 @@ import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
 import { CONTRAST_MIN, CRITERION, CRITERION_TITLE, RATIO_TEXT } from '../lib/wcag.js';
+import { nearestPass, visionConflicts } from '../lib/color.js';
 import { isDoc, CREATE_PATH } from './routes.js';
 
 /* A COLOUR'S SHARE OF THE FRAME, as every surface prints it (22.09.26, UX audit). Rounded to a whole
@@ -180,6 +181,17 @@ export const renderValsMethods = {
     // capitals on a hairline. The list's EXAMPLE chip is kept separate, by request.
     const pill = { fontFamily: sans, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', color: 'var(--on-surface)', background: 'color-mix(in srgb, var(--on-surface) 9%, var(--surface))', border: '0', borderRadius: 'var(--radius-pill)', padding: 'var(--btn-pad-chip)', minHeight: '26px', display: 'inline-flex', alignItems: 'center', lineHeight: 1 };
     const busy = s.stage === 'processing';
+    // RENAME (23.09.26): the pencil and the field for the palette a view shows (AppView RenameButton and
+    // NameField). Only a palette in this browser's library can be renamed; a shared one being viewed is not.
+    const renameFor = (p, where) => ({
+      can: !s.sharedView && !!p && s.feed.some((f) => f.id === p.id),
+      editing: !!(s.renaming && p && s.renaming.id === p.id && s.renaming.where === where),
+      initial: p ? p.name : '', aria: 'Rename ' + (p ? p.name : 'palette'),
+      countId: 'name-count-' + where, btnRef: this._renameRef(where),
+      onStart: () => this.startRename(p.id, where),
+      onCommit: (name, refocus) => this.renamePalette(p.id, name, where, refocus),
+      onCancel: (refocus, said) => this.cancelRename(where, refocus, said),
+    });
 
     // ===== contrast checker view (computed from sRGB relative luminance — WCAG, not OKLCH L) =====
     let cx = null;
@@ -237,7 +249,7 @@ export const renderValsMethods = {
                  from the next, so the fail's faint tile is what shows a pair was measured.) The fill was 6% beside the mark and could not carry
                  the verdict alone. Two cues, fill and weight, so it is not colour alone (SC 1.4.1),
                  and the number is still the reading. The fill eases when a toggle moves the verdict. */
-              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', transition: 'background-color var(--dur-state) var(--ease-standard)' },
+              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', transition: 'background-color var(--dur-state) var(--ease-standard), box-shadow var(--dur-state) var(--ease-standard)' },
               /* --fs-detail and --fs-fine, off the tokens this cell used to borrow. --fs-label is
                  defined as "uppercase labels" and this is a number. It sat under --fs-fine, which
                  global.css names the smallest READABLE size, so the checker's own fifteen
@@ -268,6 +280,38 @@ export const renderValsMethods = {
         const bp = this.paletteMetrics(cp).bestPair;
         const best = bp ? { r: bp.ratio, fg: bp.fg, bg: bp.bg } : null;
         const summary = this.contrastSummary(cp);
+        // One sample box, whichever pair it shows: Best Pair Sample and Nearest Pass are the same object.
+        const sampleFor = (fg, bg) => ({ borderRadius: 'var(--radius-card)', background: bg || 'var(--surface)', color: fg || 'var(--on-surface)', padding: '12px 16px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' });
+        /* THE NEAREST PASS (23.09.26, by request, from Adobe Color's Contrast Suggestions: "guide the
+           user and visualise it", with no hex codes written out). Of the pairs that miss the threshold
+           now selected, the one that passes with the smallest move of one colour along its lightness
+           (nearestPass, lib/color.js). DRAWN, NOT SPELLED, as Best Pair Sample is: a chip split
+           between the colour as read and as nudged, the matrix's own fail tile turning into its pass
+           tile, and the nudged pair in the sample box, oriented as Best Pair Sample is (ink the
+           darker, ground the lighter). The hexes are said, visually hidden, and one press copies the
+           nudged colour. Hovering or focusing it outlines its pair in the matrix above. */
+        const np = nearestPass(sw.map((b) => b.hex), th);
+        let near = null;
+        if (np) {
+          const movedHex = np.to, otherHex = sw[np.other].hex;
+          const movedIsInk = this.relLum(movedHex) <= this.relLum(otherHex);
+          const tile = (pass) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '26px', padding: '0 10px', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
+          const cellKey = Math.max(np.moved, np.other) + '-' + Math.min(np.moved, np.other);
+          const lit = (on) => () => { const c = document.querySelector('[data-contrast-dialog] [data-cx-cell="' + cellKey + '"]'); if (c) c.toggleAttribute('data-cx-near', on); };
+          near = {
+            fromRatio: RATIO_TEXT(np.fromRatio, th), toRatio: RATIO_TEXT(np.toRatio, th),
+            // The two halves meet at a 1px seam of the page, so read and nudged stay two colours even when
+            // the nudge is too small to see.
+            chipStyle: { flex: 'none', width: '40px', height: '26px', borderRadius: 'var(--radius-pill)', background: 'linear-gradient(90deg, ' + np.from + ' calc(50% - 0.5px), var(--surface) calc(50% - 0.5px) calc(50% + 0.5px), ' + movedHex + ' calc(50% + 0.5px))' },
+            failStyle: tile(false), passStyle: tile(true),
+            sampleStyle: sampleFor(movedIsInk ? movedHex : otherHex, movedIsInk ? otherHex : movedHex),
+            spoken: np.from.toUpperCase() + ' nudged to ' + movedHex.toUpperCase() + ' on ' + otherHex.toUpperCase() + ': contrast ' + RATIO_TEXT(np.fromRatio, th) + ' to 1 becomes ' + RATIO_TEXT(np.toRatio, th) + ' to 1, which meets ' + criterion + '.',
+            copyAria: 'Copy the nudged colour, ' + movedHex.toUpperCase(),
+            copied: s.copied === 'cx-near',
+            onCopy: () => this.copy(movedHex.toUpperCase(), 'cx-near'),
+            on: lit(true), off: lit(false),
+          };
+        }
         /* PASSING ONLY IS THE ROW'S ODD CONTROL, and it stays that way on purpose — it is a filter
            that is on or off, not one of a pair, so it keeps the bordered treatment that says so (see
            the rail note below). What it should NOT keep is a different height and a different type
@@ -313,7 +357,9 @@ export const renderValsMethods = {
           matrixColsStyle: { display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' },
           // The text-on-colour tiles' padding (19.09.26, by request: "add same padding to this"), so the
           // sample's words start on the same inner edge as the hexes above them.
-          sampleStyle: { borderRadius: 'var(--radius-card)', background: best ? best.bg : 'var(--surface)', color: best ? best.fg : 'var(--on-surface)', padding: '12px 16px', fontFamily: sans, fontSize: s.contrastLarge ? 'var(--fs-title)' : 'var(--fs-lead)', lineHeight: 1.4, fontWeight: s.contrastLarge ? 500 : 400, textWrap: 'pretty' },
+          sampleStyle: sampleFor(best && best.fg, best && best.bg),
+          // With Nearest Pass under it, Best Pair Sample closes at the 20px the drawer's sections open on.
+          near, bestSecPad: near ? '20px var(--page-gutter) 20px' : '20px var(--page-gutter) 26px',
           sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
@@ -408,7 +454,15 @@ export const renderValsMethods = {
       // 12px AND NO BORDER (18.09.26, by request): --radius-card, a tenth of its 104px height as the
       // short panels' 16 is of theirs, where 28 would be a quarter; the button takes the same corner
       // so its focus ring follows the picture's.
-      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in', borderRadius: 'var(--radius-card)' } }, React.createElement('img', { src: _ref, alt: (s.current && s.current.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', borderRadius: 'var(--radius-card)' } })) : null;
+      // The photograph carries its colours' regions (methods/where.js): a grey copy and one masked copy per
+      // swatch over it, keyed to the palette so a new one never inherits the last one's masks. The zoom
+      // opens the first image in the button, which stays the photograph itself.
+      const _cur = s.current;
+      const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in', borderRadius: 'var(--radius-card)' } },
+        React.createElement('span', { key: _cur.id + '|' + _ref, 'data-where': '1', style: { borderRadius: 'var(--radius-card)' } },
+          React.createElement('img', { src: _ref, 'data-where-base': '1', onLoad: (e) => this._wherePrime(_cur, e.currentTarget), alt: (_cur.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', borderRadius: 'var(--radius-card)' } }),
+          React.createElement('img', { src: _ref, alt: '', 'aria-hidden': 'true', 'data-where-dim': '1', decoding: 'async' }),
+          _cur.swatches.map((b, k) => React.createElement('img', { key: k, src: _ref, alt: '', 'aria-hidden': 'true', 'data-where-sid': String(k), decoding: 'async' })))) : null;
       // The metadata cluster — restored to the detail pane. It used to live ONLY in the list's
       // inline expansion; Phase 1 removed that expansion on the contract that this panel is the one
       // detail surface, but these five values (hue/chroma/lightness/temperature/archetype) were
@@ -442,6 +496,11 @@ export const renderValsMethods = {
           title: 'Accessibility', rows: [
             { label: 'Max Contrast', value: curMet.contrastMax.toFixed(1) + ':1' },
             { label: 'AA Text Pairs', value: aaReadout(curMet).aaValueText, aa: aaReadout(curMet) },
+            /* COLOUR BLIND SAFE (23.09.26, by request, from Adobe Color's simulator): the pairs that
+               stay apart under protanopia, deuteranopia and tritanopia (visionConflicts, lib/color.js),
+               counted in the AA line's own n/total so the two read as one grammar. Computed here for
+               the palette on screen only; paletteMetrics runs for every library row. */
+            (() => { const v = visionConflicts(s.current.swatches.map((b) => b.hex)); return { label: 'Colour Blind Safe', value: v.safe + '/' + v.total, spoken: v.safe + ' of ' + v.total + ' pairs stay distinct for colour-blind vision' }; })(),
           ],
         },
         {
@@ -469,7 +528,9 @@ export const renderValsMethods = {
             // which is why it is not "From the link" or "Shared link".
             {
               label: 'Name From',
+              // Renamed by the reader (23.09.26): whatever it was named from, it is theirs now.
               value: s.sharedView ? 'Shared palette'
+                : s.current.renamed === true ? 'You'
                 : s.current.example === true ? 'Bundled example'
                   : s.current.fallback === true ? 'Local reading' : 'Live reading',
             },
@@ -490,6 +551,9 @@ export const renderValsMethods = {
       const useLine = composeUse(analysePalette(s.current.swatches), curMet.aaState, curMet);
       const allTraits = this.paletteTags(s.current);
       result = {
+        // The tiles light their colour in the photograph beside them (methods/where.js).
+        whereTile: this.whereHandlers(s.current),
+        rename: renameFor(s.current, 'stage'),
         name: s.current.name, rationale: s.current.rationale, descriptors: allTraits, bands,
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
         useLine,
@@ -907,10 +971,14 @@ export const renderValsMethods = {
       });
       const omet = this.paletteMetrics(p);
       overlay = {
+        // Its tiles light their colour in its photograph, as the create page's do (methods/where.js).
+        whereTile: this.whereHandlers(p), whereKey: p.id + '|' + this.dispUrl(p), whereN: p.swatches.length,
+        wherePrime: (e) => this._wherePrime(p, e.currentTarget),
+        rename: renameFor(p, 'detail'),
         name: p.name, descriptors: this.paletteTags(p), bands: obands,
         // What the palette is for, the create page's line (23.09.26): the view reads as that page does.
         useLine: composeUse(analysePalette(p.swatches), omet.aaState, omet),
-        time: this.stampTime(p.time), timeTitle: this.absTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
+        refImage: this.dispUrl(p), hasRef: this.hasImg(p),
         refAlt: p.example === true ? 'The reference image this example palette was read from' : 'The reference image you uploaded',
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
