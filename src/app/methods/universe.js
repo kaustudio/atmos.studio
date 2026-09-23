@@ -440,7 +440,9 @@ export const universeMethods = {
               const px = L + (open.portrait ? 0 : (W - 1) * slide);
               const py = T + (open.portrait ? (H - 1) * slide : 0);
               open.panel.style.left = px.toFixed(2) + 'px'; open.panel.style.top = py.toFixed(2) + 'px';
-              open.panel.style.width = W.toFixed(2) + 'px'; open.panel.style.height = H.toFixed(2) + 'px';
+              // One gutter wider on each side in a landscape open (openTile's bleed), grown with the slide
+              // so the panel's surface and its content are the same box at every frame.
+              open.panel.style.width = (W + (open.bleed || 0) * slide).toFixed(2) + 'px'; open.panel.style.height = H.toFixed(2) + 'px';
               // CLOSING, THE WORDS GO BEHIND THE PHOTOGRAPH WITH THEIR PANEL (22.09.26). This layer sits
               // above the card, so a panel sliding home carried its words across the picture while they
               // faded: with the damped close the slide starts at once, and at 80ms the metrics were
@@ -679,9 +681,29 @@ export const universeMethods = {
     const V = this._uView, TW = UNIVERSE_TILE.W, TH = UNIVERSE_TILE.H, GP = UNIVERSE_OPEN.gap;
     const vw = wrapper.clientWidth, vh = wrapper.clientHeight, portrait = vh > vw;
     const share = portrait ? UNIVERSE_OPEN.sharePortrait : UNIVERSE_OPEN.share;
-    const B = Math.round(Math.min(Math.min(vw, vh) * share, (Math.max(vw, vh) * UNIVERSE_OPEN.pairMax - GP) / 2));
+    let B = Math.round(Math.min(Math.min(vw, vh) * share, (Math.max(vw, vh) * UNIVERSE_OPEN.pairMax - GP) / 2));
     const cx = vw / 2, cy = vh / 2;
-    const cardX = Math.round(portrait ? cx - B / 2 : cx - B - GP / 2), cardY = Math.round(portrait ? cy - B - GP / 2 : cy - B / 2);
+    let cardX = Math.round(portrait ? cx - B / 2 : cx - B - GP / 2), cardY = Math.round(portrait ? cy - B - GP / 2 : cy - B / 2);
+    // Landscape takes the page's columns (_uOpenGrid below); the shares above stay the portrait
+    // open's, and the fallback for a window too short to hold three columns of photograph.
+    const grid = portrait ? null : this._uOpenGrid(vw, vh);
+    if (grid) { B = grid.B; cardX = grid.x; cardY = Math.round(cy - B / 2); }
+    // One gutter each side, and the pixel back: the panel slides out by its width less one pixel so its
+    // hairline sits under the photograph's last column, which set everything on it 1px left of the
+    // lines. The leading inset takes that pixel, and so does the bleed, so the far edge is column 12's.
+    const bleed = grid ? 2 * grid.G + 1 : 0;
+    el.style.setProperty('--upanel-bleed', bleed + 'px');
+    panel.style.setProperty('--upanel-inset', grid ? (grid.G + 1) + 'px' : '');
+    panel.style.setProperty('--upanel-inset-end', grid ? grid.G + 'px' : '');
+    panel.style.setProperty('--upanel-gap', grid ? grid.G + 'px' : '');
+    panel.style.setProperty('--upanel-metrics', grid && grid.n >= 4 ? (2 * grid.col + grid.G).toFixed(2) + 'px 1fr' : '');
+    // A gutter above and below the body's words on a full-size card, less on a smaller one.
+    const padY = grid ? Math.round(grid.G * Math.min(1, B / 566)) + 'px' : '';
+    panel.style.setProperty('--upanel-pad-top', padY);
+    panel.style.setProperty('--upanel-pad-bottom', padY);
+    // THE PANEL'S TYPE SCALES WITH ITS CARD (renderVals universePanel): 1 at 1440 × 900, where the
+    // photograph is five columns and 566px and the panel's lines sit on the create page's steps.
+    panel.style.setProperty('--upanel-s', (B / 566).toFixed(4));
     const isOrig = el.getAttribute('tabindex') !== '-1' && !el.hasAttribute('aria-hidden');
     const cap = el.querySelector('[data-tile-caption]'), ring = el.querySelector('[data-ring]');
     const fades = [...el.querySelectorAll('[data-tile-fade]')];
@@ -689,7 +711,7 @@ export const universeMethods = {
     // the render's view of the open card: the box as cell corners about the stage centre, grown by
     // half a gutter because cellMatrix takes half a gutter back
     const open = this._uOpenK;
-    open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.B = B; open.panel = panel; open.portrait = portrait; open.home = null;
+    open.cell = cd; open.k = 0; open.w = TW; open.h = TH; open.B = B; open.panel = panel; open.portrait = portrait; open.home = null; open.bleed = bleed;
     open.box = { l: cardX - V.mid.x - V.GAP / 2, t: cardY - V.mid.y - V.GAP / 2, r: cardX + B - V.mid.x + V.GAP / 2, b: cardY + B - V.mid.y + V.GAP / 2 };
     el.setAttribute('data-universe-open', portrait ? 'portrait' : 'landscape'); el.style.zIndex = '4';
     panel.setAttribute('data-upanel-side', portrait ? 'portrait' : 'landscape');
@@ -735,6 +757,29 @@ export const universeMethods = {
       tl.to(parts, { opacity: 1, y: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: this.DUR.stagger }, AT_IN + this.DUR.stagger * 2);
     });
   },
+  /* THE OPEN CARD ON THE PAGE'S COLUMNS (23.09.26, by request: "make sure content in the grid view
+     preview aligns to the grid"). The pair was sized from shares of the window and centred on it, so
+     at 1440 × 900 the photograph ran from the middle of column 1 to the middle of the centre gutter,
+     the panel to the middle of column 12, and only the name came near a line (1px off column 7).
+     Now, in landscape, the photograph is a whole number of the page's columns, as many as five of
+     twelve while it fits under gridShare of the window's height, and the pair is centred on the
+     columns: five puts the photograph on 2–6 and the panel's content on 7–11. The panel's surface
+     stays flush against the photograph and runs one gutter past its content on each side, so the
+     content keeps a gutter's inset, and its far edge lands on column 12's line. The panel's content
+     is laid on the same columns (UniversePanel; --upanel-metrics puts the second metric column on
+     the third). Null for an odd column count or a window too short for three: the shares answer. */
+  _uOpenGrid(vw, vh) {
+    const cs = getComputedStyle(document.documentElement);
+    const N = parseInt(cs.getPropertyValue('--grid-cols'), 10) || 12;
+    const G = parseFloat(cs.getPropertyValue('--grid-gutter')) || 24, M = parseFloat(cs.getPropertyValue('--page-gutter')) || 24;
+    if (N % 2) return null;
+    const col = (vw - 2 * M - (N - 1) * G) / N;
+    const span = (n) => n * col + (n - 1) * G;
+    let n = N / 2 - 1;
+    while (n >= 3 && span(n) > vh * UNIVERSE_OPEN.gridShare) n--;
+    if (n < 3) return null;
+    return { n, G, col, B: span(n), x: M + (N / 2 - n) * (col + G) };
+  },
   closeTile(done) {
     const o = this._uOpenCard;
     if (!o || this._uClosing) { if (done) done(); return; }
@@ -756,7 +801,8 @@ export const universeMethods = {
     const back = orig || (this.universeCloseRef && this.universeCloseRef.current) || null;
     const finish = () => {
       if (this._uOpenCard !== o) return;   // a reset got here first
-      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null;
+      open.cell = null; open.k = 0; open.w = TW; open.h = TH; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null; open.bleed = 0;
+      el.style.removeProperty('--upanel-bleed');
       el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : ''; el.style.width = TW + 'px'; el.style.height = TH + 'px';
       el.style.setProperty('--dim', '0'); el.style.setProperty('--slide', '0');
       // whole again, whichever way it landed (the tick's last frame, or the floor on a stalled loop)
@@ -797,7 +843,8 @@ export const universeMethods = {
     if (this._uOpenTl) { try { this._uOpenTl.kill(); } catch (e) { } this._uOpenTl = null; }
     const panel = document.querySelector('[data-universe-panel]');
     if (panel) { if (g) g.set(panel, { opacity: 0, x: 0, y: 0 }); panel.style.pointerEvents = 'none'; panel.style.clipPath = ''; }
-    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null; }
+    if (open) { open.cell = null; open.k = 0; open.w = UNIVERSE_TILE.W; open.h = UNIVERSE_TILE.H; open.box = null; open.panel = null; open.home = null; open.cap = null; open.fades = null; open.bleed = 0; }
+    if (o && o.el) o.el.style.removeProperty('--upanel-bleed');
     clearTimeout(this._exitFloorT_ut); this._exitFloorT_ut = null;
     if (o && g) {
       const el = o.el; el.removeAttribute('data-universe-open'); el.style.zIndex = o.isOrig ? '1' : '';

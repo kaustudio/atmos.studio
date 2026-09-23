@@ -7,6 +7,38 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — Grid View's open card stands on the columns, and its type scales with it
+
+**By request:**
+- "make sure content in the grid view preview aligns to the grid";
+- "Adjust the typography and scale. it doesn't bring balance when it's that small";
+- "We need more balance between label, copy and pill";
+- "Change the date here so it matches the list".
+
+- **In landscape the photograph takes whole page columns:** five of twelve (2–6), as long as it fits
+  under 0.75 of the window's height. The panel's words stand on 7–11: the second metrics column starts
+  on 9, and the close mark ends on 11.
+- **The panel's surface stays flush with the photograph.** It runs one gutter past its words on each
+  side, plus the pixel the panel tucks under the photograph. Portrait keeps the old shares.
+- **The card's size** is now 393 · 499 · 566 · 766px at 1024 · 1280 · 1440 · 1920. It was
+  448 · 560 · 630 · 756.
+- **The type scales with the card,** at 1 on a 1440 × 900 window:
+  - the name at --fs-display, as on the result stage and in the Full Swatch View;
+  - labels and pills at --fs-body, and the figures at --fs-lead. That is the create page's
+    13 · 13 · 15, and nothing is smaller than it was before.
+- **The traits are the create page's pills,** with Example beside them as the outlined pill at the same
+  size. Example had been --fs-nano on the name's line.
+- **The strip takes the height the words leave,** between a 46px floor and a 200px cap. Past the cap,
+  the rest sits between the name and the figures. Nothing scrolls from 1024 to 1920.
+- **The Generated value is the list's stamp** (stampTime, with the full stamp on hover). It had kept the
+  column's pre-19.09 format.
+- **Verified in Chrome** against live at 1024, 1280, 1440 and 1920:
+  - every edge is on its line;
+  - the drift while the card moves is live's own, or less;
+  - the Full Swatch View's flight home still lands on the strip;
+  - the list and the card show the same stamp;
+  - the production build passes.
+
 ## 2026-09-23 — Custom events count which features are used, behind the same consent
 
 **By request: "can we set up custom events on vercel to gain more insights to the analytics", then

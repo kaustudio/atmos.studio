@@ -381,9 +381,9 @@ const CardIdentity = ({ c, onPhoto }) => {
         takes --fs-title — 24, the scale's heading step — with --track-title, and wraps rather than
         truncates because a heading has the room a row does not. */}
     <span style={c.titleName
-      ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);letter-spacing:var(--track-title);line-height:1.15;color:var(--on-surface);text-wrap:balance")
+      ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + (c.nameSize || 'var(--fs-title)') + ";letter-spacing:" + (c.nameSize ? 'var(--track-statement)' : 'var(--track-title)') + ";line-height:" + (c.nameSize ? '1.05' : '1.15') + ";color:var(--on-surface);text-wrap:balance")
       : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
-    {c.isExample && (
+    {c.isExample && !c.exampleInRow && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
           up with the values column below it and reads down the wall of cards as its own signal,
@@ -419,7 +419,7 @@ const CardMetrics = ({ c }) => (
             an informative label, at 8px, at barely half the contrast its own value had. The token
             resolves per theme, which is the entire reason the token exists, and it lands at 5.5:1
             light / 6.5:1 dark. Nothing else about the label changed except the size floor. */}
-        <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
+        <span style={sx('font-family:Neue Montreal;font-size:' + (c.metricLabelSize || 'var(--fs-fine)') + ';letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
         {/* Value first, badge trailing — the opposite order to the list row, and for the reason the
             row uses its own: put the number where the eye is already reading. The row's values are
             a RIGHT-aligned numeric column, so the badge leads and the count lands on the shared
@@ -432,8 +432,8 @@ const CardMetrics = ({ c }) => (
             glance. At --fs-label they were 10px, a size the ladder reserves for uppercase labels,
             and set in proportional digits so the same figure took a different width on every card
             and no column of them ever lined up. */}
-        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-variant-numeric:tabular-nums;letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;text-transform:capitalize')}>
-          <span style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
+        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:' + (c.metricValueSize || 'var(--fs-body)') + ';font-variant-numeric:tabular-nums;letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;text-transform:' + (m.ownCase ? 'none' : 'capitalize'))}>
+          <span title={m.title} style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
           {m.aa && <AaBadge aa={m.aa} />}
         </span>
       </div>
@@ -451,20 +451,36 @@ const CardMetrics = ({ c }) => (
 // Each `data-upanel-part` is a beat in the arrival — strip, body, foot, on --dur-stagger.
 const UniversePanel = ({ c }) => (<>
   {/* The strip takes more of the open box than it took of the card — the swatches ARE the palette,
-      and a 46px band at the head of a 630px panel read as a ruled line over a page of air. A share
-      of the box, floored at the card's own band and capped where a band stops being a band: on a
-      tall panel the colour leads, on a short one the readout keeps its room and scrolls. */}
-  <div data-upanel-part="1" data-strip="1" style={sx('display:flex;flex:0 0 clamp(46px, 28%, 200px);width:100%')} aria-hidden="true">
+      and a 46px band at the head of a 630px panel read as a ruled line over a page of air. Floored at
+      the card's own band and capped where a band stops being a band: on a tall panel the colour
+      leads, on a short one the readout keeps its room.
+      WHAT THE WORDS LEAVE (23.09.26), no longer a share of the box. Since the type scales with the
+      card, a fixed 28% left the readout 25px short at 1440 and 88 at 1024, and the body scrolled.
+      The strip grows into whatever the body does not need (flex-grow 1000 against the body's 1, so it
+      takes the free space first), up to its cap; past the cap the rest goes to the body, where the
+      readout's auto margin sets it between the name and the figures. */}
+  <div data-upanel-part="1" data-strip="1" style={sx('display:flex;flex:1000 1 0;min-height:46px;max-height:200px;width:100%')} aria-hidden="true">
     {c.strip.map((st, si) => (<div key={si} style={st.style}></div>))}
   </div>
-  <div data-upanel-part="1" data-lenis-prevent="1" style={sx('flex:1;min-height:0;overflow-y:auto;touch-action:pan-y;user-select:text;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;width:100%')}>
+  <div data-upanel-part="1" data-lenis-prevent="1" style={sx('flex:1 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y;user-select:text;padding:var(--upanel-pad-top, 12px) var(--upanel-inset-end, 14px) var(--upanel-pad-bottom, 14px) var(--upanel-inset, 14px);display:flex;flex-direction:column;gap:6px;width:100%')}>
     <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
       <CardIdentity c={c} />
     </div>
     {/* --fs-label and --track-flat, exactly as the detail's trait chips set the same words: one size
         and one tracking for the traits on every surface. (The card's own -0.01em stays on the card's
         own lines; this is the chips' line, unpinned.) Wraps rather than truncates. */}
-    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty')}>{c.descriptors}</span>
+    {/* THE TRAITS ARE PILLS HERE TOO (23.09.26, by request: "more balance between label, copy and pill"):
+        the create page's trait pill, chip voice and all, at the panel's scaled label size, 18px under the
+        name as on the create page, with Example after them as the outlined identity pill it is on every
+        row, at the same size and height instead of --fs-nano on the name's line. */}
+    {c.traitList ? ((c.traitList.length > 0 || c.isExample) && (
+      <div style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:calc(12px * min(1, var(--upanel-s, 1)))')}>
+        {c.traitList.map((t, ti) => (<span key={ti} style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal';font-size:" + c.pillSize + ";font-weight:500;letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);border:1px solid transparent;background:color-mix(in srgb, var(--on-surface) 9%, var(--surface-raised));color:var(--on-surface);border-radius:var(--radius-pill)")}>{t}</span>))}
+        {c.isExample && (<span style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal';font-size:" + c.pillSize + ";letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill)")}>Example</span>)}
+      </div>
+    )) : (
+      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty')}>{c.descriptors}</span>
+    )}
     <CardMetrics c={c} />
   </div>
   {/* The foot: the door to the detail leads, the close mark trails — the same 32px mark every
@@ -473,7 +489,7 @@ const UniversePanel = ({ c }) => (<>
       While a card is open this is the ONLY close mark on screen: the view's own, in the corner,
       is put away for the duration (universe.js openTile), because leaving the field with a card
       mid-open is an exit the engine cannot play. */}
-  <div data-upanel-part="1" data-voice="banner" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px;border-top:1px solid var(--line)')}>
+  <div data-upanel-part="1" data-voice="banner" style={sx('flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(14px * min(1, var(--upanel-s, 1))) var(--upanel-inset-end, 14px) calc(14px * min(1, var(--upanel-s, 1))) var(--upanel-inset, 14px);border-top:1px solid var(--line)')}>
     {/* THE BANNER'S VOICE (17.09.26, by request): the dialogs' button type and Title Case, where this
         was the uppercase action voice. An open card is a surface with a question at its foot, like
         the dialogs, so its one act speaks as theirs do. */}

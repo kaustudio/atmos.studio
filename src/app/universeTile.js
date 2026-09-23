@@ -25,6 +25,8 @@ export const UNIVERSE_TILE = { W: 300, H: 344, CAP: 44 };
 
 // The metrics block's inset — the caption's side padding, and the panel body's. One figure, so the
 // name on the closed card and the name at the head of the open panel start on the same x.
+// Not in a landscape open since 23.09.26: there the panel's content stands on the page's columns and
+// its inset is the gutter (--upanel-inset, universe.js openTile). A portrait open keeps this.
 export const UNIVERSE_TILE_INSET = 14;
 
 // The open state's shares of the viewport (the reference's own three: lightboxSize,
@@ -32,4 +34,9 @@ export const UNIVERSE_TILE_INSET = 14;
 // panel slides out from under the picture and stops flush against it, so the pair reads as one
 // object. (It was 16 for a day.) Its leading hairline lands under the picture's last column, since
 // the card lost its own stroke (17.09.26).
-export const UNIVERSE_OPEN = { share: 0.7, sharePortrait: 0.8, pairMax: 0.9, gap: 0, dim: 0.4 };
+// gridShare (23.09.26): in landscape the open pair is set on the page's columns instead of these
+// shares (universe.js _uOpenGrid), and this is the most of the window's height its photograph may
+// take. It is looser than `share` because a column count only steps down: at 0.7 a 1920 × 1080 window
+// lost a column and the card a fifth of its size, where 0.75 keeps five columns on every 16:10 and
+// 16:9 screen and the card within 12% of the size it had.
+export const UNIVERSE_OPEN = { share: 0.7, sharePortrait: 0.8, pairMax: 0.9, gap: 0, dim: 0.4, gridShare: 0.75 };

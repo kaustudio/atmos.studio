@@ -746,8 +746,13 @@ export const renderValsMethods = {
         { label: 'Character', text: met.mood },
         // Eighth entry, and the one that squares the 2-column grid off at four full rows: the list
         // row ends on a date and the card had none, so the same palette was datable in one view and
-        // not in the other. Absolute stamp, exactly as the row's column carries it.
-        { label: 'Generated', text: this.absTime(p.time) },
+        // not in the other. The row's own stamp, exactly as its Created column carries it.
+        // THE LIST'S STAMP, NOT THE OLD ONE (23.09.26, by request: "Change the date here so it matches
+        // the list"). This was absTime, "23.09.26, 12.17", which is what the column showed until
+        // 19.09.26. The column has read stampTime since (words for a week, then the date), so the card
+        // and the row it came from disagreed. The full stamp stays on hover, as it does on the row, and
+        // the value keeps its own case: the card's capitalize would have set "8m Ago".
+        { label: 'Generated', text: this.stampTime(p.time), title: this.absTime(p.time), ownCase: true },
       ];
       return {
         id: p.id, name: p.name, descriptors: this.paletteTags(p).join('  ·  '), current: isCur, ariaCurrent: isCur ? 'true' : undefined,
@@ -775,7 +780,7 @@ export const renderValsMethods = {
         // edge — measured, 04.09.26.) --slide is the reference's clamp of the open scalar;
         // --sx/--sy pick the axis. It is invisible while it is home (--slide 0): the card has no
         // stroke now, and a hairline under the photograph would show at its anti-aliased edge.
-        panelStyle: { position: 'absolute', inset: '0', opacity: 'min(1, calc(var(--slide, 0) * 1000))', background: 'var(--surface-raised)', border: '1px solid var(--line)', borderRadius: 'var(--radius-card)', pointerEvents: 'none', transform: 'translate(calc((100% - 1px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 1px) * var(--slide, 0) * var(--sy, 0)))' },
+        panelStyle: { position: 'absolute', top: '0', left: '0', height: '100%', width: 'calc(100% + var(--upanel-bleed, 0px) * var(--slide, 0))', opacity: 'min(1, calc(var(--slide, 0) * 1000))', background: 'var(--surface-raised)', border: '1px solid var(--line)', borderRadius: 'var(--radius-card)', pointerEvents: 'none', transform: 'translate(calc((100% - var(--upanel-bleed, 0px) * var(--slide, 0) - 1px) * var(--slide, 0) * var(--sx, 1)), calc((100% - 1px) * var(--slide, 0) * var(--sy, 0)))' },
         // THE PHOTOGRAPH FILLS THE CARD (17.09.26, radius issue R3, by request): the caption band
         // and its white ground went, and the name sits on the picture's foot over a progressive blur
         // and a dark tint (AppView TILE_FADE). The open tween no longer moves anything here.
@@ -815,7 +820,31 @@ export const renderValsMethods = {
     const universePanel = uOpenNode ? Object.assign({}, uOpenNode, {
       titleName: true,   // the name heads the panel at --fs-title (CardIdentity)
       panelAria: uOpenP.name + ' palette. ' + uOpenNode.readout,
-      cardMetricsStyle: Object.assign({}, uOpenNode.cardMetricsStyle, { padding: UNIVERSE_TILE_INSET + 'px 0 0' }),
+      // On the page's columns in a landscape open (universe.js _uOpenGrid): the first metric column is
+      // two columns wide, so the second starts on the content's third, with the gutter between. The
+      // readout settles at the foot of the panel's body (margin-top auto), over Open Detail, so the
+      // room a tall panel has is spent between the name and the figures rather than under them.
+      cardMetricsStyle: Object.assign({}, uOpenNode.cardMetricsStyle, { padding: 'calc(' + UNIVERSE_TILE_INSET + 'px * min(1, var(--upanel-s, 1))) 0 0', marginTop: 'auto', gridTemplateColumns: 'var(--upanel-metrics, 1fr 1fr)', gap: 'clamp(8px, calc(22px * var(--upanel-s, 1) - 4px), 24px) var(--upanel-gap, 16px)' }),
+      /* THE TYPE SCALES WITH THE CARD (23.09.26, by request: "Adjust the typography and scale. it doesn't
+         bring balance when it's that small"). The name was --fs-title and the readout 12 over 13px in a
+         panel 614 wide and 566 tall at 1440 × 900, so the lines filled a strip of its upper half and
+         left the rest to the photograph's weight. The name now has --fs-display at that size, as on the
+         result stage and in the Full Swatch View, and every line grows and shrinks with the card
+         (--upanel-s, universe.js openTile), never below the size it had before this change or past
+         the step over. */
+      /* LABEL, COPY AND PILL IN BALANCE (23.09.26, by request: "We need more balance between label, copy
+         and pill"). The first scaled build set the figures at --fs-subtitle, 20, and left the Example
+         pill at --fs-nano, 10, so the one pill on the panel was its smallest type and the figures read
+         as headings. The panel now keeps the create page's rhythm for the three: labels and pills at
+         --fs-body, the copy (the figures) a step up at --fs-lead, 13 · 13 · 15 at 1440 × 900, all
+         three scaled with the card. The traits are the create page's pills too, in the chip voice, with
+         Example beside them as the outlined identity pill. */
+      nameSize: 'clamp(var(--fs-title), calc(var(--fs-display) * var(--upanel-s, 1)), calc(var(--fs-display) * 1.25))',
+      metricLabelSize: 'clamp(var(--fs-fine), calc(var(--fs-body) * var(--upanel-s, 1)), var(--fs-lead))',
+      metricValueSize: 'clamp(var(--fs-body), calc(var(--fs-lead) * var(--upanel-s, 1)), var(--fs-subtitle))',
+      pillSize: 'clamp(var(--fs-fine), calc(var(--fs-body) * var(--upanel-s, 1)), var(--fs-lead))',
+      traitList: this.paletteTags(uOpenP),
+      exampleInRow: true,
       onDetail: () => this.openOverlay(uOpenP, this._uOpenCard ? this._uOpenCard.el : null),
       // The visible label is "Open Detail", so the accessible name opens with it (SC 2.5.3).
       detailAria: 'Open Detail for ' + uOpenP.name,
