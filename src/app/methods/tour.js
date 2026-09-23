@@ -756,7 +756,9 @@ export const tourMethods = {
     if (step.via && !own) {
       const via = this._tourVia(step);
       const home = step.viaAnchor ? document.querySelector(step.viaAnchor) : null;
-      return { placeEl: home || via, ringEl: via, place: step.viaPlace || step.place, ring: '', waiting: true };
+      // The harmony button stands inside the dominant band, so its ring does too: 'band' draws it in
+      // the band's own ink (global.css [data-tour-lit="band"]), not the page's.
+      return { placeEl: home || via, ringEl: via, place: step.viaPlace || step.place, ring: step.via === 'harmony' ? 'band' : '', waiting: true };
     }
     const ringEl = step.ringOn ? (document.querySelector(step.ringOn) || own) : own;
     return { placeEl: own, ringEl, place: step.place, ring: step.ring || '', waiting: false };
@@ -1357,7 +1359,8 @@ export const tourMethods = {
   /* THE RING MOVES; IT DOES NOT BLINK. Off where it was — outline-color to transparent on the
      [data-tour-lit] rule's own --dur-state transition, the attribute taken away only once it has
      faded, since removing it removes the transition with it — and on where it is going, committed
-     transparent for one frame and then released to --on-surface. */
+     transparent for one frame and then released to the rule's colour: --on-surface, or on a band
+     the band's own ink. */
   _tourRingTo(el, ring) {
     const cur = this._tourRingEl || null;
     const want = ring || '';

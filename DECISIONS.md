@@ -7,6 +7,37 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The tour's harmony ring takes its band's ink
+
+**By request: "When opening a palette on the take a tour and the first color is black, the circle that
+tells the user to click color harmonies is unclear, we need to fix that", then "commit and push".**
+
+- **Step 3's ring is the only one that stands inside a band.** It circles the dominant band's harmony
+  button, 12px into the band's corner; every other ring stands on the page. It was drawn in the page's
+  ink, so it measured 1.17:1 on Garnet's black first band in light mode, and 1.1:1 on a pale first
+  band in dark mode.
+- **It now takes the band's own ink** (`[data-tour-lit="band"]`, currentColor): the black or white the
+  button's icon already uses, from onColor(). That measured 20.3:1 and 17.2:1 on those two bands, and
+  it can't fall below 4.6:1 on any band, above the 3:1 a ring needs (WCAG 1.4.11).
+- **The button keeps its own transitions while it is ringed.** The ring's rule had replaced them, so
+  the step's cue, one pass of the button's hover tint, was cut in one frame when the ring landed and
+  again when it ended, and a real hover snapped the same way. `[data-info][data-tour-lit]` restates
+  the button's list with the ring's two properties added. The tint now eases over 17 frames each way,
+  as it does on the buttons without the ring.
+- **Unchanged:**
+  - the rings on steps 1, 2, 4 and 5 keep the page's ink;
+  - keyboard focus on the button shows the focus ring instead of the tour's;
+  - under reduced motion the tint and the ring still switch instantly.
+- **Verified in Chrome** against live, with Garnet in light mode and Scorched Clear Morning in dark:
+  - the ring against its band in both;
+  - the tint sampled every frame, from step 2 into step 3 and under a pointer;
+  - Tab from Back reaches the ringed button, with the focus ring;
+  - no console errors;
+  - the production build passes.
+- **Not changed, and asked about:** the ring doesn't fade in on arrival. On steps 2 and 3 it appears at
+  full strength and grows out to its 6px offset. `_tourRingTo` means to fade it in, but the fade is
+  cancelled before it paints.
+
 ## 2026-09-23 — Grid View's open card stands on the columns, and its type scales with it
 
 **By request:**

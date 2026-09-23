@@ -3217,6 +3217,27 @@ html,body{overflow-anchor:none}
    of it. Written above, the base rule simply won and the ring kept the offset it was trying to
    leave: caught by measuring the computed value rather than by reading the file. */
 [data-tour-lit="surface"]{border-radius:var(--radius-card)}
+/* ON A BAND, THE BAND'S INK (23.09.26, by request: "When opening a palette on the take a tour and the
+   first color is black, the circle that tells the user to click color harmonies is unclear"). The
+   argument above, that the ring stands outside its box and so never lands on one of the five colours,
+   holds for the swatch group and fails for the one ring drawn around a control INSIDE a band: step 3's
+   harmony button, 12px into the dominant band's corner. There the ring is on the band, and the page's
+   ink on Garnet's #0F0302 measured 1.17:1 against it, a circle nobody could see; in dark mode the light
+   ink on a pale first band (Scorched Clear Morning's #E5E9EB) measured 1.1:1. The button's own glyph
+   is already in the band's AA ink (renderVals _infoBtnStyle, onColor), so the ring takes that:
+   currentColor, white on a dark band, black on a light one, 20.3:1 and 17.2:1 on those two. It stays
+   inside the band (offset 6 + 2 against the button's 12px inset), so the band is the only colour it
+   meets. */
+[data-tour-lit="band"]{outline-color:currentColor}
+/* THE RING JOINS THE HARMONY BUTTON'S TRANSITION, IT DOES NOT REPLACE IT (23.09.26, measured while
+   fixing the colour above). [data-tour-lit] and [data-info] are both (0,1,0) and the ring's rule is
+   written later, so its two properties replaced the button's list for as long as step 3 waited: the
+   cue, one pass of the button's own 16% tint, cut from 0.019 to 0.16 in one frame when the ring
+   landed mid-ease and from 0.16 to 0 in one frame when it ended, and a pointer's hover cut the same
+   way. The unlit button beside it eases both over 17 frames. [data-info]'s list restated, with the
+   ring's two added. It outranks the reduced-motion [data-tour-lit] rule below, and that costs
+   nothing: the .001ms rule at the top of this file stills every transition under that preference. */
+[data-info][data-tour-lit]{transition:opacity var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard),outline-color var(--dur-state) var(--ease-standard),outline-offset var(--dur-state) var(--ease-standard)}
 /* REDUCED MOTION: the card stops travelling and the ring stops easing. Neither is decoration that
    can simply be dropped — the card still has to arrive at the right place and the ring still has to
    land on the right box — so what goes is the movement between them, not the states themselves.
