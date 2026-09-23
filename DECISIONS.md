@@ -7,6 +7,52 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — Check Contrast: the grid points at the pair each sample shows
+
+**By request, in rounds on a test build.** It started with "How is the logic if you want to try the dark
+red on top of the orange?". Text and Background pickers with a swap were mocked, and the user said: "We
+are overcomplicating things again. The user should always see the best option with best pair, not guess
+them. The nearest pair is also determined by the tool." Then: "we need to use the pair grid on top as
+guidance when the user interacts with elements so it becomes clear as day to them what they do and how
+colors pair".
+
+- **The tool still picks both pairs.** There are no pickers.
+- **Nearest Pass:**
+  - the split chip ("what are we telling the user with the swatch that is not clickable") and the copy of
+    the nudged colour ("why are we copying ... Where do they go?") are gone;
+  - its header is now the Aa chip of the nudged pair, then the grid's fail tile › pass tile.
+- **Best Pair Sample:**
+  - keeps its Aa chip ("Why would you remove the Aa chip?");
+  - its ratio is now the grid's own tile, so the two headers read alike.
+- **Both samples stand directly under the grid**, and the text-on-colour tiles close the drawer. On a
+  1440 × 900 laptop the samples ended 824px and 925px down the drawer, past the window; they now end at
+  495px and 594px.
+- **The guide:** pointing at a sample keeps its pair's cell and two chips in the grid, and quiets the
+  rest.
+  - The cell takes the 1.5px outline, and the other cells fade to .3.
+  - The other chips take one flat grey of the page's ink, in both themes. A faded colour reads as another
+    colour, and a colour's own grey vanished in dark mode.
+  - A lit failing figure stays whole under Passing Only.
+- **Only the two samples light the grid.** Three refinements took other lights out:
+  - a colour tile, or a chip on the grid's edge, lit that colour's every pair as an L across the
+    triangle ("the hover state on the hex codes just brings confusing");
+  - a cell lit itself and greyed out the grid's own pass and fail reading ("Does the hover on the rows
+    and columns even make sense as it's clearly visualised what clears and whats not");
+  - the hover areas are what is drawn: the Aa chip with its tiles, and the box ("The cursor is sometimes
+    too far away while the hover state is still intact"). The whole section reached into the gutters and
+    the padding. Letting go clears after 40ms.
+- **How it runs:** attributes only, so nothing re-renders. Touch is ignored, as the photo's light
+  ignores it.
+- **The cells' fill eases again between AA and AAA.** The drawer's arrival clears an inline transition as
+  each cell lands, so the rule moved to global.css.
+- **Rejected, don't re-propose:**
+  - picking a pair in the grid;
+  - Text and Background pickers with a swap and fixes per direction;
+  - a copy of the nudged colour;
+  - lighting a colour's every pair;
+  - a cell lighting itself;
+  - removing the Aa chip.
+
 ## 2026-09-23 — The photo shows where a colour lives, and the tour points at it
 
 **By request:** "Are there any minor improvements that could improve the tool based off Adobe's Color
@@ -76,6 +122,8 @@ a more professional way".
   7:1.
 - **Normal/Large growth:** `setContrastSize` and `_growSample` now grow every sample box by its key, so
   both samples move as one.
+- **Superseded the same day:** the split chip and the copy went, and the section now sits under the grid.
+  See "Check Contrast: the grid points at the pair each sample shows" above.
 
 ## 2026-09-23 — Rename a palette, and the design system's first error state
 

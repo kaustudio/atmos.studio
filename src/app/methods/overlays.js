@@ -892,6 +892,39 @@ export const overlayMethods = {
       try { this._maskLineReveal(el, i * this.DUR.overlayStep * 2, { duration: dur, ease: this.EASE.overlay, stagger: this.DUR.overlayStep * 1.6 }); } catch (e) { }
     });
   },
+  /* THE GRID IS THE GUIDE (23.09.26, by request: "use the pair grid on top as guidance when the user
+     interacts with elements so it becomes clear as day to them what they do and how colors pair").
+     renderVals hands the two samples — Best Pair Sample and Nearest Pass — their pair's grid keys
+     (c{k} a column chip, r{k} a row chip, p{i}-{j} a cell) and this lights them: the grid takes
+     [data-cx-guide], the pair's chips and cell [data-cx-lit], and the cell the outline Nearest Pass
+     already drew ([data-cx-near]). global.css greys the rest. Nothing else lights: a colour's every
+     pair, from a tile or a chip, was a scattered L across the triangle, and a cell lighting itself hid
+     the grid's own reading (both removed the same day, by request). DOM attributes only, as the photograph's light is
+     (where.js): a hover must not re-render the drawer. Touch is left out, as it is there. */
+  cxGuideHandlers(keys, outline) {
+    return {
+      onPointerEnter: (e) => { if (e.pointerType !== 'touch') this._cxGuide(keys, outline); },
+      onPointerLeave: (e) => { if (e.pointerType !== 'touch') this._cxGuide(null); },
+    };
+  },
+  _cxGuide(keys, outline) {
+    clearTimeout(this._cxGuideT);
+    const apply = () => {
+      const grid = document.querySelector('[data-contrast-dialog] [data-cx-grid]'); if (!grid) return;
+      const lit = new Set(keys || []);
+      grid.toggleAttribute('data-cx-guide', lit.size > 0);
+      grid.querySelectorAll('[data-cx-g]').forEach((el) => {
+        const k = el.getAttribute('data-cx-g');
+        el.toggleAttribute('data-cx-lit', lit.has(k));
+        el.toggleAttribute('data-cx-near', !!outline && k === outline);
+      });
+    };
+    // Letting go waits a beat, just long enough to cross the 8px between a sample's Aa chip and its
+    // box, so the pair is not dropped for a frame in between. It was 90ms, which a quick hand carried
+    // a finger's width off the target with the pair still lit (23.09.26, by request); 40 still bridges
+    // the gap at an ordinary pace.
+    if (keys) apply(); else this._cxGuideT = setTimeout(apply, 40);
+  },
   // ONE reversible timeline — play forward on open, reverse() on close (symmetric by construction).
   buildContrastTimeline() {
     this._cxTl = null;
@@ -916,7 +949,7 @@ export const overlayMethods = {
   },
   _finishContrastClose() {
     if (this._cxDone) return; this._cxDone = true;
-    clearTimeout(this._cxGuard);
+    clearTimeout(this._cxGuard); clearTimeout(this._cxGuideT);
     this._blockPlan = null;   // see _finishHarmonyClose
     const back = this._contrastBack; this._cxTl = null;
     this.setState({ contrast: false, announce: 'Contrast checker closed.' }, () => {

@@ -214,14 +214,30 @@ export const renderValsMethods = {
            against, one line down, which is what makes the two incapable of disagreeing. */
         const criterion = CRITERION(aaa ? 'AAA' : 'AA', s.contrastLarge);
         let passCount = 0, pairTotal = 0;
-        const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map(chip) }];
+        /* THE GRID IS THE GUIDE (23.09.26, by request: "we need to use the pair grid on top as guidance
+           when the user interacts with elements so it becomes clear as day to them what they do and how
+           colors pair"). Pointing at Best Pair Sample or Nearest Pass, the grid keeps that pair's cell
+           and its two chips lit and greys the rest (_cxGuide, methods/overlays.js; the look is
+           global.css's [data-cx-guide]). Keys: c{k} a column chip, r{k} a row chip, p{i}-{j} a cell,
+           i the row.
+           ONLY PAIRS LIGHT (same day, by request: "Given the colors come sequentally after each other, the
+           hover state on the hex codes just brings confusing"). A text-on-colour tile, and a chip on the
+           grid's edge, lit every pair their colour is in: an L of cells across the triangle, not a line,
+           for tiles that already stand in the grid's own order. Neither lights anything now.
+           NOR DOES THE GRID LIGHT ITSELF (same day, by request: "Does the hover on the rows and columns
+           even make sense as it's clearly visualised what clears and whats not"). Pointing at a cell
+           greyed the rest of the grid, the pass-and-fail overview being read at that moment, to say which
+           two colours meet there: the chips at the row's start and the column's head already say it. */
+        const pairKeys = (i, j) => { const hi = Math.max(i, j), lo = Math.min(i, j); return ['c' + lo, 'r' + hi, 'p' + hi + '-' + lo]; };
+        const pairGuide = (i, j) => this.cxGuideHandlers(pairKeys(i, j), 'p' + Math.max(i, j) + '-' + Math.min(i, j));
+        const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map((b, k) => ({ ...chip(b), g: 'c' + k })) }];
         sw.forEach((rb, i) => {
           const cells = sw.map((cb, j) => {
             if (j >= i) return { blank: true, key: '', ratio: '', numStyle: {}, style: { flex: 1, minWidth: 0, height: '34px' } };
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
             pairTotal++; if (pass) passCount++;
             return {
-              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th),
+              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th), g: 'p' + i + '-' + j,
               /* EACH CELL SAYS WHAT IT MEASURED. Visually a cell is legible from its row and column
                  chips; read aloud it was the bare number "10.3", with the two colours it compares
                  sitting in a header the reader passed several rows ago and a verdict carried only by
@@ -248,8 +264,11 @@ export const renderValsMethods = {
                  three rendered in this drawer, by request: "b". Each pair is a rounded tile, 8px, 4px
                  from the next, so the fail's faint tile is what shows a pair was measured.) The fill was 6% beside the mark and could not carry
                  the verdict alone. Two cues, fill and weight, so it is not colour alone (SC 1.4.1),
-                 and the number is still the reading. The fill eases when a toggle moves the verdict. */
-              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', transition: 'background-color var(--dur-state) var(--ease-standard), box-shadow var(--dur-state) var(--ease-standard)' },
+                 and the number is still the reading. The fill eases when a toggle moves the verdict.
+                 THAT EASING IS global.css's, beside the guide (23.09.26). It was declared here, inline, and
+                 the drawer's arrival clears an inline transition when each cell lands (clearProps in
+                 _drawerIn), so after the first open every fill change was a cut. */
+              style: { flex: 1, minWidth: 0, height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)' },
               /* --fs-detail and --fs-fine, off the tokens this cell used to borrow. --fs-label is
                  defined as "uppercase labels" and this is a number. It sat under --fs-fine, which
                  global.css names the smallest READABLE size, so the checker's own fifteen
@@ -261,7 +280,7 @@ export const renderValsMethods = {
               numStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', opacity: dim ? 0.22 : 1 },
             };
           });
-          rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
+          rows.push({ isHeader: false, isBody: true, chip: { ...chip(rb), g: 'r' + i }, cells });
         });
         const textOn = sw.map((b) => {
           const on = this.onColor(b.hex); const r = this.contrastRatio(b.hex, on);
@@ -285,33 +304,34 @@ export const renderValsMethods = {
         /* THE NEAREST PASS (23.09.26, by request, from Adobe Color's Contrast Suggestions: "guide the
            user and visualise it", with no hex codes written out). Of the pairs that miss the threshold
            now selected, the one that passes with the smallest move of one colour along its lightness
-           (nearestPass, lib/color.js). DRAWN, NOT SPELLED, as Best Pair Sample is: a chip split
-           between the colour as read and as nudged, the matrix's own fail tile turning into its pass
-           tile, and the nudged pair in the sample box, oriented as Best Pair Sample is (ink the
-           darker, ground the lighter). The hexes are said, visually hidden, and one press copies the
-           nudged colour. Hovering or focusing it outlines its pair in the matrix above. */
+           (nearestPass, lib/color.js). DRAWN, NOT SPELLED, as Best Pair Sample is: the matrix's own
+           fail tile turning into its pass tile, and the nudged pair in the sample box, oriented as Best
+           Pair Sample is (ink the darker, ground the lighter). The hexes are said, visually hidden.
+           Pointing at it lights its pair in the grid (the guide, above).
+           THE SAME HEADER AS BEST PAIR SAMPLE (23.09.26, by request, after "We are overcomplicating things
+           again"): the Aa chip of the pair it shows, where the split chip was ("what are we telling the
+           user with the swatch that is not clickable"), then the fail tile › pass tile. The copy of the
+           nudged colour went too ("why are we copying ... Where do they go?"): nothing in the tool takes
+           a colour that is not in the palette. */
+        const ratioTile = (pass) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '26px', padding: '0 10px', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
         const np = nearestPass(sw.map((b) => b.hex), th);
         let near = null;
         if (np) {
           const movedHex = np.to, otherHex = sw[np.other].hex;
           const movedIsInk = this.relLum(movedHex) <= this.relLum(otherHex);
-          const tile = (pass) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: '26px', padding: '0 10px', borderRadius: 'calc(var(--radius-card) * 2 / 3)', background: pass ? 'color-mix(in srgb, var(--on-surface) 14%, transparent)' : 'color-mix(in srgb, var(--on-surface) 4%, transparent)', fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums' });
-          const cellKey = Math.max(np.moved, np.other) + '-' + Math.min(np.moved, np.other);
-          const lit = (on) => () => { const c = document.querySelector('[data-contrast-dialog] [data-cx-cell="' + cellKey + '"]'); if (c) c.toggleAttribute('data-cx-near', on); };
+          const fg = movedIsInk ? movedHex : otherHex, bg = movedIsInk ? otherHex : movedHex;
           near = {
             fromRatio: RATIO_TEXT(np.fromRatio, th), toRatio: RATIO_TEXT(np.toRatio, th),
-            // The two halves meet at a 1px seam of the page, so read and nudged stay two colours even when
-            // the nudge is too small to see.
-            chipStyle: { flex: 'none', width: '40px', height: '26px', borderRadius: 'var(--radius-pill)', background: 'linear-gradient(90deg, ' + np.from + ' calc(50% - 0.5px), var(--surface) calc(50% - 0.5px) calc(50% + 0.5px), ' + movedHex + ' calc(50% + 0.5px))' },
-            failStyle: tile(false), passStyle: tile(true),
-            sampleStyle: sampleFor(movedIsInk ? movedHex : otherHex, movedIsInk ? otherHex : movedHex),
+            markFg: fg, markBg: bg,
+            failStyle: ratioTile(false), passStyle: ratioTile(true),
+            sampleStyle: sampleFor(fg, bg),
             spoken: np.from.toUpperCase() + ' nudged to ' + movedHex.toUpperCase() + ' on ' + otherHex.toUpperCase() + ': contrast ' + RATIO_TEXT(np.fromRatio, th) + ' to 1 becomes ' + RATIO_TEXT(np.toRatio, th) + ' to 1, which meets ' + criterion + '.',
-            copyAria: 'Copy the nudged colour, ' + movedHex.toUpperCase(),
-            copied: s.copied === 'cx-near',
-            onCopy: () => this.copy(movedHex.toUpperCase(), 'cx-near'),
-            on: lit(true), off: lit(false),
+            guide: pairGuide(np.moved, np.other),
           };
         }
+        // Best Pair Sample's place in the grid, found by its colours: paletteMetrics names the pair by hex.
+        const idxOf = (hex) => sw.findIndex((b) => b.hex.toUpperCase() === String(hex).toUpperCase());
+        const bi = best ? idxOf(best.fg) : -1, bj = best ? idxOf(best.bg) : -1;
         /* PASSING ONLY IS THE ROW'S ODD CONTROL, and it stays that way on purpose — it is a filter
            that is on or off, not one of a pair, so it keeps the bordered treatment that says so (see
            the rail note below). What it should NOT keep is a different height and a different type
@@ -359,8 +379,12 @@ export const renderValsMethods = {
           // sample's words start on the same inner edge as the hexes above them.
           sampleStyle: sampleFor(best && best.fg, best && best.bg),
           // With Nearest Pass under it, Best Pair Sample closes at the 20px the drawer's sections open on.
-          near, bestSecPad: near ? '20px var(--page-gutter) 20px' : '20px var(--page-gutter) 26px',
-          sampleRatio: best ? best.r.toFixed(1) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
+          // Both now stand under the grid, and the text-on-colour tiles close the drawer (AppView).
+          near, bestSecPad: near ? '20px var(--page-gutter) 20px' : '20px var(--page-gutter) 0',
+          sampleRatio: best ? RATIO_TEXT(best.r, th) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
+          // The grid's own tile, as Nearest Pass carries, so the two headers read alike (23.09.26).
+          bestTileStyle: ratioTile(!!best && best.r >= th),
+          bestGuide: bi >= 0 && bj >= 0 && bi !== bj ? pairGuide(bi, bj) : {},
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
           setNormal: () => this.setContrastSize(false), setLarge: () => this.setContrastSize(true),
