@@ -865,8 +865,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      Now it IS the page grid — twelve equal tracks on the same 24px gutter — and each cell spends a
      whole number of them:
 
-       strip 2 · name and tags 6 · AA pairs 1 · max contrast 1 · date 2        above 1280px
-       strip 2 · name and tags 3 · AA pairs 2 · max contrast 2 · date 3        at 1280px and below
+       strip 2 · name and tags 5 · AA pairs 1 · (empty 1) · max contrast 1 · date 2   above 1280px
+       strip 2 · name and tags 3 · AA pairs 2 · max contrast 2 · date 3                at 1280px and below
 
      (The spans live with the [data-row-cell] rules further down, which say why each one moved.)
 
@@ -2280,15 +2280,24 @@ a.button{text-decoration:none;}
    at a breakpoint and an inline style cannot be reached by a media query. Keyed by role, and read by
    BOTH the sort header and the rows — a cell that spans 2 below must span 2 above, or the column
    exists in one and not the other. */
+/* ONE EMPTY COLUMN BEFORE MAX CONTRAST (23.09.26, by request: "let aa text pairs and max contrast have
+   one column between them. Allow them to breathe"). Above 1280 each metric is one column, and both
+   labels end on their column's line, so "AA Text Pairs" and "Max Contrast" stood 42px apart and read
+   as one run of words. Column 9 now stays empty: Max Contrast starts on line 10, and the name gives
+   the column back (6 → 5, still 566px at 1440). The three metrics now end two columns apart (lines 9,
+   11 and 13), the even pitch the block was designed with. Before, it was one column, then two.
+   Placed by line because an empty track cannot be spanned into existence; the date after it is
+   auto-placed and lands on 11–12. At 1280 and below each metric already spends two columns with
+   its figures at the end, so the column before Max Contrast is empty there without a rule. */
 [data-row-cell="strip"]{grid-column:span 2}
-[data-row-cell="name"]{grid-column:span 6}
+[data-row-cell="name"]{grid-column:span 5}
 [data-row-cell="aa"]{grid-column:span 1}
-[data-row-cell="contrast"]{grid-column:span 1}
+[data-row-cell="contrast"]{grid-column:10 / span 1}
 [data-row-cell="date"]{grid-column:span 2}
 /* The header's first label spans exactly what the strip and the name span together, so "Palette"
    heads the row's whole identity block rather than only its swatches. It was "scope" while the
    project chips lived in these tracks; the tracks are the same, the tenant is not. */
-[data-row-cell="head"]{grid-column:span 8}
+[data-row-cell="head"]{grid-column:span 7}
 /* The metrics are one column each now, which is what they measure: a two-digit count and a ratio.
    The two columns that came back went to the name, which is the only cell holding variable-length
    content and the one that had been paying for the metrics' width.

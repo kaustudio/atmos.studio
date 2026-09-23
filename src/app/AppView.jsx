@@ -2595,7 +2595,11 @@ export default function AppView({ vals }) {
                 three columns (1–3, 4–6, 7–9) on the page's own gutter, so every edge lands on a line;
                 the last quarter stays empty, as the row's end did before. The gap between groups is
                 the gutter, 24 where it was 44. At 1024 a group is 226px, which still holds AA Text
-                Pairs with its badge and count, so the groups never need to wrap. */}
+                Pairs with its badge and count, so the groups never need to wrap.
+                ONE COLUMN BETWEEN THEM (23.09.26, by request: "Allow them to breathe"). Three groups one
+                gutter apart read as one wide table with three headings. Each keeps its three columns
+                and they stand on 1–3, 5–7 and 9–11, with an empty column between each pair and only
+                the twelfth left over. The tool is gated below 1024, so the grid here is always twelve. */}
             {/* Every tier speaks --track-flat — the design's single flat-tracking source, the same
                 voice the action row's labels use. Hierarchy: weight 500→400, size 9→8→13, ink
                 full→muted→full, case. Structure: ruled rows and heading underlines only — no left
@@ -2609,7 +2613,7 @@ export default function AppView({ vals }) {
             <div data-meta="1" role="group" aria-label="Palette metrics" style={sx('display:grid;grid-template-columns:var(--row-grid);align-items:start;column-gap:var(--grid-gutter);row-gap:22px;margin-top:18px')}>
               <span data-meta-line="1" aria-hidden="true" style={sx('display:block;grid-column:1 / -1;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
-                <div key={gi} style={sx('grid-column:span 3;min-width:0;display:flex;flex-direction:column')}>
+                <div key={gi} style={sx('grid-column:' + (1 + gi * 4) + ' / span 3;min-width:0;display:flex;flex-direction:column')}>
                   <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>

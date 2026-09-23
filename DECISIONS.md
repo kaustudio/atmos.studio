@@ -7,6 +7,28 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — One empty column between the metrics
+
+**By request: "let aa text pairs and max contrast have one column between them. Allow them to breathe.
+Same goes for spacing between colour, accessibility and reading on an open palette".**
+
+- **The library table, above 1280:** column 9 stays empty.
+  - AA Text Pairs is on column 8, Max Contrast on 10 (placed by line), and Created on 11–12.
+  - The name gives the column back: 6 → 5 columns, 566px at 1440.
+  - The two labels stood 42px apart and read as one run of words. They are 160px apart now.
+  - The three metrics end two columns apart, the even pitch the block was designed with.
+- **At 1280 and below the table is unchanged.** Each metric already spends two columns with its figures
+  at the end, so the column before Max Contrast is already empty: the labels are 133px apart at 1280 and
+  91 at 1024. A column there would have to come from the name (cutting names) or the date (putting the
+  hover buttons on it).
+- **The open palette's readout** (Colour, Accessibility, Reading) keeps three columns a group, on 1–3,
+  5–7 and 9–11. The gaps are 142, 129 and 107px at 1440, 1280 and 1024, where they were one 24px gutter.
+- **Verified in Chrome** against live at 1440, 1280 and 1024, with the grid overlay:
+  - no name newly cut;
+  - a hovered row's date still steps clear of Max Contrast;
+  - no horizontal scroll and no console errors;
+  - the production build passes.
+
 ## 2026-09-23 — The footer's stylesheet rides in the hashed bundle
 
 **By request: "Footer looks like this on safari and chrome. inspect and adjust".** The landing's legal row
