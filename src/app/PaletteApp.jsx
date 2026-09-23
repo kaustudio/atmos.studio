@@ -1139,6 +1139,9 @@ export default class PaletteApp extends React.Component {
       motion,
       hero,
       heroParts: hero ? [].slice.call(hero.querySelectorAll('[data-story-hero-line]')) : [],
+      // Under the first-visit loader the hero is drawn now and withheld as the loader leaves
+      // (_parkStoryHero, and the note at pageReveal.js parkHero). The wipe's cover keeps arming at mount.
+      heroHeld: !!this.state.showLoader && !this._arrivingByWipe,
       groups,
     });
     this._storyKills.push(() => { try { this._storyReveal.destroy(); } catch (e) { } });
@@ -1264,6 +1267,12 @@ export default class PaletteApp extends React.Component {
     if (!this._storyArmed) return;
     this._storyArmed = false;
     try { if (this._storyReveal) this._storyReveal.play(); } catch (e) { }
+  }
+
+  // The loader's exit calls this first, while its fold still fills the screen: the hero it has been
+  // covering stops being drawn, so the fold can only ever uncover masks for the rise to fill.
+  _parkStoryHero() {
+    try { if (this._storyReveal && this._storyReveal.parkHero) this._storyReveal.parkHero(); } catch (e) { }
   }
 
   // Torn down in reverse of the order they were built.

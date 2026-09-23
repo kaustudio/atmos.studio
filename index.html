@@ -9,6 +9,21 @@
          served by this one document now, so the swap behind the cover is a setState and the whole
          transition is a single timeline — see src/app/methods/wipe.js navigateTo. -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- THE LOADER'S GROUND FROM THE FIRST FRAME (23.09.26). The first-visit loader is drawn by the app,
+         so until the main script had downloaded and run the page stood in the light --surface and then
+         turned dark in one frame when the loader mounted: about 2.4s of light screen on a slow phone,
+         then the pop. This paints the loader's own ground (--ground, #1C1B1A in global.css; the second
+         hard-coded copy, because it has to be right before any stylesheet arrives) on exactly the
+         visits the loader will play: no document route, no share link (the only hashes the app
+         reads), not already played this session, and not reduced motion, which skips it. The app
+         takes it off in _initLoader, under its own loader, and the timer is the floor if the script
+         never runs.
+         EDITING THIS SCRIPT MEANS EDITING vercel.json, as with prerender.mjs's theme script: the
+         Content-Security-Policy admits it by the SHA-256 of its exact bytes (one line, so whitespace
+         cannot drift), 'sha256-JGN4EOVuIFAkihzz36dLhKnbfXP+Z/h9lVEP1Pggobc='. Recompute with
+           printf '%s' '<the script body, without the tags>' | openssl dgst -sha256 -binary | base64 -->
+    <style>html[data-load-pre],html[data-load-pre] body{background:#1C1B1A}</style>
+    <script>(function(){try{var p=location.pathname.replace(/\/+$/,'').replace(/\.html$/,'');if(p==='/about'||p==='/privacy'||p==='/terms'||location.hash.length>1)return;if(sessionStorage.getItem('palette-generator/loader-session')==='1')return;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;var h=document.documentElement;h.setAttribute('data-load-pre','');setTimeout(function(){h.removeAttribute('data-load-pre')},15000)}catch(e){}})()</script>
     <!-- The title names the category, not the mood. It was "Atmos Gallery" alone — thirteen
          characters, matching only people who already knew the name, which for a new product is
          nobody; then briefly a longer line built around "light and mood", which is the product's

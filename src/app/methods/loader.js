@@ -47,6 +47,9 @@ export const loaderMethods = {
     this._maskReveal(lines, '_dropRevealT');
   },
   _initLoader() {
+    // index.html painted the loader's ground before the script arrived; the loader (or, when it is not
+    // playing, the page) is mounted now, so the stand-in goes. See the note beside it in index.html.
+    try { document.documentElement.removeAttribute('data-load-pre'); } catch (e) { }
     if (!this.state.showLoader) return;
     const done = () => {
       // Burn the session flag HERE, at the end of the run, not at mount: an intro cut short by a
@@ -121,6 +124,7 @@ export const loaderMethods = {
         if (phase !== 'FILLING') return; phase = 'EXIT';
         if (this._loaderFill) { try { g.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
         num && (num.textContent = '100'); g.set(bar, { scaleX: 1 });
+        this._parkStoryHero();   // the phone's story hero, drawn under the cover until now (pageReveal.js parkHero)
         const ex = this.EASE.reveal;   // the same bezier this cached privately until 17.09.26
         const tl = g.timeline({ onComplete: () => { phase = 'GONE'; done(); } });
         tl.to({}, { duration: this.DUR.fast });                                                           // brief hold at 100

@@ -133,23 +133,39 @@ export function initHorizontalRail(root) {
 
   const triggers = [];
 
-  /* [ATMOS 6] THE PIN IS TAKEN A MOMENT EARLY (21.09.26, by request: on an iPhone the close "jumps or
-     shakes" when scrolling to the footer and back up). Safari scrolls on its own thread, with momentum,
-     and the pin is switched on in JavaScript: coming back up from the footer, the scroll reaches the
-     pin's end before the switch lands, so for a frame the stage is drawn where it would be unpinned and
-     then snaps, with the close laid over it by the handoff above. anticipatePin projects the scroll
-     from its speed and switches the pin ahead of it, in both directions (ScrollTrigger 3.15 applies it
-     entering the start going down and the end coming back up). 1 is the figure GSAP recommends; it
-     changes nothing about where the pin starts or ends. */
+  /* [ATMOS 6] THE STAGE HOLDS BY position:sticky, NOT BY ScrollTrigger's PIN (23.09.26, for the field
+     CLS). The pin switched the stage to position:fixed as the travel began and back as it ended, and
+     Chrome scores each switch as the whole screen moving: 0.95 to 0.9994 per switch, measured on /about
+     and on the phone story, so every reader who scrolled through the rail scored a CLS of about 1 and
+     the two surfaces were filed as poor. Nothing on screen moved; the metric cannot tell.
+
+     So the stage is sticky while the scene is live (about.css, [data-rail-live]) and the scroll the pin
+     used to add is a plain block after it, [data-rail-spacer], the travel's length. The section holds
+     nothing else, so the stage sticks for exactly that length and lets go where the pin did, and the
+     page is the same height. The browser holds a sticky box on its own scrolling thread, which is also
+     what the iPhone's "jumps or shakes" at the close asked for (21.09.26): the anticipatePin that
+     projected the switch ahead of Safari's momentum has nothing left to switch.
+
+     The TRIGGER is the spacer, not the stage. A sticky box reports where it is stuck, so a refresh taken
+     mid-travel (a font landing, a resize) would measure the stage at the top of the screen and move the
+     start to wherever the reader happened to be. The spacer never moves: the stage meets the top of the
+     screen when the spacer's top is one stage and the stage's margin below it. */
+  const spacer = document.createElement('div');
+  spacer.setAttribute('data-rail-spacer', '1');
+  spacer.setAttribute('aria-hidden', 'true');
+  container.after(spacer);
+  const sizeSpacer = () => { spacer.style.height = distance() + 'px'; };
+  sizeSpacer();
+  ScrollTrigger.addEventListener('refreshInit', sizeSpacer);
+  const stageStart = () => 'top ' + (container.offsetHeight + (parseFloat(getComputedStyle(container).marginBottom) || 0)) + 'px';
+
   const scrollTween = gsap.to(track, {
     x: () => -distance(),
     ease: 'none',
     scrollTrigger: {
-      trigger: container,
-      pin: true,
-      anticipatePin: 1,
+      trigger: spacer,
       scrub: true,
-      start: 'top top',
+      start: stageStart,
       end: () => '+=' + distance(),
       invalidateOnRefresh: true,
     },
@@ -227,8 +243,8 @@ export function initHorizontalRail(root) {
   };
   if (chars.length) {
     const scene = ScrollTrigger.create({
-      trigger: container,
-      start: 'top top',
+      trigger: spacer,
+      start: stageStart,
       end: () => '+=' + distance(),
       invalidateOnRefresh: true,
       onRefresh: (self) => { measure(); draw(self.progress); },
@@ -247,6 +263,8 @@ export function initHorizontalRail(root) {
       try { ScrollTrigger.removeEventListener('refreshInit', placeHandoff); } catch (e) { }
       try { handoff.removeAttribute('data-rail-handoff-live'); handoff.style.removeProperty('--handoff-overlap'); } catch (e) { }
     }
+    try { ScrollTrigger.removeEventListener('refreshInit', sizeSpacer); } catch (e) { }
+    try { spacer.remove(); } catch (e) { }
     container.removeAttribute('data-rail-scene');
     container.removeAttribute('data-st-active');
     container.removeAttribute('data-rail-live');

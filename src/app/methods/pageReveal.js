@@ -72,7 +72,7 @@ var ENTER = 0.88;
 // Nothing to animate: no GSAP, or the reader asked for less motion. Leave the document exactly as
 // the CSS renders it — fully drawn rules, plain visible text, nothing to recover from.
 function inertController() {
-  return { play: function () { }, destroy: function () { } };
+  return { play: function () { }, parkHero: function () { }, destroy: function () { } };
 }
 
 /* root      — the mounted route's element. Only used for isConnected checks; nothing is queried off
@@ -89,7 +89,11 @@ function inertController() {
                        can see is left exactly as it is: not armed, not triggered, not swept. Only
                        what is below the fold is withheld and scroll-revealed as usual. Without this
                        a cold /about showed its copy, blinked it to opacity 0 the moment the chunk
-                       mounted, and rose it back out of its masks — the copy arriving twice. */
+                       mounted, and rose it back out of its masks — the copy arriving twice.
+   options.heroHeld  — the hero is under an opaque cover that will lift later (the first-visit
+                       loader). Its parts are left DRAWN until the controller's parkHero() withholds
+                       them, which the cover calls while it still fills the screen; play() parks them
+                       itself if nothing did. See the note at parkHero. */
 export function initPageReveal(root, options) {
   var g = window.gsap;
   var opts = options || {};
@@ -322,7 +326,8 @@ export function initPageReveal(root, options) {
 
   var heroEls = [];
   if (hero) {
-    heroEls = (opts.heroParts || []).filter(Boolean).map(arm).filter(Boolean);
+    heroEls = (opts.heroParts || []).filter(Boolean);
+    if (!opts.heroHeld) heroEls = heroEls.map(arm).filter(Boolean);
 
     if (heroRule) {
       g.set(hero, { '--rule': 0 });
@@ -400,7 +405,24 @@ export function initPageReveal(root, options) {
   }
   var sequence = !!opts.sequence;
 
+  /* THE HERO IS DRAWN UNDER THE LOADER AND WITHHELD AS IT LEAVES (23.09.26, for the phone story's
+     field LCP). Armed at mount, the hero's copy sat at opacity 0 for the whole of the loader, so the
+     browser's first paint of the story's largest text was the END of its rise, when the masks are
+     taken back off: Speed Insights read 4.74s on phones, the loader's length plus the rise, while the
+     page had been ready behind the cover since about 0.2s. Held, the copy is painted under the cover
+     at mount (the loader is opaque, so nobody sees it) and parked the moment the loader starts to
+     leave, while the fold still fills the screen; the rise then plays exactly when and how it always
+     did. Measured on a phone profile: LCP 3.7s -> 0.32s, and on slow 4G with a 4x CPU 6.0s -> 2.4s,
+     with no frame in which the copy stood uncovered before its rise. */
+  var heroParked = !opts.heroHeld;
+  function parkHero() {
+    if (heroParked) return;
+    heroParked = true;
+    heroEls = heroEls.map(arm).filter(Boolean);
+  }
+
   function playHero() {
+    parkHero();
     // One call, so the stagger runs across the title's line, the summary's three and the meta's one
     // as a single cascade of five rather than as three animations starting together.
     revealMasked(heroEls);
@@ -422,6 +444,7 @@ export function initPageReveal(root, options) {
         playHero();
         groups.forEach(runGroup);
       },
+      parkHero: parkHero,
       destroy: destroy,
     };
   }
@@ -639,6 +662,7 @@ export function initPageReveal(root, options) {
       catchUp();
       timers.push(setTimeout(sweep, 1500));   // covers what was already on screen at load
     },
+    parkHero: parkHero,
     destroy: destroy,
   };
 }

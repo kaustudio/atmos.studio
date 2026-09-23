@@ -1390,10 +1390,15 @@
    time; the cards carry no controls. Without the scene neither rule applies and the close follows the
    travel as it did. */
 .about-rail[data-rail-live]{z-index:2;pointer-events:none}
-/* And its pin's spacer, which ScrollTrigger wraps round the stage and hands the stage's z-index: left to
-   take the pointer, it sat over Explore Atmos for the whole of the close and the button could not be
-   pressed. Selected through :has() because the wrapper is ScrollTrigger's to create and recreate. */
-.pin-spacer:has(> .about-rail[data-rail-live]){pointer-events:none}
+/* HELD BY STICKY, NOT BY A PIN (23.09.26). ScrollTrigger's pin switched the stage to position:fixed and
+   back, which Chrome scored as a whole-screen layout shift at each end of the travel (a CLS of about 1
+   for every reader who scrolled through). The stage sticks instead, for the length of the spacer
+   aboutRail.js puts after it; see [ATMOS 6] there. */
+.about-rail[data-rail-live]{position:sticky;top:0}
+/* And the spacer, which stands where the close is pulled up under the end of the travel: left to take
+   the pointer it would sit over Explore Atmos, as the pin's own spacer did until it was given this
+   rule. */
+[data-rail-spacer]{pointer-events:none}
 /* The phone story's close (.story-cta) is handed off the same way, with the same settle: its gallery
    has the same band below the rail and the same rail margin. */
 .about-end[data-rail-handoff-live],
