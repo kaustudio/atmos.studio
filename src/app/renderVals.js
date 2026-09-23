@@ -861,7 +861,9 @@ export const renderValsMethods = {
           sid: typeof b.sid === 'number' ? b.sid : i,
           groupAria: 'Swatch ' + (i + 1) + ' of ' + N + ', ' + fmt.hex.display,
           weightPct: sharePct(b.weight, tw2),
-          style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '210px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
+          // The create page's tile (23.09.26, "Go with b"): its corner, clipped, and its 190px floor. The floor
+          // was 210, which put five bands 26px past a 1024 window's edge, the last one's copy marks with them.
+          style: { position: 'relative', flexGrow: w(b), flexBasis: 0, minWidth: '190px', background: b.hex, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: 'var(--radius-card)', overflow: 'hidden' },
           // The detail overlay's copy of the band label — same decision as the result stage's, see
           // the note there.
           weightStyle: { fontFamily: sans, fontSize: 'var(--fs-title)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', color: on, padding: '16px 14px 0' },
@@ -873,9 +875,13 @@ export const renderValsMethods = {
           values,
         };
       });
+      const omet = this.paletteMetrics(p);
       overlay = {
-        name: p.name, rationale: p.rationale, descriptors: this.paletteTags(p), bands: obands,
+        name: p.name, descriptors: this.paletteTags(p), bands: obands,
+        // What the palette is for, the create page's line (23.09.26): the view reads as that page does.
+        useLine: composeUse(analysePalette(p.swatches), omet.aaState, omet),
         time: this.stampTime(p.time), timeTitle: this.absTime(p.time), refImage: this.dispUrl(p), hasRef: this.hasImg(p),
+        refAlt: p.example === true ? 'The reference image this example palette was read from' : 'The reference image you uploaded',
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
         onShare: () => this.shareCurrent(p, 'ov-pal-share'), shareCopied: s.copied === 'ov-pal-share',

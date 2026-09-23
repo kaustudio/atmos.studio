@@ -61,7 +61,12 @@ export const overlayMethods = {
     // direction, but a squash rather than an uncovering, and the one place a palette arrived by a
     // different mechanic from the other two doors.
     tl.from(root, { opacity: 0, duration: this.DUR.fast, ease: 'none' }, 0);   // backdrop first in / last out
-    tl.from(bands, { clipPath: 'inset(100% 0 0 0)', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath' }, this.DUR.overlayBlock);
+    /* THE TILE'S EDGE (23.09.26): the bands are the create page's tiles now, so they rise as those do,
+       through a clip with the tile's corner riding a custom property (motion.js _bandWipe says why a
+       string tween cannot carry it). A square inset read as a tile with its top cut off. */
+    const r = this._cssVar('--radius-card') || '12px';
+    bands.forEach((b) => { b.style.setProperty('--wipe', '100%'); b.style.clipPath = 'inset(var(--wipe) 0% 0% 0% round ' + r + ')'; });
+    tl.to(bands, { '--wipe': '0%', duration: this.DUR.reveal, ease: this.EASE.entrance, stagger: this.DUR.stagger, clearProps: 'clipPath,--wipe' }, this.DUR.overlayBlock);
     // chrome (header, footer, value rows) fades in a beat after — colour leads; on reverse it exits first
     if (chrome.length) tl.from(chrome, { opacity: 0, duration: this.DUR.swap, ease: this.EASE.entrance, stagger: this.DUR.overlayStep }, this.DUR.reveal * 0.45);
     this._ovTl = tl;
@@ -88,9 +93,9 @@ export const overlayMethods = {
        run, and the field arrives through it as the dropzone arrives while the stage's bands go. The
        ground is a colour going to no alpha rather than an opacity on the sheet, so nothing on it
        dissolves and nothing is left to pop at the release. The sink rides a custom property for the
-       reason _bandWipe gives (motion.js), with a square edge because these bands are full-bleed
-       columns, and from wherever each band is if the arrival was still running. Reduced motion keeps
-       the reversed fade, which is a fade either way.
+       reason _bandWipe gives (motion.js), with the tile's corner since the bands became the create
+       page's tiles (23.09.26), and from wherever each band is if the arrival was still running.
+       Reduced motion keeps the reversed fade, which is a fade either way.
        THE SINK IS NOW THE FALLBACK (22.09.26): a view opened from a card that is still open goes home
        into that card instead (_ovFoldHome, below), and this exit runs only when there is no such card. */
     const g = window.gsap, root = this._detailRoot();
@@ -108,10 +113,11 @@ export const overlayMethods = {
     const home = this._ovHome(bands.length);
     if (home) { this._ovFoldHome(root, bands, chrome, home); return; }
     const { D, step, end } = this._exitSink(bands.length);
+    const r = this._cssVar('--radius-card') || '12px';
     bands.forEach((b) => {
-      const at = /inset\(\s*([\d.]+)%/.exec(b.style.clipPath || '');
-      b.style.setProperty('--wipe', (at ? parseFloat(at[1]) : 0) + '%');
-      b.style.clipPath = 'inset(var(--wipe) 0% 0% 0%)';
+      const at = parseFloat(b.style.getPropertyValue('--wipe'));
+      b.style.setProperty('--wipe', (isNaN(at) ? 0 : at) + '%');
+      b.style.clipPath = 'inset(var(--wipe) 0% 0% 0% round ' + r + ')';
     });
     root.style.setProperty('--ov-ground', '100%');
     root.style.background = 'color-mix(in srgb, var(--surface) var(--ov-ground), transparent)';
@@ -172,16 +178,31 @@ export const overlayMethods = {
     bands.forEach((b, i) => {
       const a = from[i], z = to[i];
       const sx = z.width / a.width, sy = z.height / a.height;
-      // an arrival still running: the band's wipe goes back to whole as it flies
-      const wipe = /inset\(\s*([\d.]+)%/.exec(b.style.clipPath || '');
-      if (wipe) {
-        b.style.setProperty('--wipe', wipe[1] + '%'); b.style.clipPath = 'inset(var(--wipe) 0% 0% 0%)';
-        tl.to(b, { '--wipe': '0%', duration: D, ease: E }, 0);
+      // an arrival still running: the band's wipe goes back to whole as it flies, and the clip's own
+      // corner goes with the tile's, below, so nothing still rounds the band when it lands
+      const wipe = parseFloat(b.style.getPropertyValue('--wipe'));
+      const R = parseFloat(getComputedStyle(b).borderTopLeftRadius) || 0;
+      if (!isNaN(wipe) && wipe > 0) {
+        b.style.setProperty('--wipe-r', R + 'px'); b.style.clipPath = 'inset(var(--wipe) 0% 0% 0% round var(--wipe-r))';
+        tl.to(b, { '--wipe': '0%', '--wipe-r': '0px', duration: D, ease: E }, 0);
       }
       tl.to(b, { x: z.left - a.left, y: z.top - a.top, scaleX: sx, scaleY: sy, transformOrigin: '0 0', duration: D, ease: E }, 0);
-      const corner = (prop, r) => { if (r) tl.fromTo(b, { [prop]: '0px 0px' }, { [prop]: (r / sx) + 'px ' + (r / sy) + 'px', duration: D, ease: E }, 0); };
-      if (i === 0) corner('borderTopLeftRadius', rTL);
-      if (i === bands.length - 1) corner('borderTopRightRadius', rTR);
+      /* EVERY CORNER GOES FROM THE TILE'S TO THE STRIP'S (23.09.26). The bands are tiles now, rounded at
+         all four corners, and the strip's bands are square but for the panel's two outer top corners.
+         Each corner runs from the tile's own to its target, pre-divided by the scale it lands at, so the
+         last frame is the strip's exactly.
+         ONE NUMBER, NOT FOUR STRINGS. GSAP tweening two-value corners mixes their vertical halves up
+         when several run on one element (measured: a corner bound for 0 read 11.8px by 35px at 1%), and
+         the tiles swelled into pillows as they left. Each corner is a calc() on --k instead, one number
+         from 0 to 1 on the flight's own curve, as the wipe rides --wipe. */
+      const k = (r0, r1) => 'calc(' + r0 + 'px * (1 - var(--k)) + ' + r1 + 'px * var(--k))';
+      const corner = (prop, r) => { b.style[prop] = k(R, r / sx) + ' ' + k(R, r / sy); };
+      b.style.setProperty('--k', '0');
+      corner('borderTopLeftRadius', i === 0 ? rTL : 0);
+      corner('borderTopRightRadius', i === bands.length - 1 ? rTR : 0);
+      corner('borderBottomLeftRadius', 0);
+      corner('borderBottomRightRadius', 0);
+      tl.to(b, { '--k': 1, duration: D, ease: E }, 0);
     });
     tl.call(() => this._finishOverlayClose(), null, D);
     clearTimeout(this._closeGuard);

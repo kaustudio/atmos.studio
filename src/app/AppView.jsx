@@ -2545,8 +2545,9 @@ export default function AppView({ vals }) {
                     what the analysis SAW, composed from the same swatches the bands above it are
                     already showing. Removed by request: under the palette it restated the picture
                     rather than telling you anything to do with it, and it is still the story's
-                    standing statement and the detail overlay's closing line, so nothing is lost from
-                    the product by taking it off this one screen.
+                    standing statement, so nothing is lost from the product by taking it off this one
+                    screen. (It was the detail overlay's closing line too until 23.09.26, when the Full
+                    Swatch View took this page's order and this line.)
                     What takes the slot is composeUse()'s recommendation, which answers the question
                     the result stage is actually for, followed by where to check the one pair a reader
                     means to use. It keeps its own weight rather than inheriting the reading's muted
@@ -3491,10 +3492,22 @@ function DetailOverlay({ vals }) {
         </div>
       </header>
 
-      {/* The shares count up out of the blur here as they do on the stage (19.09.26, by request):
+      {/* THE CREATE PAGE'S PALETTE, IN THE CREATE PAGE'S ORDER (23.09.26, by request: "structure the visual
+          hierarchy for the full swatch view in grid view. It's not aligned with the changes we made on
+          the create page. Also the elements below the swatches lacks balance", then "Go with b").
+          - The swatches are the create page's tiles (renderVals, overlay bands): the card corner, 6px
+            apart, on the page gutter, where they were full-bleed columns under a rule.
+          - The actions stand directly under them, as they do there, where they closed the view.
+          - Then what the palette is for, as the create page says it (composeUse), under its tags on the
+            left, and the photograph it was read from on the right: the name block's own two ends. The
+            tags stood alone at the left with the reading right-aligned in half ink opposite them, two
+            weights pulling apart across an empty middle.
+          The reading is no longer on the desktop at all: the create page gave its slot to this line on
+          the same argument, and it goes on as the story's statement on the phone.
+          The shares count up out of the blur here as they do on the stage (19.09.26, by request):
           overlays.js plays it on the beat the chrome arrives on. The rolling strips are hidden from a
           screen reader, which reads the twin beside them. */}
-      <div ref={vals.overlayBandsRef} role="group" aria-label="Palette swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;flex:1;min-height:0;width:100%')}>
+      <div ref={vals.overlayBandsRef} role="group" aria-label="Palette swatches" data-odometer-group="" data-odometer-stagger="0.2" style={sx('display:flex;flex:1;min-height:0;width:100%;gap:6px;padding:16px var(--page-gutter) 0')}>
         {overlay.bands.map((b) => (
           <div key={b.sid} data-oband="1" data-sid={b.sid} role="group" aria-label={b.groupAria} style={b.style}>
             <div data-ochrome="1" style={sx('display:flex;flex-direction:column;gap:8px')}>
@@ -3513,28 +3526,14 @@ function DetailOverlay({ vals }) {
         ))}
       </div>
 
-      {/* TWO ROWS SINCE SHARE JOINED THE ACTIONS (19.09.26, audit U6, by request). The traits and the
-          reading share the first, the actions the second at the footer's full width, so Share closes
-          it at the far right as it closes the result stage's. In one row beside the reading, the
-          actions' column ended where the reading began and Share stood two thirds across. */}
-      <footer data-ochrome="1" style={sx('display:flex;flex-direction:column;gap:14px;padding:22px var(--page-gutter);border-top:1px solid var(--line-strong);flex:none')}>
-        <div style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:28px')}>
-          <div style={sx('display:flex;flex-wrap:wrap;gap:8px;min-width:0')}>
-            {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
-          </div>
-          <p style={sx("max-width:380px;flex:none;font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface-muted);text-align:end;margin:0;text-wrap:pretty")}>{overlay.rationale}</p>
-        </div>
-        {/* The same row as the result view's, deliberately: same order, same division, same
-            weights. A palette opened fullscreen from the archive must not re-teach the user a
-            different set of controls. Filing leads because it leaves something behind; the pair
-            after it only reads the palette back to you, Contrast first because inspecting comes
-            before copying. SHARE CLOSES THE ROW HERE TOO (19.09.26, audit U6, by request), at the far
-            end behind the same flexible gap: a share link is sealed from the palette itself, so
-            any palette has one. The hairline that used to divide the trio from Filing went on
-            02.09.26, on both surfaces. */}
+      {/* The same row as the result view's, deliberately: same order, same division, same weights. A
+          palette opened fullscreen from the archive must not re-teach the user a different set of
+          controls. Filing leads because it leaves something behind; the pair after it only reads the
+          palette back to you, Contrast first because inspecting comes before copying. Share closes the
+          row at the far end behind the same flexible gap: a share link is sealed from the palette
+          itself, so any palette has one. */}
+      <footer data-ochrome="1" style={sx('display:flex;flex-direction:column;padding:18px var(--page-gutter) 24px;flex:none')}>
         <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-          {/* Filing leads here, as it does on the result view: the act that is first in the
-              sequence and available — organise, then validate, then output. */}
           <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
             <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
@@ -3543,6 +3542,23 @@ function DetailOverlay({ vals }) {
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
             <Button data-emphasis="secondary" onClick={overlay.onShare} aria-label={overlay.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(overlay.shareCopied)} />
           </span>
+        </div>
+        <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 0 0')}>
+          <div style={sx('flex:1;min-width:0')}>
+            {overlay.descriptors.length > 0 && (
+              <div style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px')}>
+                {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
+              </div>
+            )}
+            <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:0;max-width:52ch;text-wrap:pretty")}>{overlay.useLine}</p>
+          </div>
+          {/* The photograph, as the create page shows it: 156 by 104 on the card corner, and a press opens
+              it larger (the click-zoom lightbox, misc.js, which stands above this view). */}
+          {overlay.hasRef && (
+            <button type="button" data-click-zoom="1" data-ix="mark" data-focus="chrome" aria-label="View the reference image larger" style={sx('flex:none;border:none;padding:0;background:none;display:block;cursor:zoom-in;border-radius:var(--radius-card)')}>
+              <img src={overlay.refImage} alt={overlay.refAlt} style={sx('display:block;width:156px;height:104px;object-fit:cover;border-radius:var(--radius-card)')} />
+            </button>
+          )}
         </div>
       </footer>
     </div>
@@ -4005,7 +4021,7 @@ function LibraryDrawer({ vals }) {
             and E9) with the state and view-model only it read. Filtering by trait is still reached
             from a palette's own tags; the applied chips remove it. */}
 
-
+        <DrawerMore />
         </div>
       </div>
     </div>
@@ -4148,6 +4164,36 @@ function DoneSwap({ done, word, restStyle, rise, children }) {
       <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: done ? 1 : 0, transform: done ? 'translateX(0)' : 'translateX(4px)' }}>{word}</span>
     </span>
   );
+}
+
+/* MORE BELOW (23.09.26, UX audit, by request: "fix both"). At 1024 x 640 the Manage drawer's last
+   visible row ended on the window's own edge, and Library File (Back Up, Restore) stood entirely below
+   it with nothing to say so. A fade at the drawer's foot while there is more to scroll to, eased in
+   and out on the state step, and gone at the end, where it would only veil the last row. It is the
+   panel's last child and sticks to the bottom of what the drawer shows; the negative margin keeps it
+   out of the flow, so it changes no measurement. Checked on scroll, on a resize of the drawer or of any of
+   its groups (a project list opening, Show All), and after every render. */
+function DrawerMore() {
+  const ref = React.useRef(null);
+  const [more, setMore] = React.useState(false);
+  const check = React.useRef(() => { });
+  // The drawer scrolls; the panel inside it holds the groups, and this, as its last child.
+  const scroller = () => ref.current && ref.current.closest('[data-library-dialog]');
+  check.current = () => {
+    const el = scroller();
+    if (el) setMore(el.scrollTop + el.clientHeight < el.scrollHeight - 2);
+  };
+  React.useEffect(() => {
+    const el = scroller();
+    if (!el) return undefined;
+    const run = () => check.current();
+    el.addEventListener('scroll', run, { passive: true });
+    let ro = null;
+    try { ro = new ResizeObserver(run); ro.observe(el); const panel = ref.current.parentElement; ro.observe(panel); for (const c of panel.children) ro.observe(c); } catch (e) { }
+    return () => { el.removeEventListener('scroll', run); if (ro) ro.disconnect(); };
+  }, []);
+  React.useEffect(() => { check.current(); });
+  return <div ref={ref} aria-hidden="true" data-drawer-more="1" style={{ ...sx('position:sticky;bottom:0;flex:none;height:72px;margin-top:-72px;pointer-events:none;background:linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface) 85%);transition:opacity var(--dur-state) var(--ease-standard)'), opacity: more ? 1 : 0 }} />;
 }
 
 const EX_COPY_MARK = { display: 'inline-flex', color: 'var(--on-surface-muted)', flex: 'none' };

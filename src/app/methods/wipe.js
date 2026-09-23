@@ -348,7 +348,8 @@ export const wipeMethods = {
       // serves the wrong one.
       // The tool's route has two addresses, / and /create, and the one pushed is the one the arriving
       // screen will show (PaletteApp._appPath), so the pageview the push reports names it correctly.
-      if (push) { try { history.pushState({ route: next, scrollY: 0 }, '', next === APP ? this._appPath() : pathFor(next)); } catch (e) { } }
+      // `t`: when the entry was made, which is how a pop tells Back from Forward (PaletteApp _onPop).
+      if (push) { try { history.pushState({ route: next, scrollY: 0, t: this._histStamp() }, '', next === APP ? this._appPath() : pathFor(next)); } catch (e) { } }
       applyHead(next);
       // A new document starts at the top — see _scrollToTop, which the landing pair now shares. A
       // history move goes back to where it was, once the document is there to scroll (below).

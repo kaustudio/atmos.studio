@@ -7,6 +7,87 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The Full Swatch View takes the create page's order
+
+**By request: "structure the visual hierarchy for the full swatch view in grid view. It's not aligned with
+the changes we made on the create page. Also the elements below the swatches lacks balance", then "Go
+with b" (of two options: A kept full-bleed bands and the reading; B takes the create page's tiles and
+line).**
+
+- **The swatches are the create page's tiles.** They sit on the page gutter, 6px apart, with the card
+  corner. They were full-bleed columns under a rule.
+- **The actions stand directly under the swatches, as on the create page.** They used to close the view.
+- **Below the actions, the create page's name block:**
+  - the tags, then what the palette is for (composeUse's line), in full ink at 52ch on the left;
+  - the photograph it was read from on the right, 156 x 104, opening larger in the zoom lightbox.
+
+  The tags used to stand alone at the left, with the reading right-aligned in half ink opposite them.
+- **The reading is no longer on the desktop.** The create page gave its slot to this line on the same
+  argument. The reading remains the phone story's statement.
+- **The band floor is 190px, the tile's, where it was 210.** Five bands at 210 ran 26px past a 1024
+  window, and the last one's harmony and copy marks went with them. This was a defect on live.
+- **Motion takes the tile's corner:**
+  - the arrival wipes up through a rounded clip on --wipe, as the stage does;
+  - the fallback sink has the same edge;
+  - the flight home runs every corner from the tile's to the strip's.
+  GSAP mixes up the vertical halves of two-value corners when several tween on one element (a corner
+  bound for 0 read 11.8px by 35px at 1%), and the tiles swelled into pillows. So each corner is a
+  calc() on one number, --k, which runs on the flight's own curve. The bands still land on the card's
+  strip.
+- **Verified in Chrome:**
+  - 1440 and 1024, in light and dark, with every band inside the gutters;
+  - the arrival and the flight home frame by frame at reduced speed;
+  - the photo's zoom above the view, where Escape takes only the lightbox;
+  - reduced motion, with nothing left clipped;
+  - no console errors, and the production build passes.
+
+## 2026-09-23 — Back closes what is in front first
+
+**From the UX audit of the 21–23 Sept changes (MEDIUM), by request: "fix both".** Since 22.09 each palette
+is a place in the browser's history. But Back changed the palette UNDER an open view or dialog and left
+it standing:
+- two presses in the Full Swatch View rewound Garnet → Dry Season → Start here behind it, with nothing
+  to see;
+- Export went on saying Garnet over Dry Season, and Harmonies kept Garnet's colour.
+
+Now:
+- **Back shuts what is in front, and the palette stays.** It uses Escape's own ladder, now shared
+  (`_closeFront` in PaletteApp). One press shuts one layer:
+  - the Full Swatch View goes home into its card;
+  - then the card closes, then the grid, then the list;
+  - a dialog or drawer closes;
+  - the tour invitation and the phone's example chooser close.
+- **The layers take an entry of their own when the first one opens** (`_frontLayers`,
+  `_syncFrontHistory`). So Back can shut them even on the first page of a visit, where there is no
+  entry of ours below to come back to.
+  - The entry has the same address, so the analytics script counts nothing: it reports a push only
+    when the path changes.
+  - The tour's card is not modal and takes no entry. Back puts back the entry it left instead.
+- **Forward is a reader moving on, so it closes nothing.** Every entry the app pushes carries when it
+  was made (`t`), which is how a pop tells Back from Forward.
+- **No dead presses.** A layer shut by its own × or by Escape leaves its entry behind, the same place
+  twice. A press that lands on or leaves one goes on one step the same way (`history.go(±1)`).
+- **Verified in Chrome** with a harness covering:
+  - the first page of a visit, the landing and the tour invitation;
+  - grid → card → detail;
+  - all six surfaces over a palette;
+  - × then Back, and Forward;
+  - a palette made from Harmonies' Save as Palette, which Back leaves for its source;
+  - Escape, unchanged;
+  - the phone's chooser.
+
+## 2026-09-23 — The Manage drawer shows there is more below
+
+**From the same audit (LOW), by request: "fix both".**
+- **At 1024 x 640 the drawer's last visible row ended on the window's edge.** Library File (Back Up,
+  Restore, moved in on 22.09) stood entirely below it, with nothing to say so.
+- **Now the last rows fade into the drawer while there is more to scroll to** (`DrawerMore` in
+  AppView). It eases in and out on the state step and goes at the end, where it would only veil the
+  last row.
+- **When it shows:** at 1280 x 720 it shows until the end. At 1440 x 900 everything fits and it never
+  shows.
+- **Verified** in light and dark.
+
 ## 2026-09-23 — Share Palette, and its words swap through the mask
 
 **By request: "please add text mask animation when pressing share for copy, we don't want any instant

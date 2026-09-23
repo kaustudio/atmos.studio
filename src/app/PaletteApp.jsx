@@ -499,6 +499,7 @@ export default class PaletteApp extends React.Component {
     // Not on a phone, where the landing is the surface and there is no tool to have reached.
     if (this._entryCreate && !this.state.narrow) { try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { } }
     safe(() => this._syncAppPath(), 'path');
+    this._histHereNow();
     // Back and forward are real navigations between these routes, so the swap is wiped exactly as a
     // click is. popstate has already moved the address bar by the time it fires, which is why
     // navigateTo is told not to push a second entry for it.
@@ -507,6 +508,32 @@ export default class PaletteApp extends React.Component {
     // navigateTo restores the offset itself, after the swap, from the entry's own state.
     try { history.scrollRestoration = 'manual'; } catch (e) { }
     this._onPop = () => {
+      const left = this._histHere;
+      const dest = history.state || {};
+      // Which way the press went: every entry this app pushes carries its time, and an entry older
+      // than the one left is behind it. The page's own first entry carries none, so it is behind too.
+      const leftT = left && left.state && left.state.t;
+      const ahead = !!(dest.t && (!leftT || dest.t > leftT));
+      /* BACK CLOSES WHAT IS IN FRONT FIRST (23.09.26, UX audit, by request: "fix both"). Back used to
+         move the palette UNDER an open view or dialog and leave it standing: two presses in the Full
+         Swatch View rewound Garnet → Dry Season → Start here behind it with nothing to see, and Export
+         went on saying Garnet over Dry Season. Now Back shuts the surface in front, Escape's own ladder
+         (_closeFront), and the palette stays where it is.
+         The modal layers take an entry of their own when they open (_syncFrontHistory), so a press
+         that leaves one arrives on this same place and there is nothing to put back, unless another
+         layer still stands, which gets its entry again. A surface without one (the tour's card, which
+         is not modal) puts back the entry the press left. Forward is a reader moving on, so it closes
+         nothing. */
+      if (!ahead && left && this._closeFront(true)) {
+        const fromFront = !!(left.state && left.state.front);
+        const layers = this._frontLayers();
+        try {
+          if (!fromFront) history.pushState(left.state, '', left.url);
+          else if (layers > 1) history.pushState(Object.assign({}, dest, { front: true, t: this._histStamp() }), '', left.url);
+        } catch (e) { }
+        this._histHereNow();
+        return;
+      }
       // Whatever the pop changes next is the browser's move, not a new place (see _syncToolHistory).
       this._histPop = performance.now();
       const next = routeFor(location.pathname);
@@ -518,10 +545,16 @@ export default class PaletteApp extends React.Component {
         if (next === APP && !s.narrow && !s.sharedView) {
           const here = location.pathname.replace(/\/+$/, '') || '/';
           const up = this._landingUp();
-          if (here === '/' && !up) { this.returnToIntro({ fromPop: true }); return; }
-          if (here === CREATE_PATH && up) { this.getStarted({ fromPop: true }); return; }
+          if (here === '/' && !up) { this.returnToIntro({ fromPop: true }); this._histHereNow(); return; }
+          if (here === CREATE_PATH && up) { this.getStarted({ fromPop: true }); this._histHereNow(); return; }
         }
-        this._applyPlace(history.state && history.state.place);
+        const moved = this._applyPlace(history.state && history.state.place);
+        /* AN ENTRY THAT CHANGES NOTHING IS PASSED THROUGH (23.09.26). A layer shut by its own × or by
+           Escape leaves its entry behind, the same place twice; a press that lands on or leaves one
+           goes on one more step the same way, so Back never answers with nothing. Only for those
+           entries: anything else that changes nothing stays exactly as it did. */
+        this._histHereNow();
+        if (!moved && (dest.front || (left && left.state && left.state.front))) { try { history.go(ahead ? 1 : -1); } catch (e) { } }
         return;
       }
       this.navigateTo(pathFor(next), { push: false, scrollY: (history.state && history.state.scrollY) || 0 });
@@ -549,61 +582,9 @@ export default class PaletteApp extends React.Component {
     }
     this._onKey = (e) => {
       if (e.key === 'Escape') {
-        /* The image chooser, above everything else it can coexist with. Its visible dismiss control
-           was removed by request, so Escape is the only way out that does not commit a choice — which
-           makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
-           opens centred on the case already being read, so choosing that one is a no-op exit. */
-        if (this.state.storyPicker) { e.preventDefault(); this.closeStoryPicker(); return; }
-        if (this.state.recognised) { e.preventDefault(); this.closeRecognised(); return; }
-        // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
-        // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
-        // dismiss the surface that is actually in front. The palette export can never coexist with
-        // either of the two below it, so nothing else changes order by this.
-        if (this.state.exportOpen) { e.preventDefault(); this.closeExport(); return; }
-        if (this.state.assignPalette) { e.preventDefault(); this.closeAssign(); return; }
-        if (this.state.restorePending) { e.preventDefault(); this.closeRestore(); return; }
-        if (this.state.backupMenuOpen) { e.preventDefault(); this.setState({ backupMenuOpen: false }); return; }
-        /* THE SHARED ARRIVAL, WHICH THIS LADDER USED TO WALK STRAIGHT PAST. A share link constructs
-           at stage 'result', so with no clause of its own Escape fell all the way to the last line
-           and called doReset() — on the read-only showcase that dropped the palette, swapped the
-           surface for the story, and announced "Ready for a new reference image." to a viewport with
-           no dropzone on it, while the hash stayed in the address bar ready to resurrect the whole
-           thing on the next reload. Measured at 900px before the fix.
-           Routed to the mark's own exit rather than to a bespoke one, so the two ways off this
-           surface cannot say different things: same destination, same announcement, same dropped
-           hash. Below the supported minimum only — above it the shared palette is on the result
-           stage, where Escape means what it means everywhere else in the tool and the last line of
-           this ladder is the right answer. */
-        if (this.state.sharedView && this.state.narrow) { e.preventDefault(); this.returnToGateOnPhone(); return; }
-        if (this.state.tagMenuOpen) { e.preventDefault(); this.closeTagFilter(); return; }
-        /* A DRAWER THE TOUR OPENED IS PART OF ITS STEP, so Escape takes both — the brief's "Escape to
-           exit", which on steps 2 and 3 used to close only the drawer and leave the card standing
-           beside nothing. Ahead of the drawers' own clauses for that reason; a drawer the reader
-           opened some other way still closes on its own below. */
-        if (typeof this.state.tourStep === 'number') {
-          const st = this.TOUR_STEPS[this.state.tourStep - 1];
-          if (st && ((st.view === 'contrast' && this.state.contrast) || (st.view === 'harmony' && this.state.harmony))) { e.preventDefault(); this.exitTour(); return; }
-        }
-        if (this.state.harmony) { e.preventDefault(); this.closeHarmony(); return; }
-        if (this.state.contrast) { e.preventDefault(); this.closeContrast(); return; }
-        if (this.state.overlay) { e.preventDefault(); this.closeOverlay(); return; }
-        // an open card in the field closes before the field does — one Escape, one step out. A
-        // second Escape while that close is still playing is not swallowed: it falls through to
-        // the field's own exit, which resets the card on the way.
-        if (this.state.uOpen != null && !this._uClosing) { e.preventDefault(); this.closeTile(); return; }
-        // A field already leaving swallows the key rather than letting it fall through to the
-        // result stage behind it: one Escape, one step out, even while the exit is still playing.
-        if (this.state.gridLeaving) { e.preventDefault(); return; }
-        if (this.state.feedView === 'grid') { e.preventDefault(); this.setFeedView('list'); return; }
-        /* THE TOUR SITS AT THE BOTTOM OF THE LADDER, under every drawer and dialog and above only
-           the stage itself — because the guidance card is the only surface here that is NOT modal.
-           A reader with the contrast drawer open and a tour card beside it means the drawer when
-           they press Escape; the card is what is left when there is nothing else to shut. (Escape
-           with focus inside the card is the card's own, and stops before it reaches this — see
-           onKey in _tourView. The invitation is a dialog and answers for itself the same way.)
-           Ahead of closeResult for the same reason it is behind the drawers: the palette is the
-           thing the tour is standing on, so the tour leaves before the thing it stands on does. */
-        if (this.state.tourStep != null) { e.preventDefault(); this.skipTour(); return; }
+        // THE LADDER IS _closeFront (23.09.26): the browser's Back walks the same one, so the two always
+        // shut the same surface. Only the stage below it is Escape's alone.
+        if (this._closeFront(false)) { e.preventDefault(); return; }
         // Close rather than reset: a palette opened from a row goes back to that row (pipeline.js
         // closeResult); one with no row behind it resets exactly as before.
         if (this.state.stage === 'result') { e.preventDefault(); this.closeResult(); }
@@ -696,6 +677,7 @@ export default class PaletteApp extends React.Component {
     this._syncLaneLift();
     this._syncAppPath();
     this._syncToolHistory();
+    this._syncFrontHistory();
     /* THE TOUR WATCHES EVERY COMMIT, not only the stage changes further down (which return early when
        neither the stage nor the palette moved — and opening a drawer moves neither). A drawer step's
        act, however it was done (methods/tour.js _tourWatch); and back on the tool from a document
@@ -843,7 +825,7 @@ export default class PaletteApp extends React.Component {
     if (push) {
       try {
         history.replaceState(Object.assign({}, history.state || {}, { landing: want === CREATE_PATH, scrollY: window.scrollY || 0 }), '');
-        history.pushState({ route: APP, scrollY: 0 }, '', url);
+        history.pushState({ route: APP, scrollY: 0, t: this._histStamp() }, '', url);
       } catch (e) { }
       return;
     }
@@ -879,14 +861,119 @@ export default class PaletteApp extends React.Component {
     this._histPop = 0; this._histReplace = false;
     try {
       if (replace) history.replaceState(entry, '');
-      else { history.replaceState(Object.assign({}, cur, { scrollY: window.scrollY || 0 }), ''); history.pushState(entry, ''); }
+      else { history.replaceState(Object.assign({}, cur, { scrollY: window.scrollY || 0 }), ''); history.pushState(Object.assign(entry, { front: false, t: this._histStamp() }), ''); }
     } catch (e) { }
+  }
+  /* WHAT IS IN FRONT, AND HOW IT CLOSES: Escape's ladder, which the browser's Back walks too since
+     23.09.26 (see _onPop). One step out per press, the surface actually in front first. True when it
+     shut something, or something is already shutting. `back` leaves out the phone's shared arrival,
+     which is a place and not a surface: Back there is the story's own. */
+  _closeFront(back) {
+    const s = this.state;
+    /* The image chooser, above everything else it can coexist with. Its visible dismiss control
+       was removed by request, so Escape is the only way out that does not commit a choice — which
+       makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
+       opens centred on the case already being read, so choosing that one is a no-op exit. */
+    if (s.storyPicker) { this.closeStoryPicker(); return true; }
+    if (s.recognised) { this.closeRecognised(); return true; }
+    // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
+    // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
+    // dismiss the surface that is actually in front. The palette export can never coexist with
+    // either of the two below it, so nothing else changes order by this.
+    if (s.exportOpen) { this.closeExport(); return true; }
+    if (s.assignPalette) { this.closeAssign(); return true; }
+    if (s.restorePending) { this.closeRestore(); return true; }
+    if (s.backupMenuOpen) { this.setState({ backupMenuOpen: false }); return true; }
+    /* THE SHARED ARRIVAL, WHICH THIS LADDER USED TO WALK STRAIGHT PAST. A share link constructs
+       at stage 'result', so with no clause of its own Escape fell all the way to the last line
+       and called doReset() — on the read-only showcase that dropped the palette, swapped the
+       surface for the story, and announced "Ready for a new reference image." to a viewport with
+       no dropzone on it, while the hash stayed in the address bar ready to resurrect the whole
+       thing on the next reload. Measured at 900px before the fix.
+       Routed to the mark's own exit rather than to a bespoke one, so the two ways off this
+       surface cannot say different things: same destination, same announcement, same dropped
+       hash. Below the supported minimum only — above it the shared palette is on the result
+       stage, where Escape means what it means everywhere else in the tool and the last line of
+       this ladder is the right answer. */
+    if (!back && s.sharedView && s.narrow) { this.returnToGateOnPhone(); return true; }
+    if (s.tagMenuOpen) { this.closeTagFilter(); return true; }
+    /* A DRAWER THE TOUR OPENED IS PART OF ITS STEP, so Escape takes both — the brief's "Escape to
+       exit", which on steps 2 and 3 used to close only the drawer and leave the card standing
+       beside nothing. Ahead of the drawers' own clauses for that reason; a drawer the reader
+       opened some other way still closes on its own below. */
+    if (typeof s.tourStep === 'number') {
+      const st = this.TOUR_STEPS[s.tourStep - 1];
+      if (st && ((st.view === 'contrast' && s.contrast) || (st.view === 'harmony' && s.harmony))) { this.exitTour(); return true; }
+    }
+    if (s.harmony) { this.closeHarmony(); return true; }
+    if (s.contrast) { this.closeContrast(); return true; }
+    if (s.overlay) { this.closeOverlay(); return true; }
+    // an open card in the field closes before the field does — one Escape, one step out. A
+    // second Escape while that close is still playing is not swallowed: it falls through to
+    // the field's own exit, which resets the card on the way.
+    if (s.uOpen != null && !this._uClosing) { this.closeTile(); return true; }
+    // A field already leaving swallows the key rather than letting it fall through to the
+    // result stage behind it: one Escape, one step out, even while the exit is still playing.
+    if (s.gridLeaving) return true;
+    if (s.feedView === 'grid') { this.setFeedView('list'); return true; }
+    /* THE TOUR SITS AT THE BOTTOM OF THE LADDER, under every drawer and dialog and above only
+       the stage itself — because the guidance card is the only surface here that is NOT modal.
+       A reader with the contrast drawer open and a tour card beside it means the drawer when
+       they press Escape; the card is what is left when there is nothing else to shut. (Escape
+       with focus inside the card is the card's own, and stops before it reaches this — see
+       onKey in _tourView. The invitation is a dialog and answers for itself the same way.)
+       Ahead of closeResult for the same reason it is behind the drawers: the palette is the
+       thing the tour is standing on, so the tour leaves before the thing it stands on does. */
+    if (s.tourStep != null) { this.skipTour(); return true; }
+    return false;
+  }
+  /* THE LAYERS THAT TAKE AN ENTRY OF THEIR OWN (23.09.26), so Back can shut them without leaving the
+     place, even on the first page of a visit, where there is no entry of ours below to come back to.
+     The ones a reader stops to look at or answer: the Full Swatch View, the grid and its open card,
+     the dialogs, the drawers, the tour's invitation and the phone's chooser. Not while the landing or
+     a document covers the tool, where a press would shut something nobody can see. */
+  _frontLayers() {
+    const s = this.state;
+    if (s.narrow) return s.storyPicker ? 1 : 0;
+    if (isDoc(s.route) || this._landingUp()) return 0;
+    let n = 0;
+    if (s.recognised) n++;
+    if (s.exportOpen) n++;
+    if (s.assignPalette) n++;
+    if (s.restorePending) n++;
+    if (s.tagMenuOpen) n++;
+    if (s.harmony) n++;
+    if (s.contrast) n++;
+    if (s.overlay) n++;
+    if (s.uOpen != null) n++;
+    if (s.feedView === 'grid') n++;
+    if (s.tourStep === 'invite') n++;
+    return n;
+  }
+  // Every entry this app pushes carries when it was made, so a pop can tell Back from Forward.
+  _histStamp() { this._histT = Math.max(Date.now(), (this._histT || 0) + 1); return this._histT; }
+  // The entry on screen, as the next pop will find it gone: read after every commit and every pop.
+  _histHereNow() { try { this._histHere = { state: history.state, url: location.pathname + location.search + location.hash }; } catch (e) { } }
+  /* The first layer to open pushes the entry the layers share; Back takes it away again (_onPop).
+     The same address, so the analytics script counts nothing (it reports a push only when the path
+     changes). A layer shut some other way leaves the entry, which the next press passes through. */
+  _syncFrontHistory() {
+    const n = this._frontLayers();
+    const was = this._frontN || 0;
+    this._frontN = n;
+    if (n > 0 && was === 0) {
+      const cur = (window.history && history.state) || {};
+      try { history.pushState(Object.assign({}, cur, { front: true, t: this._histStamp() }), ''); } catch (e) { }
+    }
+    this._histHereNow();
   }
   /* Back or Forward within the tool: open the place the entry names. A palette since deleted, or one
      this browser no longer holds, falls back to the start. */
   _applyPlace(place) {
     // A pop that changes nothing leaves nothing to attribute to the browser.
-    if (!this._applyPlaceNow(place)) this._histPop = 0;
+    const moved = this._applyPlaceNow(place);
+    if (!moved) this._histPop = 0;
+    return moved;
   }
   _applyPlaceNow(place) {
     if (!place) return false;
