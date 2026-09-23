@@ -7,6 +7,32 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The Full Swatch View's name heads the block under the actions
+
+**From the grid and UX audit of the 23 Sept changes (MEDIUM, composition), by request: "yes show me",
+then "commit and push".**
+
+- **The header keeps Delete and Close and nothing else.** The name and its time stamp stood at its left,
+  at 20px.
+- **The name heads the block under the actions,** at the create page's display size and tracking, with
+  the library's time stamp at its baseline. The tags and what the palette is for follow it. The
+  photograph stays on the right, its top on the name's, as on the create page.
+- **Why:** in the blur test the photograph was the heaviest thing under the swatches, with only a button
+  and light text to its left. The create page balances the same photograph with its display name.
+- **The create page's spacing, measured equal on both surfaces at 1440, 1280 and 1024:**
+  - 26px from the actions to the name (22 held the tags when they led);
+  - 18px to the tags, and 14px to the use line;
+  - 14px from the name to the use line when a palette has no tags.
+- **The cost:** the tiles give up 68px. They go from 617 to 549 at 1440 x 900, and from 357 to 289 at
+  1024 x 640, where they still hold all four values and nothing scrolls.
+- **The header strip keeps its rule.** A version without it was offered and not taken.
+- **Motion:** the name fades in with the footer, a beat after the tiles; before, it came in with the
+  header. It leaves with the footer. Sampled after each paint, it never shows before its fade.
+- **Verified in Chrome against live:**
+  - 1440, 1280 and 1024, in light and dark;
+  - a long name ("Scorched Clear Morning") on one line at 1024;
+  - no console errors, and the production build passes.
+
 ## 2026-09-23 — The Full Swatch View takes the create page's order
 
 **By request: "structure the visual hierarchy for the full swatch view in grid view. It's not aligned with

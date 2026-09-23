@@ -3468,14 +3468,11 @@ function DetailOverlay({ vals }) {
   const overlay = vals.overlay;
   return (
     <div ref={vals.overlayRef} data-overlay-stage="1" role="dialog" aria-modal="true" aria-label={overlay.name + ' palette detail'} onKeyDown={vals.trapFocus} style={sx('position:fixed;inset:0;z-index:100;background:var(--surface);display:flex;flex-direction:column')}>
-      <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);flex:none')}>
-        <div style={sx('display:flex;align-items:baseline;gap:14px;min-width:0')}>
-          <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap")}>{overlay.name}</h2>
-          {/* THE LIBRARY'S STAMP, IN THE LIBRARY'S TYPE (19.09.26, audit U6, by request): minutes and hours
-              under a day, the date after, at the Created column's 12px with no capitals. It was relative
-              at any age, in 11px capitals, while the list gave the date. */}
-          <span title={overlay.timeTitle} style={sx('font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color: var(--on-surface-muted); font-variant-numeric: tabular-nums')}>{overlay.time}</span>
-        </div>
+      {/* THE HEADER KEEPS THE TWO CONTROLS (23.09.26, grid audit, by request: "yes show me"). The name and
+          its stamp went down to head the block under the actions, where the create page sets its name:
+          under the swatches the photograph was the heaviest thing, with only a button and light text to
+          its left, and the create page balances that photograph with its display name. */}
+      <header data-ochrome="1" style={sx('display:flex;align-items:center;justify-content:flex-end;gap:16px;height:64px;padding:0 var(--page-gutter);border-bottom:1px solid var(--line-strong);flex:none')}>
         {/* Filing used to stand here, in the chrome, while the result view files from its action
             row — one job wearing two different clothes depending on which door you came through.
             It moved down to the footer row, next to Export, where the other things you
@@ -3543,14 +3540,23 @@ function DetailOverlay({ vals }) {
             <Button data-emphasis="secondary" onClick={overlay.onShare} aria-label={overlay.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(overlay.shareCopied)} />
           </span>
         </div>
-        <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:22px 0 0')}>
+        <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
           <div style={sx('flex:1;min-width:0')}>
+            {/* The create page's name, in its type (--fs-display, its tracking, balanced) and at its distance
+                from the actions (26px; 22 held the tags when they led), with the library's stamp at its
+                baseline as it stood beside the name in the header.
+                THE LIBRARY'S STAMP, IN THE LIBRARY'S TYPE (19.09.26, audit U6, by request): minutes and hours
+                under a day, the date after, at the Created column's 12px with no capitals. */}
+            <div style={sx('display:flex;align-items:baseline;flex-wrap:wrap;column-gap:14px;row-gap:4px')}>
+              <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</h2>
+              <span title={overlay.timeTitle} style={sx('font-family: Neue Montreal; font-size:var(--fs-detail); letter-spacing:var(--track-flat); color: var(--on-surface-muted); font-variant-numeric: tabular-nums')}>{overlay.time}</span>
+            </div>
             {overlay.descriptors.length > 0 && (
-              <div style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px')}>
+              <div style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                 {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
               </div>
             )}
-            <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:0;max-width:52ch;text-wrap:pretty")}>{overlay.useLine}</p>
+            <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{overlay.useLine}</p>
           </div>
           {/* The photograph, as the create page shows it: 156 by 104 on the card corner, and a press opens
               it larger (the click-zoom lightbox, misc.js, which stands above this view). */}
