@@ -7,6 +7,38 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The control the tour waits on repeats the ring's arrival until it is pressed
+
+**By request: "can we make we action repeat the radiation, so the user becomes more aware of what to
+do", then option A of three shown moving, on steps 2 and 3, then "commit and push".**
+
+- **This answers the question left in the entry below.** The ring still doesn't fade in: it grows out
+  from the control to its 6px, and that grow is now repeated.
+- **Steps 2 and 3 wait for the reader to press something:** Check Contrast, then the first band's
+  harmony button. While a step waits, and until its drawer has been opened once, every 3 seconds a
+  second ring grows from the control's edge into the held ring and joins it (`data-tour-call`,
+  drawn as the control's `::before`).
+- **It uses the ring's own colour:** the page's ink around Check Contrast, and the band's ink around
+  the harmony button. It fades out with the ring when the ring moves on.
+- **Timing:**
+  - the first one comes after the step's hover tint, about 1s after the ring lands;
+  - each one takes --dur-reveal, once every two --dur-pulse.
+- **It stays inside the ring on purpose.** In step 2 the buttons either side of Check Contrast are 8px
+  away, which is where the ring's outer edge already sits. A wave past the ring (option B) ran over
+  them.
+- **Rejected:**
+  - B, a wave past the ring;
+  - C, three repeats and then still, which would have kept under WCAG's five-second limit for moving
+    content. Skip Tour, Escape and pressing the control all end A.
+- **Never under reduced motion.** The tour doesn't set the attribute, and a reduce rule stops the
+  `::before`, which the global `*` rule doesn't reach.
+- **Verified in Chrome,** in both themes:
+  - each repeat is visible for about 600ms, every 3.0s;
+  - opening the drawer ends it, and it stays off when the drawer is shut again;
+  - steps 1, 4 and 5 are unchanged, and nothing runs with reduced motion;
+  - no console errors;
+  - the production build passes.
+
 ## 2026-09-23 — The tour's harmony ring takes its band's ink
 
 **By request: "When opening a palette on the take a tour and the first color is black, the circle that

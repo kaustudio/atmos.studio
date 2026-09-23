@@ -3238,6 +3238,21 @@ html,body{overflow-anchor:none}
    ring's two added. It outranks the reduced-motion [data-tour-lit] rule below, and that costs
    nothing: the .001ms rule at the top of this file stills every transition under that preference. */
 [data-info][data-tour-lit]{transition:opacity var(--dur-fast) var(--ease-standard),background-color var(--dur-chrome) var(--ease-button-hover),color var(--dur-chrome) var(--ease-button-hover),border-color var(--dur-chrome) var(--ease-button-hover),box-shadow var(--dur-chrome) var(--ease-button-hover),filter var(--dur-fast) var(--ease-standard),outline-color var(--dur-state) var(--ease-standard),outline-offset var(--dur-state) var(--ease-standard)}
+/* THE CONTROL TO PRESS REPEATS THE RING'S ARRIVAL UNTIL IT IS PRESSED (23.09.26, by request: "can we
+   make we action repeat the radiation, so the user becomes more aware of what to do"; option A of
+   three shown moving, on steps 2 and 3). Those two steps wait for the reader to press Check Contrast
+   or the harmony button, and the ring growing out from the control to its 6px was the one moment
+   that said "here", once. Now a second ring, this ::before, grows from the control's edge into the
+   held ring and joins it, once every two pulses. It stays inside the ring: in step 2 the neighbouring
+   buttons stand 8px from Check Contrast, where the ring's outer edge already is, and a wave past it
+   ran over them. outline-color inherits the ring's, so on a band it is the band's ink, and it fades
+   out with the ring when the ring moves on. The delay is the cue's length (_tourCue, DUR.overlay +
+   DUR.state), so the first one follows the hover tint instead of landing on it; 20.67% is
+   --dur-reveal of the 3s cycle. _tourRingTo sets data-tour-call only while the step's drawer has
+   never been opened (tourDone), and never under reduced motion. */
+[data-tour-call]::before{content:'';position:absolute;inset:0;border-radius:inherit;outline:2px solid;outline-color:inherit;outline-offset:0;opacity:0;pointer-events:none;animation:tour-call-grow calc(2 * var(--dur-pulse)) var(--ease-progress) calc(var(--dur-overlay) + var(--dur-state)) infinite,tour-call-fade calc(2 * var(--dur-pulse)) linear calc(var(--dur-overlay) + var(--dur-state)) infinite}
+@keyframes tour-call-grow{0%{outline-offset:0}20.67%,100%{outline-offset:6px}}
+@keyframes tour-call-fade{0%{opacity:0}3%{opacity:1}20.6%{opacity:1}20.67%,100%{opacity:0}}
 /* REDUCED MOTION: the card stops travelling and the ring stops easing. Neither is decoration that
    can simply be dropped — the card still has to arrive at the right place and the ring still has to
    land on the right box — so what goes is the movement between them, not the states themselves.
@@ -3249,6 +3264,9 @@ html,body{overflow-anchor:none}
 @media (prefers-reduced-motion: reduce){
   [data-tour-card][data-tour-glide]{transition:opacity var(--dur-state) var(--ease-standard)}
   [data-tour-lit]{transition:none}
+  /* The .001ms rule's `*` never reaches a ::before (see the checkbox block), and the attribute is
+     only withheld by _tourRingTo when the preference is set before the step starts. */
+  [data-tour-call]::before{animation:none}
 }
 /* THE GRID'S DOCK (18.09.26, by request): the hint and the close, one pair at the bottom centre, in
    the front page's glass — the landing's quiet act ([data-landing] .glass-cta above): the page's own

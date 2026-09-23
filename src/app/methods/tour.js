@@ -1360,11 +1360,14 @@ export const tourMethods = {
      [data-tour-lit] rule's own --dur-state transition, the attribute taken away only once it has
      faded, since removing it removes the transition with it — and on where it is going, committed
      transparent for one frame and then released to the rule's colour: --on-surface, or on a band
-     the band's own ink. */
-  _tourRingTo(el, ring) {
+     the band's own ink. `call` marks the control the step is waiting for the reader to press, which
+     repeats the ring's arrival until pressed (global.css [data-tour-call]); never under reduced
+     motion, and it leaves with the ring. */
+  _tourRingTo(el, ring, call) {
     const cur = this._tourRingEl || null;
     const want = ring || '';
-    if (cur === el && (!el || el.getAttribute('data-tour-lit') === want)) return;
+    const calls = !!call && !this._reduce;
+    if (cur === el && (!el || (el.getAttribute('data-tour-lit') === want && el.hasAttribute('data-tour-call') === calls))) return;
     if (cur && cur !== el) this._tourRingOff(cur);
     this._tourRingEl = el || null;
     if (!el) return;
@@ -1376,6 +1379,7 @@ export const tourMethods = {
       void el.offsetWidth;
     }
     el.style.outlineColor = '';
+    if (calls) el.setAttribute('data-tour-call', ''); else el.removeAttribute('data-tour-call');
   },
 
   _tourRingOff(el) {
@@ -1385,6 +1389,7 @@ export const tourMethods = {
     el._tourRingT = setTimeout(() => {
       if (this._tourRingEl === el) return;         // re-lit while it was fading
       el.removeAttribute('data-tour-lit');
+      el.removeAttribute('data-tour-call');          // after the fade: its ring inherits the fading colour
       el.style.outlineColor = '';
     }, this._reduce ? 0 : (this.DUR.state * 1000 + 40));
   },
@@ -1419,7 +1424,8 @@ export const tourMethods = {
        drawer swaps, which freeze the solve — and a missing drawer then means the reader shut it.
        The card goes to the control that opens it again, and comes back to the drawer on its own if
        the reader presses it: the step follows the reader instead of stranding them. */
-    if (t.ringEl) this._tourRingTo(t.ringEl, t.ring);
+    // It calls while the step waits on a control the reader has not pressed yet (tourDone).
+    if (t.ringEl) this._tourRingTo(t.ringEl, t.ring, t.waiting && !(this.state.tourDone || {})[step.n]);
     /* A NEW PLACE IS TRAVELLED TO, never cut to — including the moves the reader causes by opening
        or shutting a step's drawer. Under reduced motion the travel is the crossfade _tourMoveReduced
        uses for a step change, for the same reason: a 700px cut is an appearance. */
