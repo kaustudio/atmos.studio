@@ -1,6 +1,7 @@
 // Share-link glue: read an incoming palette out of the URL fragment, and put the current one into
 // a link. The encoding itself lives in lib/share.js; this is the app-state side.
 import { decodeShare, shareUrl } from '../../lib/share.js';
+import { trackEvent } from '../../lib/track.js';
 
 export const shareMethods = {
   // Read at CONSTRUCTION (see the _shared field in PaletteApp), not on mount: a share link should
@@ -46,6 +47,7 @@ export const shareMethods = {
     const url = shareUrl(p);
     if (!url) { this.showNotice('This palette can’t be shared.', { sticky: true }); return; }
     this.copy(url, key || 'pal-share', 'Share link copied to your clipboard.');
+    trackEvent('Palette Shared', { from: key === 'ov-pal-share' ? 'detail' : 'create' });
   },
 
   /* THE SHARE DIALOG STOOD HERE (19.09.26–22.09.26). It opened a sheet with Copy Link, Share via…
@@ -62,6 +64,7 @@ export const shareMethods = {
   saveShared() {
     const p = this.state.current;
     if (!p || !this.state.sharedView) return;
+    trackEvent('Shared Palette Saved');
     const mine = Object.assign({}, p, {
       id: String(Date.now()) + Math.random().toString(36).slice(2, 5),
       time: Date.now(),

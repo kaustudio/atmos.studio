@@ -2,7 +2,7 @@
   <div class="legal-hero__inner">
     <h1>Privacy</h1>
     <p class="legal-hero__sub">Atmos Gallery extracts colours from your images on your device and saves your palettes in your browser. A smaller copy of your image is sent to Anthropic to generate a palette name and description. No account is required.</p>
-    <p class="legal-hero__meta">Last updated: 15 September 2026 · Data controller: KauStudio ApS</p>
+    <p class="legal-hero__meta">Last updated: 23 September 2026 · Data controller: KauStudio ApS</p>
   </div>
 </header>
 
@@ -30,7 +30,7 @@
 
     <h2>Website hosting and analytics</h2>
     <p>Atmos Gallery has no accounts or advertising.</p>
-    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics to measure visits and Speed Insights to understand loading speed and website performance. Neither uses cookies.</p>
+    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics to measure visits and which features are used, and Speed Insights to understand loading speed and website performance. Neither uses cookies.</p>
     <!-- data-consent-open is picked up by docLinkHandler in chrome.jsx and opens the analytics banner.
          Analytics cannot run without JavaScript, so the href has nothing to fall back to. -->
     <p>We use this information to operate and improve the website. Hosting relies on legitimate interests as our legal basis, and analytics on your consent, which you can change at any time in <a href="#analytics" data-consent-open>Privacy settings</a>.</p>
@@ -41,12 +41,16 @@
     <h2 id="analytics">Analytics</h2>
     <p>With your permission, we use Vercel Web Analytics and Speed Insights to understand how often Atmos Gallery is visited and how the site performs.</p>
     <p>These tools may collect information about the page visited, browser and device type, approximate location, visit time and loading performance. They do not set cookies or track you across other websites.</p>
+    <!-- Custom events since 23.09.26 (src/lib/track.js). Each counts a kind of act, with at most two
+         fixed words or counts beside it. A new event that counts a new kind of act is named here in
+         the same commit. -->
+    <p>Web Analytics also counts which features are used, such as creating, exporting or sharing a palette. These counts never include your images, colours or palette names.</p>
     <p>Analytics are disabled until you choose &ldquo;Accept&rdquo;. You can change or withdraw your choice at any time through &ldquo;<a href="#analytics" data-consent-open>Privacy settings</a>&rdquo;.</p>
 
     <h2>How your data is used</h2>
     <p>Atmos Gallery does not require an account. Your palettes are saved in your browser, not on our servers.</p>
     <p>When you choose an image, a smaller copy is sent to Anthropic with the palette&rsquo;s colour values and proportions to generate a name and description.</p>
-    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics and Speed Insights to measure visits and loading performance.</p>
+    <p>Vercel hosts the website and processes technical information such as your IP address and browser details. If you allow it, we also use Vercel Web Analytics and Speed Insights to measure visits, feature use and loading performance.</p>
 
     <h2>Your rights</h2>
     <p>Your rights under data protection law also apply to personal data processed by our service providers on our behalf.</p>

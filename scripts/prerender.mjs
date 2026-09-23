@@ -69,7 +69,7 @@ const ROUTES = {
       name: 'Atmos Gallery | Privacy and Image Processing',
       url: ORIGIN + '/privacy',
       description: 'How Atmos Gallery handles your images, palettes and data.',
-      dateModified: '2026-07-27',
+      dateModified: '2026-09-23',
       inLanguage: 'en',
       publisher: {
         '@type': 'Organization',

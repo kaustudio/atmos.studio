@@ -7,6 +7,37 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — Custom events count which features are used, behind the same consent
+
+**By request: "can we set up custom events on vercel to gain more insights to the analytics", then
+"commit and push".**
+
+- **Fourteen Vercel Web Analytics events,** sent through `src/lib/track.js`:
+  - Palette Created {source, naming} and Palette Failed {reason};
+  - Colour Copied {format, from}, Palette Exported {format, method} and Palette Shared {from};
+  - Shared Palette Opened and Shared Palette Saved;
+  - Added to Project {projects}, Contrast Checked {from} and Harmony Used {action, model};
+  - View Opened {view} and Tour {action, step};
+  - Library Backed Up {palettes} and Library Restored {palettes}.
+- **At most two properties each,** which is the Pro plan's limit. Every property is an enumeration or a
+  count, never a palette's name, its colours, a file name or anything read from an image.
+- **Nothing is called before consent,** and nothing is queued for later either.
+  - The existing beforeSend re-reads consent for every event, and cuts a share link's fragment from
+    the event's url.
+  - The helper never defines `window.va` itself, so no event can be queued ahead of beforeSend.
+- **The privacy page names it.** The Analytics section adds: "Web Analytics also counts which features
+  are used, such as creating, exporting or sharing a palette. These counts never include your images,
+  colours or palette names." Two summary sentences add feature use.
+- **Dates and other copies:**
+  - The privacy page's date moves to 23 September, and so does the prerender's `dateModified`.
+  - README and llms.txt change in the same commit, as the README requires.
+  - The consent banner is unchanged.
+- **Verified against the real Vercel script,** with the payloads captured:
+  - every event arrives with the right name and data;
+  - declined consent sends nothing;
+  - no payload from a share link carries the `#` fragment;
+  - the production build passes.
+
 ## 2026-09-23 — Terms and Privacy stand on the columns as one centred block
 
 **From a grid and UX audit of the live legal pages, by request: "inspect the grid structure on both terms

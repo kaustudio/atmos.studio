@@ -1,6 +1,7 @@
 // Upload → extraction → interpretation → result pipeline, plus the branded processing canvas.
 // Verbatim port of the design comp's logic; interpretLive routes through the pluggable seam.
 import { buildInterpRequest, liveComplete } from '../../lib/interpret.js';
+import { trackEvent } from '../../lib/track.js';
 import { hashBytes } from '../../lib/hash.js';
 
 export const pipelineMethods = {
@@ -16,17 +17,20 @@ export const pipelineMethods = {
   fallbackCopy(text) { try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.top = '-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) { } },
 
   // ================= upload validation + failure =================
-  handleIncoming(file) {
-    if (!file) { this.showError('No file received', 'Try dropping an image again, or browse to pick one.'); return; }
+  // `source` is the door the file came through, 'drop' or 'browse', kept for the Palette Created event.
+  handleIncoming(file, source) {
+    this._incoming = source || 'browse';
+    if (!file) { this.showError('No file received', 'Try dropping an image again, or browse to pick one.', 'no file'); return; }
     if (this.ACCEPT.indexOf(file.type) < 0 && file.type.indexOf('image/') !== 0) {
-      this.showError('That file isn’t an image', 'Upload a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.'); return;
+      this.showError('That file isn’t an image', 'Upload a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.', 'not an image'); return;
     }
     if (file.size > this.MAX_BYTES) {
-      this.showError('That image is too large', 'Files need to be under 20 MB. Try exporting a smaller or compressed version.'); return;
+      this.showError('That image is too large', 'Files need to be under 20 MB. Try exporting a smaller or compressed version.', 'too large'); return;
     }
     this.processFile(file);
   },
-  showError(title, msg) { this._genId = (this._genId || 0) + 1; this.stopCanvas(); if (this._end) clearTimeout(this._end); if (this._t) clearInterval(this._t); this.setState({ stage: 'error', errorTitle: title, errorMsg: msg, pending: null, announce: 'Upload failed. ' + title + '. ' + msg }); },
+  // `reason` is a fixed word per failure for the Palette Failed event, never the message itself.
+  showError(title, msg, reason) { if (reason) trackEvent('Palette Failed', { reason }); this._genId = (this._genId || 0) + 1; this.stopCanvas(); if (this._end) clearTimeout(this._end); if (this._t) clearInterval(this._t); this.setState({ stage: 'error', errorTitle: title, errorMsg: msg, pending: null, announce: 'Upload failed. ' + title + '. ' + msg }); },
 
   // H1: persisted/imported imageUrl must never trigger a remote request. Allow only self-contained
   // data-image URLs (persisted thumbnails) and session blob: URLs (in-memory objects).
@@ -122,7 +126,7 @@ export const pipelineMethods = {
 
   processFile(file) {
     const url = URL.createObjectURL(file); const img = new Image();
-    img.onerror = () => { this.showError('This image could not be loaded', 'The file may be corrupted or in a format the browser can’t decode. Try another image.'); };
+    img.onerror = () => { this.showError('This image could not be loaded', 'The file may be corrupted or in a format the browser can’t decode. Try another image.', 'unreadable'); };
     img.onload = () => {
       this._runPipeline(img, { srcUrl: url });         // keep the full-res object URL alive for crisp in-session display
     };
@@ -133,7 +137,7 @@ export const pipelineMethods = {
     const k = this.props.swatchCount || 5;
     let buf = null;
     try { buf = this._extractBuffer(img); } catch (e) { buf = null; }
-    if (!buf || buf.n < k) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette. Try a photo with more visible tone and detail.'); return; }
+    if (!buf || buf.n < k) { if (opts.srcUrl) { try { URL.revokeObjectURL(opts.srcUrl); } catch (e) { } } this.showError('We couldn’t read enough colour', 'This image didn’t yield a stable palette. Try a photo with more visible tone and detail.', 'too little colour'); return; }
     const hash = buf.hash;
     // RECOGNITION GATE. Now that identity is content-addressed, an image the archive has already
     // read is a fact we can state instead of a duplicate we silently manufacture. Only the buffer and
@@ -229,7 +233,7 @@ export const pipelineMethods = {
       this.commitGenerated(finalPal, job.gen, !interp, errored);
     } catch (e) {
       if (e === CANCEL || stale()) return;
-      this.showError('We couldn’t read this image', 'Something went wrong while reading its colour. Try again, or try another image.');
+      this.showError('We couldn’t read this image', 'Something went wrong while reading its colour. Try again, or try another image.', 'reading failed');
     }
   },
   // Live interpretation over the guaranteed local baseline. Never rejects: a clean "can't attempt"
@@ -301,6 +305,9 @@ export const pipelineMethods = {
     // persists (round-trips through validation) and enables a future "Another reading". The notice below is
     // reserved for genuine failures, so a standalone build never surfaces it on every generation.
     pal.fallback = !!noLive;
+    // naming: 'live' = the model's reading, 'local' = the local composer by design, 'failed' = the live
+    // reading was attempted and did not come back (the one case that also shows the notice below).
+    trackEvent('Palette Created', { source: this._incoming || 'browse', naming: errored ? 'failed' : (noLive ? 'local' : 'live') });
     this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. ' + this.tagsSpoken(pal) + '.' }), () => this.persist({ immediate: true }));
     if (errored) this.showNotice('Named with the local reading. The live reading did not come back.', { sticky: true });
   },

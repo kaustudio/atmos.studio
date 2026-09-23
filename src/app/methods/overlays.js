@@ -3,6 +3,7 @@
 // The same content-addressing the extraction uses, so a harmony saved as a palette gets an id of
 // the same KIND as a generated one rather than a timestamp with a different shape.
 import { hashBytes } from '../../lib/hash.js';
+import { trackEvent } from '../../lib/track.js';
 import { CONTRAST_MIN, CRITERION } from '../../lib/wcag.js';
 import { initPageReveal } from './pageReveal.js';
 
@@ -26,6 +27,7 @@ export const overlayMethods = {
     // deletePalette, and _resetIntroState) so it can never strand.
     if (this._ovOpen) return;
     this._ovOpen = true;
+    trackEvent('View Opened', { view: 'full swatch' });
     this._lastFocus = document.activeElement;
     this._openTileEl = tileEl || null;
     this._ovDone = false; this._ovBack = null;
@@ -443,6 +445,7 @@ export const overlayMethods = {
   contrastPalette() { const s = this.state; return s.overlay || s.current || (s.feed && s.feed[0]) || null; },
   openContrast() {
     const p = this.contrastPalette(); if (!p) return; this._contrastBack = document.activeElement; this._cxDone = false;
+    trackEvent('Contrast Checked', { from: this.state.overlay ? 'detail' : 'create' });
     /* THE ANNOUNCEMENT COUNTS AT THE SELECTED CRITERION, and it was the last place that did not.
        This read contrastSummary(), which counts at a hard-coded 4.5 — right for the palette's AA
        metric, wrong for a panel whose level and text size the reader chooses. Open the drawer with
@@ -1041,6 +1044,7 @@ export const overlayMethods = {
   // ===== per-swatch colour harmonies (OKLCH-derived, gamut-mapped) =====
   openHarmony(hex) {
     this._harmonyBack = document.activeElement; this._hxDone = false;
+    trackEvent('Harmony Used', { action: 'open' });
     this.setState({ harmony: { hex: hex.toUpperCase() }, harmonyModel: 'analogous', harmonyMethodOpen: false, announce: 'Colour harmonies for ' + hex.toUpperCase() + ' opened. Press Escape to close.' }, () => {
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-harmony-dialog]');
@@ -1086,6 +1090,7 @@ export const overlayMethods = {
   useHarmonyAsPalette() {
     const s = this.state;
     if (!s.harmony) return;
+    trackEvent('Harmony Used', { action: 'save', model: s.harmonyModel });
     const groups = this.harmonyGroups(s.harmony.hex);
     const g = groups.find((x) => x.id === s.harmonyModel) || groups[0];
     const hexes = g.cells.map((c) => c.hex);
@@ -1415,6 +1420,7 @@ export const overlayMethods = {
     else if (format === 'css') this.download(fn('css'), this.buildCssFile(pal, entries, semantic), 'text/css;charset=utf-8');
     else if (format === 'ase') this.download('palette_' + slug + '.ase', this.buildASE(entries), 'application/octet-stream');
     this._confirmRow('ex-' + format);
+    trackEvent('Palette Exported', { format, method: 'download' });
   },
   /* THE ROW REPORTS, AND THE SHEET STAYS (22.09.26). A download used to close this dialog while
      Share's Download Image and every copy row kept theirs open and said so on the row — and with Copy
@@ -1445,6 +1451,7 @@ export const overlayMethods = {
     else if (format === 'css') this.download(fn('css'), this.buildCssFileSet(title, groups, semantic), 'text/css;charset=utf-8');
     else if (format === 'ase') this.download('project_' + slug + '.ase', this.buildASESet(groups), 'application/octet-stream');
     this._confirmRow('exp-' + format);
+    trackEvent('Palette Exported', { format, method: 'project' });
   },
   openExport(p) {
     if (!p) return;

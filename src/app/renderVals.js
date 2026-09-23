@@ -1,6 +1,7 @@
 // The view-model: renderVals() computes everything the view renders — a verbatim port of the
 // design comp's renderVals. The JSX view (AppView) consumes this object untouched.
 import React from 'react';
+import { trackEvent } from '../lib/track.js';
 import { UNIVERSE_TILE, UNIVERSE_TILE_INSET } from './universeTile.js';
 import { ROLE_LABEL, semanticRoles } from '../lib/exporters.js';
 import { analysePalette, composeUse } from '../lib/reading.js';
@@ -349,7 +350,7 @@ export const renderValsMethods = {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             value: f.display,
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
-            onCopy: () => this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy),
+            onCopy: () => { this.copy(f.copy, key + '-' + sid, 'Copied ' + f.copy); trackEvent('Colour Copied', { format: key, from: 'create' }); },
             rowStyle: key === 'hsl' ? rowLast : rowBase,
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
@@ -844,7 +845,7 @@ export const renderValsMethods = {
             key, labelText: f.label, caveat: f.caveat, hasCaveat: !!f.caveat, copied, notCopied: !copied,
             value: f.display,
             aria: 'Copy ' + f.label + ' value ' + f.copy + ' for swatch ' + (i + 1) + (f.caveat ? ', ' + f.caveat : ''),
-            onCopy: () => this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy),
+            onCopy: () => { this.copy(f.copy, 'ov-' + key + '-' + i, 'Copied ' + f.copy); trackEvent('Colour Copied', { format: key, from: 'detail' }); },
             rowStyle: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', width: '100%', background: 'transparent', border: 'none', borderTop: '1px solid ' + divCol, padding: '8px 14px', margin: 0, cursor: 'pointer', textAlign: 'left', color: on },
             colStyle: { display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, flex: 1 },
             labelRowStyle: { display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 },
@@ -929,7 +930,7 @@ export const renderValsMethods = {
           badge: c.base ? 'Source' : (c.mapped ? 'Mapped' : ''),
           aria: 'Copy ' + c.hex + (c.base ? ', the source colour' : '')
             + (c.mapped ? ', adjusted to fit sRGB' : ''),
-          onCopy: () => this.copy(c.hex, 'hx-' + active.id + '-' + ci, 'Copied ' + c.hex),
+          onCopy: () => { this.copy(c.hex, 'hx-' + active.id + '-' + ci, 'Copied ' + c.hex); trackEvent('Harmony Used', { action: 'copy', model: active.id }); },
           // The colour on the wrapper, the button transparent over it: data-ix="cell" tints the
           // button's own background from its ink (see the markup in AppView).
           /* A CORNER, LIKE EVERY OTHER COLOUR TILE ON THE SITE (20.09.26, by request: "colour
@@ -976,7 +977,7 @@ export const renderValsMethods = {
         onUse: () => this.useHarmonyAsPalette(),
         // The names open with the visible labels, "Save as Palette" and "Copy Harmony" (SC 2.5.3).
         useAria: 'Save as Palette: the ' + active.name.toLowerCase() + ' harmony becomes a new palette in your library, ' + active.cells.length + ' colours',
-        onCopyAll: () => this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'),
+        onCopyAll: () => { this.copy(active.cells.map((c) => c.hex).join('\n'), 'hx-all', 'Copied all ' + active.cells.length + ' colours as a hex list'); trackEvent('Harmony Used', { action: 'copy all', model: active.id }); },
         // Copy Harmony ⇄ Copied through the text mask (WordSwap in AppView, 23.09.26).
         copyAllDone: s.copied === 'hx-all',
         copyAllAria: 'Copy Harmony: all ' + active.cells.length + ' colours in this harmony, as a hex list',
@@ -1042,8 +1043,8 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
            so the CSS on the clipboard is the CSS in the file (paletteCss, exporters.js). A single
            palette only: a folder's export has no clipboard form. */
         copies: pid ? [] : [
-          { label: 'Hex List', act: 'copy', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list') },
-          { label: 'CSS Custom Properties', ext: 'CSS', act: 'copy', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties') },
+          { label: 'Hex List', act: 'copy', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => { this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); trackEvent('Palette Exported', { format: 'hex', method: 'copy' }); } },
+          { label: 'CSS Custom Properties', ext: 'CSS', act: 'copy', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => { this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties'); trackEvent('Palette Exported', { format: 'css', method: 'copy' }); } },
         ].map((c) => Object.assign(c, { onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' } })),
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · CSS'),
@@ -2044,7 +2045,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // frozen `schema` note in persistence.js).
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
       // _confirmRow: the row says "Backed Up" on Export's timer (see DoneSwap in AppView).
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); this._confirmRow('lib-backup'); },
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); this._confirmRow('lib-backup'); trackEvent('Library Backed Up', { palettes: s.feed.length }); },
       backupDone: s.copied === 'lib-backup',
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
@@ -2232,8 +2233,8 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       overlay, hasOverlay: !!s.overlay, closeOverlay: () => this.closeOverlay(),
       overlayRef: this.overlayRef, overlayBandsRef: this.overlayBandsRef, trapFocus: (e) => this.trapFocus(e),
       onBrowse: () => { this._procFieldIntent(); if (this.fileRef.current) this.fileRef.current.click(); },
-      onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.handleIncoming(f); e.target.value = ''; },
-      onDrop: (e) => { e.preventDefault(); this.setState({ dragOver: false }); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.handleIncoming(f); },
+      onFile: (e) => { const f = e.target.files && e.target.files[0]; if (f) this.handleIncoming(f, 'browse'); e.target.value = ''; },
+      onDrop: (e) => { e.preventDefault(); this.setState({ dragOver: false }); const f = e.dataTransfer.files && e.dataTransfer.files[0]; this.handleIncoming(f, 'drop'); },
       onDragOver: (e) => { e.preventDefault(); if (!this.state.dragOver) { this._procFieldPrefetch(); this.setState({ dragOver: true }); } },
       onDragLeave: (e) => { e.preventDefault(); this.setState({ dragOver: false }); },
       onGridKey: (e) => this.onGridKey(e),

@@ -35,7 +35,8 @@ something only a browser can discover.
   unavailable. Shared links carry the palette in the URL fragment, which browsers never transmit to
   a server.
 - **No cookies.** The site sets none. Measurement is Vercel Web Analytics and Speed Insights, both
-  cookieless and aggregated, and neither runs until a visitor allows it.
+  cookieless and aggregated, and neither runs until a visitor allows it. Web Analytics counts page
+  views and which features are used, never images, colours or palette names.
 - **Colour readings are interpretations, not measurements**, and are not colour-managed. They should
   not be relied on for print production, brand matching or any colour-critical work.
 

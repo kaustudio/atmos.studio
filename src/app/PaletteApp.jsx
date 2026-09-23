@@ -25,6 +25,7 @@ import { tourMethods } from './methods/tour.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP, CREATE_PATH } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
+import { trackEvent } from '../lib/track.js';
 /* THE STORY'S MOTION IS /about's MOTION — the same modules, not a second set.
    src/app/methods/story.js is gone with the surface it drove. Every one of these takes a root, so
    running them over the story's markup is the same code path /about takes, which is the only way two
@@ -449,6 +450,9 @@ export default class PaletteApp extends React.Component {
     if (!window.__pgErrHook) { window.__pgErrHook = true; window.addEventListener('error', (e) => { try { console.error('[pg:onerror]', e.message, e.filename, e.lineno, e.error && e.error.stack); } catch (_) { } }); }
     // one feature's failure must never abort the rest of mount
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
+    // A share link opened here: counted once per visit to it, and only for a recipient who has already
+    // allowed analytics (lib/track.js). Nothing about the palette goes with it.
+    if (this._shared) trackEvent('Shared Palette Opened');
     // THE STAMPS KEEP TIME (19.09.26, audit U6). The Library's Created column and the palette detail
     // read "9m ago" for anything under a day old, and nothing else here re-renders on a clock, so
     // "Just now" would stand for as long as the page stayed still. Once a minute, while a stamp is on

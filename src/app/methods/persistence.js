@@ -1,6 +1,7 @@
 // Persistence (Workstream A): swappable storage adapter over localStorage, versioned schema with
 // migration + validation, cross-tab sync, projects CRUD, and the portable project file.
 import { ROLE_IDS } from '../../lib/exporters.js';
+import { trackEvent } from '../../lib/track.js';
 import { withoutRetired } from '../../lib/taxonomy.js';
 import { shareUrl } from '../../lib/share.js';
 import { buildMasks } from '../../lib/masks.js';
@@ -561,7 +562,7 @@ export const persistenceMethods = {
   },
   // Cancelling is a real outcome, not a dead end: the library is untouched.
   closeRestore() { this._closeRestore(); this.setState({ announce: 'Restore cancelled. Nothing was added to your library.' }); },
-  confirmRestore() { this._closeRestore((pending) => { if (pending) this.mergeProjectFile(pending); }); },
+  confirmRestore() { this._closeRestore((pending) => { if (pending) { this.mergeProjectFile(pending); trackEvent('Library Restored', { palettes: (pending.palettes || []).length }); } }); },
   // Merge, never clobber: dedupe palettes by id; keep both projects if names collide but ids differ.
   // Takes the payload _readProjectFile already produced — validation happened once, before the
   // dialog. The added/addedProj counts are still recomputed HERE rather than reused from the
@@ -1181,6 +1182,7 @@ export const persistenceMethods = {
   confirmAssign() {
     const pal = this.state.assignPalette; if (!pal) return;
     const ids = (this.state.assignPending || []).slice();
+    if (ids.length) trackEvent('Added to Project', { projects: ids.length });
     const names = ids.map((id) => this.projectName(id)).filter(Boolean);
     const msg = names.length
       ? pal.name + ' is in ' + (names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]) + '.'

@@ -5,6 +5,7 @@
 // with a radial-bloom entrance as ONE reversible timeline, plus the feed-view switcher shared with
 // the one fullscreen view left since the 3D reel went. The open card (openTile) is the reference's lightbox on the same loop.
 import { UNIVERSE_TILE, UNIVERSE_OPEN } from '../universeTile.js';
+import { trackEvent } from '../../lib/track.js';
 
 // The field's feel, every knob in one place — the reference's own names and, where the field is
 // the same size, its own figures. Distances in cards are in CELLS here (card + gutter), which is
@@ -30,7 +31,7 @@ export const universeMethods = {
     // back from wherever it has got to — no teardown, no rebuild, no lost click.
     if (v === 'grid' && this.state.gridLeaving) { this._resumeGrid(); return; }
     if (v === this.state.feedView) return;
-    if (v === 'grid') { this._enterGrid(); return; }
+    if (v === 'grid') { trackEvent('View Opened', { view: 'grid' }); this._enterGrid(); return; }
     /* THE FIELD PLAYS ITS OWN EXIT, AND THE LIST IS ALREADY THERE (18.09.26). The rule is unchanged —
        whatever is on screen plays its own exit, and nothing is torn down while it is being looked at
        — but what the exit uncovers is not built in its completion any more. The list stays laid out

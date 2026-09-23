@@ -126,7 +126,8 @@ processors and transfers, retention, rights. It is deliberately short, and it is
 - Palettes live in localStorage only, under `palette-generator/*`. No cookies at all. The Library
   heading's marker says so on screen, and says what ends it.
 - Analytics is Vercel Web Analytics + Speed Insights, both cookieless, and neither runs until the
-  visitor allows it: the answer is read at send time, so declining later stops both at once.
+  visitor allows it: the answer is read at send time, so declining later stops both at once. The
+  custom events (`src/lib/track.js`) sit behind the same gate, and are never called before it opens.
 
 Terms are `src/legal/terms.html`. Both are hand-authored HTML fragments rather than JSX — a clause
 should be reviewable as prose — injected by `src/app/LegalPage.jsx` and shared with
@@ -157,9 +158,13 @@ copy must change in the same commit**:
 3. **"the part after `#` is never sent to a server"** — true of URL fragments by specification.
    Moving share data into a query string (`?p=`) would make it false immediately.
 4. **Analytics** — two Vercel products, both cookieless and aggregated: Web Analytics (page views
-   only) as of `f82dfaa`, and Speed Insights (Core Web Vitals only) as of 2026-07-26. If custom
-   events are ever added, or any other provider, this paragraph must name what is collected **in the
-   same commit** — Speed Insights shipped a day ahead of its disclosure, which is why
+   as of `f82dfaa`, and since 2026-09-23 custom events counting which features are used), and Speed
+   Insights (Core Web Vitals only) as of 2026-07-26. The events are Palette Created, Palette Failed,
+   Colour Copied, Palette Exported, Palette Shared, Shared Palette Opened, Shared Palette Saved,
+   Added to Project, Contrast Checked, Harmony Used, View Opened, Tour, Library Backed Up and
+   Library Restored, each with at most two fixed words or counts beside it, never a palette's name,
+   its colours or anything read from an image. If another event or any other provider is added, this
+   paragraph must name what is collected **in the same commit** — Speed Insights shipped a day ahead of its disclosure, which is why
    `DECISIONS.md` now carries an entry about the sequencing rather than just the decision. The one
    other third-party request the app can make is unchanged: if the vendored GSAP fails to load it
    falls back to `cdn.jsdelivr.net` (`PaletteApp.jsx`).

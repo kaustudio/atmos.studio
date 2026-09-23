@@ -1,4 +1,5 @@
 import { splitLines } from './maskLines.js';
+import { trackEvent } from '../../lib/track.js';
 
 /* ===== THE TOUR — FIVE STOPS OVER A PALETTE THE READER PICKED ================================
 
@@ -241,6 +242,7 @@ export const tourMethods = {
      visit; the masthead's Take a Tour is the way back. */
   skipTourInvite() {
     this._tourRemember();
+    if (!this._tourInviteLeaving) trackEvent('Tour', { action: 'declined' });
     if (this._tourInviteLeaving) return;
     this._tourInviteLeaving = true;
     this.setState({ tourInviteOut: true });
@@ -263,6 +265,7 @@ export const tourMethods = {
      touches the library. */
   takeTour() {
     this._tourRemember();
+    trackEvent('Tour', { action: 'taken' });
     this.setState({ tourDone: {} });
     /* WHERE IT LANDS (21.09.26, by request: "after clicking Take the Tour it becomes unclear to the
        user where the modal lands"). The invitation used to vanish in one frame and the card appear
@@ -322,6 +325,7 @@ export const tourMethods = {
      focuses itself. newPalette is the masthead button's own act; running it here is the same press. */
   tourMakeOwn() {
     if (this._tourBusy || this.state.tourStep !== STEPS.length) return;
+    trackEvent('Tour', { action: 'new palette' });
     this._tourAbandon();
     this.newPalette();
     /* Focus goes where pressing the masthead's New Palette leaves it: on that button. The press was
@@ -1033,7 +1037,9 @@ export const tourMethods = {
 
   // ===== leaving ============================================================================
 
-  skipTour() { this._tourClose('Tour closed.'); },
+  // Which step the reader left from; 0 while the tour was still waiting for a palette to be chosen.
+  _tourLeft() { const t = this.state.tourStep; trackEvent('Tour', { action: 'left', step: typeof t === 'number' ? t : 0 }); },
+  skipTour() { this._tourLeft(); this._tourClose('Tour closed.'); },
 
   /* LEAVING BECAUSE THE SUBJECT LEFT, which is not the same act as skipping.
 
@@ -1065,6 +1071,7 @@ export const tourMethods = {
      now takes the step and its drawer together, in one press, back to the palette. Skip Tour keeps
      its own meaning — close the tour, stay where you are — and leaves an open drawer open. */
   exitTour() {
+    this._tourLeft();
     const step = this._tourStepDef();
     const tourDrawer = !!(step && ((step.view === 'contrast' && this.state.contrast) || (step.view === 'harmony' && this.state.harmony)));
     this._tourClose('Tour closed.', { closeDrawer: tourDrawer });
@@ -1098,7 +1105,7 @@ export const tourMethods = {
      they are standing in the thing they just learned to read, with everything they were shown still
      open to them. No image picker, no congratulation screen, no "what's next" — the last card
      already said what is next, and the interface under it is the answer. */
-  finishTour() { this._tourClose('Tour finished. You are on the palette you chose.'); },
+  finishTour() { trackEvent('Tour', { action: 'finished' }); this._tourClose('Tour finished. You are on the palette you chose.'); },
 
   /* WHERE A KEYBOARD READER IS LEFT WHEN THE TOUR ENDS, and it is not always where it started.
 
