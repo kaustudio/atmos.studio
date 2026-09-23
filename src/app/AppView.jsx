@@ -1462,10 +1462,10 @@ function SkipLink({ target = 'main' }) {
   return <a className="skip-link" href={'#' + target} data-focus="chrome">Skip to Main Content</a>;
 }
 
-/* The site footer, closing the tool and both legal routes — styles from /site-foot.css, which
-   index.html links rather than the bundle importing it, because that file predates this being the
-   only document that draws the footer at all. 404.html used to be the other one and no longer
-   carries a footer. Classes rather than sx() for exactly one reason: the footer needs :hover,
+/* The site footer, closing the tool and both legal routes — styles from src/styles/site-foot.css,
+   which global.css imports. It was a <link> to /public until 23.09.26, when an unhashed copy cached
+   for a day left the landing's legal row in browser defaults. Classes rather than sx() for exactly
+   one reason: the footer needs :hover,
    :focus-visible and a 700px media query, none of which an inline style can express, so the rules
    have to live in a stylesheet whatever we do — and then a second, inline copy of the layout would
    only be something to keep in sync with them.

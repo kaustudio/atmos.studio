@@ -103,12 +103,10 @@
     }
     </script>
 
-    <!-- The site footer, shared verbatim with the legal routes and 404. A plain <link> rather than an
-         import in global.css: 404.html is the last document served straight out of /public without
-         passing through the bundle, and one copy that every entry point reads is the whole point of
-         it being a separate file. It only consumes theme tokens, so it follows :root[data-theme]
-         wherever it is used without knowing which page it is on. -->
-    <link rel="stylesheet" href="/site-foot.css" />
+    <!-- The site footer's stylesheet was linked here from /public until 23.09.26. A public file has no
+         hash, and it was cached for a day, so returning browsers paired new HTML with an old footer:
+         the landing's legal row showed in browser defaults. global.css imports it now, into the
+         hashed chunk linked below. -->
 
     <!-- Vendored motion runtime (same builds the design was authored against).
          The app code reads window.gsap / window.Observer / window.Flip / window.ScrollToPlugin /

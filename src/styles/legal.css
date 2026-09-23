@@ -251,8 +251,8 @@
 .legal-foot__nav{margin:0 0 .5em}
 .legal-foot__nav span{opacity:.5;padding:0 .5em}
 
-/* The site footer used to live here. It is now public/site-foot.css, linked by this page and by the
-   app, because the app cannot load this file — see that file's own note. */
+/* The site footer used to live here. It is now src/styles/site-foot.css, which global.css imports
+   (it was a linked file under /public until 23.09.26) — see that file's own note. */
 
 /* ---------------------------------------------------------------- responsive */
 

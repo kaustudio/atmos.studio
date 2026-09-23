@@ -1,6 +1,12 @@
 /* Atmos Gallery. Global chrome styles, ported verbatim from the design comp helmet.
    Asset URLs remapped to /fonts and /assets. */
 
+/* THE SITE FOOTER, FIRST (23.09.26). It was index.html's <link> to /public/site-foot.css, ahead of
+   this file, and a public file carries no hash: browsers kept a day-old copy under new HTML, and the
+   landing's legal row fell back to browser defaults. Imported here it lands in the hashed chunk, in
+   the same place in the cascade as before. See the file's own note. */
+@import './site-foot.css';
+
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
 @font-face{font-family:'Neue Montreal';src:url('/fonts/NeueMontreal-Medium.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 *{box-sizing:border-box}

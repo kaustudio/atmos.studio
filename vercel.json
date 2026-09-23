@@ -103,7 +103,7 @@
       ]
     },
     {
-      "source": "/(fit-width\\.js|notfound\\.css|site-foot\\.css)",
+      "source": "/(fit-width\\.js|notfound\\.css)",
       "headers": [
         {
           "key": "Cache-Control",

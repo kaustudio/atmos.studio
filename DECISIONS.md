@@ -7,6 +7,30 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-23 — The footer's stylesheet rides in the hashed bundle
+
+**By request: "Footer looks like this on safari and chrome. inspect and adjust".** The landing's legal row
+showed in browser defaults in the user's Safari and Chrome: purple visited links and a grey system button.
+
+- **The cause was a cached file, not the page.**
+  - public/site-foot.css had no hash, and vercel.json cached it for a day (max-age=86400, with a week
+    of stale-while-revalidate). The HTML revalidates on every load.
+  - ecb58a4 (22.09, 18:17) added the .land-legal rules to that file. Browsers that had fetched it
+    earlier kept their old copy under the new page.
+  - Serving that copy on live reproduced the screenshot exactly.
+- **It is src/styles/site-foot.css now, @imported first in global.css.** That is the place in the cascade
+  the <link> gave it: before global's own rules. Importing it in main.tsx would have put it after global
+  in production (global is a chunk shared with the 404 entry) but before it in dev.
+- index.html's <link> is gone, and so is site-foot.css's entry in the vercel.json cache rule.
+- **Verified in Chrome:**
+  - every footer element on the landing (light and dark), /create and /privacy computes identically to
+    live, with no differences across 22 properties each;
+  - nothing requests /site-foot.css any more;
+  - the prerendered documents carry the rules;
+  - the production build passes.
+- notfound.css and fit-width.js, which only the 404 page loads, are still under the same one-day rule.
+  They were left as a separate task.
+
 ## 2026-09-23 — The Full Swatch View's name heads the block under the actions
 
 **From the grid and UX audit of the 23 Sept changes (MEDIUM, composition), by request: "yes show me",
