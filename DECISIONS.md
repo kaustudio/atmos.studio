@@ -7,6 +7,20 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Paste an image to start
+
+**By request:** "build paste". It came from the pass over Coolors and Adobe Color ("Be critical don't
+implement something that doesn't bring value"), which kept this one idea and set the rest aside.
+
+- **Cmd+V reads an image** wherever the tool is waiting for one: the start box, and the error panel that
+  stands in its place. A screenshot, a browser's Copy Image or Figma's Copy as PNG no longer has to be
+  saved to disk first. Coolors answers the same need with a URL field; paste covers it without the
+  server fetching arbitrary addresses.
+- **Everything else is left alone:** text on the clipboard, a palette on screen (a stray paste would
+  replace it), an open layer, the tour, the landing, a phone, and a text field's own paste.
+- **Nothing on screen changes.** The start box's screen-reader name says "Drop or paste", and the
+  Palette Created event's source gains the fixed word `paste`.
+
 ## 2026-09-24 — The field shows a palette's own colours, and mixes them instead of walking the circle
 
 **By request:** "just make sure we meet the correct color representation", after a live test of a shared

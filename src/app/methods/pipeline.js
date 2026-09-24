@@ -17,7 +17,7 @@ export const pipelineMethods = {
   fallbackCopy(text) { try { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.top = '-9999px'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); } catch (e) { } },
 
   // ================= upload validation + failure =================
-  // `source` is the door the file came through, 'drop' or 'browse', kept for the Palette Created event.
+  // `source` is the door the file came through, 'drop', 'browse' or 'paste', kept for the Palette Created event.
   handleIncoming(file, source) {
     this._incoming = source || 'browse';
     if (!file) { this.showError('No file received', 'Try dropping an image again, or browse to pick one.', 'no file'); return; }

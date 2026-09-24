@@ -612,6 +612,29 @@ export default class PaletteApp extends React.Component {
       }
     };
     document.addEventListener('keydown', this._onKey);
+    /* PASTE IS A THIRD DOOR, BESIDE DROP AND BROWSE (24.09.26). An image on the clipboard (a screenshot,
+       a browser's Copy Image, Figma's Copy as PNG) used to have to be saved to disk first. A field
+       keeps its own paste, and a clipboard holding only text is left alone, since that paste was never
+       meant for the tool. A file that is not an image still goes in, so it meets the same "isn't an
+       image" answer a drop gets. See _pasteReady for where it is taken. */
+    this._onPaste = (e) => {
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (!this._pasteReady() || !e.clipboardData) return;
+      let file = null;
+      const items = e.clipboardData.items ? Array.from(e.clipboardData.items) : [];
+      for (const it of items) {
+        if (it.kind !== 'file') continue;
+        const f = it.getAsFile(); if (!f) continue;
+        if (/^image\//.test(f.type)) { file = f; break; }
+        if (!file) file = f;
+      }
+      if (!file && e.clipboardData.files && e.clipboardData.files.length) file = e.clipboardData.files[0];
+      if (!file) return;
+      e.preventDefault();
+      this.handleIncoming(file, 'paste');
+    };
+    document.addEventListener('paste', this._onPaste);
     // input-modality tracking: keyboard sets the flag, pointer clears it — centerOnTile is gated on it
     // The same fact is mirrored onto the root as data-kbd, which is the only way CSS can know it:
     // the text field's focus ring hangs off it (global.css), so a click leaves the field alone and a
@@ -973,6 +996,16 @@ export default class PaletteApp extends React.Component {
     if (s.feedView === 'grid') n++;
     if (s.tourStep === 'invite') n++;
     return n;
+  }
+  /* WHERE A PASTED IMAGE IS TAKEN (24.09.26, by request: "build paste"). Only where the tool is waiting
+     for one, which is where a dropped one is taken: the start box, and the error panel that stands in
+     its place. Not over a palette, which a stray Cmd+V would replace; not while one is being read; not
+     behind a layer, the landing or a document; and not on a phone, where the tool is not on the page. */
+  _pasteReady() {
+    const s = this.state;
+    if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
+    if (s.stage !== 'upload' && s.stage !== 'error') return false;
+    return this._frontLayers() === 0 && s.tourStep == null;
   }
   // Every entry this app pushes carries when it was made, so a pop can tell Back from Forward.
   _histStamp() { this._histT = Math.max(Date.now(), (this._histT || 0) + 1); return this._histT; }
@@ -1346,6 +1379,7 @@ export default class PaletteApp extends React.Component {
     if (this._t) clearInterval(this._t);
     if (this._end) clearTimeout(this._end);
     if (this._onKey) document.removeEventListener('keydown', this._onKey);
+    if (this._onPaste) document.removeEventListener('paste', this._onPaste);
     if (this._uRetryT) clearTimeout(this._uRetryT);
     if (this._objUrls) { this._objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) { } }); this._objUrls = []; }
     if (this._storageHandler) window.removeEventListener('storage', this._storageHandler);
