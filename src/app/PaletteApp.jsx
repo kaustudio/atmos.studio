@@ -608,10 +608,22 @@ export default class PaletteApp extends React.Component {
       loadSeq([vendor + 'gsap.min.js', vendor + 'Observer.min.js', vendor + 'Flip.min.js', vendor + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
+      /* CMD+Z UNDOES WHILE THE UNDO TOAST IS UP (24.09.26, by request). The toast's button was the only
+         way back from a delete or a rename, and every app answers Cmd+Z. A text field keeps its own. */
+      if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (this._undoRun(this.state).length) { e.preventDefault(); this.undoDelete(); }
+        return;
+      }
       if (e.key === 'Escape') {
         // THE LADDER IS _closeFront (23.09.26): the browser's Back walks the same one, so the two always
         // shut the same surface. Only the stage below it is Escape's alone.
         if (this._closeFront(false)) { e.preventDefault(); return; }
+        /* ESCAPE STOPS A READING (24.09.26, by request), as New Palette and Back already do. A pasted
+           image is not on screen until it has been pasted, and a wrong one would otherwise become a
+           palette in the Library, to be deleted. */
+        if (this.state.stage === 'processing') { e.preventDefault(); this.doReset({ announce: 'Stopped reading. Ready for a new reference image.' }); return; }
         // Close rather than reset: a palette opened from a row goes back to that row (pipeline.js
         // closeResult); one with no row behind it resets exactly as before.
         if (this.state.stage === 'result') { e.preventDefault(); this.closeResult(); }
@@ -638,7 +650,8 @@ export default class PaletteApp extends React.Component {
       if (!file && e.clipboardData.files && e.clipboardData.files.length) file = e.clipboardData.files[0];
       if (!file) return;
       e.preventDefault();
-      this.handleIncoming(file, 'paste');
+      if (this.state.stage === 'result') this.pasteOverPalette(file);
+      else this.handleIncoming(file, 'paste');
     };
     document.addEventListener('paste', this._onPaste);
     // input-modality tracking: keyboard sets the flag, pointer clears it — centerOnTile is gated on it
@@ -890,6 +903,8 @@ export default class PaletteApp extends React.Component {
   _historyView() {
     const s = this.state;
     if (isDoc(s.route) || s.sharedView) return null;
+    // The dropzone a paste over a palette passes through is not a place (pipeline.js pasteOverPalette).
+    if (this._histSkipStart) return null;
     if (this._mobileStory()) return { story: s.storyCaseId || null };
     if (s.narrow || this._landingUp()) return null;
     if (s.stage === 'result' && s.current && s.current.id) return { palette: s.current.id };
@@ -1003,14 +1018,18 @@ export default class PaletteApp extends React.Component {
     if (s.tourStep === 'invite') n++;
     return n;
   }
-  /* WHERE A PASTED IMAGE IS TAKEN (24.09.26, by request: "build paste"). Only where the tool is waiting
-     for one, which is where a dropped one is taken: the start box, and the error panel that stands in
-     its place. Not over a palette, which a stray Cmd+V would replace; not while one is being read; not
-     behind a layer, the landing or a document; and not on a phone, where the tool is not on the page. */
+  /* WHERE A PASTED IMAGE IS TAKEN (24.09.26, by request: "build paste"). Where the tool is waiting for
+     one, which is where a dropped one is taken: the start box, and the error panel that stands in its
+     place. And, later the same day, over a palette (pipeline.js pasteOverPalette): it was kept off one
+     so a stray Cmd+V could not replace it, but a palette is in the Library from the moment it is read,
+     so the next image loses nothing. Not over a shared palette, which is not in the Library until it
+     is saved; not while one is being read; not behind a layer, the tour, the landing or a document;
+     and not on a phone, where the tool is not on the page. */
   _pasteReady() {
     const s = this.state;
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
-    if (s.stage !== 'upload' && s.stage !== 'error') return false;
+    const over = s.stage === 'result' && !s.sharedView;
+    if (s.stage !== 'upload' && s.stage !== 'error' && !over) return false;
     return this._frontLayers() === 0 && s.tourStep == null;
   }
   // Every entry this app pushes carries when it was made, so a pop can tell Back from Forward.

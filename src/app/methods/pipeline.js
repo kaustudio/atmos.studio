@@ -790,6 +790,22 @@ export const pipelineMethods = {
     }
     if (window.scrollY > 1) this._glideToY(0);
   },
+  /* CMD+V OVER A PALETTE (24.09.26, by request): New Palette and the paste as one act, the same sink
+     and then the reading. The palette on screen went into the Library the moment it was read
+     (commitGenerated), so leaving it loses nothing. The dropzone it passes through keeps no history
+     entry (_histSkipStart, read by PaletteApp _historyView), so Back returns to the palette the new one
+     replaced, not to an empty start. Only an image: a stray file of another kind is no reason to take a
+     palette off the screen. Held by New Palette's own lock, so a press and a paste cannot both reset. */
+  pasteOverPalette(file) {
+    if (this._npLock || !file || !/^image\//.test(file.type || '')) return;
+    this._npLock = true;
+    clearTimeout(this._npLockT);
+    const free = () => { this._npLock = false; clearTimeout(this._npLockT); };
+    this._npLockT = setTimeout(free, this.DUR.reveal * 1000 + 260);
+    this._histSkipStart = true;
+    this.doReset({ announce: 'Generating palette from your image.', after: () => { this._histSkipStart = false; free(); this.handleIncoming(file, 'paste'); } });
+    if (window.scrollY > 1) this._glideToY(0);
+  },
   /* CLOSE, as distinct from New palette — reached by Escape in the result stage (PaletteApp). A
      masthead close mark stood beside New palette for a day and was removed by request. A palette
      opened from a library row leaves by the same exit New palette runs (doReset's sink and the

@@ -7,6 +7,22 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Three keys: paste over a palette, Cmd+Z, and Escape during a reading
+
+**By request:** "build and commit and push", after these three were proposed as the commands worth adding
+("And are there any other helpful commands that would optimize the workflow").
+
+- **Cmd+V over a palette reads the next image**, through New Palette's own exit. This supersedes one
+  clause of the paste entry below ("a palette on screen"): a palette is in the Library from the moment it
+  is read, so the next image loses nothing. The dropzone it passes through keeps no history entry, so
+  Back returns to the palette it replaced. Not over a shared palette that has not been saved.
+- **Cmd+Z undoes while the Undo toast is up**: a delete or a rename, the same run the toast's button
+  restores. A text field keeps its own Cmd+Z.
+- **Escape stops a reading**, as New Palette and Back already did. A pasted image is not on screen until
+  it has been pasted, and a wrong one would otherwise become a palette to delete.
+- **No copy for any of them.** They are conventions people bring. Single-letter keys, Cmd+C on a tile,
+  Cmd+S or Cmd+E, and a shortcut overlay were considered and left out.
+
 ## 2026-09-24 — Paste an image to start
 
 **By request:** "build paste". It came from the pass over Coolors and Adobe Color ("Be critical don't
