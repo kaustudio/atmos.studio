@@ -1262,10 +1262,10 @@ export const persistenceMethods = {
   },
   writePayload(payload) {
     const store = this._store();
-    if (!store.available) return;
+    if (!store.available) { this._storageNotKept(payload); return; }
     const attempt = (pl) => { let str; try { str = JSON.stringify(pl); } catch (e) { return { ok: false }; } return store.save(str); };
     let res = attempt(payload);
-    if (res && res.ok) return;
+    if (res && res.ok) { this._storageKeep(payload); return; }
     // quota: drop reference thumbnails from the OLDEST palettes (tail) inward, keeping palette data
     const feed = payload.feed.map((p) => Object.assign({}, p));
     let dropped = 0;
@@ -1274,5 +1274,69 @@ export const persistenceMethods = {
     }
     if (!res || !res.ok) { this.setState({ announce: 'Storage is full. Some palettes could not be saved, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full. Back up to keep your palettes safe.', { sticky: true }); } }
     else if (dropped > 0) { this.setState({ announce: 'Storage is nearly full. Older reference images were dropped to keep your palettes, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space. Back up to keep everything.'); } }
+  },
+
+  /* WHERE THE LIBRARY LIVES, SAID WHERE IT MATTERS (24.09.26, UX audit, by request). The Library is
+     this browser's local storage and nothing else: no account, no server copy (/privacy, /terms). Only
+     those two pages said so, and the storage marker that said it beside the heading went on 17.09.26,
+     leaving a browser that keeps nothing (blocked site data, some private windows) as a failure
+     nothing announced: the save returned here without a word and the palettes were gone on reload.
+     Now the heading carries one line (AppView, the Library's heading row), the result says a palette
+     is saved or is not (renderVals, `saved`), and the three pieces below do the rest.
+
+     A palette of the visitor's own: not one of the eight examples the Library opens with. */
+  _ownPalettes(feed) { return (feed || []).filter((p) => p && p.example !== true && !p.exampleKey).length; },
+  storageKept() { return !!this._store().available; },
+
+  // A BROWSER THAT KEEPS NOTHING IS SAID ONCE, the first time there is something of the visitor's own
+  // to lose, as the error-class notice it is: sticky, with Back Up in it, because the only copy that
+  // can outlive the tab is a file.
+  _storageNotKept(payload) {
+    if (this._storageWarned || !this._ownPalettes(payload && payload.feed)) return;
+    this._storageWarned = true;
+    this.showNotice('This browser isn’t keeping your palettes. Back Up saves a copy before you leave.', { sticky: true, action: 'backup' });
+  },
+
+  /* THE BROWSER IS ASKED TO KEEP IT. Without navigator.storage.persist() the Library is best-effort
+     storage, which a browser short of space may clear without asking. Asked once a visit, after the
+     first palette of the visitor's own is written, the moment there is something worth keeping.
+     Chromium answers silently from how the site is used; Firefox asks the visitor; Safari decides by
+     its own rules. Nothing here depends on the answer. */
+  _storageKeep(payload) {
+    if (this._persistAsked || !this._ownPalettes(payload && payload.feed)) return;
+    this._persistAsked = true;
+    try {
+      const sm = navigator.storage;
+      if (!sm || !sm.persist) return;
+      (sm.persisted ? sm.persisted() : Promise.resolve(false)).then((on) => (on ? null : sm.persist())).catch(() => { });
+    } catch (e) { }
+  },
+
+  /* BACK UP IS OFFERED WHEN THERE IS SOMETHING TO LOSE. It is the twelfth of thirteen rows in Manage,
+     which is where it belongs and where nobody looks for it before they need it, which is after the
+     loss. The third palette a visitor makes is the moment it earns a sentence: offered once, never
+     after a Back Up, and never over a notice already saying something (a reading that did not come
+     back outranks it, and the offer waits for the next palette). A notice with an act in it does not
+     time out, the toast's rule, so it stays until it is answered or dismissed. */
+  _offerBackUp() {
+    if (!this._store().available || this.state.notice) return;
+    let done = true;
+    try { done = localStorage.getItem('palette-generator/backup-offered') === '1' || !!localStorage.getItem('palette-generator/backed-up'); } catch (e) { }
+    if (done || this._ownPalettes(this.state.feed) < 3) return;
+    try { localStorage.setItem('palette-generator/backup-offered', '1'); } catch (e) { }
+    clearTimeout(this._backupOfferT);
+    // A beat after the palette, so the offer arrives once the result has.
+    this._backupOfferT = setTimeout(() => {
+      this._backupOfferT = null;
+      if (this._alive === false || this.state.notice) return;
+      this.showNotice('Your palettes live in this browser only. Back Up keeps a copy.', { sticky: true, action: 'backup' });
+    }, 1200);
+  },
+
+  // Back Up, from Manage, a notice or the search: the file, the event, and the fact, so the offer never repeats.
+  backUpLibrary(from) {
+    this.saveProjectFile('library');
+    try { localStorage.setItem('palette-generator/backed-up', String(Date.now())); } catch (e) { }
+    trackEvent('Library Backed Up', { palettes: this.state.feed.length, from: /^(notice|search)$/.test(from) ? from : 'manage' });
   },
 };

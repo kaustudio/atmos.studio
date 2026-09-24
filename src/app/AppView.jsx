@@ -145,6 +145,10 @@ const IconCopy = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 
 // uppercase labels it sits in. The decorative <path d="M0 0h24v24H0z" fill="none"/> from the source
 // SVG is dropped: it is a transparent 24x24 spacer, and the viewBox already establishes that box.
 const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"></path></svg>);
+// The grid of four, for the search's Grid View act (24.09.26): the toggle it stands for is words only.
+const IconGrid = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M3 3v8h8V3zm6 6H5V5h4zm-6 4v8h8v-8zm6 6H5v-4h4zm4-16v8h8V3zm6 6h-4V5h4zm-6 4v8h8v-8zm6 6h-4v-4h4z"></path></svg>);
+// The lens, for Search (24.09.26): the same 24-unit set as the marks around it, drawn at 12 beside the word.
+const IconSearch = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"></path></svg>);
 /* THE HARMONY GLYPH, by request (17.09.26): a disc inside a broken ring, the colour and the colours
    around it. Replaced the two overlapping circles. */
 const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m13.76 4.19l.44-1.95c-1.45-.33-3-.32-4.45.01l.45 1.95a8.1 8.1 0 0 1 3.56-.01M20 12c0 1.21-.27 2.38-.79 3.47l1.8.87c.66-1.36.99-2.82.99-4.37h-.2zm-18 .02c0 1.52.34 2.98 1 4.33l1.8-.87a7.96 7.96 0 0 1-.8-3.47H2Zm11.79 7.78l.45 1.95c1.45-.33 2.84-1 4.01-1.93L17 18.26c-.93.75-2.04 1.28-3.2 1.55ZM7 5.76L5.75 4.2c-1.17.94-2.12 2.14-2.77 3.48l1.8.87a8.2 8.2 0 0 1 2.21-2.79Zm11.21-1.6l-1.24 1.57c.94.74 1.71 1.7 2.23 2.78l1.8-.88a10 10 0 0 0-2.79-3.46ZM5.78 19.83c1.17.93 2.56 1.6 4.01 1.93l.44-1.95a8 8 0 0 1-3.21-1.54l-1.25 1.56ZM12 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12"></path></svg>);
@@ -1874,10 +1878,12 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    its only other multi-row floating panel already takes; the acts inside stay pills, as the dock's
    rows do.
 
-   ACCEPT IS THE FILLED TIER, DECLINE THE OUTLINED ONE, by request: primary is --on-surface ink, the
-   system's black, and it inverts on the dark theme as every other filled action does. Decline keeps
-   the full outlined button rather than shrinking to a link, so saying no stays one press of the same
-   size as saying yes.
+   THE TWO ANSWERS LOOK ALIKE (24.09.26, UX audit, by request; this replaces "Accept is the filled
+   tier, Decline the outlined one"). Accept filled beside an outlined Decline weighted the one question
+   the site asks for itself toward its own side. Both answers are the same outlined button, the same
+   size, one press, as GOV.UK's cookie banner sets its two. The fill now means one thing here: the
+   answer that stands. Reopened, the chosen answer is the filled one, the way List and Grid show the
+   view that is on; before any answer, neither is.
 
    Reopened with analytics on, Accept takes the check the Copied state uses — a glyph beside the word,
    holding still while the word swaps. Only Accept: a tick beside Decline read as approving the
@@ -1890,7 +1896,8 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    are in global.css (.consent .button[data-emphasis]). The label rows are 16px, one line of 13. */
 const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
 /* No check mark on Accept when the banner is reopened (17.09.26, by request): the pressed state
-   (aria-pressed, and the filled button) already says which answer stands. */
+   (aria-pressed, and the filled button) already says which answer stands. Since 24.09.26 that holds
+   for Decline too: the filled button is whichever answer was given. */
 export function ConsentBanner({ vals }) {
   const choice = vals.consentChoice;
   const act = (value, label, aria, emphasis, onClick) => (
@@ -1913,8 +1920,8 @@ export function ConsentBanner({ vals }) {
           — rename the two together. */}
       <div className="consent__row">
         <div className="consent__acts">
-          {act('granted', 'Accept', 'Accept analytics', 'primary', vals.allowAnalytics)}
-          {act('denied', 'Decline', 'Decline analytics', 'secondary', vals.declineAnalytics)}
+          {act('granted', 'Accept', 'Accept analytics', choice === 'granted' ? 'primary' : 'secondary', vals.allowAnalytics)}
+          {act('denied', 'Decline', 'Decline analytics', choice === 'denied' ? 'primary' : 'secondary', vals.declineAnalytics)}
         </div>
         {/* Outlined like Decline, by request, and still a link: it goes somewhere rather than deciding
             anything, so it is an <a> with a real address drawn as the secondary tier. */}
@@ -2717,7 +2724,8 @@ export default function AppView({ vals }) {
                 <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface)")}>Shared with you</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
                   {/* THE BANNER'S PAIR (17.09.26, audit A8, by request): set like the analytics
-                      banner's buttons, Save to Library filled as Accept is there. The strip is fully
+                      banner's buttons, Save to Library filled, the one filled control on a shared
+                      palette (the action row's Export steps back for it, 24.09.26). The strip is fully
                       round, and its padding follows the pill: the text clears the curve, the buttons
                       sit 10px in from it.
                       THEIR NAMES ARE THEIR WORDS (24.09.26, audit): each is called what it says, and
@@ -2772,16 +2780,18 @@ export default function AppView({ vals }) {
             {/* data-tour="actions" — not an anchor, a thing to keep clear of. Step 1's card would
                 otherwise land across this row (see `clear` in methods/tour.js). */}
             <div data-voice="banner" data-tour="actions" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
-              {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
-                  gives: first in the sequence and available, organise then validate then output.
-                  It held the second tier here only because one creative act stood ahead of it, and
-                  that act is not in the row at the moment. Still exactly ONE filled control, per
-                  the two-tier rule.
+              {/* THE FILL IS ON EXPORT (24.09.26, UX audit, by request: "fill what makes sense by von
+                  restorff"). The one filled control is where the eye lands first, so it marks the step
+                  most people take next, and after a palette that is taking its colours out: the first
+                  events counted Export and Share twice each, Check Contrast once, Add to Projects
+                  never. Filing held the fill because it leads the row (organise, then validate, then
+                  output); it keeps its place at the front, outlined. Still exactly ONE filled control,
+                  per the two-tier rule, and on a shared palette that one is Save to Library in the
+                  strip above, so Export steps back to the outlined tier there.
 
-                  filing changes the archive, so it stays on the committing side of the hairline.
-                  Disabled while the palette is only in the URL — a shared palette has no record to
-                  file until it is saved, and the strip above already offers that. */}
-              <Button data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(vals.assignLabel)} />
+                  Filing is disabled while the palette is only in the URL — a shared palette has no
+                  record to file until it is saved, and the strip above already offers that. */}
+              <Button data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(vals.assignLabel)} />
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
@@ -2799,7 +2809,7 @@ export default function AppView({ vals }) {
                 {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
                     and the one its card falls back to if the reader dismisses the drawer themselves. */}
                 <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-                <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+                <Button data-tour="export" data-emphasis={vals.isSharedView ? 'secondary' : 'primary'} onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2843,11 +2853,21 @@ export default function AppView({ vals }) {
                     rather than as a rule elsewhere: this chip declares its whole appearance inline,
                     and splitting one property out into the stylesheet is how a corner and its edge
                     end up maintained in two places. */}
-                {vals.result.hasTraits && (
+                {/* SAVED, SAID AT THE END OF THE ROW (24.09.26, UX audit, by request). The traits' row
+                    ends on where the palette is kept: a check and "Saved to your Library" in the muted
+                    voice, after a gap wider than the chips' own, so it reads as a fact about the palette
+                    rather than a fourth trait. Where the browser keeps nothing it is the ink and says
+                    so. The row now stands when there is either to show. */}
+                {(vals.result.hasTraits || vals.result.saved) && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                   {vals.result.traits.map((d, di) => (
                     <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); border-radius: var(--radius-pill)')}>{d}</span>
                   ))}
+                  {vals.result.saved && (
+                    <span data-saved-line={vals.result.saved.ok ? '1' : '0'} style={sx('display:inline-flex;align-items:center;gap:6px;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:' + (vals.result.saved.ok ? 'var(--on-surface-muted)' : 'var(--on-surface)') + (vals.result.hasTraits ? ';margin-inline-start:8px' : ''))}>
+                      {vals.result.saved.ok && <IconCheck size={12} />}{vals.result.saved.text}
+                    </span>
+                  )}
                 </div>
                 )}
                 {/* WHAT THE PALETTE IS FOR, IN THE SLOT THE READING HELD. The reading stood here —
@@ -3017,6 +3037,7 @@ export default function AppView({ vals }) {
           also the reading order a screen reader meets: the thing, then the note about the thing. */}
       <TourInvite vals={vals} />
       <TourGuide vals={vals} />
+      <SearchDialog vals={vals} />
 
       <MessageLane vals={vals} />
 
@@ -3114,11 +3135,31 @@ function FeedSection({ vals }) {
           interface — persist() still fails silently — so the failure is now unannounced.
           Its unread state went on 17.09.26 (audit H3), and so did the toggletip component the
           empty states briefly used (audit H5, by request): putting the marker back is a rebuild. */}
+      {/* ONE LINE IN ITS PLACE (24.09.26, UX audit, by request: "proceed"). Not the marker back: a
+          sentence, always visible, in the heading row's own muted voice, saying where the Library is
+          kept and where the copy comes from, in the words the Manage panel uses. It takes the ink
+          when the browser keeps nothing, which is the warning the marker's ! used to carry, and the
+          notice raised at the first palette says it again with Back Up in it (persistence.js
+          _storageNotKept). Wraps under the title on a narrow row rather than pushing the controls. */}
+      <p data-storage-line="1" data-kept={vals.storageKept ? '1' : '0'} style={sx("margin:0;flex:0 1 auto;min-width:0;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);text-wrap:pretty;color:" + (vals.storageKept ? 'var(--on-surface-muted)' : 'var(--on-surface)'))}>{vals.storageLine}</p>
       {/* THE DOOR AND THE SWITCH, AT THE FAR EDGE, 8px APART (19.09.26, by request: "move the list
           button to the right next to the list/grid toggle with the same gap"). The pair carries
           margin-inline-start:auto; the toggle used to carry it alone. */}
       {vals.showProjectsBar && (
         <div style={sx('display:flex;align-items:center;gap:8px;margin-inline-start:auto')}>
+          {/* SEARCH, AND ITS KEY (24.09.26, UX audit, by request: "Add a Command+K search we know from
+              react tools"). The Library had no way to find one palette but paging and scanning. ⌘K
+              (Ctrl+K off a Mac) opens the search anywhere in the tool, as it does in the tools people
+              already use it in; this button is the same door for a pointer, and it prints the key so
+              the shortcut is learned by seeing it rather than by being told. Set as the Manage door
+              beside it: outlined, 35.5px, 13px Medium, the word in Title Case. The key is a hint,
+              aria-hidden, since aria-keyshortcuts states it to assistive technology. */}
+          {vals.search.can && (
+            <button type="button" data-search-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-keyshortcuts={vals.search.keys} disabled={vals.search.disabled} onClick={vals.search.openFromButton} title={'Search the Library (' + vals.search.keyHint + ')'} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 8px 0 12px;height:35.5px')}>
+              <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconSearch size={12} />Search</span></TextSwap>
+              <kbd aria-hidden="true" data-kbd="1">{vals.search.keyHint}</kbd>
+            </button>
+          )}
           {/* THE ONE DOOR INTO THE LIBRARY PANEL. It replaced two controls: Manage Projects ended the
               old scope rail and Filter began the row under it.
 
@@ -3870,15 +3911,16 @@ function DetailOverlay({ vals }) {
       {/* The same row as the result view's, deliberately: same order, same division, same weights. A
           palette opened fullscreen from the archive must not re-teach the user a different set of
           controls. Filing leads because it leaves something behind; the pair after it only reads the
-          palette back to you, Contrast first because inspecting comes before copying. Share closes the
+          palette back to you, Contrast first because inspecting comes before copying. Export carries
+          the fill, as it does there (24.09.26). Share closes the
           row at the far end behind the same flexible gap: a share link is sealed from the palette
           itself, so any palette has one. */}
       <footer data-ochrome="1" style={sx('display:flex;flex-direction:column;padding:18px var(--page-gutter) 24px;flex:none')}>
         <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-          <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
+          <Button data-emphasis="secondary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
             <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-            <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+            <Button data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
             <Button data-emphasis="secondary" onClick={overlay.onShare} aria-label={overlay.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(overlay.shareCopied)} />
@@ -5000,7 +5042,7 @@ function NoticeLayer({ vals }) {
               keep their five seconds but hold while hovered or focused, so looking at a notice is enough
               to keep it. role follows the kind: alert for the ones that stay, status for the ones that pass. */}
           {vals.hasNotice && (
-            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('display:flex;align-items:center;gap:9px;border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:8px;padding-inline-start:16px;max-width:340px;pointer-events:auto')}>
+            <div data-notice="1" role={vals.noticeRole} onMouseEnter={vals.holdNotice} onMouseLeave={vals.releaseNotice} onFocus={vals.holdNotice} onBlur={vals.releaseNotice} style={sx('display:flex;align-items:center;gap:9px;border-radius:var(--radius-pill);color:var(--on-surface-muted);padding:8px;padding-inline-start:16px;max-width:' + (vals.noticeAction ? '480px' : '340px') + ';pointer-events:auto')}>
               {/* The leading dot went on 17.09.26, by request (audit C9). It was a bullet with no
                   meaning to lose: aria-hidden, no state, no variants. */}
               {/* THE SAME TYPE AS THE TOAST'S LABEL, which is the bar this one is a quieter copy of.
@@ -5015,6 +5057,15 @@ function NoticeLayer({ vals }) {
                   source for flat tracking; .01em beside it was the same drift as the six .06em sites
                   still outstanding elsewhere. */}
               <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
+              {/* THE ONE ACT A NOTICE CAN CARRY (24.09.26): Back Up, where the notice is about keeping
+                  the Library (persistence.js _storageNotKept, _offerBackUp). A worded outlined button in
+                  the banner's voice, not a glyph like the toast's Undo: a download mark alone would not
+                  say what it downloads. Before the Dismiss, the answer the sentence asks for first. */}
+              {vals.noticeAction && (
+                <span data-voice="banner" style={sx('display:inline-flex;flex:none;margin-inline-start:6px')}>
+                  <Button data-emphasis="secondary" data-notice-act="1" onClick={vals.noticeAction.run} aria-label={vals.noticeAction.aria} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>{vals.noticeAction.label}</ButtonText></span>} />
+                </span>
+              )}
               {/* THE WAY OUT. An error-class notice no longer expires (see showNotice), so it needs one;
                   a timed one gets the same control because hover and focus hold it, and a held notice
                   is one the reader has decided to deal with. Same 28px disc the toast’s Dismiss uses. */}
@@ -5095,7 +5146,15 @@ function RestoreDialog({ vals }) {
    --radius-surface, the header's h2 beside the app's one close mark, the body line at --fs-body,
    and the pair in the footer's banner voice with the outlined answer first. It is opened twice in
    the app's life — once by Create on a first visit, and again by Take a Tour in the masthead — and
-   it is the same dialog both times, because it is the same offer.
+   it is the same card both times, because it is the same offer.
+
+   DOCKED ON THE FIRST VISIT (24.09.26, UX audit, by request). The offer Create makes no longer takes
+   the screen: it stands where the analytics banner stands, bottom right at the page gutter, at the
+   guidance card's 124, with no scrim, no aria-modal and no trap, beside a start box that stays live
+   (tour.js openTourInvite). A region named by its heading, as the banner is. Both answers are
+   outlined there: an offer beside the page does not outweigh the start box's + it stands beside,
+   which is what that screen is for. Opened from the footer, where the visitor asked for it, it is
+   still the dialog described above.
 
    THE GUIDANCE CARD IS NOT A DIALOG, and the difference is the whole design. A dialog takes the
    screen: backdrop, aria-modal, a focus trap, nothing else reachable. This card stands BESIDE the
@@ -5112,13 +5171,16 @@ function RestoreDialog({ vals }) {
 function TourInvite({ vals }) {
   if (!vals.tour || vals.tour.stage !== 'invite') return null;
   const t = vals.tour;
+  const docked = !!t.docked;
   return (
     /* STILL MOUNTED WHILE IT LEAVES. `leaving` keeps this rendered for the length of _dialogOut, so
        the invitation can fade and drop on the dialogs' own exit while the card rises out of its
        centre — one object handing over to the next rather than one vanishing and another appearing
        somewhere else. It takes no presses while it goes. */
-    <div style={{ ...sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px'), pointerEvents: t.leaving ? 'none' : undefined }}>
-      <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+    <div data-tour-docked={docked ? '1' : undefined} style={{ ...sx(docked
+      ? 'position:fixed;right:var(--page-gutter);bottom:calc(var(--page-gutter) + env(safe-area-inset-bottom, 0px));z-index:124;width:min(380px, calc(100vw - 2 * var(--page-gutter)))'
+      : 'position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px'), pointerEvents: t.leaving ? 'none' : undefined }}>
+      {!docked && <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>}
       {/* GLASS, LIKE THE ANALYTICS BANNER (20.09.26, by request: "modal should be in the same glass
           design as cookie banner"). It shipped for one round as the solid dialog plate — --surface,
           --line-strong, --shadow-surface — which is the recipe for the five dialogs that act ON
@@ -5130,7 +5192,9 @@ function TourInvite({ vals }) {
           pane is the heaviest thing on it), --radius-surface passed to the pane through
           border-radius:inherit, and NO SHADOW — glass reads from its fill, and a shadow under it is
           a smudge seen through the glass. The .tour-invite block in global.css carries the rest. */}
-      <div className="tour-invite" data-tour-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-labelledby="tour-invite-title" onKeyDown={t.onInviteKey} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)')}>
+      <div className="tour-invite" data-tour-dialog="1" data-lenis-prevent="1" {...(docked ? { role: 'region' } : { role: 'dialog', 'aria-modal': 'true' })} aria-labelledby="tour-invite-title" onKeyDown={t.onInviteKey} style={sx(docked
+        ? 'position:relative;width:100%;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)'
+        : 'position:relative;width:420px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)')}>
         <GlassEffect />
         <header style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           {/* No eyebrow, for Already Extracted's reason: a label over this line would say what the
@@ -5157,11 +5221,91 @@ function TourInvite({ vals }) {
             the inconsistency the one-policy rule exists to stop. */}
         <div data-voice="banner" style={sx('padding:18px var(--page-gutter) 22px;margin-top:10px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px')}>
           <Button data-emphasis="secondary" onClick={t.onSkipInvite} aria-label="Skip the tour and stay in the overview" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Skip for Now</ButtonText></span>} />
-          <Button data-tour-take="1" data-emphasis="primary" onClick={t.onTake} aria-label="Take the tour of an example palette" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Take the Tour</ButtonText></span>} />
+          <Button data-tour-take="1" data-emphasis={docked ? 'secondary' : 'primary'} onClick={t.onTake} aria-label="Take the tour of an example palette" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Take the Tour</ButtonText></span>} />
         </div>
       </div>
     </div>
   );
+}
+
+/* ⌘K, THE LIBRARY'S SEARCH (24.09.26, UX audit, by request: "Add a Command+K search we know from react
+   tools"). What it finds and what a pick does are methods/search.js; this is the frame.
+
+   THE COMMAND MENU THOSE TOOLS SHARE, IN THIS SYSTEM'S MATERIALS. Opened high rather than centred
+   (14vh down), so the list grows toward the reader instead of the field jumping as results change;
+   one field; groups under quiet heads; the lit row follows the arrows and the pointer; the keys that
+   work printed at the foot. The frame is the dialogs' own, the solid plate of the ones that act on
+   something (Export, Add to Projects, Restore): --surface on --line-strong at --radius-surface with
+   --shadow-surface, z-126 over the 55% scrim and its 6px blur, entering and leaving on _dialogIn and
+   _dialogOut. The lit row is a stadium, the stage's shape for anything pressable; each palette leads
+   with its own colours at their shares, the Library row's strip at a third of its width.
+
+   THE ARIA IS THE COMBOBOX PATTERN. Focus never leaves the field: it is role=combobox, it owns the
+   listbox through aria-controls, and aria-activedescendant names the lit option, which is how a
+   screen reader follows the arrows while the caret stays put. The groups are role=group labelled by
+   their heads; the heads and the key hints are aria-hidden, since the pattern already speaks them. An
+   empty result is said through the app's live region (methods/search.js). */
+function SearchDialog({ vals }) {
+  const q = vals.search;
+  if (!q || !q.open) return null;
+  const kbd = sx("display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:6px;font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1;letter-spacing:var(--track-flat);color:var(--on-surface-muted)");
+  return (
+    <div style={{ ...sx('position:fixed;inset:0;z-index:126;display:flex;justify-content:center;align-items:flex-start;padding:14vh 24px 24px'), pointerEvents: q.leaving ? 'none' : undefined }}>
+      <div data-modal-backdrop="1" onClick={q.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-search-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Search the Library" onKeyDown={q.onKey} style={sx('position:relative;width:600px;max-width:100%;max-height:72vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);overflow:hidden')}>
+        <div style={sx('display:flex;align-items:center;gap:12px;height:60px;padding:0 18px 0 22px;border-bottom:1px solid var(--line);flex:none')}>
+          <span aria-hidden="true" style={sx('display:inline-flex;color:var(--on-surface-muted)')}><IconSearch size={16} /></span>
+          <input ref={q.inputRef} type="text" role="combobox" aria-expanded="true" aria-controls="search-list" aria-autocomplete="list" aria-activedescendant={q.activeId} aria-label="Search palettes and actions"
+            placeholder="Search palettes by name, colour or hex" value={q.query} onChange={q.onInput} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-search-input="1"
+            style={sx("flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;font-family:'Neue Montreal';font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+          <kbd aria-hidden="true" style={kbd}>Esc</kbd>
+        </div>
+        <div id="search-list" role="listbox" aria-label="Results" style={sx('flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:8px')}>
+          {q.groups.map((g) => (
+            <div key={g.key} role="group" aria-labelledby={'search-g-' + g.key} style={sx('padding-bottom:4px')}>
+              <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 6px;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>
+              {g.items.map((it) => (
+                <div key={it.key} id={it.id} role="option" aria-selected={it.active} data-search-opt="1" onMouseMove={it.onHover} onClick={it.onPick}
+                  style={sx('display:flex;align-items:center;gap:14px;min-height:48px;padding:6px 14px;box-sizing:border-box;border-radius:var(--radius-pill);cursor:pointer;background:' + (it.active ? 'color-mix(in srgb, var(--on-surface) 7%, transparent)' : 'transparent'))}>
+                  {it.kind === 'palette'
+                    ? (<span aria-hidden="true" style={sx('display:flex;flex:none;width:72px;height:22px;border-radius:var(--radius-swatch);overflow:hidden')}>
+                        {it.strip.map((c, ci) => (<span key={ci} style={{ flex: (c.w > 0 ? c.w : 0.0001) + ' 1 0', background: c.hex }}></span>))}
+                      </span>)
+                    : (<span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;flex:none;width:72px;color:var(--on-surface-muted)')}><SearchActIcon name={it.icon} /></span>)}
+                  <span style={sx('display:flex;flex-direction:column;gap:2px;min-width:0;flex:1')}>
+                    <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{it.name}</span>
+                    {it.sub && <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{it.sub}</span>}
+                  </span>
+                  {it.active && <kbd aria-hidden="true" style={kbd}>↵</kbd>}
+                </div>
+              ))}
+            </div>
+          ))}
+          {q.empty && (
+            <div style={sx('padding:28px 14px 30px;text-align:center')}>
+              <p style={sx("margin:0;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;color:var(--on-surface)")}>Nothing matches “{q.query}”</p>
+              <p style={sx("margin:6px 0 0;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>Try a name, a word like warm, or a hex like #C8A27A.</p>
+            </div>
+          )}
+        </div>
+        <div aria-hidden="true" style={sx("display:flex;align-items:center;gap:18px;padding:12px 22px;border-top:1px solid var(--line);flex:none;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>
+          <span style={sx('display:inline-flex;align-items:center;gap:6px')}><kbd style={kbd}>↑</kbd><kbd style={kbd}>↓</kbd>Move</span>
+          <span style={sx('display:inline-flex;align-items:center;gap:6px')}><kbd style={kbd}>↵</kbd>Open</span>
+          <span style={sx('display:inline-flex;align-items:center;gap:6px')}><kbd style={kbd}>Esc</kbd>Close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+// The acts' marks, from the set the buttons that do the same things already wear.
+function SearchActIcon({ name }) {
+  if (name === 'plus') return <IconPlus size={14} />;
+  if (name === 'export') return <IconExport size={14} />;
+  if (name === 'import') return <IconImport size={14} />;
+  if (name === 'contrast') return <IconContrast size={14} />;
+  if (name === 'list') return <IconList size={14} />;
+  if (name === 'grid') return <IconGrid size={14} />;
+  return <IconChevronRight size={14} />;
 }
 
 function TourGuide({ vals }) {

@@ -22,6 +22,7 @@ import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { tourMethods } from './methods/tour.js';
+import { searchMethods } from './methods/search.js';
 import { whereMethods } from './methods/where.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP, CREATE_PATH } from './routes.js';
@@ -151,6 +152,8 @@ export default class PaletteApp extends React.Component {
   progRef = React.createRef();
   gridRef = React.createRef();
   projectFileRef = React.createRef();
+  // The ⌘K search's field (methods/search.js), focused when the menu opens.
+  searchInputRef = React.createRef();
   contrastBtnRef = React.createRef();
   overlayRef = React.createRef();
   overlayBandsRef = React.createRef();
@@ -237,6 +240,10 @@ export default class PaletteApp extends React.Component {
     tourStep: null,
     // The invitation stays mounted while it leaves, so its exit can play (TourInvite in AppView).
     tourInviteOut: false,
+    // The first visit's invitation stands beside the page rather than over it (tour.js openTourInvite).
+    tourInviteDocked: false,
+    // ⌘K (methods/search.js): whether the menu is up or leaving, what is typed, and which row is lit.
+    searchOpen: false, searchOut: false, searchQuery: '', searchActive: 0,
     // Which drawer steps the reader has done in this run (their drawer opened) — Next waits on it.
     tourDone: {},
     // Whether the current drawer step's drawer is open, as the card's copy shows it ('shut' | 'open').
@@ -245,7 +252,7 @@ export default class PaletteApp extends React.Component {
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
-    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, notice: null,
+    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, notice: null, noticeAction: null,
     /* THE SCAFFOLD IS ON UNTIL YOU TURN IT OFF (24.09.26, the Adobe assessment's MEDIUM, by request: "implement
        the medium finding"). It was off on every visit, so a first export named the colours 01 to 05, which
        is what any palette tool gives, and the roles (atmos's clearest lead) waited behind a switch in a
@@ -257,8 +264,9 @@ export default class PaletteApp extends React.Component {
     consent: readConsent(), consentOpen: false,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A document route arrives past them for a different reason: there is no tool on it to introduce.
+    // A typed /create passes the loader too (24.09.26): it is someone asking for the tool by name.
     landingDismissed: (this._shared || isDoc(this._entryRoute) || this._entryCreate) ? true : this._landingDismissed(),
-    showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
+    showLoader: (this._shared || isDoc(this._entryRoute) || this._entryCreate) ? false : this._loaderPending(),
     /* WHICH OF THE EIGHT THE LANDING FIELD IS A READING OF — a MIRROR, not the source of truth.
        methods/orbit.js holds the answer on the instance (`_fieldPalId`), because the ramp is baked
        synchronously inside initOrbit and a value that only exists after a commit would be a frame
@@ -277,7 +285,15 @@ export default class PaletteApp extends React.Component {
   };
 
   _genId = 0;
-  MAX_BYTES = 20 * 1024 * 1024;
+  /* THE LIMIT IS ON PIXELS, NOT BYTES (24.09.26, UX audit, by request). Files over 20 MB were refused,
+     though the colours are read from a 72 × 72 copy of the picture: a full-size camera JPEG or a large
+     PNG export had to be shrunk in another app first. What a big file really costs is decoding it, and
+     that follows its pixels, so the ceiling is on pixels (checked before anything is drawn,
+     pipeline.js processFile) and set past any camera: a 102MP medium-format frame reads. A picture
+     larger than DISPLAY_EDGE on its long edge is shown from a copy drawn down to it
+     (pipeline.js _displayCopy); the reading still takes the original. */
+  MAX_MP = 150;
+  DISPLAY_EDGE = 4096;
   ACCEPT = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif'];
 
   // ---- THE LANDING FIELD. ORB_LIGHT, ORB_GL_MAX, ORB_RING_GAP_MUL, ORB_MIN_GAP_MUL and
@@ -455,19 +471,19 @@ export default class PaletteApp extends React.Component {
      this says so. */
   _landingUp() { return !isDoc(this.state.route) && (!this.state.landingDismissed || this.state.narrow); }
   _landingLit() { return this._landingUp() && !this._mobileShare(); }
-  // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
-  // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is
-  // the ARRIVAL, and a returning visitor arrives just as much as a first-time one; keying it to the
-  // landing meant the people who use the tool most were the only ones who never saw it.
-  //
-  // sessionStorage, not localStorage: 'first visit of this session' is precisely what a session
-  // store means, and it clears itself with the tab, so there is no permanent flag to go stale.
-  //
-  // The flag is burned when the run FINISHES (loader done()), never here at mount — that was the
-  // real objection to a one-shot flag, and it survives: a run cut short by a reload replays instead
-  // of being swallowed. done() is reachable from every teardown path, watchdogs included, so the
-  // flag cannot fail to burn either.
-  _loaderSeen() { try { return sessionStorage.getItem('palette-generator/loader-session') === '1'; } catch (e) { return false; } }
+  /* ONCE IN THIS BROWSER, NOT ONCE PER SESSION (24.09.26, UX audit, by request). It was keyed to
+     sessionStorage on the reasoning that a returning visitor arrives as much as a first-time one, so
+     every new tab replayed it: 3.4s on a 120Hz display, 4.3s on 60Hz (loader.js), in front of a page
+     that was ready in a fraction of that, paid on every visit by the people who use the tool most.
+     The loader introduces the site; it does that once. A visit that did not open on it (a share
+     link, a document, a typed /create) counts as having arrived, so it never plays later either
+     (loader.js _initLoader). A click or a key ends a run early.
+
+     The flag is still burned when the run FINISHES (loader done()), never at mount for a run that
+     plays: a run cut short by a reload replays instead of being swallowed. done() is reachable from
+     every teardown path, watchdogs included, so the flag cannot fail to burn either. index.html reads
+     the same key to paint the loader's ground before the script runs. */
+  _loaderSeen() { try { return localStorage.getItem('palette-generator/loader-seen') === '1'; } catch (e) { return false; } }
   _loaderPending() { return !this._loaderSeen(); }
 
   componentDidMount() {
@@ -615,6 +631,16 @@ export default class PaletteApp extends React.Component {
       loadSeq([vendor + 'gsap.min.js', vendor + 'Observer.min.js', vendor + 'Flip.min.js', vendor + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
+      /* ⌘K OPENS THE SEARCH (24.09.26, by request), Ctrl+K off a Mac, from anywhere in the tool: the
+         convention of the tools it was asked to follow (methods/search.js). Not from inside a text
+         field, whose keys are its own; the search's own field closes it again (searchKey). */
+      if (this._isSearchKey(e)) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        if (this.state.searchOpen) { e.preventDefault(); this.closeSearch(); return; }
+        if (this.openSearch('shortcut')) e.preventDefault();
+        return;
+      }
       /* CMD+Z UNDOES WHILE THE UNDO TOAST IS UP (24.09.26, by request). The toast's button was the only
          way back from a delete or a rename, and every app answers Cmd+Z. A text field keeps its own.
          One change a press, newest first (undoLast, overlays.js), where it used to take the whole run. */
@@ -786,7 +812,7 @@ export default class PaletteApp extends React.Component {
     // the library panel now, and that panel is deliberately non-modal — the library stays visible
     // and operable behind it. Nothing here regressed; a member of this set left the app.
     const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony);
+      || s.exportOpen || s.contrast || s.harmony || s.searchOpen);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
@@ -862,6 +888,8 @@ export default class PaletteApp extends React.Component {
        'choose' is deliberately exempt: it is the one stop that belongs to the library, and it is
        waiting for exactly this stage. */
     if (s.stage !== 'result' && typeof s.tourStep === 'number') this._tourAbandon();
+    // The docked offer is answered by starting: an image arriving, a palette opening, a layer opened.
+    if (s.tourStep === 'invite' && s.tourInviteDocked && (s.stage !== 'upload' || this._frontLayers() > 0)) this._tourInviteStepAside();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
     this._prev = { stage: s.stage, curId: curId };
     if (enteredResult) {
@@ -970,6 +998,8 @@ export default class PaletteApp extends React.Component {
        makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
        opens centred on the case already being read, so choosing that one is a no-op exit. */
     if (s.storyPicker) { this.closeStoryPicker(); return true; }
+    // The search is opened over everything it allows to be open (methods/search.js), so it is in front.
+    if (s.searchOpen) { this.closeSearch(); return true; }
     if (s.recognised) { this.closeRecognised(); return true; }
     // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
     // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
@@ -1019,6 +1049,8 @@ export default class PaletteApp extends React.Component {
        onKey in _tourView. The invitation is a dialog and answers for itself the same way.)
        Ahead of closeResult for the same reason it is behind the drawers: the palette is the
        thing the tour is standing on, so the tour leaves before the thing it stands on does. */
+    // The docked invitation is answered here the way its own Skip for Now answers it.
+    if (s.tourStep === 'invite') { this.skipTourInvite(); return true; }
     if (s.tourStep != null) { this.skipTour(); return true; }
     return false;
   }
@@ -1042,7 +1074,9 @@ export default class PaletteApp extends React.Component {
     if (s.overlay) n++;
     if (s.uOpen != null) n++;
     if (s.feedView === 'grid') n++;
-    if (s.tourStep === 'invite') n++;
+    // The docked invitation is beside the page, not over it: no entry of its own (tour.js).
+    if (s.tourStep === 'invite' && !s.tourInviteDocked) n++;
+    if (s.searchOpen) n++;
     return n;
   }
   /* WHERE A PASTED IMAGE IS TAKEN (24.09.26, by request: "build paste"). Where the tool is waiting for
@@ -1058,7 +1092,7 @@ export default class PaletteApp extends React.Component {
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
     const over = s.stage === 'result' && (!s.sharedView || !!overShared);
     if (s.stage !== 'upload' && s.stage !== 'error' && !over) return false;
-    return this._frontLayers() === 0 && s.tourStep == null;
+    return this._frontLayers() === 0 && (s.tourStep == null || (s.tourStep === 'invite' && !!s.tourInviteDocked));
   }
   // Every entry this app pushes carries when it was made, so a pop can tell Back from Forward.
   _histStamp() { this._histT = Math.max(Date.now(), (this._histT || 0) + 1); return this._histT; }
@@ -1542,6 +1576,7 @@ Object.assign(
   miscMethods,
   consentMethods,
   tourMethods,
+  searchMethods,
   whereMethods,
   renderValsMethods,
 );

@@ -150,6 +150,46 @@ const MEAS_CHIPS = (self, s, focusBack) => {
 };
 
 export const renderValsMethods = {
+  /* THE SEARCH MENU'S VALUES. The flat order is the order the arrows walk and the ids the field's
+     aria-activedescendant names, so both come from the same pass over the groups. */
+  _searchVals() {
+    const s = this.state;
+    const keys = this.searchKeys();
+    const base = { can: (s.feed || []).length > 0, disabled: !s.searchOpen && !this._searchAvailable(), keys: keys.aria, keyHint: keys.hint, openFromButton: () => this.openSearch('button') };
+    if (!s.searchOpen) return Object.assign(base, { open: false });
+    const groups = this.searchItems();
+    const flat = [];
+    groups.forEach((g) => g.items.forEach((it) => flat.push(it)));
+    const at = flat.length ? Math.min(s.searchActive, flat.length - 1) : -1;
+    let n = 0;
+    const viewGroups = groups.map((g) => ({
+      key: g.key, label: g.label,
+      items: g.items.map((it) => {
+        const i = n++;
+        const row = { key: it.key, id: 'search-opt-' + i, active: i === at, kind: it.kind,
+          // Pointer MOVE, not enter: a list scrolling under a still pointer must not take the row.
+          onHover: () => { if (this.state.searchActive !== i) this.setState({ searchActive: i }); },
+          onPick: () => this.searchPick(it) };
+        if (it.kind === 'palette') {
+          const p = it.p;
+          const sub = this.paletteTags(p).slice();
+          if (p.example === true) sub.push('Example');
+          const proj = this.palProjects(p).map((id) => this.projectName(id)).filter(Boolean);
+          if (proj.length) sub.push(proj.join(', '));
+          return Object.assign(row, { name: p.name, sub: sub.join(' · '), strip: (p.swatches || []).map((sw) => ({ hex: sw.hex, w: +sw.weight || 0 })) });
+        }
+        return Object.assign(row, { name: it.a.label, icon: it.a.icon });
+      }),
+    }));
+    return Object.assign(base, {
+      open: true, leaving: !!s.searchOut, query: s.searchQuery, inputRef: this.searchInputRef,
+      groups: viewGroups, empty: !flat.length, activeId: at >= 0 ? 'search-opt-' + at : undefined,
+      onInput: (e) => this.setState({ searchQuery: e.target.value, searchActive: 0 }, () => this._searchAnnounce()),
+      onKey: (e) => this.searchKey(e, flat),
+      onClose: () => this.closeSearch(),
+    });
+  },
+
   /* THE HARMONY BUTTON IS A BARE GLYPH, LIKE THE LIBRARY ROW'S FOLDER AND BIN (17.09.26, audit A1,
      fourth round, by request): no edge and no fill at rest, the glyph in the swatch's own AA ink
      (`on`, onColor(): black on a light swatch, white on a dark one), and on hover the row icons'
@@ -571,6 +611,12 @@ export const renderValsMethods = {
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
         useLine,
         traits: allTraits, hasTraits: allTraits.length > 0,
+        /* WHERE THIS PALETTE IS KEPT (24.09.26, UX audit, by request): the reading's end, beside the
+           traits. A palette is saved the moment it is read, and this is where the page says so; a
+           shared one is not in the Library until Save to Library, so it says nothing (the strip above
+           does), and where the browser keeps nothing it says that instead. */
+        saved: (s.sharedView || !(s.feed || []).some((p) => p && p.id === s.current.id)) ? null
+          : (this.storageKept() ? { ok: true, text: 'Saved to your Library' } : { ok: false, text: 'Not saved: this browser isn’t keeping palettes' }),
       };
     }
     // SHARE IS ONE PRESS (22.09.26, by request: "What are we actively solving here? … we messing up the
@@ -2180,7 +2226,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // frozen `schema` note in persistence.js).
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
       // _confirmRow: the row says "Backed Up" on Export's timer (see DoneSwap in AppView).
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); this._confirmRow('lib-backup'); trackEvent('Library Backed Up', { palettes: s.feed.length }); },
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.backUpLibrary('manage'); this._confirmRow('lib-backup'); },
       backupDone: s.copied === 'lib-backup',
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
@@ -2485,6 +2531,20 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',
+      // The one act a notice can carry (showNotice `action`): Back Up, from the offer or the warning.
+      noticeAction: s.noticeAction === 'backup' ? {
+        label: 'Back Up', aria: 'Back up your whole library to a file',
+        run: () => { this.backUpLibrary('notice'); this._dismissNotice(); this.setState({ announce: 'Library backed up to a file.' }); },
+      } : null,
+      // ⌘K (methods/search.js): the Library heading's door to it, and the menu while it is up.
+      search: this._searchVals(),
+      /* THE LIBRARY'S ONE LINE ABOUT ITSELF (24.09.26, UX audit, by request), beside its heading: where
+         it is kept and where the copy comes from. Not the storage marker that stood there until
+         17.09.26 (a toggletip, removed by request); a line of text, always visible, that changes when
+         the browser keeps nothing. */
+      storageKept: this.storageKept(),
+      storageLine: this.storageKept() ? 'Saved in this browser only. To keep a copy, use Back Up in Manage.'
+        : 'This browser isn’t keeping your palettes. Back up from Manage before you leave.',
       // alert for a notice that stays until dismissed, status for one that passes — see showNotice
       noticeRole: s.noticeSticky ? 'alert' : 'status',
       dismissNotice: () => this._dismissNotice(), holdNotice: () => this._holdNotice(), releaseNotice: () => this._releaseNotice(),

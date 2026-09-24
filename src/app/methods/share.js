@@ -79,10 +79,13 @@ export const shareMethods = {
       projectId: (this.state.activeProjects || [])[0] || null,
       projectIds: (this.state.activeProjects || []).slice(),
     });
+    // Where the browser keeps nothing, the save is for this visit only and says so (24.09.26): the
+    // sticky notice persist() raises there is the message, not a "Saved" that would outlive the tab.
+    const kept = this.storageKept();
     this.setState((st) => ({
       feed: [mine, ...st.feed], current: mine, sharedView: false,
-      announce: 'Saved ' + mine.name + ' to your Library.',
-    }), () => { this.persist({ immediate: true }); this._clearShareHash(); this.showNotice('Saved to your Library.'); });
+      announce: kept ? 'Saved ' + mine.name + ' to your Library.' : 'Added ' + mine.name + ' to your Library for this visit only. This browser isn’t keeping palettes.',
+    }), () => { this.persist({ immediate: true }); this._clearShareHash(); if (kept) this.showNotice('Saved to your Library.'); });
   },
 
   // "Make your own" — drop the shared palette and land on the dropzone.

@@ -7,6 +7,51 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — ⌘K finds a palette, the Library says where it is kept, and the first visit is not held up
+
+**From the UX audit** (better-ux, standalone), every finding, by request:
+
+- **The Library says where it is kept.** It is this browser's storage and nothing else, and only /privacy
+  and /terms said so. The heading carries one line: "Saved in this browser only. To keep a copy, use Back
+  Up in Manage." It is text, always visible, not the storage marker that went on 17.09 (a toggletip).
+  Where the browser keeps nothing (blocked site data), a save used to return without a word. Now the line
+  says so in the ink, the first palette raises a sticky notice with Back Up in it, the result says "Not
+  saved", and a saved shared palette no longer claims "Saved". The first palette of one's own asks the
+  browser to keep the Library (`navigator.storage.persist()`: Chromium answers silently, Firefox asks).
+  The third one offers Back Up once, in a notice that holds the button. It is never offered after a Back
+  Up. Library Backed Up now counts where it was pressed.
+- **A new palette says it is saved.** "Saved to your Library" ends the traits row, and the announcement
+  says "generated and saved". A shared palette says nothing until Save to Library.
+- **The tour offer stands beside the page.** On the first Create it was a modal: the start box sat under
+  its scrim until it was answered, and the analytics question came next. It now stands where the banner
+  does, with no scrim, no focus move and both answers outlined. It steps aside once an image arrives or a
+  palette opens, and that counts as an answer. Escape answers it. Take a Tour in the footer still opens
+  the dialog. The banner still waits for it, one question at a time.
+- **The loader plays once in this browser.** It replayed in every new tab (sessionStorage, the "once per
+  session" of 19.09), 3.4 to 4.3 s in front of a page that was ready far sooner. A localStorage flag now,
+  and a first visit that did not open on it (a share link, a document, a typed /create) counts as
+  arrived; /create skips it. A click or a key sends it to its own exit at twice the pace. The page takes
+  clicks as soon as the fold starts to lift, where it held them to the end (12 s where frames came
+  slowly). index.html's pre-paint reads the same flag; its CSP hash in vercel.json is updated with it.
+- **Big pictures read.** The 20 MB cap is gone: the colours come from a 72 × 72 copy. The ceiling is 150
+  megapixels, read from the picture's size before anything is drawn. A picture over 4096 px on its long
+  edge is shown from a copy drawn down to that; the reading still takes the original, so a palette reads
+  the same at any size.
+- **Export carries the fill** (by request: "fill what makes sense by von restorff"). The one filled act
+  under a palette was Add to Projects, the step taken least (the first events: Export and Share twice
+  each, Check Contrast once, Add to Projects never). Export now, on the stage and in the Full Swatch View.
+  On a shared palette the fill stays with Save to Library alone.
+- **Accept and Decline look alike.** Accept was filled beside an outlined Decline (by request, 17.09).
+  Both are outlined now, as GOV.UK sets its two. Reopened, the answer that stands is the filled one.
+- **⌘K searches the Library** (by request: "Add a Command+K search we know from react tools"). Ctrl+K off
+  a Mac, and a Search door beside Manage that prints the key. It finds palettes by name, their Warm or
+  Balanced words, Character, project, "example" and hex; every word typed must match; with nothing typed
+  it opens on the newest. Return opens a palette as its row does, so Close goes back to the row. It runs
+  a few acts by name too (New Palette, Export, Check Contrast, Back Up, Restore, Grid or List, the theme,
+  Take a Tour), and an act whose name starts with what is typed comes first. The combobox pattern:
+  focus stays in the field, aria-activedescendant follows the arrows. "Search Opened" is counted, never
+  what is typed, and /privacy now says searching is counted.
+
 ## 2026-09-24 — Controls are called what they say, a swatch is one Tab stop, Cmd+Z undoes one change
 
 **From the interface audit** of the 23–24.09 changes (better-interface, full mode), all six findings:

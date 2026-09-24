@@ -1,4 +1,5 @@
-// Logo-reveal page loader: first-ever visit only, before the Get Started landing.
+// Logo-reveal page loader: first-ever visit only (a localStorage flag since 24.09.26), before the Get
+// Started landing, and a click or a key ends it.
 // A PHASE MACHINE — HIDDEN → ENTRANCE → FILLING → EXIT → GONE. One owner, one clock.
 // Real load progress is buffered as DATA; it becomes motion only while phase === FILLING.
 //
@@ -50,12 +51,16 @@ export const loaderMethods = {
     // index.html painted the loader's ground before the script arrived; the loader (or, when it is not
     // playing, the page) is mounted now, so the stand-in goes. See the note beside it in index.html.
     try { document.documentElement.removeAttribute('data-load-pre'); } catch (e) { }
-    if (!this.state.showLoader) return;
+    const burn = () => { try { localStorage.setItem('palette-generator/loader-seen', '1'); } catch (e) { } };
+    // A first visit that did not open on the loader (a share link, a document route, a typed /create)
+    // has arrived all the same, so the loader does not wait for a later visit to introduce the site.
+    if (!this.state.showLoader) { burn(); return; }
     const done = () => {
-      // Burn the session flag HERE, at the end of the run, not at mount: an intro cut short by a
+      // Burn the flag HERE, at the end of the run, not at mount: an intro cut short by a
       // reload should replay rather than be swallowed by a flag it never got to earn. Every
       // teardown path lands here, watchdogs included, so it cannot fail to burn.
-      try { sessionStorage.setItem('palette-generator/loader-session', '1'); } catch (e) { }
+      burn();
+      if (this._loaderSkipOff) { this._loaderSkipOff(); this._loaderSkipOff = null; }
       if (this._loaderT1) { clearTimeout(this._loaderT1); this._loaderT1 = null; }
       if (this._loaderT2) { clearTimeout(this._loaderT2); this._loaderT2 = null; }
       this._loaderRescue = null;
@@ -122,6 +127,10 @@ export const loaderMethods = {
       const render = () => { if (phase !== 'FILLING') return; const pct = Math.round(shown * 100); if (num) num.textContent = String(pct); g.set(bar, { scaleX: shown }); };
       const beginExit = () => {
         if (phase !== 'FILLING') return; phase = 'EXIT';
+        // THE PAGE TAKES CLICKS AS SOON AS THE COVER STARTS TO LIFT (24.09.26, UX audit). The layer
+        // held pointer events until done(), so wherever frames came slowly the page showed through a
+        // lifted fold and ignored every click on it until the run was over, 12s at worst (FLOOR_MS).
+        try { wrap.style.pointerEvents = 'none'; } catch (e) { }
         if (this._loaderFill) { try { g.ticker.remove(this._loaderFill); } catch (e) { } this._loaderFill = null; }
         num && (num.textContent = '100'); g.set(bar, { scaleX: 1 });
         this._parkStoryHero();   // the phone's story hero, drawn under the cover until now (pageReveal.js parkHero)
@@ -169,6 +178,7 @@ export const loaderMethods = {
         };
         g.ticker.add(loop); this._loaderFill = loop;
       };
+      let entranceTl = null;
       const enter = () => {
         if (phase !== 'HIDDEN') return; phase = 'ENTRANCE';
         g.set(bar, { scaleX: 0 }); if (num) num.textContent = '0';   // bar frozen, number frozen at 0 — fill is forbidden here
@@ -176,6 +186,7 @@ export const loaderMethods = {
         // re-express the offset as yPercent, which the entrance and exit tweens actually drive.
         g.set([logo, num], { y: 0, yPercent: 110 });
         const tl = g.timeline({ delay: this.DUR.state });
+        entranceTl = tl;
         tl.to(logo, { yPercent: 0, duration: this.DUR.overlay, ease: this.EASE.entrance }, 0);      // wordmark rises bottom → centre of its mask
         tl.to(num, { yPercent: 0, duration: this.DUR.overlay, ease: this.EASE.entrance }, this.DUR.fast);    // progress follows
         tl.call(startFill, null, this.DUR.swap);                                          // bar begins just after the progress rise has started
@@ -196,6 +207,24 @@ export const loaderMethods = {
         // just be a longer stall than the cut it replaces.
         return phase === 'FILLING' && lastTick > 0 && (nowMs() - lastTick) < 600;
       };
+      /* A CLICK OR A KEY ENDS IT (24.09.26, UX audit, by request). Whatever the run is doing, it goes
+         straight to its own exit at twice the pace: the number takes its 100, the wordmark leaves and
+         the fold lifts, so a skip still ends the way the run does, only sooner. The press lands on
+         the cover, never on the page under it. Modifier keys alone do not count. */
+      const skip = (e) => {
+        if (e && e.type === 'keydown' && /^(Shift|Control|Alt|Meta|CapsLock)$/.test(e.key)) return;
+        if (phase === 'GONE') return;
+        // Already leaving: the press hurries the exit that is playing rather than starting another.
+        if (phase === 'EXIT') { try { this._loaderTl && this._loaderTl.timeScale(2); } catch (err) { } return; }
+        try { entranceTl && entranceTl.kill(); } catch (err) { }
+        if (phase === 'HIDDEN' || phase === 'ENTRANCE') { try { g.set([logo, num], { y: 0, yPercent: 0 }); } catch (err) { } phase = 'FILLING'; }
+        shown = 1; forced = true;
+        beginExit();
+        try { this._loaderTl && this._loaderTl.timeScale(2); } catch (err) { }
+      };
+      window.addEventListener('pointerdown', skip, true);
+      window.addEventListener('keydown', skip, true);
+      this._loaderSkipOff = () => { window.removeEventListener('pointerdown', skip, true); window.removeEventListener('keydown', skip, true); };
       requestAnimationFrame(() => requestAnimationFrame(enter));   // first painted frame + the 0.25s beat
       // Stall pump for the EXIT timeline only: if the rAF ticker sleeps mid-exit, step the
       // timeline's own clock so the cover always lifts and completes.

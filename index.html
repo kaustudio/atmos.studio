@@ -15,15 +15,16 @@
          then the pop. This paints the loader's own ground (--ground, #1C1B1A in global.css; the second
          hard-coded copy, because it has to be right before any stylesheet arrives) on exactly the
          visits the loader will play: no document route, no share link (the only hashes the app
-         reads), not already played this session, and not reduced motion, which skips it. The app
+         reads), not /create, never after it has played once in this browser (localStorage since
+         24.09.26, where it was once per session), and not reduced motion, which skips it. The app
          takes it off in _initLoader, under its own loader, and the timer is the floor if the script
          never runs.
          EDITING THIS SCRIPT MEANS EDITING vercel.json, as with prerender.mjs's theme script: the
          Content-Security-Policy admits it by the SHA-256 of its exact bytes (one line, so whitespace
-         cannot drift), 'sha256-JGN4EOVuIFAkihzz36dLhKnbfXP+Z/h9lVEP1Pggobc='. Recompute with
+         cannot drift), 'sha256-WJHfc/26CwkQgwTf04eYyKst0Qm6na97wrsIDWY2oak='. Recompute with
            printf '%s' '<the script body, without the tags>' | openssl dgst -sha256 -binary | base64 -->
     <style>html[data-load-pre],html[data-load-pre] body{background:#1C1B1A}</style>
-    <script>(function(){try{var p=location.pathname.replace(/\/+$/,'').replace(/\.html$/,'');if(p==='/about'||p==='/privacy'||p==='/terms'||location.hash.length>1)return;if(sessionStorage.getItem('palette-generator/loader-session')==='1')return;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;var h=document.documentElement;h.setAttribute('data-load-pre','');setTimeout(function(){h.removeAttribute('data-load-pre')},15000)}catch(e){}})()</script>
+    <script>(function(){try{var p=location.pathname.replace(/\/+$/,'').replace(/\.html$/,'');if(p==='/about'||p==='/privacy'||p==='/terms'||p==='/create'||location.hash.length>1)return;if(localStorage.getItem('palette-generator/loader-seen')==='1')return;if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;var h=document.documentElement;h.setAttribute('data-load-pre','');setTimeout(function(){h.removeAttribute('data-load-pre')},15000)}catch(e){}})()</script>
     <!-- The title names the category, not the mood. It was "Atmos Gallery" alone — thirteen
          characters, matching only people who already knew the name, which for a new product is
          nobody; then briefly a longer line built around "light and mood", which is the product's
