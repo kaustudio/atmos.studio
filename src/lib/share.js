@@ -68,6 +68,19 @@ export function encodeShare(pal) {
 
 // Full URL for the current document, fragment replaced. Origin/path come from the browser, never
 // from the palette, so a share link can only ever point at this app.
+/* THE NAME, AS A LABEL AHEAD OF THE CODE (24.09.26, reported: "when clicking copy palette I don't think
+   the link generated changes each time"). It did change, but every link opened on the same fifty
+   characters, "#p=eyJ2IjoxLCJuIjoi", which is the encoded header, so two palettes looked like one link
+   wherever the start of an address is all that shows. "#p=cobalt.eyJ…" reads as what it is. Only a
+   label for people: the decoder sets it aside and takes the name from the code, and links without
+   one read as they always did. Letters and digits only, accents folded ("Café" is "cafe"), so it
+   never needs escaping and never holds the '.' that separates it from the code. Empty when a name has
+   no Latin letters, and then the link is the code alone. */
+export function linkLabel(name) {
+  return String(name || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
 export function shareUrl(pal, loc) {
   const code = encodeShare(pal);
   if (!code) return null;
@@ -75,7 +88,11 @@ export function shareUrl(pal, loc) {
   if (!l) return null;
   // Always the front page, never the /create the sender is on: a recipient is not using the tool,
   // and a link that pointed there would count every opened share as a visit to it.
-  return l.origin + '/' + l.search + '#' + HASH_KEY + '=' + code;
+  // AND NEVER THE SENDER'S QUERY STRING (24.09.26). It rode along from the first version, with no reason
+  // recorded, so a link inherited whatever the sender arrived with (a campaign's utm tags, an ad's click
+  // id) and every recipient's visit was credited to it.
+  const label = linkLabel(pal.name);
+  return l.origin + '/#' + HASH_KEY + '=' + (label ? label + '.' : '') + code;
 }
 
 // ---- decode (UNTRUSTED) -------------------------------------------------------------------------
@@ -94,6 +111,10 @@ export function decodeShare(hash) {
     if (eq > 0 && part.slice(0, eq) === HASH_KEY) code = part.slice(eq + 1);
   });
   if (!code) return null;
+  // The name label, when there is one, is set aside unread (see linkLabel): base64url has no '.', so
+  // everything after the last one is the code.
+  const dot = code.lastIndexOf('.');
+  if (dot >= 0) code = code.slice(dot + 1);
   // base64url alphabet only — reject before handing anything to atob
   if (!/^[A-Za-z0-9\-_]+$/.test(code)) return null;
 

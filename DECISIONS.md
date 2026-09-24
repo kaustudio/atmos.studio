@@ -7,6 +7,25 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Share links begin with the palette's name, and leave the sender's address behind
+
+**Reported:** "when clicking copy palette I don't think the link generated changes each time". It did:
+each press seals the palette on screen into the link, five palettes gave five links on live, and the
+same palette always gives the same one. But every link opened on the same fifty characters
+(`#p=eyJ2IjoxLCJuIjoi`, the encoded header), and chat previews show the site's own title and picture
+for every link, because the palette after the `#` never reaches a server.
+
+- **The name leads:** `atmos.gallery/#p=cobalt.eyJ…`. It is a label for people only. The decoder sets it
+  aside and takes the name from the code, and links made before it open as they did.
+- **No query string:** a link carried whatever the sender arrived with (utm tags, an ad's click id), so a
+  recipient's visit was credited to the sender's campaign. It had been there since the first version,
+  with no reason recorded.
+- **Previews stay as they are:** a preview per palette would need the palette on a server, which the
+  privacy page rules out.
+- **Why links are long:** they are the palette. The name, five colours with their shares and the
+  reading's sentence travel inside the link, encoded so an address can carry them, and the sentence is
+  most of it. A shorter link would drop the sentence or need a server to hold the palette.
+
 ## 2026-09-24 — Three keys: paste over a palette, Cmd+Z, and Escape during a reading
 
 **By request:** "build and commit and push", after these three were proposed as the commands worth adding
