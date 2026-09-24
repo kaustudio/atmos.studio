@@ -2546,6 +2546,13 @@ export default function AppView({ vals }) {
                   "Choose an image to discover its colour palette.", was tried and reverted by request. */}
               <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>Choose an image that captures the atmosphere</div></div>
               <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your palette to carry.</div></div>
+              {/* THE PASTE LINE (24.09.26, by request: "What about adding to the copy under start here, that
+                  you can copy and paste an image", option A of three mocked). It finishes the lead's
+                  sentence ("Choose an image… Or paste one"), so it sits under it rather than under the +,
+                  and the + stays the one act below the words. One type step down (body, 13) in the
+                  lead's grey, and the 8px the lead keeps from the title, so the block steps down at one
+                  rhythm. Its own mask, so it joins the reveal; plain text, as every split target must be. */}
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>{vals.pasteHint}</div></div>
             </div>
             {/* THE CALL IS A DISC NOW, drawn from the Figma node (10384:7592): 24px of --on-surface
                 with the plus in --surface, which is the app's filled-CTA pair and the same fill the

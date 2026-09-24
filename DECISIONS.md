@@ -26,6 +26,15 @@ for every link, because the palette after the `#` never reaches a server.
   reading's sentence travel inside the link, encoded so an address can carry them, and the sentence is
   most of it. A shorter link would drop the sentence or need a server to hold the palette.
 
+## 2026-09-24 — "Start here" names paste
+
+**By request:** "What about adding to the copy under start here, that you can copy and paste an image",
+option A of three mocked. This reverses "No copy for any of them" in the entry below, for paste.
+
+- "Or paste one with ⌘V." (Ctrl+V off a Mac) sits under the lead, whose sentence it finishes. It is one
+  type step down (body, 13) in the lead's grey, 8px below it, with its own mask in the reveal.
+- Only in the start box: the error panel keeps its one act.
+
 ## 2026-09-24 — Three keys: paste over a palette, Cmd+Z, and Escape during a reading
 
 **By request:** "build and commit and push", after these three were proposed as the commands worth adding

@@ -1882,6 +1882,9 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // AppView's gate). copySiteLink() and the 'gate-link' copy key are still in persistence.js.
 
       isUpload: s.stage === 'upload', isProcessing: busy, isResult: s.stage === 'result', isError: s.stage === 'error',
+      // The key as the keyboard labels it: ⌘ on a Mac (an iPad with a keyboard reports itself as one).
+      // Case-blind: Chrome says "macOS", Safari "MacIntel".
+      pasteHint: 'Or paste one with ' + (/mac|iphone|ipad/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '') ? '⌘V' : 'Ctrl+V') + '.',
       errorTitle: s.errorTitle, errorMsg: s.errorMsg,
       canReset: s.stage !== 'upload', busy, announce: s.announce,
       reset: () => this.doReset(),
