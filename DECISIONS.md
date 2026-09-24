@@ -7,6 +7,39 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Five colours that look like five: the reading merges look-alikes
+
+**By request.** Three messages, in order:
+- "Can we rebuild the image output so it doesn't put images at 1% or present colors that are barely
+  scanable";
+- "Yes, please do. But also make sure we do that on user images and update the examples on how it
+  works";
+- "Go with option 1 we need to meet the requirements when the tools builds around upholding these".
+
+- **Look-alikes merge; small colours stay.** `kmeansDistinct` (`lib/color.js`) works like this:
+  - A reading with a pair under CIEDE2000 4 is read again with one more cluster.
+  - The look-alikes merge, share-weighted in OKLab.
+  - If more than five distinct colours remain, the two most alike merge.
+  - A reading with no look-alikes is exactly `kmeans`' own.
+- **Dropping small colours was rejected.** Dry Season's 0.8% shadow is half of its 10.3:1 pair, and
+  without it the best pair falls to 4.9.
+- **CIEDE2000, not OKLab.** OKLab has no toe at black: it puts Frozen Slate's blacks 0.127 apart and its
+  distinct blues 0.121. CIEDE2000 puts them at 1.6 and 12.2. The nearest distinct pairs measured were
+  4.4 (a lorry's two charcoals), 6.1 (Midfield's blues) and 6.5 (Dry Season's oranges).
+- **Uploads and the examples both go through it.** Of the eight examples, only Frozen Slate changes:
+  one black at 29.9%, blues at 28.0, 24.2 and 16.3, and the slate at 1.6.
+  - The name is kept. The engine would say "Slate".
+  - The rationale and the archetype (now Graphic) are the engine's.
+  - `SEED_VERSION` is 7, and a re-seed now keeps a reader's rename as well as their filing.
+- **How it Works:** the 2.2 card, 3.1's roles and 3.2 are recomputed from the seed.
+  - 3.2 is option 1: the filled Primary button's label is the Background (5.03), and the outlined
+    button's label is the Text on the card (4.86). As assigned, Text on Primary would be 1.78.
+  - The note says four of ten pairs, where it said five.
+- **Rejected:**
+  - a share floor;
+  - palettes with fewer than five colours (the app is built on five);
+  - 3.2 drawn with its failing pair.
+
 ## 2026-09-24 — No "• Viewing" mark in the list or Grid View
 
 **By request:** "Remove • Viewing from list view and full grid view".

@@ -61,11 +61,12 @@ export const pipelineMethods = {
     for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 128) continue; pts.push(this.rgb2oklab(d[i] / 255, d[i + 1] / 255, d[i + 2] / 255)); }
     return pts;
   },
-  // The grouping is this.kmeans(pts, k), unchanged.
+  // The grouping is this.kmeans(pts, k), read again when two of its colours look the same
+  // (kmeansDistinct, lib/color.js, 24.09.26): five colours, not five clusters.
   extract(img) {
     const k = this.props.swatchCount || 5, b = this._extractBuffer(img);
     if (b.n < k) return { cents: [], hash: b.hash };
-    return { cents: this.kmeans(this._extractPoints(b.d), k), hash: b.hash };
+    return { cents: this.kmeansDistinct(this._extractPoints(b.d), k), hash: b.hash };
   },
 
   // ---- derived-reading cache, keyed by content hash -------------------------------------------
@@ -217,7 +218,7 @@ export const pipelineMethods = {
       const pts = await step(1, () => this._extractPoints(job.buf.d));
       let pal = null, reading = null;
       await step(2, () => {
-        pal = this.buildPalette(this.kmeans(pts, job.k), thumb, job.srcUrl, job.hash);   // the local reading is the baseline
+        pal = this.buildPalette(this.kmeansDistinct(pts, job.k), thumb, job.srcUrl, job.hash);   // the local reading is the baseline
         job.spread = this._paletteSpread(pal);
         // The atmosphere's grouping beat: how many swatches, what share each holds and their
         // lightness order — never a hue (procField.js _procShape).
@@ -492,11 +493,16 @@ export const pipelineMethods = {
         sw: [['#547b95', .4699], ['#0a2944', .1977], ['#678da4', .1890], ['#456b85', .1140], ['#d0d2c6', .0293]],
       }),
       // 263° — periwinkle
+      // RE-READ 24.09.26 (kmeansDistinct, lib/color.js). The reading gave #000000 20.8% and #090606 9.0%,
+      // one black twice (CIEDE2000 1.6, 1.04:1); read again, the black is one colour at its true 29.9%
+      // and the freed place is a third blue. The swatches, weights, rationale and archetype are what the
+      // app now returns for this photograph. The name is kept: the engine would now say "Slate", and
+      // How it Works, share links and the reader know it as Frozen Slate.
       this.seedObj({
         key: 'profile-sky', hash: 'b1fdb175587f7f09', age: 100 * H,
-        name: 'Frozen Slate', arch: 'accented',
-        rat: 'Cool blues sitting at mid weight, held to a single note, one blue carrying the only real colour. Even-tempered and workable.',
-        sw: [['#6881ae', .3488], ['#8ca6d5', .3362], ['#000000', .2083], ['#090606', .0905], ['#383b49', .0162]],
+        name: 'Frozen Slate', arch: 'graphic',
+        rat: 'Cool blues sitting at mid weight, held to a single note. Restrained and quietly atmospheric.',
+        sw: [['#020101', .2988], ['#667da9', .2801], ['#92abd9', .2423], ['#7995c6', .1628], ['#373a49', .016]],
       }),
     ];
   },

@@ -103,6 +103,78 @@ export function kmeans(pts, k) {
     .filter((c) => c.weight > 0).sort((a, b) => (b.weight - a.weight) || (a.L - b.L));
 }
 
+/* ===== FIVE COLOURS THAT LOOK LIKE FIVE (24.09.26, by request: "rebuild the image output so it
+   doesn't ... present colors that are barely scanable", then "make sure we do that on user images") =====
+
+   k-means gives five clusters, not five colours. Frozen Slate's photograph is a sky and a silhouette,
+   and the silhouette's dark split in two: #000000 and #090606, 1.04:1 apart, the same black twice in
+   one of five places. So a reading whose colours include a pair that looks the same is read again with
+   one more cluster, the look-alikes merged, and — when more than five distinct colours are left — the
+   two most alike merged until five remain. Merging keeps every pixel's share where dropping the
+   smallest would not; a small colour that is its own (Dry Season's 0.8% shadow, half of its 10.3:1
+   pair) is never the most alike, so it stays.
+
+   "LOOKS THE SAME" IS CIEDE2000 UNDER 4, measured on the hexes the palette will show. OKLab distance,
+   which the clustering uses, has no toe at black: it puts Frozen Slate's two blacks 0.127 apart and
+   its two clearly different blues 0.121. CIEDE2000 puts them at 1.6 and 12.2. Across the eight
+   examples and ten other photographs the nearest distinct pairs were 4.4 (two charcoals of a lorry),
+   6.1 (Midfield's blues) and 6.5 (Dry Season's oranges); only Frozen Slate's blacks fell under 4.
+   A reading with no look-alikes comes back exactly as kmeans returns it. */
+function _lab76(hexStr) {
+  const c = hexToRgb(hexStr).map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  const X = (0.4124564 * c[0] + 0.3575761 * c[1] + 0.1804375 * c[2]) / 0.95047;
+  const Y = 0.2126729 * c[0] + 0.7151522 * c[1] + 0.0721750 * c[2];
+  const Z = (0.0193339 * c[0] + 0.1191920 * c[1] + 0.9503041 * c[2]) / 1.08883;
+  const f = (t) => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116);
+  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
+}
+// CIEDE2000 (Sharma, Wu and Dalal, 2005) between two hex colours.
+export function deltaE00(h1, h2) {
+  const [L1, a1, b1] = _lab76(h1), [L2, a2, b2] = _lab76(h2);
+  const R = Math.PI / 180, P7 = Math.pow(25, 7);
+  const Cb = (Math.hypot(a1, b1) + Math.hypot(a2, b2)) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Math.pow(Cb, 7) / (Math.pow(Cb, 7) + P7)));
+  const a1p = (1 + G) * a1, a2p = (1 + G) * a2;
+  const C1p = Math.hypot(a1p, b1), C2p = Math.hypot(a2p, b2);
+  const hue = (b, a) => { if (b === 0 && a === 0) return 0; const x = Math.atan2(b, a) / R; return x < 0 ? x + 360 : x; };
+  const h1p = hue(b1, a1p), h2p = hue(b2, a2p);
+  let dhp = 0; if (C1p * C2p !== 0) { dhp = h2p - h1p; if (dhp > 180) dhp -= 360; else if (dhp < -180) dhp += 360; }
+  const dLp = L2 - L1, dCp = C2p - C1p, dHp = 2 * Math.sqrt(C1p * C2p) * Math.sin((dhp / 2) * R);
+  const Lbp = (L1 + L2) / 2, Cbp = (C1p + C2p) / 2;
+  let hbp = h1p + h2p;
+  if (C1p * C2p !== 0) hbp = Math.abs(h1p - h2p) > 180 ? (h1p + h2p < 360 ? (h1p + h2p + 360) / 2 : (h1p + h2p - 360) / 2) : (h1p + h2p) / 2;
+  const T = 1 - 0.17 * Math.cos((hbp - 30) * R) + 0.24 * Math.cos(2 * hbp * R) + 0.32 * Math.cos((3 * hbp + 6) * R) - 0.20 * Math.cos((4 * hbp - 63) * R);
+  const Rt = -Math.sin(2 * 30 * Math.exp(-Math.pow((hbp - 275) / 25, 2)) * R) * 2 * Math.sqrt(Math.pow(Cbp, 7) / (Math.pow(Cbp, 7) + P7));
+  const Sl = 1 + (0.015 * Math.pow(Lbp - 50, 2)) / Math.sqrt(20 + Math.pow(Lbp - 50, 2)), Sc = 1 + 0.045 * Cbp, Sh = 1 + 0.015 * Cbp * T;
+  return Math.sqrt(Math.pow(dLp / Sl, 2) + Math.pow(dCp / Sc, 2) + Math.pow(dHp / Sh, 2) + Rt * (dCp / Sc) * (dHp / Sh));
+}
+export const LOOK_ALIKE = 4;
+const _byShare = (a, b) => (b.weight - a.weight) || (a.L - b.L);
+function _mostAlike(cs) {
+  const hx = cs.map((c) => labToHex(c.L, c.a, c.b));
+  let i0 = -1, j0 = -1, d0 = Infinity;
+  for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) { const d = deltaE00(hx[i], hx[j]); if (d < d0) { d0 = d; i0 = i; j0 = j; } }
+  return { i: i0, j: j0, d: d0 };
+}
+// Two clusters as one: the share-weighted mean in OKLab, holding both shares.
+function _merge(cs, i, j) {
+  const x = cs[i], y = cs[j], w = x.weight + y.weight;
+  const m = { L: (x.L * x.weight + y.L * y.weight) / w, a: (x.a * x.weight + y.a * y.weight) / w, b: (x.b * x.weight + y.b * y.weight) / w, weight: w };
+  return cs.filter((_, z) => z !== i && z !== j).concat([m]).sort(_byShare);
+}
+export function kmeansDistinct(pts, k) {
+  const first = kmeans(pts, k);
+  if (first.length < 2 || !(_mostAlike(first).d < LOOK_ALIKE)) return first;
+  for (let kk = k + 1; kk <= k + 3; kk++) {
+    let cs = kmeans(pts, kk);
+    for (let c = _mostAlike(cs); cs.length > 1 && (c.d < LOOK_ALIKE || cs.length > k); c = _mostAlike(cs)) cs = _merge(cs, c.i, c.j);
+    if (cs.length === k) return cs;
+  }
+  // A photograph that cannot give five distinct colours keeps its plain reading: five places that
+  // include a look-alike are still five, and the tool is built on five.
+  return first;
+}
+
 // ===== OKLCH colour harmonies (hue rotation + gamut-map to sRGB) =====
 export function oklabToLinear(L, a, b) {
   const l_ = L + 0.3963377774 * a + 0.2158037573 * b, m_ = L - 0.1055613458 * a - 0.0638541728 * b, s_ = L - 0.0894841775 * a - 1.2914855480 * b;

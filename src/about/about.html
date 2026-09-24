@@ -286,8 +286,12 @@
      and the display-size numeral clears 3:
        Dry Season    #D5CDBF ground, #361905 text 10.26, #A74B1B numeral 3.63. Pale neutral, warm
                      brown, orange: the three things its paragraph names.
-       Frozen Slate  #000000 ground, #8CA6D5 text 8.53, #6881AE numeral 5.34. Black under both blues,
-                     lightness 0 against 0.723 and 0.602. The roles 3.1 and 3.2 (See Frozen Slate in Use) give the same colours.
+       Frozen Slate  #020101 ground, #92ABD9 text 8.98, #7995C6 numeral 6.88. Black under the palest and
+                     the middle blue, lightness 0.072 against 0.739 and 0.667. The roles 3.1 and 3.2 (See
+                     Frozen Slate in Use) give the same colours: background, text and accent.
+                     RE-READ 24.09.26: the reading merged Frozen Slate's two blacks (#000000 and #090606, one
+                     black twice) and gave the freed place to a third blue. It was #000000 ground, #8CA6D5
+                     text 8.53, #6881AE numeral 5.34.
        Garnet        #540604 ground, #F17645 text 5.28, #E12409 numeral 3.17. The numeral is on the
                      ground's own hue (31.0° on 28.9°) at twice its chroma (0.223 on 0.109).
      Garnet's near-black #0F0302 was the more neutral ground, but it reads as black, disappears into
@@ -321,12 +325,12 @@
     </div>
     <div class="about-stack__slide" data-stack-slide>
       <div class="about-stack__wrap" data-stack-wrap>
-        <div class="about-stack__card" data-stack-content style="--r-bg:#000000;--r-text:#8CA6D5;--r-mark:#6881AE">
+        <div class="about-stack__card" data-stack-content style="--r-bg:#020101;--r-text:#92ABD9;--r-mark:#7995C6">
           <div class="about-stack__top"><p class="about-stack__n" data-optical>02</p><p class="about-stack__ref">Frozen Slate</p></div>
           <div class="about-stack__bottom">
             <p class="about-stack__t" data-optical>Lightness</p>
             <p class="about-stack__d">Frozen Slate combines black and very dark tones with lighter blues. These differences in lightness help separate text and surfaces. Check the contrast of each pair before using it.</p>
-            <span class="about-stack__strip" role="img" aria-label="The five colours of Frozen Slate: #6881AE, #8CA6D5, #000000, #090606, #383B49."><span style="background:#6881ae"></span><span style="background:#8ca6d5"></span><span style="background:#000000"></span><span style="background:#090606"></span><span style="background:#383b49"></span></span>
+            <span class="about-stack__strip" role="img" aria-label="The five colours of Frozen Slate: #020101, #667DA9, #92ABD9, #7995C6, #373A49."><span style="background:#020101"></span><span style="background:#667da9"></span><span style="background:#92abd9"></span><span style="background:#7995c6"></span><span style="background:#373a49"></span></span>
           </div>
         </div>
       </div>
@@ -356,35 +360,38 @@
 
   <!-- Five colours, reordered by job — the tool's OWN output. semanticRoles() weighs lightness,
        chroma and area, and this is what it returns for Frozen Slate (16.09.26, by request, replacing
-       Nightfall, which is not one of 4.1's eight). Its area-weighted lightness is 0.470, so the tool
-       reads it as a dark palette: the black becomes the background, the palest blue the text, and
-       the dark slate covering 1.6% of the frame takes primary. Every colour is claimed by then, so
-       secondary repeats primary, which is the doubling the paragraph under the grid explains. 3.2's
-       interface is drawn in this same assignment. The shares are the seed's weights at one decimal,
+       Nightfall, which is not one of 4.1's eight). Its area-weighted lightness is 0.480, so the tool
+       reads it as a dark palette: the black becomes the background, the palest blue the text, the
+       dark slate covering 1.6% of the frame the surface, the middle blue the accent and the deepest
+       blue primary. Every colour is claimed by then, so secondary repeats primary. 3.2's interface is
+       drawn in this same assignment, its filled button labelled in the Background, which is what reads
+       on this Primary (see the note above 3.2). (Re-read 24.09.26, one black where there were two: the
+       near-black surface and the slate primary of before are the slate surface and the blue primary now.) The shares are the seed's weights at one decimal,
        as the phone story prints them: .0905 is 9.0, not 9.1, in the app's own toFixed. They are not
        printed here since 18.09.26 (by request), and neither are the hexes. Each card IS its colour,
        full bleed, with its role at the foot and nothing laid over the colour. The name takes whichever
-       of white or black reads better on it, measured: white on the four dark cards (11.11 to 21), black
-       on Accent (5.34, where white is 3.93) and Text (8.53, where white is 2.46) — --role-ink. The note
+       of white or black reads better on it, measured: white on Background and Surface (20.85, 11.27),
+       black on Primary and Secondary (5.07, where white is 4.14), Accent (6.93, where white is 3.03) and
+       Text (9.05, where white is 2.32) — --role-ink. The note
        that used to follow the grid went too, and the section runs straight into See Frozen Slate in
        Use (about-sec--joined). Six cells on the twelve-column grid, two columns each. -->
   <div class="about-roles" data-cascade data-reveal-focus>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#000000">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#020101">
       <span class="about-role__name">Background</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#090606">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#373a49">
       <span class="about-role__name">Surface</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#383b49">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#667da9;--role-ink:#000000">
       <span class="about-role__name">Primary</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#383b49">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="10" data-parallax-end="-10" data-parallax-disable="mobileLandscape" style="--role-colour:#667da9;--role-ink:#000000">
       <span class="about-role__name">Secondary</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#6881ae;--role-ink:#000000">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="15" data-parallax-end="-15" data-parallax-disable="mobileLandscape" style="--role-colour:#7995c6;--role-ink:#000000">
       <span class="about-role__name">Accent</span>
     </div>
-    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#8ca6d5;--role-ink:#000000">
+    <div class="about-role" data-parallax="trigger" data-parallax-start="20" data-parallax-end="-20" data-parallax-disable="mobileLandscape" style="--role-colour:#92abd9;--role-ink:#000000">
       <span class="about-role__name">Text</span>
     </div>
   </div>
@@ -392,9 +399,17 @@
 </section>
 
 <!-- SOME IMAGES ALREADY WORK, and that earns its own section rather than a footnote to the one about
-     contrast. Frozen Slate clears AA on five of its ten pairs; nothing in the eight-palette gallery
-     below reaches more than four. It is the honest answer to "does this ever just come out right",
-     and the one interface on this page a reader can simply read.
+     contrast. Frozen Slate clears AA on four of its ten pairs (five before its 24.09.26 re-read), with
+     Scorched Clear Morning the only other example at four. It is the honest answer to "does this ever
+     just come out right", and the one interface on this page a reader can simply read.
+
+     RE-READ 24.09.26 (kmeansDistinct, lib/color.js): its two blacks were one black twice, and the freed
+     place is a third blue. The roles are the tool's own for the new five: background #020101, surface
+     #373A49, primary #667DA9, accent #7995C6, text #92ABD9. As assigned, Text on Primary is 1.78, so
+     the interface's filled button carries its label in the Background (5.03) and the outlined one in
+     the Text (4.86 on the card), by request, option 1 of two shown: "we need to meet the requirements
+     when the tools builds around upholding these". Every pair the figure draws passes, so the
+     paragraph that says nothing needed adjusting still holds; the checks list the four it draws.
 
      THE FIRST PARAGRAPH SAYS WHAT CAN BE SEEN (16.09.26). It said one clearer blue carried the
      palette's strongest colour, but the two blues are one hue (261.9° and 262.1°) at one chroma
@@ -410,7 +425,7 @@
 <section id="already-contain-relationships" class="about-sec about-grid" data-sec>
   <div class="about-col">
     <h2 data-sec-head data-optical><span class="about-sec__num" aria-hidden="true">3.2</span>See Frozen Slate<br /><span class="about-head__soft">in Use</span></h2>
-    <p data-reveal>The palette&rsquo;s two blues share one hue and almost the same chroma, and differ only in lightness. Black and near-black fill most of the rest of the image.</p>
+    <p data-reveal>The palette&rsquo;s three blues share one hue and almost the same chroma, and differ only in lightness. Black fills most of the rest of the image.</p>
     <p data-reveal>Nothing needed to be adjusted for the assigned roles shown here. That does not make every possible use of the palette compliant. It means the selected relationships already meet their intended requirements.</p>
   </div>
 
@@ -423,20 +438,20 @@
       </div>
     </div>
     <div class="about-figure__side" data-cascade>
-      <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text and a blue accent on near-black grounds, every pairing clearing AA." style="--r-bg:#000000;--r-surface:#090606;--r-text:#8CA6D5;--r-primary:#383B49;--r-accent:#6881AE">
+      <div class="about-ui about-ui--compact" role="img" aria-label="Frozen Slate in use: pale blue text on a slate card over black, a black label on a blue Primary button, and a blue accent, every pairing clearing AA." style="--r-bg:#020101;--r-surface:#373A49;--r-text:#92ABD9;--r-primary:#667DA9;--r-accent:#7995C6;--r-on-primary:#020101;--r-link:#92ABD9">
         <div class="about-ui__card">
           <p class="about-ui__title">Frozen Slate</p>
-          <p class="about-ui__body">Two blues of one hue, on black and near-black.</p>
+          <p class="about-ui__body">Three blues of one hue, on black and slate.</p>
           <p class="about-ui__actions"><span class="about-ui__btn">Primary</span><span class="about-ui__link">Accent</span></p>
         </div>
       </div>
       <ul class="about-checks">
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#000000">Aa</span>Text on Background</span><span class="about-checks__val"><span data-ratio>8.53</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#090606">Aa</span>Text on Surface</span><span class="about-checks__val"><span data-ratio>8.20</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#8CA6D5;--pair-bg:#383B49">Aa</span>Text on Primary</span><span class="about-checks__val"><span data-ratio>4.51</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
-        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#6881AE;--pair-bg:#000000">Aa</span>Accent against Background</span><span class="about-checks__val"><span data-ratio>5.34</span></span><span class="about-checks__verdict">Non-Text Elements at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#92ABD9;--pair-bg:#020101">Aa</span>Text on Background</span><span class="about-checks__val"><span data-ratio>8.98</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#92ABD9;--pair-bg:#373A49">Aa</span>Text on Surface</span><span class="about-checks__val"><span data-ratio>4.86</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#020101;--pair-bg:#667DA9">Aa</span>Background on Primary</span><span class="about-checks__val"><span data-ratio>5.03</span></span><span class="about-checks__verdict">Body Text at AA</span></li>
+        <li class="is--pass"><span class="about-checks__pair"><span class="about-pair" aria-hidden="true" style="--pair-fg:#7995C6;--pair-bg:#020101">Aa</span>Accent against Background</span><span class="about-checks__val"><span data-ratio>6.88</span></span><span class="about-checks__verdict">Non-Text Elements at AA</span></li>
       </ul>
-      <p class="about-figure__note" data-reveal>Five of the palette&rsquo;s ten pairs reach at least <span data-ratio>4.5</span>. They can support body text at AA when used as foreground and background.</p>
+      <p class="about-figure__note" data-reveal>Four of the palette&rsquo;s ten pairs reach at least <span data-ratio>4.5</span>. They can support body text at AA when used as foreground and background.</p>
     </div>
   </figure>
 </section>

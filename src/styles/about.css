@@ -955,7 +955,8 @@
   background:var(--r-bg);
   display:flex;flex-direction:column;justify-content:center;gap:clamp(18px,2.4vw,30px);
 }
-/* The ground is the palette's background, and Frozen Slate's is #000: 1.06 to 1 against the dark
+/* The ground is the palette's background, and Frozen Slate's is #020101 (#000 until its 24.09.26
+   re-read): about 1.06 to 1 against the dark
    theme's page. So it keeps an edge, the inset edge the page's swatches wore until 19.09.26, rather than a border —
    inset, so it follows the corner and takes no layout. 16px, the short panels' corner: the frame is
    about 205px tall, the height of the empty states that took it. */
@@ -989,15 +990,20 @@
    edge (--action-primary-line is the surface's own colour); secondary is transparent on the tier's
    48% edge, mixed from the accent where the site mixes from its ink. Padding and weight are the
    tiers' tokens, the type is the banner voice (CONSENT_BTN_TYPE and [data-voice="banner"]), and the
-   line box is normal as the banner's is: 35.5px, measured against its Accept and Decline. */
+   line box is normal as the banner's is: 35.5px, measured against its Accept and Decline.
+   EACH LABEL TAKES THE ROLE THAT READS ON ITS FILL (24.09.26, by request: "we need to meet the
+   requirements when the tools builds around upholding these"). Frozen Slate re-read with one black
+   and three blues, and its Text on its Primary is 1.78 to 1, so the filled button's label is the
+   Background (5.03 to 1) and the outlined one's the Text on the card (4.86 to 1) — --r-on-primary and
+   --r-link, falling back to the roles they replaced. */
 .about-ui__btn,.about-ui__link{
   display:inline-flex;align-items:center;border-radius:var(--radius-pill);
   font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;
   letter-spacing:var(--track-flat);line-height:normal;white-space:nowrap;
 }
-.about-ui__btn{padding:var(--action-primary-padding);background:var(--r-primary);color:var(--r-text)}
+.about-ui__btn{padding:var(--action-primary-padding);background:var(--r-primary);color:var(--r-on-primary, var(--r-text))}
 .about-ui__link{
-  padding:0.75em 1em;color:var(--r-accent);
+  padding:0.75em 1em;color:var(--r-link, var(--r-accent));
   box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-accent) 48%,transparent);
 }
 

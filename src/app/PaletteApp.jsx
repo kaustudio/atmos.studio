@@ -109,6 +109,7 @@ export default class PaletteApp extends React.Component {
   onColor = C.onColor;
   dist2 = C.dist2;
   kmeans = C.kmeans;
+  kmeansDistinct = C.kmeansDistinct;
   rgb2hsl = C.rgb2hsl;
   relLum = C.relLum;
   contrastRatio = C.contrastRatio;

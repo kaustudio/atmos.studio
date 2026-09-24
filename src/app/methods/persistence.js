@@ -31,7 +31,7 @@ import { buildMasks } from '../../lib/masks.js';
    BUMP THIS WHENEVER makeSeed's TABLE CHANGES — a name, a hash, a swatch, an added or removed
    example. That is the whole contract, and it is the one thing a future edit to pipeline.js has to
    remember. */
-const SEED_VERSION = 6;   // 6: Dry Season's rationale is the supplied copy (14.09.26)
+const SEED_VERSION = 7;   // 7: Frozen Slate re-read with look-alikes merged (24.09.26); 6: Dry Season's rationale is the supplied copy (14.09.26)
 
 export const persistenceMethods = {
   // Storage adapter — a swappable interface (load/save/clear). Implemented against localStorage
@@ -255,12 +255,17 @@ export const persistenceMethods = {
      name, descriptors or rationale. A palette whose hash changed, or one dropped from the table, is a
      different palette and takes no filing with it — Ruled Open Country's assignments are gone by the
      same rule, which is correct: there is nothing left to file. */
+  /* AND SO DOES A NAME THE READER GAVE (24.09.26). Since 23.09 an example can be renamed (renamePalette
+     sets `renamed`), and the name is then theirs in the same way the filing is. The re-seed for Frozen
+     Slate's re-read would have put the table's name back over it. Matched on id, like the filing. */
   _reseed(feed) {
     const mine = feed.filter((p) => p.example !== true);
-    const filed = new Map(feed.filter((p) => p.example === true).map((p) => [p.id, this.palProjects(p)]));
+    const stored = new Map(feed.filter((p) => p.example === true).map((p) => [p.id, p]));
     const seeds = this.makeSeed().map((p) => {
-      const was = filed.get(p.id);
-      return (was && was.length) ? this.withProjects(p, was) : p;
+      const o = stored.get(p.id);
+      const was = o ? this.palProjects(o) : null;
+      const s = (was && was.length) ? this.withProjects(p, was) : p;
+      return (o && o.renamed === true && typeof o.name === 'string' && o.name) ? Object.assign({}, s, { name: o.name, renamed: true }) : s;
     });
     const taken = new Set(mine.map((p) => p.id));
     return mine.concat(seeds.filter((p) => !taken.has(p.id)));

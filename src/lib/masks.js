@@ -63,6 +63,10 @@ const MIN_COVERAGE = 0.012;
    genuinely separate parts of the frame. So the test is the disagreement itself, not the geometry
    that might cause it — measure the drift and refuse the ones that fail.
 
+   (Frozen Slate itself no longer does this: since 24.09.26 the reading merges colours that look the
+   same, kmeansDistinct in color.js, and its black is one colour. The gate stays for any photograph
+   whose reading still carries a pair like it, a stored palette read before that day above all.)
+
    Refused rather than merged. Merging the pair into one shared mask would show the true dark region
    and is tempting, but it makes two different swatches highlight the same area, which reads as a
    broken control rather than as an honest one. A swatch with no region simply is not offered — the
@@ -249,8 +253,9 @@ export function maskDataUrl(map, sid) {
    to point. So the tool answers every colour with the pixels it has, for the reason it was refused:
 
    · SAME COLOUR TWICE (the drift gate): two swatches that trade pixels light TOGETHER. Frozen Slate's
-     #000000 and #090606 measure 6.5 and 23.6 against 20.8 and 9.0 stated; as one region they measure
-     30.1 against 29.8. Which of the two owns a pixel is arbitrary; that the dark lives there is not.
+     #000000 and #090606 measured 6.5 and 23.6 against 20.8 and 9.0 stated; as one region, 30.1 against
+     29.8. Which of the two owns a pixel is arbitrary; that the dark lives there is not. (The reading
+     merges such a pair since 24.09.26, so this is for palettes read before it.)
      Partners are the other swatches refused by the same gate within TWIN of it in OKLab.
    · TOO LITTLE OF THE FRAME (the coverage gate): its own pixels, scattered as they are. A colour at
      1% lives in a rim or a few specks, and that is the true answer to where it sits.
