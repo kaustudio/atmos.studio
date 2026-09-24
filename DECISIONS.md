@@ -7,6 +7,14 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — The name field's rule draws back in 0.85s
+
+**By request:** "The closing animation on the input edit field should be .85s and not 1.5s". The draw-in
+keeps its 1.5s (--dur-draw); the draw-back takes --dur-draw-back, 0.85s, on the same curve
+(--ease-overlay), so the heading has the name back 0.65s sooner. The two directions differ on purpose.
+Measured on the dev build: in 1.56s from the click, back 0.87s from the key, the name in the heading at
+0.89s, with Enter and with Escape.
+
 ## 2026-09-24 — Share links begin with the palette's name, and leave the sender's address behind
 
 **Reported:** "when clicking copy palette I don't think the link generated changes each time". It did:

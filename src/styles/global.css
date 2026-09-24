@@ -489,7 +489,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --dur-overlay-item:.05s;  /* beat between items inside an overlay (DUR.overlayItem) */
   --dur-overlay-block:.08s; /* beat between blocks inside an overlay (DUR.overlayBlock) */
   --dur-overlay-arrive:1s;  /* an overlay's contents arriving (DUR.overlayArrive) */
-  --dur-draw:1.5s;          /* a rule drawn under a field and drawn back (the name field's, 23.09.26) */
+  --dur-draw:1.5s;          /* a rule drawn under a field (the name field's, 23.09.26) */
+  --dur-draw-back:.85s;     /* and drawn back (24.09.26, by request: ".85s and not 1.5s") */
   --dur-line:.09s;          /* beat between masked lines (DUR.line) */
   /* THE SIGNATURE LOOPS AND RUNS, named rather than written in place (17.09.26, audit F3): the
      extraction bar's fill, the wordmark's gradient drift and the processing dot's pulse. */
@@ -1860,9 +1861,13 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    --ease-overlay, which IS that curve: the overlay system's expo-out, quick off the mark with a long,
    soft landing. It was --ease-entrance in and that curve played backwards out (the draw threw half its
    length in 70ms; the close held nearly full for 400ms, then snapped), and for one round --ease-progress
-   over --dur-reveal. The count arrives and goes with it. */
+   over --dur-reveal. The count arrives and goes with it.
+   THE CLOSE IS SHORTER (24.09.26, by request: "The closing animation on the input edit field should be
+   .85s and not 1.5s"): drawn back over --dur-draw-back on the same curve. The name waits for it, so the
+   heading has it back 0.65s sooner (AppView NameField close). */
 [data-name-rule]{position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%;pointer-events:none;transition:transform var(--dur-draw) var(--ease-overlay),background-color var(--dur-state) var(--ease-standard)}
 [data-name-field][data-open] [data-name-rule]{transform:scaleX(1)}
+[data-name-field][data-closing] [data-name-rule]{transition-duration:var(--dur-draw-back),var(--dur-state)}
 /* THE COUNT WAITS FOR THE LIMIT (24.09.26; NAME_NEAR in AppView): it arrives with the rule only once the
    name reaches three quarters of the limit ([data-near], 32 of 42), on the same state beat, and stays past
    it. Below that it is transparent, not gone: it still describes the field to a screen reader. */

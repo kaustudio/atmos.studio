@@ -654,8 +654,9 @@ function WordSwap({ on, rest, done }) {
    THE RULE DRAWS, AND DRAWS BACK (23.09.26, by request: "The underline that highlights the edit text
    should animate with a cubic bezier from left to right ... reverse the animation to close", then "start
    quick and land slow", then "1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge and back to
-   it, both ways on --ease-overlay over --dur-draw (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the
-   heading only takes the name back once the rule has gone.
+   it, both ways on --ease-overlay: in over --dur-draw (1.5s), back over --dur-draw-back (.85s since
+   24.09.26, by request) (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the heading only takes the
+   name back once the rule has gone.
 
    THE RULE STANDS ON THE COLUMNS (24.09.26, by request: "make sure the stroke aligns with the grid and make
    it shorter"). It ran the name's whole row, up to the photograph: 1180px at 1440, ending between two
@@ -789,8 +790,9 @@ function NameField({ r, as }) {
     const onEnd = (e) => { if (e.target === rule && e.propertyName === 'transform') end(); };
     const end = () => { if (done) return; done = true; rule.removeEventListener('transitionend', onEnd); clearTimeout(timer); after(); };
     rule.addEventListener('transitionend', onEnd);
-    // The rule's own duration (--dur-draw) and a little over, should the transition never run.
-    const secs = parseFloat(getComputedStyle(rule).transitionDuration) || 1.5;
+    // The drawing-back length (--dur-draw-back) and a little over, should the transition never run. Read
+    // from the token, not the rule: [data-closing] has not been rendered yet, so the rule still says 1.5s.
+    const secs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-draw-back')) || 0.85;
     timer = setTimeout(end, secs * 1000 + 120);
   };
   /* How the field was left: 'enter' saves, 'escape' keeps the old name, 'leave' (Tab, or a press anywhere
