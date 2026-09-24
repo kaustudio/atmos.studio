@@ -270,7 +270,7 @@ const RowMain = ({ c, inv }) => (
       <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px')}>
         {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
       </div>
-      {/* IDENTITY — one grid cell, four things: name, Example, Viewing, tags. They were
+      {/* IDENTITY — one grid cell: name, Example, tags (and a Viewing mark until 24.09.26). They were
           four siblings of the row itself, which meant the tag list was the row's single
           elastic child and quietly owned every pixel the metrics did not use (520 of
           them at 1440, most of it empty). As one cell on the 2fr track it takes a
@@ -289,22 +289,18 @@ const RowMain = ({ c, inv }) => (
           muted: it is the row's only text identifier and the one thing a screen reader
           leads with, so the demotion is a size step and never a fade.
           THE NAME GIVES WAY, THE LABELS DO NOT (22.09.26, grid audit). Below 1280 the name has three
-          columns, 226px at 1024, since AA pairs took one of its four. A long name beside Example or
-          Viewing would have been cut off at the cell's edge, labels first, so the name shrinks
+          columns, 226px at 1024, since AA pairs took one of its four. A long name beside Example
+          would have been cut off at the cell's edge, labels first, so the name shrinks
           with an ellipsis while the labels stay whole. The full name is the row's accessible name,
           and one press away. */}
       <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
       {c.isExample && (
         <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
       )}
-      {/* "Viewing" sits with the name and the Example chip — the labels that say what
-          this palette IS — and, structurally, it has to sit before the flexible column:
-          appearing on the right would push the metric columns left on whichever row was
-          selected, and a column that moves for one row is not a column. */}
-      {c.current && (
-        <span style={sx('display: inline-flex; align-items: center; gap: 4px; flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); color:' + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>
-          <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);background:' + (inv ? 'var(--surface)' : 'var(--on-surface)'))} aria-hidden="true"></span>Viewing</span>
-      )}
+      {/* TOMBSTONE: a "• Viewing" mark followed the name on the palette being viewed, and went on
+          24.09.26 with the Grid View's (by request: "Remove • Viewing from list view and full grid
+          view"). The row still shows it is the one open by its left marker bar and tint, and says so
+          with aria-current. */}
       {/* THE TRAIT TAGS ARE GONE FROM THE ROW, and the flexible child stays. It was
           three uppercase words per row — SMOULDERING · GOLDEN · GRAPHIC — each one a
           button that filtered in place, which made the row's middle a second control
@@ -402,10 +398,8 @@ const CardIdentity = ({ c, onPhoto }) => {
       <span style={onPhoto ? EXAMPLE_CHIP_ON_PHOTO : EXAMPLE_CHIP}>Example</span>
     )}
   </span>
-  {c.current && (
-    <span style={sx('display:inline-flex;align-items:center;gap:4px;flex:none;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);color:' + ink)}>
-      <span style={sx('width:7px;height:7px;border-radius:var(--radius-pill);flex:none;background:' + ink)} aria-hidden="true"></span>Viewing</span>
-  )}
+  {/* TOMBSTONE: the "• Viewing" mark on the card of the palette being viewed went on 24.09.26 (by
+      request: "Remove • Viewing from list view and full grid view"). aria-current still says it. */}
 </>);
 };
 

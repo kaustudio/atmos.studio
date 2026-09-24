@@ -865,7 +865,8 @@ export const renderValsMethods = {
            whose lightness this tool does not control failed on pale fields (High Key). The picture
            now runs to the edge and the name sits on its foot, over a progressive blur and a dark tint
            strong enough for white type on the palest example (AppView TILE_FADE; the user chose the
-           tint). The current card is still named, by its Viewing mark. */
+           tint). The current card is named to a screen reader by aria-current; its Viewing mark went
+           on 24.09.26, by request. */
         captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', height: CAP + 'px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '0 ' + UNIVERSE_TILE_INSET + 'px', zIndex: 1 },
         // 14px row gap, 16 column, 14 inset: the rhythm the card's block settled on (the pair inside
         // a row is 4, so the gap between rows has to stay well above it or the grouping inverts). The

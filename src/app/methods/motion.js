@@ -417,7 +417,7 @@ export const motionMethods = {
   // it was selected would keep the hover value and the selected row could be left reading as plain.
   //
   // The colour is only ever the QUIET half of the selected state. The persistent, non-colour half —
-  // the left marker bar, the "Viewing" label and aria-current — is declarative in the view-model and
+  // the left marker bar and aria-current (the "Viewing" label went on 24.09.26) — is declarative in the view-model and
   // is what actually survives a hovered neighbour looking momentarily identical.
   _syncListActive() {
     const wrap = document.querySelector('[data-list-wrap]'); if (!wrap) return;

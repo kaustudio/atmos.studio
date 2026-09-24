@@ -611,10 +611,10 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      them). It was 8, which is the size this ladder had left over after --fs-micro and --fs-nano
      were retired as text sizes — and the four things still wearing it are not decoration: the
      Example chip on a library row and on a grid card, the harmonies' Source/Mapped badge, and the
-     Viewing mark. Those NAME what a palette is, which is a label's job, and they were doing it two
+     Viewing mark (removed 24.09.26). Those NAME what a palette is, which is a label's job, and they were doing it two
      rungs below the label floor. The one genuinely decorative user, the ✕ inside the AA badge,
      grows with them and still clears --row-aa-mark (re-measured; see the note there). */
-  --fs-nano:0.625rem;         /* 10 — the identity pills: Example, Source, Mapped, Viewing */
+  --fs-nano:0.625rem;         /* 10 — the identity pills: Example, Source, Mapped */
   /* ===== BUTTON GEOMETRY =====
      Three sizes. It was twelve paddings across the forty buttons that declared one, and ten of
      those sat within a pixel of a neighbour in each direction — 8px 13px beside 9px 14px beside

@@ -7,6 +7,17 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — No "• Viewing" mark in the list or Grid View
+
+**By request:** "Remove • Viewing from list view and full grid view".
+
+- **Where it went from:** the Library list row, and Grid View's card, both the tile and the open card
+  (`CardIdentity`).
+- **What stays:**
+  - The list row still shows the palette that is open, with its left marker bar and tint.
+  - `aria-current` still tells a screen reader, on every surface.
+- **Grid View has no visible marker** for the open palette now. That is accepted; don't re-add one.
+
 ## 2026-09-24 — Every colour answers in the photo, the open card's names, and no guide in the checker
 
 **The evening audit of 23.09** (/better-ux on live at a42882c) found three things. The user said: "Fix all".
