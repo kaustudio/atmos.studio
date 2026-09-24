@@ -288,12 +288,12 @@ const RowMain = ({ c, inv }) => (
           13/500 is what that is called in this app. Still full --on-surface ink, not
           muted: it is the row's only text identifier and the one thing a screen reader
           leads with, so the demotion is a size step and never a fade.
-          THE NAME GIVES WAY, THE LABELS DO NOT (22.09.26, grid audit). Below 1280 the name has three
-          columns, 226px at 1024, since AA pairs took one of its four. A long name beside Example
-          would have been cut off at the cell's edge, labels first, so the name shrinks
-          with an ellipsis while the labels stay whole. The full name is the row's accessible name,
-          and one press away. */}
-      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
+          THE NAME WRAPS, AND THE LABELS STAY WHOLE (24.09.26, by request: "I don't want ... on the cards, the
+          full name shouldn't dissappear"). Below 1280 the name has three columns, 226px at 1024, since AA
+          pairs took one of its four, and from 22.09.26 a long name beside Example ended in an ellipsis
+          there. It takes a second line instead, balanced, so the row grows rather than the name going:
+          at the 32-character limit (lib/chars.js) two lines at most. */}
+      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.25;flex:0 1 auto;min-width:0;overflow-wrap:anywhere;text-wrap:balance;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
       {c.isExample && (
         <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
       )}
@@ -382,18 +382,21 @@ const CardIdentity = ({ c, onPhoto }) => {
   <span style={sx('display:flex;align-items:' + (onPhoto ? 'center' : 'baseline') + ';gap:8px;min-width:0;flex:1')}>
     {/* The OPEN panel's name is the head of a surface rather than a row's first column, so it
         takes --fs-title — 24, the scale's heading step — with --track-title, and wraps rather than
-        truncates because a heading has the room a row does not. */}
+        truncates because a heading has the room a row does not.
+        NO CARD CUTS A NAME (24.09.26, by request: "I don't want ... on the cards, the full name shouldn't
+        dissappear"). The cards' names ended in an ellipsis where they ran out of room; they wrap now,
+        balanced, and the card's caption grows by the line. At the 32-character limit (lib/chars.js) a
+        name takes two lines at most on the narrowest card. */}
     <span style={c.titleName
       ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + (c.nameSize || 'var(--fs-title)') + ";letter-spacing:" + (c.nameSize ? 'var(--track-statement)' : 'var(--track-title)') + ";line-height:" + (c.nameSize ? '1.05' : '1.15') + ";color:var(--on-surface);text-wrap:balance")
-      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{c.name}</span>
+      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";overflow-wrap:anywhere;text-wrap:balance")}>{c.name}</span>
     {c.isExample && !c.exampleInRow && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
           up with the values column below it and reads down the wall of cards as its own signal,
           where hung off the name it started at a different x on every card.
           The name gets min-width:0 to go with it. Without that a flex item will not shrink below its
-          content, so a long name would have pushed the chip back off the edge — the ellipsis it
-          already asks for cannot fire until the item is allowed to be narrower than its text.
+          content, so a long name would have pushed the chip back off the edge instead of wrapping.
           On the photograph it takes the photograph's ink, its edge a mix of it. */
       <span style={onPhoto ? EXAMPLE_CHIP_ON_PHOTO : EXAMPLE_CHIP}>Example</span>
     )}

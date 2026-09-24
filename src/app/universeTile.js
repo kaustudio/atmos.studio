@@ -19,7 +19,8 @@
 // its panel together never leave the screen, and the panel's content scrolls inside its box rather
 // than growing the box. See openTile for the arithmetic, and UNIVERSE_OPEN below for the shares.
 //
-// CAP is the caption's height: the band the name is centred in. The open tween fades the caption
+// CAP is the caption's height: the band a one-line name is centred in; a name on two lines grows it
+// upward from the card's foot (24.09.26, names wrap rather than truncate). The open tween fades the caption
 // and the blur under it; nothing else in the card moves (the hero's foot was CAP until 17.09.26).
 export const UNIVERSE_TILE = { W: 300, H: 344, CAP: 44 };
 

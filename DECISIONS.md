@@ -7,6 +7,18 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Names wrap on the cards and in the list instead of ending in an ellipsis
+
+**By request:** "I don't want ... on the cards, the full name shouldn't dissappear".
+
+- Grid View's cards, the reduced-motion grid and the Library list set a long name on a second line,
+  balanced, instead of cutting it. At the 32-character limit a name takes two lines at most on the
+  narrowest card.
+- On a Grid View card the caption grows upward from the card's foot (`minHeight` CAP, padded to centre
+  one line), so a one-line name sits exactly where it did: measured to 0.1px against live on every card.
+- The dialog titles that head themselves with the name (Check Contrast, Export, Add to Projects) already
+  hold a 32-character name on one line.
+
 ## 2026-09-24 — A palette's name stops at 32 characters, keeps no emoji, and stands on columns 1–7
 
 **By request:** "Instead of the input saying remove x characters it should just stop", "remove emojis", "make sure

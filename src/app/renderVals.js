@@ -867,7 +867,10 @@ export const renderValsMethods = {
            strong enough for white type on the palest example (AppView TILE_FADE; the user chose the
            tint). The current card is named to a screen reader by aria-current; its Viewing mark went
            on 24.09.26, by request. */
-        captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', height: CAP + 'px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: '0 ' + UNIVERSE_TILE_INSET + 'px', zIndex: 1 },
+        // A name on two lines (24.09.26: names wrap on the cards rather than end in an ellipsis) grows the
+        // caption UPWARD from the card's foot. One line sits exactly where it did: centred in CAP, the
+        // padding being what CAP leaves around one line of the name (--fs-subtitle at 1.2).
+        captionStyle: { position: 'absolute', left: '0', right: '0', bottom: '0', minHeight: CAP + 'px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', padding: 'calc((' + CAP + 'px - var(--fs-subtitle) * 1.2) / 2) ' + UNIVERSE_TILE_INSET + 'px', zIndex: 1 },
         // 14px row gap, 16 column, 14 inset: the rhythm the card's block settled on (the pair inside
         // a row is 4, so the gap between rows has to stay well above it or the grouping inverts). The
         // reduced-motion card draws this directly; the open panel pads its body instead and keeps
