@@ -7,6 +7,16 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — A share link pasted into an open tab opens
+
+**Reported:** "After the renaming of a generated image, I think the link breaks". The links held: every one
+made after a rename (an apostrophe and an ampersand, accents, 32 characters, a dash and a slash) opened its
+palette in a fresh tab and on a phone. What failed was pasting a new link into a tab already showing a
+shared palette. A link that differs only after the # does not reload the page, and the palette was read
+once, when the app was built, so the address changed and the screen kept the old palette. A fragment
+holding a palette now reloads the page, which opens it as a fresh visit does; other fragments are left
+alone.
+
 ## 2026-09-24 — ↵ on the end of the name field's rule
 
 **By request:** "add an enter icon at the end of the line so the user know how to exit", then option A of

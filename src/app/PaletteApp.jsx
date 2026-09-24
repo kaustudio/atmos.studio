@@ -654,6 +654,15 @@ export default class PaletteApp extends React.Component {
       else this.handleIncoming(file, 'paste');
     };
     document.addEventListener('paste', this._onPaste);
+    /* A SHARE LINK PASTED INTO THIS TAB'S ADDRESS BAR (24.09.26, reported: "After the renaming of a generated
+       image, I think the link breaks"). A link that differs from the address only after the # does not
+       reload the page, and a shared palette is read once, when the app is built (_sharedFromHash), so the
+       address changed while the screen kept the palette it had: paste a renamed palette's link over the one
+       still open, and nothing happened. A fragment that holds a palette now reloads the page, which opens
+       it exactly as a fresh visit does. Any other fragment (an anchor) is left alone, and the app's own
+       address changes use replaceState, which fires no event. */
+    this._onHash = () => { if (this._sharedFromHash()) { try { window.location.reload(); } catch (e) { } } };
+    window.addEventListener('hashchange', this._onHash);
     // input-modality tracking: keyboard sets the flag, pointer clears it — centerOnTile is gated on it
     // The same fact is mirrored onto the root as data-kbd, which is the only way CSS can know it:
     // the text field's focus ring hangs off it (global.css), so a click leaves the field alone and a
@@ -1405,6 +1414,7 @@ export default class PaletteApp extends React.Component {
     if (this._end) clearTimeout(this._end);
     if (this._onKey) document.removeEventListener('keydown', this._onKey);
     if (this._onPaste) document.removeEventListener('paste', this._onPaste);
+    if (this._onHash) window.removeEventListener('hashchange', this._onHash);
     if (this._uRetryT) clearTimeout(this._uRetryT);
     if (this._objUrls) { this._objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) { } }); this._objUrls = []; }
     if (this._storageHandler) window.removeEventListener('storage', this._storageHandler);
