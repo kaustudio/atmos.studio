@@ -76,7 +76,8 @@ a `display:none`.
   `sourceSwatches` and `roles` exactly as before, there is just nothing writing them at the moment.
 - **Tools** — WCAG contrast checker (AA/AAA × normal/large, pairwise matrix), OKLCH colour
   harmonies (gamut-mapped to sRGB), token export (Tailwind v4 `@theme`, W3C design tokens, Figma
-  variables, CSS custom properties, binary `.ase`), projects.
+  variables, CSS custom properties, binary `.ase`), projects. The semantic layer names the six roles
+  plus `on-primary`, a label colour derived to reach 4.5:1 on primary (`onPrimary`, exporters.js).
 - **Standalone pages** — privacy and terms, served straight out of `/public`, and a not-found page
   that is one thing only: the real Neue Montreal glyphs of *404*, fitted edge to edge across the
   viewport and rebuilt as a particle cloud the cursor pushes through, over a fixed full-viewport

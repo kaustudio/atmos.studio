@@ -4505,7 +4505,7 @@ function ExportDialog({ vals }) {
               sentence made the column as wide as itself and stood the switch 393px from its name. Two
               lines, broken where the sense does, what it does and then the six names, in the voice the
               note had before it went. */}
-          <p id="ex-scaffold-note" style={sx("margin:4px 0 0;font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Names colours by role instead of 01–05:<br />background, surface, primary, secondary, accent, text.</p>
+          <p id="ex-scaffold-note" style={sx("margin:4px 0 0;font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Names colours by role instead of 01–05:<br />background, surface, primary, on primary, secondary, accent, text.</p>
         </div>
       </div>
     </div>

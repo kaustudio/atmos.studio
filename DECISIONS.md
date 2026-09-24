@@ -7,6 +7,28 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — The semantic scaffold names a label colour for Primary
+
+**By request:** "Yes, do that for the scaffold", following "we need to meet the requirements when the tools
+builds around upholding these".
+
+- **The gap.** The scaffold named six roles and nothing for the words on Primary, so a reader took Text.
+  Text on Primary failed AA on all eight examples, at 1.78 to 3.29:1.
+- **What the export adds.** Every semantic export now carries `on-primary`, right after primary, from
+  `onPrimary()` in `exporters.js`. It is the first of these to reach 4.5:1 on Primary:
+  - the palette's Text;
+  - then its Background;
+  - then the best other swatch;
+  - else black or white, whichever reads better, since one of them always reaches 4.58:1.
+- **On the eight examples:** four take their Background (4.70 to 7.08:1) and four fall back to black or
+  white (4.64 to 7.63:1). Frozen Slate's is #020101, matching How it Works 3.2.
+- **Derived, not assigned:** it follows Primary, including a role override.
+- **Wording updated:**
+  - the Export note lists "on primary";
+  - the project export's status line says "seven roles per palette";
+  - How it Works says "the suggested roles" where it said "six";
+  - the README describes the token.
+
 ## 2026-09-24 — Five colours that look like five: the reading merges look-alikes
 
 **By request.** Three messages, in order:

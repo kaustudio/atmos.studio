@@ -1138,7 +1138,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
           : 'Export ' + p.name + ': copy it, or download it as design tokens',
         semanticOn: semantic, semanticChecked: semantic ? 'true' : 'false',
         layerLabel: semantic
-          ? 'Exporting the semantic scaffold' + (pid ? ', six roles per palette' : '') + '. Refine before shipping.'
+          ? 'Exporting the semantic scaffold' + (pid ? ', seven roles per palette' : '') + '. Refine before shipping.'
           : 'Exporting the primitive layer (swatches by weight)' + (pid ? ', grouped by palette' : '') + '.',
         /* COPY IS THE FIRST GROUP OF EXPORT (22.09.26, by request: "fold copy into export"). Copy and
            Export were two doors to one job — take this palette into your work — split only by where it

@@ -1,7 +1,7 @@
 // Token export (Workstream B) — HEX/RGB only; never the labelled CMYK-approx or Pantone-nearest
 // (those stay on-screen display). Five formats: Tailwind v4 @theme, W3C design tokens, Figma
 // variables JSON, plain CSS custom properties, and binary Adobe Swatch Exchange (ASEF).
-import { hexToRgb } from './color.js';
+import { hexToRgb, contrastRatio, onColor } from './color.js';
 
 export function slugName(name) { return (name || 'palette').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'palette'; }
 
@@ -97,9 +97,31 @@ export function semanticRoles(pal, override) {
     return { role, hex: pal.swatches[i].hex.toUpperCase(), index: i };
   });
 }
+/* A LABEL THAT READS ON PRIMARY (24.09.26, by request: "Yes, do that for the scaffold", after "we need to
+   meet the requirements when the tools builds around upholding these"). Primary is a fill, and a fill
+   needs a colour for the words on it; the scaffold had none, so a reader took Text, and on Frozen
+   Slate Text on Primary is 1.78 to 1. This is the first colour that reaches 4.5 to 1 (WCAG AA for body
+   text) on Primary: the palette's Text, then its Background, then whichever other swatch reads best.
+   When none does, black or white, whichever reads better — one of the two always reaches 4.58 to 1.
+   Exported as a seventh name, derived rather than assigned, so it follows Primary wherever Primary goes. */
+export function onPrimary(pal, roles) {
+  const byRole = {}; roles.forEach((r) => { byRole[r.role] = r.hex.toUpperCase(); });
+  const primary = byRole.primary;
+  const first = [byRole.text, byRole.background].filter(Boolean);
+  const rest = pal.swatches.map((s) => s.hex.toUpperCase()).filter((h) => h !== primary && first.indexOf(h) < 0)
+    .sort((a, b) => contrastRatio(b, primary) - contrastRatio(a, primary));
+  for (const h of first.concat(rest)) if (h !== primary && contrastRatio(h, primary) >= 4.5) return h;
+  return onColor(primary).toUpperCase();
+}
 export function semanticEntries(pal, override, slug) {
   slug = slug || slugName(pal.name);
-  return semanticRoles(pal, override).map((r) => ({ key: r.role, cssName: 'palette-' + slug + '-' + r.role, hex: r.hex.toUpperCase(), rgb: hexToRgb(r.hex) }));
+  const roles = semanticRoles(pal, override), label = onPrimary(pal, roles), out = [];
+  roles.forEach((r) => {
+    out.push({ key: r.role, cssName: 'palette-' + slug + '-' + r.role, hex: r.hex.toUpperCase(), rgb: hexToRgb(r.hex) });
+    // Beside the fill it labels, so a stylesheet reads primary, then the colour for text on it.
+    if (r.role === 'primary') out.push({ key: 'on-primary', cssName: 'palette-' + slug + '-on-primary', hex: label, rgb: hexToRgb(label) });
+  });
+  return out;
 }
 
 export function buildTailwind(pal, entries, semantic) {
