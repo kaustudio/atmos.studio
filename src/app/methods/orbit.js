@@ -70,10 +70,12 @@ const PAL = {
       which is under the grey floor and therefore sits at the dominant hue by rule rather than by
       fan. Before the cap the worst was 49°.
 
-      NOT RE-MEASURED since Ruled Open Country was replaced by Hard Gunmetal (pipeline.js). The
-      figures above stand for the previous eight. The new palette is achromatic — every swatch is
-      inside 0.036 chroma, so the whole of it is under the grey floor this paragraph describes, and
-      it is the case most likely to move the worst number. Re-run the test before quoting these. */
+      RE-MEASURED 24.09.26 on today's eight (Hard Gunmetal in, Ruled Open Country out), and against
+      each swatch's OWN hue, which is stricter than "a hue in its palette": no station lands more
+      than 16° from its own colour, the fan's cap (Garnet's #f17645 41°→57°, Midfield's #0a2944
+      249°→265°). Greys under the floor sit at the dominant hue by rule and are not counted. Until
+      trust stopped moving colours (see _paletteStations) two stood outside the old 20°: Dry Season's
+      cream #d5cdbf, 82° drawn at 46°, and Hard Gunmetal's #3e312b, 46° drawn at 71°. */
   spanMin: 40,
   fanMax: 3.2,
   addMax: 16,
@@ -200,9 +202,10 @@ export const orbitMethods = {
      §8's acceptance criterion and it is deliberately spent — the twelve stations were an authored
      wheel that no palette in the archive matches, and a landing that shows every hue is a landing
      that shows none of the tool's actual output. Everything else §8 protects is kept exactly:
-     neighbouring gas is neighbouring hue, each station owns a contiguous arc, the wheel closes with
-     no seam, every pixel still goes through gamutMap, and the tonal ladder is still solved against
-     the page rather than taken from the photograph.
+     neighbouring gas is neighbouring colour (a palette's neighbours mix, 24.09.26: _orbitRampData),
+     each station owns a contiguous arc, the wheel closes with no seam, every pixel still goes
+     through gamutMap, and the tonal ladder is still solved against the page rather than taken from
+     the photograph.
 
      WHICH PALETTE. Held on the instance rather than in state so the ramp can be baked synchronously
      inside initOrbit; mirrored into state by _setFieldPalette for the credit under the footer.
@@ -297,10 +300,19 @@ export const orbitMethods = {
     // their (tiny) chroma and their share, so they read as the near-neutral the palette actually
     // holds instead of as a stray hue nobody photographed.
     parts.forEach((q) => { if (q.C <= PAL.greyFloor) q.H = domH; });
-    // Offset from the dominant hue, scaled by how much hue the swatch actually has — see greyTrust.
+    /* Offset from the dominant hue, scaled by how much hue the swatch actually has — see greyTrust.
+       THE TRUST DECIDES HOW FAR THE FIELD MAY PUSH A COLOUR, NEVER WHERE THE COLOUR IS (24.09.26).
+       The scaled offset `d` orders the ring, measures the span the fan answers to and picks the
+       harmony, so a greyish swatch neither widens a narrow palette nor has its hue spread, which is
+       the job greyTrust was written for. The colour itself is drawn at its OWN offset (`own`), and
+       the fan's spread of it is scaled by the trust (see the return below). Drawing it at `d` moved
+       it round the circle instead, by as much as its whole distance from the dominant hue: Alien
+       Meridian's slate #878BA5 (278°, 176° across the circle from its dominant hue) was drawn at
+       10°, a pink, and Dry Season's cream #d5cdbf (82°) at the orange 46°. */
     parts.forEach((q) => {
-      const conf = Math.max(0, Math.min(1, (q.C - PAL.greyFloor) / (PAL.greyTrust - PAL.greyFloor)));
-      q.d = (((q.H - domH + 540) % 360) - 180) * conf;
+      q.t = Math.max(0, Math.min(1, (q.C - PAL.greyFloor) / (PAL.greyTrust - PAL.greyFloor)));
+      q.own = ((q.H - domH + 540) % 360) - 180;
+      q.d = q.own * q.t;
     });
     let lo = Infinity, hi = -Infinity, maxC = 0, totW = 0;
     parts.forEach((q) => { lo = Math.min(lo, q.d); hi = Math.max(hi, q.d); maxC = Math.max(maxC, q.C); totW += q.w; });
@@ -308,8 +320,12 @@ export const orbitMethods = {
     const fan = Math.min(PAL.fanMax, Math.max(1, PAL.spanMin / Math.max(span, 1)));
     const gain = Math.min(PAL.cGainMax, Math.max(PAL.cGainMin, Math.pow(PAL.cTop / Math.max(maxC, 1e-4), PAL.cSoft)));
     // Ascending signed offset, so consecutive stations are consecutive hues and the one long step is
-    // the wheel closing — which the ramp walks the short way round, back through the same arc. A
-    // palette does not contain a full revolution and the wheel does not invent one for it.
+    // the wheel closing. The ramp MIXES neighbouring palette stations instead of walking the hue
+    // circle between them (see `lab` below, and _orbitRampData), so that step is a straight line back
+    // across the palette. It used to walk the short way round, which is back through the palette
+    // only while the palette spans less than half the circle: Alien Meridian, olive against violet,
+    // turned a full revolution through teal and blue. A palette does not contain a full revolution,
+    // and the wheel does not invent one for it.
     const open = (d) => d + Math.max(-PAL.addMax, Math.min(PAL.addMax, (fan - 1) * d));
     /* The harmony is chosen off the wheel that will actually be drawn — open(hi) − open(lo), not
        span × fan. Those two are only equal while the fan is unbounded, and it is not: addMax bites
@@ -319,7 +335,10 @@ export const orbitMethods = {
     const k = (open(hi) - open(lo)) < PAL.harmSplit ? 'analogWide' : 'analogTight';
     const n = parts.length, even = 1 / n;
     return parts.slice().sort((x, y) => x.d - y.d).map((q) => {
-      const H = ((domH + open(q.d)) % 360 + 360) % 360;
+      // Where the colour is, plus the fan's spread of it scaled by how much hue it has: exactly
+      // open(own) for a whole hue (t = 1), the dominant hue for a grey (own = 0), and in between a
+      // greyish colour is spread less than a clear one, never more.
+      const H = ((domH + open(q.own) - (1 - q.t) * (open(q.own) - q.own)) % 360 + 360) % 360;
       const w = totW > 0 ? q.w / totW : even;
       return {
         H,
@@ -327,6 +346,7 @@ export const orbitMethods = {
         dL: this._hueLift(H),
         k,
         share: Math.max(even * PAL.shareMin, even + (w - even) * PAL.weightBias),
+        lab: true,       // mixed with its neighbours, not walked round the circle: _orbitRampData
       };
     });
   },
@@ -420,7 +440,20 @@ export const orbitMethods = {
      wheel directions. The interesting edge is dir < 0 at x = 0, where u lands exactly on 1: the old
      form wrapped to station 0 at f = 0 and this one holds station 11 at f = 1, which are the same
      colour because every term — hue, chroma, dL and both harmony blends — is interpolated to its
-     endpoint. Re-run that comparison before changing anything in this loop.
+     endpoint. Re-run that comparison before changing anything in this loop. (Re-run 24.09.26, when
+     palettes began to mix: still 0 of 32768 in both directions, since the twelve carry no `lab`.)
+
+     A PALETTE'S NEIGHBOURS ARE MIXED, NOT WALKED (24.09.26). Walking the circle is right for the
+     authored twelve, a spectrum whose neighbours sit 30° apart. A palette's neighbours can sit across
+     the circle, and the arc between them is colours neither holds: Alien Meridian, a shared palette
+     of olive and brown against slate and violet, was joined through teal and blue. So two palette
+     stations (`lab`, from _paletteStations) mix as two gases do, on the straight line between them
+     in OKLab: olive into violet passes through their muddy mix, never a teal. Between two close hues
+     that line is the arc to within the eye: across the eight examples the mix alone moves no pixel
+     by more than ΔE(OK) 0.014, under the 0.02 a viewer can just tell apart. Judged by how far the
+     eight examples' own fields ever stray from their colours (62°), 7.3% of Alien Meridian's wheel
+     went past it; mixed, 6 pixels of 8192 do, a mauve-grey at the grey floor where its slate turns
+     into its brown.
 
      256x32 with a linear filter, which is finer than gas can show. 8192 gamut maps — measured at 6ms
      warm and 9ms cold. It used to be paid once per landing arrival, inside a module already off the
@@ -456,8 +489,17 @@ export const orbitMethods = {
       const i1 = (i0 + 1) % n;
       const s0 = st[i0], s1 = st[i1];
       const f = s0.share > 0 ? Math.min(1, Math.max(0, (u - s0.at) / s0.share)) : 0;
-      const hue = s0.H + (((s1.H - s0.H + 540) % 360) - 180) * f;
-      const C = mix(s0.C, s1.C, f);
+      // Palette stations MIX; the authored twelve walk the circle. See A PALETTE'S NEIGHBOURS, above.
+      let hue, C;
+      if (s0.lab && s1.lab) {
+        const R = Math.PI / 180;
+        const ma = mix(s0.C * Math.cos(s0.H * R), s1.C * Math.cos(s1.H * R), f);
+        const mb = mix(s0.C * Math.sin(s0.H * R), s1.C * Math.sin(s1.H * R), f);
+        hue = Math.atan2(mb, ma) / R; C = Math.hypot(ma, mb);
+      } else {
+        hue = s0.H + (((s1.H - s0.H + 540) % 360) - 180) * f;
+        C = mix(s0.C, s1.C, f);
+      }
       const dL = mix(s0.dL || 0, s1.dL || 0, f);
       const A = S.HARM[s0.k], B = S.HARM[s1.k];
       const rung = this._ladder(dL);
@@ -1074,7 +1116,8 @@ export const orbitMethods = {
           this spends is the old acceptance line "the whole spectrum is present around the copy at
           once" — Garnet is a red field, High Key a pale one, and a landing that showed every hue was
           a landing that showed none of the tool's actual output. What it keeps, and what any pass
-          here still has to keep: neighbouring gas is neighbouring hue; every station owns one
+          here still has to keep: neighbouring gas is neighbouring colour, and between two palette
+          colours it is their mix, never a hue round the circle neither holds; every station owns one
           CONTIGUOUS arc (now its share of the palette rather than an even twelfth); the wheel closes
           with no seam; the tonal ladder is solved against `--surface` and never taken from the
           photograph, which is what keeps one exposure serving both themes; and only ANALOGOUS

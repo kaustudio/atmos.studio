@@ -7,6 +7,25 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — The field shows a palette's own colours, and mixes them instead of walking the circle
+
+**By request:** "just make sure we meet the correct color representation", after a live test of a shared
+palette (Alien Meridian: olive and brown against slate and violet) showed its phone field full of teal and
+sky blue.
+
+- **Neighbouring colours mix as two gases do**, on the straight line between them in OKLab. The field
+  walked the hue circle between them, which was built on the eight examples (their colours sit within 40°
+  of each other); across a wider palette it invents the colours in between. The authored twelve, the
+  fallback spectrum, still walk the circle, byte for byte as before.
+- **Every colour is drawn at its own hue.** How much hue a greyish colour has (`greyTrust`) still limits
+  how far the fan spreads it and how much it widens the span, but no longer moves it. The slate #878BA5
+  had been drawn as a pink, Dry Season's cream as an orange, Hard Gunmetal's brown-grey as an olive.
+- **Measured:** no station of any palette tested lands more than 16° (the fan's cap) from its own colour;
+  it had been as far as 95°. 7.3% of Alien Meridian's wheel lay further from its colours than any
+  example's field strays (62°); now 6 pixels of 8192. Six examples move by at most ΔE(OK) 0.013, under
+  the 0.02 a viewer can just tell apart; Dry Season (0.040) and Hard Gunmetal (0.035) move toward their
+  own colours.
+
 ## 2026-09-24 — Export starts with the Semantic Scaffold on, and remembers the choice
 
 **By request:** "implement the medium finding", from the assessment of atmos's feature priorities against
