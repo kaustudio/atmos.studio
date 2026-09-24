@@ -216,6 +216,12 @@ export const orbitMethods = {
      whole example set a stale name. */
   _fieldPool() {
     const live = this._examples ? this._examples() : [];
+    /* A SHARED PALETTE JOINS THE POOL ON A PHONE (24.09.26). When the story tells a shared
+       link's palette, the field behind its first chapter is that palette's, as it is an example's. */
+    if (this.state.narrow && this._storyCase) {
+      const st = this._storyCase();
+      if (st && st.example !== true && !live.some((x) => x.id === st.id)) return live.concat([st]);
+    }
     if (live.length) return live;
     // makeSeed() is the same eight, freshly built — it reads no storage, so this survives the one
     // case _examples() cannot cover. Cached because it allocates forty swatches and converts them.

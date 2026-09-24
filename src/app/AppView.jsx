@@ -1039,8 +1039,9 @@ function MobileStory({ st }) {
                 start washing the field off the screen, which is the failure above. */}
             <div className="story-hero__block">
               <span aria-hidden="true" style={sx('position:absolute;inset:-140px -120px;z-index:0;pointer-events:none;background:radial-gradient(ellipse closest-side at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
+              {st.heroEyebrow && (<p className="story-hero__eyebrow" data-story-hero-line>{st.heroEyebrow}</p>)}
               <h1 data-story-hero-line>{st.heroTitle}</h1>
-              <p className="story-hero__lead" data-story-hero-line>Atmos shows how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024&nbsp;px or wider.</p>
+              <p className="story-hero__lead" data-story-hero-line>{st.heroLead}</p>
               {/* The label names the palette once there is one to name — see beginLabel in
                   renderVals. `data-case="own"` for the same reason the picker's titles carry it: the
                   name is a string the reading invented, so nothing downstream may case it. */}
@@ -1072,12 +1073,14 @@ function MobileStory({ st }) {
             (about.css). The markup is static, so the line reveal's innerHTML restore cannot strand it
             (see the split-targets note in maskLines.js). The hero keeps its one solid statement, which
             balance already breaks after "from", as How it Works' does. */}
+        {st.hasImage && (
         <section id="story-image" data-story-ch="image" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>Start With<br /><span className="about-head__soft">the Whole Image</span></h2>
             <p data-reveal>{st.name} is a palette of five colours drawn from this image. Explore their proportions, properties and contrast to understand how they relate.</p>
           </div>
         </section>
+        )}
 
         {/* 1.2 — THE STRUCTURE, as /about's weight figure: a bar of true shares, numbers in the key. */}
         <section id="story-structure" data-story-ch="structure" data-sec className="about-sec about-grid">
@@ -1113,6 +1116,8 @@ function MobileStory({ st }) {
 
         {/* 1.3 — WHERE THE COLOUR LIVES. The two stacked photographs live HERE, inside a bounded
             figure, because here they are the subject — a colour's region cut out of its own picture. */}
+        {/* A shared link carries no photograph, so its story skips the two chapters about one (24.09.26). */}
+        {st.hasImage && (<>
         <section id="story-where" data-story-ch="where" data-sec className="about-sec about-grid">
           <div className="about-col">
             <h2 data-sec-head>See Where<br /><span className="about-head__soft">Each Colour Comes From</span></h2>
@@ -1180,6 +1185,7 @@ function MobileStory({ st }) {
             </figure>
           )}
         </section>
+        </>)}
 
         {/* 2.1 — CHARACTER, ROLE AND CONTRAST. Three /about figures behind one segmented group. */}
         <section id="story-relationships" data-story-ch="relationships" data-sec className="about-sec about-grid">

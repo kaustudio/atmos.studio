@@ -278,6 +278,18 @@
   text-wrap:pretty;
 }
 .story-hero__act{ margin-top:12px }
+/* "SHARED WITH YOU" (24.09.26): the desktop shared view's words in its voice (--fs-body, flat
+   tracking), muted here because it qualifies the name rather than competing with it, and 4px nearer the
+   name than the block's 14px gap so the two read as one statement (proximity). */
+/* Scoped past [data-mobile-story] main p (about.css), which gives every story paragraph the lead's size,
+   body tracking and a 1.15em foot: that rule outranks a class, and took all three from this line. */
+[data-mobile-story] main p.story-hero__eyebrow{
+  margin:0 0 -4px;
+  font-size:var(--fs-body);
+  line-height:1.4;
+  letter-spacing:var(--track-flat);
+  color:var(--on-surface-muted);
+}
 
 /* ===== THE PICTURE, WHERE IT IS THE SUBJECT ================================================== */
 

@@ -381,7 +381,9 @@ export default class PaletteApp extends React.Component {
   // a first-time visitor asked to see from the gate, behind a flag of its own (exampleView), until the
   // phone's example view and example list were removed on 17.09.26 (audit C5); the story shows the
   // examples now.
-  _mobileShare() { return !!(this.state.narrow && this.state.sharedView && this.state.current); }
+  // THE SHARED LINK IS TOLD AS THE STORY TOO (24.09.26): the phone's plain palette page
+  // (MobileShareView) gives way to the story, which _storyCase hands the shared palette.
+  _mobileShare() { return false; }
   /* THE STORY IS THE PHONE'S GROUND FLOOR, so it answers last: the shared-link view stands above it
      and must win. It also needs a case to tell — with no examples in the feed there is nothing to
      read, and the phone falls through to the gate exactly as it stands today.
@@ -409,10 +411,17 @@ export default class PaletteApp extends React.Component {
   _storyCase() {
     const ex = this._examples();
     if (!ex.length) return null;
-    const id = this.state.storyCaseId;
     const chosen = id && ex.find((p) => p.id === id);
     if (chosen) return chosen;
+  /* A SHARED PALETTE IS TOLD AS THE EXAMPLES ARE (24.09.26, by request: "the user would land
+     to the same information already provided with the 8 existing examples", and "it only occurs when a
+     photo is shared with them from the desktop tool"). A phone never reads an image (the tool is the
+     computer's); what reaches it is a palette someone shared from the tool, and the story tells that
+     palette exactly as it tells an example. */
     let held = this._storyDefaultId && ex.find((p) => p.id === this._storyDefaultId);
+    const s = this.state;
+    if (s.narrow && s.sharedView && s.current) return s.current;
+    const id = s.storyCaseId;
     if (!held) { held = ex[Math.floor(Math.random() * ex.length)]; this._storyDefaultId = held.id; }
     return held;
   }

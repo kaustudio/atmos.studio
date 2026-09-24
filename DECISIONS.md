@@ -7,6 +7,23 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — A palette shared from the desktop opens on a phone as the story the examples tell
+
+**By request:** "I was thinking the user would land to the same information already provided with the 8
+existing examples", "The user should not choose a photo after the photo rail, it only occurs when a photo
+is shared with them from the desktop tool", and "yes optimize that".
+
+- **The phone never reads an image.** The tool stays on the computer; what reaches a phone is a palette
+  shared with Share Palette. Don't add photo uploads to the phone.
+- **That palette is told as the phone story**, the same chapters and design as the eight examples, in
+  place of the one-screen share page. `_storyCase()` returns the shared palette; `MobileShareView` is no
+  longer reached and is to be removed separately.
+- **Share links stay photo-free** (a photo would not fit in a link, and a sharer is not necessarily
+  sharing it), so a shared story skips "Start With the Whole Image" and "See Where Each Colour Comes From".
+- **The hero says "Shared with you"**, the desktop shared view's words, over the palette's name. Its lead
+  drops the tool's width, which the ending states. The hero's act lands on the first chapter the story has
+  (it went nowhere for a shared palette), and the field behind it takes the shared palette's colours.
+
 ## 2026-09-24 — Names wrap on the cards and in the list instead of ending in an ellipsis
 
 **By request:** "I don't want ... on the cards, the full name shouldn't dissappear".

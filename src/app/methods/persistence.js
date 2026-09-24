@@ -925,7 +925,9 @@ export const persistenceMethods = {
     try { el.scrollIntoView({ behavior: now || this._reduce ? 'auto' : 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
     return true;
   },
-  beginStory() { this.scrollStoryTo('[data-story-ch="image"]'); },
+  // The first chapter the story has: "the Whole Image", or, for a shared palette that came without its
+  // photograph (24.09.26), the weights. It went nowhere there, since the image chapter is absent.
+  beginStory() { if (!this.scrollStoryTo('[data-story-ch="image"]')) this.scrollStoryTo('[data-story-ch]'); },
 
   /* THE HANDOFF, and it is a real one.
 
