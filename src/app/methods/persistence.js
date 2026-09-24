@@ -1112,9 +1112,11 @@ export const persistenceMethods = {
       return;
     }
     const recast = !!s.storyCaseId;
-    const rolled = this._storyDefaultId && this._examples().find((p) => p.id === this._storyDefaultId);
+    // The visit's first case: the palette a shared link opened on (24.09.26), or the example it rolled.
+    const home = (s.narrow && s.sharedView && s.current) ? s.current
+      : (this._storyDefaultId && this._examples().find((p) => p.id === this._storyDefaultId));
     // Before the cover, for the reason chooseStoryCase gives: the field changes while it is still lit.
-    if (recast && rolled) this.setFieldPalette(rolled);
+    if (recast && home) this.setFieldPalette(home);
     this._wipeCover({
       commit: (after) => {
         // A new telling, case change or not (see above): fresh markup, so every module starts over.

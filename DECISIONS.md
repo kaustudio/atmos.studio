@@ -66,6 +66,10 @@ is shared with them from the desktop tool", and "yes optimize that".
 - **The hero says "Shared with you"**, the desktop shared view's words, over the palette's name. Its lead
   drops the tool's width, which the ending states. The hero's act lands on the first chapter the story has
   (it went nowhere for a shared palette), and the field behind it takes the shared palette's colours.
+- **An example picked from the rail is told as itself** (reported the same day: "it says Explore and the
+  naming of the shared palette where it should say Garnet or Midfield"). The whole story had kept telling
+  the shared palette while its field and credit turned to the example. The shared palette is where the
+  link opens, "Shared with you" stands only over it, and the logo brings it back, field and all.
 
 ## 2026-09-24 — Names wrap on the cards and in the list instead of ending in an ellipsis
 

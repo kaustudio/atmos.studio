@@ -220,10 +220,13 @@ export const orbitMethods = {
   _fieldPool() {
     const live = this._examples ? this._examples() : [];
     /* A SHARED PALETTE JOINS THE POOL ON A PHONE (24.09.26). When the story tells a shared
-       link's palette, the field behind its first chapter is that palette's, as it is an example's. */
-    if (this.state.narrow && this._storyCase) {
-      const st = this._storyCase();
-      if (st && st.example !== true && !live.some((x) => x.id === st.id)) return live.concat([st]);
+       link's palette, the field behind its first chapter is that palette's, as it is an example's.
+       It stays in the pool while an example picked after it is told, so the logo can hand the field
+       back to it (returnToStoryStart); asking the story's case instead dropped it the moment an
+       example was chosen, and setFieldPalette refused it on the way home. */
+    const s = this.state;
+    if (s.narrow && s.sharedView && s.current && s.current.example !== true && !live.some((x) => x.id === s.current.id)) {
+      return live.concat([s.current]);
     }
     if (live.length) return live;
     // makeSeed() is the same eight, freshly built — it reads no storage, so this survives the one

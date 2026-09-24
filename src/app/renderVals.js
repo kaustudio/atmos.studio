@@ -1501,6 +1501,8 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
     let mobileStory = null;
     if (this._mobileStory()) {
       const p = this._storyCase();
+      // The story is telling the palette a link brought, rather than an example picked after it.
+      const toldShared = !!(s.sharedView && s.current && p.id === s.current.id);
       const an = analysePalette(p.swatches);
       const met = this.paletteMetrics(p);
       const totW = p.swatches.reduce((a, x) => a + x.weight, 0) || 1;
@@ -1585,7 +1587,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
            behaviour the ternary has always had. The statement does its work on the way in and then
            gets out of the way of the image the story is about. */
         // A shared link's palette is named from the first frame too (24.09.26): the reader came for it.
-        heroTitle: (s.storyCaseId || s.sharedView) ? p.name : 'Colour Read from Light and Atmosphere',
+        heroTitle: (s.storyCaseId || toldShared) ? p.name : 'Colour Read from Light and Atmosphere',
         /* THE ACT NAMES WHAT IT OPENS, on the same condition and for the same reason the heading
            does. "Explore an Example" is the right words exactly once — on first arrival, when the
            heading is the width notice and there is no palette on the screen yet to name. The moment
@@ -1595,14 +1597,16 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
            is open THAT palette's story, not a sample of the idea.
            Split from heroTitle rather than derived from it because the two say different things on
            the first-arrival branch — one is a sentence about the viewport, the other is a verb. */
-        beginLabel: (s.storyCaseId || s.sharedView) ? 'Explore ' + p.name : 'Explore an Example',
+        beginLabel: (s.storyCaseId || toldShared) ? 'Explore ' + p.name : 'Explore an Example',
         /* A SHARED PALETTE ARRIVES AS ONE (24.09.26, by request: "yes optimize that"). The
            desktop's shared view says "Shared with you"; the phone says it too, quietly, over the name, so
            the recipient knows whose palette this is before the story starts. Its lead keeps what Atmos
            does and drops the tool's width: the story's ending says where the tool is, at the moment it
-           becomes the next step, and a recipient's first screen is about the palette they were sent. */
-        heroEyebrow: s.sharedView ? 'Shared with you' : '',
-        heroLead: s.sharedView
+           becomes the next step, and a recipient's first screen is about the palette they were sent.
+           Only while the story tells that palette: over an example picked after it, "Shared with you"
+           would be claiming the example was sent. */
+        heroEyebrow: toldShared ? 'Shared with you' : '',
+        heroLead: toldShared
           ? 'Atmos shows how colours share weight, create contrast and shape the feeling of an image.'
           : 'Atmos shows how colours share weight, create contrast and shape the feeling of an image. The tool opens in a window 1024\u00a0px or wider.',
         image: this.dispUrl(p), hasImage: this.hasImg(p),

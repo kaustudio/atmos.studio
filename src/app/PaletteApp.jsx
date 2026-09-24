@@ -418,15 +418,21 @@ export default class PaletteApp extends React.Component {
      to the same information already provided with the 8 existing examples", and "it only occurs when a
      photo is shared with them from the desktop tool"). A phone never reads an image (the tool is the
      computer's); what reaches it is a palette someone shared from the tool, and the story tells that
-     palette exactly as it tells an example. */
+     palette exactly as it tells an example.
+     THE READER'S CHOICE STILL WINS (24.09.26, reported: "When I share a palette and explore a default
+     image from the rail, it says Explore and the naming of the shared palette where it should say
+     Garnet or Midfield"). The shared palette is where a link opens; an example picked from the rail
+     after it is what the story tells from then on, and the logo brings the shared palette back
+     (returnToStoryStart). The shared palette was returned ahead of the choice, so the whole story
+     kept telling it while the field behind it moved to the example. */
   _storyCase() {
     const s = this.state;
-    if (s.narrow && s.sharedView && s.current) return s.current;
     const id = s.storyCaseId;
     const ex = this._examples();
-    if (!ex.length) return null;
     const chosen = id && ex.find((p) => p.id === id);
     if (chosen) return chosen;
+    if (s.narrow && s.sharedView && s.current) return s.current;
+    if (!ex.length) return null;
     let held = this._storyDefaultId && ex.find((p) => p.id === this._storyDefaultId);
     if (!held) { held = ex[Math.floor(Math.random() * ex.length)]; this._storyDefaultId = held.id; }
     return held;
