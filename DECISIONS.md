@@ -7,6 +7,18 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — ↵ on the end of the name field's rule
+
+**By request:** "add an enter icon at the end of the line so the user know how to exit", then option A of
+two mocked, "It should sit on the edge of the line not outside of it ... Same position as now, but align
+with the edge of the line".
+
+- ↵ (`ic:outline-keyboard-return`) stands in the pencil's own box, 12px past the name and centred on its
+  first line, while the pencil gives way. The rule and the count under its end run out 31.25px past the
+  field, to the glyph's ink edge, so the mark sits on the line's end, not past it.
+- It is a button: pressing it saves as Enter does and hands focus back to the pencil. It is out of the tab
+  order, since Tab leaves the field, which saves too. It arrives and leaves with the rule.
+
 ## 2026-09-24 — The name field's rule is as long as the longest name, draws in over 1.25s and back over 0.85s
 
 **By request:** "The closing animation on the input edit field should be .85s and not 1.5s", then "We should

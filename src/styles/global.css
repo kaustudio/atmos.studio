@@ -1865,7 +1865,15 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    THE CLOSE IS SHORTER (24.09.26, by request: "The closing animation on the input edit field should be
    .85s and not 1.5s"): drawn back over --dur-draw-back on the same curve. The name waits for it, so the
    heading has it back 0.65s sooner (AppView NameField close). */
-[data-name-rule]{position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%;pointer-events:none;transition:transform var(--dur-draw) var(--ease-overlay),background-color var(--dur-state) var(--ease-standard)}
+/* THE RULE RUNS OUT TO THE ↵ (24.09.26, by request: "sit on the edge of the line not outside of it"; AppView
+   NameField, THE WAY OUT). The ↵'s 14px glyph box ends 33px past the field (the 12px gap, then 21px into its
+   28px target), and its ink stops 1.75px inside that (x 21 of 24 at 14px), so the rule and the count under
+   its end stop 31.25px past the field, on the glyph's edge. The ↵ arrives with the rule and leaves with it. */
+[data-name-field]{--name-rule-out:calc(-33px + 1.75px)}
+[data-name-enter]{opacity:0;transition:opacity var(--dur-draw) var(--ease-overlay)}
+[data-name-field][data-open] [data-name-enter]{opacity:1}
+[data-name-field][data-closing] [data-name-enter]{transition-duration:var(--dur-draw-back)}
+[data-name-rule]{position:absolute;left:0;right:var(--name-rule-out);bottom:-2px;height:2px;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%;pointer-events:none;transition:transform var(--dur-draw) var(--ease-overlay),background-color var(--dur-state) var(--ease-standard)}
 [data-name-field][data-open] [data-name-rule]{transform:scaleX(1)}
 [data-name-field][data-closing] [data-name-rule]{transition-duration:var(--dur-draw-back),var(--dur-state)}
 /* THE COUNT WAITS FOR THE LIMIT (24.09.26; NAME_NEAR in AppView): it arrives with the rule only once the

@@ -218,6 +218,8 @@ const IconLink = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 
    solid, and a solid glyph would sit heavier than the hollow folder and download it stands among, so it
    takes their outline cut. The error mark is `ic:outline-error-outline`, drawn at 12 beside the 12px
    text of a field's error. */
+// ↵, the name field's way out (24.09.26): `ic:outline-keyboard-return`, drawn alike in every cut of the set.
+const IconReturn = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M19 7v4H5.83l3.58-3.59L8 6l-6 6l6 6l1.41-1.41L5.83 13H21V7z"></path></svg>);
 const IconRename = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m14.06 9.02l.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83a.996.996 0 0 0 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z"></path></svg>);
 const IconTrash = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M6 21h12V7H6zM8 9h8v10H8zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>);
 
@@ -693,6 +695,9 @@ const NAME_TYPE = "font-family:'Neue Montreal';font-weight:500;font-size:var(--f
    Its count hangs under the rule's right end, in the gap above the tags (no row is added, so nothing under
    the name moves). */
 const NAME_FIELD_STYLE = sx('position:relative;display:flex;flex:1 1 auto;min-width:0');
+// ↵ in the pencil's box: 12px past the field, 28px, centred on the first line as the pencil is (THE WAY OUT).
+// Above the pencil's wrapper, which comes later in the row and would otherwise take the press (caught in testing).
+const NAME_ENTER_STYLE = sx('position:absolute;z-index:1;left:calc(100% + 12px);top:calc((var(--fs-display) * 1.05 - 28px) / 2);display:flex');
 const NAME_INPUT_STYLE = sx(NAME_TYPE + ';display:block;flex:1 1 auto;min-width:0;width:100%;height:calc(var(--fs-display) * 1.05);margin:0;padding:0;border:0;border-radius:0;background:transparent;outline:none;resize:none;overflow:hidden;text-wrap:balance');
 const normName = (v) => String(v || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
 // What may stand in the field: no emoji, no line breaks, no more than the limit.
@@ -829,7 +834,20 @@ function NameField({ r, as }) {
         onBlur={() => finish('leave')}
         style={NAME_INPUT_STYLE} />
       <span ref={ruleRef} data-name-rule="1" aria-hidden="true"></span>
-      <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:0;top:calc(100% + 6px);font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
+      {/* THE WAY OUT (24.09.26, by request: "add an enter icon at the end of the line so the user know how to
+          exit", option A of two mocked, then "It should sit on the edge of the line not outside of it ...
+          Same position as now, but align with the edge of the line"). ↵ stands in the pencil's own box, 12px
+          past the name and centred on its first line, while the pencil gives way, and the rule runs out to
+          the glyph's right edge, so the mark sits on the line's end instead of past it. Pressing it saves as
+          Enter does: the press keeps the field focused (a blur would save without handing focus back to the
+          pencil), then finishes the way Enter does. Out of the tab order, since Tab leaves the field, which
+          saves too. */}
+      <span data-name-enter="1" style={NAME_ENTER_STYLE}>
+        <button type="button" data-ix="icon" data-focus="chrome" tabIndex={-1} aria-label="Save Name" onMouseDown={(e) => e.preventDefault()} onClick={() => finish('enter')} style={sx('width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
+          <TextSwap><IconReturn /></TextSwap>
+        </button>
+      </span>
+      <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:var(--name-rule-out);top:calc(100% + 6px);font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
         <span aria-hidden="true">{len + '/' + NAME_LIMIT}</span><span style={visuallyHidden}>{len + ' of ' + NAME_LIMIT + ' characters'}</span>
       </span>
       <span role="status" aria-live="polite" style={visuallyHidden}>{said}</span>
