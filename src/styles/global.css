@@ -1849,11 +1849,10 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-where][data-lit] [data-where-dim],[data-where-sid][data-on]{opacity:1}
 /* THE NAME FIELD (23.09.26; AppView NameField). While a name is being edited, a 2px rule under it in the
    page's ink — the field's edge and its focus mark in one, drawn below the line box so descenders keep
-   clear of it — and the count under the rule's right end, muted. Past 42 characters, the design system's
-   first ERROR STATE: the rule and the message turn --danger (as text 4.9:1 on the light page and 6.7:1
-   on the dark; the rule, as a boundary, needs 3:1) and the message leads with the error mark, so the
-   state is never colour alone; the change of colour runs on --dur-state. The input's own field ring would
-   draw a second rule inside the first, so under the keyboard it gives way to the row's. */
+   clear of it — and, near the limit, the count under the rule's right end, muted. There is no over-limit
+   state since 24.09.26: the field stops at the limit (by request), so the --danger rule and message it
+   had are gone. The input's own field ring would draw a second rule inside the first, so under the
+   keyboard it gives way to the row's. */
 /* THE RULE DRAWS IN AND DRAWS BACK (23.09.26, by request: "animate with a cubic bezier from left to
    right ... reverse the animation to close", "start quick and land slow", then "increase the length to
    1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge once the field has painted, and back to
@@ -1864,11 +1863,12 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    over --dur-reveal. The count arrives and goes with it. */
 [data-name-rule]{position:absolute;left:0;right:0;bottom:-2px;height:2px;background:var(--on-surface);transform:scaleX(0);transform-origin:0% 50%;pointer-events:none;transition:transform var(--dur-draw) var(--ease-overlay),background-color var(--dur-state) var(--ease-standard)}
 [data-name-field][data-open] [data-name-rule]{transform:scaleX(1)}
-[data-name-field][data-invalid] [data-name-rule]{background:var(--danger)}
+/* THE COUNT WAITS FOR THE LIMIT (24.09.26; NAME_NEAR in AppView): it arrives with the rule only once the
+   name reaches three quarters of the limit ([data-near], 32 of 42), on the same state beat, and stays past
+   it. Below that it is transparent, not gone: it still describes the field to a screen reader. */
 [data-name-field] [data-name-count]{color:var(--on-surface-muted);opacity:0;transition:opacity var(--dur-state) var(--ease-standard),color var(--dur-state) var(--ease-standard)}
-[data-name-field][data-open] [data-name-count]{opacity:1}
-[data-name-field][data-invalid] [data-name-count]{color:var(--danger)}
-:root[data-kbd] [data-name-field] input[data-focus="field"]:focus-visible{box-shadow:none}
+[data-name-field][data-open][data-near] [data-name-count]{opacity:1}
+:root[data-kbd] [data-name-field] [data-focus="field"]:focus-visible{box-shadow:none}
 /* The pencil gives way while its field is up, on the contract's opacity. */
 [data-rename][data-hidden]{opacity:0;pointer-events:none}
 

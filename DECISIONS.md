@@ -7,6 +7,37 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — A palette's name stops at 32 characters, keeps no emoji, and stands on columns 1–7
+
+**By request:** "Instead of the input saying remove x characters it should just stop", "remove emojis", "make sure
+the stroke aligns with the grid and make it shorter", and "whats the reasoning for 42 characters? you have
+to be on top of these things". It follows the rename audit, its best-practice research and the mock.
+
+- **Why 32, not 42.** 42 was never designed. The first commit clamped the live reading's name at 42 while
+  its prompt asked for one to three words; the local reading copied the clamp; the rename adopted it on a
+  "one line from 1024" claim that was false. Measured in the name's own type (Neue Montreal 500 at 44px):
+  20px a character on average, 21.3 at the 90th percentile. Columns 1–7 are 559, 709, 802 and 1082px at
+  1024, 1280, 1440 and 1920, so 32 keeps any name on one line from 1280 up and on two at most at 1024. It
+  holds every seed (the longest is 22) and the longest three-word readings (29). The reasoning is written
+  beside `NAME_MAX` in `lib/chars.js`.
+- **One limit for every name.** Both readings clamp to 32 at a whole word, and the live prompt asks for at
+  most 32, so a generated name never opens in the field over the limit.
+- **The field stops.** A key at the limit adds nothing and leaves the caret where it was; a paste arrives up
+  to its last whole word that fits. The over-limit error state (the design system's first, 23.09) is gone;
+  its rules stand for the next one. The count shows from 24 of 32; a screen reader hears "Limit reached"
+  once, and "Pasted name shortened to fit".
+- **No emoji in a name**, typed, pasted or read. Whole clusters go; ©, ® and ™ stay.
+- **Counted as a reader counts** (grapheme clusters, `lib/chars.js`). A name the counter accepted could be
+  saved with half an emoji.
+- **The field is the name at every width.** A textarea in the heading's type, balanced like the heading, so
+  a two-line name opens as the same two lines; the heading's box ends at its longest line, so the pencil
+  stays with the words; the Full Swatch View takes the create page's row.
+- **The stroke stands on the grid.** The name and its field span columns 1–7 (`NAME_BLOCK`), so the stroke
+  ends on column 7's line, where the readout's middle group ends: 802px at 1440, where it was 1180 and
+  ended between columns.
+- **A rename can be undone.** It joins the toast's run as a deletion does ("Renamed from Garnet"), and Undo
+  restores the name and where it came from.
+
 ## 2026-09-24 — The semantic scaffold names a label colour for Primary
 
 **By request:** "Yes, do that for the scaffold", following "we need to meet the requirements when the tools

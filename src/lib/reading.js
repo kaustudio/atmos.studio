@@ -17,6 +17,7 @@
 // Pure, offline, no DOM, no network, no dependencies beyond the colour maths in ./color.js — which
 // means scripts/reading-check.mjs can exercise it directly in Node.
 
+import { charCount, fitWords, NAME_MAX } from './chars.js';
 import { contrastRatio } from './color.js';
 
 // ============================================================================================
@@ -420,7 +421,7 @@ function composeName(A, r, nth) {
     const out = shapes[idx]();
     if (!out) continue;
     if (BLOCKED.has(Q + '|' + S) && out.indexOf(Q) === 0) continue;
-    if (words(out) > 3 || out.length > 42) continue;
+    if (words(out) > 3 || charCount(out) > NAME_MAX) continue;
     if (stutters(out)) continue;
     return out;
   }
@@ -650,7 +651,7 @@ export function composeReading(swatches, taken) {
   if (!name) name = 'Untitled';
 
   return {
-    name: name.trim().slice(0, 42),
+    name: fitWords(name.trim(), NAME_MAX),   // the rename's limit (lib/chars.js, WHY 32)
     descriptors: [],   // tags are computed from the swatches wherever the palette is shown
     rationale: composeRationale(A, rng(seed ^ 0x85ebca6b)).trim().slice(0, 240),
     archetype: composeArchetype(A),

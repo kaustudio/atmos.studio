@@ -311,19 +311,26 @@ export const overlayMethods = {
        A PROJECT'S UNDO REFILES THROUGH withProjects (19.09.26). It wrote the legacy projectId alone,
        which nothing reads since membership became the projectIds set, so the project came back empty
        while the toast said it was restored. */
+    /* A RENAME IN THE RUN (24.09.26, persistence.js renamePalette) takes back its old name and its old
+       standing, on the palette on screen and the one in the detail view as well as in the library: a name
+       the reading gave reads from the reading again. */
     this.setState((st) => {
       let feed = st.feed.slice();
       const projects = st.projects.slice();
+      let current = st.current, overlay = st.overlay;
       for (let i = run.length - 1; i >= 0; i--) {
         const d = run[i];
-        if (d.project) {
+        if (d.rename) {
+          const back = (p) => (p && p.id === d.rename.id ? Object.assign({}, p, { name: d.rename.from, renamed: d.rename.fromRenamed }) : p);
+          feed = feed.map(back); current = back(current); overlay = back(overlay);
+        } else if (d.project) {
           if (!projects.some((x) => x.id === d.project.id)) projects.splice(Math.min(d.index, projects.length), 0, d.project);
           feed = feed.map((p) => d.palIds.indexOf(p.id) >= 0 && !this.inProject(p, d.project.id) ? this.withProjects(p, this.palProjects(p).concat([d.project.id])) : p);
         } else if (!feed.some((p) => p.id === d.palette.id)) feed.splice(Math.min(d.index, feed.length), 0, d.palette);
       }
       const one = run.length === 1 ? run[0] : null;
-      const announce = one ? (one.project ? 'Restored project ' + one.project.name + '.' : 'Restored ' + one.palette.name + '.') : 'Restored ' + this._undoPhrase(run) + '.';
-      return { feed, projects, announce };
+      const announce = one ? (one.rename ? 'Name restored to ' + one.rename.from + '.' : one.project ? 'Restored project ' + one.project.name + '.' : 'Restored ' + one.palette.name + '.') : 'Restored ' + this._undoPhrase(run) + '.';
+      return { feed, projects, current, overlay, announce };
     }, () => {
       run.forEach((d) => { if (d.palette) this._revealRestoredRow(d.palette.id); });
       this.persist({ immediate: true });
@@ -333,11 +340,14 @@ export const overlayMethods = {
   },
   // The run the toast is holding: everything deleted since it came up, oldest first.
   _undoRun(st) { return st.toast && Array.isArray(this._deleted) ? this._deleted : []; },
-  // What a run holds, for its toast and its announcements: "2 palettes", "1 project and 3 palettes".
+  // What a run holds, for its toast and its announcements: "2 palettes", "1 project and 3 palettes", and
+  // since renames join the run (24.09.26), "1 palette and 2 names" — a name counted once per palette.
   _undoPhrase(run) {
-    const pals = run.filter((d) => d.palette).length, projs = run.length - pals;
+    const pals = run.filter((d) => d.palette).length, projs = run.filter((d) => d.project).length;
+    const names = new Set(run.filter((d) => d.rename).map((d) => d.rename.id)).size;
     const part = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
-    return [projs ? part(projs, 'project') : '', pals ? part(pals, 'palette') : ''].filter(Boolean).join(' and ');
+    const parts = [projs ? part(projs, 'project') : '', pals ? part(pals, 'palette') : '', names ? part(names, 'name') : ''].filter(Boolean);
+    return parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts.join('');
   },
   /* 'Project deleted', not 'Project Deleted', and '2 palettes deleted' the same way. A status line is
      prose, and prose is sentence case: a single palette's label is built as `name + ' deleted'`
@@ -346,6 +356,16 @@ export const overlayMethods = {
      same reason. */
   _undoToast(run) {
     const last = run[run.length - 1];
+    /* A RENAME'S TOAST NAMES WHAT UNDO BRINGS BACK (24.09.26): "Renamed from Garnet", the name the palette
+       had when the toast came up, however many times it has been renamed since. Several palettes renamed,
+       or renames among deletions, say what the run holds, as deletions do. */
+    const ren = run.filter((d) => d.rename);
+    if (ren.length) {
+      const ids = new Set(ren.map((d) => d.rename.id));
+      if (ren.length === run.length && ids.size === 1) return { name: '', count: run.length, kind: 'rename', label: 'Renamed from ' + ren[0].rename.from };
+      if (ren.length === run.length) return { name: '', count: run.length, kind: 'rename', label: ids.size + ' palettes renamed' };
+      return { name: '', count: run.length, kind: 'mixed', label: this._undoPhrase(run.filter((d) => !d.rename)) + ' deleted, ' + ids.size + ' renamed' };
+    }
     if (run.length > 1) return { name: '', count: run.length, label: this._undoPhrase(run) + ' deleted' };
     return last.project ? { name: last.project.name + ' project', count: 1, label: 'Project deleted' } : { name: last.palette.name, count: 1 };
   },

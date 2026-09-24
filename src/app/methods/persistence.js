@@ -5,6 +5,7 @@ import { trackEvent } from '../../lib/track.js';
 import { withoutRetired } from '../../lib/taxonomy.js';
 import { shareUrl } from '../../lib/share.js';
 import { buildMasks } from '../../lib/masks.js';
+import { fitWords, noEmoji, NAME_MAX } from '../../lib/chars.js';
 
 /* THE SEEDED EXAMPLES ARE THE APP'S CONTENT, NOT THE READER'S, and until now the store could not
    tell the difference.
@@ -439,16 +440,28 @@ export const persistenceMethods = {
   // `refocus` only when the field was left by a key inside it (Enter or Escape); `said` is why a name did
   // not change, for the app's own live region, which outlives the field.
   cancelRename(where, refocus, said) { this.setState(said ? { renaming: null, announce: said } : { renaming: null }, () => { if (refocus) this._renameFocus(where); }); },
+  /* A RENAME CAN BE UNDONE (24.09.26, from the audit's research: NN/g's user control and freedom, and
+     Finder's Undo Rename). It replaced the reading's name for good. It joins the toast's run as a deletion
+     does (overlays.js, ONE UNDO FOR EVERYTHING DELETED WHILE THE TOAST IS UP), so the one Undo puts back
+     every name and every palette changed while the toast is up, newest first. The entry keeps the old name
+     and whether it was already the reader's, so an undone rename reads from the reading again (Name From).
+     The field already stops at the limit and takes no emoji; the save keeps both rules (lib/chars.js), and a
+     name from before the limit was 32 that is edited but still longer loses its last whole words. */
   renamePalette(id, name, where, refocus) {
-    name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 42);
-    if (!name) { this.cancelRename(where, refocus); return; }
+    name = fitWords(noEmoji(String(name || '')).replace(/\s+/g, ' ').trim(), NAME_MAX);
+    const was = (this.state.feed || []).find((p) => p.id === id);
+    if (!name || !was || name === was.name) { this.cancelRename(where, refocus); return; }
+    const turned = this._keepToast();
+    const standing = !!this.state.toast && !turned;
+    this._deleted = this._undoRun(this.state).concat([{ rename: { id, from: was.name, fromRenamed: was.renamed === true } }]);
+    const toast = this._undoToast(this._deleted), hint = this._undoHint(this._deleted);
     this.setState((st) => {
       const next = (p) => Object.assign({}, p, { name, renamed: true });
-      const patch = { feed: st.feed.map((p) => p.id === id ? next(p) : p), renaming: null, announce: 'Palette renamed to ' + name + '.' };
+      const patch = { feed: st.feed.map((p) => p.id === id ? next(p) : p), renaming: null, toast, announce: 'Palette renamed to ' + name + '. ' + hint };
       if (st.current && st.current.id === id) patch.current = next(st.current);
       if (st.overlay && st.overlay.id === id) patch.overlay = next(st.overlay);
       return patch;
-    }, () => { this.persist({ immediate: true }); if (refocus) this._renameFocus(where); });
+    }, () => { this.persist({ immediate: true }); if (!standing) this._toastIn(); if (refocus) this._renameFocus(where); });
   },
   /* TOGGLE, not move. Picking a project the palette is already in removes it; picking a new one
      adds it. Belonging to nothing is not a project: it is the empty set, reached by clearing,

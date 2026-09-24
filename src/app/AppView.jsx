@@ -3,6 +3,7 @@
 // from renderVals() untouched. No logic lives here.
 import React from 'react';
 import { sx } from '../lib/sx.js';
+import { charCount, cutChars, fitWhole, noEmoji, NAME_MAX } from '../lib/chars.js';
 import { Button, ButtonText, DocHead, GlassEffect, NavNewPalette, SwitchTrack, TextSwap, ThemeSwitch } from './chrome.jsx';
 import { IconPlus } from './icons.jsx';
 /* THE TWO READING ROUTES ARE THEIR OWN CHUNK, and prefetched the moment the tool has mounted.
@@ -218,7 +219,6 @@ const IconLink = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 
    takes their outline cut. The error mark is `ic:outline-error-outline`, drawn at 12 beside the 12px
    text of a field's error. */
 const IconRename = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m14.06 9.02l.92.92L5.92 19H5v-.92zM17.66 3c-.25 0-.51.1-.7.29l-1.83 1.83l3.75 3.75l1.83-1.83a.996.996 0 0 0 0-1.41l-2.34-2.34c-.2-.2-.45-.29-.71-.29m-3.6 3.19L3 17.25V21h3.75L17.81 9.94z"></path></svg>);
-const IconError = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2M12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8s8 3.58 8 8s-3.58 8-8 8"></path></svg>);
 const IconTrash = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M6 21h12V7H6zM8 9h8v10H8zm7.5-5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>);
 
 // The AA verdict badge. ONE component for every surface that reports it — the list row, the detail
@@ -633,35 +633,86 @@ function WordSwap({ on, rest, done }) {
 
    THE FIELD IS THE NAME. Same face, size, weight, tracking and line box as the heading it replaces, so
    pressing the pencil moves nothing: the text stays where it was, gains a caret and a 2px rule in the
-   page's ink, and its count hangs under the rule's right end (no row is added under it, so nothing
-   below it moves either). Enter or leaving it saves, Escape keeps the old name, and focus returns to the
-   pencil.
+   page's ink, and once the name nears the limit its count hangs under the rule's right end (no row is
+   added under it, so nothing below it moves either). Enter or leaving it saves, Escape keeps the old
+   name, and focus returns to the pencil.
 
-   THE LENGTH IS HELD, NOT CUT. 42 characters, the cap the reading already puts on the names it makes
-   (lib/reading.js), which keeps a name on one line from 1024 up (measured). The field never truncates —
-   a paste over the limit arrives whole — and past 42 it says so in the first error state this design
-   system has (23.09.26: "remember wcag compliances in terms of danger/error states"): the rule and the
-   message turn --danger (4.9:1 on the light page, 6.7:1 on the dark; a 2px rule needs 3:1), the message
-   says the fix ("Remove 3 Characters") beside the error mark so it is never colour alone, the input is
-   aria-invalid and described by that message, a polite live region says it once as the name crosses the
-   limit, and Enter will not save it until it fits. The field can always be left: leaving it while the
-   name is too long keeps the old name, and says so.
+   THE LENGTH STOPS AT THE LIMIT (24.09.26, by request: "Instead of the input saying remove x characters it
+   should just stop. there is no point of letting the user typing more letters when they reach the
+   maximum"). NAME_MAX characters (lib/chars.js, WHY 32), counted as a reader counts them. A key that
+   would pass the limit adds nothing and a paste arrives as far as it fits, so the field is never over it,
+   and the over-limit error state it had (23.09.26–24.09.26, the design system's first; its rules are kept
+   for the next one) is gone. The count says the limit is reached (32/32), and a screen reader hears it once
+   as the name reaches it, and when a paste was shortened to fit.
+
+   NO EMOJI (24.09.26, by request: "remove emojis"). One typed or pasted never arrives (lib/chars.js
+   noEmoji); the rest of a paste does.
 
    THE RULE DRAWS, AND DRAWS BACK (23.09.26, by request: "The underline that highlights the edit text
    should animate with a cubic bezier from left to right ... reverse the animation to close", then "start
    quick and land slow", then "1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge and back to
    it, both ways on --ease-overlay over --dur-draw (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the
-   heading only takes the name back once the rule has gone. */
-const NAME_LIMIT = 42;
-// The heading's own type, so the field and the name it replaces are the same line of text.
+   heading only takes the name back once the rule has gone.
+
+   THE RULE STANDS ON THE COLUMNS (24.09.26, by request: "make sure the stroke aligns with the grid and make
+   it shorter"). It ran the name's whole row, up to the photograph: 1180px at 1440, ending between two
+   columns. The name and its field now stand on columns 1–7 (NAME_BLOCK), so the rule ends on column 7's
+   line, where the readout's middle group ends below it: 802px at 1440, 559 at 1024. */
+const NAME_LIMIT = NAME_MAX;
+/* THE COUNT SHOWS NEAR THE LIMIT (24.09.26, from the audit's research: GOV.UK's character count and its
+   threshold). A count from the first letter was a standing line of numbers under every rename. It arrives
+   at three quarters of the limit (24 of 32), in time to see the stop coming, and stays; below that it is
+   still read to a screen reader, which hears the limit when the field opens. */
+const NAME_NEAR = Math.ceil(NAME_LIMIT * 0.75);
+/* THE NAME STANDS ON COLUMNS 1–7 (24.09.26). The block holding the name, its tags and its use line is seven
+   of the page's columns plus the pencil's 40px (28, and its 12px gap), so the name and its field end on
+   column 7's line and the pencil stands just past it. Both rows it sits in (the create page's, and the
+   detail view's footer) span the page between its gutters, so a share of the row is a share of the page's
+   columns. Seven, where the readout's middle group ends, holds a name at the limit on one line from 1280
+   up (lib/chars.js, WHY 32). */
+const NAME_COLS = 7;
+const NAME_BLOCK = sx('flex:1;min-width:0;max-width:calc((100% - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols) * ' + NAME_COLS + ' + ' + (NAME_COLS - 1) + ' * var(--grid-gutter) + 40px)');
+// The heading's own type, so the field and the name it replaces are the same lines of text.
 const NAME_TYPE = "font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface)";
-// The field spans the name's column so a name at the limit is never scrolled inside it; its count hangs
-// under the rule's right end, in the gap above the tags, where a field's count is looked for (no row is
-// added, so nothing under the name moves).
+/* THE FIELD WRAPS AS THE HEADING DOES (24.09.26, the audit's R2). It was a one-line input, so a name the
+   heading set on two lines opened as one: the tags jumped up a line and the start of the name scrolled out
+   of the field. A textarea in the heading's type, balanced as the heading is and as tall as its lines,
+   breaks the words where the heading broke them. Enter still saves; a line break is never part of a name.
+   Its count hangs under the rule's right end, in the gap above the tags (no row is added, so nothing under
+   the name moves). */
 const NAME_FIELD_STYLE = sx('position:relative;display:flex;flex:1 1 auto;min-width:0');
-const NAME_INPUT_STYLE = sx(NAME_TYPE + ';flex:1 1 auto;min-width:0;width:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;outline:none');
+const NAME_INPUT_STYLE = sx(NAME_TYPE + ';display:block;flex:1 1 auto;min-width:0;width:100%;height:calc(var(--fs-display) * 1.05);margin:0;padding:0;border:0;border-radius:0;background:transparent;outline:none;resize:none;overflow:hidden;text-wrap:balance');
 const normName = (v) => String(v || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
-const plural = (n, one) => n + ' ' + one + (n === 1 ? '' : 's');
+// What may stand in the field: no emoji, no line breaks, no more than the limit.
+const fitName = (raw) => { const t = noEmoji(String(raw || '').replace(/[\r\n\t]+/g, ' ')); return charCount(t) > NAME_LIMIT ? cutChars(t, NAME_LIMIT) : t; };
+/* THE HEADING'S BOX ENDS WHERE ITS WORDS DO (24.09.26, the audit's R2). A balanced heading that wraps keeps
+   its box at the width it was given, so the pencil beside it stood at the column's end: 440px from the
+   words at 1024 with a 42-character name. The box takes its longest line's width, and balancing inside
+   that width breaks the words where they broke before, so the lines do not move and the pencil stands
+   12px from the first of them. Measured again when the name changes, the row changes width, or the face
+   arrives. One line needs nothing: a flex item already ends with its words. */
+function HugHeading({ as, children, style, ...rest }) {
+  const ref = React.useRef(null);
+  React.useLayoutEffect(() => {
+    const el = ref.current; if (!el) return undefined;
+    let raf = 0, live = true;
+    const fit = () => {
+      if (!live) return;
+      el.style.maxWidth = '';
+      const rg = document.createRange(); rg.selectNodeContents(el);
+      const rs = [...rg.getClientRects()].filter((q) => q.width > 0);
+      if (new Set(rs.map((q) => Math.round(q.top))).size < 2) return;
+      el.style.maxWidth = Math.ceil(Math.max(...rs.map((q) => q.right)) - el.getBoundingClientRect().left) + 'px';
+    };
+    fit();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); }) : null;
+    if (ro && el.parentElement) ro.observe(el.parentElement);
+    return () => { live = false; if (ro) ro.disconnect(); cancelAnimationFrame(raf); };
+  }, [children]);
+  const Tag = as || 'h2';
+  return (<Tag ref={ref} style={style} {...rest}>{children}</Tag>);
+}
 function RenameButton({ r }) {
   return (
     <button type="button" ref={r.btnRef} data-ix="icon" data-focus="chrome" data-rename="1" data-hidden={r.editing ? '' : undefined} onClick={r.onStart} aria-label={r.aria} tabIndex={r.editing ? -1 : undefined} aria-hidden={r.editing ? 'true' : undefined} style={sx('flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;background:transparent;border-radius:var(--radius-pill);color:var(--on-surface);cursor:pointer')}>
@@ -678,20 +729,54 @@ function NameField({ r, as }) {
   const ref = React.useRef(null);
   const ruleRef = React.useRef(null);
   const settled = React.useRef(false);
-  const wasOver = React.useRef(false);
-  const len = Array.from(normName(v)).length, over = len - NAME_LIMIT, invalid = over > 0;
+  const wasFull = React.useRef(false);
+  const len = charCount(normName(v)), full = len >= NAME_LIMIT, near = len >= NAME_NEAR;
+  // As tall as its lines, in whole lines of the heading's line box, so a two-line name is two lines here.
+  React.useLayoutEffect(() => {
+    const el = ref.current; if (!el) return;
+    el.style.height = '0px';
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 1;
+    el.style.height = 'calc(var(--fs-display) * 1.05 * ' + Math.max(1, Math.round(el.scrollHeight / lh)) + ')';
+  }, [v]);
   React.useEffect(() => {
     const el = ref.current; if (el) { el.focus({ preventScroll: true }); el.select(); }
     // Two frames, so scaleX(0) has painted and the draw has somewhere to start from.
     let f2 = 0; const f1 = requestAnimationFrame(() => { f2 = requestAnimationFrame(() => setPhase((ph) => (ph === 'opening' ? 'open' : ph))); });
     return () => { cancelAnimationFrame(f1); cancelAnimationFrame(f2); };
   }, []);
-  // Said once as the name crosses the limit each way, not on every keystroke.
+  /* THE STOP. Before the browser inserts anything, what would arrive is measured against the room left (the
+     limit less what stays: the name without the selection it replaces), its emoji and line breaks go, and
+     only what fits goes in, where the caret is. A key at the limit adds nothing and leaves the caret where
+     it was; a paste arrives cut to fit. Deleting is never stopped. An arrival that passes whole is left to
+     the browser, so its own undo keeps working. A composition (a Chinese or Japanese input method) is left
+     alone while it runs and fitted when it ends (onCompositionEnd). */
   React.useEffect(() => {
-    if (invalid && !wasOver.current) setSaid('Name is ' + plural(over, 'character') + ' too long.');
-    else if (!invalid && wasOver.current) setSaid('Name fits.');
-    wasOver.current = invalid;
-  }, [invalid]);
+    const el = ref.current; if (!el) return undefined;
+    const onBefore = (e) => {
+      if (e.isComposing || !/^insert/.test(e.inputType || '')) return;
+      if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') { e.preventDefault(); return; }
+      const raw = e.data != null ? e.data : (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '');
+      const s = el.selectionStart, en = el.selectionEnd;
+      const room = Math.max(0, NAME_LIMIT - charCount(el.value.slice(0, s) + el.value.slice(en)));
+      const clean = noEmoji(String(raw || '').replace(/[\r\n\t]+/g, ' ')).replace(/ {2,}/g, ' ');
+      // What does not fit stops at its last whole word ("…First Frost", not "…First Frost Ove"); a single
+      // key has no word to keep, so at the limit it simply adds nothing (lib/chars.js fitWhole).
+      const fit = fitWhole(clean, room);
+      if (fit === raw) return;
+      e.preventDefault();
+      if (charCount(clean) > charCount(fit) && fit) setSaid('Pasted name shortened to fit.');
+      if (!fit) return;
+      el.setRangeText(fit, s, en, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    el.addEventListener('beforeinput', onBefore);
+    return () => el.removeEventListener('beforeinput', onBefore);
+  }, []);
+  // Said once as the name reaches the limit, not on every key that finds it full.
+  React.useEffect(() => {
+    if (full && !wasFull.current) setSaid('Limit reached, ' + NAME_LIMIT + ' characters.');
+    wasFull.current = full;
+  }, [full]);
   // The rule draws back the way it came, and only then does the heading take the name back.
   const close = (after) => {
     setPhase('closing');
@@ -705,25 +790,23 @@ function NameField({ r, as }) {
     const secs = parseFloat(getComputedStyle(rule).transitionDuration) || 1.5;
     timer = setTimeout(end, secs * 1000 + 120);
   };
-  /* How the field was left: 'enter' saves (and waits while the name is too long), 'escape' keeps the old
-     name, 'leave' (Tab, or a press anywhere else) saves a name that fits and keeps the old one when it
-     does not — so the field can always be left. Only a key that stays in the field sends focus back to
-     the pencil; a reader who pressed or tabbed elsewhere keeps the focus they moved. */
+  /* How the field was left: 'enter' saves, 'escape' keeps the old name, 'leave' (Tab, or a press anywhere
+     else) saves. Only a key that stays in the field sends focus back to the pencil; a reader who pressed
+     or tabbed elsewhere keeps the focus they moved. */
   const finish = (how) => {
     if (settled.current) return;
-    if (how === 'enter' && invalid) { setSaid((t) => 'Remove ' + plural(over, 'character') + ' to save the name.' + (t.endsWith('.') ? ' ' : '')); return; }
     settled.current = true;
     const name = normName(v), refocus = how !== 'leave';
-    const save = how !== 'escape' && !invalid && !!name && name !== r.initial;
-    const lost = how === 'leave' && invalid ? 'Name not changed: it was ' + plural(over, 'character') + ' too long.' : '';
+    const save = how !== 'escape' && !!name && name !== r.initial;
     if (!save && v !== r.initial) setV(r.initial);
-    close(() => (save ? r.onCommit(name, refocus) : r.onCancel(refocus, lost)));
+    close(() => (save ? r.onCommit(name, refocus) : r.onCancel(refocus)));
   };
   const Tag = as || 'div';
   return (
-    <Tag data-name-field="1" data-invalid={invalid ? '' : undefined} data-open={phase === 'open' ? '' : undefined} data-closing={phase === 'closing' ? '' : undefined} style={NAME_FIELD_STYLE}>
-      <input ref={ref} type="text" value={v} readOnly={phase === 'closing'} data-focus="field" aria-label="Palette name" aria-invalid={invalid ? 'true' : undefined} aria-describedby={r.countId} spellCheck={false} autoComplete="off"
-        onChange={(e) => setV(e.target.value)}
+    <Tag data-name-field="1" data-near={near ? '' : undefined} data-open={phase === 'open' ? '' : undefined} data-closing={phase === 'closing' ? '' : undefined} style={NAME_FIELD_STYLE}>
+      <textarea ref={ref} rows={1} value={v} readOnly={phase === 'closing'} data-focus="field" aria-label="Palette name" aria-describedby={r.countId} spellCheck={false} autoComplete="off"
+        onChange={(e) => setV(e.nativeEvent && e.nativeEvent.isComposing ? e.target.value : fitName(e.target.value))}
+        onCompositionEnd={(e) => setV(fitName(e.currentTarget.value))}
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing) return;
           if (e.key === 'Enter') { e.preventDefault(); finish('enter'); }
@@ -734,9 +817,7 @@ function NameField({ r, as }) {
         style={NAME_INPUT_STYLE} />
       <span ref={ruleRef} data-name-rule="1" aria-hidden="true"></span>
       <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:0;top:calc(100% + 6px);font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
-        {invalid
-          ? (<><span aria-hidden="true" style={sx('display:inline-block;vertical-align:-2px;margin-right:5px')}><IconError /></span>{'Remove ' + plural(over, 'Character')}</>)
-          : (<><span aria-hidden="true">{len + '/' + NAME_LIMIT}</span><span style={visuallyHidden}>{len + ' of ' + NAME_LIMIT + ' characters'}</span></>)}
+        <span aria-hidden="true">{len + '/' + NAME_LIMIT}</span><span style={visuallyHidden}>{len + ' of ' + NAME_LIMIT + ' characters'}</span>
       </span>
       <span role="status" aria-live="polite" style={visuallyHidden}>{said}</span>
     </Tag>
@@ -2652,14 +2733,14 @@ export default function AppView({ vals }) {
               </span>
             </div>
             <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
-              <div style={sx('flex:1;min-width:0')}>
+              <div style={NAME_BLOCK}>
                 {/* The name and its pencil (RenameButton): the pencil beside the heading, centred on its first
                     line, never inside it — the heading is a split target. Editing swaps the heading for a
                     field in the same type (NameField), so nothing on the page moves. */}
                 <div style={sx('display:flex;align-items:flex-start;gap:12px;min-width:0')}>
                   {vals.result.rename.editing
                     ? (<NameField r={vals.result.rename} />)
-                    : (<h1 data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</h1>)}
+                    : (<HugHeading as="h1" data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</HugHeading>)}
                   {vals.result.rename.can && (
                     <span data-fx="1" style={sx('display:inline-flex;flex:none;margin-top:calc((var(--fs-display) * 1.05 - 28px) / 2)')}><RenameButton r={vals.result.rename} /></span>
                   )}
@@ -3727,19 +3808,22 @@ function DetailOverlay({ vals }) {
           </span>
         </div>
         <div style={sx('display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 0 0')}>
-          <div style={sx('flex:1;min-width:0')}>
+          <div style={NAME_BLOCK}>
             {/* The create page's name, in its type (--fs-display, its tracking, balanced) and at its distance
                 from the actions (26px; 22 held the tags when they led), with its pencil beside it.
                 NO DATE BESIDE IT (23.09.26, by request: "remove the created date next to the palette name in
                 full swatch view"). The library's stamp stood at the name's baseline here since 19.09.26 (audit
                 U6); the list and Grid View still carry it. */}
-            <div style={sx('display:flex;align-items:baseline;flex-wrap:wrap;column-gap:14px;row-gap:4px')}>
+            {/* THE CREATE PAGE'S ROW (24.09.26, the audit's R2). This row wrapped, on the baseline, from the days a
+                date stood at the name's baseline; with the date gone (23.09.26) the wrap only ever moved the
+                pencil, and at 1024 a long name sent it to a line of its own, which opening the field took
+                away, dropping the actions and the name 32px. Now the name wraps and the pencil never does:
+                12px from the words, centred on the first line, as on the create page. */}
+            <div style={sx('display:flex;align-items:flex-start;gap:12px;min-width:0')}>
               {overlay.rename.editing
                 ? (<NameField r={overlay.rename} />)
-                : (<h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</h2>)}
-              {/* The pencil, as on the create page: 12px from the name there, so the row's 14px gap less 2. That
-                  leaves its focus ring 6px clear of the last letter. */}
-              {overlay.rename.can && (<span style={sx('display:inline-flex;align-self:center;margin-inline-start:-2px')}><RenameButton r={overlay.rename} /></span>)}
+                : (<HugHeading as="h2" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</HugHeading>)}
+              {overlay.rename.can && (<span style={sx('display:inline-flex;flex:none;margin-top:calc((var(--fs-display) * 1.05 - 28px) / 2)')}><RenameButton r={overlay.rename} /></span>)}
             </div>
             {overlay.descriptors.length > 0 && (
               <div style={sx('display:flex;flex-wrap:wrap;gap:8px;margin-top:18px')}>

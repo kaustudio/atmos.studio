@@ -9,6 +9,7 @@
 // touches the UI: it reads canInterpretLive() + liveComplete().
 
 import { composeReading } from './reading.js';
+import { fitWords, noEmoji, NAME_MAX } from './chars.js';
 
 // ================= local interpretation — the guaranteed baseline =================
 // Delegates to the compositional engine. One naming system, not two: the old 5-archetype /
@@ -61,5 +62,9 @@ export function parseInterp(raw) {
   // its two measured classifications (src/lib/classify.js), computed from the swatches. A reading
   // is its name, its rationale and its archetype.
   const archetype = (typeof obj.archetype === 'string' && obj.archetype.trim()) ? obj.archetype.trim().toLowerCase().slice(0, 24) : 'interpreted';
-  return { name: obj.name.trim().slice(0, 42), descriptors: [], rationale: obj.rationale.trim().slice(0, 240), archetype };
+  // A name keeps to the rename's rules (lib/chars.js, WHY 32): no emoji, and at most NAME_MAX characters,
+  // losing its last whole words rather than the middle of one. It was cut at 42 units, the clamp 42 came from.
+  const name = fitWords(noEmoji(obj.name).replace(/\s+/g, ' ').trim(), NAME_MAX);
+  if (!name) return null;
+  return { name, descriptors: [], rationale: obj.rationale.trim().slice(0, 240), archetype };
 }

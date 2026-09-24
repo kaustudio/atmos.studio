@@ -2445,9 +2445,12 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
          "which one", and the sentence has one job: to be the handle on Undo. The spoken form still
          names it (see the announce in deleteProject), so nothing is lost to a screen reader. */
       hasToast: !!s.toast, toastLabel: s.toast ? (s.toast.label || s.toast.name + ' deleted') : '',
-      // A run of deletions is undone together (overlays.js deletePalette), and its two answers say so.
-      undoAria: s.toast && s.toast.count > 1 ? 'Undo all ' + s.toast.count + ' deletions' : 'Undo the deletion',
-      dismissAria: s.toast && s.toast.count > 1 ? 'Dismiss, keep the deletions' : 'Dismiss, keep the deletion', undoDelete: () => this.undoDelete(),
+      // A run of deletions is undone together (overlays.js deletePalette), and its two answers say so; since
+      // 24.09.26 a run can hold renames (persistence.js renamePalette), and then they say that.
+      undoAria: !s.toast ? '' : s.toast.kind === 'rename' ? (s.toast.count > 1 ? 'Undo all ' + s.toast.count + ' renames' : 'Undo the rename')
+        : s.toast.kind === 'mixed' ? 'Undo all ' + s.toast.count + ' changes' : s.toast.count > 1 ? 'Undo all ' + s.toast.count + ' deletions' : 'Undo the deletion',
+      dismissAria: !s.toast ? '' : s.toast.kind === 'rename' ? (s.toast.count > 1 ? 'Dismiss, keep the new names' : 'Dismiss, keep the new name')
+        : s.toast.kind === 'mixed' ? 'Dismiss, keep the changes' : s.toast.count > 1 ? 'Dismiss, keep the deletions' : 'Dismiss, keep the deletion', undoDelete: () => this.undoDelete(),
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',
