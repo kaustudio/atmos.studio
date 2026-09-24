@@ -489,7 +489,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   --dur-overlay-item:.05s;  /* beat between items inside an overlay (DUR.overlayItem) */
   --dur-overlay-block:.08s; /* beat between blocks inside an overlay (DUR.overlayBlock) */
   --dur-overlay-arrive:1s;  /* an overlay's contents arriving (DUR.overlayArrive) */
-  --dur-draw:1.5s;          /* a rule drawn under a field (the name field's, 23.09.26) */
+  --dur-draw:1.25s;         /* a rule drawn under a field (the name field's, 23.09.26; 1.25s since 24.09.26, by request) */
   --dur-draw-back:.85s;     /* and drawn back (24.09.26, by request: ".85s and not 1.5s") */
   --dur-line:.09s;          /* beat between masked lines (DUR.line) */
   /* THE SIGNATURE LOOPS AND RUNS, named rather than written in place (17.09.26, audit F3): the

@@ -7,13 +7,19 @@ doesn't know it was ever made.
 ---
 
 
-## 2026-09-24 — The name field's rule draws back in 0.85s
+## 2026-09-24 — The name field's rule is as long as the longest name, draws in over 1.25s and back over 0.85s
 
-**By request:** "The closing animation on the input edit field should be .85s and not 1.5s". The draw-in
-keeps its 1.5s (--dur-draw); the draw-back takes --dur-draw-back, 0.85s, on the same curve
-(--ease-overlay), so the heading has the name back 0.65s sooner. The two directions differ on purpose.
-Measured on the dev build: in 1.56s from the click, back 0.87s from the key, the name in the heading at
-0.89s, with Enter and with Escape.
+**By request:** "The closing animation on the input edit field should be .85s and not 1.5s", then "We should
+also adjust the line to match the maximum character length, the gap is too long" and "Decrease the opening
+animation to 1.25s".
+
+- **Timing:** in over --dur-draw, now 1.25s; back over --dur-draw-back, 0.85s; both on --ease-overlay. The
+  two directions differ on purpose. The name is in the heading 0.65s sooner than with the 1.5s close.
+- **Length:** the name's row (heading and field alike, NAME_ROW) stops at 15.75 times the display size,
+  693px at 44: the widest of 400 realistic 32-character names set in the heading's type (their mean 619,
+  90th percentile 657). Column 7's line had left 110px of rule past the longest name at 1440 and 390 at
+  1920. Below 1280, column 7 is the narrower of the two, so nothing moves there. A name narrower than the
+  widest still leaves some rule: it is the room a name has, not the name's own width.
 
 ## 2026-09-24 — Share links begin with the palette's name, and leave the sender's address behind
 

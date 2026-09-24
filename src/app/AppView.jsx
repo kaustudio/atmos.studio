@@ -654,8 +654,8 @@ function WordSwap({ on, rest, done }) {
    THE RULE DRAWS, AND DRAWS BACK (23.09.26, by request: "The underline that highlights the edit text
    should animate with a cubic bezier from left to right ... reverse the animation to close", then "start
    quick and land slow", then "1.5s cubic-bezier(.19,1,.22,1)"). scaleX from the left edge and back to
-   it, both ways on --ease-overlay: in over --dur-draw (1.5s), back over --dur-draw-back (.85s since
-   24.09.26, by request) (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the heading only takes the
+   it, both ways on --ease-overlay: in over --dur-draw (1.25s since 24.09.26), back over --dur-draw-back
+   (.85s since 24.09.26), both by request (global.css, THE RULE DRAWS IN AND DRAWS BACK), and the heading only takes the
    name back once the rule has gone.
 
    THE RULE STANDS ON THE COLUMNS (24.09.26, by request: "make sure the stroke aligns with the grid and make
@@ -670,12 +670,20 @@ const NAME_LIMIT = NAME_MAX;
 const NAME_NEAR = Math.ceil(NAME_LIMIT * 0.75);
 /* THE NAME STANDS ON COLUMNS 1–7 (24.09.26). The block holding the name, its tags and its use line is seven
    of the page's columns plus the pencil's 40px (28, and its 12px gap), so the name and its field end on
-   column 7's line and the pencil stands just past it. Both rows it sits in (the create page's, and the
+   column 7's line and the pencil stands just past it, up to the longest name the limit allows (NAME_ROW). Both rows it sits in (the create page's, and the
    detail view's footer) span the page between its gutters, so a share of the row is a share of the page's
    columns. Seven, where the readout's middle group ends, holds a name at the limit on one line from 1280
    up (lib/chars.js, WHY 32). */
 const NAME_COLS = 7;
 const NAME_BLOCK = sx('flex:1;min-width:0;max-width:calc((100% - (var(--grid-cols) - 1) * var(--grid-gutter)) / var(--grid-cols) * ' + NAME_COLS + ' + ' + (NAME_COLS - 1) + ' * var(--grid-gutter) + 40px)');
+/* THE NAME'S ROW IS AS LONG AS THE LONGEST NAME (24.09.26, by request: "adjust the line to match the maximum
+   character length, the gap is too long"). Column 7's line left the field's rule running past any name the
+   field can hold: 110px at 1440, 390 at 1920. The row now stops at the widest name the limit allows, 15.75
+   times the display size (693px at 44): the widest of 400 realistic 32-character names measured in the
+   heading's type (their mean 619, 90th percentile 657), plus the pencil's 40px. It is narrower than column 7
+   only from 1280 up, so nothing moves below that, and the heading shares the row, so it breaks where the
+   field does. */
+const NAME_ROW = sx('display:flex;align-items:flex-start;gap:12px;min-width:0;max-width:calc(var(--fs-display) * 15.75 + 40px)');
 // The heading's own type, so the field and the name it replaces are the same lines of text.
 const NAME_TYPE = "font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface)";
 /* THE FIELD WRAPS AS THE HEADING DOES (24.09.26, the audit's R2). It was a one-line input, so a name the
@@ -2755,7 +2763,7 @@ export default function AppView({ vals }) {
                 {/* The name and its pencil (RenameButton): the pencil beside the heading, centred on its first
                     line, never inside it — the heading is a split target. Editing swaps the heading for a
                     field in the same type (NameField), so nothing on the page moves. */}
-                <div style={sx('display:flex;align-items:flex-start;gap:12px;min-width:0')}>
+                <div style={NAME_ROW}>
                   {vals.result.rename.editing
                     ? (<NameField r={vals.result.rename} />)
                     : (<HugHeading as="h1" data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</HugHeading>)}
@@ -3837,7 +3845,7 @@ function DetailOverlay({ vals }) {
                 pencil, and at 1024 a long name sent it to a line of its own, which opening the field took
                 away, dropping the actions and the name 32px. Now the name wraps and the pencil never does:
                 12px from the words, centred on the first line, as on the create page. */}
-            <div style={sx('display:flex;align-items:flex-start;gap:12px;min-width:0')}>
+            <div style={NAME_ROW}>
               {overlay.rename.editing
                 ? (<NameField r={overlay.rename} />)
                 : (<HugHeading as="h2" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</HugHeading>)}
