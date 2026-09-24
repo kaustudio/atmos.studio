@@ -7,6 +7,23 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — The skip link and a pasted share link are not taken for Back
+
+**Found on the way,** checking the entry below. A # the browser follows (the skip link, a share link pasted
+over the one open) makes a new history entry and fires the same event as Back, and the app read it as Back.
+From the entry a shut layer leaves behind, the press was passed on to that entry, which read as Forward and
+was passed on again, without end: the skip link after the contrast checker was shut by Escape made 883 pops
+in three seconds, and a share link pasted there opened either palette.
+
+- **An entry the browser made for a # is taken first.** A palette's link reloads, as below. Any other #
+  takes the place it was followed from and a time of its own, so Back from it goes where Back from that
+  place goes. Every entry the page stands on now carries a state, so one without is the browser's.
+- **Back and Forward onto another palette's link reload**, before anything can pass the press on: after B
+  is pasted over A, Back is A's link in B's page, and it shows A. Not onto the shared palette already on
+  screen, which Back from the skip link's entry had reloaded for nothing.
+- **A saved shared palette keeps its entry's place.** Dropping the link wrote the entry's state as null, so
+  a refresh after Save to Library opened Start here instead of the palette just saved.
+
 ## 2026-09-24 — A share link pasted into an open tab opens
 
 **Reported:** "After the renaming of a generated image, I think the link breaks". The links held: every one

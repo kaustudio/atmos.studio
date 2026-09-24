@@ -166,6 +166,8 @@ export default class PaletteApp extends React.Component {
   // initializer branches on it — a link must open ON the palette, never on the landing first.
   // Reads the fragment only; nothing here writes to the recipient's archive.
   _shared = this._sharedFromHash();
+  // ...and its code, so Back or Forward onto a link to the same palette is not taken for another (_hashMoved).
+  _sharedCode = this._shared ? this._hashCode() : null;
 
   // Which of the three addresses this document was opened at. Read once, before state, because the
   // loader and the landing both branch on it: neither belongs on a legal route, and deciding that
@@ -526,6 +528,9 @@ export default class PaletteApp extends React.Component {
     // Not on a phone, where the landing is the surface and there is no tool to have reached.
     if (this._entryCreate && !this.state.narrow) { try { localStorage.setItem('palette-generator/landing', '1'); } catch (e) { } }
     safe(() => this._syncAppPath(), 'path');
+    // Every entry this page stands on carries a state, the first one too, so an entry with none is one
+    // the browser has just made for a # (_hashMoved).
+    try { if (history.state == null) history.replaceState({}, ''); } catch (e) { }
     this._histHereNow();
     // Back and forward are real navigations between these routes, so the swap is wiped exactly as a
     // click is. popstate has already moved the address bar by the time it fires, which is why
@@ -535,6 +540,8 @@ export default class PaletteApp extends React.Component {
     // navigateTo restores the offset itself, after the swap, from the entry's own state.
     try { history.scrollRestoration = 'manual'; } catch (e) { }
     this._onPop = () => {
+      // A # followed within the page fires this too, and so does Back onto another palette's link.
+      if (this._hashMoved()) return;
       const left = this._histHere;
       const dest = history.state || {};
       // Which way the press went: every entry this app pushes carries its time, and an entry older
@@ -660,8 +667,9 @@ export default class PaletteApp extends React.Component {
        address changed while the screen kept the palette it had: paste a renamed palette's link over the one
        still open, and nothing happened. A fragment that holds a palette now reloads the page, which opens
        it exactly as a fresh visit does. Any other fragment (an anchor) is left alone, and the app's own
-       address changes use replaceState, which fires no event. */
-    this._onHash = () => { if (this._sharedFromHash()) { try { window.location.reload(); } catch (e) { } } };
+       address changes use replaceState, which fires no event. _hashMoved decides, and popstate, which
+       comes first, has usually asked it already. */
+    this._onHash = () => { this._hashMoved(); };
     window.addEventListener('hashchange', this._onHash);
     // input-modality tracking: keyboard sets the flag, pointer clears it — centerOnTile is gated on it
     // The same fact is mirrored onto the root as data-kbd, which is the only way CSS can know it:
@@ -1045,6 +1053,46 @@ export default class PaletteApp extends React.Component {
   _histStamp() { this._histT = Math.max(Date.now(), (this._histT || 0) + 1); return this._histT; }
   // The entry on screen, as the next pop will find it gone: read after every commit and every pop.
   _histHereNow() { try { this._histHere = { state: history.state, url: location.pathname + location.search + location.hash }; } catch (e) { } }
+  /* A # THE BROWSER FOLLOWED (24.09.26): the skip link, an anchor, a share link pasted over the one open,
+     or Back and Forward between entries whose # differs. popstate fires for each of them and then
+     hashchange, and both ask here first. True when this has taken the move, and nothing else reads it.
+     A # FOLLOWED WITHIN THE PAGE IS NOT BACK OR FORWARD. The browser makes a new entry for it, with no
+     state, and _onPop read it as Back: from an entry a layer had left behind, it passed the press through
+     to that entry, which read as Forward and was passed on again, without end. The skip link after the
+     contrast checker was shut by Escape made 883 pops in three seconds, and a share link pasted there
+     opened either palette. Every entry this page stands on carries a state (componentDidMount,
+     _clearShareHash), so one without is the browser's. A palette's link opens as a fresh visit does. Any
+     other # takes the state of the entry it was followed from and a time of its own, so the next pop can
+     tell which way it went; the same address again replaces its own entry, which keeps its time.
+     BACK OR FORWARD ONTO ANOTHER PALETTE'S LINK reloads too, since a reload does not part the entries:
+     paste B over A, and Back is A's link in B's page. It is taken before _onPop's passes, which do not
+     know a shared palette as a place and would take the press on past it. Not onto the shared palette
+     already on screen, which Back from the skip link's entry is, and never between two paths. */
+  _hashMoved() {
+    let st, path, hash;
+    try { st = history.state; path = location.pathname + location.search; hash = location.hash; } catch (e) { return false; }
+    const left = this._histHere;
+    if (!left || left.url.split('#')[0] !== path) return false;
+    const made = st == null;
+    if (!made && left.url === path + hash) return false;
+    if (this._sharedFromHash()) {
+      if (!made && this.state.sharedView && this._hashCode() === this._sharedCode) return false;
+      if (made) { try { history.replaceState({ t: this._histStamp() }, ''); } catch (e) { } }
+      this._hashReload();
+      return true;
+    }
+    if (!made) return false;
+    const was = left.state || {};
+    try { history.replaceState(left.url === path + hash ? was : Object.assign({}, was, { t: this._histStamp() }), ''); } catch (e) { }
+    this._histHereNow();
+    return true;
+  }
+  // Once: popstate and hashchange can both ask for it.
+  _hashReload() {
+    if (this._hashReloading) return;
+    this._hashReloading = true;
+    try { window.location.reload(); } catch (e) { }
+  }
   /* The first layer to open pushes the entry the layers share; Back takes it away again (_onPop).
      The same address, so the analytics script counts nothing (it reports a push only when the path
      changes). A layer shut some other way leaves the entry, which the next press passes through. */

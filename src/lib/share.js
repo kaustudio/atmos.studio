@@ -96,10 +96,10 @@ export function shareUrl(pal, loc) {
 }
 
 // ---- decode (UNTRUSTED) -------------------------------------------------------------------------
-// Returns a palette-SHAPED plain object, or null. Never throws. The caller must still pass the
-// result through validateFeed before it reaches state — this function establishes shape and bounds,
-// validateFeed establishes colour validity.
-export function decodeShare(hash) {
+// The code a fragment carries, or null: the palette itself, without the name label. Two links to one
+// palette have the same code whatever their labels say, which is how the app knows a link names the
+// palette already on screen (PaletteApp _hashMoved). Never throws.
+export function shareCode(hash) {
   if (typeof hash !== 'string' || !hash) return null;
   const raw = hash.charAt(0) === '#' ? hash.slice(1) : hash;
   if (raw.length > MAX_FRAGMENT) return null;
@@ -116,7 +116,15 @@ export function decodeShare(hash) {
   const dot = code.lastIndexOf('.');
   if (dot >= 0) code = code.slice(dot + 1);
   // base64url alphabet only — reject before handing anything to atob
-  if (!/^[A-Za-z0-9\-_]+$/.test(code)) return null;
+  return /^[A-Za-z0-9\-_]+$/.test(code) ? code : null;
+}
+
+// Returns a palette-SHAPED plain object, or null. Never throws. The caller must still pass the
+// result through validateFeed before it reaches state — this function establishes shape and bounds,
+// validateFeed establishes colour validity.
+export function decodeShare(hash) {
+  const code = shareCode(hash);
+  if (!code) return null;
 
   let obj;
   try { obj = JSON.parse(b64urlDecode(code)); } catch (e) { return null; }

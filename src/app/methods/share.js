@@ -1,6 +1,6 @@
 // Share-link glue: read an incoming palette out of the URL fragment, and put the current one into
 // a link. The encoding itself lives in lib/share.js; this is the app-state side.
-import { decodeShare, shareUrl } from '../../lib/share.js';
+import { decodeShare, shareCode, shareUrl } from '../../lib/share.js';
 import { trackEvent } from '../../lib/track.js';
 
 export const shareMethods = {
@@ -24,6 +24,12 @@ export const shareMethods = {
     try { list = this.validateFeed([decoded]); } catch (e) { return null; }
     if (!list || !list.length) return null;
     return list[0];
+  },
+
+  // The address's palette as its code (lib/share.js shareCode), label aside, or null: what the shared view
+  // was opened from (PaletteApp _sharedCode), and what Back or Forward has brought (_hashMoved).
+  _hashCode() {
+    try { return shareCode(window.location.hash || ''); } catch (e) { return null; }
   },
 
   // Copy a link to the current palette. Reuses this.copy(), so it gets the same clipboard fallback
@@ -87,7 +93,10 @@ export const shareMethods = {
 
   // Drop the fragment once the visitor has moved on, so a reload doesn't reopen someone else's
   // palette over what they're now doing. replaceState keeps it out of their history too.
+  // The entry keeps its state (24.09.26). It was written null, and an entry without one now means the
+  // browser made it for a # (PaletteApp _hashMoved).
   _clearShareHash() {
-    try { window.history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) { }
+    try { window.history.replaceState(window.history.state || {}, '', window.location.pathname + window.location.search); } catch (e) { }
+    this._histHereNow();
   },
 };
