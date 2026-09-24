@@ -1829,30 +1829,13 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-seg-rail] > [aria-hidden="true"],
 [data-seg-btn],
 [data-library-btn]{border-radius:var(--radius-pill)}
-/* NEAREST PASS POINTS AT ITS PAIR (23.09.26). Pointing at or into the Nearest Pass section outlines
-   the matrix tile of the pair it nudges, inside the tile so the 4px between tiles stays clear, in the
-   page's ink. Since the grid became the guide (below), Best Pair Sample's pair takes it too. */
-[data-cx-cell][data-cx-near]{box-shadow:inset 0 0 0 1.5px var(--on-surface)}
-/* THE GRID IS THE GUIDE (23.09.26, by request: "use the pair grid on top as guidance when the user
-   interacts with elements so it becomes clear as day to them what they do and how colors pair";
-   _cxGuide in methods/overlays.js). While Best Pair Sample or Nearest Pass is pointed at, the grid
-   keeps that pair's cell and its two chips as they are and quiets the rest. The grid's own cells light
-   nothing: it already shows what passes.
-   THE CHIPS TURN GREY, NOT PALE. They are colours, and a faded red reads as pink, a colour the palette
-   doesn't have. Nor does each keep its own grey: in the dark theme the darkest colours' greys, quieted,
-   went into the surface, and the grid read as chips missing rather than chips resting. So every chip
-   not pointed at takes one flat grey of the page's ink, visible and the same in both themes, and the
-   lit chips are the only colour on the axes. The inline background is the chip's colour, hence
-   !important. The cells are grey tiles already, so they only quiet. A lit cell's figure stays whole
-   under Passing Only, which dims a failing figure: the pair being pointed at is the one to read.
-   THE EASING LIVES HERE, for the fill and the outline as well. renderVals used to declare the cells'
-   transition inline, and the drawer's arrival clears an inline transition as each cell lands
-   (clearProps in _drawerIn), so after the first open a verdict's fill changed in a cut. */
-[data-cx-grid] [data-cx-g]{transition:opacity var(--dur-state) var(--ease-standard),background-color var(--dur-state) var(--ease-standard),box-shadow var(--dur-state) var(--ease-standard)}
-[data-cx-grid][data-cx-guide] [data-cx-g^="p"]:not([data-cx-lit]){opacity:.3}
-[data-cx-grid][data-cx-guide] [data-cx-g^="c"]:not([data-cx-lit]),
-[data-cx-grid][data-cx-guide] [data-cx-g^="r"]:not([data-cx-lit]){background:color-mix(in srgb, var(--on-surface) 12%, transparent)!important}
-[data-cx-grid][data-cx-guide] [data-cx-lit] [data-cx-num]{opacity:1!important}
+/* THE GRID'S FILLS EASE (23.09.26). renderVals declared the cells' transition inline, and the drawer's
+   arrival clears an inline transition as each cell lands (clearProps in _drawerIn), so after the first
+   open a verdict's fill changed in a cut. It lives here, where the arrival cannot clear it.
+   TOMBSTONE: the pointing guide that lit a sample's pair here (a42882c: [data-cx-guide], [data-cx-lit]
+   and the Nearest Pass outline, [data-cx-near]) went on 24.09.26, by request: "The hover state on best
+   and nearest is redundant as the color is highlighted in the rows and columns. remove it". */
+[data-cx-grid] [data-cx-cell]{transition:background-color var(--dur-state) var(--ease-standard)}
 /* WHERE A COLOUR LIVES (23.09.26, by request; methods/where.js). The photograph beside the tiles holds a
    grey copy (How it Works' own treatment, .story-mask__dim) and one copy per colour masked to that
    colour's region. The masks are the photograph's own shape, so they take the image's cover crop

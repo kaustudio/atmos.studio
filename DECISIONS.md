@@ -7,6 +7,34 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Every colour answers in the photo, the open card's names, and no guide in the checker
+
+**The evening audit of 23.09** (/better-ux on live at a42882c) found three things. The user said: "Fix all".
+
+- **Every colour answers when pointed at.**
+  - The problem: of the eight examples' 40 colours, four lit nothing (Dry Season's 1%, Frozen Slate's
+    21%, 9% and 2%). That reads as broken while tour step 1 says "Point at a colour".
+  - `hasRegion` is How it Works' rule, and there a colour without a region is simply not offered. The
+    tool now has its own rule, `toolRegion` in `lib/masks.js`:
+    - Two near-identical colours that trade pixels light the region they share. Frozen Slate's blacks
+      measure 30.1% together, against 29.8% stated.
+    - A colour under 1.2% lights its own pixels. Dry Season's shadow lights the stem.
+  - How it Works keeps the strict rule.
+- **The open card uses the create page's names:** Dominant Hue, Temperature, Max Contrast and AA Text
+  Pairs. They were Hue, Temp, Max contrast and AA text pairs. Colour Blind Safe stays off the card,
+  because a ninth entry breaks its four rows.
+- **Colour Blind Safe stays out of the checker.** A line under the AA summary that lit the merging pairs
+  was built, then removed: "Don't include color blind in the checker". The figure stays on the create
+  page.
+- **The grid guide is gone.** Pointing at Best Pair Sample or Nearest Pass no longer lights their pair:
+  "The hover state on best and nearest is redundant as the color is highlighted in the rows and columns.
+  remove it".
+  - What stays: the Aa chips, the tiles in the headers, and the samples under the grid.
+  - The fill easing stays, now as `[data-cx-grid] [data-cx-cell]` in global.css.
+- **Rejected, don't re-propose:**
+  - a hover guide in the checker, in any form;
+  - colour-blind information in the checker.
+
 ## 2026-09-23 — Check Contrast: the grid points at the pair each sample shows
 
 **By request, in rounds on a test build.** It started with "How is the logic if you want to try the dark
@@ -52,6 +80,7 @@ colors pair".
   - lighting a colour's every pair;
   - a cell lighting itself;
   - removing the Aa chip.
+- **Superseded 24.09:** the guide went (see the entry above). The samples, the Aa chips and the easing stay.
 
 ## 2026-09-23 — The photo shows where a colour lives, and the tour points at it
 

@@ -189,11 +189,13 @@ export function hasRegion(map, sid, swatches) {
    The RGB channels are left white rather than black. An alpha-only PNG is legal and smaller, but a
    mask used as a plain <img> or drawn with a composite operation somewhere later would then paint
    black fringes wherever the alpha is partial; white fringes are invisible against every surface
-   this site has. Costs nothing, removes a whole class of future surprise. */
+   this site has. Costs nothing, removes a whole class of future surprise.
+   `sid` may be a list, for the one caller that lights two swatches as one region (toolRegion). */
 export function maskDataUrl(map, sid) {
   try {
     if (!map || !map.idx) return null;
     const { w, h, idx } = map;
+    const own = Array.isArray(sid) ? (k) => sid.indexOf(k) >= 0 : (k) => k === sid;
     const cv = document.createElement('canvas');
     cv.width = w; cv.height = h;
     const ctx = cv.getContext('2d');
@@ -202,7 +204,7 @@ export function maskDataUrl(map, sid) {
     const d = out.data;
     for (let i = 0, p = 0; i < idx.length; i++, p += 4) {
       d[p] = 255; d[p + 1] = 255; d[p + 2] = 255;
-      d[p + 3] = idx[i] === sid ? 255 : 0;
+      d[p + 3] = own(idx[i]) ? 255 : 0;
     }
     ctx.putImageData(out, 0, 0);
 
@@ -235,6 +237,38 @@ export function maskDataUrl(map, sid) {
 
     return cv.toDataURL('image/png');
   } catch (e) { return null; }
+}
+
+/* WHAT THE TOOL LIGHTS FOR A COLOUR THE CHAPTER WOULD LEAVE OUT (23.09.26, the evening audit, by
+   request: "Fix all").
+
+   hasRegion is the story's rule, and the story can keep it because it simply does not OFFER a colour
+   without a region. The tool cannot: every colour is a tile, pointing at a tile lights the photograph
+   (methods/where.js), and a tile that lit nothing read exactly like a broken one. On the eight examples
+   four colours did, among them Frozen Slate's 21% black, while step 1 of the tour tells the reader
+   to point. So the tool answers every colour with the pixels it has, for the reason it was refused:
+
+   · SAME COLOUR TWICE (the drift gate): two swatches that trade pixels light TOGETHER. Frozen Slate's
+     #000000 and #090606 measure 6.5 and 23.6 against 20.8 and 9.0 stated; as one region they measure
+     30.1 against 29.8. Which of the two owns a pixel is arbitrary; that the dark lives there is not.
+     Partners are the other swatches refused by the same gate within TWIN of it in OKLab.
+   · TOO LITTLE OF THE FRAME (the coverage gate): its own pixels, scattered as they are. A colour at
+     1% lives in a rim or a few specks, and that is the true answer to where it sits.
+
+   Returns the swatch ids to light, or null for a colour no pixel classifies to. */
+const TWIN = 0.15;
+export function toolRegion(map, sid, swatches) {
+  if (!map || !map.coverage || !(map.coverage[sid] > 0)) return null;
+  if (hasRegion(map, sid, swatches)) return [sid];
+  if (!(map.coverage[sid] >= MIN_COVERAGE)) return [sid];
+  const cents = centroids(swatches) || [];
+  const me = cents.find((c) => c.sid === sid);
+  const ids = [sid];
+  if (me) for (const c of cents) {
+    if (c.sid === sid || !(map.coverage[c.sid] >= MIN_COVERAGE) || hasRegion(map, c.sid, swatches)) continue;
+    if (dist2(me, c) < TWIN * TWIN) ids.push(c.sid);
+  }
+  return ids;
 }
 
 /* Every mask for a palette, built once.

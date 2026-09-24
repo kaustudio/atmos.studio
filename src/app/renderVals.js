@@ -214,30 +214,14 @@ export const renderValsMethods = {
            against, one line down, which is what makes the two incapable of disagreeing. */
         const criterion = CRITERION(aaa ? 'AAA' : 'AA', s.contrastLarge);
         let passCount = 0, pairTotal = 0;
-        /* THE GRID IS THE GUIDE (23.09.26, by request: "we need to use the pair grid on top as guidance
-           when the user interacts with elements so it becomes clear as day to them what they do and how
-           colors pair"). Pointing at Best Pair Sample or Nearest Pass, the grid keeps that pair's cell
-           and its two chips lit and greys the rest (_cxGuide, methods/overlays.js; the look is
-           global.css's [data-cx-guide]). Keys: c{k} a column chip, r{k} a row chip, p{i}-{j} a cell,
-           i the row.
-           ONLY PAIRS LIGHT (same day, by request: "Given the colors come sequentally after each other, the
-           hover state on the hex codes just brings confusing"). A text-on-colour tile, and a chip on the
-           grid's edge, lit every pair their colour is in: an L of cells across the triangle, not a line,
-           for tiles that already stand in the grid's own order. Neither lights anything now.
-           NOR DOES THE GRID LIGHT ITSELF (same day, by request: "Does the hover on the rows and columns
-           even make sense as it's clearly visualised what clears and whats not"). Pointing at a cell
-           greyed the rest of the grid, the pass-and-fail overview being read at that moment, to say which
-           two colours meet there: the chips at the row's start and the column's head already say it. */
-        const pairKeys = (i, j) => { const hi = Math.max(i, j), lo = Math.min(i, j); return ['c' + lo, 'r' + hi, 'p' + hi + '-' + lo]; };
-        const pairGuide = (i, j) => this.cxGuideHandlers(pairKeys(i, j), 'p' + Math.max(i, j) + '-' + Math.min(i, j));
-        const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map((b, k) => ({ ...chip(b), g: 'c' + k })) }];
+        const rows = [{ isHeader: true, isBody: false, corner: '', chips: sw.map(chip) }];
         sw.forEach((rb, i) => {
           const cells = sw.map((cb, j) => {
             if (j >= i) return { blank: true, key: '', ratio: '', numStyle: {}, style: { flex: 1, minWidth: 0, height: '34px' } };
             const r = this.contrastRatio(rb.hex, cb.hex), pass = r >= th, dim = s.contrastPassOnly && !pass;
             pairTotal++; if (pass) passCount++;
             return {
-              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th), g: 'p' + i + '-' + j,
+              blank: false, key: i + '-' + j, pass, ratio: RATIO_TEXT(r, th),
               /* EACH CELL SAYS WHAT IT MEASURED. Visually a cell is legible from its row and column
                  chips; read aloud it was the bare number "10.3", with the two colours it compares
                  sitting in a header the reader passed several rows ago and a verdict carried only by
@@ -280,7 +264,7 @@ export const renderValsMethods = {
               numStyle: { fontFamily: sans, fontSize: 'var(--fs-detail)', fontWeight: pass ? 500 : 400, lineHeight: 1, color: pass ? 'var(--on-surface)' : 'var(--on-surface-muted)', fontVariantNumeric: 'tabular-nums', opacity: dim ? 0.22 : 1 },
             };
           });
-          rows.push({ isHeader: false, isBody: true, chip: { ...chip(rb), g: 'r' + i }, cells });
+          rows.push({ isHeader: false, isBody: true, chip: chip(rb), cells });
         });
         const textOn = sw.map((b) => {
           const on = this.onColor(b.hex); const r = this.contrastRatio(b.hex, on);
@@ -307,7 +291,6 @@ export const renderValsMethods = {
            (nearestPass, lib/color.js). DRAWN, NOT SPELLED, as Best Pair Sample is: the matrix's own
            fail tile turning into its pass tile, and the nudged pair in the sample box, oriented as Best
            Pair Sample is (ink the darker, ground the lighter). The hexes are said, visually hidden.
-           Pointing at it lights its pair in the grid (the guide, above).
            THE SAME HEADER AS BEST PAIR SAMPLE (23.09.26, by request, after "We are overcomplicating things
            again"): the Aa chip of the pair it shows, where the split chip was ("what are we telling the
            user with the swatch that is not clickable"), then the fail tile › pass tile. The copy of the
@@ -326,12 +309,8 @@ export const renderValsMethods = {
             failStyle: ratioTile(false), passStyle: ratioTile(true),
             sampleStyle: sampleFor(fg, bg),
             spoken: np.from.toUpperCase() + ' nudged to ' + movedHex.toUpperCase() + ' on ' + otherHex.toUpperCase() + ': contrast ' + RATIO_TEXT(np.fromRatio, th) + ' to 1 becomes ' + RATIO_TEXT(np.toRatio, th) + ' to 1, which meets ' + criterion + '.',
-            guide: pairGuide(np.moved, np.other),
           };
         }
-        // Best Pair Sample's place in the grid, found by its colours: paletteMetrics names the pair by hex.
-        const idxOf = (hex) => sw.findIndex((b) => b.hex.toUpperCase() === String(hex).toUpperCase());
-        const bi = best ? idxOf(best.fg) : -1, bj = best ? idxOf(best.bg) : -1;
         /* PASSING ONLY IS THE ROW'S ODD CONTROL, and it stays that way on purpose — it is a filter
            that is on or off, not one of a pair, so it keeps the bordered treatment that says so (see
            the rail note below). What it should NOT keep is a different height and a different type
@@ -384,7 +363,6 @@ export const renderValsMethods = {
           sampleRatio: best ? RATIO_TEXT(best.r, th) : '—', sampleFg: best ? best.fg.toUpperCase() : '', sampleBg: best ? best.bg.toUpperCase() : '',
           // The grid's own tile, as Nearest Pass carries, so the two headers read alike (23.09.26).
           bestTileStyle: ratioTile(!!best && best.r >= th),
-          bestGuide: bi >= 0 && bj >= 0 && bi !== bj ? pairGuide(bi, bj) : {},
           setAA: () => this.setState({ contrastLens: 'AA' }), setAAA: () => this.setState({ contrastLens: 'AAA' }),
           aaStyle: segBtn(!aaa), aaaStyle: segBtn(aaa), aaPressed: aaa ? 'false' : 'true', aaaPressed: aaa ? 'true' : 'false',
           setNormal: () => this.setContrastSize(false), setLarge: () => this.setContrastSize(true),
@@ -822,15 +800,19 @@ export const renderValsMethods = {
       // SAME palette-card content model as the list row — identical data, and in this view it is
       // the open panel's arrangement rather than the tile's
       const met = this.paletteMetrics(p);
+      // THE CREATE PAGE'S NAMES, IN ITS TITLE CASE (23.09.26, the evening audit, by request: "Fix all").
+      // The card said Hue, Temp, Max contrast and AA text pairs where the create page and the list say
+      // Dominant Hue, Temperature, Max Contrast and AA Text Pairs: one value, two names. Colour Blind
+      // Safe stays on the create page; a ninth entry would break the card's four full rows.
       const cardMetrics = [
-        { label: 'Hue', text: met.hue + '°' },
+        { label: 'Dominant Hue', text: met.hue + '°' },
         { label: 'Chroma', text: met.chroma.toFixed(3) },
         { label: 'Lightness', text: met.lMin + '–' + met.lMax + '%' },
-        { label: 'Temp', text: met.temp },
-        { label: 'Max contrast', text: met.contrastMax.toFixed(1) + ':1' },
+        { label: 'Temperature', text: met.temp },
+        { label: 'Max Contrast', text: met.contrastMax.toFixed(1) + ':1' },
         // the one metric carrying a verdict as well as a number — badge from the shared readout,
         // so the card says exactly what the row and the detail panel say
-        { label: 'AA text pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
+        { label: 'AA Text Pairs', text: aaReadout(met).aaValueText, aa: aaReadout(met) },
         { label: 'Character', text: met.mood },
         // Eighth entry, and the one that squares the 2-column grid off at four full rows: the list
         // row ends on a date and the card had none, so the same palette was datable in one view and

@@ -3537,7 +3537,7 @@ function ContrastDrawer({ vals }) {
                   <div style={sx('width:34px;flex:none')}></div>
                   {row.chips.map((c, ci) => (
                     <div key={ci} style={sx('flex:1;min-width:0;display:flex;align-items:center;justify-content:center;height:34px')}>
-                      <span aria-hidden="true" data-cx-cell={'chip-' + ci} data-cx-g={c.g} data-ov-band="1" style={c.style}></span>
+                      <span aria-hidden="true" data-cx-cell={'chip-' + ci} data-ov-band="1" style={c.style}></span>
                     </div>
                   ))}
                 </>)}
@@ -3557,10 +3557,10 @@ function ContrastDrawer({ vals }) {
                       edge is exactly what a small swatch can do, because it is a miniature of the
                       result stage's own band. */}
                   <div style={sx('width:34px;flex:none;display:flex;align-items:center;justify-content:center')}>
-                    <span aria-hidden="true" data-cx-cell={'chip-r' + ri} data-cx-g={row.chip.g} data-ov-band="1" style={row.chip.style}></span>
+                    <span aria-hidden="true" data-cx-cell={'chip-r' + ri} data-ov-band="1" style={row.chip.style}></span>
                   </div>
                   {row.cells.map((cell, ci) => (
-                    <div key={ci} data-cx-cell={cell.key} data-cx-g={cell.blank ? undefined : cell.g} style={cell.style}>
+                    <div key={ci} data-cx-cell={cell.key} style={cell.style}>
                       {/* The ratio is aria-hidden and the whole statement is carried by the hidden
                           span below it. Read aloud, the visible number alone was "10.3", with the two
                           colours it compares in a header several rows back. No ✓/✕ mark since
@@ -3578,14 +3578,13 @@ function ContrastDrawer({ vals }) {
           </div>
         </div>
 
-        {/* THE TWO SAMPLES STAND UNDER THE GRID (23.09.26, by request, with the grid as their guide). They
-            were under the five text-on-colour tiles, where a 1440 × 900 laptop's window cut Best Pair
-            Sample in half and hid Nearest Pass. Beside the grid, the pair each one shows and the cell it
-            lights are on screen together. The tiles close the drawer.
-            THE POINTER TARGETS ARE WHAT IS DRAWN (same day, by request: "The cursor is sometimes too far
-            away while the hover state is still intact"): each sample's Aa chip with its tiles, and its
-            box. On the section they reached 24px into the gutters, 20px above the label and below the
-            box, and across the empty stretch between label and chip. */}
+        {/* THE TWO SAMPLES STAND UNDER THE GRID (23.09.26, by request). They were under the five
+            text-on-colour tiles, where a 1440 × 900 laptop's window cut Best Pair Sample in half and hid
+            Nearest Pass. Beside the grid, each pair and its cell are on screen together. The tiles close
+            the drawer.
+            TOMBSTONE: pointing at either sample lit its pair in the grid (a42882c) and went on 24.09.26, by
+            request: "The hover state on best and nearest is redundant as the color is highlighted in the
+            rows and columns. remove it". The Aa chip and the grid's own tile already say which pair it is. */}
         <div data-cx-sec="1" style={{ padding: contrast.bestSecPad }}>
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
             {/* THE BUTTONS' TYPE (18.09.26, by request): the label at 13px Medium in its own Title Case,
@@ -3595,9 +3594,9 @@ function ContrastDrawer({ vals }) {
                 hexes are still said, visually hidden, ahead of the ratio. It stays (23.09.26: "Why would you
                 remove the Aa chip?"), and Nearest Pass carries one too.
                 THE RATIO IS THE GRID'S OWN TILE (23.09.26), as Nearest Pass's are, so the two headers read
-                alike and each figure looks like the cell it lights. */}
+                alike and each figure looks like its cell in the grid. */}
             <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Best Pair Sample</span>
-            <span {...contrast.bestGuide} style={sx('display:inline-flex;align-items:center;gap:8px')}>
+            <span style={sx('display:inline-flex;align-items:center;gap:8px')}>
               <PairMark fg={contrast.sampleFg} bg={contrast.sampleBg} />
               <span style={visuallyHidden}>{contrast.sampleFg} on {contrast.sampleBg}, </span>
               <span style={contrast.bestTileStyle}><span data-ratio="">{contrast.sampleRatio}</span></span>
@@ -3605,18 +3604,17 @@ function ContrastDrawer({ vals }) {
           </div>
           {/* The words have a box of their own so their size can step while the sample's box
               extends around them (_growSample in methods/overlays.js). */}
-          <div data-cx-sample="best" data-cx-cell="sample" {...contrast.bestGuide} style={contrast.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
+          <div data-cx-sample="best" data-cx-cell="sample" style={contrast.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
         </div>
         {/* NEAREST PASS (23.09.26, by request): the failing pair that one small move of one colour puts
             over the line, in this drawer's own pieces — the Aa chip of the pair as nudged, the grid's fail
             tile becoming its pass tile, the nudged pair in the sample box. Nothing is spelled; the hexes
-            are said. Pointing at it lights its pair in the grid. The split chip and the copy of the nudged
-            colour went the same day (see renderVals). */}
+            are said. The split chip and the copy of the nudged colour went the same day (see renderVals). */}
         {contrast.near && (
           <div data-cx-sec="1" data-cx-near-sec="1" style={sx('padding:0 var(--page-gutter) 0')}>
             <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
               <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Nearest Pass</span>
-              <span data-cx-near-cluster="1" {...contrast.near.guide} style={sx('display:inline-flex;align-items:center;gap:8px')}>
+              <span data-cx-near-cluster="1" style={sx('display:inline-flex;align-items:center;gap:8px')}>
                 <PairMark fg={contrast.near.markFg} bg={contrast.near.markBg} />
                 <span aria-hidden="true" style={contrast.near.failStyle}><span data-ratio="">{contrast.near.fromRatio}</span></span>
                 <span aria-hidden="true" style={sx('display:inline-flex;color:var(--on-surface-muted)')}><IconChevronRight size={12} /></span>
@@ -3624,7 +3622,7 @@ function ContrastDrawer({ vals }) {
                 <span style={visuallyHidden}>{contrast.near.spoken}</span>
               </span>
             </div>
-            <div data-cx-sample="near" data-cx-cell="near-sample" {...contrast.near.guide} style={contrast.near.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
+            <div data-cx-sample="near" data-cx-cell="near-sample" style={contrast.near.sampleStyle}><span data-cx-sample-text="1" style={sx('display:block')}>The quick brown fox jumps over the lazy dog</span></div>
           </div>
         )}
 
@@ -3636,9 +3634,7 @@ function ContrastDrawer({ vals }) {
             at 20px, since it is what this panel measures. Static: this drawer is opened often, so the
             count-up and masked reveal the pages' tiles carry stay on the pages.
             THEY CLOSE THE DRAWER since 23.09.26, 28px under the samples: a step more than the 20px
-            between the two samples, so the pairs and the tiles read as two groups. Pointing at a tile
-            lights nothing in the grid (23.09.26, by request): a tile is one colour, and a colour's pairs
-            lit as a scattered L across the triangle. */}
+            between the two samples, so the pairs and the tiles read as two groups. */}
         <div data-cx-sec="1" style={sx('padding:28px var(--page-gutter) 26px')}>
           <div style={sx('display:flex;flex-direction:column;gap:6px')}>
             {contrast.textOn.map((t, ti) => (

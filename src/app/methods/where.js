@@ -1,4 +1,4 @@
-import { buildMasks } from '../../lib/masks.js';
+import { buildMasks, maskDataUrl, toolRegion } from '../../lib/masks.js';
 
 /* WHERE A COLOUR LIVES, BESIDE THE TILES (23.09.26, by request, from Adobe Color's handles on the image).
    How it Works has shown it since the story was built — "Select a colour to find it in the photograph"
@@ -23,7 +23,12 @@ export const whereMethods = {
     this._whereCache = this._whereCache || new Map();
     if (this._whereCache.has(key)) return this._whereCache.get(key);
     const built = buildMasks(img, p.swatches);
-    const urls = built ? built.urls : null;
+    // Every colour answers here, where the story's rule would leave some out (toolRegion, masks.js).
+    const urls = built ? built.urls.map((u, s) => {
+      if (u) return u;
+      const ids = toolRegion(built.map, s, p.swatches);
+      return ids ? maskDataUrl(built.map, ids.length === 1 ? ids[0] : ids) : null;
+    }) : null;
     this._whereCache.set(key, urls);
     if (this._whereCache.size > MAX_CACHED) this._whereCache.delete(this._whereCache.keys().next().value);
     return urls;
@@ -47,7 +52,8 @@ export const whereMethods = {
       if (on && !layer.style.maskImage) { layer.style.webkitMaskImage = 'url(' + url + ')'; layer.style.maskImage = 'url(' + url + ')'; }
       layer.toggleAttribute('data-on', on);
     });
-    // A colour spread too finely to locate lights nothing, and the photograph stays as it is.
+    // Only a colour no pixel classifies to lights nothing now, and the photograph stays as it is. One
+    // spread thin lights its specks, and a colour twice lights the region the two share (toolRegion).
     box.toggleAttribute('data-lit', !!url);
   },
   _whereOff(el) {
