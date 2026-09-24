@@ -7,6 +7,16 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Export starts with the Semantic Scaffold on, and remembers the choice
+
+**By request:** "implement the medium finding", from the assessment of atmos's feature priorities against
+Adobe Color's.
+
+- It was off on every visit, so a first export named the colours 01 to 05, as any palette tool does, while
+  the roles (atmos's clearest lead) waited behind a switch in a dialog.
+- It starts on, and the last choice is kept in `palette-generator/export-semantic`, as the page size is.
+  The privacy page's "first-party keys" already covers it.
+
 ## 2026-09-24 — A palette shared from the desktop opens on a phone as the story the examples tell
 
 **By request:** "I was thinking the user would land to the same information already provided with the 8

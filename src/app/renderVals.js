@@ -2482,7 +2482,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // token export
       export: exportView, hasExport: !!exportView,
       closeExport: () => this.closeExport(), trapExport: (e) => this.trapExport(e),
-      toggleExportSemantic: () => this.setState((st) => ({ exportSemantic: !st.exportSemantic })),
+      toggleExportSemantic: () => this.setState((st) => ({ exportSemantic: !st.exportSemantic }), () => { try { localStorage.setItem('palette-generator/export-semantic', this.state.exportSemantic ? '1' : '0'); } catch (e) { } }),
       pill, result, procStatus, procOrb, procStep: s.procStep, procGroups: s.procGroups,
     };
   },

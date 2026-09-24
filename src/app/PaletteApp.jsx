@@ -243,7 +243,13 @@ export default class PaletteApp extends React.Component {
     theme: this._entryTheme(), contrast: false, contrastLens: 'AA', contrastLarge: false, contrastPassOnly: false,
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
-    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, exportSemantic: false, notice: null,
+    toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, notice: null,
+    /* THE SCAFFOLD IS ON UNTIL YOU TURN IT OFF (24.09.26, the Adobe assessment's MEDIUM, by request: "implement
+       the medium finding"). It was off on every visit, so a first export named the colours 01 to 05, which
+       is what any palette tool gives, and the roles (atmos's clearest lead) waited behind a switch in a
+       dialog. It starts on now, and the last choice is kept, as the page size is: a reader who wants the
+       numbered names switches once. */
+    exportSemantic: (function () { try { const v = localStorage.getItem('palette-generator/export-semantic'); return v === null ? true : v === '1'; } catch (e) { return true; } })(),
     // The visitor's answer on analytics — 'granted', 'denied', or null for not yet asked — and whether
     // the banner that asks is on screen. See methods/consent.js.
     consent: readConsent(), consentOpen: false,
@@ -408,20 +414,20 @@ export default class PaletteApp extends React.Component {
      No storage key: a reload is the new roll — the whole point is variety between visits, and a
      preference to persist and validate would cost more than it buys. Rolled again only if the held
      example has since been deleted. */
-  _storyCase() {
-    const ex = this._examples();
-    if (!ex.length) return null;
-    const chosen = id && ex.find((p) => p.id === id);
-    if (chosen) return chosen;
   /* A SHARED PALETTE IS TOLD AS THE EXAMPLES ARE (24.09.26, by request: "the user would land
      to the same information already provided with the 8 existing examples", and "it only occurs when a
      photo is shared with them from the desktop tool"). A phone never reads an image (the tool is the
      computer's); what reaches it is a palette someone shared from the tool, and the story tells that
      palette exactly as it tells an example. */
-    let held = this._storyDefaultId && ex.find((p) => p.id === this._storyDefaultId);
+  _storyCase() {
     const s = this.state;
     if (s.narrow && s.sharedView && s.current) return s.current;
     const id = s.storyCaseId;
+    const ex = this._examples();
+    if (!ex.length) return null;
+    const chosen = id && ex.find((p) => p.id === id);
+    if (chosen) return chosen;
+    let held = this._storyDefaultId && ex.find((p) => p.id === this._storyDefaultId);
     if (!held) { held = ex[Math.floor(Math.random() * ex.length)]; this._storyDefaultId = held.id; }
     return held;
   }
