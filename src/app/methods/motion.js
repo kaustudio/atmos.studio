@@ -4,6 +4,7 @@
 import { syncThemeColor } from '../../lib/themeColor.js';
 import { paletteTags as tagsFor, temperatureBand, lightnessBand, TEMP_LABEL } from '../../lib/classify.js';
 import { initNumberOdometer } from './numberOdometer.js';
+import { archetypeOf } from '../../lib/reading.js';
 
 export const motionMethods = {
   // ---- motion tokens: one shared set, scaled by hierarchy ----
@@ -377,7 +378,11 @@ export const motionMethods = {
       // the palette gives you choices. Measured across the current archive the split is roughly
       // 19% / 27% / 54%, so every state is reachable and none is vestigial.
       aaState: aa === 0 ? 'none' : aa <= 2 ? 'limited' : 'flexible',
-      mood: (p.archetype && p.archetype !== 'seed') ? p.archetype : (p.descriptors[0] || '').toLowerCase(),
+      /* A SHARED PALETTE HAS A CHARACTER OF ITS OWN (24.09.26, audit). A link carries no archetype, so its
+         record holds the placeholder 'shared', and the Reading readout said "Character: Shared" on every
+         shared palette and on every one saved from a link. It reads the palette's own colours instead, as
+         the local reading would (lib/reading.js archetypeOf); Name From already says where it came from. */
+      mood: p.archetype === 'shared' ? archetypeOf(p.swatches) : (p.archetype && p.archetype !== 'seed') ? p.archetype : (p.descriptors[0] || '').toLowerCase(),
     };
   },
   // Resolve a CSS custom property to its concrete value in the ACTIVE theme (GSAP can't interpolate var()).

@@ -616,11 +616,12 @@ export default class PaletteApp extends React.Component {
     }
     this._onKey = (e) => {
       /* CMD+Z UNDOES WHILE THE UNDO TOAST IS UP (24.09.26, by request). The toast's button was the only
-         way back from a delete or a rename, and every app answers Cmd+Z. A text field keeps its own. */
+         way back from a delete or a rename, and every app answers Cmd+Z. A text field keeps its own.
+         One change a press, newest first (undoLast, overlays.js), where it used to take the whole run. */
       if ((e.key === 'z' || e.key === 'Z') && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
         const t = e.target;
         if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-        if (this._undoRun(this.state).length) { e.preventDefault(); this.undoDelete(); }
+        if (this._undoRun(this.state).length) { e.preventDefault(); this.undoLast(); }
         return;
       }
       if (e.key === 'Escape') {
@@ -645,7 +646,7 @@ export default class PaletteApp extends React.Component {
     this._onPaste = (e) => {
       const t = e.target;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      if (!this._pasteReady() || !e.clipboardData) return;
+      if (!e.clipboardData) return;
       let file = null;
       const items = e.clipboardData.items ? Array.from(e.clipboardData.items) : [];
       for (const it of items) {
@@ -656,6 +657,15 @@ export default class PaletteApp extends React.Component {
       }
       if (!file && e.clipboardData.files && e.clipboardData.files.length) file = e.clipboardData.files[0];
       if (!file) return;
+      if (!this._pasteReady()) {
+        /* A SHARED PALETTE SAYS WHY IT KEPT THE IMAGE OUT (24.09.26, audit). It is not in the Library
+           until it is saved, so a paste over it is refused (_pasteReady), and the refusal was silent: an
+           image pasted there did nothing at all, which reads as paste being broken. Where the shared
+           palette is the only reason, the notice names the two ways past it. The image is still on the
+           clipboard, so either one and a second paste reads it. */
+        if (this.state.sharedView && this._pasteReady(true) && /^image\//.test(file.type)) this.showNotice('Choose Save to Library or Make Your Own, then paste your image again.');
+        return;
+      }
       e.preventDefault();
       if (this.state.stage === 'result') this.pasteOverPalette(file);
       else this.handleIncoming(file, 'paste');
@@ -1042,10 +1052,11 @@ export default class PaletteApp extends React.Component {
      so the next image loses nothing. Not over a shared palette, which is not in the Library until it
      is saved; not while one is being read; not behind a layer, the tour, the landing or a document;
      and not on a phone, where the tool is not on the page. */
-  _pasteReady() {
+  // `overShared` asks whether it would be taken if the palette on screen were not a shared one.
+  _pasteReady(overShared) {
     const s = this.state;
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
-    const over = s.stage === 'result' && !s.sharedView;
+    const over = s.stage === 'result' && (!s.sharedView || !!overShared);
     if (s.stage !== 'upload' && s.stage !== 'error' && !over) return false;
     return this._frontLayers() === 0 && s.tourStep == null;
   }

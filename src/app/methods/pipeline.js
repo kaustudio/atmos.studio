@@ -20,9 +20,9 @@ export const pipelineMethods = {
   // `source` is the door the file came through, 'drop', 'browse' or 'paste', kept for the Palette Created event.
   handleIncoming(file, source) {
     this._incoming = source || 'browse';
-    if (!file) { this.showError('No file received', 'Try dropping an image again, or browse to pick one.', 'no file'); return; }
+    if (!file) { this.showError('No file received', 'Drop, choose or paste an image to try again.', 'no file'); return; }
     if (this.ACCEPT.indexOf(file.type) < 0 && file.type.indexOf('image/') !== 0) {
-      this.showError('That file isn’t an image', 'Upload a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.', 'not an image'); return;
+      this.showError('That file isn’t an image', 'Use a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.', 'not an image'); return;
     }
     if (file.size > this.MAX_BYTES) {
       this.showError('That image is too large', 'Files need to be under 20 MB. Try exporting a smaller or compressed version.', 'too large'); return;
@@ -30,7 +30,12 @@ export const pipelineMethods = {
     this.processFile(file);
   },
   // `reason` is a fixed word per failure for the Palette Failed event, never the message itself.
-  showError(title, msg, reason) { if (reason) trackEvent('Palette Failed', { reason }); this._genId = (this._genId || 0) + 1; this.stopCanvas(); if (this._end) clearTimeout(this._end); if (this._t) clearInterval(this._t); this.setState({ stage: 'error', errorTitle: title, errorMsg: msg, pending: null, announce: 'Upload failed. ' + title + '. ' + msg }); },
+  /* NOTHING HERE SAYS UPLOAD (24.09.26, audit). Every failure was announced as "Upload failed.", a paste
+     and a picture that would not decode among them, and the not-an-image line said "Upload a JPG". The
+     full-size image is never uploaded: it is read on this device, as /privacy says (only a ~320px copy
+     goes out, and only to name a palette), and it arrives by one of three doors the start box names,
+     choose, drop and paste. The title already says what went wrong, so it leads the announcement. */
+  showError(title, msg, reason) { if (reason) trackEvent('Palette Failed', { reason }); this._genId = (this._genId || 0) + 1; this.stopCanvas(); if (this._end) clearTimeout(this._end); if (this._t) clearInterval(this._t); this.setState({ stage: 'error', errorTitle: title, errorMsg: msg, pending: null, announce: title + '. ' + msg }); },
 
   // H1: persisted/imported imageUrl must never trigger a remote request. Allow only self-contained
   // data-image URLs (persisted thumbnails) and session blob: URLs (in-memory objects).
@@ -850,10 +855,11 @@ export const pipelineMethods = {
      this returned early — the dropzone popped in at rest. And the lines are behind a one-shot latch
      (_dropRevealed, loader.js) that only the landing path ever reset, so even with the zone found
      the copy would have faded as a block. The latch is released here: a reset IS a fresh arrival of
-     this surface. */
+     this surface. Found by data-drop-zone since 24.09.26, when the name was rewritten to begin with
+     "Start here": a label is copy, and copy is not an address. */
   animateUploadIn() {
     const g = window.gsap; if (!g || document.hidden) return;
-    const zone = document.querySelector('main button[aria-label^="Choose image"]');
+    const zone = document.querySelector('main [data-drop-zone]');
     if (!zone) return;
     if (this._reduce) { g.fromTo(zone, { opacity: 0 }, { opacity: 1, duration: this.DUR.swap, ease: 'none' }); return; }   // opacity crossfade only
     g.fromTo(zone, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: this.DUR.reveal, ease: this.EASE.entrance, clearProps: 'transform' });

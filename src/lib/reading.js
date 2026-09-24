@@ -542,6 +542,12 @@ function composeRationale(A, r) {
 
 // Archetype: a single lowercase mood keyword. Consumed as `mood` in the metrics readout
 // (methods/motion.js), so it must stay one short word.
+// The same word for a palette that arrived without one: a share link carries none, and its record
+// holds the placeholder 'shared' (lib/share.js decodeShare), which is not a character.
+export function archetypeOf(swatches) {
+  const A = analysePalette(swatches);
+  return A ? composeArchetype(A) : 'neutral';
+}
 function composeArchetype(A) {
   if (A.chroma.spread === 'accented') return 'accented';
   if (A.temperature.split) return 'split';

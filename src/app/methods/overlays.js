@@ -306,6 +306,23 @@ export const overlayMethods = {
   undoDelete() {
     const run = this._deleted; this._deleted = null;
     if (!run || !run.length) { this._dismissToast(); return; }
+    this._undoApply(run, []);
+  },
+  /* CMD+Z TAKES BACK ONE CHANGE (24.09.26, audit). It ran the toast's Undo, which takes back the whole
+     run: rename one palette, delete another, press Cmd+Z for the deletion, and the name went back too,
+     with nothing on the key to say so, and a toast that never times out can hold a whole session. Every
+     app's Cmd+Z undoes the last step, so this one does: the newest change comes back, the toast stays
+     for the rest and says what it now holds, and the last one lets it go. The toast's own button still
+     undoes everything it names ("Undo all 2 changes"). */
+  undoLast() {
+    const run = this._deleted;
+    if (!run || !run.length) { this._dismissToast(); return; }
+    this._deleted = run.slice(0, -1);
+    this._undoApply(run.slice(-1), this._deleted);
+  },
+  // Takes back `undo` (oldest first, as the run holds it), and leaves the toast holding `rest`, or lets
+  // it go when nothing is left in it.
+  _undoApply(undo, rest) {
     /* BACK IN REVERSE, each to the index it left from, which walks the library back through the states
        it passed through, so every palette and project lands where it stood and in the order it stood.
        A PROJECT'S UNDO REFILES THROUGH withProjects (19.09.26). It wrote the legacy projectId alone,
@@ -318,8 +335,8 @@ export const overlayMethods = {
       let feed = st.feed.slice();
       const projects = st.projects.slice();
       let current = st.current, overlay = st.overlay;
-      for (let i = run.length - 1; i >= 0; i--) {
-        const d = run[i];
+      for (let i = undo.length - 1; i >= 0; i--) {
+        const d = undo[i];
         if (d.rename) {
           const back = (p) => (p && p.id === d.rename.id ? Object.assign({}, p, { name: d.rename.from, renamed: d.rename.fromRenamed }) : p);
           feed = feed.map(back); current = back(current); overlay = back(overlay);
@@ -328,14 +345,16 @@ export const overlayMethods = {
           feed = feed.map((p) => d.palIds.indexOf(p.id) >= 0 && !this.inProject(p, d.project.id) ? this.withProjects(p, this.palProjects(p).concat([d.project.id])) : p);
         } else if (!feed.some((p) => p.id === d.palette.id)) feed.splice(Math.min(d.index, feed.length), 0, d.palette);
       }
-      const one = run.length === 1 ? run[0] : null;
-      const announce = one ? (one.rename ? 'Name restored to ' + one.rename.from + '.' : one.project ? 'Restored project ' + one.project.name + '.' : 'Restored ' + one.palette.name + '.') : 'Restored ' + this._undoPhrase(run) + '.';
-      return { feed, projects, current, overlay, announce };
+      const one = undo.length === 1 ? undo[0] : null;
+      const said = one ? (one.rename ? 'Name restored to ' + one.rename.from + '.' : one.project ? 'Restored project ' + one.project.name + '.' : 'Restored ' + one.palette.name + '.') : 'Restored ' + this._undoPhrase(undo) + '.';
+      const patch = { feed, projects, current, overlay, announce: rest.length ? said + ' ' + this._undoHint(rest) : said };
+      if (rest.length) patch.toast = this._undoToast(rest);
+      return patch;
     }, () => {
-      run.forEach((d) => { if (d.palette) this._revealRestoredRow(d.palette.id); });
+      undo.forEach((d) => { if (d.palette) this._revealRestoredRow(d.palette.id); });
       this.persist({ immediate: true });
       if (this.state.feedView === 'grid') this.buildUniverse();
-      this._dismissToast();
+      if (!rest.length) this._dismissToast();
     });
   },
   // The run the toast is holding: everything deleted since it came up, oldest first.

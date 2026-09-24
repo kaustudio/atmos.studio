@@ -159,6 +159,17 @@ export const renderValsMethods = {
   _infoBtnStyle(on) {
     return { position: 'absolute', top: '12px', right: '12px', zIndex: 4, width: '28px', height: '28px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 0, borderRadius: 'var(--radius-pill)', color: on, cursor: 'pointer', padding: 0 };
   },
+  /* ADD TO PROJECTS IS CALLED WHAT IT SAYS (24.09.26, audit). Its name was "Add Garnet to a project",
+     which a reader who speaks to the page could not reach by the words on the button (SC 2.5.3). The
+     words come first now, then the palette, and where it is filed already. Both surfaces that carry
+     the button, the create page and the Full Swatch View, take their name from here. */
+  _assignAria(p) {
+    if (!p) return 'Add to Projects: save this palette to your Library before filing it';
+    const ids = this.palProjects(p);
+    return ids.length
+      ? 'Add to Projects: ' + p.name + ', in ' + ids.map((id) => this.projectName(id)).join(', ') + '. Add it to another project, or remove it from one'
+      : 'Add to Projects: file ' + p.name + ' in a project';
+  },
   renderVals() {
     const s = this.state;
     /* THIS WAS CALLED `mono`, AND NOTHING IN THIS APP HAS EVER BEEN MONOSPACE. The alias is from a
@@ -462,7 +473,7 @@ export const renderValsMethods = {
       const _cur = s.current;
       const refImageNode = _hasRef ? React.createElement('button', { type: 'button', 'data-click-zoom': '1', 'data-ix': 'mark', 'data-focus': 'chrome', 'aria-label': 'View the reference image larger', style: { border: 'none', padding: 0, background: 'none', display: 'block', cursor: 'zoom-in', borderRadius: 'var(--radius-card)' } },
         React.createElement('span', { key: _cur.id + '|' + _ref, 'data-where': '1', style: { borderRadius: 'var(--radius-card)' } },
-          React.createElement('img', { src: _ref, 'data-where-base': '1', onLoad: (e) => this._wherePrime(_cur, e.currentTarget), alt: (_cur.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image you uploaded', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', borderRadius: 'var(--radius-card)' } }),
+          React.createElement('img', { src: _ref, 'data-where-base': '1', onLoad: (e) => this._wherePrime(_cur, e.currentTarget), alt: (_cur.example === true) ? 'The reference image this example palette was read from' : s.sharedView ? 'The reference image this shared palette was read from' : 'The reference image this palette was read from', style: { display: 'block', width: '156px', height: '104px', objectFit: 'cover', borderRadius: 'var(--radius-card)' } }),
           React.createElement('img', { src: _ref, alt: '', 'aria-hidden': 'true', 'data-where-dim': '1', decoding: 'async' }),
           _cur.swatches.map((b, k) => React.createElement('img', { key: k, src: _ref, alt: '', 'aria-hidden': 'true', 'data-where-sid': String(k), decoding: 'async' })))) : null;
       // The metadata cluster — restored to the detail pane. It used to live ONLY in the list's
@@ -989,14 +1000,14 @@ export const renderValsMethods = {
         // What the palette is for, the create page's line (23.09.26): the view reads as that page does.
         useLine: composeUse(analysePalette(p.swatches), omet.aaState, omet),
         refImage: this.dispUrl(p), hasRef: this.hasImg(p),
-        refAlt: p.example === true ? 'The reference image this example palette was read from' : 'The reference image you uploaded',
+        refAlt: p.example === true ? 'The reference image this example palette was read from' : 'The reference image this palette was read from',
         onDelete: () => this.deletePalette(p.id, null), deleteAria: 'Delete ' + p.name,
         // Share, as on the result stage (19.09.26, audit U6, by request), with its own Copied state.
         onShare: () => this.shareCurrent(p, 'ov-pal-share'), shareCopied: s.copied === 'ov-pal-share',
         // filed → the project's name; unfiled → the invitation. Same words the result view's row
         // uses, because it is now the same control in the same place on both surfaces.
         onAssign: () => this.openAssign(p),
-        assignAria: this.palProjects(p).length ? 'Add ' + p.name + ' to another project, or remove it from one (currently in ' + this.palProjects(p).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + p.name + ' to a project',
+        assignAria: this._assignAria(p),
         // The state, then the project, so the button says where the palette IS and not only what
         // pressing it will do. A bare project name read as a filter; "Add to project" on a palette
         // already filed read as a second copy.
@@ -2456,7 +2467,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // The button reports where the palette IS, the way the overlay's does — a filed palette
       // shows its project, so the row states the fact rather than repeating the invitation.
       assignLabel: 'Add to Projects',
-      assignCurAria: filedCur ? (this.palProjects(filedCur).length ? 'Add ' + filedCur.name + ' to another project, or remove it from one (currently in ' + this.palProjects(filedCur).map((id) => this.projectName(id)).join(', ') + ')' : 'Add ' + filedCur.name + ' to a project') : 'Save this palette to your Library before filing it in a project',
+      assignCurAria: this._assignAria(filedCur),
       contrast: cx, hasContrast: !!cx, closeContrast: () => this.closeContrast(), trapContrast: (e) => this.trapContrast(e),
       // delete + undo toast
       /* The toast says "<name> deleted" for a palette, whose name is the thing you would look for

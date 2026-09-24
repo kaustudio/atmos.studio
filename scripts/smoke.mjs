@@ -52,7 +52,7 @@ const rows = await page.$$eval('[data-row]', (els) => els.length);
 console.log('list rows:', rows);
 
 // open contrast drawer
-const cbtn = await page.$('button[aria-label="Open contrast checker for this palette"]');
+const cbtn = await page.$('button[data-tour="via-contrast"]');
 if (cbtn) { await cbtn.click(); await page.waitForTimeout(1200); await page.screenshot({ path: shots + '/07-contrast.png' }); await page.keyboard.press('Escape'); await page.waitForTimeout(900); }
 
 // open harmonies from first band

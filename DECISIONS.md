@@ -7,6 +7,29 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Controls are called what they say, a swatch is one Tab stop, Cmd+Z undoes one change
+
+**From the interface audit** of the 23–24.09 changes (better-interface, full mode), all six findings:
+
+- **Controls are called what they say** (SC 2.5.3). Check Contrast was named "Open contrast checker for this
+  palette", Add to Projects "Add Garnet to a project", Save to Library and Make Your Own a sentence each, and
+  the start box "Choose image…" under a heading that says Start here. Check Contrast and Save to Library are
+  now named by their words alone; the others begin with their words and add context after a colon. The code
+  that finds the start box keys off `data-drop-zone`, not its name, which once broke it.
+- **One Tab stop per swatch.** Twenty-five stops, a harmony button and four values per swatch, stood between
+  Skip to Main Content and the palette's actions. A swatch's values are a vertical toolbar: Tab enters on the
+  row last used, ↑ ↓ Home and End move and wrap, Tab leaves. Ten presses from the first swatch to Add to
+  Projects; the Full Swatch View takes the same.
+- **Cmd+Z takes back one change.** It undid the whole run the toast holds, so undoing a deletion also undid an
+  earlier rename. The newest change comes back and the toast stays for the rest; its button still undoes all.
+- **Nothing says upload.** Every failure was announced as "Upload failed.", and "That file isn't an image"
+  asked to "Upload a JPG". The full-size image is never uploaded, and it arrives by choosing, dropping or
+  pasting. The reference image's alt text follows.
+- **A paste the shared view refuses says why**, where it was silent: "Choose Save to Library or Make Your
+  Own, then paste your image again."
+- **A shared palette's Character is its own.** A link carries no archetype, so the readout said "Shared", on
+  the shared view and on every palette saved from a link. It reads the colours instead.
+
 ## 2026-09-24 — The skip link and a pasted share link are not taken for Back
 
 **Found on the way,** checking the entry below. A # the browser follows (the skip link, a share link pasted

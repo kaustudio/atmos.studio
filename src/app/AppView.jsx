@@ -855,9 +855,9 @@ function NameField({ r, as }) {
   );
 }
 
-function ValueRow({ v, showCaveat }) {
+function ValueRow({ v, showCaveat, tabIndex, onFocus }) {
   return (
-    <button type="button" data-ix="cell" data-focus="value" onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
+    <button type="button" data-ix="cell" data-focus="value" data-value-row="1" tabIndex={tabIndex} onFocus={onFocus} onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
       <span style={v.colStyle}>
         <span style={v.labelRowStyle}>
           <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine)')}>{v.labelText}</span>
@@ -870,8 +870,38 @@ function ValueRow({ v, showCaveat }) {
   );
 }
 
+/* ONE TAB STOP PER SWATCH (24.09.26, audit). Every value row was a stop of its own, so the five swatches
+   put 25 of them (with the harmony buttons) between Skip to Main Content and the palette's actions: some
+   thirty presses to reach Share Palette or the pencil. A swatch's four values are one toolbar now, as
+   the ARIA pattern for a set of buttons has it: Tab enters on the row last used (HEX at first), ↑ and ↓
+   move between them and wrap, Home and End go to the ends, and Tab leaves for the next swatch. The rows
+   are still buttons, every one read in full, and a pointer copies from any of them as before. The create
+   page and the Full Swatch View both draw their values with this. */
+function ValueList({ values, style, ...rest }) {
+  const [at, setAt] = React.useState(0);
+  const ref = React.useRef(null);
+  const n = values.length, cur = Math.min(at, n - 1);
+  const onKeyDown = (e) => {
+    const to = { ArrowDown: cur + 1, ArrowUp: cur - 1, Home: 0, End: n - 1 }[e.key];
+    if (to === undefined || e.altKey || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+    const i = (to + n) % n;
+    const rows = ref.current ? ref.current.querySelectorAll('[data-value-row]') : [];
+    setAt(i);
+    if (rows[i]) rows[i].focus();
+  };
+  return (
+    <div ref={ref} role="toolbar" aria-orientation="vertical" aria-label="Copy a value" onKeyDown={onKeyDown} style={style} {...rest}>
+      {values.map((v, i) => (<ValueRow key={v.key} v={v} showCaveat={false} tabIndex={i === cur ? 0 : -1} onFocus={() => setAt(i)} />))}
+    </div>
+  );
+}
+
 // Each of these names a job, not a noun. "Contrast" named the subject the button is about and left
 // the user to supply the verb; in a row of six that is six subjects and no route.
+// And the words are the name (24.09.26, audit). Check Contrast was announced as "Open contrast checker
+// for this palette", which a reader saying "Check Contrast" could not reach (SC 2.5.3); Add to Projects
+// begins its name with its words too (renderVals, assignCurAria and the detail's assignAria).
 /* OPTICALLY BALANCED (18.09.26, by request): each icon steps into the button's left padding by what
    its glyph's own empty margin adds, so the ink sits as far from the pill's left edge as the last
    letter does from its right. Measured ink-to-edge in the row, not taken from the path: Check
@@ -2553,7 +2583,7 @@ export default function AppView({ vals }) {
       <main id="main" aria-busy={vals.busy} style={sx('width: 100%; flex: 1; min-height: 500px; display: flex; flex-direction: column; justify-content: center; padding: 24px var(--page-gutter) 8px')}>
 
         {vals.isUpload && (<>
-          <button type="button" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Choose image. Drop or paste an image here, or activate to browse your files." style={vals.dropStyle}>
+          <button type="button" data-drop-zone="1" data-focus="chrome" onClick={vals.onBrowse} onMouseEnter={vals.dropEnter} onMouseLeave={vals.dropLeave} onDrop={vals.onDrop} onDragOver={vals.onDragOver} onDragLeave={vals.onDragLeave} aria-label="Start here: choose an image. Drop or paste one here, or activate to browse your files." style={vals.dropStyle}>
             <div style={sx('position:relative;width:38px;height:38px')} aria-hidden="true">
               <div style={sx('position:absolute;left:0;top:0;width:26px;height:26px;border:1px solid var(--on-surface-muted)')}></div>
               <div style={sx('position:absolute;right:0;bottom:0;width:26px;height:26px;border:1px solid var(--on-surface);background:var(--surface)')}></div>
@@ -2599,6 +2629,9 @@ export default function AppView({ vals }) {
                 files." — and title now hands "Choose Image" to a pointer. The instruction itself is
                 two lines up in copy that arrives on the same reveal, so nothing about what to do is
                 only in the glyph.
+                THE NAME BEGINS WITH THE HEADING (24.09.26, audit): "Start here: choose an image…",
+                so a reader who speaks to the page can say what it shows (SC 2.5.3). The code that
+                finds the zone keys off data-drop-zone, never this sentence.
 
                 TWO MASKS, AND THEY ARE DIFFERENT MASKS. It keeps data-drop-line, so on arrival it
                 rides the same yPercent reveal as the three lines above it rather than being the one
@@ -2686,9 +2719,13 @@ export default function AppView({ vals }) {
                   {/* THE BANNER'S PAIR (17.09.26, audit A8, by request): set like the analytics
                       banner's buttons, Save to Library filled as Accept is there. The strip is fully
                       round, and its padding follows the pill: the text clears the curve, the buttons
-                      sit 10px in from it. */}
-                  <Button data-emphasis="primary" onClick={vals.onSaveShared} aria-label="Save this shared palette to your Library" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save to Library</ButtonText></span>} />
-                  <Button data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Make Your Own</ButtonText></span>} />
+                      sit 10px in from it.
+                      THEIR NAMES ARE THEIR WORDS (24.09.26, audit): each is called what it says, and
+                      Make Your Own adds what it starts after a colon, so a reader who speaks to the
+                      page can say what is on it (SC 2.5.3). Save to Library needs nothing more: the
+                      strip has just said the palette was shared. */}
+                  <Button data-emphasis="primary" onClick={vals.onSaveShared} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save to Library</ButtonText></span>} />
+                  <Button data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Make Your Own: start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Make Your Own</ButtonText></span>} />
                 </span>
               </div>
             )}
@@ -2711,9 +2748,7 @@ export default function AppView({ vals }) {
                   <button type="button" data-ix="icon" data-info="1" data-focus="chrome" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
                     <TextSwap><IconHarmony /></TextSwap>
                   </button>
-                  <div style={b.valuesWrap}>
-                    {b.values.map((v) => (<ValueRow key={v.key} v={v} showCaveat={false} />))}
-                  </div>
+                  <ValueList values={b.values} style={b.valuesWrap} />
                 </div>
               ))}
             </div>
@@ -2763,7 +2798,7 @@ export default function AppView({ vals }) {
               <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
                 {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
                     and the one its card falls back to if the reader dismisses the drawer themselves. */}
-                <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
+                <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
                 <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
@@ -3825,11 +3860,9 @@ function DetailOverlay({ vals }) {
             <button type="button" data-ix="icon" data-info="1" data-focus="chrome" aria-haspopup="dialog" aria-label={b.harmonyAria} onClick={b.onHarmony} style={b.infoBtnStyle}>
               <TextSwap><IconHarmony /></TextSwap>
             </button>
-            <div data-ochrome="1" style={b.valuesWrap}>
-              {/* CMYK, as on the result stage (19.09.26, audit U6, by request: "stick with CMYK"): the
-                  detail wrote CMYK APPROX where the stage wrote CMYK. Export says the value is approximate. */}
-              {b.values.map((v) => (<ValueRow key={v.key} v={v} showCaveat={false} />))}
-            </div>
+            {/* CMYK, as on the result stage (19.09.26, audit U6, by request: "stick with CMYK"): the
+                detail wrote CMYK APPROX where the stage wrote CMYK. Export says the value is approximate. */}
+            <ValueList data-ochrome="1" values={b.values} style={b.valuesWrap} />
           </div>
         ))}
       </div>
@@ -3844,7 +3877,7 @@ function DetailOverlay({ vals }) {
         <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
           <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
-            <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" aria-label="Open contrast checker for this palette" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
+            <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
             <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
