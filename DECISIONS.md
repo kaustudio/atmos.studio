@@ -7,6 +7,17 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-25 — How it Works: the axis notes read as paragraphs
+
+By request. (A change to the card stack's hand-off to 3.1 was built the same evening: a fade, which
+was declined, then a z-index, reverted by request ("revert. never mind."). The stack is as it was.)
+
+- **The axis notes read as paragraphs.** ("adjust the font sizing here, so meet readability".) They were
+  --fs-detail, 12px at 1.55, three sentences of definition set in the size of a menu item. They take
+  the page's prose now, 15px at 1.65 (.about-route main p): 50 to 66 characters a line at 1440 and 390.
+  The muted ink stays (5.55:1 light, 7.17:1 dark). The page is 43px longer at 1440, 111px at 390.
+
+
 ## 2026-09-25 — Start here's paste line is "Or" and one key, and the phone's first chapter arrives with no edge
 
 Both by request.
