@@ -1,6 +1,6 @@
 // Share-link glue: read an incoming palette out of the URL fragment, and put the current one into
 // a link. The encoding itself lives in lib/share.js; this is the app-state side.
-import { decodeShare, shareCode, shareUrl } from '../../lib/share.js';
+import { decodeShare, paletteCode, shareCode, shareUrl } from '../../lib/share.js';
 import { composeReading } from '../../lib/reading.js';
 import { trackEvent } from '../../lib/track.js';
 
@@ -31,6 +31,15 @@ export const shareMethods = {
     const p = list[0];
     if (!p.rationale) { try { const r = composeReading(p.swatches); if (r && r.rationale) p.rationale = r.rationale; } catch (e) { } }
     return p;
+  },
+
+  /* THE LIBRARY'S OWN COPY OF A LINKED PALETTE, or null (25.09.26, from the share audit). The same name
+     and the same colours at the same shares (lib/share.js paletteCode): the link names a palette this
+     Library already holds, most often one's own link opened in one's own browser. */
+  _ownCopy(p) {
+    const code = paletteCode(p);
+    if (!code) return null;
+    return (this.state.feed || []).find((q) => paletteCode(q) === code) || null;
   },
 
   // The address's palette as its code (lib/share.js shareCode), label aside, or null: what the shared view
@@ -86,10 +95,15 @@ export const shareMethods = {
       projectId: (this.state.activeProjects || [])[0] || null,
       projectIds: (this.state.activeProjects || []).slice(),
     });
+    /* SAID WHERE THE PALETTE IS (24.09.26). The saved palette takes the stage as one just made does,
+       with "Saved to your Library" and its drawn tick beside its traits (`freshSaved`, renderVals
+       `saved`), where a notice at the foot of the window used to say the same thing a second time.
+       Where the browser keeps nothing, it is added for the visit and nothing says more. */
+    const kept = this.storageKept();
     this.setState((st) => ({
-      feed: [mine, ...st.feed], current: mine, sharedView: false,
-      announce: 'Saved ' + mine.name + ' to your Library.',
-    }), () => { this.persist({ immediate: true }); this._clearShareHash(); this.showNotice('Saved to your Library.'); });
+      feed: [mine, ...st.feed], current: mine, sharedView: false, freshSaved: mine.id,
+      announce: (kept ? 'Saved ' : 'Added ') + mine.name + ' to your Library.',
+    }), () => { this.persist({ immediate: true }); this._clearShareHash(); });
   },
 
   // "Make your own" — drop the shared palette and land on the dropzone.

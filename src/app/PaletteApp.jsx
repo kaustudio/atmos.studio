@@ -22,11 +22,13 @@ import { loaderMethods } from './methods/loader.js';
 import { shareMethods } from './methods/share.js';
 import { miscMethods } from './methods/misc.js';
 import { tourMethods } from './methods/tour.js';
+import { searchMethods } from './methods/search.js';
 import { whereMethods } from './methods/where.js';
 import { renderValsMethods } from './renderVals.js';
 import { routeFor, pathFor, isDoc, applyHead, APP, CREATE_PATH } from './routes.js';
 import { initGridOverlay } from '../lib/gridOverlay.js';
 import { trackEvent } from '../lib/track.js';
+import { paletteCode, shareUrl } from '../lib/share.js';
 /* THE STORY'S MOTION IS /about's MOTION — the same modules, not a second set.
    src/app/methods/story.js is gone with the surface it drove. Every one of these takes a root, so
    running them over the story's markup is the same code path /about takes, which is the only way two
@@ -151,6 +153,8 @@ export default class PaletteApp extends React.Component {
   progRef = React.createRef();
   gridRef = React.createRef();
   projectFileRef = React.createRef();
+  // The ⌘K search's field (methods/search.js), focused when the menu opens.
+  searchInputRef = React.createRef();
   contrastBtnRef = React.createRef();
   overlayRef = React.createRef();
   overlayBandsRef = React.createRef();
@@ -237,6 +241,10 @@ export default class PaletteApp extends React.Component {
     tourStep: null,
     // The invitation stays mounted while it leaves, so its exit can play (TourInvite in AppView).
     tourInviteOut: false,
+    // The first visit's invitation stands beside the page rather than over it (tour.js openTourInvite).
+    tourInviteDocked: false,
+    // ⌘K (methods/search.js): whether the menu is up or leaving, what is typed, and which row is lit.
+    searchOpen: false, searchOut: false, searchQuery: '', searchActive: 0,
     // Which drawer steps the reader has done in this run (their drawer opened) — Next waits on it.
     tourDone: {},
     // Whether the current drawer step's drawer is open, as the card's copy shows it ('shut' | 'open').
@@ -246,6 +254,8 @@ export default class PaletteApp extends React.Component {
     // exportPalette and exportProject are the export dialog's two SCOPES, and exactly one is ever
     // set: one palette, or every palette in a folder. The dialog reads whichever it finds.
     toast: null, harmony: null, exportOpen: false, exportPalette: null, exportProject: null, notice: null,
+    // The palette just made or just saved, which says so beside its traits for a moment (AppView SavedStatus).
+    freshSaved: null,
     /* THE SCAFFOLD IS ON UNTIL YOU TURN IT OFF (24.09.26, the Adobe assessment's MEDIUM, by request: "implement
        the medium finding"). It was off on every visit, so a first export named the colours 01 to 05, which
        is what any palette tool gives, and the roles (atmos's clearest lead) waited behind a switch in a
@@ -257,8 +267,9 @@ export default class PaletteApp extends React.Component {
     consent: readConsent(), consentOpen: false,
     // a share link arrives past both gates: the recipient came for the palette, not the intro.
     // A document route arrives past them for a different reason: there is no tool on it to introduce.
+    // A typed /create passes the loader too (24.09.26): it is someone asking for the tool by name.
     landingDismissed: (this._shared || isDoc(this._entryRoute) || this._entryCreate) ? true : this._landingDismissed(),
-    showLoader: (this._shared || isDoc(this._entryRoute)) ? false : this._loaderPending(),
+    showLoader: (this._shared || isDoc(this._entryRoute) || this._entryCreate) ? false : this._loaderPending(),
     /* WHICH OF THE EIGHT THE LANDING FIELD IS A READING OF — a MIRROR, not the source of truth.
        methods/orbit.js holds the answer on the instance (`_fieldPalId`), because the ramp is baked
        synchronously inside initOrbit and a value that only exists after a commit would be a frame
@@ -277,7 +288,15 @@ export default class PaletteApp extends React.Component {
   };
 
   _genId = 0;
-  MAX_BYTES = 20 * 1024 * 1024;
+  /* THE LIMIT IS ON PIXELS, NOT BYTES (24.09.26, UX audit, by request). Files over 20 MB were refused,
+     though the colours are read from a 72 × 72 copy of the picture: a full-size camera JPEG or a large
+     PNG export had to be shrunk in another app first. What a big file really costs is decoding it, and
+     that follows its pixels, so the ceiling is on pixels (checked before anything is drawn,
+     pipeline.js processFile) and set past any camera: a 102MP medium-format frame reads. A picture
+     larger than DISPLAY_EDGE on its long edge is shown from a copy drawn down to it
+     (pipeline.js _displayCopy); the reading still takes the original. */
+  MAX_MP = 150;
+  DISPLAY_EDGE = 4096;
   ACCEPT = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/avif'];
 
   // ---- THE LANDING FIELD. ORB_LIGHT, ORB_GL_MAX, ORB_RING_GAP_MUL, ORB_MIN_GAP_MUL and
@@ -455,19 +474,19 @@ export default class PaletteApp extends React.Component {
      this says so. */
   _landingUp() { return !isDoc(this.state.route) && (!this.state.landingDismissed || this.state.narrow); }
   _landingLit() { return this._landingUp() && !this._mobileShare(); }
-  // ONCE PER SESSION, on whatever surface the visit lands on — the Get Started page for a newcomer,
-  // 'Drop a reference' for a regular who dismissed the landing long ago. What the loader marks is
-  // the ARRIVAL, and a returning visitor arrives just as much as a first-time one; keying it to the
-  // landing meant the people who use the tool most were the only ones who never saw it.
-  //
-  // sessionStorage, not localStorage: 'first visit of this session' is precisely what a session
-  // store means, and it clears itself with the tab, so there is no permanent flag to go stale.
-  //
-  // The flag is burned when the run FINISHES (loader done()), never here at mount — that was the
-  // real objection to a one-shot flag, and it survives: a run cut short by a reload replays instead
-  // of being swallowed. done() is reachable from every teardown path, watchdogs included, so the
-  // flag cannot fail to burn either.
-  _loaderSeen() { try { return sessionStorage.getItem('palette-generator/loader-session') === '1'; } catch (e) { return false; } }
+  /* ONCE IN THIS BROWSER, NOT ONCE PER SESSION (24.09.26, UX audit, by request). It was keyed to
+     sessionStorage on the reasoning that a returning visitor arrives as much as a first-time one, so
+     every new tab replayed it: 3.4s on a 120Hz display, 4.3s on 60Hz (loader.js), in front of a page
+     that was ready in a fraction of that, paid on every visit by the people who use the tool most.
+     The loader introduces the site; it does that once. A visit that did not open on it (a share
+     link, a document, a typed /create) counts as having arrived, so it never plays later either
+     (loader.js _initLoader). A click or a key ends a run early.
+
+     The flag is still burned when the run FINISHES (loader done()), never at mount for a run that
+     plays: a run cut short by a reload replays instead of being swallowed. done() is reachable from
+     every teardown path, watchdogs included, so the flag cannot fail to burn either. index.html reads
+     the same key to paint the loader's ground before the script runs. */
+  _loaderSeen() { try { return localStorage.getItem('palette-generator/loader-seen') === '1'; } catch (e) { return false; } }
   _loaderPending() { return !this._loaderSeen(); }
 
   componentDidMount() {
@@ -477,6 +496,29 @@ export default class PaletteApp extends React.Component {
     const safe = (fn, tag) => { try { fn(); } catch (e) { try { console.error('[pg:mount:' + tag + ']', e && e.message, e); } catch (_) { } } };
     // A share link opened here: counted once per visit to it, and only for a recipient who has already
     // allowed analytics (lib/track.js). Nothing about the palette goes with it.
+    /* A LINK TO A PALETTE ALREADY IN THIS LIBRARY OPENS THAT PALETTE (25.09.26, from the share audit). One's
+       own link opened in one's own browser came up as "Shared with you", and Save to Library then put a
+       second, identical palette in the Library. Where the Library holds the same name and colours
+       (methods/share.js _ownCopy), the palette opens as its Library row would, and the link leaves the
+       address bar; it is not counted as a shared palette opened, since nobody received it. The desktop
+       only: a phone's story is the shared palette told, and a phone has no Library to save it to. Set
+       here, before the first paint, so the shared view is never seen. */
+    /* ON A PHONE, A LINK TO ONE OF THE EXAMPLES TELLS THAT EXAMPLE (25.09.26), photograph and all: the link
+       a phone's address carries for an example (_syncToolHistory), and the one Share Palette makes for an
+       example on the desktop, which opens the Library's copy there (below). Not "Shared with you": nobody
+       sent it, or what was sent is one of the eight. */
+    if (this._shared && this.state.narrow) {
+      const code = paletteCode(this._shared);
+      const ex = code && this._examples().find((q) => paletteCode(q) === code);
+      if (ex) { this._shared = null; this._sharedCode = null; this._storyDefaultId = ex.id; this.setState({ sharedView: false, stage: 'upload', current: null }); }
+    }
+    if (this._shared && !this.state.narrow) {
+      const own = this._ownCopy(this._shared);
+      if (own) {
+        this._shared = null; this._sharedCode = null;
+        this.setState({ sharedView: false, current: own, announce: 'Opened ' + own.name + ' from your Library.' }, () => this._clearShareHash());
+      }
+    }
     if (this._shared) trackEvent('Shared Palette Opened');
     // THE STAMPS KEEP TIME (19.09.26, audit U6). The Library's Created column and the palette detail
     // read "9m ago" for anything under a day old, and nothing else here re-renders on a clock, so
@@ -615,6 +657,19 @@ export default class PaletteApp extends React.Component {
       loadSeq([vendor + 'gsap.min.js', vendor + 'Observer.min.js', vendor + 'Flip.min.js', vendor + 'ScrollToPlugin.min.js']);
     }
     this._onKey = (e) => {
+      /* ⌘K OPENS THE SEARCH (24.09.26, by request), Ctrl+K off a Mac, from anywhere in the tool: the
+         convention of the tools it was asked to follow (methods/search.js). Not from inside a text
+         field, whose keys are its own; the search's own field closes it again (searchKey). */
+      if (this._isSearchKey(e)) {
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        // Held down, the key repeats: the first press counts, the rest are kept from the browser only
+        // where the search took the first (it toggled open and shut once a repeat before, 25.09.26).
+        if (e.repeat) { if (this.state.searchOpen || this.state.searchOut) e.preventDefault(); return; }
+        if (this.state.searchOpen) { e.preventDefault(); this.closeSearch(); return; }
+        if (this.openSearch('shortcut')) e.preventDefault();
+        return;
+      }
       /* CMD+Z UNDOES WHILE THE UNDO TOAST IS UP (24.09.26, by request). The toast's button was the only
          way back from a delete or a rename, and every app answers Cmd+Z. A text field keeps its own.
          One change a press, newest first (undoLast, overlays.js), where it used to take the whole run. */
@@ -748,7 +803,16 @@ export default class PaletteApp extends React.Component {
     this._syncShareCount();
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  /* THE SEARCH'S HEIGHT BEFORE WHAT IS TYPED CHANGES IT (25.09.26), read before the commit writes the new
+     list, so methods/search.js _searchResize can ease from it. Only then: nothing else is measured here. */
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    if (!prevState.searchOpen || !this.state.searchOpen || prevState.searchQuery === this.state.searchQuery) return null;
+    const panel = document.querySelector('[data-search-dialog]');
+    return panel ? { searchH: panel.offsetHeight } : null;
+  }
+
+  componentDidUpdate(prevProps, prevState, snap) {
+    if (snap && snap.searchH) this._searchResize(snap.searchH);
     const s = this.state;
     /* The story's choreography follows the SURFACE, not a state flag: it is armed when the story is
        on screen and torn down when anything covers it, so its triggers can never be left measuring
@@ -785,8 +849,15 @@ export default class PaletteApp extends React.Component {
     // manageProjects is gone from this list because the surface is: managing projects is a tab of
     // the library panel now, and that panel is deliberately non-modal — the library stays visible
     // and operable behind it. Nothing here regressed; a member of this set left the app.
+    /* THE SEARCH DOES NOT OUTLIVE THE TOOL (25.09.26, from the ⌘K audit: "test out scenarios of
+       command+K when a user is not on the create page"). It opens only over the tool (methods/search.js
+       _searchAvailable), and it stayed open when the tool left the screen under it: a window narrowed past
+       1024 with it open put the phone's view over it (z 150 against its 126) and inert, so nothing on
+       screen took a press and the caret sat in a field nobody could see, until the window was widened and
+       the search stood there again. It closes, and hands focus to nothing, since what it came from has gone. */
+    if (s.searchOpen && (s.narrow || isDoc(s.route) || this._landingUp())) this.closeSearch(null, true);
     const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony);
+      || s.exportOpen || s.contrast || s.harmony || s.searchOpen);
     if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
@@ -862,8 +933,15 @@ export default class PaletteApp extends React.Component {
        'choose' is deliberately exempt: it is the one stop that belongs to the library, and it is
        waiting for exactly this stage. */
     if (s.stage !== 'result' && typeof s.tourStep === 'number') this._tourAbandon();
+    // A palette says it is saved while it is the one just made: once another is on the stage, or none, it is one of many.
+    if (s.freshSaved && (s.stage !== 'result' || !s.current || s.current.id !== s.freshSaved)) this.setState({ freshSaved: null });
+    // The docked offer is answered by starting: an image arriving, a palette opening, a layer opened.
+    if (s.tourStep === 'invite' && s.tourInviteDocked && (s.stage !== 'upload' || this._frontLayers() > 0)) this._tourInviteStepAside();
     const enteredResult = s.stage === 'result' && (prev.stage !== 'result' || curId !== prev.curId);
     this._prev = { stage: s.stage, curId: curId };
+    // The search's Recent Palettes: what this visit has had on the stage or in Full Swatch View (search.js _noteRecent).
+    if (enteredResult && curId && !s.sharedView) this._noteRecent(curId);
+    if (s.overlay && s.overlay.id && (!prevState.overlay || prevState.overlay.id !== s.overlay.id)) this._noteRecent(s.overlay.id);
     if (enteredResult) {
       const vis = window.gsap && !document.hidden;
       try {
@@ -929,10 +1007,13 @@ export default class PaletteApp extends React.Component {
 
   _historyView() {
     const s = this.state;
-    if (isDoc(s.route) || s.sharedView) return null;
+    if (isDoc(s.route)) return null;
     // The dropzone a paste over a palette passes through is not a place (pipeline.js pasteOverPalette).
     if (this._histSkipStart) return null;
+    // The phone's story is a place, the shared palette it opens on as much as an example chosen after it
+    // (25.09.26: its entry carries the told palette's link, _syncToolHistory).
     if (this._mobileStory()) return { story: s.storyCaseId || null };
+    if (s.sharedView) return null;
     if (s.narrow || this._landingUp()) return null;
     if (s.stage === 'result' && s.current && s.current.id) return { palette: s.current.id };
     if (s.stage === 'upload') return { start: true };
@@ -940,6 +1021,10 @@ export default class PaletteApp extends React.Component {
   }
   _syncToolHistory() {
     const view = this._historyView();
+    // A Library palette opened over a shared one pushes, where the shared entry would be taken over
+    // (motion.js _loadIntoResultNow). Read once, by the commit that set it.
+    const fromShared = !!this._histFromShared;
+    this._histFromShared = false;
     const rest = this._histRestoring;
     if (rest) {
       if (performance.now() < rest.until && !(view && view.palette === rest.id)) return;
@@ -952,12 +1037,34 @@ export default class PaletteApp extends React.Component {
     const cur = (window.history && history.state) || {};
     const entry = Object.assign({}, cur, { route: this.state.route, scrollY: 0, place: view });
     const fromBrowser = this._histPop && performance.now() - this._histPop < 4000;
-    const replace = !cur.place || fromBrowser || this._histReplace;
+    const replace = (!cur.place && !fromShared) || fromBrowser || this._histReplace;
     this._histPop = 0; this._histReplace = false;
+    /* ON A PHONE THE ADDRESS IS THE PALETTE ON SCREEN (25.09.26, by request: "Fix this so every link on
+       the phone matches the palette a user lands on"). The story's entries carried no link: the address
+       stayed a shared palette's after Explore Another Example had moved the story on, and it was the
+       bare site for an example, so the browser's own Share, a copied address and a reload each gave
+       another palette than the one being read. Each story place now writes the link to the palette it
+       tells (_storyHash): a shared palette its own, an example the one Share Palette would make on the
+       desktop. That link opens the same example on any phone (componentDidMount), so it is never taken
+       for a palette someone sent. Off the story (a phone window widened into the tool), the address
+       goes back to the bare page. */
+    const story = 'story' in view;
+    const url = story ? location.pathname + location.search + this._storyHash() : (this._storyHashOn ? location.pathname + location.search : null);
+    this._storyHashOn = story;
     try {
-      if (replace) history.replaceState(entry, '');
-      else { history.replaceState(Object.assign({}, cur, { scrollY: window.scrollY || 0 }), ''); history.pushState(Object.assign(entry, { front: false, t: this._histStamp() }), ''); }
+      if (replace) { if (url) history.replaceState(entry, '', url); else history.replaceState(entry, ''); }
+      else {
+        history.replaceState(Object.assign({}, cur, { scrollY: window.scrollY || 0 }), '');
+        if (url) history.pushState(Object.assign(entry, { front: false, t: this._histStamp() }), '', url);
+        else history.pushState(Object.assign(entry, { front: false, t: this._histStamp() }), '');
+      }
     } catch (e) { }
+  }
+  // The link to the palette the phone's story tells, as its fragment: what Share Palette makes for it.
+  _storyHash() {
+    const p = this._storyCase();
+    const u = p ? shareUrl(p) : null;
+    return u ? u.slice(u.indexOf('#')) : '';
   }
   /* WHAT IS IN FRONT, AND HOW IT CLOSES: Escape's ladder, which the browser's Back walks too since
      23.09.26 (see _onPop). One step out per press, the surface actually in front first. True when it
@@ -970,6 +1077,8 @@ export default class PaletteApp extends React.Component {
        makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
        opens centred on the case already being read, so choosing that one is a no-op exit. */
     if (s.storyPicker) { this.closeStoryPicker(); return true; }
+    // The search is opened over everything it allows to be open (methods/search.js), so it is in front.
+    if (s.searchOpen) { this.closeSearch(); return true; }
     if (s.recognised) { this.closeRecognised(); return true; }
     // ABOVE manage, and that is the whole reason it moved up from where it used to sit: a
     // project export is opened FROM the manage dialog and stacks on top of it, so Escape has to
@@ -1019,6 +1128,8 @@ export default class PaletteApp extends React.Component {
        onKey in _tourView. The invitation is a dialog and answers for itself the same way.)
        Ahead of closeResult for the same reason it is behind the drawers: the palette is the
        thing the tour is standing on, so the tour leaves before the thing it stands on does. */
+    // The docked invitation is answered here the way its own Skip for Now answers it.
+    if (s.tourStep === 'invite') { this.skipTourInvite(); return true; }
     if (s.tourStep != null) { this.skipTour(); return true; }
     return false;
   }
@@ -1042,7 +1153,9 @@ export default class PaletteApp extends React.Component {
     if (s.overlay) n++;
     if (s.uOpen != null) n++;
     if (s.feedView === 'grid') n++;
-    if (s.tourStep === 'invite') n++;
+    // The docked invitation is beside the page, not over it: no entry of its own (tour.js).
+    if (s.tourStep === 'invite' && !s.tourInviteDocked) n++;
+    if (s.searchOpen) n++;
     return n;
   }
   /* WHERE A PASTED IMAGE IS TAKEN (24.09.26, by request: "build paste"). Where the tool is waiting for
@@ -1058,7 +1171,7 @@ export default class PaletteApp extends React.Component {
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
     const over = s.stage === 'result' && (!s.sharedView || !!overShared);
     if (s.stage !== 'upload' && s.stage !== 'error' && !over) return false;
-    return this._frontLayers() === 0 && s.tourStep == null;
+    return this._frontLayers() === 0 && (s.tourStep == null || (s.tourStep === 'invite' && !!s.tourInviteDocked));
   }
   // Every entry this app pushes carries when it was made, so a pop can tell Back from Forward.
   _histStamp() { this._histT = Math.max(Date.now(), (this._histT || 0) + 1); return this._histT; }
@@ -1083,9 +1196,25 @@ export default class PaletteApp extends React.Component {
     let st, path, hash;
     try { st = history.state; path = location.pathname + location.search; hash = location.hash; } catch (e) { return false; }
     const left = this._histHere;
-    if (!left || left.url.split('#')[0] !== path) return false;
+    if (!left) return false;
     const made = st == null;
+    /* ONTO A SHARED PALETTE'S LINK FROM ANOTHER PATH (25.09.26, from the ⌘K audit). The link is at /
+       and the tool at /create, and this stopped at the change of path, so _onPop read Back from a
+       palette at /create onto the link's entry as the way back to the landing: the landing came up
+       with the link in the address bar. It happened wherever a layer had taken an entry over the link's
+       (the search, Export) before the reader left it: Save and Make Your Own take the link off the entry
+       they stand on, not off the one under it. Taken as any other palette's link is (below): the page
+       reloads onto it. Not onto the story's own places, and not onto the shared palette on screen. */
+    if (left.url.split('#')[0] !== path) {
+      if (made || (st.place && 'story' in st.place)) return false;
+      if (!this._sharedFromHash() || (this.state.sharedView && this._hashCode() === this._sharedCode)) return false;
+      this._hashReload();
+      return true;
+    }
     if (!made && left.url === path + hash) return false;
+    // The phone story's own places carry their palette's link (_syncToolHistory): Back and Forward between
+    // them are the story's to take (_onPop, _applyPlace), never a new palette to reload for.
+    if (!made && st.place && 'story' in st.place) return false;
     if (this._sharedFromHash()) {
       if (!made && this.state.sharedView && this._hashCode() === this._sharedCode) return false;
       if (made) { try { history.replaceState({ t: this._histStamp() }, ''); } catch (e) { } }
@@ -1478,6 +1607,7 @@ export default class PaletteApp extends React.Component {
     if (this._objUrls) { this._objUrls.forEach((u) => { try { URL.revokeObjectURL(u); } catch (e) { } }); this._objUrls = []; }
     if (this._storageHandler) window.removeEventListener('storage', this._storageHandler);
     if (this._onPop) window.removeEventListener('popstate', this._onPop);
+    if (this._searchOnResize) window.removeEventListener('resize', this._searchOnResize);
     if (this._wipeWatchdog) clearTimeout(this._wipeWatchdog);
     if (this._wipeClearGuards) { try { this._wipeClearGuards(); } catch (e) { } this._wipeClearGuards = null; }
     if (this._czDetach) { try { this._czDetach(); } catch (e) { } this._czDetach = null; this._czInit = false; }
@@ -1542,6 +1672,7 @@ Object.assign(
   miscMethods,
   consentMethods,
   tourMethods,
+  searchMethods,
   whereMethods,
   renderValsMethods,
 );

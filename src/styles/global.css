@@ -183,7 +183,7 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
 /* The Library row's door joins them (22.09.26, by request: it says Manage now): it stands against the
    List / Grid toggle, and a pair where one word is capitalised and the other is not reads as two
    controls that arrived from different places. */
-[data-toggle-btn][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-story-pick][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix],[data-library-btn][data-ix]{text-transform:none!important}
+[data-toggle-btn][data-ix],[data-seg-btn][data-ix],[data-cx-cell="filter"][data-ix],[data-story-pick][data-ix],[data-hx-cell][data-ix],[data-sort-col][data-ix],[data-applied-filters] [data-ix],[data-library-btn][data-ix],[data-search-btn][data-ix]{text-transform:none!important}
 .about-route [data-ix]{text-transform:none!important}
 /* The anchor dock's own case exemption went with the dock (17.09.26). */
 /* THE VOICES A CONTROL MAY SPEAK, counted (17.09.26, audit Q7, by request: "keep the big CTAs").
@@ -246,6 +246,9 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
   [data-library-dialog] [data-drawer-act][data-ix]:active:not(:disabled),
   [data-library-btn][data-ix]:hover:not(:disabled),
   [data-library-btn][data-ix]:active:not(:disabled),
+  /* Search, beside it, is the same door (24.09.26). */
+  [data-search-btn][data-ix]:hover:not(:disabled),
+  [data-search-btn][data-ix]:active:not(:disabled),
   /* The toast's two acts join them the moment they carry the swap. Written on the surface rather
      than on either button, so the undo, the dismiss and anything this bar grows later answer a
      hover the same way — and because neither of them has an attribute of its own worth minting for
@@ -1829,7 +1832,42 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
 [data-seg-rail],
 [data-seg-rail] > [aria-hidden="true"],
 [data-seg-btn],
-[data-library-btn]{border-radius:var(--radius-pill)}
+[data-library-btn],
+[data-search-btn]{border-radius:var(--radius-pill)}
+/* A KEY, PRINTED (24.09.26): the keys at the foot of the search (AppView SearchDialog), the menu's
+   own and the tool's. A key cap in the hairline and the muted ink, one step down from the words
+   beside it, 20px tall. THE CORNER IS THE TICK BOX'S (25.09.26, by request: the search's corners were
+   "too aggressive"): a key is a small box, and the system's small boxes (the tick box, a colour
+   sample) take 3px, "a small corner rather than a circle"; 6px read as a pill at 20px tall. The
+   Search door prints its ⌘K without a cap, as Manage prints its count. A cap is at least square (20),
+   its glyph or word centred by the box, since the glyphs are the icon set's SVGs, not characters. */
+kbd[data-kbd]{display:inline-flex;align-items:center;justify-content:center;gap:0;flex:none;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:var(--radius-tick);font-family:'Neue Montreal';font-size:var(--fs-fine);font-weight:400;line-height:1;letter-spacing:var(--track-flat);color:var(--on-surface-muted)}
+/* The Search door's disabled state is every control's ([data-ix]:disabled, .42); it had its own .45. */
+/* THE SEARCH'S LIT ROW (AppView SearchDialog), on the panel's corner less the 8px the row is inset by,
+   so the two curves run parallel. IT IS THE LIBRARY'S LIT ROW (25.09.26, from the search audit): the
+   ink fill a Library row takes under the pointer, the surface's colour for its words, the fill's own
+   muted and hairline tokens for the rest (--ink-fill-muted, --ink-fill-line, the strip's edge there
+   too). It was a 7% tint, 1.14:1 against the panel, and the lit row is the one thing that says which
+   row Return opens while the caret stays in the field: a state, held to the 3:1 of WCAG 1.4.11. It
+   eases on the shortest token, so the light follows the arrows and the pointer without popping. */
+[data-search-opt]{border-radius:calc(var(--radius-panel) - 8px);color:var(--on-surface);transition:background-color var(--dur-micro) var(--ease-standard),color var(--dur-micro) var(--ease-standard)}
+[data-search-opt] [data-search-sub],[data-search-opt] [data-search-glyph]{color:var(--on-surface-muted);transition:color var(--dur-micro) var(--ease-standard)}
+[data-search-opt][data-lit]{background-color:var(--on-surface);color:var(--surface)}
+[data-search-opt][data-lit] [data-search-sub],[data-search-opt][data-lit] [data-search-glyph]{color:var(--ink-fill-muted)}
+[data-search-opt][data-lit] [data-search-strip]{box-shadow:0 0 0 1px var(--ink-fill-line)}
+/* The list scrolls inside the panel, and while the panel eases to a new height (search.js _searchResize)
+   it shows no scrollbar: growing, its rows are taller than it for a moment, and a bar would flash in and
+   out. Both here and nowhere inline, since an inline overflow outranked the second (25.09.26). */
+[data-search-dialog] #search-list{overflow-y:auto}
+[data-search-dialog][data-search-resizing] #search-list{overflow-y:hidden}
+/* THE TAGS UNDER "DID YOU MEAN" (25.09.26, by request): options of the same list, so the same lit state
+   on the same token, on the trait pill's shape and ground (the stroke is transparent so the ground runs
+   under it, and the outlined Show All, --action-line as on Clear Filters, is the same size). The stroke
+   is declared here and nowhere inline: an inline border would outrank every state below. */
+[data-search-opt][data-search-tag]{border:1px solid transparent;border-radius:var(--radius-pill);background-color:color-mix(in srgb, var(--on-surface) 9%, var(--surface));transition:background-color var(--dur-micro) var(--ease-standard),color var(--dur-micro) var(--ease-standard),border-color var(--dur-micro) var(--ease-standard)}
+[data-search-opt][data-search-tag="all"]{background-color:transparent;border-color:var(--action-line)}
+[data-search-opt][data-search-tag][data-lit]{background-color:var(--on-surface);border-color:var(--on-surface)}
+@media (prefers-reduced-motion: reduce){[data-search-opt],[data-search-opt][data-search-tag],[data-search-opt] [data-search-sub],[data-search-opt] [data-search-glyph]{transition:none}}
 /* THE GRID'S FILLS EASE (23.09.26). renderVals declared the cells' transition inline, and the drawer's
    arrival clears an inline transition as each cell lands (clearProps in _drawerIn), so after the first
    open a verdict's fill changed in a cut. It lives here, where the arrival cannot clear it.

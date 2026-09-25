@@ -10,8 +10,8 @@
 
    The size of the type is not this module's business either. public/fit-width.js (Osmo Supply's
    resource, as delivered) sets the font-size that fills `.nf-type`, and everything here is measured
-   off whatever it lands on — so the 404 is as wide as the page allows and the cloud follows, at any
-   viewport, with no size named twice. */
+   off whatever it lands on — so the 404 is as wide as its eight centre columns allow (notfound.css)
+   and the cloud follows, at any viewport, with no size named twice. */
 
 // Tokens and the Neue Montreal @font-face pair. This page used to link /legal.css for them, back
 // when that file carried its own copy of both and was served straight out of /public for the legal
@@ -21,6 +21,20 @@
 import '../styles/global.css';
 import { createParticleField } from './particleField.js';
 import { rasterizeType, RASTER_FONT_PX } from './typeRaster.js';
+
+/* BACK GOES BACK (25.09.26, by request; the link is in 404.html). To the page this reader came from, when
+   it is a page of this site and the tab has one to go back to: a broken link inside the site, followed
+   and regretted. From anywhere else (a mistyped address, an old link from another site, a new tab) the
+   link's own href takes them to the tool. A modified or middle click is the browser's, so it opens that
+   href where it was asked to. Before the particle field, and outside it: the way out of this page never
+   waits on WebGL. */
+const back = document.querySelector('[data-nf-back]');
+if (back) back.addEventListener('click', (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  let fromHere = false;
+  try { fromHere = !!document.referrer && new URL(document.referrer).origin === location.origin; } catch (err) { }
+  if (fromHere && history.length > 1) { e.preventDefault(); history.back(); }
+});
 
 // Must match the @font-face family in src/styles/global.css, imported above.
 const FAMILY = 'Neue Montreal';

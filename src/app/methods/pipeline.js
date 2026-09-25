@@ -24,9 +24,8 @@ export const pipelineMethods = {
     if (this.ACCEPT.indexOf(file.type) < 0 && file.type.indexOf('image/') !== 0) {
       this.showError('That file isn’t an image', 'Use a JPG, PNG, WEBP, or GIF. This tool reads colour from picture files only.', 'not an image'); return;
     }
-    if (file.size > this.MAX_BYTES) {
-      this.showError('That image is too large', 'Files need to be under 20 MB. Try exporting a smaller or compressed version.', 'too large'); return;
-    }
+    // No size check here since 24.09.26: the ceiling is on pixels, once the picture's size is known
+    // (processFile, MAX_MP in PaletteApp).
     this.processFile(file);
   },
   // `reason` is a fixed word per failure for the Palette Failed event, never the message itself.
@@ -134,9 +133,41 @@ export const pipelineMethods = {
     const url = URL.createObjectURL(file); const img = new Image();
     img.onerror = () => { this.showError('This image could not be loaded', 'The file may be corrupted or in a format the browser can’t decode. Try another image.', 'unreadable'); };
     img.onload = () => {
-      this._runPipeline(img, { srcUrl: url });         // keep the full-res object URL alive for crisp in-session display
+      // The picture's size is known here and nothing has been drawn yet, so one too large to decode
+      // is turned away before it costs anything (MAX_MP in PaletteApp).
+      const mp = (img.naturalWidth || 0) * (img.naturalHeight || 0) / 1e6;
+      if (mp > this.MAX_MP) {
+        try { URL.revokeObjectURL(url); } catch (e) { }
+        this.showError('That image is too large', 'At ' + Math.round(mp) + ' megapixels it is more than this page can read at once. Try a version under ' + this.MAX_MP + ' megapixels.', 'too large'); return;
+      }
+      this._runPipeline(img, { srcUrl: url, type: file.type });         // keep the full-res object URL alive for crisp in-session display
     };
     img.src = url;
+  },
+  /* A PICTURE LARGER THAN ANY SCREEN SHOWS IS SHOWN FROM A COPY (24.09.26). The object URL of the file
+     itself is the display source, which was fine while files stopped at 20 MB. Past DISPLAY_EDGE on its
+     long edge (4096² pixels in all) the picture is drawn down once, under Reading light, whose line
+     already names that work, and the copy is what the result, the Full Swatch View and the grid show
+     for the rest of the visit; the file's own URL is let go. The reading never sees the copy: the
+     72 × 72 buffer and the thumbnail come from the original, so a palette reads the same at any size.
+     JPEG for a JPEG, WebP otherwise, so a transparent PNG keeps its transparency (a browser that
+     cannot write WebP writes PNG). */
+  async _displayCopy(job) {
+    const img = job.img, w = img.naturalWidth || 0, h = img.naturalHeight || 0, E = this.DISPLAY_EDGE;
+    if (!job.srcUrl || !w || !h || w * h <= E * E) return;
+    try {
+      const s = E / Math.max(w, h), cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(w * s)); cv.height = Math.max(1, Math.round(h * s));
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      const type = /jpe?g/i.test(job.type || '') ? 'image/jpeg' : 'image/webp';
+      const blob = await new Promise((r) => cv.toBlob(r, type, 0.9));
+      if (!blob) return;
+      const next = URL.createObjectURL(blob), was = job.srcUrl;
+      this._objUrls = (this._objUrls || []).filter((u) => u !== was).concat(next);
+      try { URL.revokeObjectURL(was); } catch (e) { }
+      job.srcUrl = next;
+      if (job.gen === this._genId) this.setState({ imageUrl: next });
+    } catch (e) { }
   },
   _runPipeline(img, opts) {
     opts = opts || {};
@@ -159,7 +190,7 @@ export const pipelineMethods = {
     const myGen = ++this._genId;                       // invalidate any in-flight reading from a prior generate
     // `pending` is the reading in progress rather than a palette: there is no palette until the
     // grouping step has run. Nothing reads it but the stage, for its identity.
-    const job = { gen: myGen, img, buf, hash, srcUrl, k, mp: ((img.naturalWidth || img.width || 0) * (img.naturalHeight || img.height || 0)) / 1e6 };
+    const job = { gen: myGen, img, buf, hash, srcUrl, type: opts.type || '', k, mp: ((img.naturalWidth || img.width || 0) * (img.naturalHeight || img.height || 0)) / 1e6 };
     if (this._t) { clearInterval(this._t); this._t = null; }
     if (this._end) { clearTimeout(this._end); this._end = null; }
     this.setState({ stage: 'processing', imageUrl: srcUrl, procStep: 0, procGroups: null, pending: job, announce: 'Generating palette from your image.' });
@@ -219,7 +250,8 @@ export const pipelineMethods = {
       return out;
     };
     try {
-      const thumb = await step(0, () => this.makeThumb(job.img));   // display-sized (×DPR), persisted
+      // display-sized (×DPR), persisted; and, for a picture larger than any screen, the copy it is shown from
+      const thumb = await step(0, async () => { const t = this.makeThumb(job.img); await this._displayCopy(job); return t; });
       const pts = await step(1, () => this._extractPoints(job.buf.d));
       let pal = null, reading = null;
       await step(2, () => {
@@ -314,7 +346,15 @@ export const pipelineMethods = {
     // naming: 'live' = the model's reading, 'local' = the local composer by design, 'failed' = the live
     // reading was attempted and did not come back (the one case that also shows the notice below).
     trackEvent('Palette Created', { source: this._incoming || 'browse', naming: errored ? 'failed' : (noLive ? 'local' : 'live') });
-    this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, announce: 'Palette generated: ' + pal.name + '. ' + this.tagsSpoken(pal) + '.' }), () => this.persist({ immediate: true }));
+    /* THE END OF THE READING SAYS WHERE THE PALETTE WENT (24.09.26, UX audit, by request). It was saved
+       the moment it existed and nothing said so: the announcement said "generated", the page showed no
+       sign of it and the new Library row was below the fold. The result carries "Saved to your
+       Library" beside its traits for a moment (`freshSaved`, renderVals `saved`), its tick drawn as the
+       drawer's is, and this sentence says the same. Where the browser keeps nothing, neither says it
+       is saved, and nothing says it is not (persistence.js, WHERE THE LIBRARY LIVES). */
+    const said = this.storageKept() ? 'Palette generated and saved to your Library: ' + pal.name + '. ' + this.tagsSpoken(pal) + '.'
+      : 'Palette generated: ' + pal.name + '. ' + this.tagsSpoken(pal) + '.';
+    this.setState((st) => ({ stage: 'result', current: pal, feed: [pal, ...st.feed], pending: null, freshSaved: pal.id, announce: said }), () => this.persist({ immediate: true }));
     if (errored) this.showNotice('Named with the local reading. The live reading did not come back.', { sticky: true });
   },
   // ------- live interpretation call (pluggable: proxy endpoint → artifact runtime → none) -------

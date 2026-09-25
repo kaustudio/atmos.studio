@@ -145,6 +145,16 @@ const IconCopy = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 
 // uppercase labels it sits in. The decorative <path d="M0 0h24v24H0z" fill="none"/> from the source
 // SVG is dropped: it is a transparent 24x24 spacer, and the viewBox already establishes that box.
 const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41z"></path></svg>);
+/* THE KEYS AT THE SEARCH'S FOOT ARE DRAWN FROM THE ICON SET (25.09.26, by request: "Make sure the UI
+   adopts the right icons from our library, "Open" is not aligned centrally"). They were characters:
+   ↵, ↑, ↓ and ⌘ come from whatever font the system falls back to, and ↵ sat high in its cap, which put
+   "Open" beside it off the cap's centre. Now each is a Material glyph from the set the rest are drawn
+   from, centred in its cap by the box: IconReturn (ic:outline-keyboard-return) as in the name field,
+   and ic:outline-arrow-upward and -arrow-downward here. (⌘ went with the tool's own keys, 25.09.26.) */
+const IconArrowUp = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8z"></path></svg>);
+const IconArrowDown = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8z"></path></svg>);
+// The lens, for Search (24.09.26): the same 24-unit set as the marks around it, drawn at 12 beside the word.
+const IconSearch = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"></path></svg>);
 /* THE HARMONY GLYPH, by request (17.09.26): a disc inside a broken ring, the colour and the colours
    around it. Replaced the two overlapping circles. */
 const IconHarmony = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m13.76 4.19l.44-1.95c-1.45-.33-3-.32-4.45.01l.45 1.95a8.1 8.1 0 0 1 3.56-.01M20 12c0 1.21-.27 2.38-.79 3.47l1.8.87c.66-1.36.99-2.82.99-4.37h-.2zm-18 .02c0 1.52.34 2.98 1 4.33l1.8-.87a7.96 7.96 0 0 1-.8-3.47H2Zm11.79 7.78l.45 1.95c1.45-.33 2.84-1 4.01-1.93L17 18.26c-.93.75-2.04 1.28-3.2 1.55ZM7 5.76L5.75 4.2c-1.17.94-2.12 2.14-2.77 3.48l1.8.87a8.2 8.2 0 0 1 2.21-2.79Zm11.21-1.6l-1.24 1.57c.94.74 1.71 1.7 2.23 2.78l1.8-.88a10 10 0 0 0-2.79-3.46ZM5.78 19.83c1.17.93 2.56 1.6 4.01 1.93l.44-1.95a8 8 0 0 1-3.21-1.54l-1.25 1.56ZM12 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12"></path></svg>);
@@ -269,7 +279,11 @@ const RowMain = ({ c, inv }) => (
           edge. It was there because a pale palette's outer band sits at ~1.3:1 against
           --surface-raised, so the strip's own end can be hard to place on the lightest
           palettes; the row's rule under it still ends the object. */}
-      <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px')}>
+      {/* THE SEARCH'S CORNER (25.09.26, by request: "Adjust the corner radius on the palettes in the list
+          view so it matches search"): --radius-swatch, the 3px a colour sample takes, as the search's
+          strips and the contrast checker's samples have it. Square before; clipped by the box, so the
+          end bands are rounded and the inner ones are not. */}
+      <div aria-hidden="true" data-row-cell="strip" style={sx('display:flex;width:100%;height:24px;border-radius:var(--radius-swatch);overflow:hidden')}>
         {c.restStrip.map((st, si) => (<div key={si} style={st.style}></div>))}
       </div>
       {/* IDENTITY — one grid cell: name, Example, tags (and a Viewing mark until 24.09.26). They were
@@ -522,6 +536,60 @@ const FacetMark = ({ active, unavailable }) => (
         <span className="checkbox__custom-check"></span>
       </span>
 );
+
+/* THE SAVED TICK IS THE DRAWER'S (24.09.26, by request: "make sure we use the same checkmark animation
+   from the drawer"). FacetMark's own box, mounted empty and ticked `at` ms later, so the ANIMATED
+   CHECKBOX block in global.css draws it in its two strokes exactly as a Manage row does: the result
+   passes the moment its traits row lands (renderVals `saved.drawAt`), Backed Up passes 0. Under
+   reduced motion the tick is there at `at`, drawn by nothing. */
+function SavedMark({ at }) {
+  const [on, setOn] = React.useState(false);
+  React.useEffect(() => { const t = setTimeout(() => setOn(true), at || 0); return () => clearTimeout(t); }, [at]);
+  return <FacetMark active={on} />;
+}
+
+/* "SAVED TO YOUR LIBRARY", SAID FOR A MOMENT (renderVals `saved`), for the palette just made or just
+   saved from a link, where the browser keeps it.
+   · IT MOVES AS THE MASKED WORDS DO (25.09.26, by request: "Make sure it matches the motion principles
+     for the masked text animation"). It rode in with its row as plain words, and only its exit went
+     through the mask. Now it is the swap pair the words of a confirmation already use (Copied, Link
+     Copied: MASK_IN and MASK_OUT, --dur-swap on --ease-entrance): the mark and the words rise into
+     their line from below it at `inAt`, a line's beat after the traits row begins to rise, the
+     drawer's tick draws in the box once they have landed (`drawAt`), they hold for `hold` (the
+     notice's five seconds, by request: "this should only be temporary"), and they go up out of the
+     line the way they came. The line clips only while its words move, and under reduced motion they
+     are simply there, then gone.
+   · NOT SAVED WAS HERE (24.09.26 to 25.09.26) and went by request ("Remove not saved altogether"):
+     where the browser keeps nothing, a palette says nothing about where it is kept. */
+function SavedStatus({ saved, afterChips }) {
+  const reduce = React.useMemo(() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }, []);
+  // 'in' while the words rise into the line, 'rest' while they hold, 'out' while they leave, 'done' after.
+  const [phase, setPhase] = React.useState(reduce ? 'rest' : 'in');
+  React.useEffect(() => {
+    if (!saved.hold) return undefined;
+    // Under reduced motion there is no exit to wait for: it is gone at the same moment.
+    const t = setTimeout(() => setPhase(reduce ? 'done' : 'out'), (saved.drawAt || 0) + saved.hold);
+    return () => clearTimeout(t);
+  }, [saved.hold, saved.drawAt, reduce]);
+  if (phase === 'done') return null;
+  const moving = phase === 'in' || phase === 'out';
+  const anim = reduce ? null
+    // MASK_IN's keyframes and tokens, with the line's beat as its delay (the shorthand only, never a longhand beside it).
+    : phase === 'in' ? { animation: 'val-mask-a var(--dur-swap) var(--ease-entrance) ' + (saved.inAt || 0) + 'ms both' }
+    : phase === 'out' ? { animation: MASK_OUT } : null;
+  const landed = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.animationName === 'val-mask-a') setPhase('rest');
+    else if (e.animationName === 'val-mask-out') setPhase('done');
+  };
+  return (
+    <span data-saved-line="saved" aria-hidden={phase === 'out' ? 'true' : undefined} style={sx('display:inline-flex' + (afterChips ? ';margin-inline-start:8px' : '') + (moving ? ';overflow-y:clip' : ''))}>
+      <span onAnimationEnd={landed} style={{ ...sx('display:inline-flex;align-items:center;gap:8px;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)'), ...anim }}>
+        <SavedMark at={saved.drawAt} />{saved.text}
+      </span>
+    </span>
+  );
+}
 
 /* COPYING SWAPS THE WORDS THROUGH THE LINE'S MASK (19.09.26, by request: "when pressing a value on a
    swatch for copy, it should make the text mask animation and "Copied" should be title case"). The
@@ -1874,10 +1942,15 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    its only other multi-row floating panel already takes; the acts inside stay pills, as the dock's
    rows do.
 
-   ACCEPT IS THE FILLED TIER, DECLINE THE OUTLINED ONE, by request: primary is --on-surface ink, the
-   system's black, and it inverts on the dark theme as every other filled action does. Decline keeps
-   the full outlined button rather than shrinking to a link, so saying no stays one press of the same
-   size as saying yes.
+   THE TWO ANSWERS LOOK ALIKE (24.09.26, UX audit, by request; this replaces "Accept is the filled
+   tier, Decline the outlined one"). Accept filled beside an outlined Decline weighted the one question
+   the site asks for itself toward its own side. Both answers are the same button, the same size, one
+   press, as GOV.UK's cookie banner sets its two: BOTH FILLED (by request, the same day: "make them
+   both with black fill so learn more stands alone outlined"), where the first round outlined both.
+   Learn More is the one outlined control, which is the difference between it and them: it goes
+   somewhere, they decide. REOPENED TOO (25.09.26, by request: "Both should be filled by default"). For
+   one round the answer that stood kept the fill and the other stepped back to the outline; now the two
+   look alike whenever they are asked, and aria-pressed says which stands.
 
    Reopened with analytics on, Accept takes the check the Copied state uses — a glyph beside the word,
    holding still while the word swaps. Only Accept: a tick beside Decline read as approving the
@@ -1889,8 +1962,8 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    buttons hand it this style rather than a stylesheet shouting over an inline value. Weight and case
    are in global.css (.consent .button[data-emphasis]). The label rows are 16px, one line of 13. */
 const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
-/* No check mark on Accept when the banner is reopened (17.09.26, by request): the pressed state
-   (aria-pressed, and the filled button) already says which answer stands. */
+/* No check mark on Accept when the banner is reopened (17.09.26, by request). The pressed state says
+   which answer stands (aria-pressed); since 25.09.26 both answers are filled whenever the banner is up. */
 export function ConsentBanner({ vals }) {
   const choice = vals.consentChoice;
   const act = (value, label, aria, emphasis, onClick) => (
@@ -1914,10 +1987,11 @@ export function ConsentBanner({ vals }) {
       <div className="consent__row">
         <div className="consent__acts">
           {act('granted', 'Accept', 'Accept analytics', 'primary', vals.allowAnalytics)}
-          {act('denied', 'Decline', 'Decline analytics', 'secondary', vals.declineAnalytics)}
+          {act('denied', 'Decline', 'Decline analytics', 'primary', vals.declineAnalytics)}
         </div>
-        {/* Outlined like Decline, by request, and still a link: it goes somewhere rather than deciding
-            anything, so it is an <a> with a real address drawn as the secondary tier. */}
+        {/* Outlined, by request, the one outlined control on the banner (24.09.26), and still a link: it
+            goes somewhere rather than deciding anything, so it is an <a> with a real address drawn as
+            the secondary tier. */}
         <span className="consent__more">
           <Button href="/privacy#analytics" data-emphasis="secondary" onClick={vals.learnAboutAnalytics} aria-label="Learn more about analytics" style={CONSENT_BTN_TYPE}
             label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Learn More</ButtonText></span>} />
@@ -2716,15 +2790,19 @@ export default function AppView({ vals }) {
               <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:10px 10px 10px 22px;margin:0 0 18px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:var(--surface-raised)')}>
                 <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface)")}>Shared with you</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
-                  {/* THE BANNER'S PAIR (17.09.26, audit A8, by request): set like the analytics
-                      banner's buttons, Save to Library filled as Accept is there. The strip is fully
-                      round, and its padding follows the pill: the text clears the curve, the buttons
-                      sit 10px in from it.
+                  {/* THE BANNER'S PAIR (17.09.26, audit A8, by request). THE SAME WEIGHT, OUTLINED
+                      (25.09.26, by request: "'Make your Own' cta in shared with you should have same
+                      weight as Save to Library", then "they should both be the outlined secondary
+                      button"): two answers to one arrival, neither pressed on the reader over the other.
+                      Save to Library had the fill, and Export stepped back to the outline to leave it
+                      the only one; with both answers outlined, Export keeps the fill here as it does on
+                      every palette. The strip is fully round, and its padding follows the pill: the
+                      text clears the curve, the buttons sit 10px in from it.
                       THEIR NAMES ARE THEIR WORDS (24.09.26, audit): each is called what it says, and
                       Make Your Own adds what it starts after a colon, so a reader who speaks to the
                       page can say what is on it (SC 2.5.3). Save to Library needs nothing more: the
                       strip has just said the palette was shared. */}
-                  <Button data-emphasis="primary" onClick={vals.onSaveShared} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save to Library</ButtonText></span>} />
+                  <Button data-emphasis="secondary" onClick={vals.onSaveShared} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Save to Library</ButtonText></span>} />
                   <Button data-emphasis="secondary" onClick={vals.onMakeOwn} aria-label="Make Your Own: start a new palette from your own image" style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Make Your Own</ButtonText></span>} />
                 </span>
               </div>
@@ -2772,16 +2850,18 @@ export default function AppView({ vals }) {
             {/* data-tour="actions" — not an anchor, a thing to keep clear of. Step 1's card would
                 otherwise land across this row (see `clear` in methods/tour.js). */}
             <div data-voice="banner" data-tour="actions" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:18px 0 0')}>
-              {/* TIER 1 — filing, which is the same answer the fullscreen detail's footer already
-                  gives: first in the sequence and available, organise then validate then output.
-                  It held the second tier here only because one creative act stood ahead of it, and
-                  that act is not in the row at the moment. Still exactly ONE filled control, per
-                  the two-tier rule.
+              {/* THE FILL IS ON EXPORT (24.09.26, UX audit, by request: "fill what makes sense by von
+                  restorff"). The one filled control is where the eye lands first, so it marks the step
+                  most people take next, and after a palette that is taking its colours out: the first
+                  events counted Export and Share twice each, Check Contrast once, Add to Projects
+                  never. Filing held the fill because it leads the row (organise, then validate, then
+                  output); it keeps its place at the front, outlined. Still exactly ONE filled control,
+                  per the two-tier rule, on a shared palette too since the strip's two answers are
+                  both outlined (25.09.26).
 
-                  filing changes the archive, so it stays on the committing side of the hairline.
-                  Disabled while the palette is only in the URL — a shared palette has no record to
-                  file until it is saved, and the strip above already offers that. */}
-              <Button data-emphasis="primary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(vals.assignLabel)} />
+                  Filing is disabled while the palette is only in the URL — a shared palette has no
+                  record to file until it is saved, and the strip above already offers that. */}
+              <Button data-emphasis="secondary" onClick={vals.openAssignCurrent} disabled={vals.assignDisabled} aria-haspopup="dialog" aria-label={vals.assignCurAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(vals.assignLabel)} />
               {/* The read-only group, held behind a hairline so the break reads as grouping rather
                   than as a gap that a wrap could invent; keeping them together also means they
                   wrap as a cluster, never one at a time. Contrast leads: inspect before you copy. */}
@@ -2799,7 +2879,7 @@ export default function AppView({ vals }) {
                 {/* data-tour="via-contrast" — the control step 2 demonstrates before it opens the drawer,
                     and the one its card falls back to if the reader dismisses the drawer themselves. */}
                 <Button data-tour="via-contrast" data-emphasis="secondary" btnRef={vals.contrastBtnRef} onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-                <Button data-tour="export" data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+                <Button data-tour="export" data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
               </div>
               {/* SHARE is neither editing nor output formatting, and it is the only act here that
                   reaches outside this browser. A flexible gap, not another hairline: the distance
@@ -2843,11 +2923,18 @@ export default function AppView({ vals }) {
                     rather than as a rule elsewhere: this chip declares its whole appearance inline,
                     and splitting one property out into the stylesheet is how a corner and its edge
                     end up maintained in two places. */}
-                {vals.result.hasTraits && (
+                {/* SAVED, SAID AT THE END OF THE ROW (24.09.26, UX audit, by request). The traits' row
+                    ends, for a moment, on where the palette just made is kept, after a gap wider than
+                    the chips' own, so it reads as a fact about the palette rather than a fourth trait:
+                    the drawer's tick box drawing itself and "Saved to your Library" in the muted voice
+                    (SavedStatus). Where the browser keeps nothing it says nothing. The row stands when
+                    there is either to show. */}
+                {(vals.result.hasTraits || vals.result.saved) && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                   {vals.result.traits.map((d, di) => (
                     <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); border-radius: var(--radius-pill)')}>{d}</span>
                   ))}
+                  {vals.result.saved && <SavedStatus saved={vals.result.saved} afterChips={vals.result.hasTraits} />}
                 </div>
                 )}
                 {/* WHAT THE PALETTE IS FOR, IN THE SLOT THE READING HELD. The reading stood here —
@@ -2872,8 +2959,12 @@ export default function AppView({ vals }) {
                   156×104, still right-aligned, still the y-fade (data-fx) and click-to-zoom it had. */}
               <div data-fx="1" style={sx('flex:none')}>
                 {vals.result.hasRef && vals.result.refImageNode}
+                {/* THE STAND-IN TAKES THE PICTURE'S CORNER (24.09.26, by request: "Needs added border radius
+                    so it aligns with an actual reference"): --radius-card, the 12px the reference image
+                    and its zoom button wear (renderVals refImageNode), so the empty slot is the same
+                    shape as the one it stands in for. */}
                 {vals.result.noRef && (
-                  <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
+                  <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
                     <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>No Reference</span>
                   </div>
                 )}
@@ -3017,6 +3108,7 @@ export default function AppView({ vals }) {
           also the reading order a screen reader meets: the thing, then the note about the thing. */}
       <TourInvite vals={vals} />
       <TourGuide vals={vals} />
+      <SearchDialog vals={vals} />
 
       <MessageLane vals={vals} />
 
@@ -3114,11 +3206,31 @@ function FeedSection({ vals }) {
           interface — persist() still fails silently — so the failure is now unannounced.
           Its unread state went on 17.09.26 (audit H3), and so did the toggletip component the
           empty states briefly used (audit H5, by request): putting the marker back is a rebuild. */}
+      {/* A LINE SAYING WHERE THE LIBRARY IS KEPT stood here for one round (24.09.26, UX audit) and went
+          the same day, by request: "The heading - delete the copy". */}
       {/* THE DOOR AND THE SWITCH, AT THE FAR EDGE, 8px APART (19.09.26, by request: "move the list
           button to the right next to the list/grid toggle with the same gap"). The pair carries
           margin-inline-start:auto; the toggle used to carry it alone. */}
       {vals.showProjectsBar && (
         <div style={sx('display:flex;align-items:center;gap:8px;margin-inline-start:auto')}>
+          {/* SEARCH, AND ITS KEY (24.09.26, UX audit, by request: "Add a Command+K search we know from
+              react tools"). The Library had no way to find one palette but paging and scanning. ⌘K
+              (Ctrl+K off a Mac) opens the search anywhere in the tool, as it does in the tools people
+              already use it in; this button is the same door for a pointer, and it prints the key so
+              the shortcut is learned by seeing it rather than by being told. Set as the Manage door
+              beside it: outlined, 35.5px, 13px Medium, the word in Title Case, 12px each side. THE KEY
+              IS PRINTED AS MANAGE PRINTS ITS COUNT (25.09.26): the muted 12px figure after the word,
+              outside the masked swap, with no cap around it. A cap is a small box, and a small box at
+              the round end of a stadium sits against the curve rather than inside it (the key's
+              corners came within 5px of the curve where its sides kept 8); the plain figure leaves
+              the door the same shape as its neighbour. The caps are the search's own, at its foot.
+              aria-hidden, since aria-keyshortcuts states the key to assistive technology. */}
+          {vals.search.can && (
+            <button type="button" data-search-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-keyshortcuts={vals.search.keys} disabled={vals.search.disabled} onClick={vals.search.openFromButton} title={'Search the Library (' + vals.search.keyHint + ')'} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
+              <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconSearch size={12} />Search</span></TextSwap>
+              <span aria-hidden="true" style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted)')}>{vals.search.keyHint}</span>
+            </button>
+          )}
           {/* THE ONE DOOR INTO THE LIBRARY PANEL. It replaced two controls: Manage Projects ended the
               old scope rail and Filter began the row under it.
 
@@ -3161,6 +3273,7 @@ function FeedSection({ vals }) {
             {/* The mark and the word are ONE unit inside the swap, so they lift and re-enter together
                 as every other label in this chrome does; the count stays outside it, below. */}
             <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconList size={12} />Manage</span></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+
           </button>
           {/* HOW the section is drawn, the last thing on the row. It sat on the heading row once
               before and went down to the scope rail's row, to line up with the bordered controls
@@ -3870,15 +3983,16 @@ function DetailOverlay({ vals }) {
       {/* The same row as the result view's, deliberately: same order, same division, same weights. A
           palette opened fullscreen from the archive must not re-teach the user a different set of
           controls. Filing leads because it leaves something behind; the pair after it only reads the
-          palette back to you, Contrast first because inspecting comes before copying. Share closes the
+          palette back to you, Contrast first because inspecting comes before copying. Export carries
+          the fill, as it does there (24.09.26). Share closes the
           row at the far end behind the same flexible gap: a share link is sealed from the palette
           itself, so any palette has one. */}
       <footer data-ochrome="1" style={sx('display:flex;flex-direction:column;padding:18px var(--page-gutter) 24px;flex:none')}>
         <div data-voice="banner" style={sx('display:flex;align-items:center;gap:8px;flex-wrap:wrap')}>
-          <Button data-emphasis="primary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
+          <Button data-emphasis="secondary" onClick={overlay.onAssign} aria-haspopup="dialog" aria-label={overlay.assignAria} style={CONSENT_BTN_TYPE} label={assignButtonLabel(overlay.assignLabel)} />
           <div style={sx('display:flex;align-items:center;gap:8px;flex-wrap:nowrap')}>
             <Button data-emphasis="secondary" onClick={vals.openContrast} disabled={vals.contrastDisabled} aria-haspopup="dialog" style={CONSENT_BTN_TYPE} label={contrastButtonLabel} />
-            <Button data-emphasis="secondary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
+            <Button data-emphasis="primary" onClick={vals.openExport} aria-haspopup="dialog" aria-label="Export this palette: copy it, or download it as design tokens" style={CONSENT_BTN_TYPE} label={exportButtonLabel} />
           </div>
           <span style={sx('margin-inline-start:auto;display:inline-flex')}>
             <Button data-emphasis="secondary" onClick={overlay.onShare} aria-label={overlay.shareCopied ? 'Share Palette: link copied' : 'Share Palette: copy its link'} style={CONSENT_BTN_TYPE} label={shareButtonLabel(overlay.shareCopied)} />
@@ -4360,10 +4474,13 @@ function LibraryDrawer({ vals }) {
                  way to "Backed Up" on the shared timer. It only downloaded, so the one act that protects
                  the library left no trace on screen; download() already names the file to a screen
                  reader, and the name here says it too while the row confirms. */
-              <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.backUpLibrary} aria-label={'Back up your whole library to a file' + (vals.backupDone ? ', backed up' : '')} style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
+              <button type="button" data-sec-row="1" data-backup-row="1" data-focus="chrome" onClick={vals.backUpLibrary} aria-label={'Back up your whole library to a file' + (vals.backupDone ? ', backed up' : '')} style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
                 <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
                 <span data-reveal="1" style={measuredLabelStyle}>Back Up</span>
-                <span style={sx('margin-inline-start:auto;display:inline-flex')}>
+
+                {/* 14px tall, so the 16px glyph overhangs its line rather than setting it: the row is then
+                    the filter rows' 37.5, where the glyph made the two Library File rows 38. */}
+                <span style={sx('margin-inline-start:auto;display:inline-flex;align-items:center;height:14px')}>
                   <DoneSwap rise done={vals.backupDone} word="Backed Up" restStyle={{ display: 'inline-flex', color: 'var(--on-surface-muted)' }}><IconExport size={16} /></DoneSwap>
                 </span>
               </button>
@@ -4371,7 +4488,7 @@ function LibraryDrawer({ vals }) {
             <button type="button" data-sec-row="1" data-focus="chrome" onClick={vals.onRestore} aria-label="Restore palettes from a backup file" style={sx(SEC_ROW + 'cursor:pointer;color:var(--on-surface)')}>
               <span data-row-plate="1" aria-hidden="true" style={SEC_PLATE}></span>
               <span data-reveal="1" style={measuredLabelStyle}>Restore</span>
-              <span data-reveal="1" style={sx('margin-inline-start:auto;display:inline-flex;color:var(--on-surface-muted)')}><IconImport size={16} /></span>
+              <span data-reveal="1" style={sx('margin-inline-start:auto;display:inline-flex;align-items:center;height:14px;color:var(--on-surface-muted)')}><IconImport size={16} /></span>
             </button>
           </div>
         </div>
@@ -5095,7 +5212,16 @@ function RestoreDialog({ vals }) {
    --radius-surface, the header's h2 beside the app's one close mark, the body line at --fs-body,
    and the pair in the footer's banner voice with the outlined answer first. It is opened twice in
    the app's life — once by Create on a first visit, and again by Take a Tour in the masthead — and
-   it is the same dialog both times, because it is the same offer.
+   it is the same card both times, because it is the same offer.
+
+   DOCKED ON THE FIRST VISIT (24.09.26, UX audit, by request). The offer Create makes no longer takes
+   the screen: it stands where the analytics banner stands, bottom right at the page gutter, at the
+   guidance card's 124, with no scrim, no aria-modal and no trap, beside a start box that stays live
+   (tour.js openTourInvite). A region named by its heading, as the banner is. Take the Tour keeps
+   the fill there (24.09.26, by request: "take the tour still needs to be a black fill. we want people
+   to take the tour"): the first round outlined both answers so the offer would not outweigh the
+   start box, and the offer is there to be taken. Opened from the footer, where the visitor asked for
+   it, it is still the dialog described above.
 
    THE GUIDANCE CARD IS NOT A DIALOG, and the difference is the whole design. A dialog takes the
    screen: backdrop, aria-modal, a focus trap, nothing else reachable. This card stands BESIDE the
@@ -5112,13 +5238,16 @@ function RestoreDialog({ vals }) {
 function TourInvite({ vals }) {
   if (!vals.tour || vals.tour.stage !== 'invite') return null;
   const t = vals.tour;
+  const docked = !!t.docked;
   return (
     /* STILL MOUNTED WHILE IT LEAVES. `leaving` keeps this rendered for the length of _dialogOut, so
        the invitation can fade and drop on the dialogs' own exit while the card rises out of its
        centre — one object handing over to the next rather than one vanishing and another appearing
        somewhere else. It takes no presses while it goes. */
-    <div style={{ ...sx('position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px'), pointerEvents: t.leaving ? 'none' : undefined }}>
-      <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+    <div data-tour-docked={docked ? '1' : undefined} style={{ ...sx(docked
+      ? 'position:fixed;right:var(--page-gutter);bottom:calc(var(--page-gutter) + env(safe-area-inset-bottom, 0px));z-index:124;width:min(380px, calc(100vw - 2 * var(--page-gutter)))'
+      : 'position:fixed;inset:0;z-index:126;display:flex;align-items:center;justify-content:center;padding:24px'), pointerEvents: t.leaving ? 'none' : undefined }}>
+      {!docked && <div data-modal-backdrop="1" onClick={t.onSkipInvite} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>}
       {/* GLASS, LIKE THE ANALYTICS BANNER (20.09.26, by request: "modal should be in the same glass
           design as cookie banner"). It shipped for one round as the solid dialog plate — --surface,
           --line-strong, --shadow-surface — which is the recipe for the five dialogs that act ON
@@ -5130,7 +5259,9 @@ function TourInvite({ vals }) {
           pane is the heaviest thing on it), --radius-surface passed to the pane through
           border-radius:inherit, and NO SHADOW — glass reads from its fill, and a shadow under it is
           a smudge seen through the glass. The .tour-invite block in global.css carries the rest. */}
-      <div className="tour-invite" data-tour-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-labelledby="tour-invite-title" onKeyDown={t.onInviteKey} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)')}>
+      <div className="tour-invite" data-tour-dialog="1" data-lenis-prevent="1" {...(docked ? { role: 'region' } : { role: 'dialog', 'aria-modal': 'true' })} aria-labelledby="tour-invite-title" onKeyDown={t.onInviteKey} style={sx(docked
+        ? 'position:relative;width:100%;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)'
+        : 'position:relative;width:420px;max-width:94vw;max-height:86vh;display:flex;flex-direction:column;background:transparent;border-radius:var(--radius-surface)')}>
         <GlassEffect />
         <header style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           {/* No eyebrow, for Already Extracted's reason: a label over this line would say what the
@@ -5162,6 +5293,156 @@ function TourInvite({ vals }) {
       </div>
     </div>
   );
+}
+
+/* ⌘K, THE LIBRARY'S SEARCH (24.09.26, UX audit, by request: "Add a Command+K search we know from react
+   tools"). What it finds and what a pick does are methods/search.js; this is the frame.
+
+   REBUILT THE SAME DAY (by request: "adjust the border radius so it aligns with the design system.
+   it's too aggressive. it needs to be snappy and quick, also rethink the UI so the search have visual
+   and optical balance"). The first round was a 600px dialog on --radius-surface (28), rows of two
+   lines with the palette's strip leading, a stadium for the lit row, an Esc key in the field and a
+   footer of key hints. What changed, and why:
+   · THE CORNER IS THE SHORT PANEL'S. 28 is the corner of the create container and the floating
+     bar, boxes twice this size and more; this panel takes --radius-panel (16), the corner of the
+     system's other short panels, and the lit row inside it takes that less the 8px it is inset by, so
+     the two curves run parallel (concentric), where a stadium inside a 28 did not.
+   · TWO LINES AND AN EDGE HOLD EVERYTHING. The glyphs hang in a 16px column 22px inside the frame:
+     the lens in the field, each act's mark, the foot's first key. Every word starts on one line 12px
+     after it, 50px in: what is typed, the group names, the palettes' names, the acts, the edge of the
+     first tag. The palettes' colours end on the right edge, 22px in. The first round
+     had three left edges (22, 50 and 108px), and what was typed and the names it found were on
+     different ones.
+   · WORDS LEFT, COLOUR RIGHT. A row is one line: the name, its words in the muted voice, and the
+     palette's strip at the far end. The strip led before, and with everything else on the left the
+     right half of the panel was empty; now the text and the colour weigh against each other.
+   · THE KEYS ARE TAUGHT AT THE FOOT (by request, after one round without them: "Would be great for
+     the user to have and adopt them to use shortcuts and keys across the tool"). The search is where
+     a visitor is already at the keyboard, so its foot prints the keys that work in it: ↑ ↓ Move,
+     ↵ Open, Esc Close, in a row as tall as a row, starting on the glyph line. The Esc key that stood in
+     the field went: the foot says it. The keys are the icon set's glyphs, not characters (IconArrowUp
+     and its kin above). THE TOOL'S OWN KEYS WENT (25.09.26, by request: "It doesn't make sense to have
+     paste image in search as it's not an actual action within search"). ⌘V Paste Image and ⌘Z Undo
+     stood on the right; neither acts in the search, and ⌘Z there is the field's own undo of what was
+     typed, so the foot named a key for something it does not do. The empty result is one line; a
+     "Did you mean" puts its question under it and its tags under that.
+   · THREE ACTS, NOT EIGHT (25.09.26, search.js _searchActs): only the ones the search is the shorter
+     way to, New Palette, Back Up Library and Restore from a File, each with the glyph its own button
+     wears.
+   · 560 WIDE: the longest name the field allows (32 characters, NAME_MAX), its three words and the
+     strip on one line, at 13px. Rows are 37.5px, a Manage row's height (11px above and below a
+     13px line), the other compact list in the tool, and the foot is one row of keys as tall; the
+     field is 56, the floating bar's height, the other bar a search starts from. With nothing
+     typed the panel holds the five recent palettes and the three acts at 468px.
+   · CENTRED AS IT OPENS, THE FIELD HELD THERE, THE FOOT FOLLOWING WHAT IS FOUND (25.09.26, by request,
+     twice: "adjust its height freely in motion when user makes an action, keep it center of the
+     viewport", then, shown the field travelling 144px as the list shrank about the middle, "keep the
+     modal centered but search at the same position at all times, the modal only extend downwards and
+     upwards depending on content"). It opened 14vh from the top and took each new height in a frame.
+     Now search.js _searchPlace centres it as it opens and holds its top there (--search-top on this
+     frame), so the field never moves; what is typed moves only its foot, down as the list grows and up
+     as it shrinks, easing (search.js _searchResize).
+   · THE WINDOW IS ITS LIMIT ("set a max height with scroll inside so the modal doesn't exceed viewport
+     height when over 40 matches"). The frame is the window less the held top and a 24px margin below,
+     and the panel is at most that (max-height:100%), where it stopped at 72vh: past it the list scrolls
+     inside, and the field and the keys stay where they are.
+   · IT MOVES ON THE SHORT TOKENS (search.js _searchIn / _searchOut): in on DUR.fast, out on
+     DUR.micro, and a pick acts as the panel starts to go rather than after it has gone.
+
+   THE FRAME IS THE DIALOGS' OWN, the solid plate of the ones that act on something (Export, Add to
+   Projects, Restore): --surface on --line-strong with --shadow-surface, z-126 over the 55% scrim and
+   its 6px blur. THE ARIA IS THE COMBOBOX PATTERN. Focus never leaves the field: it is role=combobox,
+   it owns the listbox through aria-controls, and aria-activedescendant names the lit option, which is
+   how a screen reader follows the arrows while the caret stays put. The groups are role=group labelled
+   by their names; the names, the strips and the key are aria-hidden, since the pattern already speaks
+   them. The count, or that nothing matches, is said through the app's live region (search.js). */
+const SEARCH_GLYPH = sx('display:inline-flex;align-items:center;justify-content:center;flex:none;width:16px');
+// The foot's keys 18px apart, a key and its word 6px, two keys of one act 4px (the ↑ ↓ pair).
+const SEARCH_KEY = sx('display:inline-flex;align-items:center;gap:6px');
+const SEARCH_PAIR = sx('display:inline-flex;align-items:center;gap:4px');
+function SearchDialog({ vals }) {
+  const q = vals.search;
+  if (!q || !q.open) return null;
+  return (
+    <div data-search-frame="1" style={{ ...sx('position:fixed;inset:0;z-index:126;display:flex;justify-content:center;align-items:flex-start;padding:var(--search-top, 14vh) 24px 24px'), pointerEvents: q.leaving ? 'none' : undefined }}>
+      <div data-modal-backdrop="1" onClick={q.onClose} style={sx('position:absolute;inset:0;background:color-mix(in srgb, var(--scrim) 55%, transparent);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)')}></div>
+      <div data-search-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Search the Library" onKeyDown={q.onKey} style={sx('position:relative;width:560px;max-width:100%;max-height:100%;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-surface);overflow:hidden')}>
+        <div style={sx('display:flex;align-items:center;gap:12px;height:56px;padding:0 22px;border-bottom:1px solid var(--line);flex:none')}>
+          <span aria-hidden="true" style={SEARCH_GLYPH}><IconSearch size={16} /></span>
+          <input ref={q.inputRef} type="text" role="combobox" aria-expanded="true" aria-controls="search-list" aria-autocomplete="list" aria-activedescendant={q.activeId} aria-label="Search palettes and actions"
+            placeholder="Search" value={q.query} onChange={q.onInput} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-search-input="1"
+            style={sx("flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;font-family:'Neue Montreal';font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+        </div>
+        <div id="search-list" role="listbox" aria-label="Results" style={sx('flex:1 1 auto;min-height:0;overscroll-behavior:contain;padding:8px')}>
+          {/* NOTHING MATCHES, one line, when nothing is within reach of what was typed. When something is,
+              "Did you mean" says it alone (by request: "We don't need to write nothing matches, when we
+              suggest a 'Did you mean' we can make it more compact that way"): the question is the answer
+              to what was typed, and the line above it said again what the question implies. */}
+          {q.miss && q.empty && (
+            <p style={sx("margin:0;padding:12px 14px 14px 42px;font-family:'Neue Montreal';font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Nothing matches “{q.query}”</p>
+          )}
+          {q.groups.map((g) => g.tags ? (
+            /* THE QUESTION IS THE GROUP'S NAME, in the voice and the place of the other names (Recent
+               Palettes, Actions), and the tags stand where the rows would: 8px under it, so their words sit
+               as far below the name as a row's do, and 10px above the list's end, which keeps the space
+               over the name and under the tags equal (18 each).
+               THE TAGS ARE THE TRAIT PILL (renderVals `pill`: 13px Medium on the 9% ground, --btn-pad-chip
+               in a 26px box, 8px apart as on the create page), options of the list like its rows: the
+               arrows walk them in order and the lit one takes the rows' ink fill. Show All, which lists
+               rather than opens, is the outlined one, as Clear Filters is beside the filled chips. The
+               group is named by the question, so a screen reader hears it on the way in. */
+            <div key={g.key} role="group" aria-labelledby={'search-g-' + g.key} data-search-group="1">
+              <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 8px 42px;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>
+              <div data-search-tags="1" style={sx('display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 10px 42px')}>
+                {g.items.map((it) => (
+                  <div key={it.key} id={it.id} role="option" aria-selected={it.active} data-search-opt="1" data-search-tag={it.all ? 'all' : '1'} data-lit={it.active ? '1' : undefined} onMouseMove={it.onHover} onClick={it.onPick}
+                    style={sx("display:inline-flex;align-items:center;gap:6px;min-height:26px;box-sizing:border-box;padding:var(--btn-pad-chip);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1;letter-spacing:var(--track-flat);white-space:nowrap;cursor:pointer")}>
+                    {it.icon && <SearchActIcon name={it.icon} size={12} />}
+                    {it.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div key={g.key} {...(g.label ? { role: 'group', 'aria-labelledby': 'search-g-' + g.key } : null)} data-search-group="1">
+              {g.label && <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 4px 42px;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>}
+              {g.items.map((it) => (
+                <div key={it.key} id={it.id} role="option" aria-selected={it.active} data-search-opt="1" data-lit={it.active ? '1' : undefined} onMouseMove={it.onHover} onClick={it.onPick}
+                  style={sx('display:flex;align-items:center;gap:12px;height:37.5px;padding:0 14px;cursor:pointer')}>
+                  <span aria-hidden="true" data-search-glyph="1" style={SEARCH_GLYPH}>{it.kind === 'act' && <SearchActIcon name={it.icon} />}</span>
+                  <span style={sx("flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;font-family:'Neue Montreal';font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap")}>
+                    {/* The name is never cut (the house rule for names on rows): 32 characters of the widest
+                        letters fit the 410px this line has, so only the words after it give way. */}
+                    <span style={sx('flex:none;font-weight:500')}>{it.name}</span>
+                    {it.sub && <span data-search-sub="1" style={sx('min-width:0;overflow:hidden;text-overflow:ellipsis')}>{it.sub}</span>}
+                  </span>
+                  {it.kind === 'palette' && (
+                    <span aria-hidden="true" data-search-strip="1" style={sx('display:flex;flex:none;width:64px;height:16px;border-radius:var(--radius-swatch);overflow:hidden')}>
+                      {it.strip.map((c, ci) => (<span key={ci} style={{ flex: (c.w > 0 ? c.w : 0.0001) + ' 1 0', background: c.hex }}></span>))}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        {/* The foot: aria-hidden, since the combobox pattern already speaks the menu's keys. */}
+        <div data-search-foot="1" aria-hidden="true" style={sx("display:flex;align-items:center;gap:18px;height:37.5px;padding:0 22px;border-top:1px solid var(--line);flex:none;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap")}>
+          <span style={SEARCH_KEY}><span style={SEARCH_PAIR}><kbd data-kbd="1"><IconArrowUp /></kbd><kbd data-kbd="1"><IconArrowDown /></kbd></span>Move</span>
+          <span style={SEARCH_KEY}><kbd data-kbd="1"><IconReturn size={12} /></kbd>Open</span>
+          <span style={SEARCH_KEY}><kbd data-kbd="1">Esc</kbd>Close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+// The acts' marks: the glyphs the buttons that do the same things already wear (New Palette's plus,
+// the Back Up and Restore rows' arrows in Manage). 14 on a row; 12 in a tag, as the folder is in a chip.
+function SearchActIcon({ name, size = 14 }) {
+  if (name === 'plus') return <IconPlus size={size} />;
+  if (name === 'export') return <IconExport size={size} />;
+  if (name === 'import') return <IconImport size={size} />;
+  return null;
 }
 
 function TourGuide({ vals }) {

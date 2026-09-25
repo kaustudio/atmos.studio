@@ -77,6 +77,16 @@ export function shareUrl(pal, loc) {
   return l.origin + '/#' + HASH_KEY + '=' + nameToLink(pal.name) + '~' + colours;
 }
 
+/* A palette's code, as a compact link would carry it: the name and the colours with their shares,
+   packed. Two palettes with the same code are the same palette as far as a link can tell, which is how
+   a link that names a palette already in this Library opens that palette (PaletteApp componentDidMount,
+   methods/share.js _ownCopy). Computed from decoded values on both sides, so a messenger that
+   unescaped part of a link does not make it a stranger. */
+export function paletteCode(pal) {
+  if (!pal || !Array.isArray(pal.swatches) || !pal.swatches.length) return null;
+  return nameToLink(pal.name) + '~' + packColours(pal.swatches);
+}
+
 // ---- base64url over UTF-8, for links made before the compact one -------------------------------
 // TextDecoder rather than unescape: names and rationales carry em-dashes and curly quotes, and the
 // legacy pair mangles anything outside latin-1.
@@ -90,6 +100,17 @@ function b64urlDecode(s) {
 }
 
 // ---- decode (UNTRUSTED) -------------------------------------------------------------------------
+/* A SHARE OF 0 IS A SHARE UNDER HALF A PERCENT (25.09.26, from the share audit). A link carries each
+   colour's share in whole percents (both formats), so a colour holding 0.4% of the frame travels as 0,
+   and the recipient's page, reading 0 as nothing, printed "0%" where the sender's says "<1%". A
+   palette's colour always holds some of the frame, so a 0 can only mean under half a percent, and it
+   arrives as 0.4%: the page then says "<1%" as the sender's does (renderVals sharePct), and the
+   palette's code is unchanged (it packs back to 0). */
+const UNDER_HALF = 0.004;
+function shareFromWire(pct) {
+  if (!Number.isFinite(pct)) return 0.2;
+  return pct <= 0 ? UNDER_HALF : Math.min(100, pct) / 100;
+}
 // The code a fragment carries, or null: the palette itself, without the name label. Two links to one
 // palette have the same code whatever their labels say, which is how the app knows a link names the
 // palette already on screen (PaletteApp _hashMoved). Never throws.
@@ -135,7 +156,7 @@ export function decodeShare(hash) {
   if (tilde >= 0) {
     const swatches = code.slice(tilde + 1).match(/.{8}/g).map((x) => {
       const pct = parseInt(x.slice(6), 36);
-      return { hex: '#' + x.slice(0, 6), weight: Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) / 100 : 0.2 };
+      return { hex: '#' + x.slice(0, 6), weight: shareFromWire(pct) };
     });
     const name = Array.from(nameFromLink(code.slice(0, tilde)).trim()).slice(0, MAX_NAME).join('');
     return { name: name || 'Shared palette', descriptors: [], rationale: '', archetype: 'shared', imageUrl: null, swatches };
@@ -154,7 +175,7 @@ export function decodeShare(hash) {
     // the hex regex is re-applied by validateFeed; this is the early reject
     if (!/^[0-9a-f]{6}$/.test(hex)) continue;
     const pct = Number(entry[1]);
-    swatches.push({ hex: '#' + hex, weight: Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) / 100 : 0.2 });
+    swatches.push({ hex: '#' + hex, weight: shareFromWire(pct) });
   }
   if (!swatches.length) return null;
 

@@ -7,6 +7,178 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-25 — ⌘K finds a palette, a new palette says it is saved for a moment, the first visit is not held up, and the 404 has a way back
+
+**From the UX audit** (better-ux, standalone), every finding, built on 24.09 (639abe1) and adjusted on
+25.09 by the notes on its report ("Make sure all of this aligns with the design system").
+
+- **No line about where the Library is kept.** The first round put "Saved in this browser only. To keep
+  a copy, use Back Up in Manage." beside the Library's heading. It went: "The heading - delete the copy".
+- **A browser that keeps nothing says nothing** (by request: "Remove not saved altogether"). It was said
+  four ways in one day, each removed by request: a line beside the Library's heading and a sticky notice
+  holding Back Up; the unsaved dot on "Not Saved", the Manage door and the Back Up row, Not Saved opening
+  Manage on its last row ("draining"); then "Not Saved" with Back Up beside it. Now a palette says it is
+  saved only where it is, and nothing says it is not; Back Up stays in Manage and the search. Why a
+  browser keeps nothing: the visitor or their organisation has told it to (block all site data, a policy,
+  some privacy extensions); it is rare. The first palette of one's own still asks the browser to keep the
+  Library (`navigator.storage.persist()`).
+- **No offer at the third palette** ("why are we backing up a single palette?"). A notice after the third
+  palette of one's own offered Back Up, and after a palette it read as saving that palette, where Back Up
+  writes the whole Library. Where the browser keeps the Library, nothing asks.
+- **A palette just made says it is saved, with the drawer's tick, for a moment** ("make sure we use the
+  same checkmark animation from the drawer"; then "this should only be temporary, we don't want it to
+  sit fixed at all times"). "Saved to your Library" ends the traits row for the palette just made or
+  just saved from a link (`freshSaved`), where the browser keeps it, and nowhere else: one opened from
+  the Library is already where the words would say it is. It holds five seconds after the tick has
+  drawn, a passing notice's time, then goes up out of the line on the mask. It moves as the masked words
+  do ("Make sure it matches the motion principles for the masked text animation"): it rode in with its
+  row as plain words and only left through the mask; now it is the swap pair a confirmation's words use
+  (Copied, Link Copied: up from below its line on --dur-swap and --ease-entrance, a line's beat after
+  the row, the tick drawn once it has landed; out the top the same way). Under reduced motion it is
+  there, then gone. The tick box is the Manage rows' own, drawn in its two strokes as the row lands.
+  Save to Library on a shared palette says it there, where a notice said it a second time. The
+  announcement says "generated and saved".
+- **The tour offer stands beside the page, and Take the Tour keeps the fill** ("take the tour still needs
+  to be a black fill. we want people to take the tour, but yes move it to the bottom right"). On the
+  first Create it was a modal over the start box. It now stands where the banner does, with no scrim and
+  no focus move; the first round outlined both answers there. It steps aside once an image arrives or a
+  palette opens, and that counts as an answer. Take a Tour in the footer still opens the dialog.
+- **The loader plays once in this browser.** It replayed in every new tab (sessionStorage, the "once per
+  session" of 19.09), 3.4 to 4.3 s in front of a page that was ready far sooner. A localStorage flag now,
+  and a first visit that did not open on it (a share link, a document, a typed /create) counts as
+  arrived; /create skips it. A click or a key sends it to its own exit at twice the pace. The page takes
+  clicks as soon as the fold starts to lift. Without the loader the landing is simply there: its lines
+  rise through their masks as the field forms, as they do after the loader; no page transition runs,
+  since that is for moving between pages. index.html's pre-paint reads the same flag; its CSP hash in
+  vercel.json is updated with it.
+- **Big pictures read.** The 20 MB cap is gone: the colours come from a 72 × 72 copy. The ceiling is 150
+  megapixels, read from the picture's size before anything is drawn. A picture over 4096 px on its long
+  edge is shown from a copy drawn down to that; the reading still takes the original.
+- **Export carries the fill** ("fill export, keep the others outlined"). The one filled act under a
+  palette was Add to Projects, the step taken least (the first events: Export and Share twice each, Check
+  Contrast once, Add to Projects never). Export now, on the stage and in the Full Swatch View, and on a
+  shared palette too: its strip's two acts are both outlined at equal weight ("'Make your Own' cta in
+  shared with you should have same weight as Save to Library", then "they should both be the outlined
+  secondary button"), where Save to Library carried the fill.
+- **Accept and Decline are both filled** ("make them both with black fill so learn more stands alone
+  outlined"). Accept was filled beside an outlined Decline (17.09), which weighted the question toward the
+  site's side; the first round outlined both. Now both are filled and Learn More is the one outlined
+  control: it goes somewhere, they decide. Reopened too ("Both should be filled by default"): for one
+  round the standing answer kept the fill and the other went to the outline; aria-pressed says which
+  stands.
+- **⌘K searches the Library** (by request: "Add a Command+K search we know from react tools"), rebuilt
+  the same day ("adjust the border radius so it aligns with the design system. it's too aggressive. it
+  needs to be snappy and quick, also rethink the UI so the search have visual and optical balance").
+  Ctrl+K off a Mac, and a Search door beside Manage that prints the key. It finds palettes by name, their
+  Warm or Balanced words, Character, project, "example" and hex; every word typed must match; with nothing
+  typed it opens on the newest. Return opens a palette as its row does. THREE ACTS, BY PRIORITY ("what is
+  the reasoning for implementing all actions across the website into search. We need make priorities
+  here"): an act is listed only where the search is the shorter way to it. New Palette (the act the tool
+  is for), Back Up Library and Restore from a File (the
+  far end of Manage). Left out, each one press from where the reader looks: Export and Check Contrast
+  (under the palette), List and Grid (beside the Search door), the theme (the masthead), Take a Tour (the
+  footer). The keys at the foot are the icon set's glyphs (ic:outline-arrow-upward, -arrow-downward,
+  -keyboard-return), where characters from a fallback font sat off their caps' centre ("'Open' is not
+  aligned centrally"). RECENT MEANS RECENTLY OPENED (from the search audit: "what is the
+  maximum recent palettes and how is the overall behavior between selecting elements back and forth"):
+  with nothing typed it lists five ("limit recent palettes to 5, otherwise the search will be overdone";
+  it was eight, the Library a first visit opens on), the palettes this visit has had on the stage or in
+  Full Swatch View first, then the newest,
+  and never the one on the stage, so ⌘K, Return goes back to the palette before; it was the eight newest,
+  so a palette opened from the Library's second page was not "recent". A query lists at most 40 matches,
+  best first. THE LIT ROW IS THE LIBRARY'S INK FILL: a 7% tint measured 1.14:1 against the panel for the
+  only sign of what Return opens; now 15.9:1 (WCAG 1.4.11). Walked: arrows wrap at both ends with
+  aria-activedescendant following, the pointer lights the row it moves over and the arrows carry on from
+  it, typing lights the best match, Tab stays in the field, nothing matching is one line and said aloud,
+  Return opens the palette with focus on it, Back after a pick returns to the palette before and Forward
+  to the pick without reopening the search, Back with the search open only closes it, Escape returns focus
+  to where it was, and on a 700px window the lit row stays in view.
+  The frame: --radius-panel (16) where it wore --radius-surface (28), the lit row 8 (concentric, where it
+  was a stadium), 560 wide, rows of one line (name, its words, the strip at the far end) 37.5px tall like
+  a Manage row, on two alignment lines (the glyphs 22px in, every word 50px in) and one right edge, one
+  line when nothing matches, cut through the middle of a row at 590px so the list says it goes on. In on
+  DUR.fast (0.18s), out on DUR.micro (0.12s), and a pick acts as the panel starts to leave rather than
+  after its 0.62s exit; ⌘K while it leaves takes it back. THE FOOTER TEACHES THE KEYS (by request, after
+  one round without it: "Would be great for the user to have and adopt them to use shortcuts and keys
+  across the tool"): the keys that work in it, ↑ ↓ Move, ↵ Open, Esc Close. The tool's own stood on the
+  right for a round (⌘V Paste Image, ⌘Z Undo) and went ("It doesn't make sense to have paste image in
+  search as it's not an actual action within search"): neither acts there, and the field keeps focus, so
+  ⌘Z in it undoes the typing, not a deletion. Key caps take the tick box's 3px corner; the Search
+  door prints ⌘K as Manage prints its count, with no cap (a cap at a stadium's end is not concentric).
+  The combobox pattern is unchanged. "Search Opened" is counted, never what is
+  typed, and /privacy says searching is counted.
+  DID YOU MEAN, AS TAGS ("if a user spells something but it's close to what they meant the engine should
+  suggest 'Did you mean'", then "The search suggestions should be tags to send the user directly to the
+  specific result", then "We don't need to write nothing matches ... we can make it more compact that
+  way"). When nothing matches, each word no palette, word, character, project or act holds is matched to
+  the Library's own words within one edit (four letters or fewer) or two (Damerau–Levenshtein), and if the
+  whole corrected query finds something, "Did you mean “Garnet”?" stands as the group's name with what it
+  finds under it as tags: the create page's trait pill, the lit one in the rows' ink fill, each opening
+  its palette or running its act as its row would; at most five (the recent list's number), then Show
+  All and the count, outlined because it lists (it writes the words into the field). "Nothing matches"
+  shows only when nothing is near. A hex is typed exactly or not at all. PUNCTUATION DOES NOT COUNT (from
+  the audit of the modal): "garnet," "oneil" (O'Neil) and "moss-hour" found nothing; both sides are now
+  read with apostrophes joining and other marks parting words. CENTRED AS IT OPENS, THE FIELD HELD THERE
+  ("The search module should also adjust its height freely in motion when user makes an action, keep it
+  center of the viewport"; then, shown the field travelling 144px as a centred panel shrank, "keep the
+  modal centered but search at the same position at all times, the modal only extend downwards and
+  upwards depending on content"): the panel is centred on the height it opens at and its top held there
+  while it is open (search.js _searchPlace, --search-top on the frame; a resized window centres that
+  opening height again), so the field never moves and only the foot does; it eases from where it is to
+  its new place on DUR.fast and EASE.standard whenever the query changes the list (read before the
+  commit, PaletteApp getSnapshotBeforeUpdate); a change mid-way starts from there, the list shows no
+  scrollbar while it grows, it opens and closes about the field's middle, and under reduced motion it
+  is simply the new height. THE WINDOW IS ITS LIMIT ("limit appropriately and set a max height with
+  scroll inside so the modal doesn't exceed viewport height when over 40 matches"): the frame is the
+  window less the held top and a 24px margin below, the panel at most that (it stopped at 72vh), the
+  list scrolling inside; a query still lists at most 40 matches, about three panels of rows on a 900px
+  window. No count is shown past 40.
+  ⌘K ON AND OFF THE CREATE PAGE, 74 scenarios ("needs bullet proof inspection"). It opens only over the
+  tool with nothing modal open; the landing, the loader, the documents, the 404 and a phone leave the key
+  to the browser. Five defects fixed: a window narrowed below 1024 with the search open left it open under
+  the phone view, which went inert (it now closes whenever the tool leaves the screen: narrow, a document,
+  the landing); a held ⌘K toggled on every repeat (the first press counts); pressed as Create lifted the
+  landing, it opened unseen under the crossing (not taken until the page has arrived); a Library palette
+  opened from the search or a row over a shared palette came up under "Shared with you" with the other
+  link in the bar (loadIntoResult ends the shared view, clears the link and takes an entry, so Back
+  returns to the shared palette); and Back onto a shared link's entry from /create brought the landing up
+  with the link in the bar, after that or after Save or Make Your Own with a dialog opened first (the
+  page reloads onto the link, as it does for another palette's link at the same path).
+- **No Reference takes the picture's corner** ("Needs added border radius so it aligns with an actual
+  reference"): --radius-card, the 12px the reference image wears.
+- **Measured against the system the same day** (by request: "carefully, thoroughly go through the
+  implementations so everything is aligned"). Besides the search's rows, cut and door above: the Library
+  File rows (Back Up, Restore) were 38px beside 37.5px filter rows, their 16px glyph setting the line, and
+  are 37.5 now; the Search door's disabled .45 went for every control's .42.
+- **Share Palette, audited across devices and renames** (by request: "audit the 'Share Palette' function
+  between devices and structure and behaviour after renaming a palette, check all user scenarios"). 23
+  scenarios on the dev build, desktop sender, desktop and phone recipients. The link is
+  `https://atmos.gallery/#p=<name>~<colours>`, 80 to 110 characters; a rename (on the stage or in Full
+  Swatch View) is in the next link, a link made before it keeps the old name, Cmd+Z brings the old name
+  back to the next link, and a recipient's own rename travels with theirs. Three defects fixed: one's own
+  link opened in one's own browser came up as "Shared with you" and Save to Library made a duplicate (a
+  palette with the same name and colours now opens from the Library, desktop only); a saved shared
+  palette said "Name From: Live Reading" (now "Shared Palette"); a colour under half a percent reached the
+  recipient as "0%" where the sender reads "<1%" (a 0 from a link now arrives as 0.4%). A PHONE ONLY
+  RECEIVES ("Share from a phone - No."): no act passes a palette on from the story; don't re-propose one.
+  EVERY PHONE LINK NAMES THE PALETTE ON SCREEN ("Fix this so every link on the phone matches the palette a
+  user lands on"): each story place writes the told palette's link into the address (the example's own,
+  or the shared one), so the browser's share, a copied address and a reload give that palette; a link to
+  one of the eight tells that example, not as shared; Back and Forward move between them with no reload.
+- **The list's colour strips take the search's corner** ("Adjust the corner radius on the palettes in the
+  list view so it matches search"): --radius-swatch (3), where they were square.
+- **The 404 has Back, top left, and stands on the eight centre columns** ("On the 404 page put the call to
+  action a more convenient place, top left with a back button for example. Make the 404 so it fits 8
+  columns from the center"). "Create a Palette" stood under the 404, the only control and the last thing
+  found. Back is the quiet glass pill it was, with the icon set's arrow (16px beside the 14px word, so the
+  stroke matches the Medium label), on the first column's line and centred on the mark's line, out of the
+  flow so the band stays the mark's height; it goes back to the page of this site the reader came from, or
+  to the tool (its href, so it works with no script); below 360px it is the arrow alone, still named Back.
+  The page is on the site's twelve columns and the 404 spans 3 / 11 (920px at 1440), the lines the legal
+  block and /about's hero stand on; 1 / -1 on a phone's four. The height reserve lost the button's terms
+  and keeps the band's height under the figure too, so a short window frames it evenly. Not taken: full
+  width (a banner), six columns (too small at 1024).
+
 ## 2026-09-24 — Share links are the name and the colours, about 90 characters
 
 **By request:** "we need shorter links as well", then "Build your pick" (the shorter of the two options).

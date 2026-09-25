@@ -1265,7 +1265,7 @@ export const persistenceMethods = {
     if (!store.available) return;
     const attempt = (pl) => { let str; try { str = JSON.stringify(pl); } catch (e) { return { ok: false }; } return store.save(str); };
     let res = attempt(payload);
-    if (res && res.ok) return;
+    if (res && res.ok) { this._storageKeep(payload); return; }
     // quota: drop reference thumbnails from the OLDEST palettes (tail) inward, keeping palette data
     const feed = payload.feed.map((p) => Object.assign({}, p));
     let dropped = 0;
@@ -1274,5 +1274,45 @@ export const persistenceMethods = {
     }
     if (!res || !res.ok) { this.setState({ announce: 'Storage is full. Some palettes could not be saved, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Storage is full. Back up to keep your palettes safe.', { sticky: true }); } }
     else if (dropped > 0) { this.setState({ announce: 'Storage is nearly full. Older reference images were dropped to keep your palettes, so back up to keep them.' }); if (!this._quotaNoticed) { this._quotaNoticed = true; this.showNotice('Older reference images were reduced to free space. Back up to keep everything.'); } }
+  },
+
+  /* WHERE THE LIBRARY LIVES (24.09.26, UX audit, by request). The Library is this browser's local
+     storage and nothing else: no account, no server copy (/privacy, /terms). A browser told to keep
+     nothing (every site's data blocked, in its settings, by a policy or by an extension) keeps the
+     palettes for the visit and no longer, and the page says nothing about it: by request, the same
+     week ("Remove not saved altogether"), after four ways of saying it had come and gone (a line
+     beside the Library's heading, a sticky notice holding Back Up, "Not Saved" with a trail of dots to
+     Back Up at the foot of Manage, then "Not Saved" with Back Up beside it). It is rare, and Back Up
+     in Manage is where it always was. A palette just made says it is saved only where it is
+     (renderVals `saved`, storageKept).
+
+     A palette of the visitor's own: not one of the eight examples the Library opens with. */
+  _ownPalettes(feed) { return (feed || []).filter((p) => p && p.example !== true && !p.exampleKey).length; },
+  storageKept() { return !!this._store().available; },
+
+  /* THE BROWSER IS ASKED TO KEEP IT. Without navigator.storage.persist() the Library is best-effort
+     storage, which a browser short of space may clear without asking. Asked once a visit, after the
+     first palette of the visitor's own is written, the moment there is something worth keeping.
+     Chromium answers silently from how the site is used; Firefox asks the visitor; Safari decides by
+     its own rules. Nothing here depends on the answer. */
+  _storageKeep(payload) {
+    if (this._persistAsked || !this._ownPalettes(payload && payload.feed)) return;
+    this._persistAsked = true;
+    try {
+      const sm = navigator.storage;
+      if (!sm || !sm.persist) return;
+      (sm.persisted ? sm.persisted() : Promise.resolve(false)).then((on) => (on ? null : sm.persist())).catch(() => { });
+    } catch (e) { }
+  },
+
+  /* THE OFFER AT THE THIRD PALETTE went the same day (by request: "why are we backing up a single
+     palette?"). A notice after the third palette of one's own offered Back Up, and after a palette it
+     read as saving that palette, where Back Up writes the whole Library. Where the browser keeps the
+     Library, nothing asks; where it keeps nothing, the dot above does. */
+
+  // Back Up, from Manage or the search: the file, and the event with where it was pressed.
+  backUpLibrary(from) {
+    this.saveProjectFile('library');
+    trackEvent('Library Backed Up', { palettes: this.state.feed.length, from: from === 'search' ? 'search' : 'manage' });
   },
 };

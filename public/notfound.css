@@ -48,7 +48,14 @@ body{display:flex;flex-direction:column}
      tracks the toolbars live and would re-fit the 404 mid-scroll as they slid away. Desktop is
      unaffected — there svh and vh are the same number. */
   min-height:calc(100svh - var(--nf-head-height));
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  /* ON THE SITE'S COLUMNS (25.09.26, by request: "Make the 404 so it fits 8 columns from the center").
+     The page's own twelve, from global.css, with its gutter and its margin, so the 404 stands on the
+     lines the legal pages' block and /about's hero stand on (3 / 11, below). One row, centred in what
+     the mark's band leaves. */
+  display:grid;
+  grid-template-columns:repeat(var(--grid-cols),minmax(0,1fr));
+  column-gap:var(--grid-gutter);
+  align-content:center;
   width:100%;
   padding:24px var(--page-gutter);
 }
@@ -108,13 +115,38 @@ body{display:flex;flex-direction:column}
    topmost thing in the band, it fills the anchor but for the 4px each side below, and the click
    bubbles to the link. */
 .nf-head{
+  position:relative;
   display:flex;justify-content:center;
   padding:var(--nf-head-pad) var(--page-gutter) 0;
 }
 /* Fully round, so the chrome focus ring around the mark is a stadium like the app bar's (B2), with the
    app bar's 4px of air each side: the artwork runs to its box's right edge, and the ring met the y.
-   The negative margin takes the padding back out of the layout, so the mark does not move. */
-.nf-head a{display:block;line-height:0;border-radius:var(--radius-pill);padding-inline:4px;margin-inline:-4px}
+   The negative margin takes the padding back out of the layout, so the mark does not move. The home
+   link's own class since Back shares the band: a rule on every `a` here would set Back's box too. */
+.nf-head .nf-home{display:block;line-height:0;border-radius:var(--radius-pill);padding-inline:4px;margin-inline:-4px}
+/* BACK, TOP LEFT (25.09.26, by request; see 404.html). The page's one control, on its first column's
+   line (the margin) and centred on the mark's line, the band's two ends: the mark in the middle, the
+   way back at the start. Out of the flow, so the band stays the mark's height, which --nf-head-height
+   and the reserve below are summed from. The quiet glass pill it was (.nf-cta, below), with the icon
+   set's arrow (ic:outline-arrow-back) before the word at 16px, a step over the 14px label: at 14 its
+   stroke (1.17px) read lighter than the Medium label's stems, at 16 it is 1.33px and as tall as the
+   capitals. 2px less padding on the arrow's side takes back the glyph's own side bearing (2.7px), so its
+   point stands 16.7px in, as far as the word's last letter does from the other end. (0,2,0), to outrank .nf-cta, which comes later and sets position and padding. */
+.nf-head .nf-back{
+  position:absolute;
+  inset-inline-start:var(--page-gutter);
+  top:calc(var(--nf-head-pad) + var(--nf-mark-height) / 2);
+  transform:translateY(-50%);
+  gap:6px;
+  padding-inline-start:14px;
+}
+.nf-back__glyph{display:block;flex:none}
+/* Where the band is too narrow for the word beside a centred mark (the 126px wordmark and a Back of
+   about 85px meet at 320), the arrow alone, a 36px disc; the word stays as its name. */
+@media (max-width:359px){
+  .nf-head .nf-back{padding:0;width:36px;height:36px;justify-content:center}
+  .nf-back__label{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+}
 .nf-mark{
   display:block;width:var(--logo-w);height:var(--nf-mark-height);
   /* The app's gradient, its 280% frame and its 9s drift, verbatim — one wordmark, one motion, on
@@ -144,6 +176,9 @@ body{display:flex;flex-direction:column}
    element and sets it there; the fallback is that same figure, so the guard is right even with no JS.
    On an ordinary window it doesn't bind at all — the type simply fills the width. */
 .nf-type{
+  /* The eight centre columns (3 / 11), by request; all four on a phone's grid (below). Centred in them
+     when the height guard makes it narrower. */
+  grid-column:3 / 11;justify-self:center;
   width:100%;
   /* The floor is not decoration. The reserve is subtracted from 100vh, so on a short enough window it
      exceeds it and the calc goes negative — max-width clamps to 0, and a 0-width parent is exactly the
@@ -157,14 +192,17 @@ body{display:flex;flex-direction:column}
   max-width:max(120px, calc((100svh - var(--nf-reserve)) * var(--nf-fit-ratio, 2.35)));
   /* Everything in the first screen that is not the 404, summed from its parts rather than written as
      one number, so each term stays answerable to the rule that sets it:
-       --nf-head-height  the mark's band, from the tokens .nf-head and .nf-mark themselves use
+       --nf-head-height  the mark's band, from the tokens .nf-head and .nf-mark themselves use (Back
+                         stands in it, out of the flow)
        48px              .nf's own vertical padding, 24 top and 24 bottom
-       24px + 36px       .nf-actions' margin-top, and the button
-       24px              air, so the type never crowds the button
-     It is a flat figure — while the footer lived inside the viewport this had to carry the footer's
-     width-dependent height, and got the arithmetic wrong on any short window. There is no footer on
-     this page at all now, so every term above is one this page's own rules set. */
-  --nf-reserve:calc(var(--nf-head-height) + 48px + 24px + 36px + 24px);
+       --nf-head-height  again, under the 404: as much room below it as the band holds above, so on a
+                         window short enough for this to bind, the figure sits in an even frame
+     The button that stood under the 404 (24px of margin, 36 of button, 24 of air) went to the band as
+     Back (25.09.26), and its terms with it. It is a flat figure — while the footer lived inside the
+     viewport this had to carry the footer's width-dependent height, and got the arithmetic wrong on
+     any short window. There is no footer on this page at all now, so every term above is one this
+     page's own rules set. */
+  --nf-reserve:calc(var(--nf-head-height) * 2 + 48px);
   text-align:center;
   /* The heading is an inline-block, so it sits on a line box here — and that line box carries a strut
      from the inherited line-height, which parked ~8px of nothing under the digits and made the 24px
@@ -226,9 +264,8 @@ body{display:flex;flex-direction:column}
   z-index:1;
 }
 
-/* The line box hugs the digits now, so this margin is the whole gap between the 404 and the button —
-   there is no leading left over to stand in for it. */
-.nf-actions{margin:24px 0 0}
+/* On a phone's four columns the 404 takes all of them, as the legal block and /about's hero do there. */
+@media screen and (max-width:720px){ .nf-type{grid-column:1 / -1} }
 
 /* The landing's Get Started button, restated. It was copied from `glassCta` in renderVals.js, which
    no longer exists: the three hand-copied versions of this control (here, the landing, and /about's
@@ -286,12 +323,12 @@ body{display:flex;flex-direction:column}
 
 /* There is no footer rule here because there is no footer on this page. It was a 404-only .nf-foot,
    then the shared .site-foot carrying its own gutter and rules, and now it is neither: the page ends
-   with the button. The links it held — privacy, terms, kau.studio — are on every page the button
-   leads to, and this one is an answer to a bad address rather than a place to read anything.
+   with the 404. The links it held — privacy, terms, kau.studio — are on every page Back and the mark
+   lead to, and this one is an answer to a bad address rather than a place to read anything.
 
    One grid at every width — the app's gutters hold on a phone as much as on a desktop, and the legal
    routes do the same, so no page here has a breakpoint-specific inset. The vertical reserve needs no
-   breakpoint either: it is summed from the mark, this page's own padding and its button, none of which
+   breakpoint either: it is summed from the mark's band and this page's own padding, none of which
    change with width. It carried three width- and height-dependent overrides while the footer shared the
    viewport with the 404 — every one of them existed to keep the footer from crowding the type, and
    there is nothing left to crowd it. Deleted rather than kept "just in case": each was a number that

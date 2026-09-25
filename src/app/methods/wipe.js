@@ -273,7 +273,9 @@ export const wipeMethods = {
          here the wipe's own handoff lands on the chrome's first control and takes the keyboard OFF
          the dialog that has just opened over it, a second after openTourInvite put it there. One
          answer, written where the wipe asks for it, rather than two focus calls racing. */
-      focusTarget: () => document.querySelector('[data-tour-dialog] [data-tour-take]')
+      // (A modal invitation only: the first visit's is docked beside the page since 24.09.26, and
+      // an offer beside the page does not take the keyboard from it.)
+      focusTarget: () => document.querySelector('[data-tour-dialog][aria-modal="true"] [data-tour-take]')
         || document.querySelector('header [data-focus="chrome"]') || document.querySelector('[data-focus="chrome"]'),
     });
   },

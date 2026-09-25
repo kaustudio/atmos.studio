@@ -197,7 +197,7 @@ export const tourMethods = {
        banner stayed clickable. Now the invitation waits for the banner's answer, and _closeConsent
        offers it once the banner has left. */
     if (this.state.consentOpen || this._consentClosing) { this._tourAfterConsent = true; return; }
-    this.openTourInvite();
+    this.openTourInvite(true);
   },
 
   /* THE WAITING INVITATION, after the banner has gone. A beat later, so the banner's exit and the
@@ -221,14 +221,26 @@ export const tourMethods = {
 
   // ===== the invitation =====================================================================
 
-  openTourInvite() {
+  /* DOCKED ON A FIRST VISIT, A DIALOG FROM THE FOOTER (24.09.26, UX audit, by request). Offered after
+     Create, the invitation was a modal: the start box sat under its scrim until it was answered, so
+     the first thing a visitor who came to make a palette had to do was decide about a tour (and then
+     about analytics). Now that offer stands in the corner the analytics banner uses, beside a page
+     that stays live: no scrim, no aria-modal, no trap, and focus stays where the visitor put it. It
+     is answered like the banner, or by simply starting: an image arriving or a palette opening takes
+     it away (_tourInviteStepAside). Take a Tour in the footer is a visitor asking for the tour by
+     name, so it still opens the dialog, which is then what they are there for. */
+  openTourInvite(docked) {
     this._tourBack = document.activeElement;
-    this.setState({ tourStep: 'invite', tourInviteOut: false }, () => {
+    const patch = { tourStep: 'invite', tourInviteOut: false, tourInviteDocked: !!docked };
+    // Spoken, because nothing moves focus to it: the banner's own rule, one polite line.
+    if (docked) patch.announce = 'A short tour of an example palette is offered at the end of the page.';
+    this.setState(patch, () => {
       /* _dialogIn, the five dialogs' own arrival: the scrim on DUR.state, the panel up 12px from 0.98
          on EASE.entrance. It used to simply be there — measured at one opacity value across ~190
          frames, where Export in the same run eased through seventeen. On a first visit it arrives
          under the page wipe and the wipe is what is seen; from the footer this is the whole entrance. */
       this._dialogIn('[data-tour-dialog]');
+      if (docked) return;
       requestAnimationFrame(() => {
         const d = document.querySelector('[data-tour-dialog]');
         if (!d) return;
@@ -241,6 +253,24 @@ export const tourMethods = {
   },
 
   trapTourInvite(e) { this.trapFocusIn('[data-tour-dialog]', e); },
+
+  /* THE DOCKED OFFER STEPS ASIDE WHEN THE VISITOR STARTS. It is only an offer while they are deciding
+     what to do; an image arriving or a palette opening answers it by doing something else. It leaves
+     the quiet way, as _tourAbandon does: nothing announced (the app is announcing what they started)
+     and focus left where their press put it. Remembered as answered, so it is not offered again, and
+     the footer's Take a Tour is the way back. Called from componentDidUpdate. */
+  _tourInviteStepAside() {
+    const s = this.state;
+    if (s.tourStep !== 'invite' || !s.tourInviteDocked || this._tourInviteLeaving) return;
+    this._tourRemember();
+    this._tourInviteLeaving = true;
+    this._tourBack = null;
+    this.setState({ tourInviteOut: true });
+    this._dialogOut('[data-tour-dialog]', () => {
+      this._tourInviteLeaving = false;
+      this.setState({ tourStep: null, tourInviteOut: false, tourInviteDocked: false });
+    });
+  },
 
   /* SKIP FOR NOW CLOSES AND LEAVES THE READER IN THE OVERVIEW — it does not start anything and does
      not take anything away. The answer is remembered so the offer does not arrive again on the next
@@ -1266,11 +1296,13 @@ export const tourMethods = {
     return {
       stage: (s.tourStep === 'invite' || s.tourInviteOut) ? 'invite' : null,
       leaving: !!s.tourInviteOut,
+      docked: !!s.tourInviteDocked,
       showRestart: !this._landingUp() && s.tourStep == null && !s.sharedView,
       onRestart: () => this.openTourInvite(),
       onTake: () => this.takeTour(),
       onSkipInvite: () => this.skipTourInvite(),
-      onInviteKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.skipTourInvite(); } else this.trapTourInvite(e); },
+      // Docked, Tab walks on out of it: it is beside the page, not over it.
+      onInviteKey: (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.skipTourInvite(); } else if (!s.tourInviteDocked) this.trapTourInvite(e); },
       card: !step ? null : {
         cardRef: this.tourCardRef,
         /* THE CARD SITS ABOVE THE SURFACE IT EXPLAINS AND BELOW ANYTHING THE READER OPENS ON TOP.

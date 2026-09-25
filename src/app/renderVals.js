@@ -150,6 +150,53 @@ const MEAS_CHIPS = (self, s, focusBack) => {
 };
 
 export const renderValsMethods = {
+  /* THE SEARCH MENU'S VALUES. The flat order is the order the arrows walk and the ids the field's
+     aria-activedescendant names, so both come from the same pass over the groups. */
+  _searchVals() {
+    const s = this.state;
+    const keys = this.searchKeys();
+    const base = { can: (s.feed || []).length > 0, disabled: !s.searchOpen && !this._searchAvailable(), keys: keys.aria, keyHint: keys.hint, openFromButton: () => this.openSearch('button') };
+    // Drawn while open and while leaving (search.js closeSearch): closed is a state, gone is a frame later.
+    if (!s.searchOpen && !s.searchOut) return Object.assign(base, { open: false });
+    const groups = this.searchItems();
+    const flat = [];
+    groups.forEach((g) => g.items.forEach((it) => flat.push(it)));
+    const at = flat.length ? Math.min(s.searchActive, flat.length - 1) : -1;
+    let n = 0;
+    const viewGroups = groups.map((g) => ({
+      key: g.key, label: g.label, tags: !!g.tags,
+      items: g.items.map((it) => {
+        const i = n++;
+        const row = { key: it.key, id: 'search-opt-' + i, active: i === at, kind: it.kind, tag: !!it.tag,
+          // Pointer MOVE, not enter: a list scrolling under a still pointer must not take the row.
+          onHover: () => { if (this.state.searchActive !== i) this.setState({ searchActive: i }); },
+          onPick: () => this.searchPick(it) };
+        if (it.kind === 'palette') {
+          const p = it.p;
+          // A tag under "Did you mean" is the name alone (search.js searchItems).
+          if (it.tag) return Object.assign(row, { name: p.name });
+          const sub = this.paletteTags(p).slice();
+          if (p.example === true) sub.push('Example');
+          const proj = this.palProjects(p).map((id) => this.projectName(id)).filter(Boolean);
+          if (proj.length) sub.push(proj.join(', '));
+          return Object.assign(row, { name: p.name, sub: sub.join(' · '), strip: (p.swatches || []).map((sw) => ({ hex: sw.hex, w: +sw.weight || 0 })) });
+        }
+        // The last tag under "Did you mean" when the words find more than the tags show.
+        if (it.kind === 'suggest') return Object.assign(row, { name: 'Show All ' + it.count, all: true });
+        return Object.assign(row, { name: it.a.label, icon: it.a.icon });
+      }),
+    }));
+    // Nothing the words found; a suggestion may still stand under the line that says so.
+    const miss = !!s.searchQuery.trim() && (!groups.length || !!groups[0].miss);
+    return Object.assign(base, {
+      open: true, leaving: !!s.searchOut, query: s.searchQuery, inputRef: this.searchInputRef,
+      groups: viewGroups, empty: !flat.length, miss, activeId: at >= 0 ? 'search-opt-' + at : undefined,
+      onInput: (e) => this.setState({ searchQuery: e.target.value, searchActive: 0 }, () => this._searchAnnounce()),
+      onKey: (e) => this.searchKey(e, flat),
+      onClose: () => this.closeSearch(),
+    });
+  },
+
   /* THE HARMONY BUTTON IS A BARE GLYPH, LIKE THE LIBRARY ROW'S FOLDER AND BIN (17.09.26, audit A1,
      fourth round, by request): no edge and no fill at rest, the glyph in the swatch's own AA ink
      (`on`, onColor(): black on a light swatch, white on a dark one), and on hover the row icons'
@@ -542,8 +589,11 @@ export const renderValsMethods = {
             {
               label: 'Name From',
               // Renamed by the reader (23.09.26): whatever it was named from, it is theirs now.
+              // A shared palette saved to the Library keeps where its name came from (25.09.26, share audit):
+              // it read Live reading, the one thing it never had.
               value: s.sharedView ? 'Shared palette'
                 : s.current.renamed === true ? 'You'
+                : s.current.archetype === 'shared' ? 'Shared palette'
                 : s.current.example === true ? 'Bundled example'
                   : s.current.fallback === true ? 'Local reading' : 'Live reading',
             },
@@ -571,6 +621,23 @@ export const renderValsMethods = {
         refImage: _ref, hasRef: _hasRef, noRef: !_hasRef, refImageNode, detailMeta,
         useLine,
         traits: allTraits, hasTraits: allTraits.length > 0,
+        /* WHERE THIS PALETTE IS KEPT (24.09.26, UX audit, by request): the end of the traits row, for
+           the palette just made or just saved (`freshSaved`) and no other, since one opened from the
+           Library is already where the words would say it is. Saved draws the drawer's tick as the row
+           arrives (by request: "make sure we use the same checkmark animation from the drawer";
+           AppView SavedMark). THE TIMES, ON THE TOKENS: the traits row rises from 0.36s (PaletteApp,
+           animateText's delay for a palette arriving from a reading); the words rise into their line
+           through the mask a line's beat later (`inAt`, + DUR.line), over DUR.swap; the tick draws when
+           they have landed (`drawAt`, 0.6 of DUR.swap in, where the entrance curve is past 95% of its
+           way). IT IS SAID FOR A MOMENT (25.09.26, by request: "this should only be temporary"): it
+           goes after `hold`, the five seconds a notice that passes is given (pipeline.js
+           _armNoticeTimer). Where the browser keeps nothing it says nothing (by request: "Remove not
+           saved altogether"). */
+        saved: (s.sharedView || s.freshSaved !== s.current.id || !this.storageKept()) ? null : (() => {
+          const D = this.DUR || { line: 0.09, swap: 0.4 };
+          const inAt = 0.36 + D.line;
+          return { text: 'Saved to your Library', inAt: Math.round(inAt * 1000), drawAt: Math.round((inAt + D.swap * 0.6) * 1000), hold: 5000 };
+        })(),
       };
     }
     // SHARE IS ONE PRESS (22.09.26, by request: "What are we actively solving here? … we messing up the
@@ -2180,7 +2247,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // frozen `schema` note in persistence.js).
       backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
       // _confirmRow: the row says "Backed Up" on Export's timer (see DoneSwap in AppView).
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.saveProjectFile('library'); this._confirmRow('lib-backup'); trackEvent('Library Backed Up', { palettes: s.feed.length }); },
+      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.backUpLibrary('manage'); this._confirmRow('lib-backup'); },
       backupDone: s.copied === 'lib-backup',
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),
@@ -2485,6 +2552,8 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       onDismissToast: () => this.dismissUndoToast(),
       // quiet non-blocking notice (e.g. live interpreter unreachable → local fallback)
       hasNotice: !!s.notice, notice: s.notice || '',
+      // ⌘K (methods/search.js): the Library heading's door to it, and the menu while it is up.
+      search: this._searchVals(),
       // alert for a notice that stays until dismissed, status for one that passes — see showNotice
       noticeRole: s.noticeSticky ? 'alert' : 'status',
       dismissNotice: () => this._dismissNotice(), holdNotice: () => this._holdNotice(), releaseNotice: () => this._releaseNotice(),

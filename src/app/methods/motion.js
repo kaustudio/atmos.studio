@@ -287,9 +287,20 @@ export const motionMethods = {
     // palette has no row to go back to, and closeResult falls back to the plain reset there.
     this._resultFrom = rowEl ? p.id : null;
     const g = window.gsap;
+    /* A LIBRARY PALETTE OPENED OVER A SHARED ONE ENDS THE SHARED VIEW (25.09.26, from the ⌘K audit). What
+       opens here is always the Library's, and the flag was left standing: a palette picked from the search,
+       or from a row under a shared palette, came up under "Shared with you", offered to be saved again,
+       with the other palette's link still in the address bar. It ends as Make Your Own and Save to Library
+       end it (methods/share.js): the view goes and the link leaves the bar. Not on a phone, whose story
+       is a place of its own. UNLIKE THOSE TWO IT TAKES AN ENTRY OF ITS OWN (_syncToolHistory): the reader
+       has gone to another palette, not finished with this one, so Back goes back to it (the link's
+       entry, which reloads, PaletteApp _hashMoved). */
+    const leaving = !!this.state.sharedView && !this.state.narrow;
+    if (leaving) this._histFromShared = true;
     // Anchor-scroll: bring the viewport UP to the result region as the palette reveals (one eased
     // motion, coordinated with the band wipe). With a stable stage height there is no reflow to pin.
-    this.setState({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Loaded ' + p.name + ' into the result.' }, () => {
+    this.setState(Object.assign({ stage: 'result', current: p, imageUrl: this.dispUrl(p), announce: 'Loaded ' + p.name + ' into the result.' }, leaving ? { sharedView: false } : null), () => {
+      if (leaving) this._clearShareHash();
       /* THE TOUR'S ENTRY POINT IS THE READER'S OWN CHOICE. `choose` waits here rather than
          selecting a palette for them, so all four steps run on whichever of the eight they opened —
          which is also why no step's copy may name a colour, a ratio or a harmony. No-ops unless the
