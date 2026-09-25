@@ -3014,6 +3014,22 @@ html[data-landing-cover] [data-app]:not([data-ghost-app])>:is(main,[data-recent]
   box-shadow: inset 0 0 1.75em var(--glass-clamp);
 }
 
+/* THE CARDS AT THE FOOT OF THE WINDOW KEEP THEIR FOOTPRINT CLEAR (25.09.26, from the live audit;
+   PaletteApp _syncDockFoot). While the analytics banner or the tour's docked offer is up, --dock-foot is
+   its footprint. As the root's scroll-padding, a control given focus beneath the card is scrolled clear
+   of it (WCAG 2.4.11, technique C43); as room at the page's end, its last lines can be scrolled out from
+   under it. With neither up, both are 0.
+
+   THE ROOM IS A SPACER THAT CARRIES THE GROUND, NOT THE APP'S PADDING. On the phone's story the ground is
+   laid section by section above the landing's field (story.css: the field 150, the footer 151, the story
+   152), and the app's own box lies under the field. As padding, the room was a hole onto it: measured at
+   the story's end with the banner up, the landing's credit strip, photograph and caption, showed between
+   the footer and the banner. So the room is the app's last flex item, and on the story it takes the
+   footer's place in that order, as the page's last section. */
+html{scroll-padding-bottom:var(--dock-foot, 0px)}
+[data-app]::after{content:'';flex:none;height:var(--dock-foot, 0px)}
+[data-app]:has(>[data-mobile-story])::after{position:relative;z-index:151;background:var(--surface)}
+
 /* ===== THE ANALYTICS BANNER (ConsentBanner in AppView) ==========================================
    Classes rather than sx(), for the footer's reason: the link needs :hover and a hover media query,
    which an inline style cannot state.

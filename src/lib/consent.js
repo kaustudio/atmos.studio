@@ -31,9 +31,29 @@ export const whenAllowed = (send) => (event) => (readConsent() === 'granted' ? s
 
 /* THE FRAGMENT, FOR SPEED INSIGHTS. A share link carries the whole palette after the #, and Speed
    Insights reports location.href with only the pathname rewritten — the hash survives, so every
-   vital recorded on an opened share link carried the palette with it. AppView's stripFragment closes
+   vital recorded on an opened share link carried the palette with it. pageviewUrl (below) closes
    the same hole for Web Analytics; its vital event names the address `url` in the same way. */
 export function withoutFragment(event) {
   try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
   catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
+}
+
+/* THE PAGEVIEW'S ADDRESS: no fragment (AppView's note on sendPageview), and on the first pageview the query
+   the visit arrived with (25.09.26, from the live audit). A phone's story writes the told palette's link
+   into the address WITHOUT the query string (PaletteApp _syncToolHistory), so a campaign's tags or an ad's
+   click id are not handed on when the reader shares it. The script can load after that, once the visitor
+   has answered, and would then read an address that has lost them; so the first pageview puts back the
+   query the page was opened with, when its address no longer has one. Read as this module is evaluated,
+   before anything rewrites the address. Later pageviews, and every custom event, go as they are. */
+const ARRIVAL_SEARCH = typeof location !== 'undefined' ? location.search : '';
+let arrivalSent = false;
+export function pageviewUrl(event) {
+  const first = !!event && event.type === 'pageview' && !arrivalSent;
+  if (event && event.type === 'pageview') arrivalSent = true;
+  try {
+    const u = new URL(event.url);
+    u.hash = '';
+    if (first && ARRIVAL_SEARCH && !u.search) u.search = ARRIVAL_SEARCH;
+    return { ...event, url: u.toString() };
+  } catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
 }

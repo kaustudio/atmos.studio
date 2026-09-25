@@ -7,6 +7,87 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-25 — Start here's paste line is "Or" and one key, and the phone's first chapter arrives with no edge
+
+Both by request.
+
+- **"Or [⌘ V]".** ("Change the copy to Or and isolate with a border around command and v", then
+  "command and v should be in the same outline [⌘ V]".) The line read "Or paste one with ⌘V."; it now
+  reads "Or" and one key cap holding ⌘ and V: the search foot's cap (kbd[data-kbd], 20px, the hairline,
+  the muted ink, the tick box's 3px corner), 6px after the word, as the foot sets a key beside its word.
+  The ⌘ is the icon set's (ic:outline-keyboard-command-key, back from this morning's search foot), not a
+  fallback font's, with 2px before the V: the glyph carries 1.4px of side bearing at 11px, so the two
+  read a word space apart at the cap's 12px. Off a Mac it is "Ctrl V" in the same cap, as the Search
+  door writes Ctrl K. The cap is 20px against the 15.5px the line's text was, so the title rises 2.3px
+  and the + drops 2.3px. Read aloud the row would be "Or V", so a screen reader is given the sentence
+  the line used to print.
+- **The phone's first chapter arrives with no edge.** ("On mobile, the first section after the landing
+  that comes in lives above the landing. I want that section to be a seamless and smooth blending
+  transition so we dont stack the section above the landing".) Each chapter carried its own opaque
+  ground, so 1.1 rose over the landing as a sheet with a hard top line, cutting the credit's photograph
+  as it passed, and 1.2's top was a second line behind it. Only the field dissolved; the stage's air,
+  vignette, grain and credit stayed. Measured down one pixel column at 390 × 844 on live: steps of 68,
+  51 and 14 of 255 between neighbouring rows at the chapter's top through the hero's tail (72, 59 and
+  18 in dark). Now 3.4 at most (2.9 in dark).
+  - heroExit.js [ATMOS 7]: the whole stage ([data-landing]) takes the fade the field had, the same curve
+    over the same 0.92 of the tail, autoAlpha so it ends hidden; the field keeps its blur. The credit
+    fades over the first 0.15, since 1.1's heading reaches its caption at 0.17 to 0.20 of the tail
+    (measured at 667, 844 and 932 tall).
+  - story.css: while that runs ([data-hero-blend], set and removed by the module), the story carries
+    one ground, transparent down to 100svh where 1.1 begins and the surface from 150svh, the overlap's
+    own half screen. 1.1 and 1.2, the chapters on screen while it arrives, drop their own grounds.
+    With no JS or under reduced motion the stage stays and the chapters keep their grounds and edge.
+  - Past the tail nothing of the stage is painted now. The air, vignette, grain and credit used to stay
+    up behind the article for the whole page (measured: the stage at full opacity at 560px on live);
+    [ATMOS 5] records the field showing beside the article at zoom below 1, and hidden, the rest of the
+    stage cannot either.
+
+
+## 2026-09-25 — The cards at the window's foot never hide a focused control, a phone's link carries no campaign, and the 404's files carry their version
+
+**From the interface audit of the live site** (better-interface, full mode, on 5cc8ff8), all three findings,
+by request ("fix all three"):
+
+- **The cards at the foot of the window keep their footprint clear.** The analytics banner and the tour's
+  docked offer float fixed at the bottom right. On /create's start at 1280 × 800 and 1024 × 768 they lay
+  entirely over the Library's Search, Manage, List and Grid, and Tab put focus on them unseen (WCAG
+  2.4.11, the one HIGH). `--dock-foot` (PaletteApp `_syncDockFoot`) is the footprint of whichever is up:
+  its height, its inset from the bottom, and 8px: the focus ring reaches 6px past a control (3px wide,
+  3px out) and 2px keep it off the card's edge. It is read from the card's box, not its painted place, so
+  an arrival in motion does not shorten it, and read again when the window changes. It is the root's
+  `scroll-padding-bottom`, so the browser brings a focused control clear of the card (WCAG technique C43),
+  and the height of a spacer that ends the page, so the last lines can be scrolled out from under it. The
+  cards stay where they were put, bottom right: at scroll 0 on a short window they still float over the
+  Library's row, as a floating card does, but nothing under them is out of reach and focus is never
+  hidden. The banner's own `--consent-foot` still pads the Library panel.
+  - *A spacer, not the app's padding.* On the phone's story the ground is laid section by section above
+    the landing's field (150; the footer 151, the story 152), and the app's own box lies under it. As
+    padding, the room was a hole onto the field: at the story's end with the banner up, the landing's
+    credit strip, photograph and caption, showed between the footer and the banner. The spacer is the
+    app's last flex item and, on the story, takes the footer's place in that order. A shared link on a
+    phone is told by the story too (since 24.09), so this covers it.
+  - *The room closes on a curve.* Given back while the window's foot is inside it, it made the browser
+    pull the page down at once: 222px in one frame after the offer left at the page's end, 151px after the
+    banner, 143px on a phone. There it now eases shut after the card has gone (DUR.state, EASE.standard),
+    as a fold's height does; anywhere else it goes at once, unseen.
+- **A phone's address carries no campaign.** Since the phone's address became the told palette's link
+  (this morning's entry below), it kept the query the visit arrived with, so a reader sharing it with the
+  browser handed on a campaign's tags or an ad's click id, which Share Palette stopped doing on 24.09. The
+  story writes the path and the palette only. So that the visit is still credited, the first pageview puts
+  back the query the page was opened with when its address has lost it (lib/consent.js `pageviewUrl`, with
+  the fragment cut as before); later pageviews and custom events go as they are. The desktop's /create
+  keeps its query: nobody is handed that address.
+- **The 404's two files in public/ carry their version.** notfound.css and fit-width.js are served under a
+  day's cache and a week's stale-while-revalidate, and the HTML is revalidated each time, so the 404's new
+  markup met yesterday's stylesheet in any browser holding it: Back crushed against the mark, the figure
+  full width again, the page scrolling (reproduced on live by serving the old file). The 23.09 footer bug
+  was the same. Each reference now gets `?v=` and ten hex digits of the file's SHA-256 at build
+  (vite.config.ts `stampPublicAssets`; 40 bits, which two files changing a few times a year will not
+  repeat by chance), so its URL changes when its bytes do. The files, their cache rule
+  and their place in the cascade are unchanged: importing notfound.css into the bundle would have put it
+  after global.css, where today it comes before, and turned every tie between them.
+
+
 ## 2026-09-25 — ⌘K finds a palette, a new palette says it is saved for a moment, the first visit is not held up, and the 404 has a way back
 
 **From the UX audit** (better-ux, standalone), every finding, built on 24.09 (639abe1) and adjusted on

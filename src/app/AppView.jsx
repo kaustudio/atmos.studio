@@ -37,7 +37,7 @@ import { thinkingOrbs } from './thinkingOrbs.js';
 // implications — the privacy statement currently promises the analytics "doesn't see anything you
 // do inside the tool", and a single custom event makes that false. See DECISIONS.md.
 import { Analytics } from '@vercel/analytics/react';
-import { whenAllowed } from '../lib/consent.js';
+import { whenAllowed, pageviewUrl } from '../lib/consent.js';
 
 /* THE FRAGMENT NEVER LEAVES, and without this it did. A share link carries the whole palette in
    #p= (lib/share.js), and the SDK's own payload is location.href ENTIRE: read the shipped script and
@@ -46,18 +46,14 @@ import { whenAllowed } from '../lib/consent.js';
    props.route !== undefined, so the automatic pageview fires with the full href. Opening a shared
    link therefore posted that palette's name, descriptors, rationale and swatches to Vercel, which
    is also what made "opening one tells us nothing" false on the privacy page.
-   beforeSend can rewrite the url before anything is sent, so the fragment is cut here rather than
-   trusted not to matter. Applied at every call site below through sendPageview; a new one must
-   carry it too. */
-const stripFragment = (event) => {
-  try { const u = new URL(event.url); u.hash = ''; return { ...event, url: u.toString() }; }
-  catch (e) { return { ...event, url: String(event.url || '').split('#')[0] }; }
-};
+   beforeSend can rewrite the url before anything is sent, so the fragment is cut there (lib/consent.js
+   pageviewUrl, which also keeps the arrival's query on the first pageview) rather than trusted not to
+   matter. Applied at every call site below through sendPageview; a new one must carry it too. */
 /* AND NOTHING AT ALL WITHOUT CONSENT. Each call site mounts the component only once the visitor has
    allowed analytics, and this gate covers the other direction: the SDK's script stays on the page
    after its component unmounts, so a visitor who withdraws is stopped here, per event, by reading
    the stored answer at send time. See lib/consent.js. */
-const sendPageview = whenAllowed(stripFragment);
+const sendPageview = whenAllowed(pageviewUrl);
 
 // HBtn, a small stateful button that applied style-hover / style-active objects from JS, went on
 // 17.09.26: its last users (the wordmark, the harmony swatches) take the [data-ix] contract now.
@@ -150,9 +146,11 @@ const IconCheck = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0
    ↵, ↑, ↓ and ⌘ come from whatever font the system falls back to, and ↵ sat high in its cap, which put
    "Open" beside it off the cap's centre. Now each is a Material glyph from the set the rest are drawn
    from, centred in its cap by the box: IconReturn (ic:outline-keyboard-return) as in the name field,
-   and ic:outline-arrow-upward and -arrow-downward here. (⌘ went with the tool's own keys, 25.09.26.) */
+   and ic:outline-arrow-upward and -arrow-downward here. (⌘ went with the tool's own keys, 25.09.26, and
+   came back for Start here's paste line the same day: ic:outline-keyboard-command-key, at 11.) */
 const IconArrowUp = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8z"></path></svg>);
 const IconArrowDown = ({ size = 12 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="m20 12l-1.41-1.41L13 16.17V4h-2v12.17l-5.58-5.59L4 12l8 8z"></path></svg>);
+const IconCommand = ({ size = 11 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M17.5 3C15.57 3 14 4.57 14 6.5V8h-4V6.5C10 4.57 8.43 3 6.5 3S3 4.57 3 6.5S4.57 10 6.5 10H8v4H6.5C4.57 14 3 15.57 3 17.5S4.57 21 6.5 21s3.5-1.57 3.5-3.5V16h4v1.5c0 1.93 1.57 3.5 3.5 3.5s3.5-1.57 3.5-3.5s-1.57-3.5-3.5-3.5H16v-4h1.5c1.93 0 3.5-1.57 3.5-3.5S19.43 3 17.5 3M16 8V6.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S18.33 8 17.5 8zM6.5 8C5.67 8 5 7.33 5 6.5S5.67 5 6.5 5S8 5.67 8 6.5V8zm3.5 6v-4h4v4zm7.5 5c-.83 0-1.5-.67-1.5-1.5V16h1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5m-11 0c-.83 0-1.5-.67-1.5-1.5S5.67 16 6.5 16H8v1.5c0 .83-.67 1.5-1.5 1.5"></path></svg>);
 // The lens, for Search (24.09.26): the same 24-unit set as the marks around it, drawn at 12 beside the word.
 const IconSearch = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', flex: 'none' }}><path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5A6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5S14 7.01 14 9.5S11.99 14 9.5 14"></path></svg>);
 /* THE HARMONY GLYPH, by request (17.09.26): a disc inside a broken ring, the colour and the colours
@@ -2683,8 +2681,25 @@ export default function AppView({ vals }) {
                   sentence ("Choose an image… Or paste one"), so it sits under it rather than under the +,
                   and the + stays the one act below the words. One type step down (body, 13) in the
                   lead's grey, and the 8px the lead keeps from the title, so the block steps down at one
-                  rhythm. Its own mask, so it joins the reveal; plain text, as every split target must be. */}
-              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>{vals.pasteHint}</div></div>
+                  rhythm. Its own mask, so it joins the reveal.
+                  "OR" AND THE KEYS (25.09.26, by request: "Change the copy to Or and isolate with a border
+                  around command and v", then "command and v should be in the same outline [⌘ V]"). It
+                  read "Or paste one with ⌘V."; the keys now stand for the act the words spelled out, in
+                  one cap, the search foot's (kbd[data-kbd]), 6px after the word as the foot sets a key
+                  beside its word. The ⌘ is the icon set's, not a fallback font's. 2px between it and the V:
+                  the glyph carries 1.4px of its own side bearing at 11, so the two read a word space
+                  apart at the cap's 12px. Off a Mac, "Ctrl V" in the same cap, as the Search door writes
+                  Ctrl K. The cap is 20px, so the line is 4.5px taller than its 13px of text was.
+                  The row is for the eye: read aloud it is "Or V", the glyph being aria-hidden, so a
+                  screen reader is given the sentence the line used to print. Elements inside are safe
+                  here: the reveal moves the whole line (orbit.js _maskReveal), with no split to undo. */}
+              <div style={sx('overflow:hidden;margin-top:8px')}>
+                <div data-drop-line="1" style={sx("display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>
+                  <span aria-hidden="true">Or</span>
+                  <kbd data-kbd="1" aria-hidden="true" style={sx('gap:2px')}>{vals.pasteMac ? (<><IconCommand />V</>) : 'Ctrl V'}</kbd>
+                  <span style={visuallyHidden}>{'Or paste one with ' + (vals.pasteMac ? 'Command' : 'Control') + ' V.'}</span>
+                </div>
+              </div>
             </div>
             {/* THE CALL IS A DISC NOW, drawn from the Figma node (10384:7592): 24px of --on-surface
                 with the plus in --surface, which is the app's filled-CTA pair and the same fill the

@@ -115,11 +115,14 @@ export function initHeroExit(root) {
 
      autoAlpha rather than opacity, so the end of the run is visibility:hidden and not merely
      transparent — nothing to paint, nothing to leak, and GSAP reverses both on the way back up so
-     scrolling to the top restores the field exactly. */
+     scrolling to the top restores the field exactly.
+     THE FADE IS THE WHOLE STAGE'S NOW ([ATMOS 7] below); the field keeps its blur, and the stage's
+     fade carries it out at the pace it had. */
   const field = document.querySelector('[data-orbit]');
+  const stage = document.querySelector('[data-landing]');
   if (field) {
     field.style.zIndex = '1';
-    tl.to(field, { autoAlpha: 0, ease: 'none', duration: 0.92 }, 0);
+    if (!stage) tl.to(field, { autoAlpha: 0, ease: 'none', duration: 0.92 }, 0);
     tl.to(field, { filter: 'blur(8px)', ease: 'none', duration: 1 }, 0);
   }
 
@@ -150,6 +153,39 @@ export function initHeroExit(root) {
   const mark = document.querySelectorAll('[data-logo]');
   if (mark.length) tl.to(mark, { autoAlpha: 0, ease: 'none', duration: 0.25 }, 0);
 
+  /* [ATMOS 7] THE STAGE LEAVES AS ONE, AND THE FIRST CHAPTER HAS NO EDGE (25.09.26, by request: "On
+     mobile, the first section after the landing that comes in lives above the landing. I want that
+     section to be a seamless and smooth blending transition so we dont stack the section above the
+     landing"). This supersedes the field's own fade in [ATMOS 5].
+
+     Two things made chapter 1.1 read as a sheet laid over the landing. Its ground was opaque from its
+     first pixel, so it rose as a hard line across the field. And only the field left: the stage's air,
+     its vignette, its grain and the credit, a photograph and its caption, stayed, so once the field had
+     gone the line still crossed something that was not the chapter's ground, and it cut the credit's
+     photograph in two as it passed. Measured at 390 × 844, one pixel column down the screen: a jump of
+     68, 51 and 14 (of 255) between neighbouring rows at the chapter's top, at 120, 200 and 280px of
+     scroll (72, 59 and 18 in dark). Now 3.4 at most.
+
+     So the stage dissolves whole: [data-landing] takes the fade the field had, on the same curve over the
+     same 0.92, and autoAlpha again, so the end is visibility:hidden. The air, the vignette, the grain and
+     the credit stayed up behind the whole article until now; nothing of the stage is painted past the
+     tail, so none of it can show beside the article at any zoom either. The credit leaves with the
+     picture it names. And the ground arrives over the half screen the first chapter rises through,
+     instead of at each chapter's edge (story.css, under the attribute set here and taken away on
+     destroy), so with no JS, under reduced motion, or anywhere this module does not run, the chapters
+     keep their opaque grounds over a stage that stays, exactly as before.
+
+     THE CREDIT GOES FIRST, BY 0.15. The opaque edge used to cover the credit before 1.1's words got to
+     it; a ground that arrives gradually does not, and 1.1's heading would cross the credit's caption and
+     photograph while the stage was still more than half there. Measured: the heading sits one band gap
+     into the chapter (40, 46 and 51px at 667, 844 and 932 tall) and the caption ends 26px above the
+     window's foot, so the heading reaches it after 66 of 334px of the tail, 72 of 422 and 77 of 466:
+     0.20, 0.17 and 0.17. The credit's own fade runs over 0.15, so it is gone before that on each. */
+  const credit = stage && stage.querySelector('[data-land-nomark]');
+  if (stage) tl.to(stage, { autoAlpha: 0, ease: 'none', duration: 0.92 }, 0);
+  if (credit) tl.to(credit, { autoAlpha: 0, ease: 'none', duration: 0.15 }, 0);
+  root.setAttribute('data-hero-blend', '');
+
   const trigger = tl.scrollTrigger;
 
   return function destroy() {
@@ -157,6 +193,9 @@ export function initHeroExit(root) {
     try { tl.kill(); } catch (e) { }
     try { gsap.set(inner, { clearProps: 'opacity,filter' }); } catch (e) { }
     try { if (field) gsap.set(field, { clearProps: 'opacity,visibility,filter,zIndex' }); } catch (e) { }
+    try { if (stage) gsap.set(stage, { clearProps: 'opacity,visibility' }); } catch (e) { }
+    try { if (credit) gsap.set(credit, { clearProps: 'opacity,visibility' }); } catch (e) { }
     try { if (mark.length) gsap.set(mark, { clearProps: 'opacity,visibility' }); } catch (e) { }
+    try { root.removeAttribute('data-hero-blend'); } catch (e) { }
   };
 }

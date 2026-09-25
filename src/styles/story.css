@@ -172,6 +172,24 @@
 }
 /* The overlap. Half a screen, which is the whole of the hero's sticky travel. */
 [data-story-ch="image"]{ margin-top:-50svh }
+/* AND THE CHAPTERS RISE WITH NO EDGE (25.09.26, by request: "a seamless and smooth blending transition
+   so we dont stack the section above the landing"). Each chapter carried its own opaque ground from
+   its top pixel, so 1.1 rose as a hard line across the landing, a sheet slid over it, and 1.2's top
+   (1.1 is barely a quarter of a screen) was a second line behind it. While the hero dissolves there is
+   one ground instead, the story's own: nothing down to 100svh, where 1.1 begins (the hero's 150svh
+   less the overlap), the whole surface at 150svh, and surface from there to the end. So the ground
+   arrives over the half screen that passes over the hero, the overlap's own length. 1.1 and 1.2, the
+   chapters that can be on screen while it arrives, drop their own grounds to let it through; every
+   chapter after them begins on solid surface, so its edge meets its own colour. The stage behind fades
+   out over the same scroll (heroExit.js [ATMOS 7]), and past it only the surface is left.
+   Scoped to the attribute that module sets and takes away: with no JS, under reduced motion, the stage
+   stays, and a see-through chapter would lay its first lines over the credit's photograph, so there
+   the chapters keep their grounds and their plain edge. The credit itself leaves before 1.1's heading
+   can reach it (heroExit.js, THE CREDIT GOES FIRST). */
+[data-mobile-story].doc-route[data-hero-blend]{
+  background:linear-gradient(to bottom, transparent 100svh, var(--surface) 150svh);
+}
+[data-mobile-story][data-hero-blend] :is([data-story-ch="image"], [data-story-ch="structure"]){ background:transparent }
 /* Sticky rather than fixed. A fixed child resolves against the nearest transformed ancestor, and
    anything that transforms <main> — the block entrance this surface used to arrive on, or any future
    one — would drop the hero out of the viewport for exactly as long as that tween ran. Sticky has no

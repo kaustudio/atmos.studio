@@ -32,7 +32,9 @@
      src/notfound/main.js rather than linked, because this page is a Vite entry and the bundler
      should be the one to hash and inline it. notfound.css adds the display 404, the grid and the
      particle layer, and is now the only stylesheet this page links: site-foot.css went with the
-     footer, which this page no longer carries. -->
+     footer, which this page no longer carries. Its address, and fit-width.js's below, get ?v= and the
+     file's content hash at build (vite.config.ts stampPublicAssets), so a copy cached for an older
+     version of this markup is never used with this one. -->
 <link rel="stylesheet" href="/notfound.css" />
 </head>
 <body>

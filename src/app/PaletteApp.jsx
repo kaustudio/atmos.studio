@@ -527,6 +527,9 @@ export default class PaletteApp extends React.Component {
     // The message lane re-measures the bars under it when the window changes shape (audit W1).
     this._laneResize = () => { if (document.querySelector('[data-message-lane]')) this._laneLiftNow(); };
     window.addEventListener('resize', this._laneResize);
+    // A card at the window's foot can change height with the window's width (_syncDockFoot).
+    this._dockResize = () => { if (this._dockKey) this._syncDockFoot(true); };
+    window.addEventListener('resize', this._dockResize);
     this._stampT = setInterval(() => {
       if (document.hidden || !document.querySelector('[data-row-time], [data-overlay-stage]')) return;
       const reach = 864e5 + 6e4;
@@ -827,6 +830,7 @@ export default class PaletteApp extends React.Component {
     this._syncAppInert();
     this._syncLandingCover();
     this._syncConsent();
+    this._syncDockFoot();
     this._syncFilteredEmpty();
     this._syncLaneLift();
     this._syncAppPath();
@@ -1048,8 +1052,13 @@ export default class PaletteApp extends React.Component {
        desktop. That link opens the same example on any phone (componentDidMount), so it is never taken
        for a palette someone sent. Off the story (a phone window widened into the tool), the address
        goes back to the bare page. */
+    /* WITHOUT THE QUERY STRING (25.09.26, from the live audit). The story's address is a link the reader
+       shares with the browser's own Share, and it carried whatever the visit arrived with, a campaign's
+       tags or an ad's click id, which Share Palette stopped doing on 24.09 (lib/share.js shareUrl). It is
+       the path and the palette now; the first pageview still reports the arrival's query (lib/consent.js
+       pageviewUrl). */
     const story = 'story' in view;
-    const url = story ? location.pathname + location.search + this._storyHash() : (this._storyHashOn ? location.pathname + location.search : null);
+    const url = story ? location.pathname + this._storyHash() : (this._storyHashOn ? location.pathname + location.search : null);
     this._storyHashOn = story;
     try {
       if (replace) { if (url) history.replaceState(entry, '', url); else history.replaceState(entry, ''); }
@@ -1232,6 +1241,57 @@ export default class PaletteApp extends React.Component {
     if (this._hashReloading) return;
     this._hashReloading = true;
     try { window.location.reload(); } catch (e) { }
+  }
+  /* THE CARDS AT THE FOOT OF THE WINDOW KEEP THEIR FOOTPRINT CLEAR (25.09.26, from the live audit). The
+     analytics banner and the tour's docked offer float fixed at the bottom right, and on /create's start
+     at 1280 × 800 they lay entirely over the Library's own controls, Search, Manage, List and Grid: Tab put
+     focus on each of them where nobody could see it (WCAG 2.4.11), and nothing could be scrolled out from
+     under them at the page's end. --dock-foot is the footprint of whichever is up, its height and its inset
+     from the bottom of the window plus 8px: the focus ring reaches 6px past a control (3px wide, 3px out,
+     global.css [data-focus]) and 2px keep it off the card's edge. Read from the card's box rather than its
+     painted place so an arrival still in motion does not shorten it. global.css makes it the root's
+     scroll-padding, so the browser brings a focused control clear of the card (WCAG technique C43), and a
+     spacer at the page's end that carries the ground. Measured when the cards up change, a frame after,
+     and when the window does; the banner's own --consent-foot (consent.js) still pads the Library panel. */
+  _syncDockFoot(force) {
+    const s = this.state;
+    const consent = !!(s.consentOpen && !this._consentAside);
+    const tour = !!(s.tourStep === 'invite' && s.tourInviteDocked);
+    const key = (consent ? 'c' : '') + (tour ? 't' : '');
+    if (!force && key === this._dockKey) return;
+    this._dockKey = key;
+    let foot = 0;
+    const measure = (el) => {
+      if (!el) return;
+      const cs = getComputedStyle(el);
+      if (cs.position !== 'fixed') return;
+      foot = Math.max(foot, el.offsetHeight + (parseFloat(cs.bottom) || 0) + 8);
+    };
+    if (consent) measure(document.querySelector('[data-consent]'));
+    if (tour) measure(document.querySelector('[data-tour-docked="1"]'));
+    foot = Math.round(foot);
+    const root = document.documentElement;
+    const was = this._dockFoot || 0;
+    this._dockFoot = foot;
+    if (this._dockEase) { this._dockEase.kill(); this._dockEase = null; }
+    /* The room given back moves the page only when the window's foot is inside it: the browser then pulls
+       the page down by whatever of it was on screen, at once. That is where a card answered at the page's
+       end leaves the reader, and measured there the page fell 222px in one frame after the offer left
+       (151px after the banner, 143px on a phone). There the room closes on a curve instead, after the
+       card has gone, as a fold's height does rather than snapping (persistence.js). */
+    const sc = document.scrollingElement || root;
+    const seen = was - foot - (sc.scrollHeight - sc.clientHeight - sc.scrollTop);
+    const g = window.gsap;
+    if (seen > 0 && g && !this._reduce) {
+      const room = { px: was };
+      this._dockEase = g.to(room, {
+        px: foot, duration: this.DUR.state, ease: this.EASE.standard,
+        onUpdate: () => root.style.setProperty('--dock-foot', room.px.toFixed(2) + 'px'),
+        onComplete: () => { this._dockEase = null; if (!foot) root.style.removeProperty('--dock-foot'); },
+      });
+    } else if (foot) root.style.setProperty('--dock-foot', foot + 'px');
+    else root.style.removeProperty('--dock-foot');
+    if (key && !force) requestAnimationFrame(() => { if (this._alive && this._dockKey === key) this._syncDockFoot(true); });
   }
   /* The first layer to open pushes the entry the layers share; Back takes it away again (_onPop).
      The same address, so the analytics script counts nothing (it reports a push only when the path
@@ -1564,6 +1624,8 @@ export default class PaletteApp extends React.Component {
     this._alive = false;
     if (this._stampT) { clearInterval(this._stampT); this._stampT = null; }
     if (this._laneResize) { window.removeEventListener('resize', this._laneResize); this._laneResize = null; }
+    if (this._dockResize) { window.removeEventListener('resize', this._dockResize); this._dockResize = null; }
+    if (this._dockEase) { this._dockEase.kill(); this._dockEase = null; }
     if (this._laneT) { clearTimeout(this._laneT); this._laneT = null; }
     if (this._killPicker) { try { this._killPicker(); } catch (e) { } this._killPicker = null; }
     if (this._storyT) { clearTimeout(this._storyT); this._storyT = null; }

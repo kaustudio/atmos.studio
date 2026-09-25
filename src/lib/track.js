@@ -4,7 +4,7 @@
 // · Nothing is called before the visitor allows analytics. Not queued and held for later either: an
 //   act from before the answer is simply not counted.
 // · After that, the SDK's own queue carries the event to its script, and the beforeSend every
-//   <Analytics> is given (AppView: sendPageview = whenAllowed(stripFragment)) reads the stored answer
+//   <Analytics> is given (AppView: sendPageview = whenAllowed(pageviewUrl)) reads the stored answer
 //   again at send time and cuts the share link's fragment from the event's url, as it does for a page
 //   view. A withdrawal mid-visit stops events at that same gate.
 //

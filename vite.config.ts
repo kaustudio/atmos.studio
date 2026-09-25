@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 
 /* Clean URLs, in dev and preview, matching what vercel.json turns on at the edge.
  *
@@ -42,8 +43,43 @@ function cleanUrls() {
   };
 }
 
+/* THE 404's TWO FILES IN public/ CARRY THEIR CONTENT'S HASH (25.09.26, from the live audit).
+ *
+ * notfound.css and fit-width.js are served from public/ under a day's cache and a week's
+ * stale-while-revalidate (vercel.json), while the HTML is revalidated every time. So when the 404's
+ * markup changed, a browser still holding yesterday's stylesheet laid the new page out with the old
+ * rules: Back crushed against the mark in the centre, the figure full width again, the page scrolling.
+ * The footer's stylesheet did the same on 23.09 and moved into the bundle; these two stay where they
+ * are, because importing notfound.css would put it after the bundle's global.css, and in the built
+ * page it comes first, so global wins every tie today and would lose them after.
+ *
+ * Instead each reference gets ?v= and the first ten hex digits of the file's SHA-256 (40 bits: two
+ * files that change a few times a year will not repeat one by chance), so its URL changes when its
+ * bytes do: no cached copy can meet markup it was not written for, and each version
+ * can keep its long cache. Read from Vite's own public directory, not the working directory, since the
+ * dev server is sometimes started from another checkout. Runs for every HTML entry, in dev and build.
+ */
+function stampPublicAssets() {
+  const FILES = ['notfound.css', 'fit-width.js'];
+  let publicDir = resolve(process.cwd(), 'public');
+  const stamp = (name: string) => {
+    try { return createHash('sha256').update(readFileSync(resolve(publicDir, name))).digest('hex').slice(0, 10); }
+    catch (e) { return null; }
+  };
+  return {
+    name: 'atmos-stamp-public-assets',
+    configResolved(config: any) { if (config.publicDir) publicDir = config.publicDir; },
+    transformIndexHtml(html: string) {
+      return FILES.reduce((out, name) => {
+        const v = stamp(name);
+        return v ? out.split('"/' + name + '"').join('"/' + name + '?v=' + v + '"') : out;
+      }, html);
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), cleanUrls()],
+  plugins: [react(), cleanUrls(), stampPublicAssets()],
   // PORT wins when the environment sets one. Vite does not read it on its own, so a harness that
   // assigns a free port and expects the server to take it got 5173 every time — and then could not
   // reach the thing it had just started. 5173 stays as the default for a plain `npm run dev`.
