@@ -7,6 +7,18 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-24 — Share links are the name and the colours, about 90 characters
+
+**By request:** "we need shorter links as well", then "Build your pick" (the shorter of the two options).
+
+- `#p=Alien_Meridian~48421d0u8c91570p…`: the name as people read it (a space as `_`, anything but letters,
+  digits, `-` and `.` escaped), then each colour as six hex digits and its share in two base-36 digits.
+  80 to 110 characters, where the base64 JSON before it ran to about 400.
+- The reading's sentence no longer travels. The recipient's copy is written from the colours by the
+  offline reading (composeReading), the words atmos gives any palette when the live reading can't be
+  reached. For a palette the live reading named, the words differ from the sender's.
+- Links made before this still open, with their own sentence, the day's name label included.
+
 ## 2026-09-24 — Controls are called what they say, a swatch is one Tab stop, Cmd+Z undoes one change
 
 **From the interface audit** of the 23–24.09 changes (better-interface, full mode), all six findings:

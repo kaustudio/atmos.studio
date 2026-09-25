@@ -1,6 +1,7 @@
 // Share-link glue: read an incoming palette out of the URL fragment, and put the current one into
 // a link. The encoding itself lives in lib/share.js; this is the app-state side.
 import { decodeShare, shareCode, shareUrl } from '../../lib/share.js';
+import { composeReading } from '../../lib/reading.js';
 import { trackEvent } from '../../lib/track.js';
 
 export const shareMethods = {
@@ -23,7 +24,13 @@ export const shareMethods = {
     let list = null;
     try { list = this.validateFeed([decoded]); } catch (e) { return null; }
     if (!list || !list.length) return null;
-    return list[0];
+    /* A LINK CARRIES NO SENTENCE since links became the name and the colours (24.09.26, lib/share.js).
+       The recipient's copy is written here, from the colours, by the offline reading: the same words
+       atmos gives any palette whenever the live reading can't be reached, and the same every time for the
+       same colours. A link from before, which carried its sentence, keeps it. */
+    const p = list[0];
+    if (!p.rationale) { try { const r = composeReading(p.swatches); if (r && r.rationale) p.rationale = r.rationale; } catch (e) { } }
+    return p;
   },
 
   // The address's palette as its code (lib/share.js shareCode), label aside, or null: what the shared view
@@ -41,9 +48,9 @@ export const shareMethods = {
   // and never seen. The confirmation (what just happened) belongs there, where the ✓ Link Copied
   // swap already says the same thing visually.
   //
-  // A share link is a snapshot sealed into the URL fragment: it carries the swatches, the name and
-  // the note, and deliberately not the id, the time, the project or the reference image (encodeShare,
-  // lib/share.js). The notice that said so when the link was made ("A share link is a snapshot, not
+  // A share link is a snapshot sealed into the URL fragment: it carries the name and the swatches with
+  // their shares, and deliberately not the sentence (written again on arrival, _sharedFromHash), the id,
+  // the time, the project or the reference image (shareUrl, lib/share.js). The notice that said so when the link was made ("A share link is a snapshot, not
   // a backup…") went on 17.09.26, by request: the button's own Copied state confirms the copy. A
   // palette that cannot be shared still says so.
   // `key` names the button whose Copied state answers: the result stage's by default, the palette
