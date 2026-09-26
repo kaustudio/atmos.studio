@@ -235,8 +235,13 @@ const IconTrash = ({ size = 14 }) => (<svg width={size} height={size} viewBox="0
 // panel's Accessibility group, and the universe card — so the three states (fill AND glyph, never
 // colour alone) cannot drift between them the way three hand-rolled copies already had. All of the
 // styling arrives from renderVals' shared aaReadout; this only draws it.
-// The glyph sits in a fixed 9px slot: ✓ and ◐ draw at 9, ✕ is a narrower text glyph, and an
-// intrinsic slot let the badge's own width follow the state.
+// The glyph sits in a fixed 9px slot: all three marks draw at 9 from the icon set, and an intrinsic
+// slot let the badge's own width follow the state.
+// THE CROSS IS THE SET'S, NOT A FONT'S (26.09.26, from the Neue Montreal audit, by request: "make sure
+// ... it is rendered correctly across browsers and devices"). It was the text character ✕, which Neue
+// Montreal does not have, so every system drew it from its own symbol font (Zapf Dingbats on a Mac, 6.75 ×
+// 7px of ink): the one piece of text on the site outside the face. IconClose at 9 is 5 × 5, lighter
+// than the check's 6.75 × 5.25, which suits the ghost badge, the faintest of the three.
 const AaBadge = ({ aa }) => (
   /* data-aa-badge carries the pill corner from global.css. It is on the COMPONENT rather than on the
      list's call site, which is the wider change and the right one: the note above records that this
@@ -247,7 +252,7 @@ const AaBadge = ({ aa }) => (
     <span aria-hidden="true" style={sx('display:inline-flex;align-items:center;justify-content:center;width:9px;flex:none;line-height:1')}>
       {aa.aaState === 'flexible' && <IconCheck size={9} />}
       {aa.aaState === 'limited' && <IconContrast size={9} />}
-      {aa.aaState === 'none' && <span style={sx('font-size:var(--fs-nano);line-height:1')}>✕</span>}
+      {aa.aaState === 'none' && <IconClose size={9} />}
     </span>
     AA
   </span>
@@ -307,9 +312,9 @@ const RowMain = ({ c, inv }) => (
           pairs took one of its four, and from 22.09.26 a long name beside Example ended in an ellipsis
           there. It takes a second line instead, balanced, so the row grows rather than the name going:
           at the 32-character limit (lib/chars.js) two lines at most. */}
-      <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.25;flex:0 1 auto;min-width:0;overflow-wrap:anywhere;text-wrap:balance;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
+      <span style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-lead);line-height:1.25;flex:0 1 auto;min-width:0;overflow-wrap:anywhere;text-wrap:balance;color:" + (inv ? 'var(--surface)' : 'var(--on-surface)'))}>{c.name}</span>
       {c.isExample && (
-        <span style={sx('flex: none; font-family: Neue Montreal; font-size:var(--fs-nano); letter-spacing:var(--track-flat); border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
+        <span style={sx('flex: none; font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-nano); letter-spacing:var(--track-flat); border-radius:var(--radius-pill); padding: 2px 6px;' + (inv ? 'color:var(--ink-fill-muted);border:1px solid var(--ink-fill-line)' : 'color:var(--on-surface-muted);border:1px solid var(--line-strong)'))}>Example</span>
       )}
       {/* TOMBSTONE: a "• Viewing" mark followed the name on the palette being viewed, and went on
           24.09.26 with the Grid View's (by request: "Remove • Viewing from list view and full grid
@@ -367,8 +372,8 @@ const RowMain = ({ c, inv }) => (
 // The identity line: name, then the row's two labels — EXAMPLE for the seeded palettes, and the
 // current palette NAMED rather than only dotted. The dot stays beside the word, so the state is
 // carried by shape as well as text and survives a greyscale render (SC 1.4.1).
-const EXAMPLE_CHIP = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:2px 6px');
-const EXAMPLE_CHIP_ON_PHOTO = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-nano);letter-spacing:var(--track-flat);color:var(--on-photo);border:1px solid color-mix(in srgb, var(--on-photo) 60%, transparent);border-radius:var(--radius-pill);padding:2px 6px');
+const EXAMPLE_CHIP = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-nano);letter-spacing:var(--track-flat);color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill);padding:2px 6px');
+const EXAMPLE_CHIP_ON_PHOTO = sx('flex:none;margin-inline-start:auto;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-nano);letter-spacing:var(--track-flat);color:var(--on-photo);border:1px solid color-mix(in srgb, var(--on-photo) 60%, transparent);border-radius:var(--radius-pill);padding:2px 6px');
 // THE GRID CARD'S FOOT (17.09.26, radius issue R3, by request): a progressive blur and a dark tint
 // over the photograph's lower part, under the name. Two copies of the picture, blurred and masked
 // so the blur grows toward the edge (a live backdrop-filter measured p95 16.7ms against 8.8 on the
@@ -402,8 +407,8 @@ const CardIdentity = ({ c, onPhoto }) => {
         balanced, and the card's caption grows by the line. At the 32-character limit (lib/chars.js) a
         name takes two lines at most on the narrowest card. */}
     <span style={c.titleName
-      ? sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + (c.nameSize || 'var(--fs-title)') + ";letter-spacing:" + (c.nameSize ? 'var(--track-statement)' : 'var(--track-title)') + ";line-height:" + (c.nameSize ? '1.05' : '1.15') + ";color:var(--on-surface);text-wrap:balance")
-      : sx("min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";overflow-wrap:anywhere;text-wrap:balance")}>{c.name}</span>
+      ? sx("min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:" + (c.nameSize || 'var(--fs-title)') + ";letter-spacing:" + (c.nameSize ? 'var(--track-statement)' : 'var(--track-title)') + ";line-height:" + (c.nameSize ? '1.05' : '1.15') + ";color:var(--on-surface);text-wrap:balance")
+      : sx("min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:" + nameSize + ";letter-spacing:var(--track-title);line-height:1.2;color:" + ink + ";overflow-wrap:anywhere;text-wrap:balance")}>{c.name}</span>
     {c.isExample && !c.exampleInRow && (
       /* margin-inline-start:auto, so the chip sits on the card's trailing edge rather than
           trailing the name. It is a STATUS, not part of the title: against the right edge it lines
@@ -437,7 +442,7 @@ const CardMetrics = ({ c }) => (
             an informative label, at 8px, at barely half the contrast its own value had. The token
             resolves per theme, which is the entire reason the token exists, and it lands at 5.5:1
             light / 6.5:1 dark. Nothing else about the label changed except the size floor. */}
-        <span style={sx('font-family:Neue Montreal;font-size:' + (c.metricLabelSize || 'var(--fs-fine)') + ';letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
+        <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:' + (c.metricLabelSize || 'var(--fs-fine)') + ';letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</span>
         {/* Value first, badge trailing — the opposite order to the list row, and for the reason the
             row uses its own: put the number where the eye is already reading. The row's values are
             a RIGHT-aligned numeric column, so the badge leads and the count lands on the shared
@@ -450,7 +455,7 @@ const CardMetrics = ({ c }) => (
             glance. At --fs-label they were 10px, a size the ladder reserves for uppercase labels,
             and set in proportional digits so the same figure took a different width on every card
             and no column of them ever lined up. */}
-        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal;font-size:' + (c.metricValueSize || 'var(--fs-body)') + ';font-variant-numeric:tabular-nums;letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;text-transform:' + (m.ownCase ? 'none' : 'capitalize'))}>
+        <span style={sx('display:flex;align-items:baseline;gap:7px;min-width:0;font-family:Neue Montreal,system-ui,sans-serif;font-size:' + (c.metricValueSize || 'var(--fs-body)') + ';font-variant-numeric:tabular-nums;letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;text-transform:' + (m.ownCase ? 'none' : 'capitalize'))}>
           <span title={m.title} style={sx('overflow:hidden;text-overflow:ellipsis')}>{m.text}</span>
           {m.aa && <AaBadge aa={m.aa} />}
         </span>
@@ -493,11 +498,11 @@ const UniversePanel = ({ c }) => (<>
         row, at the same size and height instead of --fs-nano on the name's line. */}
     {c.traitList ? ((c.traitList.length > 0 || c.isExample) && (
       <div style={sx('display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:calc(12px * min(1, var(--upanel-s, 1)))')}>
-        {c.traitList.map((t, ti) => (<span key={ti} style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal';font-size:" + c.pillSize + ";font-weight:500;letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);border:1px solid transparent;background:color-mix(in srgb, var(--on-surface) 9%, var(--surface-raised));color:var(--on-surface);border-radius:var(--radius-pill)")}>{t}</span>))}
-        {c.isExample && (<span style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal';font-size:" + c.pillSize + ";letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill)")}>Example</span>)}
+        {c.traitList.map((t, ti) => (<span key={ti} style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal',system-ui,sans-serif;font-size:" + c.pillSize + ";font-weight:500;letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);border:1px solid transparent;background:color-mix(in srgb, var(--on-surface) 9%, var(--surface-raised));color:var(--on-surface);border-radius:var(--radius-pill)")}>{t}</span>))}
+        {c.isExample && (<span style={sx("display:inline-flex;align-items:center;min-height:calc(26px * min(1, var(--upanel-s, 1)));font-family:'Neue Montreal',system-ui,sans-serif;font-size:" + c.pillSize + ";letter-spacing:var(--track-flat);padding:var(--btn-pad-chip);color:var(--on-surface-muted);border:1px solid var(--line-strong);border-radius:var(--radius-pill)")}>Example</span>)}
       </div>
     )) : (
-      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty')}>{c.descriptors}</span>
+      <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);text-wrap:pretty')}>{c.descriptors}</span>
     )}
     <CardMetrics c={c} />
   </div>
@@ -582,7 +587,7 @@ function SavedStatus({ saved, afterChips }) {
   };
   return (
     <span data-saved-line="saved" aria-hidden={phase === 'out' ? 'true' : undefined} style={sx('display:inline-flex' + (afterChips ? ';margin-inline-start:8px' : '') + (moving ? ';overflow-y:clip' : ''))}>
-      <span onAnimationEnd={landed} style={{ ...sx('display:inline-flex;align-items:center;gap:8px;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)'), ...anim }}>
+      <span onAnimationEnd={landed} style={{ ...sx('display:inline-flex;align-items:center;gap:8px;min-height:26px;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)'), ...anim }}>
         <SavedMark at={saved.drawAt} />{saved.text}
       </span>
     </span>
@@ -753,7 +758,7 @@ const NAME_BLOCK = sx('flex:1;min-width:0;max-width:calc((100% - (var(--grid-col
    field does. */
 const NAME_ROW = sx('display:flex;align-items:flex-start;gap:12px;min-width:0;max-width:calc(var(--fs-display) * 15.75 + 40px)');
 // The heading's own type, so the field and the name it replaces are the same lines of text.
-const NAME_TYPE = "font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface)";
+const NAME_TYPE = "font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface)";
 /* THE FIELD WRAPS AS THE HEADING DOES (24.09.26, the audit's R2). It was a one-line input, so a name the
    heading set on two lines opened as one: the tags jumped up a line and the start of the name scrolled out
    of the field. A textarea in the heading's type, balanced as the heading is and as tall as its lines,
@@ -913,7 +918,7 @@ function NameField({ r, as }) {
           <TextSwap><IconReturn /></TextSwap>
         </button>
       </span>
-      <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:var(--name-rule-out);top:calc(100% + 6px);font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
+      <span id={r.countId} data-name-count="1" style={sx('position:absolute;right:var(--name-rule-out);top:calc(100% + 6px);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums')}>
         <span aria-hidden="true">{len + '/' + NAME_LIMIT}</span><span style={visuallyHidden}>{len + ' of ' + NAME_LIMIT + ' characters'}</span>
       </span>
       <span role="status" aria-live="polite" style={visuallyHidden}>{said}</span>
@@ -926,10 +931,10 @@ function ValueRow({ v, showCaveat, tabIndex, onFocus }) {
     <button type="button" data-ix="cell" data-focus="value" data-value-row="1" tabIndex={tabIndex} onFocus={onFocus} onClick={v.onCopy} aria-label={v.aria} style={v.rowStyle}>
       <span style={v.colStyle}>
         <span style={v.labelRowStyle}>
-          <span style={sx('font-family: Neue Montreal; font-size:var(--fs-fine)')}>{v.labelText}</span>
-          {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-fine); font-family: Neue Montreal; text-transform: uppercase')}>{v.caveat}</span>)}
+          <span style={sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-fine)')}>{v.labelText}</span>
+          {showCaveat && v.hasCaveat && (<span style={sx('font-size:var(--fs-fine); font-family: Neue Montreal,system-ui,sans-serif; text-transform: uppercase')}>{v.caveat}</span>)}
         </span>
-        <CopySwap copied={v.copied} value={v.value} arrive style={sx('font-family: Neue Montreal; font-size:var(--fs-detail)')} />
+        <CopySwap copied={v.copied} value={v.value} arrive style={sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-detail)')} />
       </span>
       <MarkSwap copied={v.copied} style={v.iconWrapStyle} />
     </button>
@@ -1691,7 +1696,7 @@ function MobileShareView({ ms }) {
       )}
 
       <div data-ms-head="1" style={sx('flex:none;padding:22px var(--page-gutter) 22px')}>
-        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
+        <h1 data-mask-copy="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-statement);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);margin:0;text-wrap:balance")}>{ms.name}</h1>
         {/* THE SAME CHIP AS THE RESULT STAGE'S, AND IT ROUNDS WITH IT. This is the phone's copy of
             the trait row — same border, same 9% ground, same uppercase label — so a corner changed
             on one and not the other would make one palette look like two products depending on the
@@ -1700,7 +1705,7 @@ function MobileShareView({ ms }) {
         {ms.descriptors.length > 0 && (
           <div style={sx('display:flex;flex-wrap:wrap;gap:6px;margin-top:14px')}>
             {ms.descriptors.map((d, i) => (
-              <span key={i} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1;padding:var(--btn-pad-chip);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);border-radius:var(--radius-pill)')}>{d}</span>
+              <span key={i} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1;padding:var(--btn-pad-chip);background:color-mix(in srgb, var(--on-surface) 9%, var(--surface));color:var(--on-surface);border-radius:var(--radius-pill)')}>{d}</span>
             ))}
           </div>
         )}
@@ -1724,7 +1729,7 @@ function MobileShareView({ ms }) {
             still on the desktop stage under this line. ms.rationale / ms.hasRationale are still in
             the view model, so putting it back under this one is a paragraph. */}
         {ms.hasUseLine && (
-          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:16px 0 0;text-wrap:pretty")}>{ms.useLine}</p>
+          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:16px 0 0;text-wrap:pretty")}>{ms.useLine}</p>
         )}
       </div>
 
@@ -1756,7 +1761,7 @@ function MobileShareView({ ms }) {
       {/* Same device inset as the list's foot — see the note there. */}
       <div data-ms-foot="1" style={sx('flex:none;padding:24px var(--page-gutter) calc(24px + env(safe-area-inset-bottom, 0px))')}>
         {ms.footLine && (
-          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
+          <p data-mask-copy="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-detail);line-height:1.6;color:var(--on-surface-muted);margin:0;text-wrap:pretty")}>{ms.footLine}</p>
         )}
         {/* No act here. `See All Examples` stood in this foot and led to the example list, which is
             gone with the example view (17.09.26, audit C5); the masthead's mark is the way back. */}
@@ -1780,7 +1785,7 @@ const visuallyHidden = sx('position:absolute;width:1px;height:1px;overflow:hidde
    its fill, and the verdict pills are the only outlined things in these rows. The hexes are still said,
    visually hidden, by whoever places the mark. */
 const PairMark = ({ fg, bg }) => (
-  <span aria-hidden="true" style={{ ...sx("display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:26px;border-radius:var(--radius-pill);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1"), background: bg, color: fg }}>Aa</span>
+  <span aria-hidden="true" style={{ ...sx("display:inline-flex;align-items:center;justify-content:center;flex:none;width:40px;height:26px;border-radius:var(--radius-pill);font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);line-height:1"), background: bg, color: fg }}>Aa</span>
 );
 /* EVERY "4.5:1" IN A STRING IS DRAWN AS WRITTEN AND SAID "4.5 TO 1" (19.09.26, interface review, by
    request: "fix all"). The figure goes in a [data-ratio] span whose ":1" global.css generates with " to 1"
@@ -1959,7 +1964,7 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
    11, which lands exactly on a step of the scale). Button writes its size inline, so the three
    buttons hand it this style rather than a stylesheet shouting over an inline value. Weight and case
    are in global.css (.consent .button[data-emphasis]). The label rows are 16px, one line of 13. */
-const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
+const CONSENT_BTN_TYPE = sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-body); letter-spacing:var(--track-flat)');
 /* No check mark on Accept when the banner is reopened (17.09.26, by request). The pressed state says
    which answer stands (aria-pressed); since 25.09.26 both answers are filled whenever the banner is up. */
 export function ConsentBanner({ vals }) {
@@ -2083,7 +2088,7 @@ function LandingStage({ vals, covered, quiet }) {
                     block instead: the gas still passes through, it just passes through dimmer, and
                     the words keep a ground to sit on. Which is the subject of the product anyway. */}
                 <span aria-hidden="true" style={sx('position:absolute;inset:-56px -40px;z-index:0;pointer-events:none;background:radial-gradient(ellipse at center, var(--surface) 0%, var(--surface) 52%, transparent 100%)')}></span>
-                <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:var(--track-title);color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
+                <h1 style={sx("position:relative;z-index:1;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-title);line-height:1.2;letter-spacing:var(--track-title);color:var(--on-surface);margin:0;max-width:none;text-wrap:balance")}>
                   {/* Two masked line-groups, not one wrapping line. It fixes the break where it
                       belongs — subject and copula end the first line at every width, rather than
                       wherever the measure happens to land — and gives each line its own reveal, so
@@ -2104,7 +2109,7 @@ function LandingStage({ vals, covered, quiet }) {
                     refusal; this names what a phone CAN do (the example palettes) before what needs
                     a computer (a palette from your own image), which explains the width by the
                     capability behind it. Supplied copy, 14.09.26. */}
-                <p style={sx("position:relative;z-index:1;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:none;text-wrap:pretty")}>
+                <p style={sx("position:relative;z-index:1;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.6;color:var(--on-surface-muted);margin:14px 0 0;max-width:none;text-wrap:pretty")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display:block')}>Explore example palettes here. To create a palette from your own image, open Atmos on your computer in a window at least 1024&nbsp;px wide.</span></span>
                 </p>
                 {/* THE HANDOFF. A gate with nothing to do is a dead end, and this one met people
@@ -2145,7 +2150,7 @@ function LandingStage({ vals, covered, quiet }) {
                     the 40px on the heading only ever set the line-height of nothing. The lines
                     inherit now: 40px, the next rung up, and the size the loader's count beside it
                     has always used. */}
-                <h1 style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-landing);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:23ch;text-wrap:balance")}>
+                <h1 style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-landing);line-height:1.16;letter-spacing:var(--track-statement);margin:0;max-width:23ch;text-wrap:balance")}>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: var(--on-surface)')}>Colour Read from Light and Atmosphere.</span></span>
                   <span style={sx('display:block;overflow:hidden')}><span data-land-line="1" style={sx('display: block; color: color-mix(in srgb, var(--on-surface) 50%, transparent)')}>In Seconds.</span></span>
                 </h1>
@@ -2277,7 +2282,7 @@ function LandingStage({ vals, covered, quiet }) {
                     "Based on" was --on-surface-muted over the field and measured about 3.2:1 in light
                     and 2.9:1 in dark, under the 4.5 text needs, so the label and the name are told
                     apart by weight now rather than by ink: the label Regular, the name Medium. */}
-                <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:400;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty")}>
+                <div style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:400;line-height:1.2;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty")}>
                   Based on<br /><span style={sx('font-weight:500')}>{vals.landingCredit.name}</span>
                 </div>
               </div>
@@ -2299,7 +2304,7 @@ function LandingStage({ vals, covered, quiet }) {
                 under the glass) and returns when the banner goes. The banner carries Learn More to
                 Privacy meanwhile, and Privacy Settings is what raised it. */}
             {!vals.narrow && (
-              <nav className="land-legal" aria-label="Legal" {...(vals.consentOpen ? { inert: true } : null)} style={sx("position:absolute;right:var(--page-gutter);bottom:calc(26px - 0.65px);display:flex;gap:16px;pointer-events:auto;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1.3;letter-spacing:var(--track-flat);color:var(--on-surface);transition:opacity var(--dur-state) var(--ease-standard);opacity:" + (vals.consentOpen ? 0 : 1))}>
+              <nav className="land-legal" aria-label="Legal" {...(vals.consentOpen ? { inert: true } : null)} style={sx("position:absolute;right:var(--page-gutter);bottom:calc(26px - 0.65px);display:flex;gap:16px;pointer-events:auto;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;line-height:1.3;letter-spacing:var(--track-flat);color:var(--on-surface);transition:opacity var(--dur-state) var(--ease-standard);opacity:" + (vals.consentOpen ? 0 : 1))}>
                 <a href="/privacy" onClick={vals.navigate}><TextSwap>Privacy</TextSwap></a>
                 <a href="/terms" onClick={vals.navigate}><TextSwap>Terms</TextSwap></a>
                 <button type="button" className="site-foot__consent" onClick={vals.openConsent}><TextSwap>Privacy Settings</TextSwap></button>
@@ -2340,7 +2345,7 @@ function LogoLoader({ show }) {
               </div>
             </div>
             <div style={sx('flex:none;overflow:hidden')} data-load-numbox="1">
-              <div data-load-num="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-landing);line-height:1;letter-spacing:var(--track-statement);color:var(--ground-ink);font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
+              <div data-load-num="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-landing);line-height:1;letter-spacing:var(--track-statement);color:var(--ground-ink);font-variant-numeric:tabular-nums;transform:translateY(110%);will-change:transform")}>0</div>
             </div>
           </div>
           <div style={sx('margin-top:24px;width:100%;height:3px;overflow:hidden')}>
@@ -2665,7 +2670,7 @@ export default function AppView({ vals }) {
                 overflow:hidden mask; the spacing lives on the MASK, never on the span, or the
                 translate would drag the margin with it and the gap would breathe mid-tween. */}
             <div style={{ textAlign: 'center' }}>
-              <div style={sx('overflow:hidden')}><h1 data-drop-line="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);line-height:1.2;color:var(--on-surface);letter-spacing:var(--track-title)")}>Start here</h1></div>
+              <div style={sx('overflow:hidden')}><h1 data-drop-line="1" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-title);line-height:1.2;color:var(--on-surface);letter-spacing:var(--track-title)")}>Start here</h1></div>
               {/* The lead breaks after "atmosphere" — and the break is a SECOND MASK, not a <br>.
                   One mask holding two lines is a slab: both halves ride up together while the title
                   and the CTA each arrive on their own, which is the one gesture maskLines.js was
@@ -2674,8 +2679,8 @@ export default function AppView({ vals }) {
                   line-height alone sets the distance, exactly as a <br> would have.
                   "palette" where it said "colour system" (14.09.26). The copy brief's shorter line,
                   "Choose an image to discover its colour palette.", was tried and reverted by request. */}
-              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>Choose an image that captures the atmosphere</div></div>
-              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your palette to carry.</div></div>
+              <div style={sx('overflow:hidden;margin-top:8px')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);color:var(--on-surface-muted)")}>Choose an image that captures the atmosphere</div></div>
+              <div style={sx('overflow:hidden')}><div data-drop-line="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);color:var(--on-surface-muted)")}>you want your palette to carry.</div></div>
               {/* THE PASTE LINE (24.09.26, by request: "What about adding to the copy under start here, that
                   you can copy and paste an image", option A of three mocked). It finishes the lead's
                   sentence ("Choose an image… Or paste one"), so it sits under it rather than under the +,
@@ -2699,7 +2704,7 @@ export default function AppView({ vals }) {
                   writes ⌘K and Ctrl K, so this one writes ⌘ V and Ctrl V, one notation for both keys. The
                   screen reader's sentence is the same words. */}
               <div style={sx('overflow:hidden;margin-top:8px')}>
-                <div data-drop-line="1" style={sx("display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>
+                <div data-drop-line="1" style={sx("display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);color:var(--on-surface-muted)")}>
                   <span aria-hidden="true">Or paste with</span>
                   <kbd data-kbd="1" aria-hidden="true" style={sx('gap:2px')}>{vals.pasteMac ? (<><IconCommand />V</>) : 'Ctrl V'}</kbd>
                   <span style={visuallyHidden}>{'Or paste with ' + (vals.pasteMac ? 'Command' : 'Control') + ' V.'}</span>
@@ -2773,7 +2778,7 @@ export default function AppView({ vals }) {
                     stage says what it is doing, and a colour space named at a palette that does not
                     exist yet is not part of that. The word still appears where it explains something:
                     the harmonies' note on the result (renderVals). */}
-                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal; font-size:var(--fs-cta); font-weight:500; letter-spacing:var(--track-statement); color: var(--on-surface)')}>
+                <span style={sx('display: inline-flex; align-items: center; gap: 9px; font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-cta); font-weight:500; letter-spacing:var(--track-statement); color: var(--on-surface)')}>
                   <ThinkingOrb state={vals.procOrb} groups={vals.procGroups} />
                   {/* Each line of the reading rises into place through a mask, the swap the copy
                       confirmation uses (val-mask), so a new step reads as arriving rather than as the
@@ -2808,7 +2813,7 @@ export default function AppView({ vals }) {
                 names the state and offers the exits. */}
             {vals.isSharedView && (
               <div data-voice="banner" style={sx('display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:10px 10px 10px 22px;margin:0 0 18px;border:1px solid var(--line-strong);border-radius:var(--radius-pill);background:var(--surface-raised)')}>
-                <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface)")}>Shared with you</span>
+                <span style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface)")}>Shared with you</span>
                 <span style={sx('display:flex;align-items:center;gap:10px;flex:none')}>
                   {/* THE BANNER'S PAIR (17.09.26, audit A8, by request). THE SAME WEIGHT, OUTLINED
                       (25.09.26, by request: "'Make your Own' cta in shared with you should have same
@@ -2919,7 +2924,7 @@ export default function AppView({ vals }) {
                 <div style={NAME_ROW}>
                   {vals.result.rename.editing
                     ? (<NameField r={vals.result.rename} />)
-                    : (<HugHeading as="h1" data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</HugHeading>)}
+                    : (<HugHeading as="h1" data-fx="1" data-split="1" style={sx("margin:0;min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{vals.result.name}</HugHeading>)}
                   {vals.result.rename.can && (
                     <span data-fx="1" style={sx('display:inline-flex;flex:none;margin-top:calc((var(--fs-display) * 1.05 - 28px) / 2)')}><RenameButton r={vals.result.rename} /></span>
                   )}
@@ -2952,7 +2957,7 @@ export default function AppView({ vals }) {
                 {(vals.result.hasTraits || vals.result.saved) && (
                 <div data-fx="1" style={sx('display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:18px')}>
                   {vals.result.traits.map((d, di) => (
-                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); border-radius: var(--radius-pill)')}>{d}</span>
+                    <span key={di} style={sx('display:inline-flex;align-items:center;min-height:26px;font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); padding:var(--btn-pad-chip); background: color-mix(in srgb, var(--on-surface) 9%, var(--surface)); color: var(--on-surface); border-radius: var(--radius-pill)')}>{d}</span>
                   ))}
                   {vals.result.saved && <SavedStatus saved={vals.result.saved} afterChips={vals.result.hasTraits} />}
                 </div>
@@ -2971,7 +2976,7 @@ export default function AppView({ vals }) {
                     13px: it is the only prose left on this surface and it is a recommendation, not an
                     aside. It keeps data-split too, so it still arrives on the masked line reveal it
                     had in its old position. */}
-                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.useLine}</p>
+                <p data-fx="1" data-split="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{vals.result.useLine}</p>
               </div>
               {/* THE REFERENCE IMAGE SITS ABOVE THE RULE (17.09.26, by request). It stood at the right
                   end of the readout below, inside the data block; the palette's source belongs with
@@ -2985,7 +2990,7 @@ export default function AppView({ vals }) {
                     shape as the one it stands in for. */}
                 {vals.result.noRef && (
                   <div aria-hidden="true" style={sx('width: 156px; height: 104px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-raised); display: flex; align-items: center; justify-content: center')}>
-                    <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>No Reference</span>
+                    <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>No Reference</span>
                   </div>
                 )}
               </div>
@@ -3035,7 +3040,7 @@ export default function AppView({ vals }) {
               <span data-meta-line="1" aria-hidden="true" style={sx('display:block;grid-column:1 / -1;height:1px;background:var(--line)')}></span>
               {vals.result.detailMeta.map((g, gi) => (
                 <div key={gi} style={sx('grid-column:' + (1 + gi * 4) + ' / span 3;min-width:0;display:flex;flex-direction:column')}>
-                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
+                  <span data-meta-split="1" style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);padding-bottom:9px")}>{g.title}</span>
                   <span data-meta-line="1" aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
                   <dl style={sx('display:flex;flex-direction:column;margin:0')}>
                     {g.rows.map((m, mi) => (
@@ -3049,10 +3054,10 @@ export default function AppView({ vals }) {
                             align-items:baseline on the wrapper, so the badge's own word sits on the
                             same line as the value it qualifies rather than floating beside it. */}
                         <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                          <dt data-meta-split="1" style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
                           <dd style={sx('display:flex;align-items:baseline;gap:8px;margin:0;min-width:0')}>
                             {m.aa && <AaBadge aa={m.aa} />}
-                            <span data-meta-split="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')} aria-hidden={hasRatio(m.value) || m.spoken ? 'true' : undefined}>{m.value}</span>
+                            <span data-meta-split="1" style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;text-transform:capitalize;font-variant-numeric:tabular-nums')} aria-hidden={hasRatio(m.value) || m.spoken ? 'true' : undefined}>{m.value}</span>
                             {hasRatio(m.value) && <span style={visuallyHidden}>{spokenRatios(m.value)}</span>}
                             {m.spoken && <span style={visuallyHidden}>{m.spoken}</span>}
                           </dd>
@@ -3074,8 +3079,8 @@ export default function AppView({ vals }) {
              global.css). Text only: the "!" above the title went, ring and all, by request. */
           <div role="alert" data-error-panel="1" data-voice="banner" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;min-height:420px;padding:40px;background:var(--surface-raised);border:1px solid var(--line-strong);border-radius:var(--radius-surface)')}>
             <div style={sx('text-align:center;max-width:440px')}>
-              <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:var(--track-title)")}>{vals.errorTitle}</div>
-              <div style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
+              <div style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-title);color:var(--on-surface);letter-spacing:var(--track-title)")}>{vals.errorTitle}</div>
+              <div style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);color:var(--on-surface-muted);margin-top:8px;text-wrap:pretty")}>{vals.errorMsg}</div>
             </div>
             <Button data-emphasis="primary" onClick={vals.onBrowse} style={CONSENT_BTN_TYPE} label={<span style={sx('display:flex;align-items:center;height:16px')}><ButtonText>Choose Another Image</ButtonText></span>} />
             <input ref={vals.fileRef} type="file" accept="image/*" onChange={vals.onFile} tabIndex={-1} aria-hidden="true" style={{ display: 'none' }} />
@@ -3215,7 +3220,7 @@ function FeedSection({ vals }) {
   // they did on the band (showProjectsBar, feedHasItems).
   const libraryRow = (
     <div style={sx('display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px')}>
-      <h2 id="feed-heading" style={sx("position:relative; top:-0.1em; font-family: 'Neue Montreal'; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
+      <h2 id="feed-heading" style={sx("position:relative; top:-0.1em; font-family: 'Neue Montreal',system-ui,sans-serif; font-weight: 500; font-size:var(--fs-title); line-height:1.1; letter-spacing:var(--track-title); color: var(--on-surface); margin: 0")}>Library</h2>
       {/* THE STORAGE MARKER STOOD HERE and is removed by request. It was a 16px toggletip beside
           the heading carrying the one fact no control on this page states — where the library
           lives: saved in this browser, on this machine, no account and no server copy, and gone
@@ -3251,7 +3256,7 @@ function FeedSection({ vals }) {
               keeps 6.5px from the door's round end against 6.8 above and below it, so it sits inside the
               curve rather than against it. The door is 125px wide where the plain figure made it 111.5. */}
           {vals.search.can && (
-            <button type="button" data-search-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-keyshortcuts={vals.search.keys} disabled={vals.search.disabled} onClick={vals.search.openFromButton} title={'Search the Library (' + vals.search.keyHint + ')'} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
+            <button type="button" data-search-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-keyshortcuts={vals.search.keys} disabled={vals.search.disabled} onClick={vals.search.openFromButton} title={'Search the Library (' + vals.search.keyHint + ')'} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
               <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconSearch size={12} />Search</span></TextSwap>
               <kbd data-kbd="1" aria-hidden="true" style={sx('gap:2px')}>{vals.search.keyHint === '⌘K' ? (<><IconCommand />K</>) : vals.search.keyHint}</kbd>
             </button>
@@ -3285,7 +3290,7 @@ function FeedSection({ vals }) {
               so --radius-pill draws a circle; A STADIUM WHEN A FILTER IS ON, and that is the shape
               saying so: the count needs room the circle does not have, so the button widens by 12px
               each side of its contents and the same 999px reads as a pill. */}
-          <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
+          <button type="button" data-library-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-expanded={vals.facetOpen} onClick={vals.openFacet} aria-label={vals.libraryAria} title={vals.libraryTitle} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
             {/* THE MARK ANSWERS A HOVER, THE NUMBER DOES NOT. The glyph takes the masked swap every
                 other control in this chrome uses — it lifts out and its twin rises into place — which
                 is what pays for this button's exemption from the [data-ix="press"] tint a few rules
@@ -3297,7 +3302,7 @@ function FeedSection({ vals }) {
                 filtering is holding back, and they are two facts that change on different occasions. */}
             {/* The mark and the word are ONE unit inside the swap, so they lift and re-enter together
                 as every other label in this chrome does; the count stays outside it, below. */}
-            <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconList size={12} />Manage</span></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
+            <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconList size={12} />Manage</span></TextSwap>{vals.filterCount && <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>{vals.filterCount}</span>}
 
           </button>
           {/* HOW the section is drawn, the last thing on the row. It sat on the heading row once
@@ -3364,13 +3369,13 @@ function FeedSection({ vals }) {
           the capitals for [data-applied-filters]), where they were the tool's 11px capitals. The ×
           is the close mark every other button carries, at its own 12px (it was drawn down to 10). */}
       {vals.appliedTags.map((t) => (
-        <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
+        <button key={t.key} type="button" data-ix="cta" data-focus="chrome" aria-label={t.aria} onClick={t.onRemove} style={sx('display:inline-flex;align-items:center;gap:7px;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--surface);cursor:pointer')}>
           <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}>{t.project && <IconFolder size={12} />}{t.label}<IconClose /></span></TextSwap>
         </button>
       ))}
       {/* No aria-label: the visible text is the accessible name, so label-in-name (SC 2.5.3) can
           never drift. */}
-      <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear Filters</TextSwap></button>
+      <button type="button" data-ix="press" data-focus="chrome" onClick={vals.onClearAll} style={sx('background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>Clear Filters</TextSwap></button>
     </div>
   );
 
@@ -3416,7 +3421,7 @@ function FeedSection({ vals }) {
         <div role="status" data-voice="banner" data-filtered-empty="1" style={sx('display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;width:100%;padding:48px 40px;background:var(--surface-raised);border:1px dashed var(--line-strong);border-radius:var(--radius-panel)')}>
           {/* The title alone (17.09.26, audit H5, by request): the combining rule stood under it
               as a sentence, then briefly in a toggletip. */}
-          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>No palette matches every filter</div>
+          <div style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>No palette matches every filter</div>
           {/* ONE WAY OUT HERE (19.09.26, audit U1): undo the most recent narrowing. Clear Filters left
               this panel; it is on the applied-filters row directly above, where it stands in every
               filtered state, and two of it a few lines apart was one act offered twice.
@@ -3440,7 +3445,7 @@ function FeedSection({ vals }) {
             <div style={sx('position:absolute;left:0;top:0;width:22px;height:22px;border:1px solid var(--line-strong)')}></div>
             <div style={sx('position:absolute;right:0;bottom:0;width:22px;height:22px;border:1px solid var(--on-surface-muted);background:var(--surface-raised)')}></div>
           </div>
-          <div style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing here yet</div>
+          <div style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing here yet</div>
         </div>
       )}
       <div ref={vals.gridRef} onKeyDown={vals.onGridKey}>
@@ -3483,7 +3488,7 @@ function FeedSection({ vals }) {
                 grid padding puts its text edge exactly where the strip below begins — so the line
                 it must state is already stated by its text. Boxing it would push the word 6px off
                 that line. Each column aligns by the rule its content needs. */}
-            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:7px')}>Palette</span>
+            <span data-row-cell="head" style={sx('min-width:0;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:7px')}>Palette</span>
             {/* AA PAIRS owns its column: the sort label right-aligns over the pair count, and the
                 ⓘ travels immediately in front of it. Sorting still runs on the true numbers, never
                 on the badge.
@@ -3616,7 +3621,7 @@ function FeedSection({ vals }) {
                 {/* The figure twice: seen as "1/2", heard as "Page 1 of 2". The live region is the
                     hidden one — it is a stable element whose text changes, which is what makes a
                     polite announcement reliable, and it says the sentence rather than the slash. */}
-                <span style={sx('font-family:Neue Montreal;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>
+                <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-detail);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap;font-variant-numeric:tabular-nums')}>
                   <span aria-hidden="true">{vals.pageLabel}</span>
                   <span aria-live="polite" style={visuallyHidden}>{vals.pageLabelSpoken}</span>
                 </span>
@@ -3698,7 +3703,7 @@ function FeedSection({ vals }) {
                       <div style={sx('display:flex;justify-content:space-between;align-items:baseline;gap:8px')}>
                         <CardIdentity c={c} />
                       </div>
-                      <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>{c.descriptors}</span>
+                      <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>{c.descriptors}</span>
                     </div>
                     <CardMetrics c={c} />
                   </button>
@@ -3762,7 +3767,7 @@ function ContrastDrawer({ vals }) {
                 request: "Delete label"). The drawer is titled for a screen reader (aria-label on the
                 dialog) and its own controls say what it measures; a standing label over them was the
                 same overexplaining the dialog leads were deleted for on 19.09. */}
-            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</h2>
+            <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{contrast.name}</h2>
           </div>
           <button type="button" data-ix="press" data-focus="chrome" title="Close" onClick={vals.closeContrast} aria-label="Close contrast checker" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
         </header>
@@ -3814,9 +3819,9 @@ function ContrastDrawer({ vals }) {
               by request): _revealContrastLines on [data-cx-line]. The reveal rebuilds a line from its
               textContent, so the minimum is its string whole, hidden from a screen reader, and the ratio
               is said beside it (spokenRatios) rather than drawn by [data-ratio]. */}
-          <span data-cx-line="1" aria-hidden="true" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
+          <span data-cx-line="1" aria-hidden="true" style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{contrast.minText}</span>
           <span style={visuallyHidden}>{spokenRatios(contrast.minText)}</span>
-          <span data-cx-summary="1" data-drawer-split="1" data-cx-line="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
+          <span data-cx-summary="1" data-drawer-split="1" data-cx-line="1" style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);color:var(--on-surface)')}>{contrast.summaryText}</span>
         </div>
 
         {/* A "Pairwise contrast" eyebrow stood above the matrix and is gone by request (14.09.26).
@@ -3887,7 +3892,7 @@ function ContrastDrawer({ vals }) {
                 remove the Aa chip?"), and Nearest Pass carries one too.
                 THE RATIO IS THE GRID'S OWN TILE (23.09.26), as Nearest Pass's are, so the two headers read
                 alike and each figure looks like its cell in the grid. */}
-            <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Best Pair Sample</span>
+            <span style={sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Best Pair Sample</span>
             <span style={sx('display:inline-flex;align-items:center;gap:8px')}>
               <PairMark fg={contrast.sampleFg} bg={contrast.sampleBg} />
               <span style={visuallyHidden}>{contrast.sampleFg} on {contrast.sampleBg}, </span>
@@ -3905,7 +3910,7 @@ function ContrastDrawer({ vals }) {
         {contrast.near && (
           <div data-cx-sec="1" data-cx-near-sec="1" style={sx('padding:0 var(--page-gutter) 0')}>
             <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px')}>
-              <span style={sx('font-family: Neue Montreal; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Nearest Pass</span>
+              <span style={sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface-muted)')}>Nearest Pass</span>
               <span data-cx-near-cluster="1" style={sx('display:inline-flex;align-items:center;gap:8px')}>
                 <PairMark fg={contrast.near.markFg} bg={contrast.near.markBg} />
                 <span aria-hidden="true" style={contrast.near.failStyle}><span data-ratio="">{contrast.near.fromRatio}</span></span>
@@ -3931,12 +3936,12 @@ function ContrastDrawer({ vals }) {
           <div style={sx('display:flex;flex-direction:column;gap:6px')}>
             {contrast.textOn.map((t, ti) => (
               <div key={ti} data-cx-cell={'on-' + ti} data-ov-wipe="1" style={t.style}>
-                <span style={sx("display:flex;flex-direction:column;gap:3px;min-width:0;font-family:'Neue Montreal';letter-spacing:var(--track-flat)")}>
+                <span style={sx("display:flex;flex-direction:column;gap:3px;min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;letter-spacing:var(--track-flat)")}>
                   <span style={sx('font-size:var(--fs-body);font-weight:500;line-height:1.2')}>{t.hex}</span>
                   {/* No capitals (19.09.26, audit W2): a value, in the Title Case of the Q5 rule. */}
                   <span style={sx('font-size:var(--fs-fine);line-height:1.2')}>{t.onLabel}</span>
                 </span>
-                <span style={sx("flex:none;font-family:'Neue Montreal';font-size:var(--fs-subtitle);font-weight:500;line-height:1;letter-spacing:var(--track-flat)")}><span data-ratio="">{t.ratio}</span></span>
+                <span style={sx("flex:none;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-subtitle);font-weight:500;line-height:1;letter-spacing:var(--track-flat)")}><span data-ratio="">{t.ratio}</span></span>
               </div>
             ))}
           </div>
@@ -4038,7 +4043,7 @@ function DetailOverlay({ vals }) {
             <div style={NAME_ROW}>
               {overlay.rename.editing
                 ? (<NameField r={overlay.rename} />)
-                : (<HugHeading as="h2" style={sx("margin:0;min-width:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</HugHeading>)}
+                : (<HugHeading as="h2" style={sx("margin:0;min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-display);line-height:1.05;letter-spacing:var(--track-statement);color:var(--on-surface);text-wrap:balance")}>{overlay.name}</HugHeading>)}
               {overlay.rename.can && (<span style={sx('display:inline-flex;flex:none;margin-top:calc((var(--fs-display) * 1.05 - 28px) / 2)')}><RenameButton r={overlay.rename} /></span>)}
             </div>
             {overlay.descriptors.length > 0 && (
@@ -4046,7 +4051,7 @@ function DetailOverlay({ vals }) {
                 {overlay.descriptors.map((d, di) => (<span key={di} style={vals.pill}>{d}</span>))}
               </div>
             )}
-            <p style={sx("font-family:'Neue Montreal';font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{overlay.useLine}</p>
+            <p style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);line-height:1.5;color:var(--on-surface);margin:14px 0 0;max-width:52ch;text-wrap:pretty")}>{overlay.useLine}</p>
           </div>
           {/* The photograph, as the create page shows it: 156 by 104 on the card corner, and a press opens
               it larger (the click-zoom lightbox, misc.js, which stands above this view). */}
@@ -4113,7 +4118,7 @@ const OvRule = ({ edge }) => (
 // own layer, under the row's content, so its hover can ease without touching the row's own box.
 const SEC_ROW = 'position:relative;display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:none;border:none;border-radius:var(--radius-pill);padding:11px 18px;font:inherit;';
 const SEC_PLATE = sx('position:absolute;inset:0;border-radius:var(--radius-pill);pointer-events:none');
-const measuredLabelStyle = sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;flex:none;font-weight:500');
+const measuredLabelStyle = sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;flex:none;font-weight:500');
 
 // ============================== THE LIBRARY PANEL ==============================
 // ONE PANEL, ONE LIST (19.09.26, by request; it had two tabs, Filter and Projects): the Project
@@ -4162,7 +4167,7 @@ function LibraryDrawer({ vals }) {
                 was then the whole panel; it is now one of two things this panel does, and it is
                 said by the tab below rather than twice over. */}
             <span style={sx('display:flex;align-items:center;gap:9px;min-width:0')}>
-              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>Manage Library</h2>
+              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>Manage Library</h2>
               {/* THE PANEL'S ⓘ STOOD HERE and is removed by request, as the Library heading's was.
                   It carried two things. The first was the combining rule — pick more than one value
                   in a group to widen, combine groups to narrow — which has no other home in the
@@ -4249,9 +4254,9 @@ function LibraryDrawer({ vals }) {
               word twice. Once a project exists it heads the list again. A lone text child, so the
               reveal's restore cannot strand it (see split-targets in maskLines.js). */}
           <div style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:8px')}>
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px')}>{vals.canEditProjects ? 'Project' : 'New Project'}</span>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px')}>{vals.canEditProjects ? 'Project' : 'New Project'}</span>
             {vals.canEditProjects && (
-              <button type="button" data-ix="press" data-focus="chrome" aria-pressed={vals.projectsEditing} aria-label={vals.projectsEditing ? 'Done editing projects' : 'Edit projects'} onClick={vals.toggleProjectsEdit} style={sx('flex:none;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>{vals.projectsEditing ? 'Done' : 'Edit'}</TextSwap></button>
+              <button type="button" data-ix="press" data-focus="chrome" aria-pressed={vals.projectsEditing} aria-label={vals.projectsEditing ? 'Done editing projects' : 'Edit projects'} onClick={vals.toggleProjectsEdit} style={sx('flex:none;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:var(--btn-pad-sm);font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer')}><TextSwap>{vals.projectsEditing ? 'Done' : 'Edit'}</TextSwap></button>
             )}
           </div>
           {vals.canEditProjects && !vals.projectsEditing ? (
@@ -4262,8 +4267,8 @@ function LibraryDrawer({ vals }) {
                   <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
                   {/* A name may run to 60 characters, so this label may shrink and end in an ellipsis,
                       where the measured labels are short and never do. */}
-                  <span data-reveal="1" style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;font-weight:500;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis')}>{o.label}</span>
-                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap;font-weight:500;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis')}>{o.label}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
               {vals.projectMore && (
@@ -4273,7 +4278,7 @@ function LibraryDrawer({ vals }) {
                    so the list's arrow keys pass over it (onFacetListKey walks the pressable rows).
                    18px of leading padding puts its word on the heading's column; 6px over and under
                    make a 28px target. */
-                <button type="button" data-proj-more="1" data-ix="press" data-focus="chrome" aria-expanded={vals.projectsAll} aria-label={vals.projectMoreAria} onClick={vals.toggleProjectsAll} style={sx('align-self:flex-start;display:inline-flex;align-items:center;margin-top:2px;padding:6px 18px;background:none;border:0;border-radius:var(--radius-pill);cursor:pointer;font-family:Neue Montreal;font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>
+                <button type="button" data-proj-more="1" data-ix="press" data-focus="chrome" aria-expanded={vals.projectsAll} aria-label={vals.projectMoreAria} onClick={vals.toggleProjectsAll} style={sx('align-self:flex-start;display:inline-flex;align-items:center;margin-top:2px;padding:6px 18px;background:none;border:0;border-radius:var(--radius-pill);cursor:pointer;font-family:Neue Montreal,system-ui,sans-serif;font-weight:500;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>
                   <span style={sx('display:inline-flex;align-items:center;gap:6px')}><TextSwap>{vals.projectMore}</TextSwap><IconChevron size={12} turn={vals.projectsAll ? 180 : 0} /></span>
                 </button>
               )}
@@ -4319,7 +4324,7 @@ function LibraryDrawer({ vals }) {
                     figure the rows below use too, so every piece of text inside a control on this
                     surface starts on the same column. (The toast keeps 16: it is a 48px bar with a
                     deeper arc and a leading inset chosen for it by hand.) */}
-                <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+                <input data-manage-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={vals.manage.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
                 {/* Filled --on-surface, unlike the toast's outlined pair: this is the one act on the tab
                     that commits something, and fill is how this system says primary. A GLYPH CARRIES ITS
                     NAME: aria-label states the act, title hands the word to a pointer, and the swap runs
@@ -4347,12 +4352,12 @@ function LibraryDrawer({ vals }) {
                         panel and both dialogs use, so a field and a row put their text on one column
                         instead of two. The padding-right follows the numeral rather than being chosen:
                         the inset, plus the digits, plus the clearance the name needs from them. */}
-                    <input data-proj-name={pr.id} data-focus="field" type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" aria-describedby={'projn-' + pr.id} style={sx("width:100%;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+                    <input data-proj-name={pr.id} data-focus="field" type="text" maxLength={60} key={pr.id + '|' + pr.name} defaultValue={pr.name} onBlur={pr.onRename} onKeyDown={pr.onRenameKey} aria-label="Rename project" aria-describedby={'projn-' + pr.id} style={sx("width:100%;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:10px 44px 10px 18px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
                     {/* The numeral is painted; the noun is spoken. A bare "8" announced after a project
                         name is a quantity of nothing in particular, and aria-label on a span with no
                         role is not reliably read — so the description this field points at carries the
                         whole sentence as real text, and only the digits are visible. */}
-                    <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
+                    <span id={'projn-' + pr.id} style={sx('position:absolute;right:18px;top:50%;transform:translateY(-50%);pointer-events:none;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);font-variant-numeric:tabular-nums')}>
                       <span aria-hidden="true">{pr.count}</span>
                       <span style={liveRegionStyle}>{pr.countAria}</span>
                     </span>
@@ -4383,7 +4388,7 @@ function LibraryDrawer({ vals }) {
             by request. */}
         {!vals.showFacet && (
           <div data-tg-sec="1" role="status" style={sx('display:flex;flex-direction:column;gap:8px;padding:20px var(--page-gutter) 26px')}>
-            <span style={sx("font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing to filter yet</span>
+            <span style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-lead);color:var(--on-surface)")}>Nothing to filter yet</span>
           </div>
         )}
 
@@ -4409,7 +4414,7 @@ function LibraryDrawer({ vals }) {
                 coverage" named the measurement, which made the group read as a compliance report.
                 Text usability names the QUESTION the group answers — can I set type in this — which
                 is why anyone opens it. */}
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Text Usability</span>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Text Usability</span>
             <div role="group" aria-label="Filter by text usability" onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;gap:6px')}>
               {vals.a11yOptions.map((o) => (
                 <button key={o.key} type="button" data-sec-row="1" data-ex-item={o.disabled ? undefined : '1'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} title={o.title} onClick={o.onPick} style={sx(SEC_ROW + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
@@ -4429,7 +4434,7 @@ function LibraryDrawer({ vals }) {
                       margin-inline-start:auto sends it to the row's trailing edge, tabular-nums
                       keeps the digits on one grid, and the row's own --btn-pad-lg puts every number
                       on the same 16px inset the rest of the panel uses. */}
-                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                   {/* A fourth span stood here on all three facet lists, right-aligned and holding
                       o.reason — "Every palette here" — whenever an option was disabled. Removed by
                       request. It was also the row's flex spacer at flex:1, and nothing takes that
@@ -4460,7 +4465,7 @@ function LibraryDrawer({ vals }) {
             else. A dimension owns its domain words. */}
         {vals.hasMeasured && vals.measuredGroups.map((g) => (
           <div key={g.id} data-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
-            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>{g.label}</span>
+            <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>{g.label}</span>
             <div role="group" aria-label={'Filter by ' + g.label.toLowerCase()} onKeyDown={vals.onFacetListKey} style={sx('display:flex;flex-direction:column;gap:6px')}>
               {g.options.map((o) => (
                 <button key={o.key} type="button" data-sec-row="1" data-ex-item={o.disabled ? undefined : '1'} data-focus="chrome" aria-pressed={o.pressed} aria-disabled={o.disabled ? 'true' : undefined} aria-label={o.aria} onClick={o.onToggle} style={sx(SEC_ROW + (o.disabled ? 'cursor:default;color:var(--on-surface-muted)' : 'cursor:pointer;color:var(--on-surface)'))}>
@@ -4472,7 +4477,7 @@ function LibraryDrawer({ vals }) {
                       as the label and count rise through their line masks (pageReveal.js). */}
                   <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;flex:none;overflow:hidden')}><FacetMark active={o.active} unavailable={o.disabled} /></span>
                   <span data-reveal="1" style={measuredLabelStyle}>{o.label}</span>
-                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
+                  <span data-reveal="1" data-sec-count="1" style={sx('margin-inline-start:auto;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);color:var(--on-surface-muted);font-variant-numeric:tabular-nums;flex:none')}>{o.count}</span>
                 </button>
               ))}
             </div>
@@ -4492,7 +4497,7 @@ function LibraryDrawer({ vals }) {
             row, so Restore read as filed under it. The heading names what both rows move, the library as
             a file, and is a noun like the headings above it (Project, Text Usability, Lightness). */}
         <div data-sec="1" style={sx('padding:14px var(--page-gutter) calc(20px + var(--consent-foot, 0px))')}>
-          <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Library File</span>
+          <span data-sec-head="1" style={sx('display:block;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px 8px')}>Library File</span>
           <div role="group" aria-label="Library File" style={sx('display:flex;flex-direction:column;gap:6px')}>
             {vals.showProjectsBar && (
               /* It confirms in place, as Export's rows do (22.09.26, interface audit): the glyph gives
@@ -4544,10 +4549,10 @@ function HarmonyDrawer({ vals }) {
       <div data-hx-drawer="1" data-harmony-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={'Colour harmonies for ' + harmony.hex} onKeyDown={vals.trapHarmony} style={sx('position:absolute;right:0;top:0;bottom:0;width:480px;max-width:94vw;background:var(--surface);border-left:1px solid var(--line-strong);border-radius:var(--radius-surface) 0 0 var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column;overflow-y:auto')}>
         <header data-hx-sec="1" style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:9px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Colour Harmonies</span>
+            <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Colour Harmonies</span>
             <div style={sx('display:flex;align-items:center;gap:11px')}>
               <span aria-hidden="true" style={harmony.swatchStyle}></span>
-              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>{harmony.hex}</h2>
+              <h2 data-drawer-split="1" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface)")}>{harmony.hex}</h2>
             </div>
           </div>
           {/* Done, not Close. The drawer can act now — Save as palette writes a record — so leaving
@@ -4606,7 +4611,7 @@ function HarmonyDrawer({ vals }) {
                   <span style={sx('display:flex;min-height:16px;align-items:flex-start')}>
                     {cell.badge ? <span aria-hidden="true" style={cell.badgeStyle}>{cell.badge}</span> : null}
                   </span>
-                  <CopySwap copied={cell.copied} value={cell.hex} style={sx('font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal')} />
+                  <CopySwap copied={cell.copied} value={cell.hex} style={sx('font-size:var(--fs-fine); letter-spacing:var(--track-flat); font-family: Neue Montreal,system-ui,sans-serif')} />
                 </button>
               </div>
             ))}
@@ -4650,7 +4655,7 @@ function HarmonyDrawer({ vals }) {
    pick, because copy() mounts, selects and removes a textarea, which drops focus on the body — a keyboard
    reader would be left in an open dialog with nothing focused. */
 // The library drawer's section-head voice, inset to the rows' text edge.
-const EX_GROUP_HEAD = sx('display:block;font-family:Neue Montreal;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px');
+const EX_GROUP_HEAD = sx('display:block;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);padding:0 18px');
 /* A ROW'S END, CONFIRMING IN PLACE: what the row carries at rest (a format, a glyph) gives way to the word
    for what just happened ("Copied", "Downloaded", "Backed Up") for as long as _confirmRow holds it. One
    component since 22.09.26, when Back Up in Manage Library took the same confirmation Export's rows give
@@ -4665,7 +4670,7 @@ function DoneSwap({ done, word, restStyle, rise, children }) {
       <span style={{ ...restStyle, gridArea: '1 / 1', transition: 'opacity var(--dur-chrome) var(--ease-standard)', opacity: done ? 0 : 1 }}>
         {rise ? <span data-reveal="1" data-reveal-rise="1" style={sx('display:inline-flex;overflow:hidden')}>{children}</span> : children}
       </span>
-      <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: done ? 1 : 0, transform: done ? 'translateX(0)' : 'translateX(4px)' }}>{word}</span>
+      <span aria-hidden="true" data-done-mark="1" style={{ ...sx('grid-area:1/1;display:inline-flex;align-items:center;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;transition:opacity var(--dur-chrome) var(--ease-standard),transform var(--dur-chrome) var(--ease-standard)'), opacity: done ? 1 : 0, transform: done ? 'translateX(0)' : 'translateX(4px)' }}>{word}</span>
     </span>
   );
 }
@@ -4742,8 +4747,8 @@ function ExportDialog({ vals }) {
       <div data-export-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label={ex.aria} onKeyDown={vals.trapExport} style={{ ...sx('position:relative;width:440px;max-width:94vw;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column'), width: twoCol ? '760px' : '440px' }}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>{ex.kicker}</span>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</h2>
+            <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>{ex.kicker}</span>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{ex.name}</h2>
           </div>
           {/* The app's one close mark, at the 32px circle the library panel and the project picker
               both use. This was the last surface still spelling the word. */}
@@ -4785,7 +4790,7 @@ function ExportDialog({ vals }) {
           <div style={sx('display:flex;align-items:center;justify-content:flex-start;gap:16px')}>
             {/* The rows' voice, 13px Medium (19.09.26, audit W4, by request): it names the switch beside it,
                 as Passing Only's words name its control, and at 12px Regular it read as description. */}
-            <div id="ex-scaffold-name" style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface)")}>Semantic Scaffold</div>
+            <div id="ex-scaffold-name" style={sx("font-family: 'Neue Montreal',system-ui,sans-serif; font-size:var(--fs-body); font-weight:500; letter-spacing:var(--track-flat); color: var(--on-surface)")}>Semantic Scaffold</div>
             {/* THE THEME SWITCH, NOT A COPY OF IT (19.09.26, audit U5, by request: "drop the off to match
                 the theme switch"). It was a ringed pill holding its own 28x14 track and the word OFF;
                 it is the masthead's switch now, the same SwitchTrack in the same unringed Button,
@@ -4808,7 +4813,7 @@ function ExportDialog({ vals }) {
               sentence made the column as wide as itself and stood the switch 393px from its name. Two
               lines, broken where the sense does, what it does and then the six names, in the voice the
               note had before it went. */}
-          <p id="ex-scaffold-note" style={sx("margin:4px 0 0;font-family:'Neue Montreal';font-size:var(--fs-fine);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Names colours by role instead of 01–05:<br />background, surface, primary, on primary, secondary, accent, text.</p>
+          <p id="ex-scaffold-note" style={sx("margin:4px 0 0;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);line-height:1.5;letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Names colours by role instead of 01–05:<br />background, surface, primary, on primary, secondary, accent, text.</p>
         </div>
       </div>
     </div>
@@ -4832,7 +4837,7 @@ function RecogniseDialog({ vals }) {
             With the name alone, the header centres it on the close mark. */}
         <header style={sx('display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;min-width:0')}>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</h2>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.name}</h2>
           </div>
           {/* THE APP'S ONE CLOSE MARK (16.09.26, by request: this dialog and the restore dialog were
               the last two still spelling "Cancel" in a square box). The 32px circle the copy, export
@@ -4843,7 +4848,7 @@ function RecogniseDialog({ vals }) {
         <div style={sx('padding:14px var(--page-gutter) 0;display:flex;flex-direction:column;gap:12px')}>
           {/* --fs-body, one step up from the --fs-detail the copy and export dialogs set their opening
               line in (17.09.26, audit D1, by request): with no eyebrow, this line carries the news. */}
-          <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
+          <span style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>
           {/* the palette itself, drawn as the archive draws it — so the claim can be checked, not just read */}
           <span aria-hidden="true" style={sx('display:flex;width:100%;height:26px;border:1px solid var(--line)')}>
             {r.strip.map((b, i) => (<span key={i} style={b.style}></span>))}
@@ -4879,8 +4884,8 @@ function AssignDialog({ vals }) {
       <div data-assign-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Add to projects" onKeyDown={vals.trapAssign} style={sx('position:relative;width:400px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Add to Projects</span>
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</h2>
+            <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Add to Projects</span>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{assign.name}</h2>
             {/* "IN COASTAL AND NORDIC" / "NOT IN ANY PROJECT YET" STOOD HERE and is removed by
                 request. It was a role=status line restating membership every time it changed, on
                 the argument that a tick appearing in a list of eight is a change a reader who has
@@ -4910,14 +4915,14 @@ function AssignDialog({ vals }) {
                   carry it; the word went with the box that replaces it. */}
               <FacetMark active={o.current} />
               {/* The panel's row voice, 13px Medium and flat (19.09.26, audit U3, by request). */}
-              <span style={sx("min-width:0;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;overflow:hidden")}><TextSwap>{o.label}</TextSwap></span>
+              <span style={sx("min-width:0;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;overflow:hidden")}><TextSwap>{o.label}</TextSwap></span>
             </button>
           ))}
           {/* The empty case, reachable since the Unfiled pseudo-row was removed (renderVals.js).
               Not a live region: it is replaced by the first real row the moment a project exists,
               and the create flow announces that itself. */}
           {assign.options.length === 0 && (
-            <p style={sx("margin:0;padding:2px 0 6px;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted)")}>{assign.emptyLine}</p>
+            <p style={sx("margin:0;padding:2px 0 6px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted)")}>{assign.emptyLine}</p>
           )}
         </div>
         <div style={sx('padding:16px var(--page-gutter) 18px;margin-top:8px;border-top:1px solid var(--line)')}>
@@ -4935,7 +4940,7 @@ function AssignDialog({ vals }) {
               itself the single source for flat tracking; a literal beside it is the second source
               that makes the first one a suggestion. Six more sites still carry this same .06em —
               left alone here because they are other surfaces, but they are the same drift. */}
-          <label style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New Project</label>
+          <label style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted);display:block;margin:12px 0 8px')}>New Project</label>
           {/* THE SAME FIELD AS THE LIBRARY PANEL'S, down to the numbers: a stadium with the act
               inside it at inset-block:4px, 32px wide, and 44px of trailing padding so a long name
               stops before the disc. Two places in this app create a project and they were two
@@ -4967,7 +4972,7 @@ function AssignDialog({ vals }) {
               rows' on the same day. It stood on the page colour inside a 48% ink edge. Its hover,
               focus and placeholder are the panel field's rules in global.css. */}
           <div style={sx('position:relative;display:flex')}>
-            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+            <input data-assign-new="1" data-focus="field" type="text" maxLength={60} placeholder="Project Name" aria-label="Name a new project" onKeyDown={assign.onCreateKey} style={sx("flex:1;min-width:0;background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-pill);padding:11px 44px 11px 18px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface)")} />
             <button type="button" data-ix="cta" data-focus="chrome" onClick={assign.onCreate} aria-label={assign.createAria} title="Create" style={sx('position:absolute;inset-block:4px;inset-inline-end:4px;width:32px;display:inline-flex;align-items:center;justify-content:center;background:var(--on-surface);border:1px solid var(--on-surface);border-radius:var(--radius-pill);padding:0;color:var(--surface);cursor:pointer')}><TextSwap><IconChevronRight size={12} /></TextSwap></button>
           </div>
           {/* THE COMMIT PAIR. The picker is a draft now (see pickAssign), so it needs a way to say
@@ -5052,7 +5057,7 @@ function ToastLayer({ vals }) {
                 {/* No capitalize transform: it Title-Cased whole sentences ("Dry Season Deleted"). The
                     label arrives as a natural sentence — the palette's own name keeps its case, the
                     verb stays lowercase — and a status line is prose, not a button. */}
-                <span style={sx("font-family: 'Neue Montreal'; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap")}>{vals.toastLabel}</span>
+                <span style={sx("font-family: 'Neue Montreal',system-ui,sans-serif; font-size:var(--fs-body); letter-spacing:var(--track-flat); white-space: nowrap")}>{vals.toastLabel}</span>
                 {/* THREE ONE-OFFS, ALL REPLACED BY THE TOKEN THAT ALREADY MEANT THEM. The tracking was
                     a literal .12em — the last uppercase label in the app not set from --track-flat,
                     which is 0 — so this one control was spaced differently from every other label
@@ -5156,7 +5161,7 @@ function NoticeLayer({ vals }) {
                   The literal goes with it. --track-flat is 0 and its declaration calls itself the single
                   source for flat tracking; .01em beside it was the same drift as the six .06em sites
                   still outstanding elsewhere. */}
-              <span style={sx('font-family:Neue Montreal;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
+              <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);line-height:1.4;letter-spacing:var(--track-flat);color:var(--on-surface);text-wrap:pretty')}>{vals.notice}</span>
               {/* THE WAY OUT. An error-class notice no longer expires (see showNotice), so it needs one;
                   a timed one gets the same control because hover and focus hold it, and a held notice
                   is one the reader has decided to deal with. Same 28px disc the toast’s Dismiss uses. */}
@@ -5178,9 +5183,9 @@ function RestoreDialog({ vals }) {
       <div data-restore-dialog="1" data-lenis-prevent="1" role="dialog" aria-modal="true" aria-label="Restore" onKeyDown={vals.trapRestore} style={sx('position:relative;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius-surface);box-shadow:var(--shadow-surface);display:flex;flex-direction:column')}>
         <header style={sx('display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px var(--page-gutter) 0')}>
           <div style={sx('display:flex;flex-direction:column;gap:4px;min-width:0')}>
-            <span style={sx('font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Restore</span>
+            <span style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);color:var(--on-surface-muted)')}>Restore</span>
             {/* the file's own name — the subject of the dialog, as the palette name is above */}
-            <h2 style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
+            <h2 style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis")}>{r.fileName}</h2>
           </div>
           {/* The app's one close mark, as on the recognise dialog above (16.09.26). Its label still
               says which outcome it is: cancel, or close when there was nothing to add. */}
@@ -5190,7 +5195,7 @@ function RestoreDialog({ vals }) {
             at the bottom so text can breathe"). When nothing in the file is new there is no commit pair,
             and the last row ran to the dialog's edge; the gutter the sides and top keep now closes it. */}
         <div style={sx('padding:14px var(--page-gutter) ' + (r.hasAct ? '0' : 'var(--page-gutter)') + ';display:flex;flex-direction:column;gap:12px')}>
-          {r.line && <span style={sx("font-family:'Neue Montreal';font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>}
+          {r.line && <span style={sx("font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-detail);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{r.line}</span>}
           {/* Four numbers are not a sentence. Muted term, full-ink tabular value, a hairline under each
               row — so a count reads here exactly as it reads on the result view's metrics, and the two
               surfaces share one way of stating a figure. THE TERM IS THE METRICS' TITLE CASE AT 13px
@@ -5201,8 +5206,8 @@ function RestoreDialog({ vals }) {
             {r.rows.map((m, mi) => (
               <div key={mi}>
                 <div style={sx('display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0')}>
-                  <dt style={sx('font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
-                  <dd style={sx('margin:0;min-width:0;font-family:Neue Montreal;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;font-variant-numeric:tabular-nums')}>{m.value}</dd>
+                  <dt style={sx('font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap')}>{m.label}</dt>
+                  <dd style={sx('margin:0;min-width:0;font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface);white-space:nowrap;font-variant-numeric:tabular-nums')}>{m.value}</dd>
                 </div>
                 <span aria-hidden="true" style={sx('display:block;height:1px;background:var(--line)')}></span>
               </div>
@@ -5295,7 +5300,7 @@ function TourInvite({ vals }) {
               same words the footer control that reopens this dialog is labelled with — one act, one
               name, wherever it is met. text-wrap:balance stays for the narrow viewports where a
               420px dialog clamps to 94vw and the line can still wrap. */}
-          <h2 id="tour-invite-title" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);text-wrap:balance")}>Take a Tour</h2>
+          <h2 id="tour-invite-title" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-subtitle);letter-spacing:var(--track-title);color:var(--on-surface);text-wrap:balance")}>Take a Tour</h2>
           {/* The same close mark as every other dialog, and it means the same as Skip for Now:
               nothing starts, nothing is taken away, the answer is remembered. */}
           <button type="button" data-ix="press" data-focus="chrome" onClick={t.onSkipInvite} aria-label="Close, and stay in the overview" title="Close" style={sx('flex:none;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--action-line);border-radius:var(--radius-pill);padding:0;color:var(--on-surface);cursor:pointer')}><TextSwap><IconClose /></TextSwap></button>
@@ -5305,7 +5310,7 @@ function TourInvite({ vals }) {
               372px and broke wherever that landed; held to three quarters it breaks earlier and
               reads as a block set under the title rather than as text filling a box. Stated as a
               proportion rather than a pixel cap so it stays right if the dialog is ever resized. */}
-          <span style={sx("max-width:75%;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Start with an example and explore colours, contrast and harmonies.</span>
+          <span style={sx("max-width:75%;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>Start with an example and explore colours, contrast and harmonies.</span>
         </div>
         {/* THE PAIR, IN THE DIALOGS' ORDER: outlined first, filled last, right-aligned under the
             rule. Title Case, like every other button in the app — the brief wrote these two in
@@ -5396,7 +5401,7 @@ function SearchDialog({ vals }) {
           <span aria-hidden="true" style={SEARCH_GLYPH}><IconSearch size={16} /></span>
           <input ref={q.inputRef} type="text" role="combobox" aria-expanded="true" aria-controls="search-list" aria-autocomplete="list" aria-activedescendant={q.activeId} aria-label="Search palettes and actions"
             placeholder="Search" value={q.query} onChange={q.onInput} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-search-input="1"
-            style={sx("flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;font-family:'Neue Montreal';font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface)")} />
+            style={sx("flex:1;min-width:0;height:100%;padding:0;border:0;outline:none;background:transparent;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-lead);letter-spacing:var(--track-flat);color:var(--on-surface)")} />
         </div>
         <div id="search-list" role="listbox" aria-label="Results" style={sx('flex:1 1 auto;min-height:0;overscroll-behavior:contain;padding:8px')}>
           {/* NOTHING MATCHES, one line, when nothing is within reach of what was typed. When something is,
@@ -5404,7 +5409,7 @@ function SearchDialog({ vals }) {
               suggest a 'Did you mean' we can make it more compact that way"): the question is the answer
               to what was typed, and the line above it said again what the question implies. */}
           {q.miss && q.empty && (
-            <p style={sx("margin:0;padding:12px 14px 14px 42px;font-family:'Neue Montreal';font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Nothing matches “{q.query}”</p>
+            <p style={sx("margin:0;padding:12px 14px 14px 42px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>Nothing matches “{q.query}”</p>
           )}
           {q.groups.map((g) => g.tags ? (
             /* THE QUESTION IS THE GROUP'S NAME, in the voice and the place of the other names (Recent
@@ -5417,11 +5422,11 @@ function SearchDialog({ vals }) {
                rather than opens, is the outlined one, as Clear Filters is beside the filled chips. The
                group is named by the question, so a screen reader hears it on the way in. */
             <div key={g.key} role="group" aria-labelledby={'search-g-' + g.key} data-search-group="1">
-              <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 8px 42px;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>
+              <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 8px 42px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>
               <div data-search-tags="1" style={sx('display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 10px 42px')}>
                 {g.items.map((it) => (
                   <div key={it.key} id={it.id} role="option" aria-selected={it.active} data-search-opt="1" data-search-tag={it.all ? 'all' : '1'} data-lit={it.active ? '1' : undefined} onMouseMove={it.onHover} onClick={it.onPick}
-                    style={sx("display:inline-flex;align-items:center;gap:6px;min-height:26px;box-sizing:border-box;padding:var(--btn-pad-chip);font-family:'Neue Montreal';font-size:var(--fs-body);font-weight:500;line-height:1;letter-spacing:var(--track-flat);white-space:nowrap;cursor:pointer")}>
+                    style={sx("display:inline-flex;align-items:center;gap:6px;min-height:26px;box-sizing:border-box;padding:var(--btn-pad-chip);font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);font-weight:500;line-height:1;letter-spacing:var(--track-flat);white-space:nowrap;cursor:pointer")}>
                     {it.icon && <SearchActIcon name={it.icon} size={12} />}
                     {it.name}
                   </div>
@@ -5430,12 +5435,12 @@ function SearchDialog({ vals }) {
             </div>
           ) : (
             <div key={g.key} {...(g.label ? { role: 'group', 'aria-labelledby': 'search-g-' + g.key } : null)} data-search-group="1">
-              {g.label && <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 4px 42px;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>}
+              {g.label && <div id={'search-g-' + g.key} aria-hidden="true" style={sx("padding:10px 14px 4px 42px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted)")}>{g.label}</div>}
               {g.items.map((it) => (
                 <div key={it.key} id={it.id} role="option" aria-selected={it.active} data-search-opt="1" data-lit={it.active ? '1' : undefined} onMouseMove={it.onHover} onClick={it.onPick}
                   style={sx('display:flex;align-items:center;gap:12px;height:37.5px;padding:0 14px;cursor:pointer')}>
                   <span aria-hidden="true" data-search-glyph="1" style={SEARCH_GLYPH}>{it.kind === 'act' && <SearchActIcon name={it.icon} />}</span>
-                  <span style={sx("flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;font-family:'Neue Montreal';font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap")}>
+                  <span style={sx("flex:1;min-width:0;display:flex;align-items:baseline;gap:8px;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);letter-spacing:var(--track-flat);white-space:nowrap")}>
                     {/* The name is never cut (the house rule for names on rows): 32 characters of the widest
                         letters fit the 410px this line has, so only the words after it give way. */}
                     <span style={sx('flex:none;font-weight:500')}>{it.name}</span>
@@ -5452,7 +5457,7 @@ function SearchDialog({ vals }) {
           ))}
         </div>
         {/* The foot: aria-hidden, since the combobox pattern already speaks the menu's keys. */}
-        <div data-search-foot="1" aria-hidden="true" style={sx("display:flex;align-items:center;gap:18px;height:37.5px;padding:0 22px;border-top:1px solid var(--line);flex:none;font-family:'Neue Montreal';font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap")}>
+        <div data-search-foot="1" aria-hidden="true" style={sx("display:flex;align-items:center;gap:18px;height:37.5px;padding:0 22px;border-top:1px solid var(--line);flex:none;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap")}>
           <span style={SEARCH_KEY}><span style={SEARCH_PAIR}><kbd data-kbd="1"><IconArrowUp /></kbd><kbd data-kbd="1"><IconArrowDown /></kbd></span>Move</span>
           <span style={SEARCH_KEY}><kbd data-kbd="1"><IconReturn size={12} /></kbd>Open</span>
           <span style={SEARCH_KEY}><kbd data-kbd="1">Esc</kbd>Close</span>
@@ -5528,7 +5533,7 @@ function TourGuide({ vals }) {
         {/* data-tour-line MARKS THE TWO THINGS THE MASK REVEAL SPLITS, and both hold PLAIN TEXT on
             purpose: splitLines rebuilds by innerHTML, so a React element inside one of these would
             come back as an inert copy that never updates again. Text only, here and below. */}
-        <h2 id="tour-card-title" data-tour-line="1" style={sx("margin:0;font-family:'Neue Montreal';font-weight:500;font-size:var(--fs-lead);line-height:1.25;letter-spacing:var(--track-flat);color:var(--on-surface)")}>{c.title}</h2>
+        <h2 id="tour-card-title" data-tour-line="1" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-weight:500;font-size:var(--fs-lead);line-height:1.25;letter-spacing:var(--track-flat);color:var(--on-surface)")}>{c.title}</h2>
         {/* --fs-detail, a step under the heading, at 1.5 because every one of these wraps to three
             lines or more. text-wrap:pretty keeps the last line from ending on one word. */}
         {/* --fs-body, ONE RUNG UP (20.09.26, by request: "increase the onboarding copy font-size to
@@ -5537,7 +5542,7 @@ function TourGuide({ vals }) {
             always been set in, which makes the two tour surfaces agree. The heading keeps --fs-lead
             at 15, so the step still reads 15/500 over 13/400 — a step you can see, which is what
             the earlier size change was for. */}
-        <p data-tour-line="2" style={sx("margin:0;font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{c.body}</p>
+        <p data-tour-line="2" style={sx("margin:0;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;color:var(--on-surface-muted);text-wrap:pretty")}>{c.body}</p>
       </div>
       {/* THE FOOT CARRIES THE WAY OUT AND THE WAY ON, and they sit at opposite ends because they
           are opposite acts — Skip Tour is not a sibling of Next. Same rule and same banner voice as

@@ -7,6 +7,46 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-26 — Neue Montreal is asked for with the page, never falls back to Times, and is drawn one way in every engine
+
+By request: "make sure we use best practice elements to present the font properly like font smoothing and that it
+is rendered correctly across browsers and devices". This followed the same day's audit of what is not drawn in
+Neue Montreal. That audit crawled 27 states on desktop and phone and tested every non-ASCII character in the
+source against both faces. It found one piece of text outside the face: the AA badge's ✕.
+
+- **Fallback stack everywhere.** 127 places named `'Neue Montreal'` and nothing after it: 118 inline style
+  declarations, six JS style values (renderVals `MONO`, `sans` and three literals; motion.js `monoLabel`) and three
+  CSS rules. Held back, the face left all 67 pieces of text on /create in Times, while body's own stack gave the
+  page copy the system face. Every one now carries body's `'Neue Montreal',system-ui,sans-serif`.
+- **Smoothing.** Firefox's `-moz-osx-font-smoothing:grayscale` now sits beside `-webkit-font-smoothing:antialiased`
+  on body and .doc-route.
+  - Since the first commit, Chrome and Safari antialiased both themes, while Firefox antialiased only the dark one.
+  - A scoped rule from the Osmo resource said the light theme was left out on purpose. The body rule had always
+    overridden it everywhere but Firefox. The rule is gone and the look people have seen is kept.
+  - This is macOS only; Windows and Android ignore both properties.
+- **Kerning and synthesis.** `font-kerning:normal` and `font-synthesis:none` on body.
+  - Measured in Chrome, neither changes a single text width on /create, /about or /privacy.
+  - Kerning is stated so that an engine that decides it by size cannot set a line differently.
+  - Synthesis is off because the family ships 400 and 500 upright only. A bolder weight or an italic would be
+    faked from the outlines, and now renders as the nearest real face instead.
+- **AA badge.** The ✕ is the icon set's cross at 9, like the ✓ and ◐ beside it. It had been drawn from each
+  system's own symbol font (Zapf Dingbats on a Mac).
+
+**Checked and left:**
+- **404 preload:** tried and taken out. index.html has preloaded both faces since 02.09, and the prerendered
+  documents inherit it; 404.html is its own entry and has none. On a slow connection (150ms round trip, 1.6 Mb/s,
+  five cold builds each, medians), a preload there brought both faces 0.33s sooner (1.23s → 0.90s). It also
+  moved first paint and largest paint (the 404 heading) 0.29s later (0.60s → 0.89s), because the fonts took
+  bandwidth from the stylesheets.
+- **Vertical metrics:** hhea and win are equal in both faces (975/−225 and 973/−227 per 1000), so Mac and
+  Windows set the same line.
+- **Fallback metrics:** a size-adjusted fallback face was not added. The swap itself moves the page by 0.0006
+  (layout shift, /about) and 0.0004 (/create).
+- **`text-rendering: optimizeLegibility`:** not added. The face has no ligatures, and kerning is stated directly.
+- **No-script page:** index.html's noscript page stays in system-ui, since there is no stylesheet without a script.
+- **Tooltips:** native tooltips are drawn by the operating system.
+
+
 ## 2026-09-26 — The banner keeps its room while it stands aside, so the page behind the search stays put
 
 From the live audit of 26.09 (better-interface on 0c730e1), its one finding, by request ("fix the banner slide

@@ -23,6 +23,7 @@
   font-family:'Neue Montreal',system-ui,sans-serif;
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 .doc-route *{box-sizing:border-box}
 /* THE PRERENDERED DOCUMENT LAYS OUT LIKE THE HYDRATED ONE. AppView gives the document wrapper

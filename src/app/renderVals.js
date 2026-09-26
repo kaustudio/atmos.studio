@@ -22,7 +22,9 @@ function shareSpoken(w, tot) {
   return t === '<1%' ? 'under 1 percent' : t.replace('%', ' percent');
 }
 
-const MONO = 'Neue Montreal';
+// With body's fallback stack, so a slow face never leaves this text in the browser's default serif
+// (global.css, the note above body).
+const MONO = "'Neue Montreal',system-ui,sans-serif";
 
 // ===== THE ACCESSIBILITY VERDICT — one definition, every surface =====
 // Module scope rather than local to renderVals() on purpose: three surfaces report this same
@@ -227,7 +229,7 @@ export const renderValsMethods = {
        `sans` is the same length and the same register, and it is the one thing the value can never
        stop being. A name that describes the value cannot drift from it; a name that describes a
        former value drifts the moment the value changes and then says nothing true for years. */
-    const sans = 'Neue Montreal';
+    const sans = MONO;
     const w = (b) => this.swatchGrow(b);   // one rule for a swatch's share, shared with the 3D card (pipeline.js)
     /* THE TRAIT PILL — the detail overlay's footer traits, and the one place the word "pill" in this
        file finally means the shape as well as the role. It rounds with the result stage's own trait
@@ -1196,7 +1198,7 @@ export const renderValsMethods = {
       const n = pals.length;
       const colours = pals.reduce((a, x) => a + (semantic ? 6 : x.swatches.length), 0);
 const rowKey = (id) => (pid ? 'exp-' : 'ex-') + id;
-const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied === rowKey(id), doneWord: 'Downloaded', onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
+const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied === rowKey(id), doneWord: 'Downloaded', onPick: () => (pid ? this.doProjectExport(pid, id, semantic) : this.doExport(p, id, semantic)), onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: MONO, fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' }, labelStyle: { fontFamily: MONO, fontSize: 'var(--fs-body)', color: 'var(--on-surface)' } });
       exportView = {
         name: pid ? this.projectName(pid) : p.name,
         // "Export", not "Export Tokens", since Copy lives here too (22.09.26): a hex list is not a token.
@@ -1230,7 +1232,7 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
         copies: pid ? [] : [
           { label: 'Hex List', act: 'copy', done: s.copied === 'ex-copy-hex', doneWord: 'Copied', onPick: () => { this.copy(this.paletteHexList(p), 'ex-copy-hex', 'Copied all ' + p.swatches.length + ' colours as a hex list'); trackEvent('Palette Exported', { format: 'hex', method: 'copy' }); } },
           { label: 'CSS Custom Properties', ext: 'CSS', act: 'copy', done: s.copied === 'ex-copy-css', doneWord: 'Copied', onPick: () => { this.copy(this.paletteCss(p, semantic), 'ex-copy-css', 'Copied palette as CSS custom properties'); trackEvent('Palette Exported', { format: 'css', method: 'copy' }); } },
-        ].map((c) => Object.assign(c, { onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' } })),
+        ].map((c) => Object.assign(c, { onEnter: (e) => this.rowTintOn(e.currentTarget), onLeave: (e) => this.rowTintOff(e.currentTarget), onFocus: (e) => this.rowTintOn(e.currentTarget), onBlur: (e) => this.rowTintOff(e.currentTarget), style: itemBase, extStyle: { fontFamily: MONO, fontSize: 'var(--fs-fine)', letterSpacing: 'var(--track-flat)', color: 'var(--on-surface-muted)', flex: 'none' } })),
         formats: [
           mk('tailwind', 'Tailwind v4', '@theme · CSS'),
           mk('tokens', 'Design Tokens (W3C)', 'JSON'),
@@ -1922,12 +1924,12 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
               // is invisible as a measurement and legible as a wobble, which is the worst of both.
               width: '100%', minHeight: '62px', padding: '0 var(--page-gutter)', margin: 0, textAlign: 'left',
               background: b.hex, color: on, border: 'none', cursor: 'pointer',
-              fontFamily: 'Neue Montreal', WebkitTapHighlightColor: 'transparent',
+              fontFamily: MONO, WebkitTapHighlightColor: 'transparent',
             },
-            hexStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-lead)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase' },
+            hexStyle: { fontFamily: MONO, fontSize: 'var(--fs-lead)', letterSpacing: 'var(--track-flat)', textTransform: 'uppercase' },
             // The showcase's copy of the same figure — same decision as the result stage's band
             // label, see the note there. This one had the worse veil of the two at 0.75.
-            metaStyle: { fontFamily: 'Neue Montreal', fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', display: 'inline-flex', alignItems: 'center', gap: '6px' },
+            metaStyle: { fontFamily: MONO, fontSize: 'var(--fs-body)', fontWeight: 500, letterSpacing: 'var(--track-flat)', fontVariantNumeric: 'tabular-nums', display: 'inline-flex', alignItems: 'center', gap: '6px' },
           };
         }),
         // THE PICTURE THE PALETTE CAME FROM. dispUrl resolves a seeded example's key against the

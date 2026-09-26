@@ -179,7 +179,7 @@ export const motionMethods = {
   // ===== style builder: the uppercase label — the dominant repeated pattern (single source) =====
   // Takes a step off the scale, not a number. It used to take px and was the last place in the app
   // that could mint a size nothing else used — 8.5 got in here and nowhere else.
-  monoLabel(size, track, extra) { return Object.assign({ fontFamily: 'Neue Montreal', fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
+  monoLabel(size, track, extra) { return Object.assign({ fontFamily: "'Neue Montreal',system-ui,sans-serif", fontSize: size, letterSpacing: track, textTransform: 'uppercase' }, extra || {}); },
   /* NONE OF THESE THREE DECLARE A TRANSITION, and that is the point. Every one of them is rendered
      on an element carrying data-ix, and an inline `transition` does not merge with the stylesheet's
      — it REPLACES it. So each of these was silently overriding the whole interaction contract with

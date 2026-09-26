@@ -54,8 +54,24 @@ input[type="range"]{-webkit-appearance:none;appearance:none;border-radius:0;font
    the mark is a CSS mask over a gradient, so the button holds no text for the wrong face to paint.
    A control that draws nothing is not a bug today and is a bug the first time somebody puts a label
    in it. Stated once, here, where the appearance reset for the same four selectors already lives.
-   The inline declarations are now redundant rather than wrong; removing them is a separate sweep. */
-body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+   The inline declarations are now redundant rather than wrong; removing them is a separate sweep.
+   THEY WERE WRONG FOR THE FIRST SECONDS OF A SLOW LOAD (26.09.26, by request: "make sure we use best
+   practice elements to present the font properly ... rendered correctly across browsers and devices").
+   A family list that ends without a generic family has nothing to fall back to while its face is still
+   downloading, so the browser used its default serif: with the woff2 held back, all 67 pieces of text
+   on /create drew in Times, while the page copy that inherits this body rule drew in the system face.
+   Every inline declaration now carries this same stack. */
+/* THE FACE IS DRAWN ONE WAY IN EVERY ENGINE (26.09.26, same request).
+   -webkit-font-smoothing and -moz-osx-font-smoothing are the same instruction to two engines, and only
+   the first was here: Chrome and Safari have drawn this site antialiased in both themes since the first
+   commit, while Firefox on a Mac antialiased only the dark theme (the scoped rule further down, now
+   gone) and drew the light theme heavier. Both are macOS-only; Windows and Android ignore them.
+   font-kerning:normal states what Chrome already does (the face kerns through its GPOS table; measured,
+   no text on /create, /about or /privacy changed width with it), so the engines that decide kerning by
+   size cannot set a line differently. font-synthesis:none because the family ships 400 and 500 upright
+   and nothing else: a weight above 500 or an italic would otherwise be faked by smearing or slanting
+   the outlines; with it they render as the nearest real face. Nothing asks for either today. */
+body{background:var(--surface);font-family:'Neue Montreal',system-ui,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;font-kerning:normal;font-synthesis:none}
 /* A RATIO IS WRITTEN 4.5:1 AND SAID "4.5 TO 1" (19.09.26, interface review, by request: "fix all"). The
    figure sits in [data-ratio] (AppView's withRatios, and by hand in about.html) and the ":1" is generated
    here with " to 1" as its alternative text. So the page keeps the notation, a screen reader says the
@@ -617,7 +633,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      Example chip on a library row and on a grid card, the harmonies' Source/Mapped badge, and the
      Viewing mark (removed 24.09.26). Those NAME what a palette is, which is a label's job, and they were doing it two
      rungs below the label floor. The one genuinely decorative user, the ✕ inside the AA badge,
-     grows with them and still clears --row-aa-mark (re-measured; see the note there). */
+     grew with them and still cleared --row-aa-mark (re-measured; see the note there). It left the
+     token on 26.09.26: Neue Montreal has no ✕, so it is now the icon set's cross, drawn at 9. */
   --fs-nano:0.625rem;         /* 10 — the identity pills: Example, Source, Mapped */
   /* ===== BUTTON GEOMETRY =====
      Three sizes. It was twelve paddings across the forty buttons that declared one, and ten of
@@ -884,7 +901,8 @@ button[data-logo]:focus-visible + [data-logo-ring]{opacity:1}
      columns rather than one shared cluster — each sized for its own header label and value. */
   --row-aa-col:104px;         /* AA verdict badge + the pair count */
   /* The verdict badge's own slot inside that column. Fixed rather than intrinsic because the three
-     states carry glyphs of different widths (✓ and ◐ are 9px, ✕ is narrower), so left to size
+     states carried glyphs of different widths (✓ and ◐ are 9px; ✕ was a narrower text glyph until
+     26.09.26, and is the set's cross at 9 now), so left to size
      themselves the badges ended in a ragged right edge down a list whose whole point is that its
      columns line up. The second reason recorded here — that the sort header's ⓘ read from the same
      token so the badge and its explanation shared one edge — went with the ⓘ. */
@@ -1612,7 +1630,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
      pass over every label. See the [data-ix] block near the top of this file for the same rule
      stated for every other control, and for the argument that route is excepted on. The opening
      screen's exception is gone: its actions are .glass-cta now and speak in caps with the rest. */
-  font-family:Neue Montreal;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
+  font-family:Neue Montreal,system-ui,sans-serif;font-size:var(--fs-label);letter-spacing:var(--track-flat);text-transform:uppercase;
   /* -WEBKIT FIRST, STANDARD LAST, and the order is load-bearing rather than stylistic. Written
      the other way round the minifier treats the later -webkit- as the winner and drops the
      unprefixed property from the bundle entirely: `npx vite build` on 18.08.26 emitted three
@@ -1841,7 +1859,7 @@ html,body{background:var(--surface);transition:background var(--dur-chrome) var(
    sample) take 3px, "a small corner rather than a circle"; 6px read as a pill at 20px tall. The
    Search door prints its ⌘K without a cap, as Manage prints its count. A cap is at least square (20),
    its glyph or word centred by the box, since the glyphs are the icon set's SVGs, not characters. */
-kbd[data-kbd]{display:inline-flex;align-items:center;justify-content:center;gap:0;flex:none;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:var(--radius-tick);font-family:'Neue Montreal';font-size:var(--fs-fine);font-weight:400;line-height:1;letter-spacing:var(--track-flat);color:var(--on-surface-muted)}
+kbd[data-kbd]{display:inline-flex;align-items:center;justify-content:center;gap:0;flex:none;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border:1px solid var(--line-strong);border-radius:var(--radius-tick);font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);font-weight:400;line-height:1;letter-spacing:var(--track-flat);color:var(--on-surface-muted)}
 /* The Search door's disabled state is every control's ([data-ix]:disabled, .42); it had its own .45. */
 /* THE SEARCH'S LIT ROW (AppView SearchDialog), on the panel's corner less the 8px the row is inset by,
    so the two curves run parallel. IT IS THE LIBRARY'S LIT ROW (25.09.26, from the search audit): the
@@ -2653,12 +2671,10 @@ a.button{text-decoration:none;}
   :root{ --logo-w:126px; --logo-h:20px }
 }
 
-/* Browser font smoothing (Osmo) — grayscale antialiasing on macOS so light-on-dark type renders
-   at its designed weight, not thickened by subpixel rendering. Scoped to the dark theme and the
-   always-dark surface (the loader), NOT the light theme — antialiased thins dark-on-light
-   body copy and costs reading contrast there. */
-:root[data-theme="dark"] body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-[data-load-wrap] { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+/* Browser font smoothing (Osmo) stood here, scoped to the dark theme and the loader, with a note that
+   the light theme was left out on purpose. The body rule had antialiased Chrome and Safari in both
+   themes since the first commit, so only Firefox ever followed the note. Both engines now take the
+   body rule's pair (26.09.26, see body). */
 /* Hide scrollbar (Osmo) — the bar, never the overflow: page and drawer regions stay fully
    scrollable by wheel, touch and keyboard; the drawers keep their edge-fade cue. */
 html, body { scrollbar-width: none; }
@@ -3438,7 +3454,7 @@ html,body{overflow-anchor:none}
 .consent__text,.consent__row{position:relative;z-index:1}
 .consent__text{
   margin:0;
-  font-family:'Neue Montreal';font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);
+  font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-body);line-height:1.5;letter-spacing:var(--track-flat);
   color:var(--on-surface);text-wrap:pretty;
 }
 /* The two answers stay a group at 8px, as the toast's pair does, and lead the row from the reading

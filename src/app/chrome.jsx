@@ -48,8 +48,8 @@ export function TextSwap({ children }) {
 export function Button({ label, hover, btnRef, href, ...props }) {
   const Tag = href ? 'a' : 'button';
   return (
-    <Tag {...(href ? { href } : { type: 'button' })} data-button="" className="button" ref={btnRef} style={sx('font-family: Neue Montreal; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
-      <span className="button__hover"><span className="button__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal')}>{hover ?? label}</span><span className="button__bg is--hover"></span></span>
+    <Tag {...(href ? { href } : { type: 'button' })} data-button="" className="button" ref={btnRef} style={sx('font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-label); letter-spacing:var(--track-flat)')} {...props}>
+      <span className="button__hover"><span className="button__text" style={sx('letter-spacing:var(--track-flat); font-family: Neue Montreal,system-ui,sans-serif')}>{hover ?? label}</span><span className="button__bg is--hover"></span></span>
       <span className="button__default"><span aria-hidden="true" className="button__text" style={sx('letter-spacing:var(--track-flat)')}>{label}</span><span className="button__bg is--default"></span></span>
     </Tag>
   );
@@ -187,7 +187,7 @@ export function NavNewPalette({ show, onPress }) {
        13 as well"); it was --fs-detail. The pill's padding is in ems, so it grows with its type. */
     <Button btnRef={ref} data-emphasis="primary" data-tour="new"
       onClick={() => { if (!leaving.current) onPress(); }}
-      style={sx("font-family: Neue Montreal; font-size:var(--fs-body); letter-spacing:var(--track-flat)")}
+      style={sx("font-family: Neue Montreal,system-ui,sans-serif; font-size:var(--fs-body); letter-spacing:var(--track-flat)")}
       label={<span style={sx('display:flex;align-items:center;gap:2px;height:14px')}><span aria-hidden="true" style={NAV_PLUS_SLOT}><IconPlus size={16} /></span><ButtonText>New Palette</ButtonText></span>} />
   );
 }
