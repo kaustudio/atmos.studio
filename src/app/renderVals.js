@@ -428,6 +428,10 @@ export const renderValsMethods = {
           setNormal: () => this.setContrastSize(false), setLarge: () => this.setContrastSize(true),
           normalStyle: segBtn(!s.contrastLarge), largeStyle: segBtn(s.contrastLarge),
           normalPressed: s.contrastLarge ? 'false' : 'true', largePressed: s.contrastLarge ? 'true' : 'false',
+          // One Tab stop per rail, the arrows move and choose (overlays.js segArrow).
+          aaTab: aaa ? -1 : 0, aaaTab: aaa ? 0 : -1, normalTab: s.contrastLarge ? -1 : 0, largeTab: s.contrastLarge ? 0 : -1,
+          lensKey: (e) => this.segArrow(e, ['AA', 'AAA'], aaa ? 'AAA' : 'AA', (v) => this.setState({ contrastLens: v })),
+          sizeKey: (e) => this.segArrow(e, ['normal', 'large'], s.contrastLarge ? 'large' : 'normal', (v) => this.setContrastSize(v === 'large')),
           togglePass: () => this.setState((st) => ({ contrastPassOnly: !st.contrastPassOnly })),
           passStyle: s.contrastPassOnly ? segOn : segOff, passPressed: s.contrastPassOnly ? 'true' : 'false', passLabel: 'Passing Only',
         };
@@ -1102,6 +1106,8 @@ export const renderValsMethods = {
           id: g.id, label: g.name, active: on, pressed: on ? 'true' : 'false',
           aria: 'Show the ' + g.name.toLowerCase() + ' harmony, ' + g.cells.length + ' colours',
           onPick: () => this.setHarmonyModel(g.id),
+          // One Tab stop for the set, the arrows move and choose (overlays.js segArrow).
+          tab: on ? 0 : -1, onKey: (e) => this.segArrow(e, all.map((x) => x.id), active.id, (id) => this.setHarmonyModel(id)),
           // THE CHOSEN METHOD IS FILLED, as a segmented control's chosen option is (19.09.26, audit Q6,
           // by request): ink ground and surface text, where it was an ink ring on the page colour. The
           // Library's sort header shares toggleStyle and keeps its ink-only state.
@@ -1819,6 +1825,9 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
            they are already in, not discover it is the one option missing. `active` seeds the slider
            on it so the strip opens centred on where the story already is. */
         pickerOpen: !!s.storyPicker,
+        // Tab stays in the chooser, as in every dialog (26.09.26, modal keyboard audit: 9 of 12 presses
+        // left it for the footer and the bar around the story).
+        trapPicker: (e) => this.trapFocusIn('[data-story-picker]', e),
         picker: {
           active: Math.max(0, this._examples().findIndex((x) => x.id === p.id)),
           cases: this._examples().map((x) => ({
@@ -2247,9 +2256,8 @@ const mk = (id, label, ext) => ({ label, ext, act: 'download', done: s.copied ==
       // the portable file — a BACKUP of the library, and the restore that reads one back. Named for
       // the consequence rather than the file dialog; the file format itself is untouched (see the
       // frozen `schema` note in persistence.js).
-      backupMenuOpen: s.backupMenuOpen, toggleBackupMenu: () => this.setState((st) => ({ backupMenuOpen: !st.backupMenuOpen })),
       // _confirmRow: the row says "Backed Up" on Export's timer (see DoneSwap in AppView).
-      backUpLibrary: () => { this.setState({ backupMenuOpen: false }); this.backUpLibrary('manage'); this._confirmRow('lib-backup'); },
+      backUpLibrary: () => { this.backUpLibrary('manage'); this._confirmRow('lib-backup'); },
       backupDone: s.copied === 'lib-backup',
       // still reached by the brand mark, which is now the only door to it
       showIntroAgain: () => this.returnToIntro(),

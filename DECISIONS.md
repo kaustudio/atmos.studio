@@ -7,6 +7,50 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-26 — Every modal keeps its keys from every door, and the search's foot names only keys that work
+
+By request: "fix all", after the audit of "Does all modals close with esc, inspect every shortcut is available
+in all instances of modals". 15 surfaces were opened from 23 entry points by keyboard (Playwright on :3002, desktop
+and phone). Every one already closed on Escape and handed focus back. What differed between them:
+
+- **The Grid View guards the page it covers.**
+  - From Close, Tab went into footer and page controls hidden behind the field: 12 of the 16 presses to the
+    first card, each live to Enter.
+  - `_syncInert` (persistence.js, replacing `_bgInert`) inerts everything around the grid, level by level up to
+    [data-app]. The bar that floats on top stays live, as do the status line and the message lane.
+  - Tab from Close now reaches the first card in 4 presses, none hidden.
+- **Three aria-modal surfaces now inert the page, like the seven dialogs:** the Full Swatch View, the tour
+  invitation opened from the footer, and the phone's chooser (everything around it, since it sits inside the story).
+  - `_syncInert` only lifts what it set, so the landing's and the wipes' guards are never undone.
+  - `_syncAppInert` leaves what `_syncInert` holds.
+- **The enlarged reference image is part of the layer model.**
+  - It lives outside state, so nothing counted it: ⌘V pasted behind it and read a new palette, and ⌘K opened
+    the search underneath it (z 126 against 170).
+  - `_czUp` is now asked by `_pasteReady` and `_searchAvailable`, and Back closes it through `_closeFront`.
+  - Escape during its 0.55s arrival, which was swallowed, now runs the arrival to its end and closes.
+- **The phone's chooser keeps Tab** (9 of 12 presses left it), and a dismissal hands focus back to Explore
+  Another Example instead of the theme switch.
+- **Focus goes back to a door that still exists:**
+  - ⌘K from inside Manage then Escape returns to Manage, not the top of the page.
+  - Escape on the invitation reopened from the footer returns to Take a Tour (`data-tour-restart`), which is
+    re-drawn after the tour and was being missed.
+- **The rails answer the arrows everywhere.**
+  - Contrast's AA / AAA and Normal / Large, and the harmony models, are one Tab stop each with ← and → moving
+    and choosing (overlays.js `segArrow`), as the Library's List / Grid and page-size rails already were.
+  - Both focus traps skip tabindex −1, so a rail's unchosen option can't be the stop a trap wraps from.
+- **The analytics banner, once answered,** closes on Escape like its ×, keeping the answer and returning focus
+  to Privacy Settings. A first visit's unanswered banner stays, since closing must never read as an answer.
+- **The backup menu's state and Escape clause went**, since nothing had drawn or opened it for some time.
+- **The search's foot:**
+  - With nothing listed it keeps only Esc Close, since ↑↓ and ↵ do nothing there.
+  - ↵ reads Select, not Open: on Back Up Library it downloads a file and on Show All it filters.
+  - The order stays: move, choose, leave.
+
+**Checked and left:** Manage and the first-visit docked invitation stay non-modal (no trap, page live) by
+design, and ⌘K still opens over them. The Full Swatch View returns focus to its grid card, since the card's panel
+closes as the view opens. Escape on the phone's shared story stays unanswered (24.09).
+
+
 ## 2026-09-26 — Neue Montreal is asked for with the page, never falls back to Times, and is drawn one way in every engine
 
 By request: "make sure we use best practice elements to present the font properly like font smoothing and that it

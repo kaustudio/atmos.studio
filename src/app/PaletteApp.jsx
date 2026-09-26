@@ -221,7 +221,7 @@ export default class PaletteApp extends React.Component {
        instead and commits it once, so nothing changes until it is confirmed and Cancel is a real
        way out. null while the dialog is shut; an array of project ids while it is open. */
     assignPending: null,
-    assignPalette: null, backupMenuOpen: false, imageUrl: null, procStep: 0, dragOver: false,
+    assignPalette: null, imageUrl: null, procStep: 0, dragOver: false,
     /* THE PHONE'S STORY. `storyOpen` is true from the first render on a phone — the story IS the
        start screen there, exactly as the gate was — and is turned off only by opening an example or
        arriving on a shared link, both of which are surfaces ABOVE it. It is not persisted: a story
@@ -686,6 +686,12 @@ export default class PaletteApp extends React.Component {
         // THE LADDER IS _closeFront (23.09.26): the browser's Back walks the same one, so the two always
         // shut the same surface. Only the stage below it is Escape's alone.
         if (this._closeFront(false)) { e.preventDefault(); return; }
+        /* THE BANNER, ONCE IT HOLDS AN ANSWER (26.09.26, from the modal keyboard audit). Reopened from
+           Privacy Settings it takes focus, and Escape was the one key that did nothing there. It closes
+           the way its own × does (dismissConsent), keeping the answer given, and hands focus back to
+           the control that opened it. A first visit's banner has no answer yet, so it stays: closing
+           must never be mistaken for one. Not in _closeFront, since Back is not a way to answer it. */
+        if (this.state.consentOpen && this.state.consent && !this._consentClosing) { e.preventDefault(); this.dismissConsent(); return; }
         /* ESCAPE STOPS A READING (24.09.26, by request), as New Palette and Back already do. A pasted
            image is not on screen until it has been pasted, and a wrong one would otherwise become a
            palette in the Library, to be deleted. */
@@ -860,9 +866,7 @@ export default class PaletteApp extends React.Component {
        screen took a press and the caret sat in a field nobody could see, until the window was widened and
        the search stood there again. It closes, and hands focus to nothing, since what it came from has gone. */
     if (s.searchOpen && (s.narrow || isDoc(s.route) || this._landingUp())) this.closeSearch(null, true);
-    const modal = !!(s.assignPalette || s.recognised || s.restorePending
-      || s.exportOpen || s.contrast || s.harmony || s.searchOpen);
-    if (modal !== this._bgInertOn) { this._bgInertOn = modal; this._bgInert(modal); }
+    this._syncInert();
     // contrast lens/size/filter change: animate ONLY the delta (cells whose verdict flips), not the whole matrix
     if (s.contrast) {
       const key = s.contrastLens + '|' + s.contrastLarge + '|' + s.contrastPassOnly;
@@ -1081,6 +1085,9 @@ export default class PaletteApp extends React.Component {
      which is a place and not a surface: Back there is the story's own. */
   _closeFront(back) {
     const s = this.state;
+    // The enlarged reference image, above everything it opens over. Escape never reaches here while it
+    // is up (its own key handler takes it first); Back does, and shuts it like any other layer.
+    if (this._czUp && this._czUp()) { this._czClose(); return true; }
     /* The image chooser, above everything else it can coexist with. Its visible dismiss control
        was removed by request, so Escape is the only way out that does not commit a choice — which
        makes it load-bearing rather than a convenience. A phone reader still has one: the chooser
@@ -1096,7 +1103,6 @@ export default class PaletteApp extends React.Component {
     if (s.exportOpen) { this.closeExport(); return true; }
     if (s.assignPalette) { this.closeAssign(); return true; }
     if (s.restorePending) { this.closeRestore(); return true; }
-    if (s.backupMenuOpen) { this.setState({ backupMenuOpen: false }); return true; }
     /* THE SHARED ARRIVAL, WHICH THIS LADDER USED TO WALK STRAIGHT PAST. A share link constructs
        at stage 'result', so with no clause of its own Escape fell all the way to the last line
        and called doReset() — on the read-only showcase that dropped the palette, swapped the
@@ -1178,6 +1184,8 @@ export default class PaletteApp extends React.Component {
   _pasteReady(overShared) {
     const s = this.state;
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
+    // Nor behind the enlarged reference image, which is a layer the state does not hold (misc.js).
+    if (this._czUp && this._czUp()) return false;
     const over = s.stage === 'result' && (!s.sharedView || !!overShared);
     if (s.stage !== 'upload' && s.stage !== 'error' && !over) return false;
     return this._frontLayers() === 0 && (s.tourStep == null || (s.tourStep === 'invite' && !!s.tourInviteDocked));

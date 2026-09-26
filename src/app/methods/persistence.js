@@ -1,6 +1,7 @@
 // Persistence (Workstream A): swappable storage adapter over localStorage, versioned schema with
 // migration + validation, cross-tab sync, projects CRUD, and the portable project file.
 import { ROLE_IDS } from '../../lib/exporters.js';
+import { isDoc } from '../routes.js';
 import { trackEvent } from '../../lib/track.js';
 import { withoutRetired } from '../../lib/taxonomy.js';
 import { shareUrl } from '../../lib/share.js';
@@ -713,18 +714,52 @@ export const persistenceMethods = {
      The landmarks are inerted rather than [data-app] itself, because every dialog is rendered INSIDE
      [data-app] — inerting the wrapper would inert the dialog with it. Listing the four landmarks is
      the honest version: they are the app's whole content surface, and a fifth would announce itself
-     by still being reachable. */
-  _bgInert(on) {
+     by still being reachable.
+
+     EVERY SURFACE THAT COVERS THE PAGE, NOT SEVEN OF THEM (26.09.26, from the modal keyboard audit, by
+     request: "fix all"). The set was the seven dialogs that open from a control. Three more say
+     aria-modal and left the page live behind them: the Full Swatch View, the tour's invitation opened
+     from the footer, and the phone's chooser. And the Grid View, which is not a dialog but covers the
+     page with the list still under it, left Tab free to walk out of it: from its Close, 12 of the 16
+     presses to the first card landed on footer and page controls hidden behind the field, each one
+     live to Enter. Two shapes, one pass:
+     - A DIALOG is a child of [data-app], so the landmarks go, as before.
+     - THE GRID AND THE CHOOSER live INSIDE the page (the field in the Library section, the chooser in
+       the story), so everything around them goes instead: their siblings, level by level, up to
+       [data-app]. The bar stays live over the grid, where it floats on top and is meant to be used;
+       the status line and the message lane stay live everywhere, so an Undo can still be pressed.
+     Only what this inerted is lifted, so another guard's inert (the landing's cover, a wipe's) is
+     never undone, and _syncAppInert leaves what this holds. Run on every update and applied as a
+     difference, so a surface opening over another hands the page from one shape to the other. */
+  _syncInert() {
     const app = document.querySelector('[data-app]');
     if (!app) return;
+    const s = this.state;
+    const want = new Set();
+    const dialog = !!(s.assignPalette || s.recognised || s.restorePending || s.exportOpen || s.contrast
+      || s.harmony || s.searchOpen || s.overlay || (s.tourStep === 'invite' && !s.tourInviteDocked));
     // The bars by name rather than 'header': a dialog carries a <header> of its own, and on a document
     // route (where Restore now opens too) the first header in the app could be the dialog's, inerting
     // its own close. [data-float-nav] is the tool's bar; .doc-head is the documents' masthead.
-    ['[data-float-nav]', '.doc-head', 'main', 'section[data-recent]', '.site-foot'].forEach((sel) => {
-      const el = app.querySelector(sel);
-      if (!el) return;
-      if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert');
+    if (dialog) ['[data-float-nav]', '.doc-head', 'main', 'section[data-recent]', '.site-foot'].forEach((sel) => { const el = app.querySelector(sel); if (el) want.add(el); });
+    const grid = !dialog && s.feedView === 'grid' && !s.narrow && !isDoc(s.route) && !this._landingUp();
+    const inside = s.storyPicker ? document.querySelector('[data-story-picker]') : grid ? document.querySelector('[data-universe-status]') : null;
+    if (inside) {
+      const keep = '[role="status"],[aria-live],[data-message-lane],[data-click-zoom-lightbox]' + (grid ? ',[data-float-nav],[data-logo],[data-logo-ring]' : '');
+      for (let e = inside; e.parentElement; e = e.parentElement) {
+        [].forEach.call(e.parentElement.children, (sib) => { if (sib !== e && !sib.matches(keep)) want.add(sib); });
+        if (e.parentElement === app || e.parentElement === document.body) break;
+      }
+    }
+    const had = this._inertSet || new Set();
+    const now = new Set();
+    had.forEach((el) => { if (!want.has(el)) { try { el.removeAttribute('inert'); } catch (e) { } } });
+    want.forEach((el) => {
+      if (had.has(el)) { now.add(el); return; }
+      if (el.hasAttribute('inert')) return;   // another guard's; not this one's to hold or to lift
+      try { el.setAttribute('inert', ''); now.add(el); } catch (e) { }
     });
+    this._inertSet = now;
   },
   // The eight seeded examples, in library order. One place, because the story, its chooser and the
   // colour field all read it. (The phone's example view and example list that also read it went on
@@ -990,6 +1025,8 @@ export const persistenceMethods = {
   openStoryPicker() {
     if (!this._examples().length) return;
     if (this._wipeRunning) return;
+    // Remembered so a dismissal hands focus back to Explore Another Example (closeStoryPicker).
+    this._pickerBack = document.activeElement;
     this._wipeCover({
       // The story keeps its place under the cover: this surface is opened FROM the story and closes
       // back onto it (see _wipeCover's keepY note, and closeStoryPicker below).
@@ -1017,13 +1054,20 @@ export const persistenceMethods = {
     this._pickerClosing = true;
     this._exitTween('[data-story-picker]', () => {
       this._pickerClosing = false;
-      this.setState({ storyPicker: false, announce: 'Closed the image chooser.' });
+      /* FOCUS GOES BACK TO THE DOOR (26.09.26, from the modal keyboard audit). It fell to the first
+         control of the page, the theme switch at the top, a whole story away from where the reader
+         pressed Explore Another Example. After the commit, which is when the story stops being inert. */
+      const back = this._pickerBack; this._pickerBack = null;
+      this.setState({ storyPicker: false, announce: 'Closed the image chooser.' }, () => {
+        if (back && back.isConnected && !back.closest('[inert]')) { try { back.focus({ preventScroll: true }); } catch (e) { } }
+      });
     });
   },
   chooseStoryCase(id) {
     const ex = this._examples().find((x) => x.id === id);
     if (!ex) return;
     if (this._pickerClosing || this._wipeRunning) return;
+    this._pickerBack = null;   // a choice re-tells the story from 1.1; the wipe places focus there
     this._pickerClosing = true;
     // Same reason as setStoryCase: the reader is choosing which palette the phone's whole surface is
     // about, and the field behind chapter 1 is part of that surface.
@@ -1184,7 +1228,9 @@ export const persistenceMethods = {
      that drawer's companion: a card waiting under someone else's drawer is not. */
   trapFocusIn(sel, e) {
     if (e.key !== 'Tab') return; const root = document.querySelector(sel); if (!root) return;
-    const f = [...root.querySelectorAll('button,[href],input,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null); if (!f.length) return;
+    // tabIndex >= 0: a rail's unchosen option and a value toolbar's resting rows are buttons Tab never
+    // lands on (roving tabindex), so neither can be the stop the trap wraps from.
+    const f = [...root.querySelectorAll('button,[href],input,textarea,select,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.tabIndex >= 0 && n.offsetParent !== null); if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
     const card = this._tourCompanionOf ? this._tourCompanionOf(root) : null;
     const c = card ? this._tourFocusables(card) : [];

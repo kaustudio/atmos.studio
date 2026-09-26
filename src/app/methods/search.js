@@ -19,7 +19,7 @@
 
    WHERE IT IS TAKEN. The tool with nothing modal open: not over the landing, a document, a phone's
    story, a dialog or drawer (they own the keyboard), a tour step or a reading. It is one of the
-   modal layers itself (_frontLayers, _bgInert, _consentBlocked), so Back shuts it and the analytics
+   modal layers itself (_frontLayers, _syncInert, _consentBlocked), so Back shuts it and the analytics
    banner steps aside for it. */
 import { trackEvent } from '../../lib/track.js';
 import { isDoc } from '../routes.js';
@@ -78,6 +78,8 @@ export const searchMethods = {
     const s = this.state;
     if (s.narrow || isDoc(s.route) || this._landingUp()) return false;
     if (s.stage === 'processing') return false;
+    // The enlarged reference image keeps the key like any modal layer (misc.js _czUp).
+    if (this._czUp && this._czUp()) return false;
     // A tour step owns the page; its docked offer does not (it steps aside for this, like any layer).
     if (s.tourStep != null && !(s.tourStep === 'invite' && s.tourInviteDocked)) return false;
     // The Library panel is non-modal and closes for it; every other layer keeps the key.
@@ -93,8 +95,13 @@ export const searchMethods = {
     if (this._wipeRecoverStuck) this._wipeRecoverStuck();
     if (this._wipeRunning) return false;
     this._searchResumed = !!this.state.searchOut;
+    /* OUT OF THE LIBRARY PANEL, FOCUS COMES BACK TO ITS DOOR (26.09.26, from the modal keyboard audit).
+       The panel closes for the search, and focus was remembered where it stood, on a control inside a
+       panel that is gone by the time the search closes: Escape dropped focus on the page itself, and
+       the next Tab started from the top. It comes back to Manage, the door the panel was opened by. */
+    const panelDoor = this.state.tagMenuOpen ? this._tagBack : null;
     if (this.state.tagMenuOpen) { try { this.closeTagFilter(); } catch (e) { } }
-    this._searchBack = document.activeElement;
+    this._searchBack = panelDoor && panelDoor.isConnected ? panelDoor : document.activeElement;
     trackEvent('Search Opened', { from: from === 'button' ? 'button' : 'shortcut' });
     if (!this._searchOnResize) this._searchOnResize = () => { if (this.state.searchOpen) this._searchPlace(true); };
     window.addEventListener('resize', this._searchOnResize);

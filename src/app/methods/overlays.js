@@ -226,7 +226,7 @@ export const overlayMethods = {
   },
   trapFocus(e) {
     if (e.key !== 'Tab') return; const root = [...document.querySelectorAll('[role="dialog"][aria-modal="true"]')].find((d) => d.offsetParent !== null) || this._detailRoot(); if (!root) return;
-    const f = [...root.querySelectorAll('button,[href],input,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.offsetParent !== null);
+    const f = [...root.querySelectorAll('button,[href],input,textarea,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && n.tabIndex >= 0 && n.offsetParent !== null);
     if (!f.length) return; const first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
@@ -1087,6 +1087,22 @@ export const overlayMethods = {
   },
   contrastSummary(p) { const sw = p.swatches; let aa = 0, total = 0; for (let i = 0; i < sw.length; i++) for (let j = i + 1; j < sw.length; j++) { total++; if (this.contrastRatio(sw[i].hex, sw[j].hex) >= 4.5) aa++; } return { aa, total }; },
   trapContrast(e) { this.trapFocusIn('[data-contrast-dialog]', e); },
+  /* A RAIL ANSWERS THE ARROWS WHEREVER IT STANDS (26.09.26, from the modal keyboard audit). The
+     Library's List / Grid and page-size rails were one Tab stop, ← and → moving and choosing; the same
+     rails in the contrast checker (AA / AAA, Normal / Large) and the harmony models were a stop per
+     option and ignored the arrows. Things that look alike behave alike now: the chosen option is the
+     rail's one stop (tabIndex 0, the rest -1), and the arrows move, choose and take focus with them,
+     wrapping at the ends, exactly as viewToggleKey does. `ids` are in the buttons' order. */
+  segArrow(e, ids, current, pick) {
+    const dir = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const next = ids[(ids.indexOf(current) + dir + ids.length) % ids.length];
+    pick(next);
+    const rail = e.currentTarget && e.currentTarget.parentElement;
+    const btn = rail ? [...rail.querySelectorAll('button')][ids.indexOf(next)] : null;
+    if (btn) btn.focus();
+  },
 
   // ===== per-swatch colour harmonies (OKLCH-derived, gamut-mapped) =====
   openHarmony(hex) {

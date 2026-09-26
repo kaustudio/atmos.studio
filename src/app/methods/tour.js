@@ -214,7 +214,7 @@ export const tourMethods = {
       this._tourAfterConsentT = null;
       const s = this.state;
       if (!this._alive || !s.landingDismissed || s.stage !== 'upload' || s.overlay || s.uOpen || this._wipeRunning) return;
-      if (s.tagMenuOpen || s.exportOpen || s.backupMenuOpen) return;
+      if (s.tagMenuOpen || s.exportOpen) return;
       this.maybeOfferTour();
     }, 400);
   },
@@ -1272,9 +1272,14 @@ export const tourMethods = {
         } catch (e) { return false; }
         return document.activeElement === el;
       };
+      /* THE FOOTER'S TAKE A TOUR COMES BACK AS A NEW BUTTON (26.09.26, from the modal keyboard audit). It
+         is not drawn while the tour is up (showRestart), so the one `back` remembers is gone by now, and
+         focus fell through to <main>: Escape on the invitation reopened from the footer sent the reader
+         to the top of the page. The button standing there now is the same door. */
+      const again = back && !document.contains(back) && back.hasAttribute && back.hasAttribute('data-tour-restart') ? () => document.querySelector('[data-tour-restart]') : () => null;
       let tries = 12;
       const land = () => {
-        if (take(subject) || take(back) || take(document.querySelector('[data-app] main'))) return;
+        if (take(subject) || take(back) || take(again()) || take(document.querySelector('[data-app] main'))) return;
         if (--tries > 0) setTimeout(land, 60);
       };
       requestAnimationFrame(land);

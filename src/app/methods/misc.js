@@ -44,8 +44,8 @@ export const miscMethods = {
      long as the landing is up, and lifts it the moment the landing goes.
      The children rather than [data-app] itself, because the landing, the mark, the loader, the
      floating header and the skip link are all children too and must stay live. Left alone while a wipe runs — the wipe owns
-     the guards then and calls this from its own clearGuards — and never lifted while a modal holds
-     the landmarks (see _bgInert), which would otherwise undo that dialog's own guard. */
+     the guards then and calls this from its own clearGuards — and never lifted from an element a
+     front layer holds (see _syncInert), which would otherwise undo that layer's own guard. */
   _syncAppInert(force) {
     // `force` is the wipes' own clearGuards, which run before the running flag drops.
     if (this._wipeRunning && !force) return;
@@ -57,7 +57,7 @@ export const miscMethods = {
       if (el.matches('[data-landing],[data-logo],[data-load-wrap],[data-float-nav],.skip-link,[role="status"]')) return;
       try {
         if (on) el.setAttribute('inert', '');
-        else if (!this._bgInertOn) el.removeAttribute('inert');
+        else if (!(this._inertSet && this._inertSet.has(el))) el.removeAttribute('inert');
       } catch (e) { }
     });
   },
@@ -149,7 +149,7 @@ export const miscMethods = {
     closeBtn.innerHTML = '<span class="tswap"><span class="tswap__a">' + closeGlyph + '</span><span class="tswap__b" aria-hidden="true">' + closeGlyph + '</span></span>';
     const S = { open: false, anim: false, clone: null, srcDoc: null, scrollY: 0, trigger: null, inerted: [] };
     /* THE PAGE BEHIND IT LEAVES THE TREE. aria-modal is a request; inert is the guarantee, and it is
-       what the other dialogs get through _bgInert. That helper inerts the four landmarks inside
+       what the other dialogs get through _syncInert. That helper inerts the four landmarks inside
        [data-app], which is the right set for a dialog rendered among them and the wrong one here:
        the overlay is a direct child of [data-app], so its siblings are the whole rest of the app —
        the chrome bar the Tab was escaping to included. Only what this call inerted is lifted on
@@ -199,7 +199,8 @@ export const miscMethods = {
       S.anim = true;
       const dstRect = S.clone.getBoundingClientRect();
       const flip = computeFlip(srcRect, dstRect);
-      const tl = g.timeline({ onComplete: () => { S.anim = false; S.open = true; attach(); } });
+      const tl = g.timeline({ onComplete: () => { S.anim = false; S.open = true; S.tl = null; attach(); } });
+      S.tl = tl;
       tl.to(lightbox, { backgroundColor: backdropColor, duration: this.DUR.chrome, ease: this.EASE.standard }, 0);
       tl.fromTo(S.clone, { x: flip.tx, y: flip.ty, scaleX: flip.scaleX, scaleY: flip.scaleY }, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: this.DUR.reveal, ease: this.EASE.entrance }, 0);
     };
@@ -232,8 +233,13 @@ export const miscMethods = {
       g.to(lightbox, { backgroundColor: transparent, duration: this.DUR.chrome, ease: this.EASE.exit, delay: this.DUR.fast });
     };
     const onOverlayClick = () => close();
+    /* ESCAPE WORKS FROM THE FIRST FRAME (26.09.26, from the modal keyboard audit). The key is owned
+       from the first frame, but close() waits for the arrival to finish, so an Escape pressed in the
+       0.55s flip was taken and did nothing: the image stayed up. The arrival is run to its end and the
+       close begins from there, one press as everywhere else. */
+    const closeNow = () => { if (S.anim && S.tl) { try { S.tl.progress(1); } catch (err) { } } close(); };
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+      if (e.key === 'Escape') { e.stopPropagation(); closeNow(); return; }
       if (e.key === 'Tab') { e.preventDefault(); try { closeBtn.focus({ preventScroll: true }); } catch (err) { } }
     };
     const onScroll = () => { if (Math.abs(window.scrollY - S.scrollY) < 2) return; close(); };
@@ -249,6 +255,12 @@ export const miscMethods = {
       open(img);
     };
     document.addEventListener('click', this._czDocClick);
+    /* THE APP KNOWS WHEN IT IS UP (26.09.26, from the modal keyboard audit). It lives outside state, so
+       the layer model never counted it: ⌘V pasted an image behind it and read a new palette, and ⌘K
+       opened the search underneath it (z 126 against its 170), focus in a field nobody could see.
+       _pasteReady and _searchAvailable ask this now, and Back closes it as it closes every layer. */
+    this._czUp = () => S.open || S.anim;
+    this._czClose = closeNow;
     this._czDetach = () => { detach(); if (this._czDocClick) { document.removeEventListener('click', this._czDocClick); this._czDocClick = null; } if (S.open || S.anim) cleanup(); document.documentElement.style.cursor = ''; };
   },
 };

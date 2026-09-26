@@ -1603,7 +1603,7 @@ function MobileStory({ st }) {
           scroll position and their built masks while the reader looks — and inert + aria-hidden go
           on the story underneath, because nothing behind a full-screen surface should be reachable. */}
       {st.pickerOpen && (
-        <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an example">
+        <div data-story-picker="1" role="dialog" aria-modal="true" aria-label="Choose an example" onKeyDown={st.trapPicker}>
           <section data-layered-slider-init data-layered-slider-autoplay="0" className="layered-slider">
             <div className="layered-slider__container">
               <div data-layered-slider-mask className="layered-slider__mask-collection">
@@ -1908,7 +1908,7 @@ function SiteFooter({ route, onNavigate, onConsent, onTour, brand = true, landma
               came looking for. Wrong grouping: How it Works and a tour of the tool are the two ways
               into understanding the product, and the two statements plus the analytics door are the
               legal tail. The row now reads product, product, statement, statement, setting. */}
-          {onTour && <button type="button" className="site-foot__consent" onClick={onTour} aria-haspopup="dialog"><TextSwap>Take a Tour</TextSwap></button>}
+          {onTour && <button type="button" data-tour-restart="1" className="site-foot__consent" onClick={onTour} aria-haspopup="dialog"><TextSwap>Take a Tour</TextSwap></button>}
           {link('/privacy', 'Privacy')}
           {link('/terms', 'Terms')}
           {/* THE WAY BACK TO THE ANALYTICS QUESTION, on every page that has a footer. Withdrawing has
@@ -3785,13 +3785,13 @@ function ContrastDrawer({ vals }) {
               global.css beside the tabs' entry. */}
           <div data-cx-cell="lens" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);height:var(--cx-control-h);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="WCAG level">
             <span aria-hidden="true" style={contrast.lensPill}></span>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAA} aria-pressed={contrast.aaPressed} style={contrast.aaStyle}><TextSwap>AA</TextSwap></button>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAAA} aria-pressed={contrast.aaaPressed} style={contrast.aaaStyle}><TextSwap>AAA</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAA} onKeyDown={contrast.lensKey} tabIndex={contrast.aaTab} aria-pressed={contrast.aaPressed} style={contrast.aaStyle}><TextSwap>AA</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setAAA} onKeyDown={contrast.lensKey} tabIndex={contrast.aaaTab} aria-pressed={contrast.aaaPressed} style={contrast.aaaStyle}><TextSwap>AAA</TextSwap></button>
           </div>
           <div data-cx-cell="size" data-seg-rail="1" style={sx('position:relative;display:inline-grid;grid-template-columns:repeat(2,1fr);height:var(--cx-control-h);padding:2px;border:1px solid var(--action-line);background:transparent')} role="group" aria-label="Text size">
             <span aria-hidden="true" style={contrast.sizePill}></span>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal Text</TextSwap></button>
-            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large Text</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setNormal} onKeyDown={contrast.sizeKey} tabIndex={contrast.normalTab} aria-pressed={contrast.normalPressed} style={contrast.normalStyle}><TextSwap>Normal Text</TextSwap></button>
+            <button type="button" data-seg-btn="1" data-ix="seg" data-focus="chrome" onClick={contrast.setLarge} onKeyDown={contrast.sizeKey} tabIndex={contrast.largeTab} aria-pressed={contrast.largePressed} style={contrast.largeStyle}><TextSwap>Large Text</TextSwap></button>
           </div>
           {/* STILL A PILL (19.09.26, by request): it was made a switch with the other two on/off controls
               (audit U5) and put back the same day. It stands beside the rails in their voice and fills
@@ -4578,7 +4578,7 @@ function HarmonyDrawer({ vals }) {
         <div data-hx-sec="1" style={sx('padding:14px var(--page-gutter) 0')}>
           <div role="group" aria-label="Harmony model" style={sx('display:flex;flex-wrap:wrap;gap:6px')}>
             {harmony.models.map((m) => (
-              <button key={m.id} type="button" data-hx-cell="1" data-ix="seg" data-focus="chrome" aria-pressed={m.pressed} aria-label={m.aria} onClick={m.onPick} style={m.style}><TextSwap>{m.label}</TextSwap></button>
+              <button key={m.id} type="button" data-hx-cell="1" data-ix="seg" data-focus="chrome" aria-pressed={m.pressed} aria-label={m.aria} onClick={m.onPick} onKeyDown={m.onKey} tabIndex={m.tab} style={m.style}><TextSwap>{m.label}</TextSwap></button>
             ))}
           </div>
         </div>
@@ -5456,10 +5456,15 @@ function SearchDialog({ vals }) {
             </div>
           ))}
         </div>
-        {/* The foot: aria-hidden, since the combobox pattern already speaks the menu's keys. */}
+        {/* The foot: aria-hidden, since the combobox pattern already speaks the menu's keys.
+            ONLY THE KEYS THAT WORK, AND WORDS THAT ARE TRUE (26.09.26, by request: "fix all", from the
+            review of this foot). With nothing listed ↑↓ and ↵ do nothing, so the foot keeps Esc alone,
+            as the house rule for keys has it. And ↵ reads Select: it opens a palette, but on Back Up
+            Library it downloads a file and on Show All it filters the Library, so Open was not true of
+            every row it stood under. The order stays: move, choose, leave. */}
         <div data-search-foot="1" aria-hidden="true" style={sx("display:flex;align-items:center;gap:18px;height:37.5px;padding:0 22px;border-top:1px solid var(--line);flex:none;font-family:'Neue Montreal',system-ui,sans-serif;font-size:var(--fs-fine);letter-spacing:var(--track-flat);color:var(--on-surface-muted);white-space:nowrap")}>
-          <span style={SEARCH_KEY}><span style={SEARCH_PAIR}><kbd data-kbd="1"><IconArrowUp /></kbd><kbd data-kbd="1"><IconArrowDown /></kbd></span>Move</span>
-          <span style={SEARCH_KEY}><kbd data-kbd="1"><IconReturn size={12} /></kbd>Open</span>
+          {!q.empty && <span style={SEARCH_KEY}><span style={SEARCH_PAIR}><kbd data-kbd="1"><IconArrowUp /></kbd><kbd data-kbd="1"><IconArrowDown /></kbd></span>Move</span>}
+          {!q.empty && <span style={SEARCH_KEY}><kbd data-kbd="1"><IconReturn size={12} /></kbd>Select</span>}
           <span style={SEARCH_KEY}><kbd data-kbd="1">Esc</kbd>Close</span>
         </div>
       </div>
