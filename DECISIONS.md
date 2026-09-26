@@ -7,6 +7,23 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-26 — Start here says "Or paste with ⌘ V", and the Search door's key has its cap back
+
+Both by request.
+
+- **Start here.** ("should say 'Or paste with command + v'".) Since 25.09 the line had read "Or" and one cap, [⌘ V].
+  The verb is back in front of the key now, in the same one cap: [⌘ V], and [Ctrl V] off a Mac. A plus stood
+  in the cap ([⌘ + V]) for one round and went the same day, by request: "we can't show two different ways to
+  communicate commands". The Search door writes ⌘K and Ctrl K, so both keys are written one way. A screen
+  reader is given the same words, "Or paste with Command V."
+- **The Search door's key.** ("add a similar outline to command k so it aligns with current border".) The door
+  printed ⌘K as a plain muted figure since 25.09, when the cap came off because a small box at a stadium's
+  round end seemed to sit against the curve. It wears the same cap as Start here now: the icon set's ⌘ and
+  the K, "Ctrl K" off a Mac, no plus, as Start here writes ⌘ V. Measured, the cap keeps 6.5px
+  from the round end against 6.8 above and below, so it sits inside the curve. The door grows from 111.5
+  to 125px.
+
+
 ## 2026-09-25 — How it Works: the axis notes read as paragraphs
 
 By request. (A change to the card stack's hand-off to 3.1 was built the same evening: a fade, which

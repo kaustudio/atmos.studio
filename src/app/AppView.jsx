@@ -2692,12 +2692,17 @@ export default function AppView({ vals }) {
                   Ctrl K. The cap is 20px, so the line is 4.5px taller than its 13px of text was.
                   The row is for the eye: read aloud it is "Or V", the glyph being aria-hidden, so a
                   screen reader is given the sentence the line used to print. Elements inside are safe
-                  here: the reveal moves the whole line (orbit.js _maskReveal), with no split to undo. */}
+                  here: the reveal moves the whole line (orbit.js _maskReveal), with no split to undo.
+                  "OR PASTE WITH" (26.09.26, by request: "should say 'Or paste with command + v'"). The verb is
+                  back in front of the key. A plus stood in the cap for one round and went the same day, by
+                  request: "we can't show two different ways to communicate commands". The Search door's cap
+                  writes ⌘K and Ctrl K, so this one writes ⌘ V and Ctrl V, one notation for both keys. The
+                  screen reader's sentence is the same words. */}
               <div style={sx('overflow:hidden;margin-top:8px')}>
                 <div data-drop-line="1" style={sx("display:flex;align-items:center;justify-content:center;gap:6px;font-family:'Neue Montreal';font-size:var(--fs-body);color:var(--on-surface-muted)")}>
-                  <span aria-hidden="true">Or</span>
+                  <span aria-hidden="true">Or paste with</span>
                   <kbd data-kbd="1" aria-hidden="true" style={sx('gap:2px')}>{vals.pasteMac ? (<><IconCommand />V</>) : 'Ctrl V'}</kbd>
-                  <span style={visuallyHidden}>{'Or paste one with ' + (vals.pasteMac ? 'Command' : 'Control') + ' V.'}</span>
+                  <span style={visuallyHidden}>{'Or paste with ' + (vals.pasteMac ? 'Command' : 'Control') + ' V.'}</span>
                 </div>
               </div>
             </div>
@@ -3239,11 +3244,16 @@ function FeedSection({ vals }) {
               the round end of a stadium sits against the curve rather than inside it (the key's
               corners came within 5px of the curve where its sides kept 8); the plain figure leaves
               the door the same shape as its neighbour. The caps are the search's own, at its foot.
-              aria-hidden, since aria-keyshortcuts states the key to assistive technology. */}
+              aria-hidden, since aria-keyshortcuts states the key to assistive technology.
+              THE CAP IS BACK (26.09.26, by request: "add a similar outline to command k so it aligns with
+              current border"), the one Start here's paste line wears: kbd[data-kbd], the icon set's ⌘ and
+              the K 2px apart, "Ctrl K" off a Mac. The curve that sent it away, measured again: the cap
+              keeps 6.5px from the door's round end against 6.8 above and below it, so it sits inside the
+              curve rather than against it. The door is 125px wide where the plain figure made it 111.5. */}
           {vals.search.can && (
             <button type="button" data-search-btn="1" data-ix="press" data-focus="chrome" aria-haspopup="dialog" aria-keyshortcuts={vals.search.keys} disabled={vals.search.disabled} onClick={vals.search.openFromButton} title={'Search the Library (' + vals.search.keyHint + ')'} style={sx('flex:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:none;border:1px solid var(--action-line);font-family:Neue Montreal;font-size:var(--fs-body);font-weight:500;letter-spacing:var(--track-flat);color:var(--on-surface);cursor:pointer;padding:0 12px;height:35.5px')}>
               <TextSwap><span style={sx('display:inline-flex;align-items:center;gap:7px')}><IconSearch size={12} />Search</span></TextSwap>
-              <span aria-hidden="true" style={sx('font-family:Neue Montreal;font-size:var(--fs-fine);color:var(--on-surface-muted)')}>{vals.search.keyHint}</span>
+              <kbd data-kbd="1" aria-hidden="true" style={sx('gap:2px')}>{vals.search.keyHint === '⌘K' ? (<><IconCommand />K</>) : vals.search.keyHint}</kbd>
             </button>
           )}
           {/* THE ONE DOOR INTO THE LIBRARY PANEL. It replaced two controls: Manage Projects ended the
