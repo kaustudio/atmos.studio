@@ -7,6 +7,18 @@ doesn't know it was ever made.
 ---
 
 
+## 2026-09-26 — The banner keeps its room while it stands aside, so the page behind the search stays put
+
+From the live audit of 26.09 (better-interface on 0c730e1), its one finding, by request ("fix the banner slide
+behind search"). The analytics banner steps aside for every front layer (consent.js `_consentBlocked`: the search,
+the tour, Export, the contrast and harmony views, the dialogs) and comes back when the layer closes, so it is
+still up. `_syncDockFoot` counted a banner standing aside as gone and took its room away. At the end of /create
+with the banner unanswered, ⌘K slid the page 151px down behind the search, and closing the search left the reader
+151px above where they had been, because the room coming back grows the page without moving it. Measured on live:
+the footer's top went from 317 to 468 as the search opened, and the page stayed 151px from its end after it
+closed. Now the room stays until the banner is answered: the footer holds at 317 and the page ends where it did.
+
+
 ## 2026-09-26 — Start here says "Or paste with ⌘ V", and the Search door's key has its cap back
 
 Both by request.

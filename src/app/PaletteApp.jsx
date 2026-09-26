@@ -1252,10 +1252,17 @@ export default class PaletteApp extends React.Component {
      painted place so an arrival still in motion does not shorten it. global.css makes it the root's
      scroll-padding, so the browser brings a focused control clear of the card (WCAG technique C43), and a
      spacer at the page's end that carries the ground. Measured when the cards up change, a frame after,
-     and when the window does; the banner's own --consent-foot (consent.js) still pads the Library panel. */
+     and when the window does; the banner's own --consent-foot (consent.js) still pads the Library panel.
+     THE BANNER KEEPS ITS ROOM WHILE IT STANDS ASIDE (26.09.26, from the live audit, by request: "fix the
+     banner slide behind search"). It steps aside for every front layer (consent.js _consentBlocked: the
+     search, the tour, Export, the contrast and harmony views, the dialogs) and comes back when the layer
+     closes, so it is still up. Counting it as gone took its room away: at the page's end on /create, ⌘K
+     slid the page 151px down behind the search, and closing the search left the reader 151px above where
+     they had been, since the room coming back grows the page without moving it. The page behind a layer
+     is inert and must not move; the room stays until the banner is answered. */
   _syncDockFoot(force) {
     const s = this.state;
-    const consent = !!(s.consentOpen && !this._consentAside);
+    const consent = !!s.consentOpen;
     const tour = !!(s.tourStep === 'invite' && s.tourInviteDocked);
     const key = (consent ? 'c' : '') + (tour ? 't' : '');
     if (!force && key === this._dockKey) return;
