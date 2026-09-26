@@ -47,6 +47,21 @@ source against both faces. It found one piece of text outside the face: the AA b
 - **Tooltips:** native tooltips are drawn by the operating system.
 
 
+## 2026-09-26 — How it Works' photograph no longer jumps as its arrival lands
+
+By request: "the hero image on how it works jumps a few px after animation lands".
+
+- **The jump.** The arrival (aboutPlate.js) cleared `y` as it landed. GSAP clears the whole transform when any part
+  of it is cleared, so this took the drift's yPercent too (aboutFlip.js, −7% at the top of the page).
+  - Measured at 1440×900, the photograph dropped 21.7px inside its frame the frame it landed.
+  - It sprang back on the first scroll, when the drift wrote itself again.
+  - Now only the mask comes off. The lift ends at 0 and stays written.
+- **The lift.** On a direct load it had never risen. The arrival starts at mount, and the flip's fonts.ready
+  rebuild clears the photograph's transform a microtask later, so a `to()` reading its start from the element
+  started at 0. It is a `fromTo()` from the park's 18 now. That covers a direct load; on a page-transition
+  crossing the park was already held.
+
+
 ## 2026-09-26 — The banner keeps its room while it stands aside, so the page behind the search stays put
 
 From the live audit of 26.09 (better-interface on 0c730e1), its one finding, by request ("fix the banner slide

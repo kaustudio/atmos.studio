@@ -26,8 +26,16 @@
    of the request — under the cover, an arrival that has already finished is a page that was simply there.
 
    The drift on the photograph (aboutFlip.js, scrubbed on scroll) writes yPercent; this writes y in
-   pixels, so the two compose on the same transform instead of fighting over one property. Both are
-   cleared when the arrival lands, which leaves the element exactly as the flip expects to find it.
+   pixels, so the two compose on the same transform instead of fighting over one property.
+
+   THE LANDING LEAVES THE TRANSFORM ALONE (26.09.26, by request: "the hero image on how it works jumps a
+   few px after animation lands"). It used to clear `y` as it landed, and GSAP cannot clear one part of a
+   transform: clearing any of it clears all of it, the drift's yPercent included. So the photograph
+   dropped by the drift's 7% of its height the instant it landed, 21.7px at 1440×900, and sprang back on
+   the first scroll when the drift wrote itself again. The lift ends at 0 and stays written as 0; only
+   the mask is taken off. The lift is a fromTo for the same family of reason: on a direct load the
+   arrival starts at mount and the flip's fonts.ready rebuild clears the photograph's transform a
+   microtask later, so a tween that read its start from the element started from 0 and never rose.
 
    THE PARK IS HELD UNTIL THE ARRIVAL PLAYS (21.09.26, by request: "it doesn't animate correctly during
    the page transition"). The flip (aboutFlip.js) rebuilds on document.fonts.ready, and its rebuild is the
@@ -42,7 +50,7 @@
    next paint, so no frame shows the picture whole. It holds THROUGH the arrival, not just up to it: on a
    cold load the arrival starts at mount, the flip's clear lands inside it, and the mount's own work then
    stalls the ticker — measured, the photograph stood whole for 0.7s before the next frame masked it at
-   70%. It lets go only as the arrival finishes, so its own clear() at the end stands. */
+   70%. It lets go only as the arrival finishes, so its own landing at the end stands. */
 
 function noop() { }
 
@@ -63,8 +71,11 @@ export function initPlateArrival(root, motion) {
   // Parked before the first paint the cover hides, so the window never opens on a whole picture.
   const clipStr = (up, side) => 'inset(' + up + '% ' + side + '% 0% ' + side + '% round ' + r + ')';
   const at = { up: 100, side: 14 };
+  // The lift: "a few pixels" of the request's slight parallax, the one number the park, the hold and the
+  // arrival all start the photograph from.
+  const LIFT = 18;
   const apply = () => { box.style.clipPath = clipStr(at.up, at.side); };
-  const park = () => { at.up = 100; at.side = 14; apply(); if (img) gsap.set(img, { y: 18 }); };
+  const park = () => { at.up = 100; at.side = 14; apply(); if (img) gsap.set(img, { y: LIFT }); };
   const clear = () => { box.style.removeProperty('clip-path'); if (img) gsap.set(img, { clearProps: 'y' }); };
   if (reduce) return dead;                      // no mask at all: the picture is simply there
   park();
@@ -75,7 +86,7 @@ export function initPlateArrival(root, motion) {
     if (done) return;
     if (!box.style.clipPath) apply();
     // The lift is the timeline's to write once it plays; before that, the park's.
-    if (!played && img && Math.abs(Number(gsap.getProperty(img, 'y')) || 0) < 0.5) gsap.set(img, { y: 18 });
+    if (!played && img && Math.abs(Number(gsap.getProperty(img, 'y')) || 0) < 0.5) gsap.set(img, { y: LIFT });
   };
   try {
     hold = new MutationObserver(reHold);
@@ -87,13 +98,14 @@ export function initPlateArrival(root, motion) {
   const play = () => {
     if (played || !box.isConnected) return;
     played = true;
-    const land = () => { done = true; letGo(); clear(); };
+    // Only the mask comes off: the lift has ended at 0, and clearing it would clear the drift with it.
+    const land = () => { done = true; letGo(); box.style.removeProperty('clip-path'); };
     const tl = gsap.timeline({ onComplete: land });
     tl.to(at, { up: 0, duration: M.duration, ease: M.ease, onUpdate: apply }, 0);
     // The sides finish a breath sooner, so the last of the movement is the top edge rising rather
     // than the frame still widening under it.
     tl.to(at, { side: 0, duration: M.duration * 0.8, ease: M.ease, onUpdate: apply }, 0);
-    if (img) tl.to(img, { y: 0, duration: M.duration * 1.15, ease: M.ease }, 0);
+    if (img) tl.fromTo(img, { y: LIFT }, { y: 0, duration: M.duration * 1.15, ease: M.ease }, 0);
     // A stalled run (a backgrounded tab) is finished rather than left holding the picture back.
     setTimeout(() => { if (tl.progress() < 1) { try { tl.progress(1); } catch (e) { land(); } } }, (M.duration * 1.15 + 1.4) * 1000);
   };
